@@ -1,0 +1,223 @@
+import { describe, expect, it } from 'vitest'
+
+import { createTailwindPipeline } from './create-tailwind-pipeline'
+
+function resolve(
+  pipeline: ReturnType<typeof createTailwindPipeline>,
+  className = '',
+  layout?: 'flex' | 'grid',
+) {
+  return pipeline('div', {}, className, undefined, layout)
+}
+
+describe('createTailwindPipeline — no layout (pass-through)', () => {
+  const pipeline = createTailwindPipeline({ baseClassName: 'base' })
+
+  it('returns raw class string when no layout is given', () => {
+    expect(resolve(pipeline, 'flex flex-col gap-4 rounded')).toBe(
+      'base flex flex-col gap-4 rounded',
+    )
+  })
+
+  it('does not strip any classes when layout is omitted', () => {
+    const result = resolve(pipeline, 'grid grid-cols-3 col-span-2')
+    expect(result).toContain('grid')
+    expect(result).toContain('grid-cols-3')
+    expect(result).toContain('col-span-2')
+  })
+})
+
+describe('createTailwindPipeline — flex active', () => {
+  const pipeline = createTailwindPipeline({})
+
+  it('prepends flex to className', () => {
+    expect(resolve(pipeline, 'rounded', 'flex')).toMatch(/\bflex\b/)
+  })
+
+  it('strips grid-exclusive classes', () => {
+    const cls = resolve(pipeline, 'grid grid-cols-3 col-span-2 row-span-1 auto-cols-fr', 'flex')
+    expect(cls).not.toMatch(/\bgrid\b/)
+    expect(cls).not.toMatch(/\bgrid-cols-3\b/)
+    expect(cls).not.toMatch(/\bcol-span-2\b/)
+    expect(cls).not.toMatch(/\brow-span-1\b/)
+    expect(cls).not.toMatch(/\bauto-cols-fr\b/)
+  })
+
+  it('preserves flex-exclusive classes', () => {
+    const cls = resolve(pipeline, 'flex-row flex-wrap grow shrink-0 basis-1/2', 'flex')
+    expect(cls).toMatch(/\bflex-row\b/)
+    expect(cls).toMatch(/\bgrow\b/)
+    expect(cls).toMatch(/\bshrink-0\b/)
+    expect(cls).toMatch(/\bbasis-1\/2\b/)
+  })
+
+  it('preserves gap classes', () => {
+    const cls = resolve(pipeline, 'gap-4 gap-x-2 gap-y-6', 'flex')
+    expect(cls).toMatch(/\bgap-4\b/)
+    expect(cls).toMatch(/\bgap-x-2\b/)
+    expect(cls).toMatch(/\bgap-y-6\b/)
+  })
+
+  it('preserves layout-agnostic classes', () => {
+    const cls = resolve(pipeline, 'rounded-lg p-4 text-sm', 'flex')
+    expect(cls).toMatch(/\brounded-lg\b/)
+    expect(cls).toMatch(/\bp-4\b/)
+    expect(cls).toMatch(/\btext-sm\b/)
+  })
+})
+
+describe('createTailwindPipeline — grid active', () => {
+  const pipeline = createTailwindPipeline({})
+
+  it('prepends grid to className', () => {
+    expect(resolve(pipeline, 'rounded', 'grid')).toMatch(/\bgrid\b/)
+  })
+
+  it('strips flex-exclusive classes', () => {
+    const cls = resolve(pipeline, 'flex flex-row grow shrink-0 basis-1/2', 'grid')
+    expect(cls).not.toMatch(/\bflex\b/)
+    expect(cls).not.toMatch(/\bflex-row\b/)
+    expect(cls).not.toMatch(/\bgrow\b/)
+    expect(cls).not.toMatch(/\bshrink-0\b/)
+    expect(cls).not.toMatch(/\bbasis-1\/2\b/)
+  })
+
+  it('preserves grid-exclusive classes', () => {
+    const cls = resolve(pipeline, 'grid-cols-3 col-span-2 row-span-1 auto-cols-fr', 'grid')
+    expect(cls).toMatch(/\bgrid-cols-3\b/)
+    expect(cls).toMatch(/\bcol-span-2\b/)
+    expect(cls).toMatch(/\brow-span-1\b/)
+    expect(cls).toMatch(/\bauto-cols-fr\b/)
+  })
+
+  it('preserves gap classes', () => {
+    const cls = resolve(pipeline, 'gap-4 gap-x-2 gap-y-6', 'grid')
+    expect(cls).toMatch(/\bgap-4\b/)
+    expect(cls).toMatch(/\bgap-x-2\b/)
+    expect(cls).toMatch(/\bgap-y-6\b/)
+  })
+})
+
+describe('createTailwindPipeline — inline layout variants', () => {
+  const pipeline = createTailwindPipeline({})
+
+  it('preserves inline-flex when flex is active', () => {
+    expect(resolve(pipeline, 'inline-flex rounded', 'flex')).toMatch(/\binline-flex\b/)
+  })
+
+  it('strips inline-flex when grid is active', () => {
+    expect(resolve(pipeline, 'inline-flex rounded', 'grid')).not.toMatch(/\binline-flex\b/)
+  })
+
+  it('preserves inline-grid when grid is active', () => {
+    expect(resolve(pipeline, 'inline-grid rounded', 'grid')).toMatch(/\binline-grid\b/)
+  })
+
+  it('strips inline-grid when flex is active', () => {
+    expect(resolve(pipeline, 'inline-grid rounded', 'flex')).not.toMatch(/\binline-grid\b/)
+  })
+})
+
+describe('createTailwindPipeline — conditional tokens', () => {
+  const pipeline = createTailwindPipeline({})
+
+  it('includes [&.flex]: token when flex is active', () => {
+    expect(resolve(pipeline, '[&.flex]:items-center rounded', 'flex')).toMatch(
+      /\[&\.flex\]:items-center/,
+    )
+  })
+
+  it('strips [&.flex]: token when grid is active', () => {
+    expect(resolve(pipeline, '[&.flex]:items-center rounded', 'grid')).not.toMatch(
+      /\[&\.flex\]:items-center/,
+    )
+  })
+
+  it('preserves [&.flex]: token when no layout is active', () => {
+    expect(resolve(pipeline, '[&.flex]:items-center rounded')).toMatch(/\[&\.flex\]:items-center/)
+  })
+
+  it('includes [&.grid]: token when grid is active', () => {
+    expect(resolve(pipeline, '[&.grid]:grid-cols-3 rounded', 'grid')).toMatch(
+      /\[&\.grid\]:grid-cols-3/,
+    )
+  })
+
+  it('strips [&.grid]: token when flex is active', () => {
+    expect(resolve(pipeline, '[&.grid]:grid-cols-3 rounded', 'flex')).not.toMatch(
+      /\[&\.grid\]:grid-cols-3/,
+    )
+  })
+})
+
+describe('createTailwindPipeline — arbitrary variant prefixes', () => {
+  const pipeline = createTailwindPipeline({})
+
+  it('strips prefixed grid class when flex is active', () => {
+    const cls = resolve(pipeline, 'data-[orientation=horizontal]:grid-cols-3 rounded', 'flex')
+    expect(cls).not.toMatch(/grid-cols-3/)
+    expect(cls).toMatch(/\brounded\b/)
+  })
+
+  it('preserves prefixed flex class when flex is active', () => {
+    const cls = resolve(pipeline, 'data-[orientation=horizontal]:flex-row rounded', 'flex')
+    expect(cls).toMatch(/flex-row/)
+    expect(cls).toMatch(/\brounded\b/)
+  })
+
+  it('handles stacked prefixes', () => {
+    const cls = resolve(pipeline, 'sm:hover:flex-row md:grid-cols-2 p-4', 'flex')
+    expect(cls).toMatch(/flex-row/)
+    expect(cls).not.toMatch(/grid-cols-2/)
+    expect(cls).toMatch(/\bp-4\b/)
+  })
+
+  it('handles colon inside brackets without false positive', () => {
+    const cls = resolve(
+      pipeline,
+      'data-[foo:bar]:flex-row data-[foo:bar]:grid-cols-3 rounded',
+      'flex',
+    )
+    expect(cls).toMatch(/flex-row/)
+    expect(cls).not.toMatch(/grid-cols-3/)
+  })
+})
+
+describe('createTailwindPipeline — layout param overrides className tokens', () => {
+  const pipeline = createTailwindPipeline({})
+
+  it('flex param forces flex mode even when className contains grid tokens', () => {
+    const cls = resolve(pipeline, 'grid grid-cols-3 gap-4 rounded', 'flex')
+    expect(cls).toMatch(/\bflex\b/)
+    expect(cls).toMatch(/\brounded\b/)
+    expect(cls).toMatch(/\bgap-4\b/)
+    expect(cls).not.toMatch(/\bgrid-cols-3\b/)
+  })
+
+  it('grid param forces grid mode even when className contains flex tokens', () => {
+    const cls = resolve(pipeline, 'flex flex-col gap-4 rounded', 'grid')
+    expect(cls).toMatch(/\bgrid\b/)
+    expect(cls).toMatch(/\brounded\b/)
+    expect(cls).toMatch(/\bgap-4\b/)
+    expect(cls).not.toMatch(/\bflex-col\b/)
+  })
+})
+
+describe('createTailwindPipeline — baseClassName layout stripping', () => {
+  it('preserves all classes from baseClassName when no layout is active', () => {
+    const pipeline = createTailwindPipeline({ baseClassName: 'flex flex-col gap-4 rounded' })
+    const cls = resolve(pipeline)
+    expect(cls).toMatch(/\bflex\b/)
+    expect(cls).toMatch(/\bflex-col\b/)
+    expect(cls).toMatch(/\bgap-4\b/)
+    expect(cls).toMatch(/\brounded\b/)
+  })
+
+  it('preserves layout classes from baseClassName when flex is active', () => {
+    const pipeline = createTailwindPipeline({ baseClassName: 'items-center gap-4 rounded' })
+    const cls = resolve(pipeline, '', 'flex')
+    expect(cls).toMatch(/\bitems-center\b/)
+    expect(cls).toMatch(/\bgap-4\b/)
+    expect(cls).toMatch(/\brounded\b/)
+  })
+})

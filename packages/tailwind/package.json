@@ -1,0 +1,25 @@
+{
+  "name": "@polymorphic-ui/tailwind",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "@polymorphic-ui/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "catalog:",
+    "vitest": "catalog:"
+  }
+}
