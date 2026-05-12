@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# Generated / cache
+.turbo/
+.cache/
+coverage/
+
+# Lockfiles
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Dot folders
+.git/
+.claude/
+.husky/
+.vscode/
+
+# Misc
+*.min.js
+*.min.css
