@@ -43,6 +43,7 @@ export default [
         projectService: {
           allowDefaultProject: [
             '*.config.ts',
+            '*.workspace.ts',
             'packages/*/tsup.config.ts',
             'packages/*/vitest.config.ts',
           ],
