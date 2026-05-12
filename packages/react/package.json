@@ -1,0 +1,13 @@
+{
+  "name": "@polymorphic-ui/react",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --dts",
+    "dev": "tsup src/index.ts --watch"
+  },
+  "devDependencies": {
+    "type-fest": "catalog:"
+  }
+}
