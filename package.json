@@ -1,0 +1,37 @@
+{
+  "name": "polymorphic-ui",
+  "private": true,
+  "version": "0.0.1",
+  "description": "A framework-agnostic polymorphic component system with strict TypeScript types and runtime accessibility validation.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r --if-present test",
+    "test:ci": "vitest run",
+    "test:related": "pnpm -r --if-present test:related",
+    "lint": "eslint . --fix",
+    "lint:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' | xargs eslint --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "format:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.md' | xargs prettier --write",
+    "clean": "rm -rf node_modules packages/**/node_modules packages/**/dist",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/js": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "typescript-eslint": "catalog:",
+    "husky": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "packageManager": "pnpm@11.0.4",
+  "engines": {
+    "node": ">=24"
+  }
+}
