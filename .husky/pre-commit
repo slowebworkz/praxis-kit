@@ -1,0 +1,7 @@
+pnpm format:staged
+pnpm lint:staged
+git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.md' | xargs git add
+
+if git diff --cached --name-only --diff-filter=ACMR | grep -qE '\.(ts|tsx)$'; then
+  pnpm typecheck
+fi
