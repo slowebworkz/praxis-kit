@@ -1,4 +1,9 @@
-import type { ImplicitRole, ImplicitTag, IntrinsicTag } from '../types'
+import type { IntrinsicTag } from '../types'
+
+type Registry = readonly (readonly [PropertyKey, unknown])[]
+type ImplicitRoleTuple<T extends Registry> = T[number]
+type ImplicitTag<T extends Registry> = ImplicitRoleTuple<T>[0]
+type ImplicitRole<T extends Registry> = ImplicitRoleTuple<T>[1]
 
 const IMPLICIT_ROLES = [
   ['article', 'article'],
@@ -33,24 +38,14 @@ export function getImplicitRole(tag: IntrinsicTag): Role | undefined {
   return implicitRoles.get(tag as Tag)
 }
 
-export function isStrongRole(role: string): role is Role {
-  return strongRoles.has(role as Role)
+/** Returns true if `tag` carries a strong implicit role that cannot be overridden with `role="region"`. */
+export function isStrongImplicitRole(tag: string): boolean {
+  const role = implicitRoles.get(tag as Tag)
+  return role !== undefined && strongRoles.has(role)
 }
 
-export function isStandaloneRole(role: string): role is Role {
-  return standaloneRoles.has(role as Role)
-}
-
-export const ariaRolePolicy = {
-  getImplicitRole(tag: string): Role | null {
-    return implicitRoles.get(tag as Tag) ?? null
-  },
-  isStrongImplicitRole(tag: string): boolean {
-    const role = implicitRoles.get(tag as Tag)
-    return role !== undefined && strongRoles.has(role)
-  },
-  isStandalone(tag: string): boolean {
-    const role = implicitRoles.get(tag as Tag)
-    return role !== undefined && standaloneRoles.has(role)
-  },
+/** Returns true if `tag` is a self-contained element whose implicit role makes `role="region"` invalid. */
+export function isStandaloneTag(tag: string): boolean {
+  const role = implicitRoles.get(tag as Tag)
+  return role !== undefined && standaloneRoles.has(role)
 }

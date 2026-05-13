@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { ariaRolePolicy } from './aria-role-policy'
+import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
 
-describe('ariaRolePolicy.getImplicitRole', () => {
+describe('getImplicitRole', () => {
   it.each([
     ['article', 'article'],
     ['aside', 'complementary'],
@@ -9,39 +9,45 @@ describe('ariaRolePolicy.getImplicitRole', () => {
     ['header', 'banner'],
     ['main', 'main'],
     ['nav', 'navigation'],
-  ] as const)('returns %s for <%s>', (tag, role) => {
-    expect(ariaRolePolicy.getImplicitRole(tag)).toBe(role)
+  ] as const)('returns "%s" for <%s>', (tag, role) => {
+    expect(getImplicitRole(tag)).toBe(role)
   })
 
-  it('returns null for elements with no implicit role', () => {
-    expect(ariaRolePolicy.getImplicitRole('div')).toBeNull()
-    expect(ariaRolePolicy.getImplicitRole('span')).toBeNull()
-    expect(ariaRolePolicy.getImplicitRole('button')).toBeNull()
+  it('returns undefined for elements with no implicit role', () => {
+    expect(getImplicitRole('div')).toBeUndefined()
+    expect(getImplicitRole('span')).toBeUndefined()
+    expect(getImplicitRole('button')).toBeUndefined()
   })
 })
 
-describe('ariaRolePolicy.isStrongImplicitRole', () => {
+describe('isStrongImplicitRole', () => {
   it.each(['aside', 'footer', 'header', 'main', 'nav'] as const)('returns true for <%s>', (tag) => {
-    expect(ariaRolePolicy.isStrongImplicitRole(tag)).toBe(true)
+    expect(isStrongImplicitRole(tag)).toBe(true)
   })
 
   it('returns false for article (non-strong implicit role)', () => {
-    expect(ariaRolePolicy.isStrongImplicitRole('article')).toBe(false)
+    expect(isStrongImplicitRole('article')).toBe(false)
   })
 
   it('returns false for elements with no implicit role', () => {
-    expect(ariaRolePolicy.isStrongImplicitRole('div')).toBe(false)
+    expect(isStrongImplicitRole('div')).toBe(false)
+    expect(isStrongImplicitRole('span')).toBe(false)
   })
 })
 
-describe('ariaRolePolicy.isStandalone', () => {
+describe('isStandaloneTag', () => {
   it('returns true for article', () => {
-    expect(ariaRolePolicy.isStandalone('article')).toBe(true)
+    expect(isStandaloneTag('article')).toBe(true)
   })
 
-  it('returns false for non-standalone elements', () => {
-    expect(ariaRolePolicy.isStandalone('nav')).toBe(false)
-    expect(ariaRolePolicy.isStandalone('div')).toBe(false)
-    expect(ariaRolePolicy.isStandalone('main')).toBe(false)
+  it('returns false for non-standalone landmark elements', () => {
+    expect(isStandaloneTag('nav')).toBe(false)
+    expect(isStandaloneTag('main')).toBe(false)
+    expect(isStandaloneTag('aside')).toBe(false)
+  })
+
+  it('returns false for elements with no implicit role', () => {
+    expect(isStandaloneTag('div')).toBe(false)
+    expect(isStandaloneTag('span')).toBe(false)
   })
 })

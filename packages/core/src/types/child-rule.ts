@@ -49,13 +49,3 @@ export type BiDirectionalMap<A, B> = Readonly<{
 export type MatchMatrix = Readonly<{
   childToRules: BiDirectionalMap<ChildIndex, RuleIndex>
 }>
-
-/**
- * Transform pipeline contracts
- */
-
-export type Pipeline<A, B> = (input: A) => B
-
-export type NormalizeChildRule = Pipeline<ChildRuleInput, NormalizedChildRule>
-
-export type BuildGraph = (children: unknown[], rules: NormalizedChildRule[]) => MatchMatrix

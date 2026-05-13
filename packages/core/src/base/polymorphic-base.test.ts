@@ -11,6 +11,10 @@ class TestStrict extends StrictBase {
     this.violate(message)
   }
 
+  callWarn(message: string) {
+    this.warn(message)
+  }
+
   callInvariant(condition: unknown, message: string) {
     this.invariant(condition, message)
   }
@@ -104,6 +108,44 @@ describe('StrictBase.violate()', () => {
     s.callViolate('b')
     s.callViolate('c')
     expect(spy).toHaveBeenCalledTimes(3)
+    spy.mockRestore()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// warn()
+// ---------------------------------------------------------------------------
+
+describe('StrictBase.warn()', () => {
+  it('is silent when strict is false', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const s = new TestStrict(false)
+    expect(() => s.callWarn('msg')).not.toThrow()
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('warns when strict is "warn"', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const s = new TestStrict('warn')
+    s.callWarn('something wrong')
+    expect(spy).toHaveBeenCalledWith('something wrong')
+    spy.mockRestore()
+  })
+
+  it('warns but does not throw when strict is "throw"', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const s = new TestStrict('throw')
+    expect(() => s.callWarn('something wrong')).not.toThrow()
+    expect(spy).toHaveBeenCalledWith('something wrong')
+    spy.mockRestore()
+  })
+
+  it('warns but does not throw when strict is true', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const s = new TestStrict(true)
+    expect(() => s.callWarn('something wrong')).not.toThrow()
+    expect(spy).toHaveBeenCalledWith('something wrong')
     spy.mockRestore()
   })
 })

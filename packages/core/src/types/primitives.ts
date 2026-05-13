@@ -37,6 +37,7 @@ export type IntrinsicTag = keyof HTMLElementTagNameMap
 export type AriaRole =
   | 'alert'
   | 'alertdialog'
+  | 'article'
   | 'banner'
   | 'button'
   | 'complementary'

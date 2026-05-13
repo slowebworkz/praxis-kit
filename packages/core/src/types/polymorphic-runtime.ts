@@ -1,7 +1,7 @@
 import type { Simplify } from 'type-fest'
 import type { AnyRecord, ClassName, ElementType } from './primitives'
 import type { ResolvedFactoryOptions } from './resolved-factory-options'
-import type { VariantMap } from './variant'
+import type { VariantMap, VariantProps } from './variant'
 
 /* ---------------------------------- */
 /* Resolvers                          */
@@ -32,12 +32,15 @@ export type PolymorphicRuntime<
   Props extends AnyRecord,
   Variants extends VariantMap,
   TKeys extends string = never,
+  TPreset extends Readonly<Record<string, Partial<VariantProps<Variants>>>> = Readonly<
+    Record<string, Partial<VariantProps<Variants>>>
+  >,
 > = {
   /**
    * Normalized, immutable factory configuration.
    * Single source of truth for runtime behavior.
    */
-  readonly options: Readonly<ResolvedFactoryOptions<TDefault, Props, Variants>>
+  readonly options: Readonly<ResolvedFactoryOptions<TDefault, Props, Variants, TPreset>>
 
   /**
    * Resolves the final element type.
