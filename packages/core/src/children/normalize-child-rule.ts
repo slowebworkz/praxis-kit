@@ -8,7 +8,14 @@ function normalizeCardinality(
   const min = input?.min
   const max = input?.max ?? (impliesSingleton ? 1 : undefined)
   if (min === undefined && max === undefined) return { kind: 'unbounded' }
-  return { kind: 'bounded', min: min ?? 0, max: max ?? Infinity }
+  const effectiveMin = min ?? 0
+  const effectiveMax = max ?? Infinity
+  if (effectiveMin > effectiveMax) {
+    throw new RangeError(
+      `normalizeChildRule: min (${effectiveMin}) cannot exceed max (${effectiveMax})`,
+    )
+  }
+  return { kind: 'bounded', min: effectiveMin, max: effectiveMax }
 }
 
 export function normalizeChildRule(rule: ChildRuleInput): NormalizedChildRule {

@@ -91,6 +91,12 @@ describe('MatchValidator — multiple matches', () => {
     expect(() => validator.validate([fooEl], m, ['ruleA', 'ruleB'])).toThrow(/ruleB/)
   })
 
+  it('falls back to "#N" label when a rule index has no name entry', () => {
+    const m = matrix([new Set([0, 1])])
+    // ruleNames only covers index 0; index 1 is out of bounds → fallback '#1'
+    expect(() => validator.validate([fooEl], m, ['ruleA'])).toThrow(/#1/)
+  })
+
   it('includes the class name in error', () => {
     const m = matrix([new Set([0, 1])])
     expect(() => validator.validate([fooEl], m, ['ruleA', 'ruleB'])).toThrow(/Foo/)
