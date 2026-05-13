@@ -18,7 +18,9 @@ export abstract class StrictBase {
   }
 
   protected warn(message: string): void {
-    this.violate(message)
+    if (this.strict) {
+      console.warn(message)
+    }
   }
 
   protected invariant(condition: unknown, message: string): void {

@@ -13,8 +13,6 @@ export type {
 } from './aria-rule'
 export type {
   BiDirectionalMap,
-  Cardinality,
-  CardinalityInput,
   ChildIndex,
   ChildRuleInput,
   ChildRuleMatch,
@@ -47,13 +45,6 @@ export type {
 } from './primitives'
 export type { ResolvedFactoryOptions } from './resolved-factory-options'
 export type { ResolveInput, ResolveOutput } from './resolver'
-export type {
-  ImplicitRole,
-  ImplicitRoleMap,
-  ImplicitRoleTuple,
-  ImplicitTag,
-  Registry,
-} from './roles'
 export type { StrictMode } from './strict-mode'
 export type { ValidationResult, ValidationViolation } from './validation'
 export type { DefaultVariants, PresetMap, VariantMap, VariantProps, VariantValue } from './variant'

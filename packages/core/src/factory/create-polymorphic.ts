@@ -18,7 +18,7 @@ export function createPolymorphic<
   TPreset extends Record<string, Partial<VariantProps<Variants>>> = Record<never, never>,
 >(
   options: FactoryOptions<TDefault, Props, Variants, TPreset> = {},
-): PolymorphicRuntime<TDefault, Props, Variants, Extract<keyof TPreset, string>> {
+): PolymorphicRuntime<TDefault, Props, Variants, Extract<keyof TPreset, string>, TPreset> {
   const resolved = resolveFactoryOptions(options)
   const classPipeline = createClassPipeline(resolved)
 

@@ -14,7 +14,7 @@ import type {
   ValidationResult,
   ValidationViolation,
 } from '../types'
-import { getImplicitRole, isStandaloneRole, isStrongRole } from './aria-role-policy'
+import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
 
 export type { IntrinsicProps }
 
@@ -131,7 +131,7 @@ export class AriaPolicyEngine extends StrictBase {
     const role = props.role
     if (!implicitRole || !role || role === implicitRole) return { valid: true }
 
-    if (isStrongRole(implicitRole) && role === 'region') {
+    if (isStrongImplicitRole(tag) && role === 'region') {
       return {
         valid: false,
         fixable: true,
@@ -160,7 +160,7 @@ export class AriaPolicyEngine extends StrictBase {
   static #checkStandaloneRegion({ tag, props, implicitRole }: AriaContext): AriaResult {
     const role = props.role
     if (role !== 'region') return { valid: true }
-    if (!implicitRole || !isStandaloneRole(implicitRole)) return { valid: true }
+    if (!isStandaloneTag(tag)) return { valid: true }
 
     return {
       valid: false,

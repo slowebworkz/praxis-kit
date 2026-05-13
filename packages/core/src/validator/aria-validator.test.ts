@@ -72,8 +72,11 @@ describe('validate() — redundant role', () => {
     spy.mockRestore()
   })
 
-  it('throws when strict is "throw"', () => {
-    expect(() => makeValidator('throw').validate('nav', { role: 'navigation' })).toThrow()
+  it('warns but does not throw when strict is "throw" (warning severity)', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(() => makeValidator('throw').validate('nav', { role: 'navigation' })).not.toThrow()
+    expect(spy).toHaveBeenCalled()
+    spy.mockRestore()
   })
 
   it('is silent but still strips invalid role when strict is false', () => {
