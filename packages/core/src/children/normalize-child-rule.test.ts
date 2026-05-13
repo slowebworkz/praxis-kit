@@ -98,3 +98,30 @@ describe('normalizeChildRule() — explicit cardinality', () => {
     expect(n.cardinality).toEqual({ kind: 'bounded', min: 1, max: Infinity })
   })
 })
+
+// ---------------------------------------------------------------------------
+// Invalid cardinality
+// ---------------------------------------------------------------------------
+
+describe('normalizeChildRule() — invalid cardinality', () => {
+  it('throws when min exceeds max', () => {
+    expect(() =>
+      normalizeChildRule({ name: 'child', match: matchAll, cardinality: { min: 5, max: 2 } }),
+    ).toThrow(RangeError)
+  })
+
+  it('includes the conflicting values in the error message', () => {
+    expect(() =>
+      normalizeChildRule({ name: 'child', match: matchAll, cardinality: { min: 5, max: 2 } }),
+    ).toThrow('min (5) cannot exceed max (2)')
+  })
+
+  it('accepts min equal to max', () => {
+    const n = normalizeChildRule({
+      name: 'child',
+      match: matchAll,
+      cardinality: { min: 3, max: 3 },
+    })
+    expect(n.cardinality).toEqual({ kind: 'bounded', min: 3, max: 3 })
+  })
+})

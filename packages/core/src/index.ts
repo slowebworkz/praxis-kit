@@ -1,7 +1,5 @@
-export * from './base'
 export * from './children'
 export * from './factory'
-export * from './options'
 export * from './resolver'
 export * from './styles'
 export type * from './types'

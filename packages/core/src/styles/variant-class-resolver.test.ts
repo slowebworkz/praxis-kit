@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { cva } from './cva'
 import { VariantClassResolver } from './variant-class-resolver'
@@ -113,5 +113,47 @@ describe('VariantClassResolver — caching', () => {
     const sm = r.resolve({ props: {}, variantKey: 'small' })
     const lg = r.resolve({ props: {}, variantKey: 'large' })
     expect(sm).not.toBe(lg)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// LRU eviction
+// ---------------------------------------------------------------------------
+
+describe('VariantClassResolver — LRU eviction', () => {
+  it('evicts the oldest entry when the cache exceeds 1000 entries', () => {
+    const fn = vi.fn((props: Record<string, unknown>) => String(props['k']))
+    const r = new VariantClassResolver(fn)
+
+    // prime k=0 (oldest), then push 1000 more unique entries to force eviction
+    r.resolve({ props: { k: 0 }, variantKey: undefined })
+    for (let i = 1; i <= 1000; i++) {
+      r.resolve({ props: { k: i }, variantKey: undefined })
+    }
+
+    // k=0 should be evicted — resolving it must recompute
+    const before = fn.mock.calls.length
+    r.resolve({ props: { k: 0 }, variantKey: undefined })
+    expect(fn.mock.calls.length).toBe(before + 1)
+  })
+
+  it('a cache hit repositions the entry so it survives subsequent eviction', () => {
+    const fn = vi.fn((props: Record<string, unknown>) => String(props['k']))
+    const r = new VariantClassResolver(fn)
+
+    // fill to exactly 1000: k=0 is oldest, k=999 is newest
+    for (let i = 0; i <= 999; i++) {
+      r.resolve({ props: { k: i }, variantKey: undefined })
+    }
+    // refresh k=0 → moves to most-recently-used; k=1 becomes oldest
+    r.resolve({ props: { k: 0 }, variantKey: undefined })
+    // add k=1000 → triggers eviction; k=1 (now oldest) is dropped
+    r.resolve({ props: { k: 1000 }, variantKey: undefined })
+
+    const before = fn.mock.calls.length
+    r.resolve({ props: { k: 0 }, variantKey: undefined }) // still cached — no new call
+    expect(fn.mock.calls.length).toBe(before)
+    r.resolve({ props: { k: 1 }, variantKey: undefined }) // evicted — recomputed
+    expect(fn.mock.calls.length).toBe(before + 1)
   })
 })
