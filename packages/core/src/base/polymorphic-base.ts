@@ -17,6 +17,8 @@ export abstract class StrictBase {
     }
   }
 
+  // Always caps at console.warn — never throws. AriaPolicyEngine routes 'warning' severity
+  // violations here so they surface even in strict='throw' mode without aborting a render.
   protected warn(message: string): void {
     if (this.strict) {
       console.warn(message)
