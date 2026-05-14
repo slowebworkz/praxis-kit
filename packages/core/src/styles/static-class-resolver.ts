@@ -15,6 +15,8 @@ export class StaticClassResolver {
   }
 
   resolve(tag: unknown, skipTagMap = false): string {
+    // When a preset (variantKey) is active it owns the visual treatment; tag-map overrides
+    // would conflict with preset intent, so they are bypassed.
     if (typeof tag !== 'string' || skipTagMap) return this.#baseClass
 
     const cached = this.#stringCache.get(tag)

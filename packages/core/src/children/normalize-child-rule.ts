@@ -20,6 +20,8 @@ function normalizeCardinality(
 
 export function normalizeChildRule(rule: ChildRuleInput): NormalizedChildRule {
   const position = rule.position ?? 'any'
+  // position='first'|'last' targets exactly one child by definition; callers who omit max
+  // get max=1 for free. An explicit max>1 is rejected by ChildrenEvaluator as contradictory.
   const impliesSingleton = position === 'first' || position === 'last'
 
   return {

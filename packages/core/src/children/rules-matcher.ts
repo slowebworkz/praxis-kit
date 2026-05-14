@@ -2,6 +2,8 @@ import type { ChildIndex, NormalizedChildRule, MatchMatrix, RuleIndex } from '..
 
 export class RuleMatcher {
   match(children: unknown[], rules: NormalizedChildRule[]): MatchMatrix {
+    // forward: child → rules it matched  (detects unexpected/ambiguous children)
+    // reverse: rule  → children it matched (counts matches per rule for cardinality)
     const forward = new Map<ChildIndex, Set<RuleIndex>>()
     const reverse = new Map<RuleIndex, Set<ChildIndex>>()
 
