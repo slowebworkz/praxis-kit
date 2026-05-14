@@ -35,4 +35,6 @@ export type ResolvedFactoryOptions<
   readonly displayName?: string
   /** Always present — `resolveFactoryOptions` fills in `false` if omitted. */
   readonly strict: StrictMode
+  /** Keys of the variant map. Always present; empty set when no variants defined. */
+  readonly variantKeys: ReadonlySet<string>
 }

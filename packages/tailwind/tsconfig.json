@@ -7,5 +7,5 @@
       "@polymorphic-ui/core": ["../core/src/index.ts"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "./vitest.config.ts", "./tsup.config.ts"]
 }
