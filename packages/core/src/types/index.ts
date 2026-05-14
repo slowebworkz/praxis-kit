@@ -13,6 +13,8 @@ export type {
 } from './aria-rule'
 export type {
   BiDirectionalMap,
+  Cardinality,
+  CardinalityInput,
   ChildIndex,
   ChildRuleInput,
   ChildRuleMatch,
