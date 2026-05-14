@@ -20,6 +20,7 @@ export function resolveFactoryOptions<
   return Object.freeze({
     defaultTag: options.defaultTag ?? 'div',
     strict: options.strict ?? false,
+    variantKeys: new Set(Object.keys(options.variants ?? {})) as ReadonlySet<string>,
     ...(options.baseClassName !== undefined && { baseClassName: options.baseClassName }),
     ...(options.defaultProps !== undefined && { defaultProps: options.defaultProps }),
     ...(options.tagMap !== undefined && { tagMap: options.tagMap }),

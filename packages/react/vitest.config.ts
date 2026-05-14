@@ -2,8 +2,9 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    name: 'tailwind',
-    include: ['src/**/*.test.ts'],
+    name: 'react',
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    environment: 'jsdom',
   },
   resolve: {
     alias: {

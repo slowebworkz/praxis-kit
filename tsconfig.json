@@ -1,4 +1,4 @@
 {
-  "files": [],
-  "references": [{ "path": "./packages/core" }, { "path": "./packages/tailwind" }]
+  "extends": "./tsconfig.base.json",
+  "files": ["vitest.workspace.ts"]
 }
