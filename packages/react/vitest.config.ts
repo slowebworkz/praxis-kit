@@ -5,6 +5,7 @@ export default defineConfig({
     name: 'react',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     environment: 'jsdom',
+    setupFiles: ['src/test-setup.ts'],
   },
   resolve: {
     alias: {
