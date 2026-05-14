@@ -10,6 +10,8 @@ export function createClassPipeline<TVariants extends VariantMap = VariantMap>(
 ): ClassPipelineFn {
   const baseClass = resolved.baseClassName ?? ''
 
+  // `as never` bridges the variance gap between the generic V and cva()'s internal overloads.
+  // resolveFactoryOptions has already validated the shape.
   const cvaFn = resolved.variants
     ? cva('', {
         variants: resolved.variants as never,

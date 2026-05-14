@@ -18,6 +18,8 @@ type Roles = typeof IMPLICIT_ROLES
 type Tag = ImplicitTag<Roles>
 type Role = ImplicitRole<Roles>
 
+// STRONG_ROLES: landmark roles whose semantics resist role="region" override — replacing them
+// would silently degrade landmark navigation for assistive technology users.
 const STRONG_ROLES = [
   'main',
   'navigation',
@@ -26,6 +28,8 @@ const STRONG_ROLES = [
   'banner',
 ] as const satisfies readonly Role[]
 
+// STANDALONE_ROLES: self-contained elements where role="region" is structurally incorrect
+// regardless of implicit-role strength (e.g. <article> is already its own AT landmark).
 const STANDALONE_ROLES = ['article'] as const satisfies readonly Role[]
 
 const implicitRoles = new Map<Tag, Role>(IMPLICIT_ROLES)

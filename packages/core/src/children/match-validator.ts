@@ -12,6 +12,7 @@ export class MatchValidator extends StrictBase {
   }
 
   validate(children: unknown[], matrix: MatchMatrix, ruleNames: readonly string[]): void {
+    // Batch all violations before reporting so the caller sees the full picture in one throw.
     const errors: string[] = []
 
     for (const [i, child] of children.entries()) {
