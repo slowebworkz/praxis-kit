@@ -1,5 +1,4 @@
-import type { ClassPipelineFn } from '../styles'
-import type { AnyRecord, ElementType, ResolveInput, ResolveOutput } from '../types'
+import type { AnyRecord, ClassPipelineFn, ElementType, ResolveInput, ResolveOutput } from '../types'
 import { mergeProps } from '../utils'
 import { resolveTag } from './resolve-tag'
 
