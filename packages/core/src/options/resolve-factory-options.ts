@@ -15,6 +15,8 @@ export function resolveFactoryOptions<
 >(
   options: FactoryOptions<TDefault, Props, V, TPreset> = {},
 ): Readonly<ResolvedFactoryOptions<TDefault, Props, V, TPreset>> {
+  // Conditional spreads rather than `key: value | undefined` satisfy exactOptionalPropertyTypes:
+  // { key: undefined } and {} are distinct shapes under that flag.
   return Object.freeze({
     defaultTag: options.defaultTag ?? 'div',
     strict: options.strict ?? false,

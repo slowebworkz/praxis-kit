@@ -18,11 +18,13 @@ export class VariantClassResolver {
     props: Record<string, unknown>
     variantKey: string | undefined
   }): string {
+    // '__none__' distinguishes "no variantKey" from an empty-string key in the cache.
     const normalizedKey = variantKey ?? '__none__'
     const cacheKey = this.#createCacheKey(props, normalizedKey)
 
     const cached = this.#cache.get(cacheKey)
     if (cached !== undefined) {
+      // Promote to MRU: delete then re-add moves the key to the tail of Set iteration order.
       this.#cacheOrder.delete(cacheKey)
       this.#cacheOrder.add(cacheKey)
       return cached

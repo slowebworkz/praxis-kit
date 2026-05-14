@@ -20,6 +20,8 @@ export class ChildrenEvaluator extends StrictBase {
 
     for (const rule of this.#rules) {
       const { name, position, cardinality } = rule
+      // A positional rule can satisfy at most one child by definition; allowing max>1
+      // creates a cardinality that is structurally impossible to ever satisfy.
       if (
         (position === 'first' || position === 'last') &&
         (cardinality.kind === 'unbounded' || cardinality.max > 1)
