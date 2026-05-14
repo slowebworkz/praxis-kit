@@ -40,14 +40,7 @@ export default [
     files: TS_FILES,
     languageOptions: {
       parserOptions: {
-        projectService: {
-          allowDefaultProject: [
-            '*.config.ts',
-            '*.workspace.ts',
-            'packages/*/tsup.config.ts',
-            'packages/*/vitest.config.ts',
-          ],
-        },
+        projectService: true,
       },
     },
     rules: {

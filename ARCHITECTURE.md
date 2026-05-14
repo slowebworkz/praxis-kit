@@ -2,7 +2,9 @@
 
 ## What it is
 
-`@polymorphic-ui/core` is a framework-agnostic TypeScript library that resolves **polymorphic component behaviour**: which HTML element or component to render (`as` prop), how to merge default and consumer props, and how to compose class strings from variants, presets, and layout state.
+`@polymorphic-ui/core` is a framework-agnostic TypeScript library that resolves **polymorphic
+component behaviour**: which HTML element or component to render (`as` prop), how to merge default
+and consumer props, and how to compose class strings from variants, presets, and layout state.
 
 It has no dependency on React, the DOM, or any specific CSS methodology.
 
@@ -10,7 +12,8 @@ It has no dependency on React, the DOM, or any specific CSS methodology.
 
 ## Standalone or adapter-required?
 
-**Core is fully standalone.** Every export is usable in any JavaScript/TypeScript environment without a framework.
+**Core is fully standalone.** Every export is usable in any JavaScript/TypeScript environment
+without a framework.
 
 A **framework adapter layer is optional but beneficial** for ergonomics:
 
@@ -23,7 +26,9 @@ A **framework adapter layer is optional but beneficial** for ergonomics:
 | ARIA validation     | `AriaPolicyEngine.validate(tag, props)` | Calls before rendering                                            |
 | Rendering           | —                                       | Creates and renders the resolved element                          |
 
-The three `PolymorphicRuntime` methods (`resolveTag`, `resolveProps`, `resolveClasses`) are designed to be called inside a component render function. `createResolverPipeline` bundles them into one call for adapter convenience. `options` exposes the frozen resolved configuration.
+The three `PolymorphicRuntime` methods (`resolveTag`, `resolveProps`, `resolveClasses`) are designed
+to be called inside a component render function. `createResolverPipeline` bundles them into one call
+for adapter convenience. `options` exposes the frozen resolved configuration.
 
 ---
 
@@ -75,7 +80,10 @@ flowchart TD
     pipeline --> runtime
 ```
 
-`createPolymorphic(options)` freezes the resolved options, builds the class pipeline once, and returns a lightweight runtime object. The pipeline instances (`StaticClassResolver`, `VariantClassResolver`) are created once per factory call and cached for the lifetime of the runtime.
+`createPolymorphic(options)` freezes the resolved options, builds the class pipeline once, and
+returns a lightweight runtime object. The pipeline instances (`StaticClassResolver`,
+`VariantClassResolver`) are created once per factory call and cached for the lifetime of the
+runtime.
 
 ---
 
@@ -105,13 +113,15 @@ Runs the full class pipeline (see below).
 
 ### `options`
 
-The frozen `ResolvedFactoryOptions`. Useful for adapters that need to inspect the factory configuration.
+The frozen `ResolvedFactoryOptions`. Useful for adapters that need to inspect the factory
+configuration.
 
 ---
 
 ## Class pipeline
 
-`resolveClasses` resolves the full class string by running `StaticClassResolver` and `VariantClassResolver` in parallel, then joining with `cn()`.
+`resolveClasses` resolves the full class string by running `StaticClassResolver` and
+`VariantClassResolver` in parallel, then joining with `cn()`.
 
 ```mermaid
 flowchart LR
@@ -142,13 +152,16 @@ CVA fn
     cn1 --> out
 ```
 
-CSS-methodology-specific post-processing (such as Tailwind layout-aware class filtering) is handled by `@polymorphic-ui/tailwind`, which wraps `createClassPipeline` and applies it after the base pipeline runs.
+CSS-methodology-specific post-processing (such as Tailwind layout-aware class filtering) is handled
+by `@polymorphic-ui/tailwind`, which wraps `createClassPipeline` and applies it after the base
+pipeline runs.
 
 ---
 
 ## Resolver pipeline
 
-`createResolverPipeline` is a convenience wrapper that combines all four runtime steps into a single function call. It is intended for framework adapters that want to resolve everything in one pass.
+`createResolverPipeline` is a convenience wrapper that combines all four runtime steps into a single
+function call. It is intended for framework adapters that want to resolve everything in one pass.
 
 ```mermaid
 flowchart LR
@@ -174,7 +187,8 @@ children"]
     input --> tag & props & cls --> output
 ```
 
-Children pass through `createResolverPipeline` unchanged. Flattening framework children into a plain array is the adapter's responsibility before calling `ChildrenEvaluator.evaluate`.
+Children pass through `createResolverPipeline` unchanged. Flattening framework children into a plain
+array is the adapter's responsibility before calling `ChildrenEvaluator.evaluate`.
 
 ---
 
@@ -227,13 +241,15 @@ multiple rule matches"]
     mv -- fails --> err
 ```
 
-Both `RuleValidator` and `MatchValidator` extend `StrictBase` and respect the `StrictMode` setting (`false` / `'warn'` / `'throw'`).
+Both `RuleValidator` and `MatchValidator` extend `StrictBase` and respect the `StrictMode` setting
+(`false` / `'warn'` / `'throw'`).
 
 ---
 
 ## ARIA validator
 
-`AriaPolicyEngine` is a standalone class — it is not embedded in `PolymorphicRuntime`. Adapters import and instantiate it directly.
+`AriaPolicyEngine` is a standalone class — it is not embedded in `PolymorphicRuntime`. Adapters
+import and instantiate it directly.
 
 ```mermaid
 flowchart LR
@@ -268,13 +284,15 @@ from props"]
     valid -- no --> strip --> out
 ```
 
-`ariaRolePolicy` maps six landmark elements (`article`, `aside`, `footer`, `header`, `main`, `nav`) to their implicit ARIA roles and classifies which have strong implicit roles.
+`ariaRolePolicy` maps six landmark elements (`article`, `aside`, `footer`, `header`, `main`, `nav`)
+to their implicit ARIA roles and classifies which have strong implicit roles.
 
 ---
 
 ## Strict mode
 
-All three validation classes (`AriaPolicyEngine`, `RuleValidator`, `MatchValidator`) extend `StrictBase`, which controls violation severity:
+All three validation classes (`AriaPolicyEngine`, `RuleValidator`, `MatchValidator`) extend
+`StrictBase`, which controls violation severity:
 
 ```mermaid
 flowchart LR
@@ -286,7 +304,8 @@ flowchart LR
 → throw Error"]
 ```
 
-`ChildrenEvaluator` passes its `strict` setting down to both `RuleValidator` and `MatchValidator` at construction time.
+`ChildrenEvaluator` passes its `strict` setting down to both `RuleValidator` and `MatchValidator` at
+construction time.
 
 ---
 
@@ -309,5 +328,6 @@ The adapter provides:
 
 - Framework-specific child flattening before `evaluate`
 - Framework-specific element rendering from the resolved `{ tag, props, className, children }`
-- Narrows `ElementType` to the framework's element union (`React.ElementType`, `SvelteComponent`, etc.)
+- Narrows `ElementType` to the framework's element union (`React.ElementType`, `SvelteComponent`,
+  etc.)
 - Event handler merging and any other framework-specific prop normalisation
