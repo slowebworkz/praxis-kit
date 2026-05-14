@@ -1,8 +1,10 @@
 # polymorphic-ui
 
-A framework-agnostic TypeScript library for polymorphic component behaviour — tag resolution, prop merging, variant-based class composition, child structural validation, and ARIA role enforcement.
+A framework-agnostic TypeScript library for polymorphic component behaviour — tag resolution, prop
+merging, variant-based class composition, child structural validation, and ARIA role enforcement.
 
-The core has no dependency on any rendering framework, the DOM, or any CSS methodology. Framework adapters consume the runtime API and handle rendering.
+The core has no dependency on any rendering framework, the DOM, or any CSS methodology. Framework
+adapters consume the runtime API and handle rendering.
 
 ---
 
@@ -87,7 +89,8 @@ A thin wrapper around `class-variance-authority` that normalises output through 
 
 ### `ChildrenEvaluator`
 
-Enforces structural child rules against a flat `unknown[]` children array. Flattening framework children into a plain array before calling `evaluate` is the adapter's responsibility.
+Enforces structural child rules against a flat `unknown[]` children array. Flattening framework
+children into a plain array before calling `evaluate` is the adapter's responsibility.
 
 ```ts
 import { ChildrenEvaluator } from '@polymorphic-ui/core'
@@ -106,7 +109,8 @@ evaluator.evaluate(flatChildren)
 
 ### `AriaValidator`
 
-Validates ARIA role assignments against implicit landmark roles. Returns a new props object with the offending `role` stripped when a violation occurs.
+Validates ARIA role assignments against implicit landmark roles. Returns a new props object with the
+offending `role` stripped when a violation occurs.
 
 ```ts
 import { AriaValidator } from '@polymorphic-ui/core'
@@ -125,9 +129,11 @@ Covered rules:
 
 ## Class pipeline
 
-`resolveClasses` joins `baseClassName`, tagMap additions, CVA variant output, and any consumer `className` into a single class string via `clsx`.
+`resolveClasses` joins `baseClassName`, tagMap additions, CVA variant output, and any consumer
+`className` into a single class string via `clsx`.
 
-For Tailwind-specific layout-aware filtering (dropping `flex-*` utilities when the active mode is `grid`, and vice versa), use `@polymorphic-ui/tailwind`:
+For Tailwind-specific layout-aware filtering (dropping `flex-*` utilities when the active mode is
+`grid`, and vice versa), use `@polymorphic-ui/tailwind`:
 
 ```ts
 import { createTailwindPipeline } from '@polymorphic-ui/tailwind'
@@ -154,7 +160,8 @@ adapter render(as, props, className, variantKey, children):
   return framework.render(tag, { ...safe, className: cls }, children)
 ```
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for a complete walkthrough of the internal pipeline, data flow diagrams, and type system design.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for a complete walkthrough of the internal pipeline, data
+flow diagrams, and type system design.
 
 ---
 

@@ -1,0 +1,22 @@
+printWidth: 100
+tabWidth: 2
+useTabs: false
+singleQuote: true
+semi: false
+trailingComma: all
+bracketSpacing: true
+arrowParens: always
+endOfLine: lf
+
+# Markdown: re-flow prose to printWidth
+proseWrap: always
+
+overrides:
+  # YAML files use double quotes (YAML strings don't need JS-style single quotes)
+  - files: "*.{yml,yaml}"
+    options:
+      singleQuote: false
+  # JSON: narrower width avoids runoff from deep nesting
+  - files: "*.json"
+    options:
+      printWidth: 80
