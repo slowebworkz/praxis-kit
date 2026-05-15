@@ -2,6 +2,7 @@ import { createElement } from 'react'
 import type { ComponentType, ReactElement, Ref } from 'react'
 import type { AnyRecord, ClassName, ElementType as CoreElementType } from '@polymorphic-ui/core'
 import { composeSlot } from './compose-slot'
+import { SlotValidator } from './slot/slot-validator'
 import type { AnyRuntime } from './types'
 
 function applyFilter(
@@ -45,25 +46,30 @@ export function render({
 }: RenderInput): ReactElement {
   const { as, asChild, children, className, variantKey, ...rest } = props as KnownProps
 
-  if (as !== undefined && asChild) {
-    throw new Error(
-      `${runtime.options.displayName ?? 'PolymorphicComponent'}: "as" and "asChild" are mutually exclusive`,
-    )
-  }
+  const name = runtime.options.displayName ?? 'PolymorphicComponent'
+  const validator = new SlotValidator(name, runtime.options.strict)
 
   const tag = runtime.resolveTag(as)
   const mergedProps = runtime.resolveProps(rest)
   const resolvedClass = runtime.resolveClasses(tag, mergedProps, className, variantKey)
   const domProps = applyFilter(mergedProps, filterProps, runtime.options.variantKeys)
 
-  if (asChild) {
+  if (as !== undefined && asChild) {
+    validator.assertExclusive()
+    // Non-throw modes: warned and fell through — render normally as a fallback.
+  } else if (asChild) {
     const kids = normalizeChildren(children)
-    if (kids.length !== 1) {
-      throw new Error(
-        `${runtime.options.displayName ?? 'PolymorphicComponent'}: asChild requires exactly one React element child, got ${kids.length}`,
-      )
+
+    if (Array.isArray(children) && children.length > kids.length) {
+      validator.warnDiscardedChildren(children.length - kids.length)
     }
-    return composeSlot(slotComponent, kids[0], { ...domProps, className: resolvedClass }, ref)
+
+    if (kids.length !== 1) {
+      validator.assertSingleChild(kids.length)
+      // Non-throw modes: warned and fell through — render normally as a fallback.
+    } else {
+      return composeSlot(slotComponent, kids[0]!, { ...domProps, className: resolvedClass }, ref)
+    }
   }
 
   const elementProps: AnyRecord = { ...domProps, className: resolvedClass, ref }

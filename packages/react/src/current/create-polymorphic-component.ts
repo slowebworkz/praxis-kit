@@ -1,7 +1,7 @@
-import { Slot } from '@radix-ui/react-slot'
 import { createPolymorphic } from '@polymorphic-ui/core'
 import type { AnyRecord, ElementType, VariantMap, VariantProps } from '@polymorphic-ui/core'
 import type { ReactElement, Ref } from 'react'
+import { Slot } from './slot/Slot'
 import { normalizeChildren } from './normalize-children'
 import { render } from '../shared'
 import type { AnyRuntime, PolymorphicComponent, ReactFactoryOptions } from '../shared'
@@ -13,7 +13,10 @@ export function createPolymorphicComponent<
   TPreset extends Record<string, Partial<VariantProps<Variants>>> = Record<never, never>,
 >(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset>) {
   const { slotComponent = Slot, filterProps } = options
-  const runtime = createPolymorphic(options) as unknown as AnyRuntime
+  const runtime = createPolymorphic({
+    ...options,
+    strict: options.strict ?? 'throw',
+  }) as unknown as AnyRuntime
 
   function Component({
     ref,

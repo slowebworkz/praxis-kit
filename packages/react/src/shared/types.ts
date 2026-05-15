@@ -1,7 +1,8 @@
-import type { AnyRecord, ClassName, ElementType } from '@polymorphic-ui/core'
+import type { AnyRecord, ClassName, ElementType, StrictMode } from '@polymorphic-ui/core'
 
 export interface AnyRuntimeOptions {
   displayName?: string
+  strict: StrictMode
   variantKeys: ReadonlySet<string>
 }
 

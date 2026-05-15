@@ -6,7 +6,7 @@ import type { AnyRuntime } from './types'
 
 function makeRuntime(overrides?: Partial<AnyRuntime>): AnyRuntime {
   return {
-    options: { variantKeys: new Set(), displayName: 'Test' },
+    options: { variantKeys: new Set(), displayName: 'Test', strict: 'throw' },
     resolveTag: (as) => as ?? 'div',
     resolveProps: (props) => props,
     resolveClasses: (_tag, _props, className) => className ?? '',
@@ -196,6 +196,39 @@ describe('render', () => {
       undefined,
       'primary',
     )
+  })
+
+  it('warns when asChild receives a mixed array containing non-element children', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const child = createElement('button')
+    render({
+      runtime: makeRuntime({
+        options: { variantKeys: new Set(), displayName: 'Test', strict: 'warn' },
+      }),
+      props: { asChild: true, children: [child, 'click me'] },
+      ref: null,
+      slotComponent,
+      // normalizeChildren strips the text node — child count shrinks from 2 to 1
+      normalizeChildren: () => [child],
+    })
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('discarded 1 non-element child'))
+    warnSpy.mockRestore()
+  })
+
+  it('does not warn about discarded children when strict is false', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const child = createElement('button')
+    render({
+      runtime: makeRuntime({
+        options: { variantKeys: new Set(), displayName: 'Test', strict: false },
+      }),
+      props: { asChild: true, children: [child, 'click me'] },
+      ref: null,
+      slotComponent,
+      normalizeChildren: () => [child],
+    })
+    expect(warnSpy).not.toHaveBeenCalled()
+    warnSpy.mockRestore()
   })
 
   it('control props (as, asChild, className, variantKey, children) are not forwarded to the DOM', () => {
