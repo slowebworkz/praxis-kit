@@ -126,6 +126,35 @@ describe('createPolymorphicComponent (current / React 19)', () => {
     expect(() => mount(createElement(box(Box), { asChild: true }, fragment))).not.toThrow()
   })
 
+  it('nested asChild: both components compose their classes onto the inner element', () => {
+    const BoxA = createPolymorphicComponent({ baseClassName: 'class-a' })
+    const BoxB = createPolymorphicComponent({ baseClassName: 'class-b' })
+    mount(
+      createElement(
+        box(BoxA),
+        { asChild: true },
+        createElement(box(BoxB), { asChild: true }, createElement('button')),
+      ),
+    )
+    const el = container.querySelector('button')!
+    expect(el.className).toContain('class-a')
+    expect(el.className).toContain('class-b')
+  })
+
+  it('nested asChild: ref from outer component reaches the innermost element', () => {
+    const BoxA = createPolymorphicComponent({})
+    const BoxB = createPolymorphicComponent({})
+    const ref = createRef<HTMLButtonElement>()
+    mount(
+      createElement(
+        box(BoxA),
+        { asChild: true, ref },
+        createElement(box(BoxB), { asChild: true }, createElement('button')),
+      ),
+    )
+    expect(ref.current).toBe(container.querySelector('button'))
+  })
+
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
     const Box = createPolymorphicComponent({
       filterProps: (key) => key === 'size',

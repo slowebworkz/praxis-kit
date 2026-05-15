@@ -1,3 +1,4 @@
+export * from './base'
 export * from './children'
 export * from './factory'
 export * from './resolver'

@@ -1,0 +1,19 @@
+import { isValidElement } from 'react'
+import type { ReactElement, Ref } from 'react'
+import type { AnyRecord } from '@polymorphic-ui/core'
+import { SLOT_NAME } from '../../shared/slot/constants'
+import { invariant } from '../../shared/slot/invariant'
+import { SlotClone } from './SlotClone'
+
+type SlotProps = AnyRecord & {
+  children?: unknown
+  ref?: Ref<unknown> | null
+}
+
+// React 19: ref is received as a plain prop on function components.
+export function Slot({ ref = null, children, ...slotProps }: SlotProps): ReactElement {
+  invariant(isValidElement(children), 'Slot: child must be a valid React element')
+  return SlotClone({ child: children, slotProps, ref })
+}
+
+Slot.displayName = SLOT_NAME

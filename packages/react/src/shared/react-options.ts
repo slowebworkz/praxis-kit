@@ -17,7 +17,7 @@ export type ReactFactoryOptions<
   Variants extends Readonly<VariantMap>,
   TPreset extends Record<string, Partial<VariantProps<Variants>>> = Record<never, never>,
 > = FactoryOptions<TDefault, Props, Variants, TPreset> & {
-  /** Component used to render the asChild slot. Defaults to @radix-ui/react-slot's Slot. */
+  /** Component used to render the asChild slot. Defaults to the built-in Slot. */
   slotComponent?: ComponentType<AnyRecord>
   /**
    * Return true for any prop key that should be consumed but not forwarded to the DOM.
