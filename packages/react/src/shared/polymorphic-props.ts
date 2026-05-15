@@ -1,4 +1,4 @@
-import type { Merge } from 'type-fest'
+import type { Merge, Simplify } from 'type-fest'
 import type { JSX, ReactElement, Ref } from 'react'
 import type {
   AnyRecord,
@@ -29,6 +29,9 @@ type IntrinsicJSXProps<T extends ElementType> = T extends IntrinsicTag
  * Merge produces a flat mapped type (Source wins on key conflicts), so the IDE
  * shows a clean resolved object rather than a nested Omit/intersection chain.
  */
+/** Flattens two prop shapes into a single resolved type for clean IntelliSense display. */
+export type MergedProps<T, U> = Simplify<T & U>
+
 export type PolymorphicProps<
   TDefault extends ElementType,
   Props extends AnyRecord,

@@ -26,6 +26,39 @@ describe('chainHandlers', () => {
     expect(() => composed()).toThrow('child error')
     expect(slot).not.toHaveBeenCalled()
   })
+
+  it('suppresses slot handler when event.defaultPrevented is true after child fires', () => {
+    const slot = vi.fn()
+    const event = {
+      defaultPrevented: false,
+      preventDefault() {
+        this.defaultPrevented = true
+      },
+    }
+    const child = (...args: unknown[]) => (args[0] as typeof event).preventDefault()
+    chainHandlers(child, slot)(event)
+    expect(slot).not.toHaveBeenCalled()
+  })
+
+  it('fires slot handler when event.defaultPrevented remains false', () => {
+    const slot = vi.fn()
+    const event = { defaultPrevented: false }
+    chainHandlers(() => {}, slot)(event)
+    expect(slot).toHaveBeenCalledWith(event)
+  })
+
+  it('fires slot handler when first argument is not an event object', () => {
+    const slot = vi.fn()
+    chainHandlers(() => {}, slot)('not-an-event')
+    expect(slot).toHaveBeenCalledWith('not-an-event')
+  })
+
+  it('fires slot handler when object has defaultPrevented undefined', () => {
+    const slot = vi.fn()
+    const event = { defaultPrevented: undefined }
+    chainHandlers(() => {}, slot)(event)
+    expect(slot).toHaveBeenCalledWith(event)
+  })
 })
 
 describe('mergeClassNames', () => {
@@ -62,4 +95,17 @@ describe('mergeStyles', () => {
 
   it('handles empty slot object', () =>
     expect(mergeStyles({}, { color: 'blue' })).toEqual({ color: 'blue' }))
+
+  it('returns child when slot is not a plain object', () => {
+    const child = { color: 'blue' }
+    expect(mergeStyles(undefined, child)).toBe(child)
+  })
+
+  it('returns child when child is not a plain object', () =>
+    expect(mergeStyles({ color: 'red' }, 'invalid')).toBe('invalid'))
+
+  it('returns child when both slot and child are non-plain objects', () => {
+    const child = new Date()
+    expect(mergeStyles(new Map(), child)).toBe(child)
+  })
 })

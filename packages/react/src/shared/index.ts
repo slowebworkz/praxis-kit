@@ -6,5 +6,10 @@ export type {
   AnyPropsResolver,
   AnyClassResolver,
 } from './types'
-export type { PolymorphicProps, PolymorphicComponent, ElementRef } from './polymorphic-props'
+export type {
+  MergedProps,
+  PolymorphicProps,
+  PolymorphicComponent,
+  ElementRef,
+} from './polymorphic-props'
 export { mergeRefs } from './merge-refs'

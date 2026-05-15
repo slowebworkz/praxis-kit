@@ -1,3 +1,4 @@
+import { assertNever } from '@polymorphic-ui/core'
 import type { ClassifiedToken } from './types/classified-token'
 import type { DependencyRules } from './dependency-rules'
 import type { LayoutState } from './layout-state'
@@ -29,10 +30,8 @@ export class DependencyEvaluator {
         return state.mode !== 'none'
       }
 
-      default: {
-        const _exhaustive: never = token
-        return _exhaustive
-      }
+      default:
+        return assertNever(token)
     }
   }
 }
