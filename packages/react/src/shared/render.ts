@@ -1,7 +1,7 @@
 import { createElement } from 'react'
+import { jsx } from 'react/jsx-runtime'
 import type { ComponentType, ReactElement, Ref } from 'react'
 import type { AnyRecord, ClassName, ElementType as CoreElementType } from '@polymorphic-ui/core'
-import { composeSlot } from './compose-slot'
 import { SlotValidator } from './slot/slot-validator'
 import type { AnyRuntime } from './types'
 
@@ -68,7 +68,12 @@ export function render({
       validator.assertSingleChild(kids.length)
       // Non-throw modes: warned and fell through — render normally as a fallback.
     } else {
-      return composeSlot(slotComponent, kids[0]!, { ...domProps, className: resolvedClass }, ref)
+      return jsx(slotComponent, {
+        ...domProps,
+        className: resolvedClass,
+        ref,
+        children: kids[0]!,
+      }) as ReactElement
     }
   }
 

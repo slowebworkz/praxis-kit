@@ -4,7 +4,7 @@ import { forwardRef } from 'react'
 import type { ReactElement } from 'react'
 import { Slot } from './slot/Slot'
 import { normalizeChildren } from './normalize-children'
-import { render } from '../shared'
+import { render } from '../shared/render'
 import type { AnyRuntime, PolymorphicComponent, ReactFactoryOptions } from '../shared'
 
 export function createPolymorphicComponent<

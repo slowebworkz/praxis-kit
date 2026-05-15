@@ -8,5 +8,3 @@ export type {
 } from './types'
 export type { PolymorphicProps, PolymorphicComponent, ElementRef } from './polymorphic-props'
 export { mergeRefs } from './merge-refs'
-export { render } from './render'
-export type { RenderInput } from './render'
