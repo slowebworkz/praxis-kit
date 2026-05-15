@@ -24,7 +24,8 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@polymorphic-ui/core": "workspace:*"
+    "@polymorphic-ui/core": "workspace:*",
+    "clsx": "catalog:"
   },
   "peerDependencies": {
     "react": ">=18"

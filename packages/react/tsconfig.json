@@ -2,7 +2,15 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "@/shared": ["./src/shared/index.ts"],
+      "@/shared/*": ["./src/shared/*"],
+      "@/current": ["./src/current/index.ts"],
+      "@/current/*": ["./src/current/*"],
+      "@/legacy": ["./src/legacy/index.ts"],
+      "@/legacy/*": ["./src/legacy/*"]
+    }
   },
   "include": ["src", "./vitest.config.ts", "./tsup.config.ts"]
 }

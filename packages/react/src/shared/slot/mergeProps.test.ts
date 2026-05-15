@@ -47,6 +47,18 @@ describe('mergeProps', () => {
     expect(result['onClick']).toBe(slotClick)
   })
 
+  it('child wins when event key is present but child value is not a function', () => {
+    const slotClick = vi.fn()
+    const result = mergeProps({ onClick: slotClick }, { onClick: null })
+    expect(result['onClick']).toBeNull()
+  })
+
+  it('child wins when event key is present but slot value is not a function', () => {
+    const childClick = vi.fn()
+    const result = mergeProps({ onClick: null }, { onClick: childClick })
+    expect(result['onClick']).toBe(childClick)
+  })
+
   it('merges style: child wins on key conflict', () => {
     const result = mergeProps(
       { style: { color: 'red', margin: '0' } },
@@ -59,6 +71,11 @@ describe('mergeProps', () => {
     const childStyle = { color: 'blue' }
     const result = mergeProps({}, { style: childStyle })
     expect(result['style']).toBe(childStyle)
+  })
+
+  it('does not apply style merge when child style is not a plain object', () => {
+    const result = mergeProps({ style: { color: 'red' } }, { style: 'invalid' as never })
+    expect(result['style']).toBe('invalid')
   })
 
   it('does not mutate either input', () => {

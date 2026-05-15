@@ -1,3 +1,10 @@
+/**
+ * Validation helper for Slot components.
+ *
+ * Wraps `StrictBase` to produce component-name-prefixed error and warning messages
+ * for the three slot invariants: mutual exclusivity of `as`/`asChild`, single-child
+ * requirement, and non-element child discarding.
+ */
 import { StrictBase } from '@polymorphic-ui/core'
 import type { StrictMode } from '@polymorphic-ui/core'
 
