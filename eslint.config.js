@@ -41,7 +41,7 @@ export default [
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['*.ts', 'packages/*/tsup.config.ts'],
+          allowDefaultProject: ['*.ts'],
           defaultProject: './tsconfig.base.json',
         },
       },
