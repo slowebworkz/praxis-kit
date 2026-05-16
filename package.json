@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm -r --parallel dev",
-    "build": "pnpm -r build",
+    "build": "pnpm typecheck && pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r --if-present test",
     "test:ci": "vitest run",
@@ -22,12 +22,14 @@
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
+    "@vitest/ui": "catalog:",
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
-    "typescript-eslint": "catalog:",
     "husky": "catalog:",
+    "jsdom": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:",
+    "typescript-eslint": "catalog:",
     "vitest": "catalog:"
   },
   "packageManager": "pnpm@11.0.4",

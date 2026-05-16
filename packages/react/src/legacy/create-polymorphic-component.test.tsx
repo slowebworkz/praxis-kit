@@ -114,7 +114,7 @@ describe('createPolymorphicComponent (legacy / React 18)', () => {
 
   it('applies filterProps', () => {
     const Box = createPolymorphicComponent({
-      filterProps: (key) => key === 'size',
+      filterProps: (key: string) => key === 'size',
     })
     mount(createElement(box(Box), { size: 'lg', 'data-keep': 'yes' } as never))
     const el = container.querySelector('div')!

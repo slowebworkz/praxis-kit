@@ -1,7 +1,11 @@
-import { defineWorkspace } from 'vitest/config'
+import { defineConfig } from 'vitest/config'
 
-export default defineWorkspace([
-  { configFile: './packages/core/vitest.config.ts' },
-  { configFile: './packages/tailwind/vitest.config.ts' },
-  { configFile: './packages/react/vitest.config.ts' },
-])
+export default defineConfig({
+  test: {
+    projects: [
+      './packages/core/vitest.config.ts',
+      './packages/tailwind/vitest.config.ts',
+      './packages/react/vitest.config.ts',
+    ],
+  },
+})
