@@ -1,14 +1,8 @@
-/**
- * Public Slot component for React 18.
- * Wraps in `forwardRef` since ref is not available as a plain prop in React 18.
- * Forwards the extracted ref to the child via `cloneSlotChild`, which composes it
- * with any existing ref already on the child.
- */
-import { forwardRef, isValidElement } from 'react'
+import { forwardRef } from 'react'
 import type { AnyRecord } from '@polymorphic-ui/core'
-import type { ReactElement, Ref } from 'react'
+import type { ReactElement, ReactNode, Ref } from 'react'
 import type { Merge } from 'type-fest'
-import { SLOT_NAME, invariant } from '@/shared'
+import { SLOT_NAME, applySlot } from '@/shared'
 import { cloneSlotChild } from './cloneSlotChild'
 
 type SlotProps = Merge<
@@ -23,8 +17,7 @@ export const Slot = forwardRef(function Slot(
   { children, ...slotProps }: SlotProps,
   ref: Ref<unknown>,
 ): ReactElement {
-  invariant(isValidElement(children), 'Slot: child must be a valid React element')
-  return cloneSlotChild({ child: children, slotProps, ref })
+  return applySlot(children as ReactNode, slotProps, ref, cloneSlotChild)
 })
 
 Slot.displayName = SLOT_NAME

@@ -140,7 +140,7 @@ describe('MatchValidator — readonly inputs', () => {
 })
 
 // ---------------------------------------------------------------------------
-// StrictMode behaviour
+// StrictMode behavior
 // ---------------------------------------------------------------------------
 
 describe('MatchValidator — StrictMode', () => {

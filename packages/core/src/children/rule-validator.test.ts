@@ -171,7 +171,7 @@ describe('RuleValidator.validate() — no children', () => {
 })
 
 // ---------------------------------------------------------------------------
-// StrictMode behaviour
+// StrictMode behavior
 // ---------------------------------------------------------------------------
 
 describe('RuleValidator.validate() — StrictMode', () => {

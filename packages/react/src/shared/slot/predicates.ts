@@ -1,6 +1,16 @@
 /** Type-narrowing predicates used by the prop classifier and merge policies. */
 import { EVENT_HANDLER_RE } from './constants'
 
+import { isValidElement } from 'react'
+import type { ReactElement } from 'react'
+
+import { Slottable } from './Slottable'
+import type { SlottableProps } from './Slottable'
+
+export function isSlottableElement(value: unknown): value is ReactElement<SlottableProps> {
+  return isValidElement(value) && value.type === Slottable
+}
+
 export function isReactEventKey(key: string): boolean {
   return EVENT_HANDLER_RE.test(key)
 }
