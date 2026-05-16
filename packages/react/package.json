@@ -1,13 +1,43 @@
 {
   "name": "@polymorphic-ui/react",
   "version": "0.0.1",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./legacy": {
+      "types": "./dist/legacy/index.d.ts",
+      "import": "./dist/legacy/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsup src/index.ts --dts",
-    "dev": "tsup src/index.ts --watch"
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "@polymorphic-ui/core": "workspace:*",
+    "clsx": "catalog:"
+  },
+  "peerDependencies": {
+    "react": ">=18"
   },
   "devDependencies": {
-    "type-fest": "catalog:"
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "jsdom": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tsup": "catalog:",
+    "type-fest": "catalog:",
+    "vitest": "catalog:"
   }
 }

@@ -1,3 +1,4 @@
+import { assertNever } from '@polymorphic-ui/core'
 import type { ClassifiedToken } from './types/classified-token'
 
 export class ClassBuilder {
@@ -19,10 +20,8 @@ export class ClassBuilder {
           break
         }
 
-        default: {
-          const _exhaustive: never = token
-          return _exhaustive
-        }
+        default:
+          return assertNever(token)
       }
     }
 

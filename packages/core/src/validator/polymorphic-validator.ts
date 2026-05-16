@@ -16,8 +16,6 @@ import type {
 } from '../types'
 import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
 
-export type { IntrinsicProps }
-
 export function isInvalid(result: AriaResult): result is InvalidResult {
   return result.valid === false
 }

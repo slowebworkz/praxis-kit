@@ -7,7 +7,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@polymorphic-ui/core': `${import.meta.dirname}/../core/src/index.ts`,
+      '@polymorphic-ui/core': new URL('../core/src/index.ts', import.meta.url).pathname,
     },
   },
 })
