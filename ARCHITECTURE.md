@@ -3,7 +3,7 @@
 ## What it is
 
 `@polymorphic-ui/core` is a framework-agnostic TypeScript library that resolves **polymorphic
-component behaviour**: which HTML element or component to render (`as` prop), how to merge default
+component behavior**: which HTML element or component to render (`as` prop), how to merge default
 and consumer props, and how to compose class strings from variants, presets, and layout state.
 
 It has no dependency on React, the DOM, or any specific CSS methodology.
@@ -37,7 +37,7 @@ for adapter convenience. `options` exposes the frozen resolved configuration.
 ```
 src/
 ├── factory/          createPolymorphic — the main entrypoint
-├── options/          resolveFactoryOptions — normalises factory config
+├── options/          resolveFactoryOptions — normalizes factory config
 ├── resolver/         resolveTag, resolveProps, createResolverPipeline
 ├── styles/           Class pipeline: CVA, static/variant resolvers
 ├── children/         ChildrenEvaluator — child structural constraint system

@@ -1,7 +1,18 @@
 export { SLOT_NAME } from './constants'
 export { invariant, invariantDefined } from './invariant'
+export { applySlot } from './applySlot'
+export { Slottable } from './Slottable'
+export type { SlottableProps } from './Slottable'
+export { extractSlottable } from './extractSlottable'
+export type { SlottableExtraction } from './extractSlottable'
 export { mergeProps } from './mergeProps'
 export { PROP_MERGE_POLICIES, chainHandlers, mergeClassNames, mergeStyles } from './policies'
 export type { PropMergePolicy, MergePolicyHandler } from './policies'
-export { isReactEventKey, isFunction, isPlainObject } from './predicates'
-export type { EventHandler, SlotProps, SlotValidationResult, SlotChildPolicy } from './types'
+export { isReactEventKey, isFunction, isPlainObject, isSlottableElement } from './predicates'
+export type {
+  EventHandler,
+  SlotProps,
+  SlotValidationResult,
+  SlotChildPolicy,
+  CloneSlotChildFn,
+} from './types'

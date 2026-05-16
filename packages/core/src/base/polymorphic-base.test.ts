@@ -79,7 +79,7 @@ describe('StrictBase.violate()', () => {
     expect(() => s.callViolate('bad')).toThrow(Error)
   })
 
-  it('true and "throw" produce identical behaviour', () => {
+  it('true and "throw" produce identical behavior', () => {
     const throwStr = new TestStrict('throw')
     const throwBool = new TestStrict(true)
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})

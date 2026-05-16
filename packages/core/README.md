@@ -19,7 +19,7 @@ const runtime = createPolymorphic({
 })
 ```
 
-`createPolymorphic` normalises the options, builds the class pipeline, and returns a
+`createPolymorphic` normalizes the options, builds the class pipeline, and returns a
 `PolymorphicRuntime` object with three resolver methods and an `options` field.
 
 ---
@@ -29,12 +29,12 @@ const runtime = createPolymorphic({
 ```
 src/
   factory/       createPolymorphic — the public entry point
-  options/       resolveFactoryOptions — normalises FactoryOptions → ResolvedFactoryOptions
+  options/       resolveFactoryOptions — normalizes FactoryOptions → ResolvedFactoryOptions
   resolver/      resolveTag, createResolverPipeline
   styles/        class pipeline: StaticClassResolver, VariantClassResolver, createClassPipeline
   children/      structural validation: ChildrenEvaluator and its four collaborators
   validator/     ARIA policy: AriaPolicyEngine, aria-role-policy
-  base/          StrictBase — shared strict-mode behaviour
+  base/          StrictBase — shared strict-mode behavior
   utils/         cn (clsx wrapper), mergeProps
   types/         all shared TypeScript types
 ```
@@ -55,7 +55,7 @@ The returned `PolymorphicRuntime` exposes:
 | `resolveTag()` / `resolveTag(as)`                     | Returns `as` if provided, otherwise `defaultTag`. Overloaded so the no-argument call returns exactly `TDefault`, not a union. |
 | `resolveProps(props)`                                 | Shallow-merges `defaultProps` under caller props. Caller wins on any key conflict.                                            |
 | `resolveClasses(tag, props, className?, variantKey?)` | Runs the full class pipeline and returns the final class string.                                                              |
-| `options`                                             | The frozen `ResolvedFactoryOptions` — single source of truth for all downstream behaviour.                                    |
+| `options`                                             | The frozen `ResolvedFactoryOptions` — single source of truth for all downstream behavior.                                     |
 
 ---
 

@@ -1,3 +1,4 @@
+import type { ReactElement, Ref } from 'react'
 import type { AnyRecord } from '@polymorphic-ui/core'
 
 /** Generic React event handler. Args default to `unknown[]` so call-sites can narrow as needed. */
@@ -16,6 +17,13 @@ export interface SlotValidationResult {
   valid: boolean
   reason?: string
 }
+
+/** Version-specific function that merges slot props into a child element and returns the clone. */
+export type CloneSlotChildFn = (args: {
+  child: ReactElement
+  slotProps: AnyRecord
+  ref: Ref<unknown> | null
+}) => ReactElement
 
 /**
  * Controls how strictly the Slot enforces its child shape.
