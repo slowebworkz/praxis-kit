@@ -40,7 +40,10 @@ export default [
     files: TS_FILES,
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        projectService: {
+          allowDefaultProject: ['*.ts', 'packages/*/tsup.config.ts'],
+          defaultProject: './tsconfig.base.json',
+        },
       },
     },
     rules: {

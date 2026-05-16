@@ -11,6 +11,11 @@
     "declarationMap": true,
     "sourceMap": true,
     "isolatedModules": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@polymorphic-ui/core": [
+        "./packages/core/src"
+      ]
+    }
   }
 }
