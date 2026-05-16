@@ -1,4 +1,3 @@
-import type { Merge, Simplify } from 'type-fest'
 import type { JSX, ReactElement, Ref } from 'react'
 import type {
   AnyRecord,
@@ -20,35 +19,44 @@ type IntrinsicJSXProps<T extends ElementType> = T extends IntrinsicTag
   : AnyRecord
 
 /**
+ * Control props owned by the polymorphic system. Separated so they can be
+ * stripped from the intrinsic props via Omit before intersecting, which is
+ * what lets TypeScript infer TAs from the `as` prop value.
+ */
+type ControlProps<
+  TAs extends ElementType,
+  Props extends AnyRecord,
+  Variants extends Readonly<VariantMap>,
+  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
+> = Props &
+  VariantProps<Variants> & {
+    as?: TAs
+    asChild?: boolean
+    className?: ClassName
+    variantKey?: keyof TPreset
+    ref?: Ref<ElementRef<TAs>>
+  }
+
+/**
  * The full prop surface for a polymorphic component rendered as `TAs`.
  *
  * HTML attributes are inferred from `TAs` (the resolved `as` prop), merged with
- * component-defined `Props` and `Variants`. Control props are applied last and
- * cannot be shadowed by intrinsic attributes or custom props.
+ * component-defined `Props`, `Variants`, and control props. Control props win on
+ * key conflicts.
  *
- * Merge produces a flat mapped type (Source wins on key conflicts), so the IDE
- * shows a clean resolved object rather than a nested Omit/intersection chain.
+ * `Omit + intersection` is used instead of `Merge` so TypeScript can infer `TAs`
+ * from the `as` prop value. `Merge` buries `as?: TAs` inside a mapped type that
+ * TypeScript cannot see through for generic inference, causing `as="a"` to be
+ * rejected when the default tag is `"button"`.
  */
-/** Flattens two prop shapes into a single resolved type for clean IntelliSense display. */
-export type MergedProps<T, U> = Simplify<T & U>
-
 export type PolymorphicProps<
   TDefault extends ElementType,
   Props extends AnyRecord,
   Variants extends Readonly<VariantMap>,
   TPreset extends Record<string, Partial<VariantProps<Variants>>>,
   TAs extends ElementType = TDefault,
-> = Merge<
-  IntrinsicJSXProps<TAs>,
-  Props &
-    VariantProps<Variants> & {
-      as?: TAs
-      asChild?: boolean
-      className?: ClassName
-      variantKey?: keyof TPreset
-      ref?: Ref<ElementRef<TAs>>
-    }
->
+> = Omit<IntrinsicJSXProps<TAs>, keyof ControlProps<TAs, Props, Variants, TPreset>> &
+  ControlProps<TAs, Props, Variants, TPreset>
 
 /**
  * A polymorphic component that infers HTML attributes and ref type from the `as` prop.
