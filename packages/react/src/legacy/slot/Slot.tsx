@@ -8,8 +8,7 @@ import { forwardRef, isValidElement } from 'react'
 import type { AnyRecord } from '@polymorphic-ui/core'
 import type { ReactElement, Ref } from 'react'
 import type { Merge } from 'type-fest'
-import { SLOT_NAME } from '@/shared/slot/constants'
-import { invariant } from '@/shared/slot/invariant'
+import { SLOT_NAME, invariant } from '@/shared'
 import { cloneSlotChild } from './cloneSlotChild'
 
 type SlotProps = Merge<

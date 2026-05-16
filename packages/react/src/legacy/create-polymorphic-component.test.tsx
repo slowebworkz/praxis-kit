@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createElement, Fragment, createRef, act } from 'react'
 import type { ComponentType } from 'react'

@@ -3,7 +3,7 @@ import type { AnyRecord, ElementType, VariantMap, VariantProps } from '@polymorp
 import type { ReactElement, Ref } from 'react'
 import { Slot } from './slot'
 import { normalizeChildren } from './normalize-children'
-import { render } from '@/shared/render'
+import { render } from '@/shared'
 import type { AnyRuntime, PolymorphicComponent, ReactFactoryOptions } from '@/shared'
 
 export function createPolymorphicComponent<

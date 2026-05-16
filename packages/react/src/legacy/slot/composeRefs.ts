@@ -5,8 +5,7 @@
  * `getChildRef` detects which location is live and reads from there.
  */
 import type { ReactElement, Ref } from 'react'
-import { mergeRefs } from '@/shared/merge-refs'
-import { isFunction, isPlainObject } from '@/shared/slot/predicates'
+import { mergeRefs, isFunction, isPlainObject } from '@/shared'
 
 type ReactWarningGetter = { isReactWarning?: unknown }
 /** A ref value that may be absent — the raw shape before normalizing to `Ref | null`. */
