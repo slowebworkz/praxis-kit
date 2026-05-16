@@ -1,5 +1,4 @@
 import type { ClassPipelineFn, ClassPipelineOptions, VariantMap } from '../types'
-export type { ClassPipelineFn } from '../types'
 import { cn } from '../utils'
 import { cva } from './cva'
 import { StaticClassResolver } from './static-class-resolver'

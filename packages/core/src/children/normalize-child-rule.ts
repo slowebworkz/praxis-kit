@@ -1,5 +1,4 @@
-import type { ChildRuleInput, NormalizedChildRule } from '../types'
-import type { Cardinality, CardinalityInput } from '../types/child-rule'
+import type { Cardinality, CardinalityInput, ChildRuleInput, NormalizedChildRule } from '../types'
 
 function normalizeCardinality(
   input: CardinalityInput | undefined,

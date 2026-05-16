@@ -2,8 +2,8 @@ import js from '@eslint/js'
 import eslintConfigPrettier from 'eslint-config-prettier'
 import tseslint from 'typescript-eslint'
 
-const FILES = ['**/*.{js,mjs,cjs,ts,mts,cts}']
-const TS_FILES = ['**/*.{ts,mts,cts}']
+const FILES = ['**/*.{js,mjs,cjs,ts,mts,cts,tsx}']
+const TS_FILES = ['**/*.{ts,mts,cts,tsx}']
 
 /** @type {import("eslint").Linter.Config[]} */
 export default [
@@ -41,12 +41,8 @@ export default [
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: [
-            '*.config.ts',
-            '*.workspace.ts',
-            'packages/*/tsup.config.ts',
-            'packages/*/vitest.config.ts',
-          ],
+          allowDefaultProject: ['*.ts'],
+          defaultProject: './tsconfig.base.json',
         },
       },
     },

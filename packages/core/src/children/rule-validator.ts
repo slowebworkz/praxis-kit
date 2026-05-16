@@ -1,5 +1,6 @@
 import type { NormalizedChildRule, MatchMatrix, RuleIndex, StrictMode } from '../types'
 import { StrictBase } from '../base'
+import { assertNever } from '../utils'
 
 export class RuleValidator extends StrictBase {
   readonly #context: string
@@ -53,10 +54,8 @@ export class RuleValidator extends StrictBase {
         return matchIndex === lastIndex
       case 'any':
         return true
-      default: {
-        const _exhaustive: never = position
-        return _exhaustive
-      }
+      default:
+        return assertNever(position)
     }
   }
 }

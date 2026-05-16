@@ -12,7 +12,11 @@ export class ChildrenEvaluator extends StrictBase {
   readonly #ruleValidator: RuleValidator
   readonly #matchValidator: MatchValidator
 
-  constructor(rules: ChildRuleInput[], strict: StrictMode = 'warn', context = 'Component') {
+  constructor(
+    rules: readonly ChildRuleInput[],
+    strict: StrictMode = 'warn',
+    context = 'Component',
+  ) {
     super(strict)
 
     this.#rules = rules.map((r) => normalizeChildRule(r))

@@ -3,13 +3,17 @@ node_modules/
 
 # Build outputs
 dist/
+*.d.ts
+
+# Test snapshots (auto-generated)
+**/__snapshots__/
 
 # Generated / cache
 .turbo/
 .cache/
 coverage/
 
-# Lockfiles
+# Lockfiles — never reformat, diffs would be enormous
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
@@ -20,6 +24,6 @@ yarn.lock
 .husky/
 .vscode/
 
-# Misc
+# Minified assets
 *.min.js
 *.min.css

@@ -1,4 +1,5 @@
 import type { CompoundVariant } from './compound-variants'
+import type { ChildRuleInput } from './child-rule'
 import type { AnyRecord, ClassName, ElementType, TagMap } from './primitives'
 import type { StrictMode } from './strict-mode'
 import type { VariantMap, VariantProps } from './variant'
@@ -35,4 +36,8 @@ export type ResolvedFactoryOptions<
   readonly displayName?: string
   /** Always present — `resolveFactoryOptions` fills in `false` if omitted. */
   readonly strict: StrictMode
+  /** Keys of the variant map. Always present; empty set when no variants defined. */
+  readonly variantKeys: ReadonlySet<string>
+  /** Rules that normalized children must satisfy. Absent when no rules were declared. */
+  readonly childRules?: readonly ChildRuleInput[]
 }
