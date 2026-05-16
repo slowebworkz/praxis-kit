@@ -7,7 +7,7 @@ import type { ReactElement, Ref } from 'react'
 import type { AnyRecord } from '@polymorphic-ui/core'
 import { mergeProps } from '@/shared'
 import { getChildRef, composeRefs } from './composeRefs'
-import { cloneWithProps } from './clone'
+import { cloneWithProps } from '@/shared'
 
 type CloneInput = {
   child: ReactElement

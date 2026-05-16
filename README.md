@@ -1,6 +1,6 @@
 # polymorphic-ui
 
-A framework-agnostic TypeScript library for polymorphic component behaviour — tag resolution, prop
+A framework-agnostic TypeScript library for polymorphic component behavior — tag resolution, prop
 merging, variant-based class composition, child structural validation, and ARIA role enforcement.
 
 The core has no dependency on any rendering framework, the DOM, or any CSS methodology. Framework
@@ -85,7 +85,7 @@ Creates a `PolymorphicRuntime` from a configuration object.
 
 ### `cva(base, config)`
 
-A thin wrapper around `class-variance-authority` that normalises output through `clsx`.
+A thin wrapper around `class-variance-authority` that normalizes output through `clsx`.
 
 ### `ChildrenEvaluator`
 

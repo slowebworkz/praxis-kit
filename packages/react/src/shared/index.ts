@@ -6,13 +6,10 @@ export type {
   AnyPropsResolver,
   AnyClassResolver,
 } from './types'
-export type {
-  MergedProps,
-  PolymorphicProps,
-  PolymorphicComponent,
-  ElementRef,
-} from './polymorphic-props'
+export type { PolymorphicProps, PolymorphicComponent, ElementRef } from './polymorphic-props'
 export { mergeRefs } from './merge-refs'
+export { buildRuntime } from './build-runtime'
+export { applyDisplayName } from './apply-display-name'
 export * from './slot'
 export { render } from './render'
 export type { RenderInput } from './render'
