@@ -10,10 +10,4 @@ export { mergeProps } from './mergeProps'
 export { PROP_MERGE_POLICIES, chainHandlers, mergeClassNames, mergeStyles } from './policies'
 export type { PropMergePolicy, MergePolicyHandler } from './policies'
 export { isReactEventKey, isFunction, isPlainObject, isSlottableElement } from './predicates'
-export type {
-  EventHandler,
-  SlotProps,
-  SlotValidationResult,
-  SlotChildPolicy,
-  CloneSlotChildFn,
-} from './types'
+export type { EventHandler, SlotProps, CloneSlotChildFn } from './types'

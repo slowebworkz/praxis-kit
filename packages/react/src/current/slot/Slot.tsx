@@ -1,16 +1,8 @@
 import type { ReactElement, ReactNode, Ref } from 'react'
-import type { AnyRecord } from '@polymorphic-ui/core'
-import type { Merge } from 'type-fest'
 import { SLOT_NAME, applySlot } from '@/shared'
 import { cloneSlotChild } from './cloneSlotChild'
 
-type SlotProps = Merge<
-  AnyRecord,
-  {
-    children?: unknown
-    ref?: Ref<unknown> | null
-  }
->
+type SlotProps = { ref?: Ref<unknown> | null; [key: string]: unknown }
 
 // React 19: ref is received as a plain prop on function components.
 export function Slot({ ref = null, children, ...slotProps }: SlotProps): ReactElement {

@@ -12,23 +12,9 @@ export type SlotProps = AnyRecord & {
   children?: unknown
 }
 
-/** Result returned by `SlotValidator` after evaluating a candidate slot child. */
-export interface SlotValidationResult {
-  valid: boolean
-  reason?: string
-}
-
 /** Version-specific function that merges slot props into a child element and returns the clone. */
 export type CloneSlotChildFn = (args: {
   child: ReactElement
   slotProps: AnyRecord
   ref: Ref<unknown> | null
 }) => ReactElement
-
-/**
- * Controls how strictly the Slot enforces its child shape.
- *
- * `'single'`        — exactly one element after normalization; Fragments count as one opaque element.
- * `'strict-single'` — exactly one concrete React element; Fragments are not permitted as the slot child.
- */
-export type SlotChildPolicy = 'single' | 'strict-single'
