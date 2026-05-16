@@ -1,7 +1,7 @@
 import { Fragment } from 'react'
 import type { ReactElement, Ref } from 'react'
 import type { AnyRecord } from '@polymorphic-ui/core'
-import { mergeProps } from '@/shared/slot/mergeProps'
+import { mergeProps } from '@/shared'
 import { getChildRef, composeRefs } from './composeRefs'
 import { cloneWithProps } from './clone'
 

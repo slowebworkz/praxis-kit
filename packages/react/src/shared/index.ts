@@ -13,3 +13,6 @@ export type {
   ElementRef,
 } from './polymorphic-props'
 export { mergeRefs } from './merge-refs'
+export * from './slot'
+export { render } from './render'
+export type { RenderInput } from './render'

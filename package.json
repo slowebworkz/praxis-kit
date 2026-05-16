@@ -10,7 +10,7 @@
     "build": "pnpm typecheck && pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r --if-present test",
-    "test:ci": "vitest run",
+    "test:ci": "pnpm -r --if-present test",
     "test:related": "pnpm -r --if-present test:related",
     "lint": "eslint . --fix",
     "lint:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' | xargs eslint --fix",

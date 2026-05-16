@@ -2,9 +2,9 @@ import { createPolymorphic } from '@polymorphic-ui/core'
 import type { AnyRecord, ElementType, VariantMap, VariantProps } from '@polymorphic-ui/core'
 import { forwardRef } from 'react'
 import type { ReactElement } from 'react'
-import { Slot } from './slot/Slot'
+import { Slot } from './slot'
 import { normalizeChildren } from './normalize-children'
-import { render } from '@/shared/render'
+import { render } from '@/shared'
 import type { AnyRuntime, PolymorphicComponent, ReactFactoryOptions } from '@/shared'
 
 export function createPolymorphicComponent<

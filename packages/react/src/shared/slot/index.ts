@@ -1,3 +1,4 @@
+export { SLOT_NAME } from './constants'
 export { invariant, invariantDefined } from './invariant'
 export { mergeProps } from './mergeProps'
 export { PROP_MERGE_POLICIES, chainHandlers, mergeClassNames, mergeStyles } from './policies'
