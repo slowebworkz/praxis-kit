@@ -1,4 +1,4 @@
-import type { MutableRefObject, Ref } from 'react'
+import type { Ref } from 'react'
 
 export function mergeRefs<T>(...refs: (Ref<T> | null | undefined)[]): Ref<T> | null {
   const active = refs.filter((r): r is NonNullable<typeof r> => r != null)
@@ -9,7 +9,7 @@ export function mergeRefs<T>(...refs: (Ref<T> | null | undefined)[]): Ref<T> | n
       if (typeof ref === 'function') {
         ref(value)
       } else {
-        ;(ref as MutableRefObject<T | null>).current = value
+        ref.current = value
       }
     }
   }

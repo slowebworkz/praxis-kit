@@ -1,6 +1,7 @@
 import { createElement } from 'react'
 import { jsx } from 'react/jsx-runtime'
 import type { ComponentType, ReactElement, Ref } from 'react'
+import { ChildrenEvaluator } from '@polymorphic-ui/core'
 import type { AnyRecord, ClassName, ElementType as CoreElementType } from '@polymorphic-ui/core'
 import { SlotValidator } from './slot/slot-validator'
 import type { AnyRuntime } from './types'
@@ -53,6 +54,13 @@ export function render({
   const mergedProps = runtime.resolveProps(rest)
   const resolvedClass = runtime.resolveClasses(tag, mergedProps, className, variantKey)
   const domProps = applyFilter(mergedProps, filterProps, runtime.options.variantKeys)
+
+  const { childRules } = runtime.options
+  if (childRules && childRules.length > 0) {
+    new ChildrenEvaluator(childRules, runtime.options.strict, name).evaluate(
+      normalizeChildren(children),
+    )
+  }
 
   if (as !== undefined && asChild) {
     validator.assertExclusive()

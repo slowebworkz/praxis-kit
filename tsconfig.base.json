@@ -13,9 +13,7 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "paths": {
-      "@polymorphic-ui/core": [
-        "./packages/core/src"
-      ]
+      "@polymorphic-ui/core": ["./packages/core/src"]
     }
   }
 }

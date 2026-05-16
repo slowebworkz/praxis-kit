@@ -1,10 +1,14 @@
-import type { AnyRecord, ClassName, ElementType, StrictMode } from '@polymorphic-ui/core'
+import type {
+  AnyRecord,
+  ClassName,
+  ElementType,
+  ResolvedFactoryOptions,
+} from '@polymorphic-ui/core'
 
-export interface AnyRuntimeOptions {
-  displayName?: string
-  strict: StrictMode
-  variantKeys: ReadonlySet<string>
-}
+export type AnyRuntimeOptions = Pick<
+  ResolvedFactoryOptions,
+  'displayName' | 'strict' | 'variantKeys' | 'childRules'
+>
 
 export interface AnyTagResolver {
   resolveTag(as?: ElementType): ElementType
