@@ -29,5 +29,6 @@ export function resolveFactoryOptions<
     ...(options.defaultVariants !== undefined && { defaultVariants: options.defaultVariants }),
     ...(options.compoundVariants !== undefined && { compoundVariants: options.compoundVariants }),
     ...(options.displayName !== undefined && { displayName: options.displayName }),
+    ...(options.childRules !== undefined && { childRules: options.childRules }),
   })
 }
