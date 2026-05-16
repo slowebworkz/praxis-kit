@@ -1,6 +1,10 @@
-# `@polymorphic-ui/core` — Architecture
+# polymorphic-ui — Architecture
 
-## What it is
+---
+
+## `@polymorphic-ui/core`
+
+### What it is
 
 `@polymorphic-ui/core` is a framework-agnostic TypeScript library that resolves **polymorphic
 component behavior**: which HTML element or component to render (`as` prop), how to merge default
@@ -10,7 +14,7 @@ It has no dependency on React, the DOM, or any specific CSS methodology.
 
 ---
 
-## Standalone or adapter-required?
+### Standalone or adapter-required?
 
 **Core is fully standalone.** Every export is usable in any JavaScript/TypeScript environment
 without a framework.
@@ -23,7 +27,7 @@ A **framework adapter layer is optional but beneficial** for ergonomics:
 | Prop merging        | `resolveProps(props)`                   | Event handler merging, framework-specific prop normalisation      |
 | Class composition   | `resolveClasses(...)`                   | CSS-methodology post-processing (e.g. `@polymorphic-ui/tailwind`) |
 | Children validation | `ChildrenEvaluator.evaluate(unknown[])` | Flattens framework children before calling                        |
-| ARIA validation     | `AriaPolicyEngine.validate(tag, props)` | Calls before rendering                                            |
+| ARIA validation     | `AriaPolicyEngine.validate(tag, props)` | Calls before rendering (not yet wired in the React adapter)       |
 | Rendering           | —                                       | Creates and renders the resolved element                          |
 
 The three `PolymorphicRuntime` methods (`resolveTag`, `resolveProps`, `resolveClasses`) are designed
@@ -32,7 +36,7 @@ for adapter convenience. `options` exposes the frozen resolved configuration.
 
 ---
 
-## Source layout
+### Source layout
 
 ```
 src/
@@ -41,26 +45,30 @@ src/
 ├── resolver/         resolveTag, resolveProps, createResolverPipeline
 ├── styles/           Class pipeline: CVA, static/variant resolvers
 ├── children/         ChildrenEvaluator — child structural constraint system
+│                     RuleMatcher, RuleValidator, MatchValidator
+│                     normalizeChildRule, get-type-name, match-validation-error-builder
 ├── validator/        AriaPolicyEngine — ARIA role validation
 ├── base/             StrictBase — shared strict-mode violation infrastructure
 ├── types/            All exported TypeScript types
-└── utils/            cn (clsx wrapper), mergeProps, NonEmptyArray
+└── utils/            cn (clsx wrapper), mergeProps, assertNever
 ```
 
 ---
 
-## Factory entrypoint
+### Factory entrypoint
 
 ```mermaid
 flowchart TD
     options["FactoryOptions
     ─────────────
     defaultTag
+    defaultProps
     baseClassName
     tagMap / presetMap
-    variants
-    defaultVariants
+    variants / defaultVariants
     compoundVariants
+    childRules
+    displayName
     strict"
     ]
 
@@ -87,7 +95,7 @@ runtime.
 
 ---
 
-## PolymorphicRuntime
+### PolymorphicRuntime
 
 ```mermaid
 classDiagram
@@ -99,26 +107,26 @@ classDiagram
     }
 ```
 
-### `resolveTag`
+#### `resolveTag`
 
 Returns `as ?? defaultTag`. No side effects.
 
-### `resolveProps`
+#### `resolveProps`
 
 Shallow-merges `defaultProps` with the consumer's props. Consumer props win on conflict.
 
-### `resolveClasses`
+#### `resolveClasses`
 
 Runs the full class pipeline (see below).
 
-### `options`
+#### `options`
 
 The frozen `ResolvedFactoryOptions`. Useful for adapters that need to inspect the factory
-configuration.
+configuration (`variantKeys`, `childRules`, `strict`, etc.).
 
 ---
 
-## Class pipeline
+### Class pipeline
 
 `resolveClasses` resolves the full class string by running `StaticClassResolver` and
 `VariantClassResolver` in parallel, then joining with `cn()`.
@@ -158,10 +166,12 @@ pipeline runs.
 
 ---
 
-## Resolver pipeline
+### Resolver pipeline
 
-`createResolverPipeline` is a convenience wrapper that combines all four runtime steps into a single
-function call. It is intended for framework adapters that want to resolve everything in one pass.
+`createResolverPipeline` is a convenience wrapper that combines the three core resolution steps into
+a single function call: `resolveTag`, `mergeProps` (defaultProps + caller props), and the class
+pipeline. Children pass through unchanged. It is intended for framework adapters that want to
+resolve everything in one pass; the React adapter calls the three methods directly instead.
 
 ```mermaid
 flowchart LR
@@ -192,18 +202,39 @@ array is the adapter's responsibility before calling `ChildrenEvaluator.evaluate
 
 ---
 
-## Children constraint system
+### Children constraint system
 
 `ChildrenEvaluator` enforces structural child rules on a flat `unknown[]` children array.
 
+#### Key types
+
+```ts
+// Cardinality is a discriminated union — unboundedness is in the type, not a sentinel.
+type Cardinality = { kind: 'bounded'; min: number; max: number } | { kind: 'unbounded' }
+
+type ChildRulePosition = 'first' | 'last' | 'any'
+
+// Tagged phantom types prevent index confusion between child positions and rule indices.
+type RuleIndex = Tagged<number, 'RuleIndex'>
+type ChildIndex = Tagged<number, 'ChildIndex'>
+
+// Bidirectional graph: forward detects unexpected/ambiguous children;
+// reverse counts matches per rule for cardinality checking.
+type MatchMatrix = {
+  childToRules: BiDirectionalMap<ChildIndex, RuleIndex>
+}
+```
+
+#### Evaluation flow
+
 ```mermaid
 flowchart TD
-    rules["ChildRule[]
+    rules["ChildRuleInput[]
 ─────────────
 name
 match(child) → bool
-cardinality min/max
-position?"]
+cardinality? {min, max}
+position? 'first'|'last'|'any'"]
 
     evaluator["ChildrenEvaluator
 (constructor)"]
@@ -211,24 +242,26 @@ position?"]
     normalize["normalizeChildRule()
 ─────────────
 resolve cardinality defaults
-position implies max=1"]
+position='first'|'last' → max=1
+(invalid max>1 throws RangeError)"]
 
     children(["children: unknown[]"])
 
     matcher["RuleMatcher
 ─────────────
 build MatchMatrix
-byChild / byRule"]
+forward: child → rules matched
+reverse: rule → children matched"]
 
     rv["RuleValidator
 ─────────────
 cardinality min/max
-position (first/last/first-or-last)"]
+position (first/last/any)"]
 
     mv["MatchValidator
 ─────────────
-unexpected child
-multiple rule matches"]
+unexpected child (no rule matched)
+ambiguous child (multiple rules matched)"]
 
     ok(["✓ valid"])
     err(["✗ violate() → warn or throw"])
@@ -241,58 +274,68 @@ multiple rule matches"]
     mv -- fails --> err
 ```
 
-Both `RuleValidator` and `MatchValidator` extend `StrictBase` and respect the `StrictMode` setting
-(`false` / `'warn'` / `'throw'`).
+Both `RuleValidator` and `MatchValidator` extend `StrictBase` and respect the `StrictMode` setting.
+The constructor invariant check (positional rule with max > 1 or unbounded) throws a `RangeError`
+unconditionally — it is not gated on `strict` mode, because the configuration is structurally
+impossible to ever satisfy.
 
 ---
 
-## ARIA validator
+### ARIA validator
 
 `AriaPolicyEngine` is a standalone class — it is not embedded in `PolymorphicRuntime`. Adapters
 import and instantiate it directly.
 
+The engine uses a **snapshot diagnostic model**: all rules evaluate against the same
+`(tag, props, implicitRole)` snapshot. Violations always reflect pre-fix state. Fixes are
+accumulated by kind and deduplicated — at most one executor per `FixKind` runs, regardless of how
+many rules emit it.
+
 ```mermaid
-flowchart LR
-    tag([tag: unknown])
-    props(["props: Record&lt;string, unknown&gt;"])
+flowchart TD
+    call["evaluate(tag, props)  [static]"]
 
-    guard{typeof tag
-=== 'string'?}
+    guard1{"tag has
+implicit role?"}
+    guard2{"props has
+explicit role?"}
 
-    pass([return props unchanged])
+    passThrough(["return props unchanged"])
 
-    rules["#rules pipeline
+    rules["rule pipeline  [snapshot model]
 ─────────────
 ① checkInvalidRoleOverride
 ② checkRedundantRole
-③ checkStandaloneRegion"]
+③ checkStandaloneRegion
+all three evaluate same snapshot"]
 
-    valid{all rules
-pass?}
+    collect["collect violations + pending fixes
+(deduped by FixKind)"]
 
-    strip["strip role
-from props"]
+    apply["apply fixes sequentially"]
 
-    out([return props])
-    warn([violate() → warn or throw])
+    out(["return { props: fixed, violations: pre-fix }"])
 
-    tag & props --> guard
-    guard -- no --> pass
-    guard -- yes --> rules --> valid
-    valid -- yes --> out
-    valid -- no --> warn
-    valid -- no --> strip --> out
+    call --> guard1
+    guard1 -- no --> passThrough
+    guard1 -- yes --> guard2
+    guard2 -- no --> passThrough
+    guard2 -- yes --> rules --> collect --> apply --> out
 ```
+
+`validate(tag, props)` calls `evaluate()` then routes each violation through `report()`:
+`'error'`-severity violations go to `violate()` (throws or warns per `strict`); `'warning'`-severity
+violations always go to `warn()` and never throw.
 
 `ariaRolePolicy` maps six landmark elements (`article`, `aside`, `footer`, `header`, `main`, `nav`)
 to their implicit ARIA roles and classifies which have strong implicit roles.
 
 ---
 
-## Strict mode
+### Strict mode
 
-All three validation classes (`AriaPolicyEngine`, `RuleValidator`, `MatchValidator`) extend
-`StrictBase`, which controls violation severity:
+All validation classes (`AriaPolicyEngine`, `RuleValidator`, `MatchValidator`) extend `StrictBase`,
+which controls violation severity:
 
 ```mermaid
 flowchart LR
@@ -304,30 +347,256 @@ flowchart LR
 → throw Error"]
 ```
 
-`ChildrenEvaluator` passes its `strict` setting down to both `RuleValidator` and `MatchValidator` at
-construction time.
+`violate()` respects the full range. `warn()` always caps at `console.warn` — it never throws even
+when `strict: 'throw'`. `AriaPolicyEngine` routes `'warning'`-severity violations through `warn()`
+so they surface in strict environments without aborting a render.
+
+`ChildrenEvaluator` passes its `strict` setting down to both validators at construction time.
 
 ---
 
-## Framework adapter pattern
+---
 
-A minimal framework adapter uses core as follows (pseudocode):
+## `@polymorphic-ui/react`
+
+`@polymorphic-ui/react` is the React adapter for core. It wraps `createPolymorphic` with
+React-specific rendering, ref handling, and a Slot/Slottable protocol that implements `asChild`.
+
+The package exports two entry points that share a common `shared/` implementation layer but differ
+in how they handle refs:
+
+| Entry point                    | Target    | Ref strategy           |
+| ------------------------------ | --------- | ---------------------- |
+| `@polymorphic-ui/react`        | React 19+ | `ref` as a plain prop  |
+| `@polymorphic-ui/react/legacy` | React 18  | `ref` via `forwardRef` |
+
+---
+
+### Source tree
 
 ```
-adapter render(as, props, children, variantKey):
-  tag    = runtime.resolveTag(as)
-  merged = runtime.resolveProps(props)
-  cls    = runtime.resolveClasses(tag, merged, merged.className, variantKey)
-  safe   = ariaValidator.validate(tag, merged)
-  flat   = framework.flattenChildren(children)      // adapter's job
-  evaluator.evaluate(flat)                          // child rules
-  return framework.render(tag, { ...safe, className: cls }, children)
+src/
+├── index.ts              re-exports current/
+├── current/              React 19 implementation
+│   ├── create-polymorphic-component.ts
+│   ├── normalize-children.ts
+│   └── slot/
+│       ├── Slot.tsx          thin shell: destructures ref as plain prop
+│       ├── cloneSlotChild.ts React 19 ref extraction + element cloning
+│       ├── composeRefs.ts    getChildRef (reads props.ref) + composeRefs alias
+│       └── index.ts          exports Slot only
+├── legacy/               React 18 implementation (forwardRef wrappers)
+│   ├── create-polymorphic-component.ts
+│   ├── normalize-children.ts
+│   └── slot/
+│       ├── Slot.tsx          thin shell: forwardRef wrapper
+│       ├── cloneSlotChild.ts React 18 ref extraction + element cloning
+│       ├── composeRefs.ts    getChildRef (reads element.ref) + composeRefs alias
+│       └── index.ts          exports Slot only
+└── shared/               behavioral contract shared by both versions
+    ├── polymorphic-props.ts  PolymorphicProps, PolymorphicComponent, ElementRef
+    ├── react-options.ts      ReactFactoryOptions (extends core FactoryOptions)
+    ├── render.ts             shared render() function
+    ├── merge-refs.ts         mergeRefs utility
+    ├── types.ts              AnyRuntime, AnyRuntimeOptions, resolver interfaces
+    └── slot/
+        ├── Slottable.tsx       marker component; renders as Fragment
+        ├── applySlot.ts        orchestration: extract → clone → rebuild
+        ├── extractSlottable.ts scan children for Slottable; return extraction + rebuild
+        ├── clone.ts            cloneWithProps — cloneElement with optional ref
+        ├── mergeProps.ts       prop merge dispatcher
+        ├── policies.ts         chain / concat / shallow-merge / child-wins handlers
+        ├── predicates.ts       isSlottableElement, isReactEventKey, isFunction, isPlainObject
+        ├── slot-validator.ts   SlotValidator (extends StrictBase) for asChild invariants
+        ├── invariant.ts        hard-throw assertion helpers
+        ├── constants.ts        SLOT_NAME, EVENT_HANDLER_RE
+        └── types.ts            EventHandler, MergePolicyHandler, SlotProps, CloneSlotChildFn
 ```
 
-The adapter provides:
+---
 
-- Framework-specific child flattening before `evaluate`
-- Framework-specific element rendering from the resolved `{ tag, props, className, children }`
-- Narrows `ElementType` to the framework's element union (`React.ElementType`, `SvelteComponent`,
-  etc.)
-- Event handler merging and any other framework-specific prop normalisation
+### `createPolymorphicComponent`
+
+Wraps `createPolymorphic` from core and returns a typed React component. The factory is called once;
+`PolymorphicRuntime` is captured in the closure and reused on every render.
+
+```mermaid
+flowchart TD
+    options["ReactFactoryOptions
+    ─────────────
+    (all FactoryOptions fields)
+    slotComponent?
+    filterProps?"]
+
+    factory["createPolymorphicComponent()"]
+
+    runtime["PolymorphicRuntime  (core)
+─────────────
+resolveTag / resolveProps / resolveClasses
+options (variantKeys, childRules, strict…)"]
+
+    component["Component function
+─────────────
+receives props + ref
+delegates to render()"]
+
+    options --> factory --> runtime
+    factory --> component
+```
+
+`slotComponent` defaults to the version-local `Slot`. `filterProps` lets the caller strip
+variant-key props (and any other implementation-detail props) from the DOM before rendering.
+
+---
+
+### Render pipeline
+
+`render()` in `shared/render.ts` is the single shared render path for both React versions.
+
+```mermaid
+flowchart TD
+    input["props + ref
+─────────────
+as? / asChild?
+children?
+className? / variantKey?
+...rest"]
+
+    extract["extract control props
+as, asChild, children,
+className, variantKey"]
+
+    tag["runtime.resolveTag(as)"]
+    merged["runtime.resolveProps(rest)"]
+    cls["runtime.resolveClasses(tag, merged, className, variantKey)"]
+    filter["applyFilter(merged, filterProps, variantKeys)"]
+
+    childEval{"childRules?"}
+    evaluate["ChildrenEvaluator.evaluate(
+  normalizeChildren(children)
+)"]
+
+    asChildBranch{"asChild?"}
+
+    slotRender["jsx(slotComponent, {
+  ...domProps, className, ref,
+  children: kids[0]
+})"]
+
+    normalRender["createElement(tag, {
+  ...domProps, className, ref,
+  children?
+})"]
+
+    input --> extract
+    extract --> tag & merged & cls
+    merged --> filter
+    tag & filter & cls --> childEval
+    childEval -- yes --> evaluate --> asChildBranch
+    childEval -- no --> asChildBranch
+    asChildBranch -- yes → single child --> slotRender
+    asChildBranch -- no --> normalRender
+```
+
+`SlotValidator` enforces three invariants during render (respecting `strict` mode): mutual
+exclusivity of `as` and `asChild`; exactly one element child when `asChild` is set; non-element
+children are warned and discarded.
+
+---
+
+### Slot protocol
+
+The `asChild` slot system is implemented as a two-layer protocol. `shared/slot/` owns the behavioral
+contract; each version-specific `Slot.tsx` is a thin shell whose only version-specific
+responsibility is ref extraction.
+
+```mermaid
+flowchart TD
+    slot["Slot({ ref, children, ...slotProps })
+— current: ref is a plain prop
+— legacy: ref comes from forwardRef"]
+
+    apply["applySlot(children, slotProps, ref, cloneSlotChild)"]
+
+    extract{"extractSlottable(children)"}
+
+    slottablePath["cloneSlotChild({ child: inner, slotProps, ref })
+extraction.rebuild(cloned)
+→ Fragment wrapping siblings"]
+
+    directPath["cloneSlotChild({ child: children, slotProps, ref })"]
+
+    clone["cloneWithProps(child, mergedProps, composedRef)
+cloneElement with optional ref"]
+
+    slot --> apply --> extract
+    extract -- Slottable found --> slottablePath --> clone
+    extract -- no Slottable --> directPath --> clone
+```
+
+**`Slottable`** is a marker component that renders as a `Fragment`. Detection is by reference
+equality (`child.type === Slottable`), not a symbol — no serialization, no context required.
+
+**`extractSlottable`** enforces its own hard-throw invariants (not `strict`-gated):
+
+- More than one `<Slottable>` sibling → throw
+- `null` / `undefined` child inside `<Slottable>` → throw
+- String or number child → throw
+- Fragment child → throw
+
+**`cloneSlotChild`** is injected into `applySlot` as `CloneSlotChildFn`. Each version supplies its
+own implementation; `shared/` never imports a version-specific module.
+
+**Ref composition** (`composeRefs.ts`): React 19 stores ref in `element.props.ref`; React 18 stores
+it in `element.ref`. When elements cross React version boundaries, one location carries a warning
+getter. `getChildRef` detects the live location by inspecting property descriptors, then
+`composeRefs` (aliased from `mergeRefs`) combines the child's existing ref with the slot ref.
+
+---
+
+### Prop merge policies
+
+When slot props and child props share a key, `mergeProps` in `shared/slot/mergeProps.ts` classifies
+the key and dispatches to a policy handler:
+
+| Policy          | Trigger                                  | Behavior                                          |
+| --------------- | ---------------------------------------- | ------------------------------------------------- |
+| `chain`         | Both values are functions + key is `on*` | Child first; slot fires unless `defaultPrevented` |
+| `concat`        | key is `className`                       | Slot classes precede child classes                |
+| `shallow-merge` | key is `style`                           | Spread; child wins on key conflicts               |
+| `child-wins`    | everything else                          | Child value replaces slot value                   |
+
+---
+
+### `PolymorphicProps` type
+
+```ts
+type PolymorphicProps<TDefault, Props, Variants, TPreset, TAs = TDefault> = Omit<
+  IntrinsicJSXProps<TAs>,
+  keyof ControlProps<TAs, Props, Variants, TPreset>
+> &
+  ControlProps<TAs, Props, Variants, TPreset>
+```
+
+`Omit + intersection` is used instead of `Merge` from type-fest. `Merge` produces a flat mapped type
+that TypeScript cannot see through for generic inference — `as="a"` would be rejected when the
+default tag is `"button"` because `TAs` could never be inferred. The `Omit + intersection` form
+keeps `as?: TAs` visible to the inference engine.
+
+`Simplify` is deliberately absent — it converts intersections to mapped types, which weakens
+excess-property checking.
+
+`ControlProps` is a separate helper type so it can be used both as the right side of the
+intersection and as the `keyof` argument to `Omit` without repeating the shape.
+
+---
+
+### `normalizeChildren`
+
+The two versions differ in how they flatten children:
+
+- **`current/`** — direct `isValidElement` check + `Array.filter`. Does not traverse Fragment
+  boundaries. A Fragment passed as the sole `asChild` child is treated as one opaque element and
+  fails the single-element validation rather than being silently flattened.
+- **`legacy/`** — `Children.toArray` (React 18 API). Traverses Fragment boundaries, matching React
+  18 expectations.
