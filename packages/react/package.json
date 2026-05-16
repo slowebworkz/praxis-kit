@@ -20,12 +20,14 @@
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:related": "vitest run --changed"
+    "test:related": "vitest run --changed",
+    "prepublishOnly": "pnpm build"
   },
   "sideEffects": false,
   "dependencies": {
     "@polymorphic-ui/core": "workspace:*",
-    "clsx": "catalog:"
+    "clsx": "catalog:",
+    "type-fest": "catalog:"
   },
   "peerDependencies": {
     "react": ">=18"
@@ -37,7 +39,6 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "tsup": "catalog:",
-    "type-fest": "catalog:",
     "vitest": "catalog:"
   }
 }
