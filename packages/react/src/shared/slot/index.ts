@@ -1,4 +1,5 @@
 export { SLOT_NAME } from './constants'
+export { cloneWithProps } from './clone'
 export { invariant, invariantDefined } from './invariant'
 export { applySlot } from './applySlot'
 export { Slottable } from './Slottable'
