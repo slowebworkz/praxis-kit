@@ -1,29 +1,45 @@
-import { createPolymorphic } from '@polymorphic-ui/core'
-import type { AnyRecord, ElementType, VariantMap, VariantProps } from '@polymorphic-ui/core'
-import type { ComponentType, ReactElement } from 'react'
+import { createPolymorphic, ChildrenEvaluator } from '@polymorphic-ui/core'
+import type { ElementType, VariantMap, VariantProps } from '@polymorphic-ui/core'
+import type { ReactElement } from 'react'
+import { SlotValidator } from './slot/slot-validator'
 import type { ReactFactoryOptions } from './react-options'
-import type { AnyRuntime } from './types'
+import type { UnknownProps, SlotComponent, Runtime, FilterPredicate } from './types'
 
 export function buildRuntime<
   TDefault extends ElementType,
-  Props extends AnyRecord,
+  Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
   TPreset extends Record<string, Partial<VariantProps<Variants>>>,
 >(
   options: ReactFactoryOptions<TDefault, Props, Variants, TPreset>,
-  defaultSlot: ComponentType<AnyRecord>,
+  defaultSlot: SlotComponent,
   normalizeChildren: (children: unknown) => ReactElement[],
 ) {
-  const { slotComponent = defaultSlot, filterProps } = options
+  const { slotComponent = defaultSlot, filterProps, childRules, displayName, strict } = options
+  const resolvedStrict = strict ?? 'throw'
+  const name = displayName ?? 'PolymorphicComponent'
+
   const runtime = createPolymorphic({
     ...options,
-    strict: options.strict ?? 'throw',
-  }) as unknown as AnyRuntime
+    strict: resolvedStrict,
+  }) as unknown as Runtime
+
+  const slotValidator = new SlotValidator(name, resolvedStrict)
+  const childrenEvaluator = childRules?.length
+    ? new ChildrenEvaluator(childRules, resolvedStrict, name)
+    : undefined
+
+  const defaultFilter: FilterPredicate = (key, variantKeys) => variantKeys.has(key)
+  const resolvedFilter: FilterPredicate = filterProps
+    ? (key, variantKeys) => variantKeys.has(key) || filterProps(key, variantKeys)
+    : defaultFilter
 
   return {
     runtime,
     slotComponent,
     normalizeChildren,
-    ...(filterProps !== undefined && { filterProps }),
+    slotValidator,
+    filterProps: resolvedFilter,
+    ...(childrenEvaluator !== undefined && { childrenEvaluator }),
   }
 }

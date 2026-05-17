@@ -1,14 +1,14 @@
-import type { AnyRecord, ElementType, VariantMap, VariantProps } from '@polymorphic-ui/core'
+import type { ElementType, VariantMap, VariantProps } from '@polymorphic-ui/core'
 import { forwardRef } from 'react'
 import type { ReactElement } from 'react'
 import { Slot } from './slot'
 import { normalizeChildren } from './normalize-children'
 import { applyDisplayName, buildRuntime, render } from '@/shared'
-import type { PolymorphicComponent, ReactFactoryOptions } from '@/shared'
+import type { UnknownProps, KnownProps, PolymorphicComponent, ReactFactoryOptions } from '@/shared'
 
 export function createPolymorphicComponent<
   TDefault extends ElementType,
-  Props extends AnyRecord,
+  Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
   TPreset extends Record<string, Partial<VariantProps<Variants>>> = Record<never, never>,
 >(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset>) {
@@ -16,7 +16,7 @@ export function createPolymorphicComponent<
 
   const Component = forwardRef<unknown, Record<string, unknown>>(
     function PolymorphicComponent(props, ref): ReactElement {
-      return render({ ...bundle, props, ref })
+      return render({ ...bundle, props: props as KnownProps, ref })
     },
   )
 
