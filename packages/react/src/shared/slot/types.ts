@@ -1,5 +1,5 @@
 import type { ReactElement, Ref } from 'react'
-import type { AnyRecord } from '@polymorphic-ui/core'
+import type { UnknownProps } from '../types'
 
 /** Generic React event handler. Args default to `unknown[]` so call-sites can narrow as needed. */
 export type EventHandler<Args extends unknown[] = unknown[]> = (...args: Args) => void
@@ -8,13 +8,13 @@ export type EventHandler<Args extends unknown[] = unknown[]> = (...args: Args) =
 export type MergePolicyHandler = (slotVal: unknown, childVal: unknown) => unknown
 
 /** Loose prop bag accepted by a Slot component; children are typed as `unknown` to avoid forcing ReactNode on callers. */
-export type SlotProps = AnyRecord & {
+export type SlotProps = UnknownProps & {
   children?: unknown
 }
 
 /** Version-specific function that merges slot props into a child element and returns the clone. */
 export type CloneSlotChildFn = (args: {
   child: ReactElement
-  slotProps: AnyRecord
+  slotProps: UnknownProps
   ref: Ref<unknown> | null
 }) => ReactElement

@@ -1,6 +1,6 @@
 import { cloneElement } from 'react'
 import type { ReactElement, Ref } from 'react'
-import type { AnyRecord } from '@polymorphic-ui/core'
+import type { UnknownProps } from '../types'
 
 /**
  * Clones `child` with merged props and an optional composed ref.
@@ -9,7 +9,7 @@ import type { AnyRecord } from '@polymorphic-ui/core'
  */
 export function cloneWithProps(
   child: ReactElement,
-  props: AnyRecord,
+  props: UnknownProps,
   ref: Ref<unknown> | null,
 ): ReactElement {
   return cloneElement(child, ref !== null ? { ...props, ref } : props)

@@ -2,9 +2,10 @@ import { describe, it, expect, vi } from 'vitest'
 import { createElement, isValidElement } from 'react'
 import type { ReactElement } from 'react'
 import { render } from './render'
-import type { AnyRuntime } from './types'
+import { SlotValidator } from './slot/slot-validator'
+import type { FilterPredicate, Runtime } from './types'
 
-function makeRuntime(overrides?: Partial<AnyRuntime>): AnyRuntime {
+function makeRuntime(overrides?: Partial<Runtime>): Runtime {
   return {
     options: { variantKeys: new Set(), displayName: 'Test', strict: 'throw' },
     resolveTag: (as) => as ?? 'div',
@@ -20,6 +21,9 @@ const noopNormalize = (children: unknown): ReactElement[] =>
 const slotComponent = ({ children }: { children?: unknown }) =>
   createElement('div', { 'data-slot': true }, children as ReactElement)
 
+const noopFilter: FilterPredicate = () => false
+const defaultValidator = new SlotValidator('Test', 'throw')
+
 describe('render', () => {
   it('renders the default tag when no as prop is given', () => {
     const el = render({
@@ -28,6 +32,8 @@ describe('render', () => {
       ref: null,
       slotComponent,
       normalizeChildren: noopNormalize,
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
     })
     expect(el.type).toBe('div')
   })
@@ -39,6 +45,8 @@ describe('render', () => {
       ref: null,
       slotComponent,
       normalizeChildren: noopNormalize,
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
     })
     expect(el.type).toBe('button')
   })
@@ -53,6 +61,8 @@ describe('render', () => {
       ref: null,
       slotComponent,
       normalizeChildren: noopNormalize,
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
     })
     expect((el.props as { className: string }).className).toBe('resolved-class')
   })
@@ -65,6 +75,8 @@ describe('render', () => {
       ref,
       slotComponent,
       normalizeChildren: noopNormalize,
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
     })
     expect((el.props as { ref: unknown }).ref).toBe(ref)
   })
@@ -76,6 +88,8 @@ describe('render', () => {
       ref: null,
       slotComponent,
       normalizeChildren: noopNormalize,
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
     })
     expect((el.props as Record<string, unknown>)['data-testid']).toBe('box')
   })
@@ -87,6 +101,8 @@ describe('render', () => {
       ref: null,
       slotComponent,
       normalizeChildren: noopNormalize,
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
     })
     expect('children' in (el.props as object)).toBe(false)
   })
@@ -99,6 +115,8 @@ describe('render', () => {
       ref: null,
       slotComponent,
       normalizeChildren: noopNormalize,
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
     })
     expect((el.props as { children: unknown }).children).toBe(child)
   })
@@ -111,6 +129,7 @@ describe('render', () => {
       slotComponent,
       normalizeChildren: noopNormalize,
       filterProps: (key) => key === 'size',
+      slotValidator: defaultValidator,
     })
     const props = el.props as Record<string, unknown>
     expect(props['size']).toBeUndefined()
@@ -125,6 +144,8 @@ describe('render', () => {
         ref: null,
         slotComponent,
         normalizeChildren: noopNormalize,
+        filterProps: noopFilter,
+        slotValidator: defaultValidator,
       }),
     ).toThrow('Test: "as" and "asChild" are mutually exclusive')
   })
@@ -137,6 +158,8 @@ describe('render', () => {
         ref: null,
         slotComponent,
         normalizeChildren: () => [],
+        filterProps: noopFilter,
+        slotValidator: defaultValidator,
       }),
     ).toThrow('asChild requires exactly one React element child, got 0')
   })
@@ -150,6 +173,8 @@ describe('render', () => {
         ref: null,
         slotComponent,
         normalizeChildren: () => kids,
+        filterProps: noopFilter,
+        slotValidator: defaultValidator,
       }),
     ).toThrow('asChild requires exactly one React element child, got 2')
   })
@@ -162,6 +187,8 @@ describe('render', () => {
       ref: null,
       slotComponent,
       normalizeChildren: () => [child],
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
     })
     expect(el.type).toBe(slotComponent)
     expect((el.props as { children: unknown }).children).toBe(child)
@@ -176,6 +203,8 @@ describe('render', () => {
       ref: null,
       slotComponent,
       normalizeChildren: () => [child],
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
     })
     expect((el.props as { className: string }).className).toBe('slot-class')
   })
@@ -189,6 +218,8 @@ describe('render', () => {
       ref: null,
       slotComponent,
       normalizeChildren: noopNormalize,
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
     })
     expect(resolveClasses).toHaveBeenCalledWith(
       expect.anything(),
@@ -210,6 +241,8 @@ describe('render', () => {
       slotComponent,
       // normalizeChildren strips the text node — child count shrinks from 2 to 1
       normalizeChildren: () => [child],
+      filterProps: noopFilter,
+      slotValidator: new SlotValidator('Test', 'warn'),
     })
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('discarded 1 non-element child'))
     warnSpy.mockRestore()
@@ -226,6 +259,8 @@ describe('render', () => {
       ref: null,
       slotComponent,
       normalizeChildren: () => [child],
+      filterProps: noopFilter,
+      slotValidator: new SlotValidator('Test', false),
     })
     expect(warnSpy).not.toHaveBeenCalled()
     warnSpy.mockRestore()
@@ -238,6 +273,8 @@ describe('render', () => {
       ref: null,
       slotComponent,
       normalizeChildren: noopNormalize,
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
     })
     const props = el.props as Record<string, unknown>
     expect(props['as']).toBeUndefined()
