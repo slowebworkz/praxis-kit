@@ -2,27 +2,14 @@ import type { LayoutKey } from './layout'
 
 export type ClassToken = string
 
-export interface LayoutToken {
-  kind: 'layout'
-  value: LayoutKey
+type Token<TKind extends string, TData extends object = Record<never, never>> = {
+  kind: TKind
   raw: string
-}
+} & TData
 
-export interface UtilityToken {
-  kind: 'utility'
-  base: string
-  raw: string
-}
+export type LayoutToken = Token<'layout', { value: LayoutKey }>
+export type ConditionalToken = Token<'conditional', { requires: LayoutKey }>
+export type GapToken = Token<'gap'>
+export type UtilityToken = Token<'utility', { base: string }>
 
-export interface ConditionalToken {
-  kind: 'conditional'
-  requires: LayoutKey
-  raw: string
-}
-
-export interface GapToken {
-  kind: 'gap'
-  raw: string
-}
-
-export type ClassifiedToken = LayoutToken | UtilityToken | ConditionalToken | GapToken
+export type ClassifiedToken = LayoutToken | ConditionalToken | GapToken | UtilityToken
