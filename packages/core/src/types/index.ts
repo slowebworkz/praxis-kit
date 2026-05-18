@@ -25,6 +25,7 @@ export type {
 } from './child-rule'
 export type { ClassPipelineFn } from './class-pipeline'
 export type { ClassPipelineOptions } from './class-pipeline-options'
+export type { ClassPlugin, ClassPluginFactory, OwnedPropKeys } from './class-plugin'
 export type {
   CompoundVariant,
   CVACompounds,
