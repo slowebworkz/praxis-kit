@@ -1,4 +1,5 @@
 import type { Simplify } from 'type-fest'
+import type { ClassPlugin } from './class-plugin'
 import type { AnyRecord, ClassName, ElementType } from './primitives'
 import type { ResolvedFactoryOptions } from './resolved-factory-options'
 import type { VariantMap, VariantProps } from './variant'
@@ -41,6 +42,9 @@ export type PolymorphicRuntime<
    * Single source of truth for runtime behavior.
    */
   readonly options: Readonly<ResolvedFactoryOptions<TDefault, Props, Variants, TPreset>>
+
+  /** Instantiated plugin, present when `classPlugin` was supplied to the factory. */
+  readonly classPlugin?: ClassPlugin
 
   /**
    * Resolves the final element type.

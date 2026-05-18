@@ -4,6 +4,7 @@ export type {
   SlotComponent,
   VariantKey,
   Runtime,
+  TypedRuntime,
   RuntimeOptions,
   TagResolver,
   PropsResolver,
@@ -23,6 +24,7 @@ export type {
 export type { PolymorphicProps, PolymorphicComponent, ElementRef } from './polymorphic-props'
 export { mergeRefs } from './merge-refs'
 export { buildRuntime } from './build-runtime'
+export type { BuiltRuntime } from './build-runtime'
 export { applyDisplayName } from './apply-display-name'
 export * from './slot'
 export { render } from './render'
