@@ -1,3 +1,4 @@
+import type { ClassPluginFactory } from './class-plugin'
 import type { CompoundVariant } from './compound-variants'
 import type { ChildRuleInput } from './child-rule'
 import type { AnyRecord, ClassName, ElementType, TagMap } from './primitives'
@@ -65,4 +66,12 @@ export type FactoryOptions<
 
   /** Rules that normalized children must satisfy. Evaluated on every render when present. */
   readonly childRules?: readonly ChildRuleInput[]
+
+  /**
+   * Optional class pipeline plugin. When provided, the factory calls it with the resolved
+   * options and uses the returned pipeline in place of the default `createClassPipeline`.
+   * The plugin may also declare `ownedKeys` — prop keys it consumes — which adapters can
+   * use to strip those keys before they reach the DOM or framework bindings.
+   */
+  readonly classPlugin?: ClassPluginFactory
 }

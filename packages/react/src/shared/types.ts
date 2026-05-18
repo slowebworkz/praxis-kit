@@ -3,7 +3,10 @@ import type {
   ChildrenEvaluator,
   ClassName,
   ElementType,
+  PolymorphicRuntime,
   ResolvedFactoryOptions,
+  VariantMap,
+  VariantProps,
 } from '@polymorphic-ui/core'
 import type { Simplify } from 'type-fest'
 import type { ComponentType, ReactElement, Ref } from 'react'
@@ -38,7 +41,7 @@ export type ClassResolver = Readonly<{
   ): string
 }>
 
-/** Widened runtime contract shared by the render layer, avoiding the complex core generics. */
+/** Widened runtime contract used by the render layer. */
 export type Runtime = Readonly<
   TagResolver &
     PropsResolver &
@@ -46,6 +49,18 @@ export type Runtime = Readonly<
       options: RuntimeOptions
     }
 >
+
+/**
+ * Fully-typed runtime that preserves all generic parameters from the factory.
+ * Used at the build layer for type-safe construction; widened to `Runtime` for
+ * the render layer where the specific props/variant types are not needed.
+ */
+export type TypedRuntime<
+  TDefault extends ElementType,
+  Props extends UnknownProps,
+  Variants extends Readonly<VariantMap>,
+  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
+> = PolymorphicRuntime<TDefault, Props, Variants, Extract<keyof TPreset, string>, TPreset>
 
 /* -------------------------------------------------------------------------------------------------
  * Polymorphic Props

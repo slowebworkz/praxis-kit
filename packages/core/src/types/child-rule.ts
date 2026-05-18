@@ -4,10 +4,17 @@ import type { Merge, Tagged } from 'type-fest'
  * Author/input layer
  */
 
+/** Type-guard predicate used to match a child against a rule. */
 export type ChildRuleMatch<T, U extends T = T> = (child: T) => child is U
 
+/** Where in the children array a rule's matches must appear. */
 export type ChildRulePosition = 'first' | 'last' | 'any'
 
+/**
+ * Author-facing cardinality bounds. Both fields are optional:
+ * omitting both produces an unbounded rule; omitting `max` with `position='first'|'last'`
+ * implicitly sets `max=1` during normalization.
+ */
 export type CardinalityInput = {
   min?: number
   max?: number
