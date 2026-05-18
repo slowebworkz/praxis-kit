@@ -1,8 +1,14 @@
 import { createElement } from 'react'
 import { jsx } from 'react/jsx-runtime'
 import type { ReactElement, Ref } from 'react'
-import type { ElementType } from '@polymorphic-ui/core'
-import type { SlotValidator } from './slot/slot-validator'
+import type {
+  AriaPolicyEngine,
+  ElementType,
+  IntrinsicProps} from '@polymorphic-ui/core';
+import {
+  isKnownAriaRole,
+} from '@polymorphic-ui/core'
+import type { SlotValidator } from './slot'
 import type {
   UnknownProps,
   SlotComponent,
@@ -11,6 +17,7 @@ import type {
   RenderInput,
   NormalizeChildren,
   ResolvedProps,
+  ResolvedSlotRender,
   RenderDirectives,
   FilterPredicate,
   ResolvedRenderState,
@@ -21,11 +28,39 @@ function applyFilter<T extends ResolvedProps>(
   filterProps: FilterPredicate,
   variantKeys: ReadonlySet<string>,
 ): T {
-  const out: UnknownProps = {}
+  const out = {} as T
   for (const [k, v] of Object.entries(props)) {
-    if (!filterProps(k, variantKeys)) out[k] = v
+    if (!filterProps(k, variantKeys)) (out as UnknownProps)[k] = v
   }
-  return out as T
+  return out
+}
+
+function buildDirectives(
+  as: ElementType | undefined,
+  asChild: boolean | undefined,
+): RenderDirectives {
+  return {
+    ...(as !== undefined && { as }),
+    ...(asChild !== undefined && { asChild }),
+  }
+}
+
+function buildRenderState(
+  tag: ElementType,
+  directives: RenderDirectives,
+  props: ResolvedProps,
+  className: string,
+  children: unknown,
+): ResolvedRenderState {
+  const state: {
+    tag: ElementType
+    directives: RenderDirectives
+    props: ResolvedProps
+    className: string
+    children?: unknown
+  } = { tag, directives, props, className }
+  if (children !== undefined) state.children = children
+  return state
 }
 
 function resolveRenderState(
@@ -38,40 +73,72 @@ function resolveRenderState(
   const mergedProps = runtime.resolveProps(rest)
   const resolvedClass = runtime.resolveClasses(tag, mergedProps, className, variantKey)
   const filteredProps = applyFilter(mergedProps, filterProps, runtime.options.variantKeys)
+  return buildRenderState(tag, buildDirectives(as, asChild), filteredProps, resolvedClass, children)
+}
 
-  const directives: { as?: ElementType; asChild?: boolean } = {}
-  if (as !== undefined) directives.as = as
-  if (asChild !== undefined) directives.asChild = asChild
+function warnDiscardedChildren(
+  originalChildren: unknown,
+  normalizedChildren: ReactElement[],
+  validator: SlotValidator,
+): void {
+  if (!Array.isArray(originalChildren)) return
+  const discarded = originalChildren.length - normalizedChildren.length
+  if (discarded > 0) validator.warnDiscardedChildren(discarded)
+}
 
-  const state: {
-    tag: ElementType
-    directives: RenderDirectives
-    props: ResolvedProps
-    className: string
-    children?: unknown
-  } = { tag, directives, props: filteredProps, className: resolvedClass }
-
-  if (children !== undefined) state.children = children
-
-  return state
+function isSingleElementArray(arr: ReactElement[]): arr is [ReactElement] {
+  return arr.length === 1
 }
 
 function resolveSlotChildren(
   children: unknown,
   normalizeChildren: NormalizeChildren,
   validator: SlotValidator,
-): ReactElement[] | null {
+): ReactElement | null {
   const normalized = normalizeChildren(children)
-  if (Array.isArray(children)) {
-    const discarded = children.length - normalized.length
-    if (discarded > 0) validator.warnDiscardedChildren(discarded)
-  }
-  if (normalized.length !== 1) {
+  warnDiscardedChildren(children, normalized, validator)
+  if (!isSingleElementArray(normalized)) {
     validator.assertSingleChild(normalized.length)
     // Non-throw modes: warned and fell through — render normally as a fallback.
     return null
   }
-  return normalized
+  return normalized[0]
+}
+
+function validateSlotDirectives(directives: RenderDirectives, validator: SlotValidator): boolean {
+  const { as, asChild } = directives
+  if (!asChild) return false
+  if (as !== undefined) {
+    validator.assertExclusive()
+    // Non-throw modes: warned and fell through — render normally as a fallback.
+    return false
+  }
+  return true
+}
+
+function resolveSlotRender(
+  state: ResolvedRenderState,
+  normalizeChildren: NormalizeChildren,
+  validator: SlotValidator,
+): ResolvedSlotRender | null {
+  if (!validateSlotDirectives(state.directives, validator)) return null
+  const child = resolveSlotChildren(state.children, normalizeChildren, validator)
+  if (child === null) return null
+  return { child }
+}
+
+function renderResolvedSlot(
+  slotComponent: SlotComponent,
+  state: ResolvedRenderState,
+  resolved: ResolvedSlotRender,
+  ref: Ref<unknown> | null,
+): ReactElement {
+  return jsx(slotComponent, {
+    ...state.props,
+    className: state.className,
+    ref,
+    children: resolved.child,
+  })
 }
 
 function tryRenderAsChild(
@@ -81,29 +148,39 @@ function tryRenderAsChild(
   normalizeChildren: NormalizeChildren,
   validator: SlotValidator,
 ): ReactElement | null {
-  const { as, asChild } = state.directives
-  if (!asChild) return null
-  if (as !== undefined) {
-    validator.assertExclusive()
-    // Non-throw modes: warned and fell through — render normally as a fallback.
-    return null
-  }
-
-  const normalizedChildren = resolveSlotChildren(state.children, normalizeChildren, validator)
-  if (normalizedChildren === null) return null
-
-  return jsx(slotComponent, {
-    ...state.props,
-    className: state.className,
-    ref,
-    children: normalizedChildren[0]!,
-  }) as ReactElement
+  const resolved = resolveSlotRender(state, normalizeChildren, validator)
+  if (resolved === null) return null
+  return renderResolvedSlot(slotComponent, state, resolved, ref)
 }
 
-function renderIntrinsic(state: ResolvedRenderState, ref: Ref<unknown> | null): ReactElement {
-  const elementProps: UnknownProps = { ...state.props, className: state.className, ref }
-  if (state.children !== undefined) elementProps['children'] = state.children
-  return createElement(state.tag, elementProps)
+function buildElementProps(
+  props: ResolvedProps,
+  className: string,
+  ref: Ref<unknown> | null,
+  children: unknown,
+): IntrinsicProps {
+  const { role, ...rest } = props
+
+  return {
+    ...rest,
+    className,
+    ref,
+    ...(children !== undefined && { children }),
+    ...(isKnownAriaRole(role) && { role }),
+  }
+}
+
+function renderIntrinsic(
+  state: ResolvedRenderState,
+  ref: Ref<unknown> | null,
+  ariaEngine: AriaPolicyEngine,
+): ReactElement {
+  const elementProps = buildElementProps(state.props, state.className, ref, state.children)
+  const domProps =
+    typeof state.tag === 'string'
+      ? ariaEngine.validate(state.tag, elementProps).props
+      : elementProps
+  return createElement(state.tag, domProps)
 }
 
 export function render<TProps extends KnownProps>({
@@ -114,6 +191,7 @@ export function render<TProps extends KnownProps>({
   normalizeChildren,
   filterProps,
   slotValidator,
+  ariaEngine,
   childrenEvaluator,
 }: RenderInput<TProps>): ReactElement {
   const state = resolveRenderState(runtime, props, filterProps)
@@ -122,5 +200,5 @@ export function render<TProps extends KnownProps>({
 
   const slotResult = tryRenderAsChild(state, ref, slotComponent, normalizeChildren, slotValidator)
 
-  return slotResult ?? renderIntrinsic(state, ref)
+  return slotResult ?? renderIntrinsic(state, ref, ariaEngine)
 }

@@ -1,4 +1,5 @@
 import type {
+  AriaPolicyEngine,
   ChildrenEvaluator,
   ClassName,
   ElementType,
@@ -83,8 +84,12 @@ export type ResolvedRenderState = Readonly<{
   tag: ElementType
   directives: RenderDirectives
   children?: unknown
-  className?: string
+  className: string
   props: ResolvedProps
+}>
+
+export type ResolvedSlotRender = Readonly<{
+  child: ReactElement
 }>
 
 /* -------------------------------------------------------------------------------------------------
@@ -107,5 +112,6 @@ export type RenderInput<TProps extends KnownProps = KnownProps> = Readonly<{
   normalizeChildren: NormalizeChildren
   filterProps: FilterPredicate
   slotValidator: SlotValidator
+  ariaEngine: AriaPolicyEngine
   childrenEvaluator?: ChildrenEvaluator
 }>

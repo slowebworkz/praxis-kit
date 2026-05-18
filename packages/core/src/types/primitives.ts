@@ -29,26 +29,8 @@ export type ElementType = IntrinsicTag | (string & {})
  */
 export type IntrinsicTag = keyof HTMLElementTagNameMap
 
-/**
- * A valid WAI-ARIA role. Known landmark and common roles are listed as
- * literals for IDE autocomplete; `string & {}` admits any other role
- * without collapsing the union to plain `string`.
- */
-export type AriaRole =
-  | 'alert'
-  | 'alertdialog'
-  | 'article'
-  | 'banner'
-  | 'button'
-  | 'complementary'
-  | 'contentinfo'
-  | 'dialog'
-  | 'form'
-  | 'main'
-  | 'navigation'
-  | 'region'
-  | 'search'
-  | (string & {})
+import type { AriaRole } from './aria-role'
+export type { AriaRole, KnownAriaRole } from './aria-role'
 
 /**
  * Props for an intrinsic HTML element. `role` is explicitly typed as the
