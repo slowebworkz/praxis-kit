@@ -1,12 +1,12 @@
 import type { JSX, ReactElement, Ref } from 'react'
 import type {
-  AnyRecord,
   ClassName,
   ElementType,
   IntrinsicTag,
   VariantMap,
   VariantProps,
 } from '@polymorphic-ui/core'
+import type { UnknownProps } from './types'
 
 /** Maps a core ElementType to its DOM instance type for ref inference. */
 export type ElementRef<T extends ElementType> = T extends IntrinsicTag
@@ -16,7 +16,7 @@ export type ElementRef<T extends ElementType> = T extends IntrinsicTag
 /** React JSX intrinsic props for a given element type. */
 type IntrinsicJSXProps<T extends ElementType> = T extends IntrinsicTag
   ? JSX.IntrinsicElements[T]
-  : AnyRecord
+  : UnknownProps
 
 /**
  * Control props owned by the polymorphic system. Separated so they can be
@@ -25,7 +25,7 @@ type IntrinsicJSXProps<T extends ElementType> = T extends IntrinsicTag
  */
 type ControlProps<
   TAs extends ElementType,
-  Props extends AnyRecord,
+  Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
   TPreset extends Record<string, Partial<VariantProps<Variants>>>,
 > = Props &
@@ -51,7 +51,7 @@ type ControlProps<
  */
 export type PolymorphicProps<
   TDefault extends ElementType,
-  Props extends AnyRecord,
+  Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
   TPreset extends Record<string, Partial<VariantProps<Variants>>>,
   TAs extends ElementType = TDefault,
@@ -66,7 +66,7 @@ export type PolymorphicProps<
  */
 export type PolymorphicComponent<
   TDefault extends ElementType,
-  Props extends AnyRecord,
+  Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
   TPreset extends Record<string, Partial<VariantProps<Variants>>>,
 > = {
