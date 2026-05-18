@@ -13,6 +13,7 @@ export type {
   PolymorphicPropsBase,
   KnownProps,
   ResolvedProps,
+  ResolvedSlotRender,
   RenderDirectives,
   ResolvedRenderState,
   FilterPredicate,

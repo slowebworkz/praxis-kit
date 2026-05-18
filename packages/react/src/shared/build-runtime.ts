@@ -1,4 +1,4 @@
-import { createPolymorphic, ChildrenEvaluator } from '@polymorphic-ui/core'
+import { createPolymorphic, AriaPolicyEngine, ChildrenEvaluator } from '@polymorphic-ui/core'
 import type { ElementType, VariantMap, VariantProps } from '@polymorphic-ui/core'
 import type { ReactElement } from 'react'
 import { SlotValidator } from './slot/slot-validator'
@@ -25,6 +25,7 @@ export function buildRuntime<
   }) as unknown as Runtime
 
   const slotValidator = new SlotValidator(name, resolvedStrict)
+  const ariaEngine = new AriaPolicyEngine(resolvedStrict)
   const childrenEvaluator = childRules?.length
     ? new ChildrenEvaluator(childRules, resolvedStrict, name)
     : undefined
@@ -39,6 +40,7 @@ export function buildRuntime<
     slotComponent,
     normalizeChildren,
     slotValidator,
+    ariaEngine,
     filterProps: resolvedFilter,
     ...(childrenEvaluator !== undefined && { childrenEvaluator }),
   }
