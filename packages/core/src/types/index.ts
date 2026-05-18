@@ -43,6 +43,7 @@ export type {
   ElementType,
   IntrinsicProps,
   IntrinsicTag,
+  KnownAriaRole,
   PropsWithRole,
 } from './primitives'
 export type { ResolvedFactoryOptions } from './resolved-factory-options'
