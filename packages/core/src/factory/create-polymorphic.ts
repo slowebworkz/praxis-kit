@@ -11,6 +11,14 @@ import type {
 } from '../types'
 import { mergeProps } from '../utils'
 
+/**
+ * Creates a `PolymorphicRuntime` from the given factory options.
+ *
+ * Normalizes options, instantiates the class pipeline (or the provided `classPlugin`),
+ * and returns an immutable runtime object with `resolveTag`, `resolveProps`,
+ * `resolveClasses`, and `options`. Framework adapters consume this runtime to
+ * drive rendering and validation.
+ */
 export function createPolymorphic<
   TDefault extends ElementType,
   Props extends AnyRecord,
@@ -20,7 +28,8 @@ export function createPolymorphic<
   options: FactoryOptions<TDefault, Props, Variants, TPreset> = {},
 ): PolymorphicRuntime<TDefault, Props, Variants, Extract<keyof TPreset, string>, TPreset> {
   const resolved = resolveFactoryOptions(options)
-  const classPipeline = createClassPipeline(resolved)
+  const plugin = options.classPlugin?.(resolved)
+  const classPipeline = plugin?.pipeline ?? createClassPipeline(resolved)
 
   return {
     resolveTag<T extends ElementType>(as?: T): T | TDefault {
@@ -36,5 +45,6 @@ export function createPolymorphic<
     },
 
     options: resolved,
+    ...(plugin !== undefined && { classPlugin: plugin }),
   }
 }
