@@ -51,7 +51,8 @@ export class AriaPolicyEngine extends StrictBase {
     const pendingFixes = new Map<FixKind, AriaFix>()
 
     for (const rule of AriaPolicyEngine.#pipeline) {
-      const context: AriaContext = { tag, props, implicitRole }
+      const effectiveRole = (props.role as string | undefined) ?? implicitRole
+      const context: AriaContext = { tag, props, implicitRole, effectiveRole }
       for (const result of rule(context)) {
         if (!result.valid) {
           const role = props.role
@@ -105,7 +106,8 @@ export class AriaPolicyEngine extends StrictBase {
     let applied = false
     for (const { apply } of fixes.values()) {
       if (!AriaPolicyEngine.#hasRole(next)) break
-      const fixContext: AriaContext = { tag, implicitRole, props: next }
+      const effectiveRole = (next.role as string | undefined) ?? implicitRole
+      const fixContext: AriaContext = { tag, implicitRole, effectiveRole, props: next }
       const fixResult = apply(fixContext)
       if (fixResult.applied) {
         next = fixResult.next as IntrinsicProps

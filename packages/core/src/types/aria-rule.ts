@@ -85,10 +85,17 @@ export type AriaResult = ValidResult | InvalidResult
  */
 export type AriaPhase = 'evaluate' | 'fix'
 
-/** The immutable context snapshot passed to every rule in the evaluation pipeline. */
+/**
+ * The immutable context snapshot passed to every rule in the evaluation pipeline.
+ *
+ * `effectiveRole` is the role the element is acting as: the explicit `props.role` when
+ * present, otherwise `implicitRole`. Attribute rules use this to check whether a given
+ * `aria-*` prop is permitted for the element's actual role without re-deriving it.
+ */
 export type AriaContext = {
   readonly tag: IntrinsicTag
   readonly implicitRole: AriaRole | undefined
+  readonly effectiveRole: string | undefined
   readonly props: ReadonlyDeep<IntrinsicProps>
 }
 
