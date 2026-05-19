@@ -1,17 +1,19 @@
-import type { IntrinsicProps } from './primitives'
-import type { AriaPhase } from './aria-rule'
+import type { IntrinsicProps, IntrinsicTag } from './primitives'
+import type { AriaContext, AriaPhase, Severity } from './aria-rule'
 
 /**
  * A single recorded ARIA policy violation.
  *
  * `phase` indicates when the violation was detected (`'evaluate'` for all current rules).
  * `role` is `undefined` when the violation is not role-specific (e.g. empty `role=""`).
+ * `attribute` is set when the violation targets a specific `aria-*` prop rather than `role`.
  */
 export type ValidationViolation = {
   message: string
   tag: string
   role: string | undefined
-  severity: 'error' | 'warning'
+  attribute: string | undefined
+  severity: Severity
   phase: AriaPhase
 }
 
@@ -25,3 +27,17 @@ export type ValidationResult = {
   props: IntrinsicProps
   violations: ReadonlyArray<ValidationViolation>
 }
+
+export type NormalizationResult =
+  | { normalized: false }
+  | { normalized: true; result: ValidationResult }
+
+export type EvaluationContext =
+  | { proceed: false; result: ValidationResult }
+  | {
+      proceed: true
+      tag: IntrinsicTag
+      implicitRole: string
+      effectiveRole: string
+      context: AriaContext
+    }

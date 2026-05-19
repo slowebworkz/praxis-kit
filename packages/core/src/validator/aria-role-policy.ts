@@ -1,22 +1,38 @@
 import type { IntrinsicTag } from '../types'
 
-type Registry = readonly (readonly [PropertyKey, unknown])[]
-type ImplicitRoleTuple<T extends Registry> = T[number]
-type ImplicitTag<T extends Registry> = ImplicitRoleTuple<T>[0]
-type ImplicitRole<T extends Registry> = ImplicitRoleTuple<T>[1]
+const IMPLICIT_ROLE_RECORD = {
+  // Landmark elements
+  article: 'article',
+  aside: 'complementary',
+  footer: 'contentinfo',
+  header: 'banner',
+  main: 'main',
+  nav: 'navigation',
+  // Interactive elements
+  button: 'button',
+  a: 'link',
+  select: 'listbox',
+  // Heading elements
+  h1: 'heading',
+  h2: 'heading',
+  h3: 'heading',
+  h4: 'heading',
+  h5: 'heading',
+  h6: 'heading',
+  // List elements
+  ul: 'list',
+  ol: 'list',
+  li: 'listitem',
+  // Table elements
+  table: 'table',
+  tr: 'row',
+  td: 'cell',
+  th: 'columnheader',
+} as const satisfies Partial<Record<IntrinsicTag, string>>
 
-const IMPLICIT_ROLES = [
-  ['article', 'article'],
-  ['aside', 'complementary'],
-  ['footer', 'contentinfo'],
-  ['header', 'banner'],
-  ['main', 'main'],
-  ['nav', 'navigation'],
-] as const
-
-type Roles = typeof IMPLICIT_ROLES
-type Tag = ImplicitTag<Roles>
-type Role = ImplicitRole<Roles>
+export type ImplicitRoleMap = typeof IMPLICIT_ROLE_RECORD
+type Tag = keyof ImplicitRoleMap
+type Role = ImplicitRoleMap[Tag]
 
 // STRONG_ROLES: landmark roles whose semantics resist role="region" override — replacing them
 // would silently degrade landmark navigation for assistive technology users.
@@ -32,24 +48,22 @@ const STRONG_ROLES = [
 // regardless of implicit-role strength (e.g. <article> is already its own AT landmark).
 const STANDALONE_ROLES = ['article'] as const satisfies readonly Role[]
 
-const implicitRoles = new Map<Tag, Role>(IMPLICIT_ROLES)
-
 const strongRoles = new Set<Role>(STRONG_ROLES)
-
 const standaloneRoles = new Set<Role>(STANDALONE_ROLES)
 
 export function getImplicitRole(tag: IntrinsicTag): Role | undefined {
-  return implicitRoles.get(tag as Tag)
+  if (tag in IMPLICIT_ROLE_RECORD) return IMPLICIT_ROLE_RECORD[tag as Tag]
+  return undefined
 }
 
 /** Returns true if `tag` carries a strong implicit role that cannot be overridden with `role="region"`. */
 export function isStrongImplicitRole(tag: string): boolean {
-  const role = implicitRoles.get(tag as Tag)
-  return role !== undefined && strongRoles.has(role)
+  if (!(tag in IMPLICIT_ROLE_RECORD)) return false
+  return strongRoles.has(IMPLICIT_ROLE_RECORD[tag as Tag])
 }
 
 /** Returns true if `tag` is a self-contained element whose implicit role makes `role="region"` invalid. */
 export function isStandaloneTag(tag: string): boolean {
-  const role = implicitRoles.get(tag as Tag)
-  return role !== undefined && standaloneRoles.has(role)
+  if (!(tag in IMPLICIT_ROLE_RECORD)) return false
+  return standaloneRoles.has(IMPLICIT_ROLE_RECORD[tag as Tag])
 }
