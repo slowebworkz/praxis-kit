@@ -26,7 +26,7 @@ export type AriaFixResult =
  * `'setRole'`; the `string & {}` tail admits future kinds without collapsing
  * autocomplete on the known literals.
  */
-export type FixKind = 'removeRole' | 'setRole' | (string & {})
+export type FixKind = 'removeRole' | 'setRole' | 'removeAttribute' | (string & {})
 
 /**
  * A self-contained fix action emitted by an ARIA rule when `fixable: true`.
