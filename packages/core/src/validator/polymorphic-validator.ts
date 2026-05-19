@@ -51,13 +51,13 @@ export class AriaPolicyEngine extends StrictBase {
 
     for (const rule of AriaPolicyEngine.#pipeline) {
       const context: AriaContext = { tag, props, implicitRole }
-      const result = rule(context)
-
-      if (!result.valid) {
-        const role = props.role
-        const message = result.message ?? `Invalid role "${role}" on <${tag}>`
-        violations.push({ message, tag, role, severity: result.severity, phase: 'evaluate' })
-        if (result.fixable) pendingFixes.set(result.fix.kind, result.fix)
+      for (const result of rule(context)) {
+        if (!result.valid) {
+          const role = props.role
+          const message = result.message ?? `Invalid role "${role}" on <${tag}>`
+          violations.push({ message, tag, role, severity: result.severity, phase: 'evaluate' })
+          if (result.fixable) pendingFixes.set(result.fix.kind, result.fix)
+        }
       }
     }
 
@@ -125,47 +125,57 @@ export class AriaPolicyEngine extends StrictBase {
     AriaPolicyEngine.#checkStandaloneRegion,
   ] as const satisfies readonly AriaRule[]
 
-  static #checkInvalidRoleOverride({ tag, props, implicitRole }: AriaContext): AriaResult {
+  static #checkInvalidRoleOverride({
+    tag,
+    props,
+    implicitRole,
+  }: AriaContext): readonly AriaResult[] {
     const role = props.role
-    if (!implicitRole || !role || role === implicitRole) return { valid: true }
+    if (!implicitRole || !role || role === implicitRole) return [{ valid: true }]
 
     if (isStrongImplicitRole(tag) && role === 'region') {
-      return {
+      return [
+        {
+          valid: false,
+          fixable: true,
+          severity: 'error',
+          fix: AriaPolicyEngine.#removeRole,
+          message: `<${tag}> should not override its implicit role="${implicitRole}" with role="${role}".`,
+        },
+      ]
+    }
+
+    return [{ valid: true }]
+  }
+
+  static #checkRedundantRole({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] {
+    const role = props.role
+    if (!implicitRole || !role || role !== implicitRole) return [{ valid: true }]
+
+    return [
+      {
+        valid: false,
+        fixable: true,
+        severity: 'warning',
+        fix: AriaPolicyEngine.#removeRole,
+        message: `<${tag}> already has implicit role="${implicitRole}". Avoid redundant role assignment.`,
+      },
+    ]
+  }
+
+  static #checkStandaloneRegion({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] {
+    const role = props.role
+    if (role !== 'region') return [{ valid: true }]
+    if (!isStandaloneTag(tag)) return [{ valid: true }]
+
+    return [
+      {
         valid: false,
         fixable: true,
         severity: 'error',
         fix: AriaPolicyEngine.#removeRole,
-        message: `<${tag}> should not override its implicit role="${implicitRole}" with role="${role}".`,
-      }
-    }
-
-    return { valid: true }
-  }
-
-  static #checkRedundantRole({ tag, props, implicitRole }: AriaContext): AriaResult {
-    const role = props.role
-    if (!implicitRole || !role || role !== implicitRole) return { valid: true }
-
-    return {
-      valid: false,
-      fixable: true,
-      severity: 'warning',
-      fix: AriaPolicyEngine.#removeRole,
-      message: `<${tag}> already has implicit role="${implicitRole}". Avoid redundant role assignment.`,
-    }
-  }
-
-  static #checkStandaloneRegion({ tag, props, implicitRole }: AriaContext): AriaResult {
-    const role = props.role
-    if (role !== 'region') return { valid: true }
-    if (!isStandaloneTag(tag)) return { valid: true }
-
-    return {
-      valid: false,
-      fixable: true,
-      severity: 'error',
-      fix: AriaPolicyEngine.#removeRole,
-      message: `<${tag}> is a self-contained element with implicit role="${implicitRole}". Assigning role="region" has been removed.`,
-    }
+        message: `<${tag}> is a self-contained element with implicit role="${implicitRole}". Assigning role="region" has been removed.`,
+      },
+    ]
   }
 }
