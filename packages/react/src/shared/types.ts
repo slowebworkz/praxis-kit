@@ -104,7 +104,7 @@ export type ResolvedRenderState = Readonly<{
 }>
 
 export type ResolvedSlotRender = Readonly<{
-  child: ReactElement
+  child: ReactElement | ReactElement[]
 }>
 
 /* -------------------------------------------------------------------------------------------------

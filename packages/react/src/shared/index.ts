@@ -21,7 +21,12 @@ export type {
   NormalizeChildren,
   RenderInput,
 } from './types'
-export type { PolymorphicProps, PolymorphicComponent, ElementRef } from './polymorphic-props'
+export type {
+  PolymorphicProps,
+  PolymorphicWithAsChild,
+  PolymorphicComponent,
+  ElementRef,
+} from './polymorphic-props'
 export { mergeRefs } from './merge-refs'
 export { buildRuntime } from './build-runtime'
 export type { BuiltRuntime } from './build-runtime'
