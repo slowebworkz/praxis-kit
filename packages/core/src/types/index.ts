@@ -9,6 +9,8 @@ export type {
   InvalidResult,
   InvalidWithFix,
   InvalidWithoutFix,
+  MaybePromise,
+  Severity,
   ValidResult,
 } from './aria-rule'
 export type {
