@@ -72,6 +72,9 @@ export type PolymorphicProps<
  * Props for the slot render path (`asChild: true`). One or more `ReactElement`
  * children are required. Multiple children are permitted for the Slottable
  * sibling pattern where one child is a `<Slottable>` wrapper.
+ *
+ * `as` is forbidden — combining `as` with `asChild` is a runtime invariant
+ * violation, so it is rejected at the type level too.
  */
 export type PolymorphicWithAsChild<
   TDefault extends ElementType,
@@ -81,6 +84,7 @@ export type PolymorphicWithAsChild<
   TAs extends ElementType = TDefault,
 > = SharedProps<TAs, Props, Variants, TPreset> & {
   asChild: true
+  as?: never
   children: ReactElement | ReactElement[]
 }
 

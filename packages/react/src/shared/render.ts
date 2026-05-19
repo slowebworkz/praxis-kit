@@ -1,14 +1,10 @@
 import { createElement } from 'react'
 import { jsx } from 'react/jsx-runtime'
 import type { ReactElement, Ref } from 'react'
-import type {
-  AriaPolicyEngine,
-  ElementType,
-  IntrinsicProps} from '@polymorphic-ui/core';
-import {
-  isKnownAriaRole,
-} from '@polymorphic-ui/core'
+import type { AriaPolicyEngine, ElementType, IntrinsicProps } from '@polymorphic-ui/core'
+import { isKnownAriaRole } from '@polymorphic-ui/core'
 import type { SlotValidator } from './slot'
+import { isSlottableElement } from './slot'
 import type {
   UnknownProps,
   SlotComponent,
@@ -94,15 +90,19 @@ function resolveSlotChildren(
   children: unknown,
   normalizeChildren: NormalizeChildren,
   validator: SlotValidator,
-): ReactElement | null {
+): ReactElement | ReactElement[] | null {
   const normalized = normalizeChildren(children)
   warnDiscardedChildren(children, normalized, validator)
-  if (!isSingleElementArray(normalized)) {
-    validator.assertSingleChild(normalized.length)
-    // Non-throw modes: warned and fell through — render normally as a fallback.
-    return null
+  if (isSingleElementArray(normalized)) {
+    return normalized[0]
   }
-  return normalized[0]
+  // Slottable sibling pattern: [element, <Slottable>] — Slot handles the merge internally.
+  if (normalized.length > 1 && normalized.some(isSlottableElement)) {
+    return normalized
+  }
+  validator.assertSingleChild(normalized.length)
+  // Non-throw modes: warned and fell through — render normally as a fallback.
+  return null
 }
 
 function validateSlotDirectives(directives: RenderDirectives, validator: SlotValidator): boolean {
