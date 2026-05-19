@@ -85,4 +85,4 @@ export type AriaContext = {
 }
 
 /** A pure function that evaluates a single ARIA policy rule against a context snapshot. */
-export type AriaRule<C extends AriaContext = AriaContext> = (context: C) => AriaResult
+export type AriaRule<C extends AriaContext = AriaContext> = (context: C) => readonly AriaResult[]
