@@ -4,17 +4,22 @@ function normalizeCardinality(
   input: CardinalityInput | undefined,
   impliesSingleton: boolean,
 ): Cardinality {
-  const min = input?.min
-  const max = input?.max ?? (impliesSingleton ? 1 : undefined)
-  if (min === undefined && max === undefined) return { kind: 'unbounded' }
-  const effectiveMin = min ?? 0
-  const effectiveMax = max ?? Infinity
-  if (effectiveMin > effectiveMax) {
-    throw new RangeError(
-      `normalizeChildRule: min (${effectiveMin}) cannot exceed max (${effectiveMax})`,
-    )
+  const min = input?.min ?? 0
+  const max = input?.max ?? (impliesSingleton ? 1 : Infinity)
+
+  if (min === 0 && max === Infinity) {
+    return { kind: 'unbounded' }
   }
-  return { kind: 'bounded', min: effectiveMin, max: effectiveMax }
+
+  if (min > max) {
+    throw new RangeError(`normalizeChildRule: min (${min}) cannot exceed max (${max})`)
+  }
+
+  return {
+    kind: 'bounded',
+    min,
+    max,
+  }
 }
 
 export function normalizeChildRule(rule: ChildRuleInput): NormalizedChildRule {

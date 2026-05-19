@@ -8,14 +8,14 @@ import type { VariantMap, VariantProps } from './variant'
 /* Resolvers                          */
 /* ---------------------------------- */
 
-type ResolveTagFn<TDefault extends ElementType> = {
+export type ResolveTagFn<TDefault extends ElementType> = {
   (): TDefault
   <T extends ElementType>(as: T): T
 }
 
 type ResolvePropsFn<Props extends AnyRecord> = <P extends AnyRecord>(
   props: P,
-) => Simplify<Partial<Props> & P>
+) => Simplify<Omit<Partial<Props>, keyof P> & P>
 
 type ResolveClassesFn<Props extends AnyRecord, TKeys extends string = never> = (
   tag: ElementType,
@@ -38,7 +38,7 @@ export type PolymorphicRuntime<
   >,
 > = {
   /**
-   * Normalized, immutable factory configuration.
+   * Normalized, read-only factory configuration.
    * Single source of truth for runtime behavior.
    */
   readonly options: Readonly<ResolvedFactoryOptions<TDefault, Props, Variants, TPreset>>
@@ -50,12 +50,12 @@ export type PolymorphicRuntime<
    * Resolves the final element type.
    * Supports polymorphic `as` overrides.
    */
-  resolveTag: ResolveTagFn<TDefault>
+  readonly resolveTag: ResolveTagFn<TDefault>
 
   /**
    * Merges default + incoming props into a final prop object.
    */
-  resolveProps: ResolvePropsFn<Props>
+  readonly resolveProps: ResolvePropsFn<Props>
 
   /**
    * Computes final class string from:
@@ -64,5 +64,5 @@ export type PolymorphicRuntime<
    * - base className
    * - variant key (slot/segment support)
    */
-  resolveClasses: ResolveClassesFn<Props, TKeys>
+  readonly resolveClasses: ResolveClassesFn<Props, TKeys>
 }

@@ -1,16 +1,14 @@
-export function getTypeName(child: unknown): string {
-  if (child === null) return 'null'
-  if (child === undefined) return 'undefined'
+export function getTypeName(value: unknown): string {
+  if (value === null) return 'null'
+  if (value === undefined) return 'undefined'
 
-  if (typeof child === 'object') {
-    const ctor = (child as object).constructor
-    if (ctor && ctor !== Object) {
-      const { name } = ctor
-      if (typeof name === 'string' && name.length > 0) {
-        return name
-      }
-    }
+  const primitive = typeof value
+
+  if (primitive !== 'object') {
+    return primitive
   }
 
-  return typeof child
+  const name = value.constructor?.name
+
+  return typeof name === 'string' && name !== 'Object' ? name : 'object'
 }
