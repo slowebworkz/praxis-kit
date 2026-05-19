@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { resolveTag } from './resolve-tag'
+import { makeResolveTag, resolveTag } from './resolve-tag'
 
 describe('resolveTag()', () => {
   it('returns defaultTag when as is undefined', () => {
@@ -30,5 +30,37 @@ describe('resolveTag()', () => {
 
   it('returns defaultTag when as is explicitly undefined', () => {
     expect(resolveTag('div', undefined)).toBe('div')
+  })
+})
+
+describe('makeResolveTag()', () => {
+  it('returns defaultTag when called with no arguments', () => {
+    const tag = makeResolveTag('div')
+    expect(tag()).toBe('div')
+  })
+
+  it('returns the provided as tag', () => {
+    const tag = makeResolveTag('div')
+    expect(tag('article')).toBe('article')
+  })
+
+  it('overrides the defaultTag with a different string', () => {
+    const tag = makeResolveTag('section')
+    expect(tag('span')).toBe('span')
+  })
+
+  it('uses the defaultTag when no argument is given (non-div)', () => {
+    const tag = makeResolveTag('nav')
+    expect(tag()).toBe('nav')
+  })
+
+  it('overrides with an arbitrary tag string', () => {
+    const tag = makeResolveTag('section')
+    expect(tag('aside')).toBe('aside')
+  })
+
+  it('returns the same function reference on each access', () => {
+    const tag = makeResolveTag('section')
+    expect(tag).toBe(tag)
   })
 })

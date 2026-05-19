@@ -35,7 +35,7 @@ export type {
 } from './compound-variants'
 export type { FactoryOptions } from './factory-options'
 export type { NonEmptyArray } from './non-empty-array'
-export type { PolymorphicRuntime } from './polymorphic-runtime'
+export type { PolymorphicRuntime, ResolveTagFn } from './polymorphic-runtime'
 export type {
   AnyRecord,
   AriaRole,

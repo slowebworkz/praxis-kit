@@ -96,7 +96,6 @@ element that contains `<Slottable>`, and `Slottable`'s children become the inner
 
 ```tsx
 import { createPolymorphicComponent, Slottable } from '@polymorphic-ui/react'
-
 ;<Button asChild>
   <a href="/dashboard">
     <span aria-hidden>→</span>

@@ -18,7 +18,7 @@ export function resolveFactoryOptions<
   // Conditional spreads rather than `key: value | undefined` satisfy exactOptionalPropertyTypes:
   // { key: undefined } and {} are distinct shapes under that flag.
   return Object.freeze({
-    defaultTag: options.defaultTag ?? 'div',
+    defaultTag: (options.defaultTag ?? 'div') as TDefault,
     strict: options.strict ?? false,
     variantKeys: new Set(Object.keys(options.variants ?? {})) as ReadonlySet<string>,
     ...(options.baseClassName !== undefined && { baseClassName: options.baseClassName }),

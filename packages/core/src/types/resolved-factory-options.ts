@@ -25,7 +25,7 @@ export type ResolvedFactoryOptions<
   >,
 > = {
   /** Resolved element type. `null` / `undefined` stripped; falls back to `string`. */
-  readonly defaultTag: NonNullable<TDefault> | string
+  readonly defaultTag: TDefault
   readonly baseClassName?: ClassName
   readonly defaultProps?: Partial<Props>
   readonly tagMap?: Readonly<TagMap>
