@@ -123,14 +123,30 @@ describe('as prop — event handler narrowing', () => {
 // ─── asChild — static type contract ──────────────────────────────────────────
 
 describe('asChild — static type contract', () => {
-  it('accepts asChild as boolean', () => {
+  it('accepts asChild with a ReactElement child', () => {
+    const _el = (
+      <Button asChild>
+        <a href="/" />
+      </Button>
+    )
+    void _el
+  })
+
+  it('rejects asChild without children', () => {
+    // @ts-expect-error — asChild: true requires at least one ReactElement child
     const _el = <Button asChild />
     void _el
   })
 
-  it('accepts children when asChild', () => {
+  it('accepts as when asChild is absent', () => {
+    const _el = <Button as="a" href="/" />
+    void _el
+  })
+
+  it('rejects as when asChild is true', () => {
     const _el = (
-      <Button asChild>
+      // @ts-expect-error — as and asChild are mutually exclusive; as is forbidden on the slot path
+      <Button asChild as="a">
         <a href="/" />
       </Button>
     )

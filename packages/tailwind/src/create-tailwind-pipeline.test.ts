@@ -3,11 +3,12 @@ import { describe, expect, it } from 'vitest'
 import { createTailwindPipeline } from './create-tailwind-pipeline'
 
 function resolve(
-  pipeline: ReturnType<typeof createTailwindPipeline>,
+  plugin: ReturnType<typeof createTailwindPipeline>,
   className = '',
   layout?: 'flex' | 'grid',
 ) {
-  return pipeline('div', {}, className, undefined, layout)
+  const props = layout === 'flex' ? { flex: true } : layout === 'grid' ? { grid: true } : {}
+  return plugin.pipeline('div', props, className, undefined)
 }
 
 describe('createTailwindPipeline — no layout (pass-through)', () => {
