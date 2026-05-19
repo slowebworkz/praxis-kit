@@ -3,6 +3,7 @@ import { createElement, isValidElement } from 'react'
 import type { ReactElement } from 'react'
 import { AriaPolicyEngine } from '@polymorphic-ui/core'
 import { render } from './render'
+import { Slottable } from './slot'
 import { SlotValidator } from './slot/slot-validator'
 import type { FilterPredicate, Runtime } from './types'
 
@@ -190,6 +191,25 @@ describe('render', () => {
         ariaEngine: defaultAriaEngine,
       }),
     ).toThrow('asChild requires exactly one React element child, got 2')
+  })
+
+  it('asChild with Slottable sibling pattern passes children through to Slot without throwing', () => {
+    const sibling = createElement('span', { 'aria-hidden': true })
+    const slottableEl = createElement(Slottable, null, createElement('a', { href: '/' }))
+    const kids = [sibling, slottableEl]
+    const el = render({
+      runtime: makeRuntime(),
+      props: { asChild: true, children: kids },
+      ref: null,
+      slotComponent,
+      normalizeChildren: () => kids,
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
+      ariaEngine: defaultAriaEngine,
+    })
+    expect(el.type).toBe(slotComponent)
+    const slotChildren = (el.props as { children: unknown }).children
+    expect(Array.isArray(slotChildren)).toBe(true)
   })
 
   it('asChild path renders the slotComponent wrapping the child', () => {
