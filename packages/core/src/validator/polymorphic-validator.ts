@@ -38,6 +38,7 @@ export class AriaPolicyEngine extends StrictBase {
           message: `<${tag}> has an explicit empty role="". Omit the attribute instead.`,
           tag,
           role: '',
+          attribute: undefined,
           severity: 'warning',
           phase: 'evaluate',
         })
@@ -55,7 +56,14 @@ export class AriaPolicyEngine extends StrictBase {
         if (!result.valid) {
           const role = props.role
           const message = result.message ?? `Invalid role "${role}" on <${tag}>`
-          violations.push({ message, tag, role, severity: result.severity, phase: 'evaluate' })
+          violations.push({
+            message,
+            tag,
+            role,
+            attribute: undefined,
+            severity: result.severity,
+            phase: 'evaluate',
+          })
           if (result.fixable) pendingFixes.set(result.fix.kind, result.fix)
         }
       }
