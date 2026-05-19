@@ -6,11 +6,13 @@ import type { AriaPhase, Severity } from './aria-rule'
  *
  * `phase` indicates when the violation was detected (`'evaluate'` for all current rules).
  * `role` is `undefined` when the violation is not role-specific (e.g. empty `role=""`).
+ * `attribute` is set when the violation targets a specific `aria-*` prop rather than `role`.
  */
 export type ValidationViolation = {
   message: string
   tag: string
   role: string | undefined
+  attribute: string | undefined
   severity: Severity
   phase: AriaPhase
 }
