@@ -3,20 +3,42 @@ import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-r
 
 describe('getImplicitRole', () => {
   it.each([
+    // Landmark elements
     ['article', 'article'],
     ['aside', 'complementary'],
     ['footer', 'contentinfo'],
     ['header', 'banner'],
     ['main', 'main'],
     ['nav', 'navigation'],
-  ] as const)('returns "%s" for <%s>', (tag, role) => {
+    // Interactive elements
+    ['button', 'button'],
+    ['a', 'link'],
+    ['select', 'listbox'],
+    // Heading elements
+    ['h1', 'heading'],
+    ['h2', 'heading'],
+    ['h3', 'heading'],
+    ['h4', 'heading'],
+    ['h5', 'heading'],
+    ['h6', 'heading'],
+    // List elements
+    ['ul', 'list'],
+    ['ol', 'list'],
+    ['li', 'listitem'],
+    // Table elements
+    ['table', 'table'],
+    ['tr', 'row'],
+    ['td', 'cell'],
+    ['th', 'columnheader'],
+  ] as const)('<%s> → "%s"', (tag, role) => {
     expect(getImplicitRole(tag)).toBe(role)
   })
 
   it('returns undefined for elements with no implicit role', () => {
     expect(getImplicitRole('div')).toBeUndefined()
     expect(getImplicitRole('span')).toBeUndefined()
-    expect(getImplicitRole('button')).toBeUndefined()
+    expect(getImplicitRole('input')).toBeUndefined()
+    expect(getImplicitRole('p')).toBeUndefined()
   })
 })
 
