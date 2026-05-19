@@ -1,5 +1,5 @@
 import type { IntrinsicProps } from './primitives'
-import type { AriaPhase } from './aria-rule'
+import type { AriaPhase, Severity } from './aria-rule'
 
 /**
  * A single recorded ARIA policy violation.
@@ -11,7 +11,7 @@ export type ValidationViolation = {
   message: string
   tag: string
   role: string | undefined
-  severity: 'error' | 'warning'
+  severity: Severity
   phase: AriaPhase
 }
 

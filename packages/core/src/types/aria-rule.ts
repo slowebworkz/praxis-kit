@@ -1,6 +1,9 @@
 import type { ReadonlyDeep } from 'type-fest'
 import type { AriaRole, IntrinsicProps, IntrinsicTag } from './primitives'
 
+/** Allows rule and fix contracts to stay sync today while supporting async in the future. */
+export type MaybePromise<T> = T | Promise<T>
+
 /**
  * The result of applying a single `AriaFix` to a props object.
  *
@@ -33,38 +36,43 @@ export type FixKind = 'removeRole' | 'setRole' | 'removeAttribute' | (string & {
  *
  * `kind` is used to deduplicate fixes across rules. `apply` receives the current
  * props snapshot and returns an `AriaFixResult` indicating whether it mutated anything.
+ *
+ * `priority` controls ordering when multiple fixes coexist (lower = runs first).
+ * `source` records which rule pack or plugin produced the fix — useful for conflict resolution.
  */
 export type AriaFix = {
   readonly kind: FixKind
+  readonly priority?: number
+  readonly source?: string
   readonly apply: (context: AriaContext) => AriaFixResult
 }
 
 export type ValidResult = { valid: true }
 
-type Severity = 'error' | 'warning'
+export type Severity = 'error' | 'warning' | (string & {})
 
-type InvalidBase = {
+type InvalidBase<M extends string = string> = {
   valid: false
   severity: Severity
-  message: string
+  message: M
 }
 
 /**
  * An invalid rule result that carries an auto-fix.
  * The fix is deduplicated by `kind` before the fix phase runs.
  */
-export type InvalidWithFix = InvalidBase & {
+export type InvalidWithFix<M extends string = string> = InvalidBase<M> & {
   fixable: true
   fix: AriaFix
 }
 
 /** An invalid rule result with no available auto-fix. */
-export type InvalidWithoutFix = InvalidBase & {
+export type InvalidWithoutFix<M extends string = string> = InvalidBase<M> & {
   fixable: false
 }
 
 /** Discriminated union returned by every `AriaRule`. */
-export type InvalidResult = InvalidWithFix | InvalidWithoutFix
+export type InvalidResult<M extends string = string> = InvalidWithFix<M> | InvalidWithoutFix<M>
 
 /** The full return type of an `AriaRule` — valid or invalid (with or without a fix). */
 export type AriaResult = ValidResult | InvalidResult
@@ -85,4 +93,6 @@ export type AriaContext = {
 }
 
 /** A pure function that evaluates a single ARIA policy rule against a context snapshot. */
-export type AriaRule<C extends AriaContext = AriaContext> = (context: C) => readonly AriaResult[]
+export type AriaRule<C extends AriaContext = AriaContext> = (
+  context: C,
+) => MaybePromise<readonly AriaResult[]>
