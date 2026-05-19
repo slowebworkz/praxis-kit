@@ -6,10 +6,10 @@ export type {
   AriaResult,
   AriaRule,
   FixKind,
+  RemoveAttributeFixKind,
   InvalidResult,
   InvalidWithFix,
   InvalidWithoutFix,
-  MaybePromise,
   Severity,
   ValidResult,
 } from './aria-rule'
@@ -52,5 +52,10 @@ export type {
 export type { ResolvedFactoryOptions } from './resolved-factory-options'
 export type { ResolveInput, ResolveOutput } from './resolver'
 export type { StrictMode } from './strict-mode'
-export type { ValidationResult, ValidationViolation } from './validation'
+export type {
+  EvaluationContext,
+  NormalizationResult,
+  ValidationResult,
+  ValidationViolation,
+} from './validation'
 export type { DefaultVariants, PresetMap, VariantMap, VariantProps, VariantValue } from './variant'

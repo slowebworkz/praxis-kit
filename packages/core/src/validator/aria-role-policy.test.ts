@@ -55,6 +55,27 @@ describe('isStrongImplicitRole', () => {
     expect(isStrongImplicitRole('div')).toBe(false)
     expect(isStrongImplicitRole('span')).toBe(false)
   })
+
+  it.each([
+    'button',
+    'a',
+    'select',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'ul',
+    'ol',
+    'li',
+    'table',
+    'tr',
+    'td',
+    'th',
+  ] as const)('returns false for <%s> (interactive/structural, not a strong landmark)', (tag) => {
+    expect(isStrongImplicitRole(tag)).toBe(false)
+  })
 })
 
 describe('isStandaloneTag', () => {
@@ -71,5 +92,26 @@ describe('isStandaloneTag', () => {
   it('returns false for elements with no implicit role', () => {
     expect(isStandaloneTag('div')).toBe(false)
     expect(isStandaloneTag('span')).toBe(false)
+  })
+
+  it.each([
+    'button',
+    'a',
+    'select',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'ul',
+    'ol',
+    'li',
+    'table',
+    'tr',
+    'td',
+    'th',
+  ] as const)('returns false for <%s>', (tag) => {
+    expect(isStandaloneTag(tag)).toBe(false)
   })
 })

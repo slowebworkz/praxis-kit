@@ -1,9 +1,6 @@
 import type { ReadonlyDeep } from 'type-fest'
 import type { AriaRole, IntrinsicProps, IntrinsicTag } from './primitives'
 
-/** Allows rule and fix contracts to stay sync today while supporting async in the future. */
-export type MaybePromise<T> = T | Promise<T>
-
 /**
  * The result of applying a single `AriaFix` to a props object.
  *
@@ -25,11 +22,12 @@ export type AriaFixResult =
  * Identifies the kind of mutation an `AriaFix` performs.
  *
  * Used for deduplication in the fix phase: at most one fix per `FixKind` runs,
- * regardless of how many rules emitted it. Known values are `'removeRole'` and
- * `'setRole'`; the `string & {}` tail admits future kinds without collapsing
- * autocomplete on the known literals.
+ * regardless of how many rules emitted it. Per-attribute removals use the
+ * namespaced form `'removeAttribute:aria-checked'` etc., giving each attribute
+ * its own deduplication slot without any structural change to the Map.
  */
-export type FixKind = 'removeRole' | 'setRole' | 'removeAttribute' | (string & {})
+export type RemoveAttributeFixKind = `removeAttribute:${string}`
+export type FixKind = 'removeRole' | 'setRole' | RemoveAttributeFixKind
 
 /**
  * A self-contained fix action emitted by an ARIA rule when `fixable: true`.
@@ -55,6 +53,7 @@ type InvalidBase<M extends string = string> = {
   valid: false
   severity: Severity
   message: M
+  attribute?: string
 }
 
 /**
@@ -100,6 +99,4 @@ export type AriaContext = {
 }
 
 /** A pure function that evaluates a single ARIA policy rule against a context snapshot. */
-export type AriaRule<C extends AriaContext = AriaContext> = (
-  context: C,
-) => MaybePromise<readonly AriaResult[]>
+export type AriaRule<C extends AriaContext = AriaContext> = (context: C) => readonly AriaResult[]

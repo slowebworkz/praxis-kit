@@ -1,5 +1,5 @@
-import type { IntrinsicProps } from './primitives'
-import type { AriaPhase, Severity } from './aria-rule'
+import type { IntrinsicProps, IntrinsicTag } from './primitives'
+import type { AriaContext, AriaPhase, Severity } from './aria-rule'
 
 /**
  * A single recorded ARIA policy violation.
@@ -27,3 +27,17 @@ export type ValidationResult = {
   props: IntrinsicProps
   violations: ReadonlyArray<ValidationViolation>
 }
+
+export type NormalizationResult =
+  | { normalized: false }
+  | { normalized: true; result: ValidationResult }
+
+export type EvaluationContext =
+  | { proceed: false; result: ValidationResult }
+  | {
+      proceed: true
+      tag: IntrinsicTag
+      implicitRole: string
+      effectiveRole: string
+      context: AriaContext
+    }

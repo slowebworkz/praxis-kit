@@ -80,4 +80,63 @@ describe('isAriaAttributeValidForRole', () => {
   it('returns false for aria-multiline on button', () => {
     expect(isAriaAttributeValidForRole('aria-multiline', 'button')).toBe(false)
   })
+
+  // Coverage for the remaining 9 restricted attributes
+
+  it.each([
+    ['aria-selected', 'option'],
+    ['aria-selected', 'tab'],
+    ['aria-selected', 'row'],
+    ['aria-haspopup', 'button'],
+    ['aria-haspopup', 'combobox'],
+    ['aria-haspopup', 'menuitem'],
+    ['aria-valuemin', 'slider'],
+    ['aria-valuemin', 'spinbutton'],
+    ['aria-valuemax', 'progressbar'],
+    ['aria-valuenow', 'meter'],
+    ['aria-valuenow', 'scrollbar'],
+    ['aria-valuetext', 'slider'],
+    ['aria-multiselectable', 'listbox'],
+    ['aria-multiselectable', 'grid'],
+    ['aria-multiselectable', 'tree'],
+    ['aria-readonly', 'textbox'],
+    ['aria-readonly', 'combobox'],
+    ['aria-required', 'combobox'],
+    ['aria-required', 'listbox'],
+    ['aria-orientation', 'slider'],
+    ['aria-orientation', 'tablist'],
+    ['aria-orientation', 'toolbar'],
+  ] as const)('returns true for %s on role="%s"', (attr, role) => {
+    expect(isAriaAttributeValidForRole(attr, role)).toBe(true)
+  })
+
+  it.each([
+    ['aria-selected', 'button'],
+    ['aria-haspopup', 'checkbox'],
+    ['aria-valuemin', 'button'],
+    ['aria-valuemax', 'listbox'],
+    ['aria-valuenow', 'heading'],
+    ['aria-valuetext', 'button'],
+    ['aria-multiselectable', 'button'],
+    ['aria-readonly', 'button'],
+    ['aria-required', 'button'],
+    ['aria-orientation', 'heading'],
+  ] as const)('returns false for %s on role="%s"', (attr, role) => {
+    expect(isAriaAttributeValidForRole(attr, role)).toBe(false)
+  })
+
+  it.each([
+    'aria-selected',
+    'aria-haspopup',
+    'aria-valuemin',
+    'aria-valuemax',
+    'aria-valuenow',
+    'aria-valuetext',
+    'aria-multiselectable',
+    'aria-readonly',
+    'aria-required',
+    'aria-orientation',
+  ])('returns false for %s when role is undefined', (attr) => {
+    expect(isAriaAttributeValidForRole(attr, undefined)).toBe(false)
+  })
 })
