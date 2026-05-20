@@ -6,6 +6,7 @@
     "paths": {
       "@polymorphic-ui/core": ["../core/src/index.ts"],
       "@polymorphic-ui/react": ["../react/src/index.ts"],
+      "@polymorphic-ui/tailwind": ["../tailwind/src/index.ts"],
       "@/shared": ["../react/src/shared/index.ts"],
       "@/shared/*": ["../react/src/shared/*"],
       "@/current": ["../react/src/current/index.ts"],

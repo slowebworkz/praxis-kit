@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "@polymorphic-ui/core": "workspace:*",
-    "@polymorphic-ui/react": "workspace:*"
+    "@polymorphic-ui/react": "workspace:*",
+    "@polymorphic-ui/tailwind": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "catalog:",
