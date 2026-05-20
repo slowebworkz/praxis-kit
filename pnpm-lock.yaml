@@ -115,6 +115,37 @@ importers:
         specifier: 'catalog:'
         version: 4.1.6(@vitest/ui@4.1.6)(jsdom@26.1.0)(vite@8.0.13(esbuild@0.27.7))
 
+  packages/docs:
+    dependencies:
+      '@polymorphic-ui/core':
+        specifier: workspace:*
+        version: link:../core
+      '@polymorphic-ui/react':
+        specifier: workspace:*
+        version: link:../react
+      '@polymorphic-ui/tailwind':
+        specifier: workspace:*
+        version: link:../tailwind
+    devDependencies:
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.3(@types/react@19.2.14)
+      jsdom:
+        specifier: 'catalog:'
+        version: 26.1.0
+      react:
+        specifier: 'catalog:'
+        version: 19.2.6
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.6(react@19.2.6)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.6(@vitest/ui@4.1.6)(jsdom@26.1.0)(vite@8.0.13(esbuild@0.27.7))
+
   packages/react:
     dependencies:
       '@polymorphic-ui/core':

@@ -1,4 +1,10 @@
-import type { ElementType, PolymorphicGenerics, PresetMap, VariantMap } from '@polymorphic-ui/core'
+import type {
+  AnyRecord,
+  ElementType,
+  PolymorphicGenerics,
+  PresetMap,
+  VariantMap,
+} from '@polymorphic-ui/core'
 import { forwardRef } from 'react'
 import type { ReactElement } from 'react'
 import { Slot } from './slot'
@@ -11,8 +17,13 @@ export function createPolymorphicComponent<
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
   TPreset extends PresetMap<Variants> = Readonly<Record<never, never>>,
->(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset>) {
-  const bundle = buildRuntime(options, Slot, normalizeChildren)
+  TPluginProps extends AnyRecord = Record<never, never>,
+>(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps>) {
+  const bundle = buildRuntime(
+    options as ReactFactoryOptions<TDefault, Props, Variants, TPreset>,
+    Slot,
+    normalizeChildren,
+  )
 
   const Component = forwardRef<unknown, Record<string, unknown>>(
     function PolymorphicComponent(props, ref): ReactElement {
@@ -22,6 +33,6 @@ export function createPolymorphicComponent<
 
   applyDisplayName(Component, options.displayName)
   return Component as unknown as PolymorphicComponent<
-    PolymorphicGenerics<TDefault, Props, Variants, TPreset>
+    PolymorphicGenerics<TDefault, Props & TPluginProps, Variants, TPreset>
   >
 }

@@ -1,6 +1,6 @@
 import type { CVACompounds, CVADefaults, CVAVariants } from './compound-variants'
 import type { ClassName, TagMap } from './primitives'
-import type { VariantMap, VariantProps } from './variant'
+import type { VariantMap, VariantSelection } from './variant'
 
 /** Always-applied base class, independent of tag or variant state. */
 interface BaseClassOptions {
@@ -36,15 +36,8 @@ export type StyleOptions<TVariants extends VariantMap = VariantMap> = BaseClassO
 
 /* ---------------- PRESET LAYER ---------------- */
 
-/**
- * A partial variant selection used as a preset value.
- *
- * Presets choose variant states — they are not style definitions themselves.
- * The resulting classes come from the variant system after the preset is applied.
- */
-export type PresetTarget<TVariants extends VariantMap = VariantMap> = Partial<
-  VariantProps<TVariants>
->
+/** A partial variant selection used as a preset/recipe value. */
+export type PresetTarget<TVariants extends VariantMap = VariantMap> = VariantSelection<TVariants>
 
 /** Named preset bundles, each selecting a subset of variant states by key. */
 interface PresetOptions<TVariants extends VariantMap = VariantMap> {

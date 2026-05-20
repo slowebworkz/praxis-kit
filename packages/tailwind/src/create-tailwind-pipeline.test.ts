@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi, afterEach } from 'vitest'
 
 import { createTailwindPipeline } from './create-tailwind-pipeline'
 
@@ -201,6 +201,44 @@ describe('createTailwindPipeline — layout param overrides className tokens', (
     expect(cls).toMatch(/\brounded\b/)
     expect(cls).toMatch(/\bgap-4\b/)
     expect(cls).not.toMatch(/\bflex-col\b/)
+  })
+})
+
+describe('createTailwindPipeline — flex/grid mutual exclusion', () => {
+  const pipeline = createTailwindPipeline({})
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('flex takes precedence when both are set', () => {
+    const cls = pipeline.pipeline(
+      'div',
+      { flex: true, grid: true },
+      'flex-row grid-cols-2',
+      undefined,
+    )
+    expect(cls).toMatch(/\bflex\b/)
+    expect(cls).not.toMatch(/\bgrid\b/)
+  })
+
+  it('emits a console.warn when both are set', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    pipeline.pipeline('div', { flex: true, grid: true }, '', undefined)
+    expect(warn).toHaveBeenCalledOnce()
+    expect(warn.mock.calls[0]![0]).toMatch(/flex.*grid|grid.*flex/i)
+  })
+
+  it('does not warn when only flex is set', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    pipeline.pipeline('div', { flex: true }, '', undefined)
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('does not warn when only grid is set', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    pipeline.pipeline('div', { grid: true }, '', undefined)
+    expect(warn).not.toHaveBeenCalled()
   })
 })
 

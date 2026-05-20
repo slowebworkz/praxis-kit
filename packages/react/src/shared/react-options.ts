@@ -1,8 +1,9 @@
 import type {
+  AnyRecord,
   ElementType as CoreElementType,
   FactoryOptions,
+  PresetMap,
   VariantMap,
-  VariantProps,
 } from '@polymorphic-ui/core'
 import type { UnknownProps, SlotComponent } from './types'
 
@@ -14,8 +15,9 @@ export type ReactFactoryOptions<
   TDefault extends CoreElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>> = Record<never, never>,
-> = FactoryOptions<TDefault, Props, Variants, TPreset> & {
+  TPreset extends PresetMap<Variants> = Readonly<Record<never, never>>,
+  TPluginProps extends AnyRecord = Record<never, never>,
+> = FactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps> & {
   /** Component used to render the asChild slot. Defaults to the built-in Slot. */
   slotComponent?: SlotComponent
   /**
