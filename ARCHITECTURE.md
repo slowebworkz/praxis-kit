@@ -21,24 +21,25 @@ without a framework.
 
 A **framework adapter layer is optional but beneficial** for ergonomics:
 
-| Concern             | Core provides                           | Adapter adds                                                      |
-| ------------------- | --------------------------------------- | ----------------------------------------------------------------- |
-| Tag resolution      | `resolveTag(defaultTag, as)`            | Narrows `ElementType` to the framework's element union            |
-| Prop merging        | `resolveProps(props)`                   | Event handler merging, framework-specific prop normalisation      |
-| Class composition   | `resolveClasses(...)`                   | CSS-methodology post-processing (e.g. `@polymorphic-ui/tailwind`) |
-| Children validation | `ChildrenEvaluator.evaluate(unknown[])` | Flattens framework children before calling                        |
-| ARIA validation     | `AriaPolicyEngine.validate(tag, props)` | Calls before rendering (not yet wired in the React adapter)       |
-| Rendering           | —                                       | Creates and renders the resolved element                          |
+| Concern             | Core provides                                                          | Adapter adds                                                      |
+| ------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Tag resolution      | `resolveTag(defaultTag, as)`                                           | Narrows `ElementType` to the framework's element union            |
+| Prop merging        | `resolveProps(props)`                                                  | Event handler merging, framework-specific prop normalisation      |
+| Class composition   | `resolveClasses(...)`                                                  | CSS-methodology post-processing (e.g. `@polymorphic-ui/tailwind`) |
+| Children validation | `ChildrenEvaluator.evaluate(unknown[])`                                | Flattens framework children before calling                        |
+| ARIA validation     | `AriaPolicyEngine` wired into `resolveAria` / `createResolverPipeline` | Strips invalid `aria-*` attrs; reports violations via strict mode |
+| Rendering           | —                                                                      | Creates and renders the resolved element                          |
 
-The three `PolymorphicRuntime` methods (`resolveTag`, `resolveProps`, `resolveClasses`) are designed
-to be called inside a component render function. `createResolverPipeline` bundles them into one call
-for adapter convenience. `options` exposes the frozen resolved configuration.
+The four `PolymorphicRuntime` methods (`resolveTag`, `resolveProps`, `resolveClasses`,
+`resolveAria`) are designed to be called inside a component render function.
+`createResolverPipeline` bundles them into one call for adapter convenience. `options` exposes the
+frozen resolved configuration.
 
 ---
 
 ### Source layout
 
-```
+```text
 src/
 ├── factory/          createPolymorphic — the main entrypoint
 ├── options/          resolveFactoryOptions — normalizes factory config
@@ -103,6 +104,7 @@ classDiagram
         +resolveTag(as?) tag
         +resolveProps(props) mergedProps
         +resolveClasses(tag, props, className?, variantKey?) string
+        +resolveAria(tag, props) props
         +options ResolvedFactoryOptions
     }
 ```
@@ -168,10 +170,11 @@ pipeline runs.
 
 ### Resolver pipeline
 
-`createResolverPipeline` is a convenience wrapper that combines the three core resolution steps into
-a single function call: `resolveTag`, `mergeProps` (defaultProps + caller props), and the class
-pipeline. Children pass through unchanged. It is intended for framework adapters that want to
-resolve everything in one pass; the React adapter calls the three methods directly instead.
+`createResolverPipeline` is a convenience wrapper that combines the four core resolution steps into
+a single function call: `resolveTag`, `mergeProps` (defaultProps + caller props), ARIA validation,
+and the class pipeline. Children pass through unchanged. It is intended for framework adapters that
+want to resolve everything in one pass; the React adapter calls the runtime methods directly
+instead.
 
 ```mermaid
 flowchart LR
@@ -185,6 +188,7 @@ children?"]
 
     tag["resolveTag()"]
     props["mergeProps()"]
+    aria["AriaPolicyEngine\n.validate()"]
     cls["classPipeline()"]
 
     output["ResolveOutput
@@ -194,7 +198,9 @@ props
 className
 children"]
 
-    input --> tag & props & cls --> output
+    input --> tag
+    input --> props --> aria --> cls
+    tag & aria & cls --> output
 ```
 
 Children pass through `createResolverPipeline` unchanged. Flattening framework children into a plain
@@ -283,8 +289,10 @@ impossible to ever satisfy.
 
 ### ARIA validator
 
-`AriaPolicyEngine` is a standalone class — it is not embedded in `PolymorphicRuntime`. Adapters
-import and instantiate it directly.
+`AriaPolicyEngine` is instantiated once per `createPolymorphic` call (using the factory's `strict`
+setting) and exposed as `runtime.resolveAria(tag, props)`. It is also embedded in
+`createResolverPipeline` so adapters that use the one-shot pipeline get ARIA validation
+automatically.
 
 The engine uses a **snapshot diagnostic model**: all rules evaluate against the same
 `(tag, props, implicitRole)` snapshot. Violations always reflect pre-fix state. Fixes are
@@ -307,7 +315,8 @@ explicit role?"}
 ① checkInvalidRoleOverride
 ② checkRedundantRole
 ③ checkStandaloneRegion
-all three evaluate same snapshot"]
+④ checkInvalidAriaAttributes
+all four evaluate same snapshot"]
 
     collect["collect violations + pending fixes
 (deduped by FixKind)"]
@@ -319,16 +328,18 @@ all three evaluate same snapshot"]
     call --> guard1
     guard1 -- no --> passThrough
     guard1 -- yes --> guard2
-    guard2 -- no --> passThrough
-    guard2 -- yes --> rules --> collect --> apply --> out
+    guard2 -- no --> rules
+    guard2 -- yes --> rules
+    rules --> collect --> apply --> out
 ```
 
 `validate(tag, props)` calls `evaluate()` then routes each violation through `report()`:
 `'error'`-severity violations go to `violate()` (throws or warns per `strict`); `'warning'`-severity
 violations always go to `warn()` and never throw.
 
-`ariaRolePolicy` maps six landmark elements (`article`, `aside`, `footer`, `header`, `main`, `nav`)
-to their implicit ARIA roles and classifies which have strong implicit roles.
+`ariaRolePolicy` maps 19 elements (6 landmark + 13 interactive/structural) to their implicit ARIA
+roles and classifies which have strong implicit roles. `aria-attribute-policy` holds the curated
+maps of global and role-restricted `aria-*` attributes used by `checkInvalidAriaAttributes`.
 
 ---
 
@@ -374,7 +385,7 @@ in how they handle refs:
 
 ### Source tree
 
-```
+```text
 src/
 ├── index.ts              re-exports current/
 ├── current/              React 19 implementation
@@ -394,11 +405,21 @@ src/
 │       ├── composeRefs.ts    getChildRef (reads element.ref) + composeRefs alias
 │       └── index.ts          exports Slot only
 └── shared/               behavioral contract shared by both versions
-    ├── polymorphic-props.ts  PolymorphicProps, PolymorphicComponent, ElementRef
+    ├── build-runtime.ts      buildRuntime — wires core runtime + React concerns into BuiltRuntime
     ├── react-options.ts      ReactFactoryOptions (extends core FactoryOptions)
     ├── render.ts             shared render() function
+    ├── apply-display-name.ts applyDisplayName utility
+    ├── compose-filter.ts     composeFilter — builds the prop-filtering predicate
     ├── merge-refs.ts         mergeRefs utility
-    ├── types.ts              AnyRuntime, AnyRuntimeOptions, resolver interfaces
+    ├── types.ts              barrel shim — re-exports from types/
+    ├── types/
+    │   ├── primitives.ts       UnknownProps, SlotComponent, ResolvedProps, FilterPredicate, …
+    │   ├── props.ts            AsProp, AsChildProp, PolymorphicPropsBase, KnownProps
+    │   ├── render.ts           RenderDirectives, ResolvedRenderState, RenderInput, …
+    │   ├── runtime.ts          Runtime, TypedRuntime, RuntimeOptions, resolver interfaces
+    │   ├── built-runtime.ts    BuiltRuntime, BuiltChildrenEvaluator, WithChildRules
+    │   ├── normalized-options.ts NormalizedOptions
+    │   └── polymorphic-props.ts  PolymorphicProps, PolymorphicWithAsChild, PolymorphicComponent, ElementRef
     └── slot/
         ├── Slottable.tsx       marker component; renders as Fragment
         ├── applySlot.ts        orchestration: extract → clone → rebuild
@@ -417,8 +438,8 @@ src/
 
 ### `createPolymorphicComponent`
 
-Wraps `createPolymorphic` from core and returns a typed React component. The factory is called once;
-`PolymorphicRuntime` is captured in the closure and reused on every render.
+Calls `buildRuntime` once at factory time and returns a typed React component that holds the
+resulting `BuiltRuntime` bundle in its closure.
 
 ```mermaid
 flowchart TD
@@ -428,24 +449,34 @@ flowchart TD
     slotComponent?
     filterProps?"]
 
-    factory["createPolymorphicComponent()"]
+    buildRuntime["buildRuntime()
+    ─────────────
+    normalizeOptions  (fill defaults)
+    buildCoreRuntime  (createPolymorphic → PolymorphicRuntime)
+    buildValidators   (SlotValidator, AriaPolicyEngine, ChildrenEvaluator?)
+    composeFilter     (variant keys + plugin ownedKeys + caller filterProps)"]
 
-    runtime["PolymorphicRuntime  (core)
+    bundle["BuiltRuntime
 ─────────────
-resolveTag / resolveProps / resolveClasses
-options (variantKeys, childRules, strict…)"]
+runtime  (PolymorphicRuntime)
+slotComponent
+normalizeChildren
+slotValidator / ariaEngine
+filterProps
+childrenEvaluator?"]
 
     component["Component function
 ─────────────
 receives props + ref
 delegates to render()"]
 
-    options --> factory --> runtime
-    factory --> component
+    options --> buildRuntime --> bundle
+    buildRuntime --> component
 ```
 
 `slotComponent` defaults to the version-local `Slot`. `filterProps` lets the caller strip
 variant-key props (and any other implementation-detail props) from the DOM before rendering.
+`ChildrenEvaluator` is only instantiated when `childRules` is present in the options.
 
 ---
 
@@ -483,10 +514,9 @@ className, variantKey"]
   children: kids[0]
 })"]
 
-    normalRender["createElement(tag, {
-  ...domProps, className, ref,
-  children?
-})"]
+    ariaGuard{"string tag?"}
+    aria["ariaEngine.validate(tag, elementProps)"]
+    normalRender["createElement(tag, domProps)"]
 
     input --> extract
     extract --> tag & merged & cls
@@ -495,12 +525,17 @@ className, variantKey"]
     childEval -- yes --> evaluate --> asChildBranch
     childEval -- no --> asChildBranch
     asChildBranch -- yes → single child --> slotRender
-    asChildBranch -- no --> normalRender
+    asChildBranch -- no --> ariaGuard
+    ariaGuard -- yes --> aria --> normalRender
+    ariaGuard -- no  --> normalRender
 ```
 
 `SlotValidator` enforces three invariants during render (respecting `strict` mode): mutual
 exclusivity of `as` and `asChild`; exactly one element child when `asChild` is set; non-element
 children are warned and discarded.
+
+ARIA validation (`ariaEngine.validate`) runs only for intrinsic string tags. Component types
+(`as={MyComponent}`) pass through without validation — there is no implicit ARIA role to check.
 
 ---
 
@@ -568,23 +603,49 @@ the key and dispatches to a policy handler:
 
 ---
 
+### `PolymorphicGenerics` bundle
+
+`PolymorphicGenerics<TDefault, Props, Variants, TPreset>` is an interface that bundles the four
+recurring generic parameters into a single type variable `G`:
+
+```ts
+interface PolymorphicGenerics<TDefault, Props, Variants, TPreset> {
+  default: TDefault
+  props: Props
+  variants: Variants
+  preset: TPreset
+}
+// Accessor types
+type DefaultOf<G> = G['default']
+type PropsOf<G> = G['props']
+type VariantsOf<G> = G['variants']
+type PresetOf<G> = G['preset']
+```
+
+Internal helpers use `G extends PolymorphicGenerics` to avoid repeating the four-parameter chain.
+Public factory functions (`createPolymorphic`, `createPolymorphicComponent`, `buildRuntime`) keep
+individual parameters so TypeScript can infer each one from the call-site options literal.
+
+---
+
 ### `PolymorphicProps` type
 
 ```ts
-type PolymorphicProps<TDefault, Props, Variants, TPreset, TAs = TDefault> = Omit<
-  IntrinsicJSXProps<TAs>,
-  keyof ControlProps<TAs, Props, Variants, TPreset>
-> &
-  ControlProps<TAs, Props, Variants, TPreset>
+type PolymorphicProps<
+  G extends PolymorphicGenerics,
+  TAs extends ElementType = DefaultOf<G>,
+> = Simplify<SharedProps<G, TAs> & { asChild?: false; children?: ReactNode }>
 ```
 
-`Omit + intersection` is used instead of `Merge` from type-fest. `Merge` produces a flat mapped type
-that TypeScript cannot see through for generic inference — `as="a"` would be rejected when the
-default tag is `"button"` because `TAs` could never be inferred. The `Omit + intersection` form
-keeps `as?: TAs` visible to the inference engine.
+`Omit + intersection` is used for `SharedProps` instead of `Merge` from type-fest. `Merge` produces
+a flat mapped type that TypeScript cannot see through for generic inference — `as="a"` would be
+rejected when the default tag is `"button"` because `TAs` could never be inferred. The
+`Omit + intersection` form keeps `as?: TAs` visible to the inference engine.
 
-`Simplify` is deliberately absent — it converts intersections to mapped types, which weakens
-excess-property checking.
+`Simplify` is applied at the outermost level only (on the exported `PolymorphicProps` and
+`PolymorphicWithAsChild` types) to flatten the intersection for IDE hover readability. It is not
+applied to `SharedProps` or `ControlProps` because those are intermediate types used inside `Omit`
+and intersection — flattening them at that level would break excess-property checking.
 
 `ControlProps` is a separate helper type so it can be used both as the right side of the
 intersection and as the `keyof` argument to `Omit` without repeating the shape.

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { createPolymorphic } from './create-polymorphic'
 
@@ -129,5 +129,59 @@ describe('createPolymorphic — options', () => {
 
   it('strict defaults to false', () => {
     expect(createPolymorphic({}).options.strict).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// resolveAria
+// ---------------------------------------------------------------------------
+
+describe('createPolymorphic — resolveAria()', () => {
+  it('returns props unchanged when all aria-* attrs are valid', () => {
+    const runtime = createPolymorphic({ defaultTag: 'button' })
+    const props = { 'aria-label': 'submit' }
+    expect(runtime.resolveAria('button', props).props).toMatchObject({ 'aria-label': 'submit' })
+  })
+
+  it('strips an invalid aria-* attribute for the effective role', () => {
+    const runtime = createPolymorphic({ defaultTag: 'button' })
+    // aria-checked is not valid on role="button"
+    const result = runtime.resolveAria('button', { 'aria-checked': 'true' })
+    expect(result.props).not.toHaveProperty('aria-checked')
+  })
+
+  it('does not strip a valid role-restricted attribute', () => {
+    const runtime = createPolymorphic({ defaultTag: 'button' })
+    // aria-expanded is valid on role="button"
+    const result = runtime.resolveAria('button', { 'aria-expanded': 'true' })
+    expect(result.props).toMatchObject({ 'aria-expanded': 'true' })
+  })
+
+  it('does not strip global aria-* attributes', () => {
+    const runtime = createPolymorphic({ defaultTag: 'button' })
+    const result = runtime.resolveAria('button', { 'aria-label': 'save', 'aria-hidden': 'true' })
+    expect(result.props).toMatchObject({ 'aria-label': 'save', 'aria-hidden': 'true' })
+  })
+
+  it('warns for invalid attribute when strict is "warn"', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const runtime = createPolymorphic({ defaultTag: 'button', strict: 'warn' })
+    runtime.resolveAria('button', { 'aria-checked': 'true' })
+    expect(warn).toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('is silent for invalid attribute when strict is false', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const runtime = createPolymorphic({ defaultTag: 'button', strict: false })
+    runtime.resolveAria('button', { 'aria-checked': 'true' })
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('passes through props unchanged for a tag with no implicit role', () => {
+    const runtime = createPolymorphic({ defaultTag: 'div' })
+    const props = { 'aria-checked': 'true' }
+    expect(runtime.resolveAria('div', props).props).toBe(props)
   })
 })
