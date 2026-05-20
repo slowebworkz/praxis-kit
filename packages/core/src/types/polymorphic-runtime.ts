@@ -2,7 +2,7 @@ import type { Simplify } from 'type-fest'
 import type { ClassPlugin } from './class-plugin'
 import type { AnyRecord, ClassName, ElementType, IntrinsicProps } from './primitives'
 import type { ResolvedFactoryOptions } from './resolved-factory-options'
-import type { VariantMap, VariantProps } from './variant'
+import type { PresetMap, VariantMap, VariantSelection } from './variant'
 
 /* ---------------------------------- */
 /* Resolvers                          */
@@ -43,9 +43,7 @@ export type PolymorphicRuntime<
   Props extends AnyRecord,
   Variants extends VariantMap,
   TSlot extends string = never,
-  TPreset extends Readonly<Record<string, Partial<VariantProps<Variants>>>> = Readonly<
-    Record<string, Partial<VariantProps<Variants>>>
-  >,
+  TPreset extends PresetMap<Variants> = Readonly<Record<string, VariantSelection<Variants>>>,
   TPlugin extends ClassPlugin | undefined = ClassPlugin | undefined,
 > = RuntimePluginField<TPlugin> & {
   /**

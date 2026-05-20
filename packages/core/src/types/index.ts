@@ -65,4 +65,11 @@ export type {
   ValidationResult,
   ValidationViolation,
 } from './validation'
-export type { DefaultVariants, PresetMap, VariantMap, VariantProps, VariantValue } from './variant'
+export type {
+  DefaultVariants,
+  PresetMap,
+  VariantMap,
+  VariantProps,
+  VariantSelection,
+  VariantValue,
+} from './variant'
