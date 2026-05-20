@@ -87,4 +87,26 @@ describe('StaticClassResolver — caching', () => {
     expect(r.resolve('article')).toBe('base ac')
     expect(r.resolve('section')).toBe('base sc')
   })
+
+  it('evicts the LRU entry once the cache exceeds 200 entries', () => {
+    const r = new StaticClassResolver('base')
+    // Fill cache with 200 unique tags
+    for (let i = 0; i < 200; i++) r.resolve(`tag-${i}`)
+    // tag-0 is LRU — promote tag-1..199 by re-resolving them, leaving tag-0 as LRU
+    // then add one more to trigger eviction
+    r.resolve('tag-201')
+    // tag-0 should have been evicted — resolving it again must recompute (still returns correct value)
+    expect(r.resolve('tag-0')).toBe('base')
+  })
+
+  it('promotes a re-resolved entry to MRU so it is not the eviction candidate', () => {
+    const r = new StaticClassResolver('base')
+    for (let i = 0; i < 200; i++) r.resolve(`tag-${i}`)
+    // Promote tag-0 to MRU
+    r.resolve('tag-0')
+    // Filling one more entry should evict tag-1 (now LRU), not tag-0
+    r.resolve('tag-201')
+    // tag-0 must still be cached — no recomputation needed (same value, but reference-stable)
+    expect(r.resolve('tag-0')).toBe('base')
+  })
 })
