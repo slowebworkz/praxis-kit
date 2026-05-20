@@ -21,10 +21,7 @@ export abstract class StrictBase {
     if (this.strict === true || this.strict === 'throw') {
       throw new Error(message)
     }
-
-    if (this.strict) {
-      console.warn(message)
-    }
+    this.warn(message)
   }
 
   // Always caps at console.warn — never throws. AriaPolicyEngine routes 'warning' severity
