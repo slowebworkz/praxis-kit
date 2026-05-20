@@ -1,24 +1,30 @@
+import type { Simplify } from 'type-fest'
 import type { JSX, ReactElement, ReactNode, Ref } from 'react'
 import type {
   ClassName,
+  DefaultOf,
   ElementType,
   IntrinsicTag,
-  VariantMap,
+  PolymorphicGenerics,
+  PresetOf,
+  PropsOf,
   VariantProps,
+  VariantsOf,
 } from '@polymorphic-ui/core'
-import type { UnknownProps } from './types'
+import type { UnknownProps } from './primitives'
 
 /** Maps a core ElementType to its DOM instance type for ref inference. */
 export type ElementRef<T extends ElementType> = T extends IntrinsicTag
   ? HTMLElementTagNameMap[T]
   : unknown
 
-/** React JSX intrinsic props for a given element type. */
+/** @internal React JSX intrinsic props for a given element type. */
 type IntrinsicJSXProps<T extends ElementType> = T extends IntrinsicTag
   ? JSX.IntrinsicElements[T]
   : UnknownProps
 
 /**
+ * @internal
  * Control props owned by the polymorphic system. Separated so they can be
  * stripped from the intrinsic props via Omit before intersecting, which is
  * what lets TypeScript infer TAs from the `as` prop value.
@@ -27,30 +33,24 @@ type IntrinsicJSXProps<T extends ElementType> = T extends IntrinsicTag
  * discriminated union below so the slot and non-slot branches can enforce
  * different child constraints.
  */
-type ControlProps<
-  TAs extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
-> = Props &
-  VariantProps<Variants> & {
+type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = PropsOf<G> &
+  VariantProps<VariantsOf<G>> & {
     as?: TAs
     className?: ClassName
-    variantKey?: keyof TPreset
+    variantKey?: keyof PresetOf<G>
     ref?: Ref<ElementRef<TAs>>
   }
 
 /**
+ * @internal
  * Intrinsic HTML attributes merged with control props, with `children` removed
  * so each branch of the discriminated union can type it independently.
  */
-type SharedProps<
-  TAs extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
-> = Omit<IntrinsicJSXProps<TAs>, keyof ControlProps<TAs, Props, Variants, TPreset> | 'children'> &
-  ControlProps<TAs, Props, Variants, TPreset>
+type SharedProps<G extends PolymorphicGenerics, TAs extends ElementType> = Omit<
+  IntrinsicJSXProps<TAs>,
+  keyof ControlProps<G, TAs> | 'children'
+> &
+  ControlProps<G, TAs>
 
 /**
  * Props for the normal (non-slot) render path. `asChild` is absent or `false`;
@@ -61,12 +61,9 @@ type SharedProps<
  * instead of `Merge` so TypeScript can infer `TAs` from the `as` prop value.
  */
 export type PolymorphicProps<
-  TDefault extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
-  TAs extends ElementType = TDefault,
-> = SharedProps<TAs, Props, Variants, TPreset> & { asChild?: false; children?: ReactNode }
+  G extends PolymorphicGenerics,
+  TAs extends ElementType = DefaultOf<G>,
+> = Simplify<SharedProps<G, TAs> & { asChild?: false; children?: ReactNode }>
 
 /**
  * Props for the slot render path (`asChild: true`). One or more `ReactElement`
@@ -77,16 +74,15 @@ export type PolymorphicProps<
  * violation, so it is rejected at the type level too.
  */
 export type PolymorphicWithAsChild<
-  TDefault extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
-  TAs extends ElementType = TDefault,
-> = SharedProps<TAs, Props, Variants, TPreset> & {
-  asChild: true
-  as?: never
-  children: ReactElement | ReactElement[]
-}
+  G extends PolymorphicGenerics,
+  TAs extends ElementType = DefaultOf<G>,
+> = Simplify<
+  SharedProps<G, TAs> & {
+    asChild: true
+    as?: never
+    children: ReactElement | ReactElement[]
+  }
+>
 
 /**
  * A polymorphic component that infers HTML attributes and ref type from the `as` prop.
@@ -95,17 +91,8 @@ export type PolymorphicWithAsChild<
  * - `asChild: true`  → slot path; exactly one `ReactElement` child required
  * - `asChild?: false` → normal path; any `ReactNode` children accepted
  */
-export type PolymorphicComponent<
-  TDefault extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
-> = {
-  <TAs extends ElementType = TDefault>(
-    props: PolymorphicWithAsChild<TDefault, Props, Variants, TPreset, TAs>,
-  ): ReactElement
-  <TAs extends ElementType = TDefault>(
-    props: PolymorphicProps<TDefault, Props, Variants, TPreset, TAs>,
-  ): ReactElement
+export type PolymorphicComponent<G extends PolymorphicGenerics> = {
+  <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicWithAsChild<G, TAs>): ReactElement
+  <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicProps<G, TAs>): ReactElement
   displayName?: string
 }

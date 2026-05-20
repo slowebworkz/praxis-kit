@@ -4,6 +4,7 @@ import type {
   AriaFix,
   AriaResult,
   AriaRule,
+  ElementType,
   EvaluationContext,
   FixKind,
   IntrinsicProps,
@@ -22,17 +23,18 @@ export function isInvalid(result: AriaResult): result is InvalidResult {
   return result.valid === false
 }
 
-const VALID = Object.freeze([Object.freeze({ valid: true })] as const)
+const VALID = [{ valid: true }] as const
 
-function isIntrinsicTag(tag: unknown): tag is IntrinsicTag {
+function isIntrinsicTag(tag: ElementType): tag is IntrinsicTag {
   return typeof tag === 'string'
 }
 
-// Callers receive T back with no cast. Sound only when `key` is optional in T — removing a
-// required key would produce a value that no longer satisfies T at runtime.
-function omitProp<T extends Record<string, unknown>>(obj: T, key: string): T {
+function omitProp<T extends Readonly<Record<string, unknown>>, K extends keyof T>(
+  obj: T,
+  key: K,
+): Omit<T, K> {
   const { [key]: _, ...rest } = obj
-  return rest as T
+  return rest as Omit<T, K>
 }
 
 export class AriaPolicyEngine extends StrictBase {
@@ -60,7 +62,7 @@ export class AriaPolicyEngine extends StrictBase {
     }
   }
 
-  static #deriveContext(tag: unknown, props: IntrinsicProps): EvaluationContext {
+  static #deriveContext(tag: ElementType, props: IntrinsicProps): EvaluationContext {
     if (!isIntrinsicTag(tag)) return { proceed: false, result: { props, violations: [] } }
     const implicitRole = getImplicitRole(tag)
     if (!implicitRole) return { proceed: false, result: { props, violations: [] } }
@@ -112,7 +114,7 @@ export class AriaPolicyEngine extends StrictBase {
   }
 
   // No side effects or logging; result is fully determined by (tag, props) + module-level policy maps.
-  static evaluate(tag: unknown, props: IntrinsicProps): ValidationResult {
+  static evaluate(tag: ElementType, props: IntrinsicProps): ValidationResult {
     const derived = AriaPolicyEngine.#deriveContext(tag, props)
     if (!derived.proceed) return derived.result
 
@@ -132,7 +134,7 @@ export class AriaPolicyEngine extends StrictBase {
     }
   }
 
-  validate(tag: unknown, props: IntrinsicProps): ValidationResult {
+  validate(tag: ElementType, props: IntrinsicProps): ValidationResult {
     const result = AriaPolicyEngine.evaluate(tag, props)
     this.report(result.violations)
     return result

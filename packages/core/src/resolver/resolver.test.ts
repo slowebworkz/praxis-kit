@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { createClassPipeline } from '../styles'
 import { createResolverPipeline } from './resolver'
@@ -89,5 +89,58 @@ describe('createResolverPipeline — children', () => {
   it('returns undefined children as-is', () => {
     const result = resolve({ props: {} })
     expect(result.children).toBeUndefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// ARIA validation
+// ---------------------------------------------------------------------------
+
+describe('createResolverPipeline — ARIA validation', () => {
+  it('strips an invalid aria-* attribute from output props', () => {
+    const navPipeline = createClassPipeline({})
+    const navResolve = createResolverPipeline({ defaultTag: 'button' }, navPipeline)
+    // aria-checked is not valid on role="button"
+    const result = navResolve({ props: { 'aria-checked': 'true' } })
+    expect(result.props).not.toHaveProperty('aria-checked')
+  })
+
+  it('passes valid aria-* attributes through unchanged', () => {
+    const buttonPipeline = createClassPipeline({})
+    const buttonResolve = createResolverPipeline({ defaultTag: 'button' }, buttonPipeline)
+    // aria-expanded is valid on role="button"
+    const result = buttonResolve({ props: { 'aria-expanded': 'false' } })
+    expect(result.props).toMatchObject({ 'aria-expanded': 'false' })
+  })
+
+  it('passes global aria-* attributes through unchanged', () => {
+    const buttonPipeline = createClassPipeline({})
+    const buttonResolve = createResolverPipeline({ defaultTag: 'button' }, buttonPipeline)
+    const result = buttonResolve({ props: { 'aria-label': 'close' } })
+    expect(result.props).toMatchObject({ 'aria-label': 'close' })
+  })
+
+  it('warns for invalid attribute when strict is "warn"', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const strictPipeline = createClassPipeline({})
+    const strictResolve = createResolverPipeline(
+      { defaultTag: 'button', strict: 'warn' },
+      strictPipeline,
+    )
+    strictResolve({ props: { 'aria-checked': 'true' } })
+    expect(warn).toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('does not warn when strict is false', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const silentPipeline = createClassPipeline({})
+    const silentResolve = createResolverPipeline(
+      { defaultTag: 'button', strict: false },
+      silentPipeline,
+    )
+    silentResolve({ props: { 'aria-checked': 'true' } })
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
   })
 })

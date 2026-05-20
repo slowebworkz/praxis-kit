@@ -15,6 +15,7 @@ import { createRef } from 'react'
 import type { MouseEvent } from 'react'
 import { createPolymorphicComponent } from './create-polymorphic-component'
 import { Slottable } from '@/shared'
+import type { PolymorphicGenerics } from '@polymorphic-ui/core'
 import type { PolymorphicProps } from '@/shared'
 
 type E = Record<never, never>
@@ -34,7 +35,7 @@ describe('as prop — intrinsic attribute narrowing', () => {
     // JSX does not enforce excess property checking for generic call-signature components,
     // so this assertion uses a direct prop-type assignment instead.
     // @ts-expect-error — href is not a button attribute
-    const _props: PolymorphicProps<'button', E, E, E> = { href: '/' }
+    const _props: PolymorphicProps<PolymorphicGenerics<'button', E, E>> = { href: '/' }
     void _props
   })
 
@@ -46,7 +47,7 @@ describe('as prop — intrinsic attribute narrowing', () => {
   it('rejects disabled when as="a" (button-only attribute)', () => {
     // JSX does not enforce excess property checking for generic call-signature components.
     // @ts-expect-error — disabled is not an anchor attribute
-    const _props: PolymorphicProps<'button', E, E, E, 'a'> = { disabled: true }
+    const _props: PolymorphicProps<PolymorphicGenerics<'button', E, E>, 'a'> = { disabled: true }
     void _props
   })
 
