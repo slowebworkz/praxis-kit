@@ -18,18 +18,29 @@ const builder = new ClassBuilder()
 
 const LAYOUT_OWNED_KEYS: OwnedPropKeys = new Set(['flex', 'grid'])
 
-export type LayoutProps = {
-  flex?: boolean
-  grid?: boolean
-}
+/**
+ * Mutually exclusive layout shorthand props.
+ *
+ * At most one key may be `true`. Passing both is a compile-time error; the
+ * runtime also warns and lets `flex` take precedence for graceful degradation.
+ */
+export type LayoutProps =
+  | { flex: true; grid?: never }
+  | { grid: true; flex?: never }
+  | { flex?: never; grid?: never }
 
 function resolveLayout(props: Record<string, unknown>): 'flex' | 'grid' | undefined {
+  if (props.flex && props.grid) {
+    console.warn(
+      '[createTailwindPipeline] Cannot use both "flex" and "grid" simultaneously; "flex" takes precedence.',
+    )
+  }
   return props.flex ? 'flex' : props.grid ? 'grid' : undefined
 }
 
 export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   options: ClassPipelineOptions<V>,
-): ClassPlugin {
+): ClassPlugin<LayoutProps> {
   const pipeline = createClassPipeline(options)
 
   return {
