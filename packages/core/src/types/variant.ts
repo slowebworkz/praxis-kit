@@ -68,6 +68,18 @@ export type DefaultVariants<V extends VariantMap> = {
 }
 
 /**
+ * A partial selection of variant states authored at factory definition time.
+ *
+ * Uses `keyof V[K]` directly (not `VariantKey`) so TypeScript can eagerly
+ * resolve the union at constraint-check time without deferred conditional types.
+ * This ensures invalid state names (e.g. `display: 'banana'`) are caught at
+ * the call site rather than slipping through as widened `string`.
+ */
+export type VariantSelection<V extends VariantMap> = {
+  [K in keyof V]?: keyof V[K]
+}
+
+/**
  * A static, immutable map of named presets to partial variant selections.
  *
  * Presets are named bundles of variant props that callers can activate by key
@@ -76,5 +88,5 @@ export type DefaultVariants<V extends VariantMap> = {
  * specify every dimension.
  */
 export type PresetMap<V extends VariantMap = VariantMap> = Readonly<
-  Record<string, Partial<VariantProps<V>>>
+  Record<string, VariantSelection<V>>
 >

@@ -3,7 +3,7 @@ import type { CompoundVariant } from './compound-variants'
 import type { ChildRuleInput } from './child-rule'
 import type { AnyRecord, ClassName, ElementType, TagMap } from './primitives'
 import type { StrictMode } from './strict-mode'
-import type { VariantMap, VariantProps } from './variant'
+import type { PresetMap, VariantMap, VariantProps } from './variant'
 
 /**
  * Configuration object accepted by `createPolymorphic`.
@@ -20,9 +20,7 @@ export type FactoryOptions<
   TDefault extends ElementType = ElementType,
   Props extends AnyRecord = Record<never, never>,
   V extends Readonly<VariantMap> = Readonly<Record<never, never>>,
-  TPreset extends Readonly<Record<string, Partial<VariantProps<V>>>> = Readonly<
-    Record<never, never>
-  >,
+  TPreset extends PresetMap<V> = Readonly<Record<never, never>>,
 > = {
   /** The element type rendered when no `as` prop is supplied. Defaults to `'div'`. */
   readonly defaultTag?: TDefault
