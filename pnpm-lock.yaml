@@ -123,6 +123,9 @@ importers:
       '@polymorphic-ui/react':
         specifier: workspace:*
         version: link:../react
+      '@polymorphic-ui/tailwind':
+        specifier: workspace:*
+        version: link:../tailwind
     devDependencies:
       '@types/react':
         specifier: 'catalog:'

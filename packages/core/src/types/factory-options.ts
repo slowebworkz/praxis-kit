@@ -9,10 +9,12 @@ import type { PresetMap, VariantMap, VariantProps } from './variant'
  * Configuration object accepted by `createPolymorphic`.
  *
  * Generic parameters flow left-to-right by dependency:
- * - `TDefault` — the fallback element type, influences valid prop shapes
- * - `Props`    — the component's own prop surface
- * - `V`        — the variant dimension map, depends on props being settled
- * - `TPreset`  — named preset selections, must be valid variant subsets
+ * - `TDefault`     — the fallback element type, influences valid prop shapes
+ * - `Props`        — the component's own prop surface
+ * - `V`            — the variant dimension map, depends on props being settled
+ * - `TPreset`      — named preset selections, must be valid variant subsets
+ * - `TPluginProps` — extra props introduced by the class plugin (e.g. `LayoutProps`);
+ *                    inferred from the `classPlugin` field — callers do not set this
  *
  * All fields are `readonly` — factory config is immutable after construction.
  */
@@ -21,6 +23,7 @@ export type FactoryOptions<
   Props extends AnyRecord = Record<never, never>,
   V extends Readonly<VariantMap> = Readonly<Record<never, never>>,
   TPreset extends PresetMap<V> = Readonly<Record<never, never>>,
+  TPluginProps extends AnyRecord = Record<never, never>,
 > = {
   /** The element type rendered when no `as` prop is supplied. Defaults to `'div'`. */
   readonly defaultTag?: TDefault
@@ -71,5 +74,5 @@ export type FactoryOptions<
    * The plugin may also declare `ownedKeys` — prop keys it consumes — which adapters can
    * use to strip those keys before they reach the DOM or framework bindings.
    */
-  readonly classPlugin?: ClassPluginFactory
+  readonly classPlugin?: ClassPluginFactory<TPluginProps>
 }
