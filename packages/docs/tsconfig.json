@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "jsx": "react-jsx",
+    "paths": {
+      "@polymorphic-ui/core": ["../core/src/index.ts"],
+      "@polymorphic-ui/react": ["../react/src/index.ts"],
+      "@/shared": ["../react/src/shared/index.ts"],
+      "@/shared/*": ["../react/src/shared/*"],
+      "@/current": ["../react/src/current/index.ts"],
+      "@/current/*": ["../react/src/current/*"],
+      "@/legacy": ["../react/src/legacy/index.ts"],
+      "@/legacy/*": ["../react/src/legacy/*"]
+    }
+  },
+  "include": ["src", "./vitest.config.ts"]
+}
