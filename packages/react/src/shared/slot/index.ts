@@ -11,4 +11,4 @@ export { PROP_MERGE_POLICIES, chainHandlers, mergeClassNames, mergeStyles } from
 export type { PropMergePolicy, MergePolicyHandler } from './policies'
 export { isReactEventKey, isFunction, isPlainObject, isSlottableElement } from './predicates'
 export type { EventHandler, SlotProps, CloneSlotChildFn } from './types'
-export type { SlotValidator } from './slot-validator'
+export { SlotValidator } from './slot-validator'

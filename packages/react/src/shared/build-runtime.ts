@@ -1,75 +1,47 @@
-import { createPolymorphic, AriaPolicyEngine, ChildrenEvaluator } from '@polymorphic-ui/core'
 import type {
   ChildRuleInput,
+  DefaultOf,
   ElementType,
+  PolymorphicGenerics,
+  PresetMap,
+  PresetOf,
+  PropsOf,
   StrictMode,
   VariantMap,
-  VariantProps,
+  VariantsOf,
 } from '@polymorphic-ui/core'
+import { AriaPolicyEngine, ChildrenEvaluator, createPolymorphic } from '@polymorphic-ui/core'
 import type { ReactElement } from 'react'
-import { SlotValidator } from './slot/slot-validator'
-import type { ReactFactoryOptions } from './react-options'
 import { composeFilter } from './compose-filter'
-import type { UnknownProps, SlotComponent, TypedRuntime, FilterPredicate } from './types'
+import type { ReactFactoryOptions } from './react-options'
+import { SlotValidator } from './slot'
+import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
+import type { NormalizedOptions } from './types/normalized-options'
+import type { SlotComponent, UnknownProps } from './types'
 
 /* -------------------------------------------------------------------------------------------------
  * Layer 1 — Normalize options
  * -----------------------------------------------------------------------------------------------*/
 
-type NormalizedOptions<
-  TDefault extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
-> = ReactFactoryOptions<TDefault, Props, Variants, TPreset> & {
-  readonly slotComponent: SlotComponent
-  readonly strict: Exclude<
-    ReactFactoryOptions<TDefault, Props, Variants, TPreset>['strict'],
-    undefined
-  >
-  readonly displayName: string
-}
-
-function normalizeOptions<
-  TDefault extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
->(
-  options: ReactFactoryOptions<TDefault, Props, Variants, TPreset>,
+function normalizeOptions<G extends PolymorphicGenerics>(
+  options: ReactFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>,
   defaultSlot: SlotComponent,
-): NormalizedOptions<TDefault, Props, Variants, TPreset> {
+): NormalizedOptions<G> {
   return {
     ...options,
     slotComponent: options.slotComponent ?? defaultSlot,
     strict: options.strict ?? 'throw',
     displayName: options.displayName ?? 'PolymorphicComponent',
-  }
+  } as NormalizedOptions<G>
 }
 
 /* -------------------------------------------------------------------------------------------------
  * Layer 2 — Build core runtime
  * -----------------------------------------------------------------------------------------------*/
 
-function createTypedRuntime<
-  TDefault extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
->(
-  options: NormalizedOptions<TDefault, Props, Variants, TPreset>,
-): TypedRuntime<TDefault, Props, Variants, TPreset> {
-  return createPolymorphic(options)
-}
-
-function buildCoreRuntime<
-  TDefault extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
->(normalized: NormalizedOptions<TDefault, Props, Variants, TPreset>) {
-  const runtime = createTypedRuntime(normalized)
-  const ownedKeys = runtime.classPlugin?.ownedKeys
+function buildCoreRuntime<G extends PolymorphicGenerics>(normalized: NormalizedOptions<G>) {
+  const runtime = createPolymorphic(normalized)
+  const ownedKeys = 'classPlugin' in runtime ? runtime.classPlugin.ownedKeys : undefined
   return { runtime, ownedKeys }
 }
 
@@ -90,33 +62,22 @@ function buildValidators(name: string, strict: StrictMode, childRules?: readonly
  * Public entry point
  * -----------------------------------------------------------------------------------------------*/
 
-export interface BuiltRuntime<
-  TDefault extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
-> {
-  runtime: TypedRuntime<TDefault, Props, Variants, TPreset>
-  slotComponent: SlotComponent
-  normalizeChildren: (children: unknown) => ReactElement[]
-  slotValidator: SlotValidator
-  ariaEngine: AriaPolicyEngine
-  filterProps: FilterPredicate
-  childrenEvaluator?: ChildrenEvaluator
-}
+export type { BuiltRuntime }
 
 export function buildRuntime<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
+  TPreset extends PresetMap<Variants>,
+  TOptions extends WithChildRules,
 >(
-  options: ReactFactoryOptions<TDefault, Props, Variants, TPreset>,
+  options: ReactFactoryOptions<TDefault, Props, Variants, TPreset> & TOptions,
   defaultSlot: SlotComponent,
   normalizeChildren: (children: unknown) => ReactElement[],
-): BuiltRuntime<TDefault, Props, Variants, TPreset> {
-  const normalized = normalizeOptions(options, defaultSlot)
-  const { runtime, ownedKeys } = buildCoreRuntime(normalized)
+): BuiltRuntime<PolymorphicGenerics<TDefault, Props, Variants, TPreset>, TOptions> {
+  type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
+  const normalized = normalizeOptions<G>(options, defaultSlot)
+  const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
   const { slotValidator, ariaEngine, childrenEvaluator } = buildValidators(
     normalized.displayName,
     normalized.strict,
@@ -132,5 +93,5 @@ export function buildRuntime<
     ariaEngine,
     filterProps,
     ...(childrenEvaluator !== undefined && { childrenEvaluator }),
-  }
+  } as BuiltRuntime<G, TOptions>
 }

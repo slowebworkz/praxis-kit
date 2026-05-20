@@ -1,21 +1,36 @@
-import type { AnyRecord, ClassPipelineFn, ElementType, ResolveInput, ResolveOutput } from '../types'
+import type {
+  AnyRecord,
+  ClassPipelineFn,
+  IntrinsicProps,
+  ResolveInput,
+  ResolveOutput,
+  ResolverOptions,
+} from '../types'
 import { mergeProps } from '../utils'
+import { AriaPolicyEngine } from '../validator'
 import { resolveTag } from './resolve-tag'
 
-type ResolvedOptions = {
-  defaultTag: unknown
-  defaultProps?: AnyRecord
-}
-
-export function createResolverPipeline<Props extends AnyRecord>(
-  resolved: ResolvedOptions,
+export function createResolverPipeline<
+  Props extends AnyRecord,
+  TSlot extends string = string,
+  Children = unknown,
+>(
+  resolved: ResolverOptions,
   classPipeline: ClassPipelineFn,
-): (input: ResolveInput<Props>) => ResolveOutput<Props> {
-  return function resolve(input) {
-    const tag = resolveTag(resolved.defaultTag, input.as) as ElementType
-    const props = mergeProps(resolved.defaultProps, input.props) as Props
-    const className = classPipeline(tag, props, input.className, input.variantKey)
+): (input: ResolveInput<Props, TSlot, Children>) => ResolveOutput<Props, Children> {
+  const engine = new AriaPolicyEngine(resolved.strict)
 
-    return { tag, props, className, children: input.children }
+  return function resolve(input) {
+    const tag = resolveTag(resolved.defaultTag, input.as)
+    const merged = mergeProps(resolved.defaultProps, input.props) as Props
+    const { props } = engine.validate(tag, merged as IntrinsicProps)
+    const className = classPipeline(tag, props as Props, input.className, input.variantKey)
+
+    return {
+      tag,
+      props: props as Props,
+      className,
+      ...(input.children !== undefined && { children: input.children as Children }),
+    }
   }
 }
