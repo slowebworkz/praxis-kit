@@ -37,6 +37,13 @@ export type {
 } from './compound-variants'
 export type { FactoryOptions } from './factory-options'
 export type { NonEmptyArray } from './non-empty-array'
+export type {
+  DefaultOf,
+  PolymorphicGenerics,
+  PresetOf,
+  PropsOf,
+  VariantsOf,
+} from './polymorphic-generics'
 export type { PolymorphicRuntime, ResolveTagFn } from './polymorphic-runtime'
 export type {
   AnyRecord,
@@ -50,7 +57,7 @@ export type {
   PropsWithRole,
 } from './primitives'
 export type { ResolvedFactoryOptions } from './resolved-factory-options'
-export type { ResolveInput, ResolveOutput } from './resolver'
+export type { ResolveInput, ResolveOutput, ResolverOptions } from './resolver'
 export type { StrictMode } from './strict-mode'
 export type {
   EvaluationContext,

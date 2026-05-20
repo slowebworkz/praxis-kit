@@ -44,7 +44,7 @@ describe('buildRuntime — defaults', () => {
 
   it('omits childrenEvaluator when no childRules are provided', () => {
     const result = buildRuntime({}, noopSlot, noopNormalize)
-    expect(result.childrenEvaluator).toBeUndefined()
+    expect('childrenEvaluator' in result).toBe(false)
   })
 
   it('returns a filterProps function', () => {
@@ -71,7 +71,7 @@ describe('buildRuntime — with childRules', () => {
 
   it('omits childrenEvaluator when childRules is an empty array', () => {
     const result = buildRuntime({ childRules: [] }, noopSlot, noopNormalize)
-    expect(result.childrenEvaluator).toBeUndefined()
+    expect('childrenEvaluator' in result).toBe(false)
   })
 })
 

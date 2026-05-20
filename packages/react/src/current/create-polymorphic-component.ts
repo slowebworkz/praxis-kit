@@ -1,4 +1,4 @@
-import type { ElementType, VariantMap, VariantProps } from '@polymorphic-ui/core'
+import type { ElementType, PolymorphicGenerics, PresetMap, VariantMap } from '@polymorphic-ui/core'
 import type { ReactElement, Ref } from 'react'
 import { Slot } from './slot'
 import { normalizeChildren } from './normalize-children'
@@ -9,7 +9,7 @@ export function createPolymorphicComponent<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>> = Record<never, never>,
+  TPreset extends PresetMap<Variants> = Readonly<Record<never, never>>,
 >(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset>) {
   const bundle = buildRuntime(options, Slot, normalizeChildren)
 
@@ -21,5 +21,7 @@ export function createPolymorphicComponent<
   }
 
   applyDisplayName(Component, options.displayName)
-  return Component as unknown as PolymorphicComponent<TDefault, Props, Variants, TPreset>
+  return Component as unknown as PolymorphicComponent<
+    PolymorphicGenerics<TDefault, Props, Variants, TPreset>
+  >
 }

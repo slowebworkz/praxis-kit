@@ -8,14 +8,21 @@ import type {
   ClassPipelineOptions,
   ClassPlugin,
   ClassPluginFactory,
+  DefaultOf,
   ElementType,
   FactoryOptions,
+  IntrinsicProps,
+  PolymorphicGenerics,
   PolymorphicRuntime,
+  PresetMap,
+  PresetOf,
+  PropsOf,
   ResolvedFactoryOptions,
   VariantMap,
-  VariantProps,
+  VariantsOf,
 } from '../types'
 import { mergeProps } from '../utils'
+import { AriaPolicyEngine } from '../validator'
 
 /**
  * Creates a `PolymorphicRuntime` from the given factory options.
@@ -35,14 +42,10 @@ function resolveClassPipeline<Variants extends VariantMap>(
   return { pluginResult, classPipeline }
 }
 
-function createRuntimeMethods<
-  TDefault extends ElementType,
-  Props extends AnyRecord,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
->(
-  resolved: ResolvedFactoryOptions<TDefault, Props, Variants, TPreset>,
+function createRuntimeMethods<G extends PolymorphicGenerics>(
+  resolved: ResolvedFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>,
   classPipeline: ClassPipelineFn,
+  engine: AriaPolicyEngine,
 ) {
   return {
     resolveTag: makeResolveTag(resolved.defaultTag),
@@ -53,32 +56,26 @@ function createRuntimeMethods<
 
     resolveClasses(
       tag: ElementType,
-      props: Props,
+      props: PropsOf<G>,
       className?: ClassName,
-      variantKey?: Extract<keyof TPreset, string>,
+      variantKey?: Extract<keyof PresetOf<G>, string>,
     ) {
       return classPipeline(tag, props, className, variantKey)
+    },
+
+    resolveAria<P extends IntrinsicProps>(tag: ElementType, props: P) {
+      const result = engine.validate(tag, props)
+      return { props: result.props as P }
     },
   }
 }
 
 function createRuntimeObject<
-  TDefault extends ElementType,
-  Props extends AnyRecord,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>>,
-  TMethods extends ReturnType<
-    typeof createRuntimeMethods<
-      ElementType,
-      AnyRecord,
-      Readonly<VariantMap>,
-      Record<string, Partial<VariantProps<VariantMap>>>
-    >
-  >,
+  G extends PolymorphicGenerics,
   TPlugin extends ClassPlugin | undefined,
 >(
-  methods: TMethods,
-  resolved: ResolvedFactoryOptions<TDefault, Props, Variants, TPreset>,
+  methods: ReturnType<typeof createRuntimeMethods<G>>,
+  resolved: ResolvedFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>,
   pluginResult?: TPlugin,
 ) {
   return pluginResult
@@ -90,13 +87,25 @@ export function createPolymorphic<
   TDefault extends ElementType,
   Props extends AnyRecord,
   Variants extends Readonly<VariantMap>,
-  TPreset extends Record<string, Partial<VariantProps<Variants>>> = Record<never, never>,
+  TPreset extends PresetMap<Variants> = Readonly<Record<never, never>>,
 >(
   options: FactoryOptions<TDefault, Props, Variants, TPreset> = {},
 ): PolymorphicRuntime<TDefault, Props, Variants, Extract<keyof TPreset, string>, TPreset> {
+  type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
   const resolved = resolveFactoryOptions(options)
   const { pluginResult, classPipeline } = resolveClassPipeline(options, resolved)
-  const methods = createRuntimeMethods(resolved, classPipeline)
+  const engine = new AriaPolicyEngine(resolved.strict)
+  const methods = createRuntimeMethods<G>(resolved, classPipeline, engine)
 
-  return createRuntimeObject(methods, resolved, pluginResult)
+  return createRuntimeObject<G, typeof pluginResult>(
+    methods,
+    resolved,
+    pluginResult,
+  ) as unknown as PolymorphicRuntime<
+    TDefault,
+    Props,
+    Variants,
+    Extract<keyof TPreset, string>,
+    TPreset
+  >
 }

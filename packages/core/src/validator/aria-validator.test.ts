@@ -137,18 +137,17 @@ describe('report()', () => {
 // validate() — component element types (non-string tag)
 // ---------------------------------------------------------------------------
 
-describe('validate() — component element types', () => {
-  it('returns props unchanged for a non-string tag', () => {
+describe('validate() — unknown string tags', () => {
+  it('returns props unchanged for a custom element with no implicit role', () => {
     const v = makeValidator('throw')
-    const FakeComponent = () => null
     const props = { role: 'navigation' as const, className: 'foo' }
-    expect(v.validate(FakeComponent, props).props).toBe(props)
+    expect(v.validate('my-custom-element', props).props).toBe(props)
   })
 
-  it('returns props unchanged for a numeric tag', () => {
+  it('returns props unchanged for an arbitrary unknown tag', () => {
     const v = makeValidator('throw')
     const props = { role: 'navigation' }
-    expect(v.validate(42, props).props).toBe(props)
+    expect(v.validate('x-widget', props).props).toBe(props)
   })
 })
 
