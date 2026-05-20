@@ -2,7 +2,7 @@ import type { CompoundVariant } from './compound-variants'
 import type { ChildRuleInput } from './child-rule'
 import type { AnyRecord, ClassName, ElementType, TagMap } from './primitives'
 import type { StrictMode } from './strict-mode'
-import type { VariantMap, VariantProps } from './variant'
+import type { PresetMap, VariantMap, VariantProps } from './variant'
 
 /**
  * The normalized factory configuration produced by `resolveFactoryOptions`.
@@ -20,9 +20,7 @@ export type ResolvedFactoryOptions<
   TDefault extends ElementType = ElementType,
   Props extends AnyRecord = Record<never, never>,
   V extends Readonly<VariantMap> = Readonly<Record<never, never>>,
-  TPreset extends Readonly<Record<string, Partial<VariantProps<V>>>> = Readonly<
-    Record<never, never>
-  >,
+  TPreset extends PresetMap<V> = Readonly<Record<never, never>>,
 > = {
   /** Resolved element type. `null` / `undefined` stripped; falls back to `string`. */
   readonly defaultTag: TDefault
