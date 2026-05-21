@@ -185,3 +185,63 @@ describe('createPolymorphic — resolveAria()', () => {
     expect(runtime.resolveAria('div', props).props).toBe(props)
   })
 })
+
+// ---------------------------------------------------------------------------
+// ariaRules — custom rule extension
+// ---------------------------------------------------------------------------
+
+describe('createPolymorphic — ariaRules option', () => {
+  it('custom rule fires through resolveAria() — reported as warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const customRule = () => [
+      {
+        valid: false as const,
+        severity: 'warning' as const,
+        message: 'custom-aria-rule',
+        fixable: false as const,
+      },
+    ]
+    const runtime = createPolymorphic({
+      defaultTag: 'nav',
+      strict: 'warn',
+      ariaRules: [customRule],
+    })
+    runtime.resolveAria('nav', {})
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('custom-aria-rule'))
+    warn.mockRestore()
+  })
+
+  it('custom rule fix strips the targeted prop via resolveAria()', () => {
+    const customRule = () => [
+      {
+        valid: false as const,
+        severity: 'warning' as const,
+        message: 'remove data-x',
+        fixable: true as const,
+        fix: {
+          kind: 'removeAttribute:data-x' as const,
+          apply: ({ props }: { props: Record<string, unknown> }) =>
+            'data-x' in props
+              ? {
+                  applied: true as const,
+                  next: Object.fromEntries(Object.entries(props).filter(([k]) => k !== 'data-x')),
+                  previous: props,
+                }
+              : { applied: false as const, next: props },
+        },
+      },
+    ]
+    const runtime = createPolymorphic({ defaultTag: 'nav', strict: false, ariaRules: [customRule] })
+    const { props } = runtime.resolveAria('nav', { 'data-x': '1' } as never)
+    expect(props).not.toHaveProperty('data-x')
+  })
+
+  it('resolveAria() behaves normally when ariaRules is not provided', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const runtime = createPolymorphic({ defaultTag: 'button', strict: 'warn' })
+    const { props } = runtime.resolveAria('button', { 'aria-label': 'ok' })
+    expect(props).toMatchObject({ 'aria-label': 'ok' })
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+})

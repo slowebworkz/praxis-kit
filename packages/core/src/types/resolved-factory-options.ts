@@ -1,5 +1,6 @@
 import type { CompoundVariant } from './compound-variants'
 import type { ChildRuleInput } from './child-rule'
+import type { AriaRule } from './aria-rule'
 import type { AnyRecord, ClassName, ElementType, TagMap } from './primitives'
 import type { StrictMode } from './strict-mode'
 import type { PresetMap, VariantMap, VariantProps } from './variant'
@@ -38,4 +39,6 @@ export type ResolvedFactoryOptions<
   readonly variantKeys: ReadonlySet<string>
   /** Rules that normalized children must satisfy. Absent when no rules were declared. */
   readonly childRules?: readonly ChildRuleInput[]
+  /** Additional ARIA policy rules. Absent when none were declared. */
+  readonly ariaRules?: readonly AriaRule[]
 }

@@ -2,10 +2,10 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createElement, act } from 'react'
 import type { ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
+import type { AnyRecord } from '@polymorphic-ui/core'
 import { Button } from './button'
 
-type AnyProps = Record<string, unknown>
-const box = (c: typeof Button) => c as ComponentType<AnyProps>
+const box = (c: typeof Button) => c as ComponentType<AnyRecord>
 
 let container: HTMLElement
 let root: ReturnType<typeof createRoot>

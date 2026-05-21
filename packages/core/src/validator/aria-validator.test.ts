@@ -602,6 +602,155 @@ describe('validate() — global aria-* attributes always pass through', () => {
 })
 
 // ---------------------------------------------------------------------------
+// AriaPolicyEngine — custom rules via constructor options
+// ---------------------------------------------------------------------------
+
+describe('AriaPolicyEngine — custom rules via constructor', () => {
+  it('fires a custom rule violation', () => {
+    const customRule = () => [
+      {
+        valid: false as const,
+        severity: 'warning' as const,
+        message: 'custom rule fired',
+        fixable: false as const,
+      },
+    ]
+    const v = new AriaPolicyEngine(false, { rules: [customRule] })
+    const { violations } = v.validate('nav', {})
+    expect(violations.some((v) => v.message === 'custom rule fired')).toBe(true)
+  })
+
+  it('applies fix from a custom rule', () => {
+    const customRule = () => [
+      {
+        valid: false as const,
+        severity: 'warning' as const,
+        message: 'remove data-custom',
+        fixable: true as const,
+        fix: {
+          kind: 'removeAttribute:data-custom' as const,
+          apply: ({ props }: { props: Record<string, unknown> }) =>
+            'data-custom' in props
+              ? {
+                  applied: true as const,
+                  next: Object.fromEntries(
+                    Object.entries(props).filter(([k]) => k !== 'data-custom'),
+                  ),
+                  previous: props,
+                }
+              : { applied: false as const, next: props },
+        },
+      },
+    ]
+    const v = new AriaPolicyEngine(false, { rules: [customRule] })
+    const { props } = v.validate('nav', { 'data-custom': '1' } as never)
+    expect(props).not.toHaveProperty('data-custom')
+  })
+
+  it('runs multiple custom rules and collects all violations', () => {
+    const ruleA = () => [
+      {
+        valid: false as const,
+        severity: 'warning' as const,
+        message: 'A',
+        fixable: false as const,
+      },
+    ]
+    const ruleB = () => [
+      {
+        valid: false as const,
+        severity: 'warning' as const,
+        message: 'B',
+        fixable: false as const,
+      },
+    ]
+    const v = new AriaPolicyEngine(false, { rules: [ruleA, ruleB] })
+    const { violations } = v.validate('nav', {})
+    const msgs = violations.map((v) => v.message)
+    expect(msgs).toContain('A')
+    expect(msgs).toContain('B')
+  })
+
+  it('skips extra rules for a tag with no implicit role', () => {
+    const customRule = () => [
+      {
+        valid: false as const,
+        severity: 'warning' as const,
+        message: 'should not fire',
+        fixable: false as const,
+      },
+    ]
+    const v = new AriaPolicyEngine(false, { rules: [customRule] })
+    // div has no implicit role — engine short-circuits before rules run
+    const { violations } = v.validate('div', {})
+    expect(violations.every((v) => v.message !== 'should not fire')).toBe(true)
+  })
+
+  it('custom rule returning valid results adds no violation', () => {
+    const customRule = () => [{ valid: true as const }]
+    const v = new AriaPolicyEngine(false, { rules: [customRule] })
+    const { violations } = v.validate('nav', {})
+    expect(violations).toHaveLength(0)
+  })
+
+  it('applies fixes from two custom rules respecting priority order', () => {
+    const log: string[] = []
+    const ruleHigh = () => [
+      {
+        valid: false as const,
+        severity: 'warning' as const,
+        message: 'high priority fix',
+        fixable: true as const,
+        fix: {
+          kind: 'removeAttribute:data-high' as const,
+          priority: 0,
+          apply: ({ props }: { props: Record<string, unknown> }) => {
+            log.push('high')
+            return 'data-high' in props
+              ? {
+                  applied: true as const,
+                  next: Object.fromEntries(
+                    Object.entries(props).filter(([k]) => k !== 'data-high'),
+                  ),
+                  previous: props,
+                }
+              : { applied: false as const, next: props }
+          },
+        },
+      },
+    ]
+    const ruleLow = () => [
+      {
+        valid: false as const,
+        severity: 'warning' as const,
+        message: 'low priority fix',
+        fixable: true as const,
+        fix: {
+          kind: 'removeAttribute:data-low' as const,
+          priority: 10,
+          apply: ({ props }: { props: Record<string, unknown> }) => {
+            log.push('low')
+            return 'data-low' in props
+              ? {
+                  applied: true as const,
+                  next: Object.fromEntries(Object.entries(props).filter(([k]) => k !== 'data-low')),
+                  previous: props,
+                }
+              : { applied: false as const, next: props }
+          },
+        },
+      },
+    ]
+    const v = new AriaPolicyEngine(false, { rules: [ruleLow, ruleHigh] })
+    const { props } = v.validate('nav', { 'data-high': '1', 'data-low': '2' } as never)
+    expect(props).not.toHaveProperty('data-high')
+    expect(props).not.toHaveProperty('data-low')
+    // high-priority (0) runs before low-priority (10) regardless of rule declaration order
+    expect(log).toEqual(['high', 'low'])
+  })
+})
+
+// ---------------------------------------------------------------------------
 // validate() — violation message content
 // ---------------------------------------------------------------------------
 

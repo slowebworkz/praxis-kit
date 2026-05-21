@@ -38,8 +38,11 @@ function omitProp<T extends Readonly<Record<string, unknown>>, K extends keyof T
 }
 
 export class AriaPolicyEngine extends StrictBase {
-  constructor(strict: StrictMode = 'warn') {
+  readonly #extraRules: readonly AriaRule[]
+
+  constructor(strict: StrictMode = 'warn', options?: { rules?: readonly AriaRule[] }) {
     super(strict)
+    this.#extraRules = options?.rules ?? []
   }
 
   static #normalizeEmptyRole(tag: IntrinsicTag, props: IntrinsicProps): NormalizationResult {
@@ -127,6 +130,24 @@ export class AriaPolicyEngine extends StrictBase {
     return { props: next, violations }
   }
 
+  // Like evaluate() but appends extra rules after the default pipeline.
+  static #evaluateWithRules(
+    tag: ElementType,
+    props: IntrinsicProps,
+    extraRules: readonly AriaRule[],
+  ): ValidationResult {
+    const derived = AriaPolicyEngine.#deriveContext(tag, props)
+    if (!derived.proceed) return derived.result
+
+    const { tag: narrowedTag, implicitRole, context } = derived
+    const { violations, fixes } = AriaPolicyEngine.#runRules(
+      [...AriaPolicyEngine.#getRules(context), ...extraRules],
+      context,
+    )
+    const next = AriaPolicyEngine.#applyFixes(narrowedTag, implicitRole, props, fixes)
+    return { props: next, violations }
+  }
+
   report(violations: ReadonlyArray<ValidationViolation>): void {
     for (const v of violations) {
       if (v.severity === 'error') this.violate(v.message)
@@ -135,7 +156,9 @@ export class AriaPolicyEngine extends StrictBase {
   }
 
   validate(tag: ElementType, props: IntrinsicProps): ValidationResult {
-    const result = AriaPolicyEngine.evaluate(tag, props)
+    const result = this.#extraRules.length
+      ? AriaPolicyEngine.#evaluateWithRules(tag, props, this.#extraRules)
+      : AriaPolicyEngine.evaluate(tag, props)
     this.report(result.violations)
     return result
   }
@@ -151,8 +174,12 @@ export class AriaPolicyEngine extends StrictBase {
     fixes: Map<FixKind, AriaFix>,
   ): T {
     if (fixes.size === 0) return props
+    // Lower priority number runs first; undefined priority runs last.
+    const sorted = [...fixes.values()].sort(
+      (a, b) => (a.priority ?? Infinity) - (b.priority ?? Infinity),
+    )
     let next: IntrinsicProps = props
-    for (const { apply } of fixes.values()) {
+    for (const { apply } of sorted) {
       const effectiveRole = next.role ?? implicitRole
       const fixContext: AriaContext = { tag, implicitRole, effectiveRole, props: next }
       const fixResult = apply(fixContext)
