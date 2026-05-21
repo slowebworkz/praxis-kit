@@ -94,7 +94,10 @@ export function createPolymorphic<
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
   const resolved = resolveFactoryOptions(options)
   const { pluginResult, classPipeline } = resolveClassPipeline(options, resolved)
-  const engine = new AriaPolicyEngine(resolved.strict)
+  const engine = new AriaPolicyEngine(
+    resolved.strict,
+    resolved.ariaRules?.length ? { rules: resolved.ariaRules } : undefined,
+  )
   const methods = createRuntimeMethods<G>(resolved, classPipeline, engine)
 
   return createRuntimeObject<G, typeof pluginResult>(

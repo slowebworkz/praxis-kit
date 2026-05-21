@@ -1,6 +1,7 @@
 import type { ClassPluginFactory } from './class-plugin'
 import type { CompoundVariant } from './compound-variants'
 import type { ChildRuleInput } from './child-rule'
+import type { AriaRule } from './aria-rule'
 import type { AnyRecord, ClassName, ElementType, TagMap } from './primitives'
 import type { StrictMode } from './strict-mode'
 import type { PresetMap, VariantMap, VariantProps } from './variant'
@@ -67,6 +68,13 @@ export type FactoryOptions<
 
   /** Rules that normalized children must satisfy. Evaluated on every render when present. */
   readonly childRules?: readonly ChildRuleInput[]
+
+  /**
+   * Additional ARIA policy rules appended to the default pipeline. Each rule
+   * receives the same `AriaContext` snapshot as built-in rules and may return
+   * violations and auto-fixes. Runs only for tags that have an implicit ARIA role.
+   */
+  readonly ariaRules?: readonly AriaRule[]
 
   /**
    * Optional class pipeline plugin. When provided, the factory calls it with the resolved
