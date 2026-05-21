@@ -3,11 +3,11 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createElement, Fragment, createRef, act } from 'react'
 import type { ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
+import type { UnknownProps } from '@/shared'
 import { createPolymorphicComponent } from './create-polymorphic-component'
 
-type AnyProps = Record<string, unknown>
 function box(comp: ReturnType<typeof createPolymorphicComponent>) {
-  return comp as ComponentType<AnyProps>
+  return comp as ComponentType<UnknownProps>
 }
 
 let container: HTMLElement
