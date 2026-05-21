@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { h } from 'vue'
+import { h, Fragment } from 'vue'
 import type { Slots, VNode } from 'vue'
 import { AriaPolicyEngine } from '@polymorphic-ui/core'
 import { render } from './render'
 import { SlotValidator } from './slot/slot-validator'
+import { Slottable } from './slot/Slottable'
 import type { FilterPredicate, Runtime } from './types'
 
 function makeRuntime(overrides?: Partial<Runtime>): Runtime {
@@ -241,6 +242,70 @@ describe('render — asChild', () => {
     expect(vnode?.props?.['data-extra']).toBe('yes')
     expect(vnode?.props?.['id']).toBe('original')
   })
+
+  it("concatenates resolved class with the child's existing class", () => {
+    const runtime = makeRuntime({ resolveClasses: () => 'slot-cls' })
+    const child = h('button', { class: 'child-cls' })
+    const vnode = render({
+      runtime,
+      attrs: { asChild: true },
+      slots: slotsWith(child),
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
+      ariaEngine: defaultAriaEngine,
+    })
+    const cls = vnode?.props?.['class'] as unknown
+    expect(String(cls)).toContain('slot-cls')
+    expect(String(cls)).toContain('child-cls')
+  })
+
+  it('stacks onX handlers from slot attrs and child', () => {
+    const slotHandler = vi.fn()
+    const childHandler = vi.fn()
+    const child = h('button', { onClick: childHandler })
+    const vnode = render({
+      runtime: makeRuntime(),
+      attrs: { asChild: true, onClick: slotHandler },
+      slots: slotsWith(child),
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
+      ariaEngine: defaultAriaEngine,
+    })
+    const handler = vnode?.props?.['onClick']
+    expect(Array.isArray(handler)).toBe(true)
+    ;(handler as (() => void)[]).forEach((fn) => fn())
+    expect(childHandler).toHaveBeenCalled()
+    expect(slotHandler).toHaveBeenCalled()
+  })
+
+  it('shallow-merges style objects from slot attrs and child', () => {
+    const child = h('button', { style: { color: 'red' } })
+    const vnode = render({
+      runtime: makeRuntime(),
+      attrs: { asChild: true, style: { margin: '4px' } },
+      slots: slotsWith(child),
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
+      ariaEngine: defaultAriaEngine,
+    })
+    expect(vnode?.props?.['style']).toMatchObject({ color: 'red', margin: '4px' })
+  })
+
+  it('falls back to normal render when strict is warn and asChild has multiple non-Slottable children', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const vnode = render({
+      runtime: makeRuntime({
+        options: { variantKeys: new Set(), displayName: 'Box', strict: 'warn' },
+      }),
+      attrs: { asChild: true },
+      slots: slotsWith(h('span'), h('div')),
+      filterProps: noopFilter,
+      slotValidator: new SlotValidator('Box', 'warn'),
+      ariaEngine: new AriaPolicyEngine('warn'),
+    })
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('asChild requires exactly one'))
+    expect(vnode?.type).toBe('div')
+  })
 })
 
 describe('render — children', () => {
@@ -298,5 +363,130 @@ describe('render — childrenEvaluator', () => {
         ariaEngine: defaultAriaEngine,
       }),
     ).not.toThrow()
+  })
+})
+
+describe('render — asChild Slottable sibling pattern', () => {
+  it('wraps result in a Fragment when a Slottable sibling is present', () => {
+    const inner = h('a', { href: '/' })
+    const slottable = h(Slottable, null, { default: () => [inner] })
+    const sibling = h('span', { 'aria-hidden': 'true' })
+
+    const vnode = render({
+      runtime: makeRuntime(),
+      attrs: { asChild: true },
+      slots: slotsWith(slottable, sibling),
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
+      ariaEngine: defaultAriaEngine,
+    })
+
+    expect(vnode?.type).toBe(Fragment)
+  })
+
+  it("merges slot props onto the Slottable's inner child", () => {
+    const inner = h('a', { href: '/' })
+    const slottable = h(Slottable, null, { default: () => [inner] })
+
+    const vnode = render({
+      runtime: makeRuntime({ resolveClasses: () => 'slot-cls' }),
+      attrs: { asChild: true, 'data-extra': 'yes' },
+      slots: slotsWith(slottable),
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
+      ariaEngine: defaultAriaEngine,
+    })
+
+    const fragmentChildren = vnode?.children as VNode[]
+    const mergedEl = fragmentChildren[0]!
+    expect(mergedEl.type).toBe('a')
+    expect(mergedEl.props?.['data-extra']).toBe('yes')
+  })
+
+  it('preserves siblings alongside the merged inner child', () => {
+    const inner = h('a', { href: '/' })
+    const slottable = h(Slottable, null, { default: () => [inner] })
+    const sibling = h('span', { id: 'sibling' })
+
+    const vnode = render({
+      runtime: makeRuntime(),
+      attrs: { asChild: true },
+      slots: slotsWith(slottable, sibling),
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
+      ariaEngine: defaultAriaEngine,
+    })
+
+    const fragmentChildren = vnode?.children as VNode[]
+    expect(fragmentChildren).toHaveLength(2)
+    expect((fragmentChildren[1] as VNode).props?.id).toBe('sibling')
+  })
+})
+
+describe('render — discarded children warning', () => {
+  it('warns when asChild receives a mixed array containing non-VNode children', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const child = h('button')
+    const validator = new SlotValidator('Test', 'warn')
+    // Slot returns one real VNode and one null (non-VNode) — normalizeChildren drops the null
+    const mixedSlots: Slots = {
+      default: () => [child, null as unknown as ReturnType<typeof h>],
+    }
+
+    render({
+      runtime: makeRuntime({
+        options: { variantKeys: new Set(), displayName: 'Test', strict: 'warn' },
+      }),
+      attrs: { asChild: true },
+      slots: mixedSlots,
+      filterProps: noopFilter,
+      slotValidator: validator,
+      ariaEngine: new AriaPolicyEngine('warn'),
+    })
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('discarded 1 non-element child'))
+  })
+
+  it('does not warn about discarded children when strict is false', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const child = h('button')
+    const validator = new SlotValidator('Test', false)
+    const mixedSlots: Slots = {
+      default: () => [child, null as unknown as ReturnType<typeof h>],
+    }
+
+    render({
+      runtime: makeRuntime({
+        options: { variantKeys: new Set(), displayName: 'Test', strict: false },
+      }),
+      attrs: { asChild: true },
+      slots: mixedSlots,
+      filterProps: noopFilter,
+      slotValidator: validator,
+      ariaEngine: new AriaPolicyEngine(false),
+    })
+
+    expect(warnSpy).not.toHaveBeenCalled()
+  })
+
+  it('does not warn about discarded children on the normal render path', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const validator = new SlotValidator('Test', 'warn')
+    const mixedSlots: Slots = {
+      default: () => [h('span'), null as unknown as ReturnType<typeof h>],
+    }
+
+    render({
+      runtime: makeRuntime({
+        options: { variantKeys: new Set(), displayName: 'Test', strict: 'warn' },
+      }),
+      attrs: {},
+      slots: mixedSlots,
+      filterProps: noopFilter,
+      slotValidator: validator,
+      ariaEngine: new AriaPolicyEngine('warn'),
+    })
+
+    expect(warnSpy).not.toHaveBeenCalled()
   })
 })

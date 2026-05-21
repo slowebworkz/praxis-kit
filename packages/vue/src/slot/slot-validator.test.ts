@@ -50,3 +50,35 @@ describe('assertSingleChild', () => {
     expect(() => new SlotValidator('MyCard', 'throw').assertSingleChild(2)).toThrow('MyCard')
   })
 })
+
+describe('warnDiscardedChildren', () => {
+  it('warns (not throws) even when strict is throw', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(() => new SlotValidator('Box', 'throw').warnDiscardedChildren(1)).not.toThrow()
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('discarded 1 non-element child'))
+  })
+
+  it('uses singular form for count of 1', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    new SlotValidator('Box', 'warn').warnDiscardedChildren(1)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('non-element child —'))
+  })
+
+  it('uses plural form for count greater than 1', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    new SlotValidator('Box', 'warn').warnDiscardedChildren(3)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('discarded 3 non-element children'))
+  })
+
+  it('is silent when strict is false', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    new SlotValidator('Box', false).warnDiscardedChildren(2)
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('includes the component name in the warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    new SlotValidator('Dialog', 'warn').warnDiscardedChildren(1)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('Dialog'))
+  })
+})
