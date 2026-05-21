@@ -19,16 +19,21 @@
     "format:check": "prettier --check .",
     "format:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.md' | xargs prettier --write",
     "clean": "rm -rf node_modules packages/**/node_modules packages/**/dist",
-    "prepare": "husky"
+    "prepare": "husky",
+    "repo-state": "node --experimental-strip-types scripts/generate-repo-state.ts",
+    "arch:validate": "depcruise --config .dependency-cruiser.cjs packages"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
     "@vitest/ui": "catalog:",
+    "dependency-cruiser": "catalog:",
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
+    "eslint-plugin-boundaries": "catalog:",
     "husky": "catalog:",
     "jsdom": "catalog:",
     "prettier": "catalog:",
+    "ts-morph": "catalog:",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",
     "vitest": "catalog:"

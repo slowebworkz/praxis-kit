@@ -1,4 +1,18 @@
-import type { KNOWN_ARIA_ROLES } from '../validator'
+export const KNOWN_ARIA_ROLES = [
+  'alert',
+  'alertdialog',
+  'article',
+  'banner',
+  'button',
+  'complementary',
+  'contentinfo',
+  'dialog',
+  'form',
+  'main',
+  'navigation',
+  'region',
+  'search',
+] as const
 
 /** One of the curated WAI-ARIA roles explicitly recognised by this library. */
 export type KnownAriaRole = (typeof KNOWN_ARIA_ROLES)[number]

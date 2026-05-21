@@ -32,3 +32,8 @@ catalog:
   vue: ^3.4.0
   "@vue/test-utils": ^2.4.0
   "@vue/server-renderer": ^3.4.0
+
+  # Architecture tooling
+  ts-morph: ^23.0.0
+  eslint-plugin-boundaries: ^4.0.0
+  dependency-cruiser: ^16.0.0
