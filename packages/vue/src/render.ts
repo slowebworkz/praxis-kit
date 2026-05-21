@@ -3,6 +3,7 @@ import type { VNode } from 'vue'
 import type { AriaPolicyEngine, ElementType, IntrinsicProps } from '@polymorphic-ui/core'
 import { isKnownAriaRole } from '@polymorphic-ui/core'
 import type { SlotValidator } from './slot'
+import { extractSlottable } from './slot/extractSlottable'
 import { normalizeChildren } from './normalize-children'
 import type {
   FilterPredicate,
@@ -73,15 +74,23 @@ function validateSlotDirectives(directives: RenderDirectives, validator: SlotVal
 function tryRenderAsChild(
   state: ResolvedRenderState,
   children: VNode[],
+  discarded: number,
   validator: SlotValidator,
 ): VNode | null {
   if (!validateSlotDirectives(state.directives, validator)) return null
 
+  if (discarded > 0) validator.warnDiscardedChildren(discarded)
+
+  const extraction = extractSlottable(children)
+  if (extraction) {
+    // cloneVNode merges extra props (class, style, onX handlers) onto the existing VNode.
+    const merged = cloneVNode(extraction.child, { ...state.props, class: state.className })
+    return extraction.rebuild(merged)
+  }
+
   if (children.length === 1) {
     const child = children[0]
     if (child === undefined) return null
-    // cloneVNode merges extra props onto the existing VNode without changing its type,
-    // making it the Vue equivalent of React's cloneElement for the asChild pattern.
     return cloneVNode(child, { ...state.props, class: state.className })
   }
 
@@ -130,10 +139,10 @@ export function render({
 }: RenderInput): VNode | null {
   const state = resolveRenderState(runtime, attrs, filterProps)
 
-  const children = normalizeChildren(slots)
+  const { vnodes: children, discarded } = normalizeChildren(slots)
   childrenEvaluator?.evaluate(children)
 
-  const slotResult = tryRenderAsChild(state, children, slotValidator)
+  const slotResult = tryRenderAsChild(state, children, discarded, slotValidator)
   if (slotResult !== null) return slotResult
 
   const domProps = buildDomProps(state.props, state.className, ariaEngine, state.tag)
