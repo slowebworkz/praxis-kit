@@ -13,6 +13,7 @@
     "test:ci": "pnpm -r --if-present test",
     "test:related": "pnpm -r --if-present test:related",
     "lint": "eslint . --fix",
+    "lint:check": "eslint .",
     "lint:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' | xargs eslint --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
