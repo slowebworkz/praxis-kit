@@ -36,7 +36,7 @@ afterEach(() => {
 
 describe('createPolymorphicComponent (current / React 19)', () => {
   it('sets displayName', () => {
-    const Comp = createPolymorphicComponent({ displayName: 'MyBox' })
+    const Comp = createPolymorphicComponent({ name: 'MyBox' })
 
     expect(Comp.displayName).toBe('MyBox')
   })
@@ -66,7 +66,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
 
   it('applies baseClassName', () => {
     const Box = createPolymorphicComponent({
-      baseClassName: 'base-cls',
+      styling: { base: 'base-cls' },
     })
 
     mount(createElement(box(Box), null))
@@ -76,7 +76,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
 
   it('merges caller className with base', () => {
     const Box = createPolymorphicComponent({
-      baseClassName: 'base',
+      styling: { base: 'base' },
     })
 
     mount(createElement(box(Box), { className: 'extra' }))
@@ -136,7 +136,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
 
   it('asChild merges className onto the child element', () => {
     const Box = createPolymorphicComponent({
-      baseClassName: 'box-cls',
+      styling: { base: 'box-cls' },
     })
 
     mount(createElement(box(Box), { asChild: true }, createElement('button')))
@@ -170,11 +170,11 @@ describe('createPolymorphicComponent (current / React 19)', () => {
 
   it('nested asChild: both components compose their classes onto the inner element', () => {
     const BoxA = createPolymorphicComponent({
-      baseClassName: 'class-a',
+      styling: { base: 'class-a' },
     })
 
     const BoxB = createPolymorphicComponent({
-      baseClassName: 'class-b',
+      styling: { base: 'class-b' },
     })
 
     mount(

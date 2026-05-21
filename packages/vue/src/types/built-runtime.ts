@@ -5,12 +5,12 @@ import type { TypedRuntime } from './runtime'
 
 // Constraining TOptions to only the field we care about avoids deep VueFactoryOptions
 // generic analysis (which exposes a VariantProps/exactOptionalPropertyTypes issue).
-export type WithChildRules = { childRules?: readonly unknown[] }
+export type WithChildRules = { enforcement?: { children?: readonly unknown[] } }
 
 // childrenEvaluator is absent entirely when no rules are given — not just optional —
 // so callers can narrow with `'childrenEvaluator' in bundle` rather than `!= null`.
 export type BuiltChildrenEvaluator<TOptions extends WithChildRules> = TOptions extends {
-  childRules: readonly unknown[]
+  enforcement: { children: readonly unknown[] }
 }
   ? { childrenEvaluator: ChildrenEvaluator }
   : Record<never, never>

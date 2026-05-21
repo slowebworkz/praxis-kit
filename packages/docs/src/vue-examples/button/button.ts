@@ -18,28 +18,30 @@ type ButtonVariants = {
 }
 
 export const Button = createPolymorphicComponent<'button', ButtonProps, ButtonVariants>({
-  defaultTag: 'button',
-  displayName: 'Button',
-  baseClassName: 'inline-flex items-center justify-center rounded font-medium transition-colors',
-  variants: {
-    intent: {
-      primary: 'bg-blue-600 text-white hover:bg-blue-700',
-      secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200',
-      ghost: 'bg-transparent text-gray-600 hover:bg-gray-100',
+  tag: 'button',
+  name: 'Button',
+  styling: {
+    base: 'inline-flex items-center justify-center rounded font-medium transition-colors',
+    variants: {
+      intent: {
+        primary: 'bg-blue-600 text-white hover:bg-blue-700',
+        secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200',
+        ghost: 'bg-transparent text-gray-600 hover:bg-gray-100',
+      },
+      size: {
+        sm: 'px-2 py-1 text-sm gap-1',
+        md: 'px-4 py-2 text-base gap-2',
+        lg: 'px-6 py-3 text-lg gap-3',
+      },
     },
-    size: {
-      sm: 'px-2 py-1 text-sm gap-1',
-      md: 'px-4 py-2 text-base gap-2',
-      lg: 'px-6 py-3 text-lg gap-3',
+    defaults: {
+      intent: 'secondary',
+      size: 'md',
     },
-  },
-  defaultVariants: {
-    intent: 'secondary',
-    size: 'md',
-  },
-  presetMap: {
-    cta: { intent: 'primary', size: 'lg' },
-    subtle: { intent: 'ghost', size: 'sm' },
+    presets: {
+      cta: { intent: 'primary', size: 'lg' },
+      subtle: { intent: 'ghost', size: 'sm' },
+    },
   },
   filterProps: (key: string, variantKeys: ReadonlySet<string>) =>
     variantKeys.has(key) || key === 'loading',

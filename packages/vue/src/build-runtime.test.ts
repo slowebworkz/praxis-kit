@@ -21,7 +21,7 @@ describe('buildRuntime — defaults', () => {
     expect(ariaEngine).toBeInstanceOf(AriaPolicyEngine)
   })
 
-  it('omits childrenEvaluator when no childRules are provided', () => {
+  it('omits childrenEvaluator when no enforcement.children provided', () => {
     const result = buildRuntime({})
     expect('childrenEvaluator' in result).toBe(false)
   })
@@ -32,9 +32,9 @@ describe('buildRuntime — defaults', () => {
   })
 })
 
-describe('buildRuntime — with displayName', () => {
-  it('passes displayName to the core runtime options', () => {
-    const { runtime } = buildRuntime({ displayName: 'MyButton' })
+describe('buildRuntime — with name', () => {
+  it('passes name to the core runtime options as displayName', () => {
+    const { runtime } = buildRuntime({ name: 'MyButton' })
     expect(runtime.options.displayName).toBe('MyButton')
   })
 
@@ -44,17 +44,17 @@ describe('buildRuntime — with displayName', () => {
   })
 })
 
-describe('buildRuntime — with childRules', () => {
-  it('returns a ChildrenEvaluator when childRules are provided', () => {
-    const childRules = [
+describe('buildRuntime — with enforcement.children', () => {
+  it('returns a ChildrenEvaluator when enforcement.children are provided', () => {
+    const children = [
       { name: 'item', match: (c: unknown) => c !== null, cardinality: { min: 1, max: 3 } },
     ]
-    const result = buildRuntime({ childRules })
+    const result = buildRuntime({ enforcement: { children } })
     expect(result.childrenEvaluator).toBeInstanceOf(ChildrenEvaluator)
   })
 
-  it('omits childrenEvaluator when childRules is an empty array', () => {
-    const result = buildRuntime({ childRules: [] })
+  it('omits childrenEvaluator when enforcement.children is an empty array', () => {
+    const result = buildRuntime({ enforcement: { children: [] } })
     expect('childrenEvaluator' in result).toBe(false)
   })
 })
@@ -62,7 +62,7 @@ describe('buildRuntime — with childRules', () => {
 describe('buildRuntime — filterProps strips variant keys', () => {
   it('strips variant keys from props', () => {
     const variants = { size: { sm: 'text-sm', lg: 'text-lg' } } as const
-    const { filterProps, runtime } = buildRuntime({ variants })
+    const { filterProps, runtime } = buildRuntime({ styling: { variants } })
     expect(filterProps('size', runtime.options.variantKeys)).toBe(true)
     expect(filterProps('class', runtime.options.variantKeys)).toBe(false)
   })
@@ -74,13 +74,13 @@ describe('buildRuntime — runtime resolveTag', () => {
     expect(runtime.resolveTag()).toBe('div')
   })
 
-  it('respects a custom defaultTag', () => {
-    const { runtime } = buildRuntime({ defaultTag: 'section' })
+  it('respects a custom tag', () => {
+    const { runtime } = buildRuntime({ tag: 'section' })
     expect(runtime.resolveTag()).toBe('section')
   })
 
   it('overrides the default with an as value', () => {
-    const { runtime } = buildRuntime({ defaultTag: 'div' })
+    const { runtime } = buildRuntime({ tag: 'div' })
     expect(runtime.resolveTag('nav')).toBe('nav')
   })
 })
@@ -92,7 +92,7 @@ describe('buildRuntime — strict default', () => {
   })
 
   it('respects an explicit strict value', () => {
-    const { runtime } = buildRuntime({ strict: false })
+    const { runtime } = buildRuntime({ enforcement: { strict: false } })
     expect(runtime.options.strict).toBe(false)
   })
 })

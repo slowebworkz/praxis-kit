@@ -1,7 +1,7 @@
 /**
  * Box — Tailwind layout component.
  *
- * Requires `@polymorphic-ui/tailwind`. The `classPlugin: createTailwindPipeline`
+ * Requires `@polymorphic-ui/tailwind`. The `plugin: createTailwindPipeline`
  * field activates the Tailwind layout pipeline, which contributes two boolean
  * props (`flex` and `grid`) to every component that uses it. These props are
  * internal to the pipeline — they never reach the DOM — and act as layout-mode
@@ -47,14 +47,16 @@ const variants = {
 } as const
 
 export const Box = createPolymorphicComponent<'div', Record<never, never>, typeof variants>({
-  defaultTag: 'div',
-  displayName: 'Box',
-  classPlugin: createTailwindPipeline,
-  variants,
-  presetMap: {
-    row: { direction: 'row', align: 'center', gap: 'md' },
-    stack: { direction: 'col', gap: 'sm' },
-    grid2: { cols: '2', gap: 'md' },
+  tag: 'div',
+  name: 'Box',
+  styling: {
+    plugin: createTailwindPipeline,
+    variants,
+    presets: {
+      row: { direction: 'row', align: 'center', gap: 'md' },
+      stack: { direction: 'col', gap: 'sm' },
+      grid2: { cols: '2', gap: 'md' },
+    },
   },
   filterProps: (key: string, variantKeys: ReadonlySet<string>) => variantKeys.has(key),
 })

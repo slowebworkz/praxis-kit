@@ -6,11 +6,11 @@ import type { TypedRuntime } from './runtime'
 
 // Constraining TOptions to only the field we care about avoids deep ReactFactoryOptions checks
 // (which expose a VariantProps/exactOptionalPropertyTypes issue).
-export type WithChildRules = { childRules?: readonly unknown[] }
+export type WithChildRules = { enforcement?: { children?: readonly unknown[] } }
 
-// Present only when options carry childRules — absent entirely otherwise.
+// Present only when options carry enforcement.children — absent entirely otherwise.
 export type BuiltChildrenEvaluator<TOptions extends WithChildRules> = TOptions extends {
-  childRules: readonly unknown[]
+  enforcement: { children: readonly unknown[] }
 }
   ? { childrenEvaluator: ChildrenEvaluator }
   : Record<never, never>

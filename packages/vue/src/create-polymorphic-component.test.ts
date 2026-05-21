@@ -10,7 +10,7 @@ function box(comp: unknown): any {
 
 describe('createPolymorphicComponent — displayName', () => {
   it('sets displayName on the component', () => {
-    const Comp = createPolymorphicComponent({ displayName: 'MyBox' })
+    const Comp = createPolymorphicComponent({ name: 'MyBox' })
     expect((Comp as { displayName?: string }).displayName).toBe('MyBox')
   })
 
@@ -34,7 +34,7 @@ describe('createPolymorphicComponent — tag rendering', () => {
   })
 
   it('respects a custom defaultTag', () => {
-    const Box = createPolymorphicComponent({ defaultTag: 'span' })
+    const Box = createPolymorphicComponent({ tag: 'span' })
     const wrapper = mount(box(Box))
     expect(wrapper.element.tagName.toLowerCase()).toBe('span')
   })
@@ -42,13 +42,13 @@ describe('createPolymorphicComponent — tag rendering', () => {
 
 describe('createPolymorphicComponent — class merging', () => {
   it('applies baseClassName', () => {
-    const Box = createPolymorphicComponent({ baseClassName: 'base-cls' })
+    const Box = createPolymorphicComponent({ styling: { base: 'base-cls' } })
     const wrapper = mount(box(Box))
     expect(wrapper.element.className).toBe('base-cls')
   })
 
   it('merges caller class with baseClassName', () => {
-    const Box = createPolymorphicComponent({ baseClassName: 'base' })
+    const Box = createPolymorphicComponent({ styling: { base: 'base' } })
     const wrapper = mount(box(Box), { props: { class: 'extra' } })
     expect(wrapper.element.className).toContain('base')
     expect(wrapper.element.className).toContain('extra')
@@ -64,7 +64,7 @@ describe('createPolymorphicComponent — attrs', () => {
 
   it('strips variant keys before DOM forwarding', () => {
     const Box = createPolymorphicComponent({
-      variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
+      styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
     })
     const wrapper = mount(box(Box), { props: { size: 'lg' } as never })
     expect(wrapper.element.getAttribute('size')).toBeNull()
@@ -102,7 +102,7 @@ describe('createPolymorphicComponent — asChild', () => {
   })
 
   it('merges baseClassName onto the asChild element', () => {
-    const Box = createPolymorphicComponent({ baseClassName: 'box-cls' })
+    const Box = createPolymorphicComponent({ styling: { base: 'box-cls' } })
     const wrapper = mount(box(Box), {
       props: { asChild: true },
       slots: { default: () => [h('button')] },
@@ -131,8 +131,8 @@ describe('createPolymorphicComponent — asChild', () => {
   })
 
   it('nested asChild: both components compose their classes onto the inner element', () => {
-    const BoxA = createPolymorphicComponent({ baseClassName: 'class-a' })
-    const BoxB = createPolymorphicComponent({ baseClassName: 'class-b' })
+    const BoxA = createPolymorphicComponent({ styling: { base: 'class-a' } })
+    const BoxB = createPolymorphicComponent({ styling: { base: 'class-b' } })
 
     const Outer = defineComponent({
       setup() {
@@ -157,8 +157,10 @@ describe('createPolymorphicComponent — asChild', () => {
 describe('createPolymorphicComponent — variants', () => {
   it('applies variant classes when variant props are passed', () => {
     const Box = createPolymorphicComponent({
-      variants: {
-        intent: { primary: 'bg-blue-500', secondary: 'bg-gray-500' },
+      styling: {
+        variants: {
+          intent: { primary: 'bg-blue-500', secondary: 'bg-gray-500' },
+        },
       },
     })
     const wrapper = mount(box(Box), { props: { intent: 'primary' } as never })
@@ -167,7 +169,7 @@ describe('createPolymorphicComponent — variants', () => {
 
   it('does not forward variant prop keys to the DOM', () => {
     const Box = createPolymorphicComponent({
-      variants: { intent: { primary: 'bg-blue-500' } },
+      styling: { variants: { intent: { primary: 'bg-blue-500' } } },
     })
     const wrapper = mount(box(Box), { props: { intent: 'primary' } as never })
     expect(wrapper.element.getAttribute('intent')).toBeNull()
@@ -175,13 +177,15 @@ describe('createPolymorphicComponent — variants', () => {
 
   it('activates a preset via variantKey', () => {
     const Box = createPolymorphicComponent({
-      variants: {
-        intent: { primary: 'bg-blue-500', secondary: 'bg-gray-500' },
-        size: { sm: 'text-sm', lg: 'text-lg' },
+      styling: {
+        variants: {
+          intent: { primary: 'bg-blue-500', secondary: 'bg-gray-500' },
+          size: { sm: 'text-sm', lg: 'text-lg' },
+        },
+        presets: {
+          cta: { intent: 'primary', size: 'lg' },
+        } as never,
       },
-      presetMap: {
-        cta: { intent: 'primary', size: 'lg' },
-      } as never,
     })
     const wrapper = mount(box(Box), { props: { variantKey: 'cta' } as never })
     expect(wrapper.element.className).toContain('bg-blue-500')

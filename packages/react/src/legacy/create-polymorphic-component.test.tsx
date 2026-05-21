@@ -34,7 +34,7 @@ afterEach(() => {
 
 describe('createPolymorphicComponent (legacy / React 18)', () => {
   it('sets displayName', () => {
-    const Comp = createPolymorphicComponent({ displayName: 'MyBox' })
+    const Comp = createPolymorphicComponent({ name: 'MyBox' })
     expect(Comp.displayName).toBe('MyBox')
   })
 
@@ -70,7 +70,7 @@ describe('createPolymorphicComponent (legacy / React 18)', () => {
   })
 
   it('asChild merges className onto the child element', () => {
-    const Box = createPolymorphicComponent({ baseClassName: 'legacy-cls' })
+    const Box = createPolymorphicComponent({ styling: { base: 'legacy-cls' } })
     mount(createElement(box(Box), { asChild: true }, createElement('button')))
     expect(container.querySelector('button')!.className).toContain('legacy-cls')
   })
@@ -85,8 +85,8 @@ describe('createPolymorphicComponent (legacy / React 18)', () => {
   })
 
   it('nested asChild: both components compose their classes onto the inner element', () => {
-    const BoxA = createPolymorphicComponent({ baseClassName: 'class-a' })
-    const BoxB = createPolymorphicComponent({ baseClassName: 'class-b' })
+    const BoxA = createPolymorphicComponent({ styling: { base: 'class-a' } })
+    const BoxB = createPolymorphicComponent({ styling: { base: 'class-b' } })
     mount(
       createElement(
         box(BoxA),
