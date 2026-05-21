@@ -33,10 +33,10 @@ import { AriaPolicyEngine } from '../validator'
  * drive rendering and validation.
  */
 function resolveClassPipeline<Variants extends VariantMap>(
-  options: { classPlugin?: ClassPluginFactory },
+  options: { styling?: { plugin?: ClassPluginFactory } },
   resolved: ClassPipelineOptions<Variants>,
 ) {
-  const pluginResult = options.classPlugin?.(resolved)
+  const pluginResult = options.styling?.plugin?.(resolved)
   const classPipeline = pluginResult?.pipeline ?? createClassPipeline(resolved)
 
   return { pluginResult, classPipeline }

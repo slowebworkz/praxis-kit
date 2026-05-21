@@ -19,15 +19,15 @@ async function ssr(
 
 describe('createPolymorphicComponent — SSR (@vue/server-renderer)', () => {
   it('renders to HTML without accessing browser globals', async () => {
-    const Nav = createPolymorphicComponent({ defaultTag: 'nav', strict: false })
+    const Nav = createPolymorphicComponent({ tag: 'nav', enforcement: { strict: false } })
     expect(await ssr(Nav)).toContain('<nav')
   })
 
   it('applies base class in server-rendered HTML', async () => {
     const Box = createPolymorphicComponent({
-      defaultTag: 'div',
-      baseClassName: 'box-base',
-      strict: false,
+      tag: 'div',
+      styling: { base: 'box-base' },
+      enforcement: { strict: false },
     })
     expect(await ssr(Box)).toContain('box-base')
   })
@@ -35,7 +35,7 @@ describe('createPolymorphicComponent — SSR (@vue/server-renderer)', () => {
   it('strips redundant ARIA role — server HTML agrees with what client hydration would produce', async () => {
     // nav has implicit role="navigation"; passing it explicitly is redundant.
     // The engine must strip it on the server so the attribute set matches client hydration.
-    const Nav = createPolymorphicComponent({ defaultTag: 'nav', strict: false })
+    const Nav = createPolymorphicComponent({ tag: 'nav', enforcement: { strict: false } })
     const html = await ssr(Nav, { role: 'navigation' })
     expect(html).toContain('<nav')
     expect(html).not.toContain('role=')
@@ -43,29 +43,31 @@ describe('createPolymorphicComponent — SSR (@vue/server-renderer)', () => {
 
   it('strips invalid aria-* attribute — server HTML agrees with what client hydration would produce', async () => {
     // aria-checked is not valid on the implicit button role.
-    const Button = createPolymorphicComponent({ defaultTag: 'button', strict: false })
+    const Button = createPolymorphicComponent({ tag: 'button', enforcement: { strict: false } })
     expect(await ssr(Button, { 'aria-checked': 'true' })).not.toContain('aria-checked')
   })
 
   it('applies variant class in server-rendered HTML', async () => {
     const Box = createPolymorphicComponent({
-      defaultTag: 'div',
-      strict: false,
-      variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
-      defaultVariants: { size: 'lg' },
+      tag: 'div',
+      styling: {
+        variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
+        defaults: { size: 'lg' },
+      },
+      enforcement: { strict: false },
     })
     expect(await ssr(Box)).toContain('text-lg')
   })
 
   it('as prop overrides the default tag in server-rendered HTML', async () => {
-    const Nav = createPolymorphicComponent({ defaultTag: 'nav', strict: false })
+    const Nav = createPolymorphicComponent({ tag: 'nav', enforcement: { strict: false } })
     const html = await ssr(Nav, { as: 'section' })
     expect(html).toContain('<section')
     expect(html).not.toContain('<nav')
   })
 
   it('asChild renders child element type, not the default tag', async () => {
-    const Nav = createPolymorphicComponent({ defaultTag: 'nav', strict: false })
+    const Nav = createPolymorphicComponent({ tag: 'nav', enforcement: { strict: false } })
     const html = await ssr(Nav, { asChild: true }, () => h('a', { href: '#target' }, 'link'))
     expect(html).toContain('<a ')
     expect(html).toContain('href="#target"')
@@ -74,9 +76,9 @@ describe('createPolymorphicComponent — SSR (@vue/server-renderer)', () => {
 
   it('merges slot class with child class during asChild SSR', async () => {
     const Box = createPolymorphicComponent({
-      defaultTag: 'div',
-      baseClassName: 'slot-cls',
-      strict: false,
+      tag: 'div',
+      styling: { base: 'slot-cls' },
+      enforcement: { strict: false },
     })
     const html = await ssr(Box, { asChild: true }, () => h('span', { class: 'child-cls' }))
     expect(html).toContain('slot-cls')

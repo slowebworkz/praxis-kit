@@ -1,8 +1,10 @@
 import type {
   DefaultOf,
+  EnforcementOptions,
   PolymorphicGenerics,
   PresetOf,
   PropsOf,
+  StrictMode,
   VariantsOf,
 } from '@polymorphic-ui/core'
 import type { ReactFactoryOptions } from '../react-options'
@@ -15,9 +17,8 @@ export type NormalizedOptions<G extends PolymorphicGenerics> = ReactFactoryOptio
   PresetOf<G>
 > & {
   readonly slotComponent: SlotComponent
-  readonly strict: Exclude<
-    ReactFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>['strict'],
-    undefined
-  >
-  readonly displayName: string
+  readonly name: string
+  readonly enforcement: EnforcementOptions & {
+    readonly strict: Exclude<StrictMode, undefined>
+  }
 }
