@@ -5,7 +5,7 @@ import type {
   PresetMap,
   VariantMap,
 } from '@polymorphic-ui/core'
-import type { UnknownProps } from './types'
+import type { UnknownProps } from './types/primitives'
 
 // No `slotComponent` field: React delegates asChild rendering to an intermediate Slot component;
 // Vue achieves the same via `cloneVNode` directly in the render layer, so no component is needed.
