@@ -20,8 +20,8 @@ import type { PolymorphicProps } from '@/shared'
 
 type E = Record<never, never>
 
-const Button = createPolymorphicComponent<'button', E, E>({ displayName: 'Button' })
-const Anchor = createPolymorphicComponent<'a', E, E>({ displayName: 'Anchor' })
+const Button = createPolymorphicComponent<'button', E, E>({ name: 'Button' })
+const Anchor = createPolymorphicComponent<'a', E, E>({ name: 'Anchor' })
 
 // ─── as prop: intrinsic attribute narrowing ───────────────────────────────────
 

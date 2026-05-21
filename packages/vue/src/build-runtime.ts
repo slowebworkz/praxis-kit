@@ -27,8 +27,11 @@ function normalizeOptions<G extends PolymorphicGenerics>(
 ): NormalizedOptions<G> {
   return {
     ...options,
-    strict: options.strict ?? 'throw',
-    displayName: options.displayName ?? 'PolymorphicComponent',
+    name: options.name ?? 'PolymorphicComponent',
+    enforcement: {
+      ...options.enforcement,
+      strict: options.enforcement?.strict ?? 'throw',
+    },
   } as NormalizedOptions<G>
 }
 
@@ -83,10 +86,10 @@ export function buildRuntime<
   const normalized = normalizeOptions<G>(options)
   const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
   const { slotValidator, ariaEngine, childrenEvaluator } = buildValidators(
-    normalized.displayName,
-    normalized.strict,
-    normalized.childRules,
-    normalized.ariaRules,
+    normalized.name,
+    normalized.enforcement.strict,
+    normalized.enforcement?.children,
+    normalized.enforcement?.aria,
   )
   const filterProps = composeFilter(ownedKeys, normalized.filterProps)
 

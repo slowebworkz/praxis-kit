@@ -31,7 +31,7 @@ export function createPolymorphicComponent<
     return render({ ...bundle, props: props as KnownProps, ref: ref ?? null })
   }
 
-  applyDisplayName(Component, options.displayName)
+  applyDisplayName(Component, options.name)
   return Component as unknown as PolymorphicComponent<
     PolymorphicGenerics<TDefault, Props & TPluginProps, Variants, TPreset>
   >

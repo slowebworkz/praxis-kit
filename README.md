@@ -1,10 +1,9 @@
 # polymorphic-ui
 
-A TypeScript library for polymorphic component behavior — tag resolution, prop merging,
-variant-based class composition, child structural validation, and ARIA role enforcement.
+Framework-neutral UI infrastructure with enforceable structural and accessibility contracts.
 
-The core has no dependency on any rendering framework, the DOM, or any CSS methodology. Framework
-adapters consume the runtime API and handle rendering.
+Build components that enforce correct ARIA roles, validate child structure, and compose safely
+across tags and frameworks — all from a single declarative configuration.
 
 ---
 
@@ -14,6 +13,7 @@ adapters consume the runtime API and handle rendering.
 | ----------------------------------------------- | ---------------------------------------------------------- |
 | [`@polymorphic-ui/core`](packages/core)         | Framework-agnostic runtime and type system                 |
 | [`@polymorphic-ui/react`](packages/react)       | React adapter (React 19+); `/legacy` sub-path for React 18 |
+| [`@polymorphic-ui/vue`](packages/vue)           | Vue 3 adapter                                              |
 | [`@polymorphic-ui/tailwind`](packages/tailwind) | Tailwind layout-aware class pipeline plugin                |
 
 ---
@@ -24,33 +24,97 @@ adapters consume the runtime API and handle rendering.
 pnpm add @polymorphic-ui/react @polymorphic-ui/core
 ```
 
-### Create a component
+### 1. A simple polymorphic component
 
 ```tsx
 import { createPolymorphicComponent } from '@polymorphic-ui/react'
-import type { PolymorphicProps } from '@polymorphic-ui/react'
 
+const Box = createPolymorphicComponent({ tag: 'div' })
+
+// Renders <div>
+<Box>content</Box>
+
+// Renders <section> — same props, different tag
+<Box as="section">content</Box>
+
+// Renders child element directly, merging Box's resolved classes onto it
+<Box asChild>
+  <a href="/dashboard">Dashboard</a>
+</Box>
+```
+
+### 2. Add scalable variants
+
+```tsx
 const Button = createPolymorphicComponent<'button', { loading?: boolean }>({
-  defaultTag: 'button',
-  baseClassName: 'btn',
-  variants: {
-    size: { sm: 'btn--sm', md: 'btn--md', lg: 'btn--lg' },
-    intent: { primary: 'btn--primary', ghost: 'btn--ghost' },
+  tag: 'button',
+  name: 'Button',
+  styling: {
+    base: 'btn',
+    variants: {
+      size: { sm: 'btn--sm', md: 'btn--md', lg: 'btn--lg' },
+      intent: { primary: 'btn--primary', ghost: 'btn--ghost' },
+    },
+    defaults: { size: 'md', intent: 'primary' },
   },
-  defaultVariants: { size: 'md', intent: 'primary' },
+  filterProps: (key, variantKeys) => variantKeys.has(key) || key === 'loading',
 })
 
-// Renders as <button class="btn btn--md btn--primary">
+// Renders <button class="btn btn--md btn--primary">
 <Button>Click me</Button>
 
-// Renders as <a class="btn btn--lg btn--ghost">
+// Renders <a class="btn btn--lg btn--ghost">
 <Button as="a" href="/" size="lg" intent="ghost">Home</Button>
+```
+
+### 3. Accessibility enforcement
+
+```tsx
+const Landmark = createPolymorphicComponent({
+  tag: 'nav',
+  enforcement: { strict: 'warn' },
+})
+
+// Redundant role="navigation" is silently stripped — <nav> already implies it.
+// With strict: 'warn' this surfaces a console warning at render time.
+<Landmark role="navigation" />
+```
+
+### 4. Structural contracts
+
+```tsx
+import { isValidElement } from 'react'
+import type { ReactElement } from 'react'
+import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { Button } from './button'
+
+const ButtonGroup = createPolymorphicComponent({
+  tag: 'div',
+  styling: { base: 'inline-flex gap-2' },
+  enforcement: {
+    children: [
+      {
+        name: 'Button',
+        match: (child): child is ReactElement =>
+          isValidElement(child) && child.type === Button,
+        cardinality: { min: 1, max: 4 },
+      },
+    ],
+  },
+})
+
+// Throws at render if children are not 1–4 Button elements
+<ButtonGroup>
+  <Button>Save</Button>
+  <Button intent="ghost">Cancel</Button>
+</ButtonGroup>
 ```
 
 ### Prop types for consumers
 
 ```ts
-// PolymorphicProps infers HTML attributes from the resolved `as` prop.
+import type { PolymorphicProps, ElementType } from '@polymorphic-ui/react'
+
 type ButtonProps<TAs extends ElementType = 'button'> = PolymorphicProps<
   'button',
   { loading?: boolean },
@@ -96,6 +160,7 @@ element that contains `<Slottable>`, and `Slottable`'s children become the inner
 
 ```tsx
 import { createPolymorphicComponent, Slottable } from '@polymorphic-ui/react'
+
 ;<Button asChild>
   <a href="/dashboard">
     <span aria-hidden>→</span>
@@ -117,8 +182,7 @@ import type {
 
 `PolymorphicComponent` has two call signatures that discriminate on `asChild`:
 
-- `asChild: true` — resolves to `PolymorphicWithAsChild`; one or more `ReactElement` children
-  required
+- `asChild: true` — resolves to `PolymorphicWithAsChild`; one `ReactElement` child required
 - `asChild?: false` — resolves to `PolymorphicProps`; `ReactNode` children accepted
 
 ### React 18
@@ -139,16 +203,17 @@ pnpm add @polymorphic-ui/tailwind
 ```
 
 `createTailwindPipeline` returns a `ClassPlugin` that filters layout-specific Tailwind utilities
-based on the active layout mode. Pass it as `classPlugin` in factory options.
+based on the active layout mode. Pass it as `styling.plugin` in factory options.
 
 ```tsx
 import { createPolymorphicComponent } from '@polymorphic-ui/react'
 import { createTailwindPipeline } from '@polymorphic-ui/tailwind'
-import type { LayoutProps } from '@polymorphic-ui/tailwind'
 
-const Box = createPolymorphicComponent<'div', LayoutProps>({
-  classPlugin: createTailwindPipeline,
-  baseClassName: 'rounded p-4',
+const Box = createPolymorphicComponent({
+  styling: {
+    plugin: createTailwindPipeline,
+    base: 'rounded p-4',
+  },
 })
 
 // flex mode — grid-cols-* and row-* tokens stripped
@@ -169,54 +234,72 @@ parameter so callers can pass `flex` or `grid` as props. The plugin declares bot
 
 ## Core API
 
-### `createPolymorphic(options)`
+### `FactoryOptions`
 
-Creates a `PolymorphicRuntime` from a configuration object. Used directly when building a framework
-adapter; most React users should use `createPolymorphicComponent` instead.
+All `createPolymorphicComponent` calls in both the React and Vue adapters accept a `FactoryOptions`
+object. Options are organized into three zones:
+
+**Identity** (top-level)
+
+| Option     | Type             | Description                                                         |
+| ---------- | ---------------- | ------------------------------------------------------------------- |
+| `tag`      | `ElementType`    | Fallback element when no `as` prop is given. Defaults to `'div'`.   |
+| `name`     | `string`         | Identifier used in error messages and dev tooling.                  |
+| `defaults` | `Partial<Props>` | Prop values merged in before caller props. Caller wins on conflict. |
+
+**`styling`** — class composition
+
+| Option              | Type                                    | Description                                                                                                                |
+| ------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `styling.base`      | `string`                                | Classes present on every render.                                                                                           |
+| `styling.variants`  | `VariantMap`                            | CVA variant definitions.                                                                                                   |
+| `styling.defaults`  | `Partial<VariantProps>`                 | Default variant state for each dimension.                                                                                  |
+| `styling.compounds` | `CompoundVariant[]`                     | Conditional classes that activate when multiple variant conditions are simultaneously satisfied.                           |
+| `styling.presets`   | `Record<string, Partial<VariantProps>>` | Named bundles of variant selections activated by `variantKey`.                                                             |
+| `styling.tags`      | `Record<string, string>`                | Extra classes applied when the rendered tag matches a key.                                                                 |
+| `styling.plugin`    | `ClassPluginFactory`                    | Replaces the built-in class pipeline. The plugin receives resolved options and may declare `ownedKeys` for prop stripping. |
+
+**`enforcement`** — structural and accessibility contracts
+
+| Option                 | Type                         | Description                                                      |
+| ---------------------- | ---------------------------- | ---------------------------------------------------------------- |
+| `enforcement.strict`   | `false \| 'warn' \| 'throw'` | How violations are surfaced. Defaults to `'throw'`.              |
+| `enforcement.aria`     | `AriaRule[]`                 | Custom ARIA validation rules extending the built-in role engine. |
+| `enforcement.children` | `ChildRuleInput[]`           | Rules the component's children must satisfy on every render.     |
+
+### `createPolymorphic(options)` — low-level runtime
+
+Used directly when building a framework adapter. Most users should use `createPolymorphicComponent`
+from the adapter package instead.
 
 ```ts
 import { createPolymorphic } from '@polymorphic-ui/core'
 
 const runtime = createPolymorphic({
-  defaultTag: 'button',
-  baseClassName: 'btn',
-  variants: { size: { sm: 'btn--sm', md: 'btn--md' } },
-  defaultVariants: { size: 'md' },
+  tag: 'button',
+  styling: {
+    base: 'btn',
+    variants: { size: { sm: 'btn--sm', md: 'btn--md' } },
+    defaults: { size: 'md' },
+  },
 })
 
 const tag = runtime.resolveTag(as) // as ?? defaultTag
-const merged = runtime.resolveProps(props) // defaultProps merged with props
+const merged = runtime.resolveProps(props) // defaults merged with props
 const cls = runtime.resolveClasses(tag, merged, className, variantKey)
+const { props: safeProps } = runtime.resolveAria(tag, merged) // strips invalid/redundant ARIA
 ```
-
-#### Options
-
-| Option             | Type                                    | Description                                                                                                                |
-| ------------------ | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `defaultTag`       | `ElementType`                           | Fallback element when no `as` prop is given. Defaults to `'div'`.                                                          |
-| `baseClassName`    | `string`                                | Classes present on every render.                                                                                           |
-| `defaultProps`     | `Partial<Props>`                        | Prop values merged in before caller props. Caller wins on conflict.                                                        |
-| `tagMap`           | `Record<string, string>`                | Extra classes applied when the rendered tag matches a key. Skipped when a `variantKey` is active.                          |
-| `presetMap`        | `Record<string, Partial<VariantProps>>` | Named bundles of variant selections activated by `variantKey`.                                                             |
-| `variants`         | `VariantMap`                            | CVA variant definitions.                                                                                                   |
-| `defaultVariants`  | `Partial<VariantProps>`                 | Default variant state for each dimension.                                                                                  |
-| `compoundVariants` | `CompoundVariant[]`                     | Conditional classes that activate when multiple variant conditions are simultaneously satisfied.                           |
-| `displayName`      | `string`                                | Identifier used in error messages and dev tooling.                                                                         |
-| `strict`           | `false \| 'warn' \| 'throw'`            | How structural validation violations are surfaced. Defaults to `'throw'`.                                                  |
-| `childRules`       | `ChildRuleInput[]`                      | Rules the component's children must satisfy on every render.                                                               |
-| `classPlugin`      | `ClassPluginFactory`                    | Replaces the built-in class pipeline. The plugin receives resolved options and may declare `ownedKeys` for prop stripping. |
 
 ### `AriaPolicyEngine`
 
-Validates ARIA role assignments against implicit landmark roles and returns a transformed props
-object with any invalid `role` stripped.
+Validates ARIA role assignments against implicit landmark roles and strips any invalid or redundant
+`role` attribute.
 
 ```ts
 import { AriaPolicyEngine } from '@polymorphic-ui/core'
 
 const engine = new AriaPolicyEngine('warn')
 const { props } = engine.validate(tag, elementProps)
-// props has role stripped if it was invalid or redundant
 ```
 
 Covered rules:
@@ -227,8 +310,7 @@ Covered rules:
 
 ### `ChildrenEvaluator`
 
-Enforces structural child rules against a flat `unknown[]` children array. Flattening framework
-children into a plain array before calling `evaluate` is the adapter's responsibility.
+Enforces structural child rules against a flat `unknown[]` children array.
 
 ```ts
 import { ChildrenEvaluator } from '@polymorphic-ui/core'

@@ -8,16 +8,16 @@ import { createPolymorphic } from './create-polymorphic'
 
 describe('createPolymorphic — resolveTag()', () => {
   it('returns defaultTag when no as provided', () => {
-    const runtime = createPolymorphic({ defaultTag: 'section' })
+    const runtime = createPolymorphic({ tag: 'section' })
     expect(runtime.resolveTag()).toBe('section')
   })
 
   it('returns as when provided', () => {
-    const runtime = createPolymorphic({ defaultTag: 'div' })
+    const runtime = createPolymorphic({ tag: 'div' })
     expect(runtime.resolveTag('article')).toBe('article')
   })
 
-  it('defaults to "div" when no defaultTag configured', () => {
+  it('defaults to "div" when no tag configured', () => {
     const runtime = createPolymorphic({})
     expect(runtime.resolveTag()).toBe('div')
   })
@@ -28,18 +28,18 @@ describe('createPolymorphic — resolveTag()', () => {
 // ---------------------------------------------------------------------------
 
 describe('createPolymorphic — resolveProps()', () => {
-  it('returns instance props unchanged when no defaultProps configured', () => {
+  it('returns instance props unchanged when no defaults configured', () => {
     const runtime = createPolymorphic({})
     expect(runtime.resolveProps({ className: 'foo' })).toEqual({ className: 'foo' })
   })
 
-  it('fills in defaultProps that are missing from instance props', () => {
-    const runtime = createPolymorphic({ defaultProps: { 'data-testid': 'card' } as never })
+  it('fills in defaults that are missing from instance props', () => {
+    const runtime = createPolymorphic({ defaults: { 'data-testid': 'card' } as never })
     expect(runtime.resolveProps({})).toMatchObject({ 'data-testid': 'card' })
   })
 
-  it('instance props override defaultProps', () => {
-    const runtime = createPolymorphic({ defaultProps: { 'aria-label': 'default' } as never })
+  it('instance props override defaults', () => {
+    const runtime = createPolymorphic({ defaults: { 'aria-label': 'default' } as never })
     expect(runtime.resolveProps({ 'aria-label': 'override' })).toMatchObject({
       'aria-label': 'override',
     })
@@ -48,7 +48,7 @@ describe('createPolymorphic — resolveProps()', () => {
   it('merges both sides without mutating inputs', () => {
     const defaults = { 'data-testid': 'card' } as never
     const instance = { className: 'foo' }
-    const runtime = createPolymorphic({ defaultProps: defaults })
+    const runtime = createPolymorphic({ defaults })
     const merged = runtime.resolveProps(instance)
     expect(merged).toMatchObject({ 'data-testid': 'card', className: 'foo' })
     expect(instance).not.toHaveProperty('data-testid')
@@ -60,8 +60,8 @@ describe('createPolymorphic — resolveProps()', () => {
 // ---------------------------------------------------------------------------
 
 describe('createPolymorphic — resolveClasses() static', () => {
-  it('returns baseClassName', () => {
-    const runtime = createPolymorphic({ baseClassName: 'rounded-lg' })
+  it('returns base class', () => {
+    const runtime = createPolymorphic({ styling: { base: 'rounded-lg' } })
     expect(runtime.resolveClasses('div', {})).toContain('rounded-lg')
   })
 
@@ -70,10 +70,9 @@ describe('createPolymorphic — resolveClasses() static', () => {
     expect(runtime.resolveClasses('div', {})).toBe('')
   })
 
-  it('appends tagMap class for matching tag', () => {
+  it('appends tags class for matching tag', () => {
     const runtime = createPolymorphic({
-      baseClassName: 'base',
-      tagMap: { section: 'sec' } as never,
+      styling: { base: 'base', tags: { section: 'sec' } as never },
     })
     const cls = runtime.resolveClasses('section', {})
     expect(cls).toContain('base')
@@ -81,7 +80,7 @@ describe('createPolymorphic — resolveClasses() static', () => {
   })
 
   it('appends instance className', () => {
-    const runtime = createPolymorphic({ baseClassName: 'base' })
+    const runtime = createPolymorphic({ styling: { base: 'base' } })
     const cls = runtime.resolveClasses('div', {}, 'user-class')
     expect(cls).toContain('base')
     expect(cls).toContain('user-class')
@@ -94,12 +93,14 @@ describe('createPolymorphic — resolveClasses() static', () => {
 
 describe('createPolymorphic — resolveClasses() variants', () => {
   const runtime = createPolymorphic({
-    baseClassName: 'base',
-    variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
-    defaultVariants: { size: 'sm' },
+    styling: {
+      base: 'base',
+      variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
+      defaults: { size: 'sm' },
+    },
   })
 
-  it('applies defaultVariants when no variant props provided', () => {
+  it('applies defaults when no variant props provided', () => {
     expect(runtime.resolveClasses('div', {})).toContain('text-sm')
   })
 
@@ -116,7 +117,7 @@ describe('createPolymorphic — resolveClasses() variants', () => {
 
 describe('createPolymorphic — options', () => {
   it('returns the resolved options', () => {
-    const runtime = createPolymorphic({ defaultTag: 'section', baseClassName: 'rounded' })
+    const runtime = createPolymorphic({ tag: 'section', styling: { base: 'rounded' } })
     const opts = runtime.options
     expect(opts.defaultTag).toBe('section')
     expect(opts.baseClassName).toBe('rounded')
@@ -138,34 +139,34 @@ describe('createPolymorphic — options', () => {
 
 describe('createPolymorphic — resolveAria()', () => {
   it('returns props unchanged when all aria-* attrs are valid', () => {
-    const runtime = createPolymorphic({ defaultTag: 'button' })
+    const runtime = createPolymorphic({ tag: 'button' })
     const props = { 'aria-label': 'submit' }
     expect(runtime.resolveAria('button', props).props).toMatchObject({ 'aria-label': 'submit' })
   })
 
   it('strips an invalid aria-* attribute for the effective role', () => {
-    const runtime = createPolymorphic({ defaultTag: 'button' })
+    const runtime = createPolymorphic({ tag: 'button' })
     // aria-checked is not valid on role="button"
     const result = runtime.resolveAria('button', { 'aria-checked': 'true' })
     expect(result.props).not.toHaveProperty('aria-checked')
   })
 
   it('does not strip a valid role-restricted attribute', () => {
-    const runtime = createPolymorphic({ defaultTag: 'button' })
+    const runtime = createPolymorphic({ tag: 'button' })
     // aria-expanded is valid on role="button"
     const result = runtime.resolveAria('button', { 'aria-expanded': 'true' })
     expect(result.props).toMatchObject({ 'aria-expanded': 'true' })
   })
 
   it('does not strip global aria-* attributes', () => {
-    const runtime = createPolymorphic({ defaultTag: 'button' })
+    const runtime = createPolymorphic({ tag: 'button' })
     const result = runtime.resolveAria('button', { 'aria-label': 'save', 'aria-hidden': 'true' })
     expect(result.props).toMatchObject({ 'aria-label': 'save', 'aria-hidden': 'true' })
   })
 
   it('warns for invalid attribute when strict is "warn"', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const runtime = createPolymorphic({ defaultTag: 'button', strict: 'warn' })
+    const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: 'warn' } })
     runtime.resolveAria('button', { 'aria-checked': 'true' })
     expect(warn).toHaveBeenCalled()
     warn.mockRestore()
@@ -173,24 +174,24 @@ describe('createPolymorphic — resolveAria()', () => {
 
   it('is silent for invalid attribute when strict is false', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const runtime = createPolymorphic({ defaultTag: 'button', strict: false })
+    const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: false } })
     runtime.resolveAria('button', { 'aria-checked': 'true' })
     expect(warn).not.toHaveBeenCalled()
     warn.mockRestore()
   })
 
   it('passes through props unchanged for a tag with no implicit role', () => {
-    const runtime = createPolymorphic({ defaultTag: 'div' })
+    const runtime = createPolymorphic({ tag: 'div' })
     const props = { 'aria-checked': 'true' }
     expect(runtime.resolveAria('div', props).props).toBe(props)
   })
 })
 
 // ---------------------------------------------------------------------------
-// ariaRules — custom rule extension
+// enforcement.aria — custom rule extension
 // ---------------------------------------------------------------------------
 
-describe('createPolymorphic — ariaRules option', () => {
+describe('createPolymorphic — enforcement.aria option', () => {
   it('custom rule fires through resolveAria() — reported as warning', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const customRule = () => [
@@ -202,9 +203,8 @@ describe('createPolymorphic — ariaRules option', () => {
       },
     ]
     const runtime = createPolymorphic({
-      defaultTag: 'nav',
-      strict: 'warn',
-      ariaRules: [customRule],
+      tag: 'nav',
+      enforcement: { strict: 'warn', aria: [customRule] },
     })
     runtime.resolveAria('nav', {})
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('custom-aria-rule'))
@@ -231,14 +231,17 @@ describe('createPolymorphic — ariaRules option', () => {
         },
       },
     ]
-    const runtime = createPolymorphic({ defaultTag: 'nav', strict: false, ariaRules: [customRule] })
+    const runtime = createPolymorphic({
+      tag: 'nav',
+      enforcement: { strict: false, aria: [customRule] },
+    })
     const { props } = runtime.resolveAria('nav', { 'data-x': '1' } as never)
     expect(props).not.toHaveProperty('data-x')
   })
 
-  it('resolveAria() behaves normally when ariaRules is not provided', () => {
+  it('resolveAria() behaves normally when enforcement.aria is not provided', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const runtime = createPolymorphic({ defaultTag: 'button', strict: 'warn' })
+    const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: 'warn' } })
     const { props } = runtime.resolveAria('button', { 'aria-label': 'ok' })
     expect(props).toMatchObject({ 'aria-label': 'ok' })
     expect(warn).not.toHaveBeenCalled()
