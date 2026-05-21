@@ -5,4 +5,5 @@ export default defineWorkspace([
   './packages/tailwind/vitest.config.ts',
   './packages/react/vitest.config.ts',
   './packages/docs/vitest.config.ts',
+  './packages/vue/vitest.config.ts',
 ])
