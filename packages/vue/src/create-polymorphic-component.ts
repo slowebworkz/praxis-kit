@@ -22,7 +22,7 @@ export function createPolymorphicComponent<
   const bundle = buildRuntime(options as VueFactoryOptions<TDefault, Props, Variants, TPreset>)
 
   const Component = defineComponent({
-    name: options.displayName ?? 'PolymorphicComponent',
+    name: options.name ?? 'PolymorphicComponent',
     // Without inheritAttrs: false Vue would double-bind attrs onto the root element
     // before our render pipeline has a chance to filter, transform, and re-apply them.
     inheritAttrs: false,
@@ -32,7 +32,7 @@ export function createPolymorphicComponent<
   })
 
   // Vue devtools reads `name`; external consumers read `displayName` (React adapter convention).
-  applyDisplayName(Component, options.displayName)
+  applyDisplayName(Component, options.name)
   return Component as unknown as PolymorphicComponent<
     PolymorphicGenerics<TDefault, Props & TPluginProps, Variants, TPreset>
   >

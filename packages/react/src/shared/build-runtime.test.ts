@@ -42,7 +42,7 @@ describe('buildRuntime — defaults', () => {
     expect(ariaEngine).toBeInstanceOf(AriaPolicyEngine)
   })
 
-  it('omits childrenEvaluator when no childRules are provided', () => {
+  it('omits childrenEvaluator when no enforcement.children provided', () => {
     const result = buildRuntime({}, noopSlot, noopNormalize)
     expect('childrenEvaluator' in result).toBe(false)
   })
@@ -53,24 +53,24 @@ describe('buildRuntime — defaults', () => {
   })
 })
 
-describe('buildRuntime — with displayName', () => {
-  it('passes displayName to the core runtime options', () => {
-    const { runtime } = buildRuntime({ displayName: 'MyButton' }, noopSlot, noopNormalize)
+describe('buildRuntime — with name', () => {
+  it('passes name to the core runtime options as displayName', () => {
+    const { runtime } = buildRuntime({ name: 'MyButton' }, noopSlot, noopNormalize)
     expect(runtime.options.displayName).toBe('MyButton')
   })
 })
 
-describe('buildRuntime — with childRules', () => {
-  it('returns a ChildrenEvaluator when childRules are provided', () => {
-    const childRules = [
+describe('buildRuntime — with enforcement.children', () => {
+  it('returns a ChildrenEvaluator when enforcement.children are provided', () => {
+    const children = [
       { name: 'button', match: (c: unknown) => c !== null, cardinality: { min: 1, max: 1 } },
     ]
-    const result = buildRuntime({ childRules }, noopSlot, noopNormalize)
+    const result = buildRuntime({ enforcement: { children } }, noopSlot, noopNormalize)
     expect(result.childrenEvaluator).toBeInstanceOf(ChildrenEvaluator)
   })
 
-  it('omits childrenEvaluator when childRules is an empty array', () => {
-    const result = buildRuntime({ childRules: [] }, noopSlot, noopNormalize)
+  it('omits childrenEvaluator when enforcement.children is an empty array', () => {
+    const result = buildRuntime({ enforcement: { children: [] } }, noopSlot, noopNormalize)
     expect('childrenEvaluator' in result).toBe(false)
   })
 })
@@ -78,7 +78,11 @@ describe('buildRuntime — with childRules', () => {
 describe('buildRuntime — filterProps strips variant keys', () => {
   it('strips variant keys from rendered props', () => {
     const variants = { size: { sm: 'text-sm', lg: 'text-lg' } } as const
-    const { filterProps, runtime } = buildRuntime({ variants }, noopSlot, noopNormalize)
+    const { filterProps, runtime } = buildRuntime(
+      { styling: { variants } },
+      noopSlot,
+      noopNormalize,
+    )
     expect(filterProps('size', runtime.options.variantKeys)).toBe(true)
     expect(filterProps('className', runtime.options.variantKeys)).toBe(false)
   })
@@ -90,13 +94,13 @@ describe('buildRuntime — runtime resolveTag', () => {
     expect(runtime.resolveTag()).toBe('div')
   })
 
-  it('respects a custom defaultTag', () => {
-    const { runtime } = buildRuntime({ defaultTag: 'section' }, noopSlot, noopNormalize)
+  it('respects a custom tag', () => {
+    const { runtime } = buildRuntime({ tag: 'section' }, noopSlot, noopNormalize)
     expect(runtime.resolveTag()).toBe('section')
   })
 
   it('overrides the default with an as prop', () => {
-    const { runtime } = buildRuntime({ defaultTag: 'div' }, noopSlot, noopNormalize)
+    const { runtime } = buildRuntime({ tag: 'div' }, noopSlot, noopNormalize)
     expect(runtime.resolveTag('nav')).toBe('nav')
   })
 })

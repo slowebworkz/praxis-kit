@@ -35,7 +35,7 @@ export type {
   CVADefaults,
   CVAVariants,
 } from './compound-variants'
-export type { FactoryOptions } from './factory-options'
+export type { EnforcementOptions, FactoryOptions, StylingOptions } from './factory-options'
 export type { NonEmptyArray } from './non-empty-array'
 export type {
   DefaultOf,

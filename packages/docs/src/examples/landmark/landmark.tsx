@@ -5,8 +5,8 @@ export const Landmark = createPolymorphicComponent<
   Record<never, never>,
   Record<never, never>
 >({
-  defaultTag: 'nav',
-  displayName: 'Landmark',
-  baseClassName: 'block',
-  strict: 'warn',
+  tag: 'nav',
+  name: 'Landmark',
+  styling: { base: 'block' },
+  enforcement: { strict: 'warn' },
 })

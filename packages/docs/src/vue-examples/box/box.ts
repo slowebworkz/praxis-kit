@@ -1,7 +1,7 @@
 /**
  * Box — Tailwind layout component for Vue.
  *
- * `classPlugin: createTailwindPipeline` activates the layout pipeline, which
+ * `plugin: createTailwindPipeline` activates the layout pipeline, which
  * contributes `flex` and `grid` boolean props. These props act as layout-mode
  * switches — they never reach the DOM — and determine which Tailwind utilities
  * are emitted:
@@ -40,14 +40,16 @@ const variants = {
 } as const
 
 export const Box = createPolymorphicComponent<'div', Record<never, never>, typeof variants>({
-  defaultTag: 'div',
-  displayName: 'Box',
-  classPlugin: createTailwindPipeline,
-  variants,
-  presetMap: {
-    row: { direction: 'row', align: 'center', gap: 'md' },
-    stack: { direction: 'col', gap: 'sm' },
-    grid2: { cols: '2', gap: 'md' },
+  tag: 'div',
+  name: 'Box',
+  styling: {
+    plugin: createTailwindPipeline,
+    variants,
+    presets: {
+      row: { direction: 'row', align: 'center', gap: 'md' },
+      stack: { direction: 'col', gap: 'sm' },
+      grid2: { cols: '2', gap: 'md' },
+    },
   },
   filterProps: (key: string, variantKeys: ReadonlySet<string>) => variantKeys.has(key),
 })
