@@ -62,18 +62,18 @@ src/
 flowchart TD
     options["FactoryOptions
     ─────────────
-    defaultTag
-    defaultProps
-    baseClassName
-    tagMap / presetMap
-    variants / defaultVariants
-    compoundVariants
-    childRules
-    displayName
-    strict"
+    tag · name · defaults
+    styling:
+      base · variants · defaults
+      compounds · presets · tags · plugin
+    enforcement:
+      strict · aria · children"
     ]
 
-    resolve["resolveFactoryOptions()"]
+    resolve["resolveFactoryOptions()
+    ─────────────
+    unpacks styling / enforcement
+    into flat ResolvedFactoryOptions"]
 
     pipeline["createClassPipeline()"]
 
@@ -82,6 +82,7 @@ flowchart TD
 .resolveTag(as?)
 .resolveProps(props)
 .resolveClasses(...)
+.resolveAria(tag, props)
 .options"]
 
     options --> resolve --> pipeline
@@ -89,8 +90,9 @@ flowchart TD
     pipeline --> runtime
 ```
 
-`createPolymorphic(options)` freezes the resolved options, builds the class pipeline once, and
-returns a lightweight runtime object. The pipeline instances (`StaticClassResolver`,
+`createPolymorphic(options)` unpacks the namespaced `FactoryOptions` into a flat
+`ResolvedFactoryOptions` (internal field names are unchanged), freezes it, builds the class pipeline
+once, and returns a lightweight runtime object. The pipeline instances (`StaticClassResolver`,
 `VariantClassResolver`) are created once per factory call and cached for the lifetime of the
 runtime.
 
@@ -445,13 +447,15 @@ resulting `BuiltRuntime` bundle in its closure.
 flowchart TD
     options["ReactFactoryOptions
     ─────────────
-    (all FactoryOptions fields)
+    tag · name · defaults
+    styling: { base, variants, … }
+    enforcement: { strict, aria, children }
     slotComponent?
     filterProps?"]
 
     buildRuntime["buildRuntime()
     ─────────────
-    normalizeOptions  (fill defaults)
+    normalizeOptions  (fill defaults: name, enforcement.strict)
     buildCoreRuntime  (createPolymorphic → PolymorphicRuntime)
     buildValidators   (SlotValidator, AriaPolicyEngine, ChildrenEvaluator?)
     composeFilter     (variant keys + plugin ownedKeys + caller filterProps)"]
@@ -476,7 +480,7 @@ delegates to render()"]
 
 `slotComponent` defaults to the version-local `Slot`. `filterProps` lets the caller strip
 variant-key props (and any other implementation-detail props) from the DOM before rendering.
-`ChildrenEvaluator` is only instantiated when `childRules` is present in the options.
+`ChildrenEvaluator` is only instantiated when `enforcement.children` is present in the options.
 
 ---
 
@@ -502,7 +506,7 @@ className, variantKey"]
     cls["runtime.resolveClasses(tag, merged, className, variantKey)"]
     filter["applyFilter(merged, filterProps, variantKeys)"]
 
-    childEval{"childRules?"}
+    childEval{"childrenEvaluator?"}
     evaluate["ChildrenEvaluator.evaluate(
   normalizeChildren(children)
 )"]
