@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "@vue/test-utils": "catalog:",
+    "@vue/server-renderer": "catalog:",
     "jsdom": "catalog:",
     "tsup": "catalog:",
     "vitest": "catalog:",

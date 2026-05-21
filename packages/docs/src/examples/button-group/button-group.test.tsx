@@ -2,12 +2,12 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createElement, act } from 'react'
 import type { ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
+import type { AnyRecord } from '@polymorphic-ui/core'
 import { Button } from '../button/button'
 import { ButtonGroup } from './button-group'
 
-type AnyProps = Record<string, unknown>
-const grp = (c: typeof ButtonGroup) => c as ComponentType<AnyProps>
-const btn = (c: typeof Button) => c as ComponentType<AnyProps>
+const grp = (c: typeof ButtonGroup) => c as ComponentType<AnyRecord>
+const btn = (c: typeof Button) => c as ComponentType<AnyRecord>
 
 let container: HTMLElement
 let root: ReturnType<typeof createRoot>
