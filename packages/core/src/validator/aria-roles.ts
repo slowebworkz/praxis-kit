@@ -1,21 +1,7 @@
-import type { KnownAriaRole } from '../types'
+import { KNOWN_ARIA_ROLES } from '../types/aria-role'
+import type { KnownAriaRole } from '../types/aria-role'
 import type { IntrinsicProps, PropsWithRole } from '../types'
-
-export const KNOWN_ARIA_ROLES = [
-  'alert',
-  'alertdialog',
-  'article',
-  'banner',
-  'button',
-  'complementary',
-  'contentinfo',
-  'dialog',
-  'form',
-  'main',
-  'navigation',
-  'region',
-  'search',
-] as const
+export { KNOWN_ARIA_ROLES }
 
 const KNOWN_ARIA_ROLES_SET: ReadonlySet<string> = new Set(KNOWN_ARIA_ROLES)
 

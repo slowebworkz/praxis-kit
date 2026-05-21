@@ -1,5 +1,5 @@
 import type { RequireAtLeastOne, Simplify } from 'type-fest'
-import type { NonEmptyArray } from '../types'
+import type { NonEmptyArray } from './non-empty-array'
 import type { DefaultVariants, VariantKey, VariantMap, VariantValue } from './variant'
 
 /**
