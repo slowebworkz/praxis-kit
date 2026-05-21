@@ -29,3 +29,5 @@ catalog:
   typescript-eslint: ^8.0.0
   vitest: ^4.1.6
   "@vitest/ui": ^4.1.6
+  vue: ^3.4.0
+  "@vue/test-utils": ^2.4.0
