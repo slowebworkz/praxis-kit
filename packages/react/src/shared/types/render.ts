@@ -1,6 +1,6 @@
 import type { AriaPolicyEngine, ChildrenEvaluator, ElementType } from '@polymorphic-ui/core'
 import type { ReactElement, Ref } from 'react'
-import type { SlotValidator } from '../slot'
+import type { SlotValidator } from '../slot/slot-validator'
 import type { FilterPredicate, NormalizeChildren, ResolvedProps, SlotComponent } from './primitives'
 import type { AsProp, AsChildProp, KnownProps } from './props'
 import type { Runtime } from './runtime'
