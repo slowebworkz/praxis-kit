@@ -10,14 +10,17 @@
   "dependencies": {
     "@polymorphic-ui/core": "workspace:*",
     "@polymorphic-ui/react": "workspace:*",
-    "@polymorphic-ui/tailwind": "workspace:*"
+    "@polymorphic-ui/tailwind": "workspace:*",
+    "@polymorphic-ui/vue": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "@vue/test-utils": "catalog:",
     "jsdom": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "vue": "catalog:"
   }
 }
