@@ -30,5 +30,6 @@ export function resolveFactoryOptions<
     ...(options.compoundVariants !== undefined && { compoundVariants: options.compoundVariants }),
     ...(options.displayName !== undefined && { displayName: options.displayName }),
     ...(options.childRules !== undefined && { childRules: options.childRules }),
+    ...(options.ariaRules !== undefined && { ariaRules: options.ariaRules }),
   })
 }

@@ -1,4 +1,5 @@
 import type {
+  AriaRule,
   ChildRuleInput,
   DefaultOf,
   ElementType,
@@ -46,9 +47,17 @@ function buildCoreRuntime<G extends PolymorphicGenerics>(normalized: NormalizedO
  * Layer 3 — Build validators
  * -----------------------------------------------------------------------------------------------*/
 
-function buildValidators(name: string, strict: StrictMode, childRules?: readonly ChildRuleInput[]) {
+function buildValidators(
+  name: string,
+  strict: StrictMode,
+  childRules?: readonly ChildRuleInput[],
+  ariaRules?: readonly AriaRule[],
+) {
   const slotValidator = new SlotValidator(name, strict)
-  const ariaEngine = new AriaPolicyEngine(strict)
+  const ariaEngine = new AriaPolicyEngine(
+    strict,
+    ariaRules?.length ? { rules: ariaRules } : undefined,
+  )
   const childrenEvaluator = childRules?.length
     ? new ChildrenEvaluator(childRules, strict, name)
     : undefined
@@ -77,6 +86,7 @@ export function buildRuntime<
     normalized.displayName,
     normalized.strict,
     normalized.childRules,
+    normalized.ariaRules,
   )
   const filterProps = composeFilter(ownedKeys, normalized.filterProps)
 
