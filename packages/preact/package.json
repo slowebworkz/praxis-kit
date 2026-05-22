@@ -1,0 +1,38 @@
+{
+  "name": "@polymorphic-ui/preact",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed",
+    "prepublishOnly": "pnpm build"
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "@polymorphic-ui/core": "workspace:*",
+    "clsx": "catalog:",
+    "type-fest": "catalog:"
+  },
+  "peerDependencies": {
+    "preact": ">=10.11"
+  },
+  "devDependencies": {
+    "jsdom": "catalog:",
+    "preact": "catalog:",
+    "preact-render-to-string": "catalog:",
+    "tsup": "catalog:",
+    "vitest": "catalog:"
+  }
+}
