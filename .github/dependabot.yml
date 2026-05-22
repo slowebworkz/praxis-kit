@@ -1,0 +1,24 @@
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+    groups:
+      internal:
+        patterns:
+          - "@polymorphic-ui/*"
+
+      build:
+        patterns:
+          - "vite*"
+          - "rollup*"
+          - "tsup"
+          - "typescript"
+
+      react:
+        patterns:
+          - "react*"
+          - "@types/react*"

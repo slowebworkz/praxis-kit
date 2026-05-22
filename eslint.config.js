@@ -72,6 +72,7 @@ export default [
         { type: 'core', pattern: 'packages/core/**/*' },
         { type: 'react', pattern: 'packages/react/**/*' },
         { type: 'vue', pattern: 'packages/vue/**/*' },
+        { type: 'preact', pattern: 'packages/preact/**/*' },
         { type: 'tailwind', pattern: 'packages/tailwind/**/*' },
         { type: 'docs', pattern: 'packages/docs/**/*' },
         { type: 'scripts', pattern: 'scripts/**/*' },
@@ -84,10 +85,11 @@ export default [
         {
           default: 'allow',
           rules: [
-            { from: ['core'], disallow: ['react', 'react-dom', 'vue', '@vue/**'] },
-            { from: ['react'], disallow: ['vue', '@vue/**'] },
-            { from: ['vue'], disallow: ['react', 'react-dom'] },
-            { from: ['tailwind'], disallow: ['react', 'react-dom', 'vue', '@vue/**'] },
+            { from: ['core'], disallow: ['react', 'react-dom', 'vue', '@vue/**', 'preact'] },
+            { from: ['react'], disallow: ['vue', '@vue/**', 'preact'] },
+            { from: ['vue'], disallow: ['react', 'react-dom', 'preact'] },
+            { from: ['preact'], disallow: ['react', 'react-dom', 'vue', '@vue/**'] },
+            { from: ['tailwind'], disallow: ['react', 'react-dom', 'vue', '@vue/**', 'preact'] },
           ],
         },
       ],
@@ -127,6 +129,23 @@ export default [
             {
               group: ['@polymorphic-ui/vue', '@polymorphic-ui/docs'],
               message: 'react adapter must not import from other adapters',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // preact adapter: no other adapters
+  {
+    files: ['packages/preact/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@polymorphic-ui/react', '@polymorphic-ui/vue', '@polymorphic-ui/docs'],
+              message: 'preact adapter must not import from other adapters',
             },
           ],
         },
