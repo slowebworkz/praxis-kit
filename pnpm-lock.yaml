@@ -153,6 +153,19 @@ importers:
         specifier: 'catalog:'
         version: 4.1.6(@vitest/ui@4.1.6)(jsdom@26.1.0)(vite@8.0.13(esbuild@0.27.7)(jiti@2.7.0))
 
+  packages/bench:
+    dependencies:
+      '@polymorphic-ui/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      class-variance-authority:
+        specifier: 'catalog:'
+        version: 0.7.1
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.6(@vitest/ui@4.1.6)(jsdom@26.1.0)(vite@8.0.13(esbuild@0.27.7)(jiti@2.7.0))
+
   packages/core:
     dependencies:
       class-variance-authority:
