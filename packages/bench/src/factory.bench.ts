@@ -1,6 +1,7 @@
 import { bench, describe } from 'vitest'
 import { createPolymorphic } from '@polymorphic-ui/core'
 import { cva } from 'class-variance-authority'
+import type { AnyRecord } from '@polymorphic-ui/core'
 
 // ─── Shared configs ────────────────────────────────────────────────────────────
 // Module-level runtimes exclude factory cost from resolver benchmarks.
@@ -44,7 +45,7 @@ const cvaFn = cva('btn', {
   compoundVariants: [{ size: 'lg', intent: 'ghost', class: 'btn--lg-ghost' }],
 })
 
-const WARM_PROPS = { size: 'lg', intent: 'ghost' } as Record<string, unknown>
+const WARM_PROPS: AnyRecord = { size: 'lg', intent: 'ghost' }
 
 // Rotated configs break V8 object-shape optimization on the factory input —
 // key order and presence change each call, exposing normalization deopt risk.
@@ -133,22 +134,22 @@ const largeVariantRuntime = createPolymorphic({
   },
 })
 
-const LARGE_WARM_PROPS = {
+const LARGE_WARM_PROPS: AnyRecord = {
   size: 'lg',
   intent: 'ghost',
   tone: 'soft',
   state: 'default',
   density: 'normal',
   emphasis: 'medium',
-} as Record<string, unknown>
-const LARGE_COMPOUND_HIT = {
+}
+const LARGE_COMPOUND_HIT: AnyRecord = {
   size: 'lg',
   intent: 'ghost',
   tone: 'soft',
   state: 'default',
   density: 'normal',
   emphasis: 'medium',
-} as Record<string, unknown>
+}
 
 // ─── Cold path: factory construction ──────────────────────────────────────────
 
