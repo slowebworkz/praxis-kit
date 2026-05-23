@@ -8,7 +8,7 @@ const config = [
   ...ts,
 
   {
-    files: ['src/**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,svelte}'],
 
     rules: {
       'no-restricted-imports': [
@@ -21,10 +21,9 @@ const config = [
                 '@polymorphic-ui/vue',
                 '@polymorphic-ui/preact',
                 '@polymorphic-ui/solid',
-                '@polymorphic-ui/svelte',
                 '@polymorphic-ui/docs',
               ],
-              message: 'tailwind plugin must not import from adapters',
+              message: 'svelte adapter must not import from other adapters',
             },
           ],
         },

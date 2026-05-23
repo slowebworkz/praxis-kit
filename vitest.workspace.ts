@@ -9,4 +9,6 @@ export default defineWorkspace([
   './packages/preact/vitest.config.ts',
   './packages/solid/vitest.config.ts',
   './packages/solid/vitest.ssr.config.ts',
+  './packages/svelte/vitest.config.ts',
+  './packages/svelte/vitest.ssr.config.ts',
 ])
