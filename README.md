@@ -345,7 +345,79 @@ adapter render(as, props, className, variantKey, children):
 ```
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for a complete walkthrough of the internal pipeline, data
-flow diagrams, and type system design.
+flow diagrams, and type system design. See [ADAPTER_AUTHORING.md](ADAPTER_AUTHORING.md) for a guide
+to writing a new framework adapter against the core runtime contract.
+
+---
+
+## Why not X?
+
+### Why not CVA directly?
+
+[CVA](https://cva.style) is excellent at one thing: mapping variant keys to class strings. If class
+composition is all you need, use it directly — this library wraps CVA internally and adds overhead
+you don't want.
+
+What CVA does not do:
+
+- **Polymorphic rendering** — CVA produces a class string, not a component. You still wire up the
+  `as` prop, tag resolution, and prop forwarding yourself.
+- **ARIA normalization** — redundant or conflicting roles are your responsibility. CVA has no
+  concept of the rendered element's semantics.
+- **Structural contracts** — there is no mechanism to enforce which children are valid or how many
+  are allowed. Violations surface at runtime as broken UI, not at component instantiation.
+- **Prop filtering** — CVA variant keys pass through to the DOM unless you strip them manually on
+  every call site.
+
+`@polymorphic-ui/core` uses CVA for the variant resolution step and adds the surrounding
+infrastructure: tag resolution, prop merging, class pipeline, ARIA normalization, child validation,
+and the framework adapter contract. If you find yourself rebuilding those pieces on top of CVA, that
+is the gap this library fills.
+
+---
+
+### Why not Radix Slot / `asChild`?
+
+[Radix Slot](https://www.radix-ui.com/primitives/docs/utilities/slot) solves `asChild` — merging
+props and refs onto a child element instead of rendering a wrapper tag. This library's `asChild`
+implementation (React and Preact adapters) is directly modeled on Radix Slot.
+
+What Radix Slot does not do:
+
+- **Variant composition** — Slot handles prop merging; class string composition across variant
+  dimensions is out of scope.
+- **ARIA enforcement** — Slot forwards whatever props you give it. Role validation and redundancy
+  stripping are not part of the contract.
+- **Structural contracts** — Slot merges onto exactly one child. It does not validate what that
+  child is or enforce cardinality rules across a set of children.
+- **Framework neutrality** — Radix primitives are React-only. The same component contract cannot be
+  expressed for Vue, Svelte, or Solid without rebuilding the primitives from scratch.
+
+If you are using Radix UI components in a React app and want `asChild` behavior, Radix Slot is the
+right tool. This library targets the layer above: defining and enforcing the structural contract
+that governs what children are valid in the first place.
+
+---
+
+### Why not Chakra UI (or any full component library)?
+
+Full component libraries like [Chakra UI](https://chakra-ui.com) ship pre-built components with
+pre-decided semantics, styling conventions, and polymorphic behavior built in. That is a different
+problem than this library solves.
+
+What a component library does not give you:
+
+- **Your own design system's constraints** — Chakra's Button enforces Chakra's rules. It cannot
+  enforce that your `ButtonGroup` must contain 1–4 of _your_ `Button` components.
+- **Framework portability** — Chakra is React-specific. Writing the same structural contract for a
+  Vue or Svelte implementation means re-implementing the enforcement layer from scratch in each
+  framework.
+- **Composable runtime contracts** — Chakra's polymorphism is a convenience feature layered on top
+  of pre-built components. It is not an open contract that you can apply to arbitrary component
+  shapes.
+
+This library is infrastructure, not a component library. It provides the enforcement, normalization,
+and composition primitives that a design system's components are built on top of — in any framework.
 
 ---
 
