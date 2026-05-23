@@ -30,6 +30,7 @@
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
     "eslint-plugin-boundaries": "catalog:",
+    "jiti": "catalog:",
     "husky": "catalog:",
     "jsdom": "catalog:",
     "prettier": "catalog:",
