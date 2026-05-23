@@ -346,7 +346,8 @@ adapter render(as, props, className, variantKey, children):
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for a complete walkthrough of the internal pipeline, data
 flow diagrams, and type system design. See [ADAPTER_AUTHORING.md](ADAPTER_AUTHORING.md) for a guide
-to writing a new framework adapter against the core runtime contract.
+to writing a new framework adapter against the core runtime contract. See
+[MIGRATING.md](MIGRATING.md) for step-by-step migration guides from CVA, Radix Slot, and Chakra UI.
 
 ---
 
@@ -374,6 +375,8 @@ infrastructure: tag resolution, prop merging, class pipeline, ARIA normalization
 and the framework adapter contract. If you find yourself rebuilding those pieces on top of CVA, that
 is the gap this library fills.
 
+→ [Migrating from CVA](MIGRATING.md#migrating-from-cva)
+
 ---
 
 ### Why not Radix Slot / `asChild`?
@@ -397,6 +400,8 @@ If you are using Radix UI components in a React app and want `asChild` behavior,
 right tool. This library targets the layer above: defining and enforcing the structural contract
 that governs what children are valid in the first place.
 
+→ [Migrating from Radix Slot](MIGRATING.md#migrating-from-radix-slot--aschild)
+
 ---
 
 ### Why not Chakra UI (or any full component library)?
@@ -418,6 +423,8 @@ What a component library does not give you:
 
 This library is infrastructure, not a component library. It provides the enforcement, normalization,
 and composition primitives that a design system's components are built on top of — in any framework.
+
+→ [Migrating from Chakra UI](MIGRATING.md#migrating-from-chakra-ui-or-any-full-component-library)
 
 ---
 
