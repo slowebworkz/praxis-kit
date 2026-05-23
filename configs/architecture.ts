@@ -16,6 +16,7 @@ const config = [
         { type: 'solid', pattern: 'packages/solid/**/*' },
         { type: 'svelte', pattern: 'packages/svelte/**/*' },
         { type: 'tailwind', pattern: 'packages/tailwind/**/*' },
+        { type: 'bench', pattern: 'packages/bench/**/*' },
       ],
 
       'boundaries/ignore': ['**/dist/**', '**/node_modules/**'],
