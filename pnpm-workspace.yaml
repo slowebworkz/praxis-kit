@@ -5,7 +5,7 @@ allowBuilds:
 
 catalog:
   # Core
-  "@eslint/js": ^9.9.0
+  "@eslint/js": ^10.0.1
   "@types/react": ^19.0.0
   "@types/react-dom": ^19.0.0
   class-variance-authority: ^0.7.1
