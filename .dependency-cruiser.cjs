@@ -7,7 +7,10 @@ module.exports = {
       severity: 'error',
       comment: 'core must remain framework-agnostic — no React imports allowed',
       from: { path: '^packages/core/' },
-      to: { dependencyTypes: ['npm', 'npm-dev', 'npm-peer'], path: '^(react|react-dom|@radix-ui/)' },
+      to: {
+        dependencyTypes: ['npm', 'npm-dev', 'npm-peer'],
+        path: '^(react|react-dom|@radix-ui/)',
+      },
     },
     {
       name: 'core-no-vue',
