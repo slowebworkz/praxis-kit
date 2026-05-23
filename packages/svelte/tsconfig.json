@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "..",
+    "allowArbitraryExtensions": true,
+    "paths": {
+      "@polymorphic-ui/core": ["../core/src/index.ts"]
+    }
+  },
+  "include": ["src", "./vitest.config.ts", "./vitest.ssr.config.ts", "./tsup.config.ts"]
+}

@@ -14,6 +14,7 @@ const config = [
         { type: 'vue', pattern: 'packages/vue/**/*' },
         { type: 'preact', pattern: 'packages/preact/**/*' },
         { type: 'solid', pattern: 'packages/solid/**/*' },
+        { type: 'svelte', pattern: 'packages/svelte/**/*' },
         { type: 'tailwind', pattern: 'packages/tailwind/**/*' },
       ],
 
@@ -30,7 +31,19 @@ const config = [
             {
               from: [{ type: 'core' }],
               disallow: [
-                { dependency: { source: ['react', 'react-dom', 'vue', '@vue/**', 'preact'] } },
+                {
+                  dependency: {
+                    source: [
+                      'react',
+                      'react-dom',
+                      'vue',
+                      '@vue/**',
+                      'preact',
+                      'svelte',
+                      'svelte/**',
+                    ],
+                  },
+                },
               ],
             },
           ],
