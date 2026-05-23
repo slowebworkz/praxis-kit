@@ -7,4 +7,6 @@ export default defineWorkspace([
   './packages/docs/vitest.config.ts',
   './packages/vue/vitest.config.ts',
   './packages/preact/vitest.config.ts',
+  './packages/solid/vitest.config.ts',
+  './packages/solid/vitest.ssr.config.ts',
 ])

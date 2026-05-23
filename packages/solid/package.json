@@ -1,15 +1,11 @@
 {
-  "name": "@polymorphic-ui/react",
+  "name": "@polymorphic-ui/solid",
   "version": "0.0.1",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./legacy": {
-      "types": "./dist/legacy/index.d.ts",
-      "import": "./dist/legacy/index.js"
     }
   },
   "files": [
@@ -21,8 +17,8 @@
     "lint": "eslint . --fix --config eslint.config.ts",
     "lint:check": "eslint . --config eslint.config.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:related": "vitest run --changed",
+    "test": "vitest run --config vitest.config.ts && vitest run --config vitest.ssr.config.ts",
+    "test:related": "vitest run --changed --config vitest.config.ts && vitest run --changed --config vitest.ssr.config.ts",
     "prepublishOnly": "pnpm build"
   },
   "sideEffects": false,
@@ -32,15 +28,14 @@
     "type-fest": "catalog:"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "solid-js": ">=1.6"
   },
   "devDependencies": {
-    "@types/react": "catalog:",
-    "@types/react-dom": "catalog:",
+    "@solidjs/testing-library": "catalog:",
     "jsdom": "catalog:",
-    "react": "catalog:",
-    "react-dom": "catalog:",
+    "solid-js": "catalog:",
     "tsup": "catalog:",
+    "vite-plugin-solid": "catalog:",
     "vitest": "catalog:"
   }
 }
