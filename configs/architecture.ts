@@ -21,15 +21,17 @@ const config = [
     },
 
     rules: {
-      'boundaries/external': [
+      'boundaries/dependencies': [
         'error',
         {
           default: 'allow',
 
           rules: [
             {
-              from: ['core'],
-              disallow: ['react', 'react-dom', 'vue', '@vue/**', 'preact'],
+              from: [{ type: 'core' }],
+              disallow: [
+                { dependency: { source: ['react', 'react-dom', 'vue', '@vue/**', 'preact'] } },
+              ],
             },
           ],
         },
