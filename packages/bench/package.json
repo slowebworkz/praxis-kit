@@ -1,0 +1,17 @@
+{
+  "name": "@polymorphic-ui/bench",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench": "vitest bench --config vitest.bench.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@polymorphic-ui/core": "workspace:*"
+  },
+  "devDependencies": {
+    "class-variance-authority": "catalog:",
+    "vitest": "catalog:"
+  }
+}
