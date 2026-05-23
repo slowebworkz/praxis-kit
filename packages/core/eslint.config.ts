@@ -20,6 +20,7 @@ const config = [
                 '@polymorphic-ui/vue',
                 '@polymorphic-ui/preact',
                 '@polymorphic-ui/solid',
+                '@polymorphic-ui/svelte',
                 '@polymorphic-ui/tailwind',
                 '@polymorphic-ui/docs',
               ],

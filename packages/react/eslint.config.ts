@@ -20,6 +20,7 @@ const config = [
                 '@polymorphic-ui/vue',
                 '@polymorphic-ui/preact',
                 '@polymorphic-ui/solid',
+                '@polymorphic-ui/svelte',
                 '@polymorphic-ui/docs',
               ],
               message: 'react adapter must not import from other adapters',
