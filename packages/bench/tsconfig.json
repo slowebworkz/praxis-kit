@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "paths": {
+      "@polymorphic-ui/core": ["../core/src/index.ts"]
+    }
+  },
+  "include": ["src", "./vitest.bench.config.ts"]
+}
