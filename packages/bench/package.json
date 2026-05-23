@@ -11,7 +11,10 @@
     "@polymorphic-ui/core": "workspace:*"
   },
   "devDependencies": {
+    "@types/react": "catalog:",
     "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "react": "catalog:",
     "vitest": "catalog:"
   }
 }
