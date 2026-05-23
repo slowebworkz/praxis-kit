@@ -2,20 +2,21 @@ import { bench, describe } from 'vitest'
 import { createElement, cloneElement, Fragment } from 'react'
 import type { ReactElement } from 'react'
 
+import type { AnyRecord } from '@polymorphic-ui/core'
 import { mergeProps } from '@/shared/slot/mergeProps'
 import { applySlot } from '@/shared/slot/applySlot'
 import { Slottable } from '@/shared/slot/Slottable'
 import { cloneSlotChild } from '@/current/slot/cloneSlotChild'
 
+type AnyFn = (...args: unknown[]) => void
+
 // ─── Radix Slot reference implementation ──────────────────────────────────────
 // Inlined from @radix-ui/react-slot source for a stable comparison baseline.
 // Structural differences from ours: no clsx (string join), no defaultPrevented
 // guard in event chains, handler order is child-then-slot (same as ours).
-type AnyProps = Record<string, unknown>
-type AnyFn = (...args: unknown[]) => void
 
-function radixMergeProps(slotProps: AnyProps, childProps: AnyProps): AnyProps {
-  const overrideProps: AnyProps = { ...childProps }
+function radixMergeProps(slotProps: AnyRecord, childProps: AnyRecord): AnyRecord {
+  const overrideProps: AnyRecord = { ...childProps }
   for (const propName in childProps) {
     const slotVal = slotProps[propName]
     const childVal = childProps[propName]
@@ -39,23 +40,23 @@ function radixMergeProps(slotProps: AnyProps, childProps: AnyProps): AnyProps {
 
 // ─── Prop fixtures ─────────────────────────────────────────────────────────────
 
-const SLOT_SIMPLE: AnyProps = { id: 'slot', 'data-type': 'btn', tabIndex: 0 }
-const CHILD_SIMPLE: AnyProps = { id: 'child', 'data-label': 'click me', 'aria-pressed': false }
+const SLOT_SIMPLE: AnyRecord = { id: 'slot', 'data-type': 'btn', tabIndex: 0 }
+const CHILD_SIMPLE: AnyRecord = { id: 'child', 'data-label': 'click me', 'aria-pressed': false }
 
-const SLOT_CLASS: AnyProps = { className: 'btn btn--base', id: 'slot' }
-const CHILD_CLASS: AnyProps = { className: 'btn--primary', id: 'child' }
+const SLOT_CLASS: AnyRecord = { className: 'btn btn--base', id: 'slot' }
+const CHILD_CLASS: AnyRecord = { className: 'btn--primary', id: 'child' }
 
 const noop = () => void 0
-const SLOT_EVENT: AnyProps = { onClick: noop, id: 'slot' }
-const CHILD_EVENT: AnyProps = { onClick: noop, id: 'child' }
+const SLOT_EVENT: AnyRecord = { onClick: noop, id: 'slot' }
+const CHILD_EVENT: AnyRecord = { onClick: noop, id: 'child' }
 
-const SLOT_MIXED: AnyProps = {
+const SLOT_MIXED: AnyRecord = {
   className: 'btn btn--base',
   style: { color: 'red', fontWeight: 'bold' },
   onClick: noop,
   'data-slot': true,
 }
-const CHILD_MIXED: AnyProps = {
+const CHILD_MIXED: AnyRecord = {
   className: 'btn--primary',
   style: { color: 'blue', fontSize: '16px' },
   onClick: noop,
@@ -66,7 +67,7 @@ const CHILD_MIXED: AnyProps = {
 // Simulates a design-system component with a large accumulated prop surface:
 // accessibility, analytics, telemetry, feature flags, motion — each system
 // that attaches props grows the iteration cost linearly.
-const SLOT_DEEP: AnyProps = {
+const SLOT_DEEP: AnyRecord = {
   className: 'btn btn--base btn--lg',
   style: { color: 'red', fontWeight: 'bold', display: 'inline-flex' },
   onClick: noop,
@@ -87,7 +88,7 @@ const SLOT_DEEP: AnyProps = {
   role: 'button',
   type: 'submit',
 }
-const CHILD_DEEP: AnyProps = {
+const CHILD_DEEP: AnyRecord = {
   className: 'btn--primary btn--rounded',
   style: { color: 'blue', padding: '8px 16px', borderRadius: '4px' },
   onClick: noop,
