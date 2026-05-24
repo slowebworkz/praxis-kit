@@ -1,0 +1,40 @@
+{
+  "name": "@polymorphic-ui/vue",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint . --fix --config eslint.config.ts",
+    "lint:check": "eslint . --config eslint.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed",
+    "prepublishOnly": "pnpm build"
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "@polymorphic-ui/core": "workspace:*",
+    "type-fest": "catalog:"
+  },
+  "peerDependencies": {
+    "vue": ">=3.4"
+  },
+  "devDependencies": {
+    "@vue/test-utils": "catalog:",
+    "@vue/server-renderer": "catalog:",
+    "jsdom": "catalog:",
+    "tsup": "catalog:",
+    "vitest": "catalog:",
+    "vue": "catalog:"
+  }
+}
