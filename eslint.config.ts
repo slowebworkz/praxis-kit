@@ -23,9 +23,11 @@ const config = [
             'scripts/*.ts',
             'configs/*.ts',
             'packages/*/eslint.config.ts',
+            'lib/*/vitest.config.ts',
+            'lib/*/eslint.config.ts',
           ],
-          // ~17 files: 2 root *.ts + 1 scripts + 4 configs src + 3 configs .d.ts + 7 per-package eslint configs
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 20,
+          // ~17 files: 2 root *.ts + 1 scripts + 4 configs src + 3 configs .d.ts + 7 per-package eslint configs + lib/ configs
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 30,
           defaultProject: './tsconfig.base.json',
         },
       },
