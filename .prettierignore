@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+*.d.ts
+
+# Test snapshots (auto-generated)
+**/__snapshots__/
+
+# Generated / cache
+.turbo/
+.cache/
+coverage/
+
+# Lockfiles — never reformat, diffs would be enormous
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Dot folders
+.git/
+.claude/
+.husky/
+.vscode/
+
+# Minified assets
+*.min.js
+*.min.css
