@@ -1,0 +1,47 @@
+{
+  "name": "polymorphic-ui",
+  "private": true,
+  "version": "0.0.1",
+  "description": "A framework-agnostic polymorphic component system with strict TypeScript types and runtime accessibility validation.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm typecheck && pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r --if-present test",
+    "test:ci": "pnpm -r --if-present test",
+    "test:related": "pnpm -r --if-present test:related",
+    "bench": "pnpm --filter @polymorphic-ui/bench bench",
+    "lint": "eslint . --fix",
+    "lint:check": "eslint .",
+    "lint:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' | xargs eslint --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "format:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.md' | xargs prettier --write",
+    "clean": "rm -rf node_modules packages/**/node_modules packages/**/dist",
+    "prepare": "husky",
+    "repo-state": "node --experimental-strip-types scripts/generate-repo-state.ts",
+    "arch:validate": "depcruise --config .dependency-cruiser.cjs packages"
+  },
+  "devDependencies": {
+    "@eslint/js": "catalog:",
+    "@vitest/ui": "catalog:",
+    "dependency-cruiser": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "eslint-plugin-boundaries": "catalog:",
+    "jiti": "catalog:",
+    "husky": "catalog:",
+    "jsdom": "catalog:",
+    "prettier": "catalog:",
+    "ts-morph": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:",
+    "vitest": "catalog:"
+  },
+  "packageManager": "pnpm@11.0.4",
+  "engines": {
+    "node": ">=24"
+  }
+}
