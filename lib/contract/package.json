@@ -1,0 +1,7 @@
+{
+  "name": "@polymorphic-ui/contract",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Contract runtime: ARIA engine, children validator, strict mode"
+}

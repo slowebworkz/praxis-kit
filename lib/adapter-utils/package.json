@@ -1,0 +1,7 @@
+{
+  "name": "@polymorphic-ui/adapter-utils",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared adapter utilities: ref composition, event chaining"
+}

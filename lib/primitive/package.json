@@ -1,0 +1,7 @@
+{
+  "name": "@polymorphic-ui/primitive",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Render primitive: tag resolution, prop merge, slot protocol"
+}

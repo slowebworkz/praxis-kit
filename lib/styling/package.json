@@ -1,0 +1,7 @@
+{
+  "name": "@polymorphic-ui/styling",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Styling runtime: variant resolver, class pipeline, plugin API"
+}
