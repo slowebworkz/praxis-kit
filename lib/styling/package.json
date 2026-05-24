@@ -3,5 +3,19 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Styling runtime: variant resolver, class pipeline, plugin API"
+  "description": "Styling runtime: variant resolver, class pipeline, plugin API",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest related --run"
+  },
+  "dependencies": {
+    "@polymorphic-ui/primitive": "workspace:*",
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "type-fest": "catalog:"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
 }

@@ -1,0 +1,6 @@
+export { mergeSlotProps } from './merge-slot-props'
+export { mergeDefaults } from './merge-defaults'
+export { chainHandlers, mergeClassNames, mergeStyles, policyHandlers } from './policies'
+export type { PropMergePolicy, EventHandler, MergePolicyHandler } from './policies'
+export { isEventKey, isFunction, isPlainObject } from './predicates'
+export { EVENT_HANDLER_RE } from './constants'
