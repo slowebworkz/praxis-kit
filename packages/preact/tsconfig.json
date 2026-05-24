@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "..",
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "paths": {
+      "@polymorphic-ui/core": ["../core/src/index.ts"]
+    }
+  },
+  "include": ["src", "./vitest.config.ts", "./tsup.config.ts"]
+}
