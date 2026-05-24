@@ -3,5 +3,16 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Render primitive: tag resolution, prop merge, slot protocol"
+  "description": "Render primitive: tag resolution, prop merge, slot protocol",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "clsx": "catalog:"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
 }
