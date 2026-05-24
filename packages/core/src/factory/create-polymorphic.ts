@@ -1,6 +1,6 @@
-import { resolveFactoryOptions } from '../options'
-import { makeResolveTag } from '../resolver'
-import { createClassPipeline } from '../styles'
+import { makeResolveTag, mergeProps } from '@polymorphic-ui/primitive'
+import { AriaPolicyEngine } from '@polymorphic-ui/contract'
+import { createClassPipeline } from '@polymorphic-ui/styling'
 import type {
   AnyRecord,
   ClassName,
@@ -21,20 +21,11 @@ import type {
   VariantMap,
   VariantsOf,
 } from '../types'
-import { mergeProps } from '../utils'
-import { AriaPolicyEngine } from '../validator'
+import { resolveFactoryOptions } from '../options'
 
-/**
- * Creates a `PolymorphicRuntime` from the given factory options.
- *
- * Normalizes options, instantiates the class pipeline (or the provided `classPlugin`),
- * and returns a read-only runtime object with `resolveTag`, `resolveProps`,
- * `resolveClasses`, and `options`. Framework adapters consume this runtime to
- * drive rendering and validation.
- */
-function resolveClassPipeline<Variants extends VariantMap>(
+function resolveClassPipeline<TVariants extends VariantMap>(
   options: { styling?: { plugin?: ClassPluginFactory } },
-  resolved: ClassPipelineOptions<Variants>,
+  resolved: ClassPipelineOptions<TVariants>,
 ) {
   const pluginResult = options.styling?.plugin?.(resolved)
   const classPipeline = pluginResult?.pipeline ?? createClassPipeline(resolved)
@@ -45,7 +36,7 @@ function resolveClassPipeline<Variants extends VariantMap>(
 function createRuntimeMethods<G extends PolymorphicGenerics>(
   resolved: ResolvedFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>,
   classPipeline: ClassPipelineFn,
-  engine: AriaPolicyEngine,
+  engine: AriaPolicyEngine | null,
 ) {
   return {
     resolveTag: makeResolveTag(resolved.defaultTag),
@@ -64,6 +55,7 @@ function createRuntimeMethods<G extends PolymorphicGenerics>(
     },
 
     resolveAria<P extends IntrinsicProps>(tag: ElementType, props: P) {
+      if (!engine) return { props }
       const result = engine.validate(tag, props)
       return { props: result.props as P }
     },
@@ -94,10 +86,16 @@ export function createPolymorphic<
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
   const resolved = resolveFactoryOptions(options)
   const { pluginResult, classPipeline } = resolveClassPipeline(options, resolved)
-  const engine = new AriaPolicyEngine(
-    resolved.strict,
-    resolved.ariaRules?.length ? { rules: resolved.ariaRules } : undefined,
-  )
+
+  // Capability-driven: only instantiate the ARIA engine when enforcement is declared.
+  const engine =
+    options.enforcement !== undefined
+      ? new AriaPolicyEngine(
+          resolved.strict,
+          resolved.ariaRules?.length ? { rules: resolved.ariaRules } : undefined,
+        )
+      : null
+
   const methods = createRuntimeMethods<G>(resolved, classPipeline, engine)
 
   return createRuntimeObject<G, typeof pluginResult>(

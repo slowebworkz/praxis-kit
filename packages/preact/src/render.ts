@@ -1,6 +1,6 @@
 import { h } from 'preact'
 import type { Ref } from 'preact'
-import type { AriaPolicyEngine, ElementType, IntrinsicProps } from '@polymorphic-ui/core'
+import type { ElementType, IntrinsicProps } from '@polymorphic-ui/core'
 import { isKnownAriaRole } from '@polymorphic-ui/core'
 import type { SlotValidator } from './slot/slot-validator'
 import { isSlottableElement } from './slot'
@@ -171,12 +171,12 @@ function buildElementProps(
 function renderIntrinsic(
   state: ResolvedRenderState,
   ref: Ref<unknown> | null,
-  ariaEngine: AriaPolicyEngine,
+  runtime: Runtime,
 ): AnyVNode {
   const elementProps = buildElementProps(state.props, state.className, ref, state.children)
   const domProps =
     typeof state.tag === 'string'
-      ? ariaEngine.validate(state.tag, elementProps).props
+      ? runtime.resolveAria(state.tag, elementProps).props
       : elementProps
   // Dynamic dispatch: IntrinsicProps covers both string and component tags; cast to bypass h() overloads.
   return (h as (t: unknown, p: unknown) => AnyVNode)(state.tag, domProps)
@@ -190,7 +190,6 @@ export function render<TProps extends KnownProps>({
   normalizeChildren,
   filterProps,
   slotValidator,
-  ariaEngine,
   childrenEvaluator,
 }: RenderInput<TProps>): AnyVNode {
   const state = resolveRenderState(runtime, props, filterProps)
@@ -199,5 +198,5 @@ export function render<TProps extends KnownProps>({
 
   const slotResult = tryRenderAsChild(state, ref, slotComponent, normalizeChildren, slotValidator)
 
-  return slotResult ?? renderIntrinsic(state, ref, ariaEngine)
+  return slotResult ?? renderIntrinsic(state, ref, runtime)
 }

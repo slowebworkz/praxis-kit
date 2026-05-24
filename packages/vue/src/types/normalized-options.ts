@@ -1,6 +1,5 @@
 import type {
   DefaultOf,
-  EnforcementOptions,
   PolymorphicGenerics,
   PresetOf,
   PropsOf,
@@ -16,7 +15,5 @@ export type NormalizedOptions<G extends PolymorphicGenerics> = VueFactoryOptions
   PresetOf<G>
 > & {
   readonly name: string
-  readonly enforcement: EnforcementOptions & {
-    readonly strict: Exclude<StrictMode, undefined>
-  }
+  readonly strict: Exclude<StrictMode, undefined>
 }

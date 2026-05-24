@@ -3,5 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Shared adapter utilities: ref composition, event chaining"
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --related"
+  },
+  "dependencies": {
+    "@polymorphic-ui/core": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
 }

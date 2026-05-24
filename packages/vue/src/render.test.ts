@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { h, Fragment } from 'vue'
 import type { Slots, VNode } from 'vue'
-import { AriaPolicyEngine } from '@polymorphic-ui/core'
 import { render } from './render'
 import { SlotValidator } from './slot/slot-validator'
 import { Slottable } from './slot/Slottable'
@@ -13,6 +12,7 @@ function makeRuntime(overrides?: Partial<Runtime>): Runtime {
     resolveTag: (as) => as ?? 'div',
     resolveProps: (props) => props,
     resolveClasses: (_tag, _props, className) => className ?? '',
+    resolveAria: (_tag, props) => ({ props }),
     ...overrides,
   }
 }
@@ -20,7 +20,6 @@ function makeRuntime(overrides?: Partial<Runtime>): Runtime {
 const emptySlots: Slots = {}
 const noopFilter: FilterPredicate = () => false
 const defaultValidator = new SlotValidator('Test', 'throw')
-const defaultAriaEngine = new AriaPolicyEngine('throw')
 
 function slotsWith(...vnodes: VNode[]): Slots {
   return { default: () => vnodes }
@@ -36,7 +35,6 @@ describe('render — tag resolution', () => {
       slots: emptySlots,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(vnode?.type).toBe('div')
   })
@@ -48,7 +46,6 @@ describe('render — tag resolution', () => {
       slots: emptySlots,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(vnode?.type).toBe('section')
   })
@@ -63,7 +60,6 @@ describe('render — class resolution', () => {
       slots: emptySlots,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(vnode?.props?.['class']).toBe('resolved-cls')
   })
@@ -77,7 +73,6 @@ describe('render — class resolution', () => {
       slots: emptySlots,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(resolveClasses).toHaveBeenCalledWith(
       expect.anything(),
@@ -96,7 +91,6 @@ describe('render — class resolution', () => {
       slots: emptySlots,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(resolveClasses).toHaveBeenCalledWith(
       expect.anything(),
@@ -115,7 +109,6 @@ describe('render — prop forwarding', () => {
       slots: emptySlots,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(vnode?.props?.['data-testid']).toBe('box')
   })
@@ -127,7 +120,6 @@ describe('render — prop forwarding', () => {
       slots: emptySlots,
       filterProps: (key) => key === 'size',
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(vnode?.props?.['size']).toBeUndefined()
     expect(vnode?.props?.['data-keep']).toBe('yes')
@@ -140,7 +132,6 @@ describe('render — prop forwarding', () => {
       slots: emptySlots,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(vnode?.props?.['as']).toBeUndefined()
     expect(vnode?.props?.['asChild']).toBeUndefined()
@@ -155,7 +146,6 @@ describe('render — prop forwarding', () => {
       slots: emptySlots,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(vnode?.props?.['className']).toBeUndefined()
     expect(vnode?.props?.['class']).toBe('foo')
@@ -171,7 +161,6 @@ describe('render — asChild', () => {
         slots: slotsWith(h('button')),
         filterProps: noopFilter,
         slotValidator: defaultValidator,
-        ariaEngine: defaultAriaEngine,
       }),
     ).toThrow('Test: "as" and "asChild" are mutually exclusive')
   })
@@ -184,7 +173,6 @@ describe('render — asChild', () => {
         slots: emptySlots,
         filterProps: noopFilter,
         slotValidator: defaultValidator,
-        ariaEngine: defaultAriaEngine,
       }),
     ).toThrow('asChild requires exactly one VNode child, got 0')
   })
@@ -197,7 +185,6 @@ describe('render — asChild', () => {
         slots: slotsWith(h('span'), h('span')),
         filterProps: noopFilter,
         slotValidator: defaultValidator,
-        ariaEngine: defaultAriaEngine,
       }),
     ).toThrow('asChild requires exactly one VNode child, got 2')
   })
@@ -210,7 +197,6 @@ describe('render — asChild', () => {
       slots: slotsWith(child),
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(vnode?.type).toBe('button')
   })
@@ -224,7 +210,6 @@ describe('render — asChild', () => {
       slots: slotsWith(child),
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(vnode?.props?.['class']).toBe('merged-cls')
   })
@@ -237,7 +222,6 @@ describe('render — asChild', () => {
       slots: slotsWith(child),
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(vnode?.props?.['data-extra']).toBe('yes')
     expect(vnode?.props?.['id']).toBe('original')
@@ -252,7 +236,6 @@ describe('render — asChild', () => {
       slots: slotsWith(child),
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     const cls = vnode?.props?.['class'] as unknown
     expect(String(cls)).toContain('slot-cls')
@@ -269,7 +252,6 @@ describe('render — asChild', () => {
       slots: slotsWith(child),
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     const handler = vnode?.props?.['onClick']
     expect(Array.isArray(handler)).toBe(true)
@@ -286,7 +268,6 @@ describe('render — asChild', () => {
       slots: slotsWith(child),
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(vnode?.props?.['style']).toMatchObject({ color: 'red', margin: '4px' })
   })
@@ -301,7 +282,6 @@ describe('render — asChild', () => {
       slots: slotsWith(h('span'), h('div')),
       filterProps: noopFilter,
       slotValidator: new SlotValidator('Box', 'warn'),
-      ariaEngine: new AriaPolicyEngine('warn'),
     })
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('asChild requires exactly one'))
     expect(vnode?.type).toBe('div')
@@ -317,7 +297,6 @@ describe('render — children', () => {
       slots: slotsWith(child),
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     // Children are forwarded as a slot object — the slot function exists on the VNode.
     expect(vnode?.children).toBeTruthy()
@@ -330,7 +309,6 @@ describe('render — children', () => {
       slots: emptySlots,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(vnode?.children).toBeFalsy()
   })
@@ -346,7 +324,6 @@ describe('render — childrenEvaluator', () => {
       slots: slotsWith(child),
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
       childrenEvaluator: { evaluate } as never,
     })
     expect(evaluate).toHaveBeenCalledWith([child])
@@ -360,7 +337,6 @@ describe('render — childrenEvaluator', () => {
         slots: emptySlots,
         filterProps: noopFilter,
         slotValidator: defaultValidator,
-        ariaEngine: defaultAriaEngine,
       }),
     ).not.toThrow()
   })
@@ -378,7 +354,6 @@ describe('render — asChild Slottable sibling pattern', () => {
       slots: slotsWith(slottable, sibling),
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
 
     expect(vnode?.type).toBe(Fragment)
@@ -394,7 +369,6 @@ describe('render — asChild Slottable sibling pattern', () => {
       slots: slotsWith(slottable),
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
 
     const fragmentChildren = vnode?.children as VNode[]
@@ -414,7 +388,6 @@ describe('render — asChild Slottable sibling pattern', () => {
       slots: slotsWith(slottable, sibling),
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
 
     const fragmentChildren = vnode?.children as VNode[]
@@ -441,7 +414,6 @@ describe('render — discarded children warning', () => {
       slots: mixedSlots,
       filterProps: noopFilter,
       slotValidator: validator,
-      ariaEngine: new AriaPolicyEngine('warn'),
     })
 
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('discarded 1 non-element child'))
@@ -463,7 +435,6 @@ describe('render — discarded children warning', () => {
       slots: mixedSlots,
       filterProps: noopFilter,
       slotValidator: validator,
-      ariaEngine: new AriaPolicyEngine(false),
     })
 
     expect(warnSpy).not.toHaveBeenCalled()
@@ -484,7 +455,6 @@ describe('render — discarded children warning', () => {
       slots: mixedSlots,
       filterProps: noopFilter,
       slotValidator: validator,
-      ariaEngine: new AriaPolicyEngine('warn'),
     })
 
     expect(warnSpy).not.toHaveBeenCalled()

@@ -9,6 +9,11 @@ const config = [
 
     settings: {
       'boundaries/elements': [
+        { type: 'primitive', pattern: 'lib/primitive/**/*' },
+        { type: 'contract', pattern: 'lib/contract/**/*' },
+        { type: 'styling', pattern: 'lib/styling/**/*' },
+        { type: 'adapter-utils', pattern: 'lib/adapter-utils/**/*' },
+        { type: 'bench', pattern: 'lib/bench/**/*' },
         { type: 'core', pattern: 'packages/core/**/*' },
         { type: 'react', pattern: 'packages/react/**/*' },
         { type: 'vue', pattern: 'packages/vue/**/*' },
@@ -16,7 +21,6 @@ const config = [
         { type: 'solid', pattern: 'packages/solid/**/*' },
         { type: 'svelte', pattern: 'packages/svelte/**/*' },
         { type: 'tailwind', pattern: 'packages/tailwind/**/*' },
-        { type: 'bench', pattern: 'packages/bench/**/*' },
       ],
 
       'boundaries/ignore': ['**/dist/**', '**/node_modules/**'],

@@ -17,7 +17,7 @@ describe('Polymorphic — SSR (svelte/server render)', () => {
   })
 
   it('strips redundant ARIA role in server-rendered HTML', () => {
-    const bundle = createPolymorphicComponent({ tag: 'button' })
+    const bundle = createPolymorphicComponent({ tag: 'button', enforcement: { strict: false } })
     const { html } = render(Polymorphic, { props: { bundle, role: 'button' } })
     expect(html).not.toContain('role=')
   })

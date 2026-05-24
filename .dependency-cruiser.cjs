@@ -1,6 +1,43 @@
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
   forbidden: [
+    // ── lib/ layer invariants ─────────────────────────────────────────────
+    {
+      name: 'primitive-no-upper-layers',
+      severity: 'error',
+      comment: 'lib/primitive is the lowest layer — may not import contract, styling, or adapters',
+      from: { path: '^lib/primitive/' },
+      to: { path: '^(lib/(contract|styling|adapter-utils)|packages/)' },
+    },
+    {
+      name: 'contract-no-styling',
+      severity: 'error',
+      comment: 'lib/contract must not import lib/styling — enforcement is orthogonal to styling',
+      from: { path: '^lib/contract/' },
+      to: { path: '^lib/styling/' },
+    },
+    {
+      name: 'contract-no-adapters',
+      severity: 'error',
+      comment: 'lib/contract must remain renderer-neutral — no adapter imports',
+      from: { path: '^lib/contract/' },
+      to: { path: '^(lib/adapter-utils|packages/(react|vue|preact|solid|svelte))/' },
+    },
+    {
+      name: 'styling-no-adapters',
+      severity: 'error',
+      comment: 'lib/styling must not import framework adapters — styling is orthogonal to rendering',
+      from: { path: '^lib/styling/' },
+      to: { path: '^(lib/adapter-utils|packages/(react|vue|preact|solid|svelte))/' },
+    },
+    {
+      name: 'adapter-utils-no-adapters',
+      severity: 'error',
+      comment: 'lib/adapter-utils must not import framework-specific adapter packages',
+      from: { path: '^lib/adapter-utils/' },
+      to: { path: '^packages/(react|vue|preact|solid|svelte)/' },
+    },
+
     // ── framework leakage ──────────────────────────────────────────────────
     {
       name: 'core-no-react',
@@ -18,6 +55,36 @@ module.exports = {
       comment: 'core must remain framework-agnostic — no Vue imports allowed',
       from: { path: '^packages/core/' },
       to: { dependencyTypes: ['npm', 'npm-dev', 'npm-peer'], path: '^(vue|@vue/)' },
+    },
+    {
+      name: 'lib-primitive-no-frameworks',
+      severity: 'error',
+      comment: 'lib/primitive must have zero framework dependencies',
+      from: { path: '^lib/primitive/' },
+      to: {
+        dependencyTypes: ['npm', 'npm-dev', 'npm-peer'],
+        path: '^(react|react-dom|vue|@vue/|preact|solid-js|svelte)',
+      },
+    },
+    {
+      name: 'lib-contract-no-frameworks',
+      severity: 'error',
+      comment: 'lib/contract must remain renderer-neutral — no framework npm deps',
+      from: { path: '^lib/contract/' },
+      to: {
+        dependencyTypes: ['npm', 'npm-dev', 'npm-peer'],
+        path: '^(react|react-dom|vue|@vue/|preact|solid-js|svelte)',
+      },
+    },
+    {
+      name: 'lib-styling-no-frameworks',
+      severity: 'error',
+      comment: 'lib/styling must not depend on framework packages',
+      from: { path: '^lib/styling/' },
+      to: {
+        dependencyTypes: ['npm', 'npm-dev', 'npm-peer'],
+        path: '^(react|react-dom|vue|@vue/|preact|solid-js|svelte)',
+      },
     },
 
     // ── cross-adapter isolation ────────────────────────────────────────────
@@ -82,7 +149,7 @@ module.exports = {
           '\\.d\\.ts$',
           '(^|/)\\.[^/]+(\\.js)?$',
           '\\.json$',
-          'vitest\\.config',
+          'vitest[^/]*\\.config',
           'tsup\\.config',
           'test-setup\\.ts$',
           'packages/docs/src/(examples|vue-examples)/',
@@ -94,7 +161,7 @@ module.exports = {
 
   options: {
     doNotFollow: { path: 'node_modules' },
-    exclude: { path: '(\\.test\\.(ts|tsx)$|vitest\\.config|tsup\\.config|dist/)' },
+    exclude: { path: '(\\.test\\.(ts|tsx)$|\\.bench\\.ts$|vitest\\.config|tsup\\.config|dist/)' },
     moduleSystems: ['es6'],
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.base.json' },

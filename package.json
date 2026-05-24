@@ -22,7 +22,7 @@
     "clean": "rm -rf node_modules packages/**/node_modules packages/**/dist",
     "prepare": "husky",
     "repo-state": "node --experimental-strip-types scripts/generate-repo-state.ts",
-    "arch:validate": "depcruise --config .dependency-cruiser.cjs packages"
+    "arch:validate": "depcruise --config .dependency-cruiser.cjs lib packages"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",

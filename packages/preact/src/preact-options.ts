@@ -5,7 +5,7 @@ import type {
   PresetMap,
   VariantMap,
 } from '@polymorphic-ui/core'
-import type { UnknownProps, SlotComponent } from './types'
+import type { SlotComponent, UnknownProps } from './types/primitives'
 
 export type PreactFactoryOptions<
   TDefault extends CoreElementType,

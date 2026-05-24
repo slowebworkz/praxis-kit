@@ -1,1 +1,1 @@
-export { ChildrenEvaluator } from './children-evaluator'
+export { ChildrenEvaluator } from '@polymorphic-ui/contract'

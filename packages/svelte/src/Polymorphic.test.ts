@@ -41,7 +41,7 @@ describe('Polymorphic (Svelte adapter)', () => {
   })
 
   it('strips redundant ARIA role from intrinsic element', () => {
-    const bundle = createPolymorphicComponent({ tag: 'button' })
+    const bundle = createPolymorphicComponent({ tag: 'button', enforcement: { strict: false } })
     const { container } = render(Polymorphic, { bundle, role: 'button' })
     expect(container.querySelector('button')?.getAttribute('role')).toBeNull()
   })

@@ -1,3 +1,5 @@
+import { mergeProps, resolveTag } from '@polymorphic-ui/primitive'
+import { AriaPolicyEngine } from '@polymorphic-ui/contract'
 import type {
   AnyRecord,
   ClassPipelineFn,
@@ -6,9 +8,6 @@ import type {
   ResolveOutput,
   ResolverOptions,
 } from '../types'
-import { mergeProps } from '../utils'
-import { AriaPolicyEngine } from '../validator'
-import { resolveTag } from './resolve-tag'
 
 export function createResolverPipeline<
   Props extends AnyRecord,

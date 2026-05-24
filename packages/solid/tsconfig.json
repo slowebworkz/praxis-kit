@@ -2,12 +2,24 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "..",
+    "rootDir": "../..",
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
     "paths": {
-      "@polymorphic-ui/core": ["../core/src/index.ts"]
+      "@polymorphic-ui/core": ["../core/src/index.ts"],
+      "@polymorphic-ui/core/primitive": ["../core/src/primitive.ts"],
+      "@polymorphic-ui/core/contract": ["../core/src/contract.ts"],
+      "@polymorphic-ui/core/styling": ["../core/src/styling.ts"],
+      "@polymorphic-ui/primitive": ["../../lib/primitive/src"],
+      "@polymorphic-ui/contract": ["../../lib/contract/src"],
+      "@polymorphic-ui/styling": ["../../lib/styling/src"],
+      "@polymorphic-ui/adapter-utils": ["../../lib/adapter-utils/src"]
     }
   },
-  "include": ["src", "./vitest.config.ts", "./vitest.ssr.config.ts", "./tsup.config.ts"]
+  "include": [
+    "src",
+    "./vitest.config.ts",
+    "./vitest.ssr.config.ts",
+    "./tsup.config.ts"
+  ]
 }

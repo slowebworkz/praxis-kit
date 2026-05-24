@@ -1,18 +1,14 @@
 import type {
-  AriaRule,
-  ChildRuleInput,
   DefaultOf,
   ElementType,
   PolymorphicGenerics,
   PresetMap,
   PresetOf,
   PropsOf,
-  StrictMode,
   VariantMap,
   VariantsOf,
 } from '@polymorphic-ui/core'
-import { AriaPolicyEngine, ChildrenEvaluator, createPolymorphic } from '@polymorphic-ui/core'
-import { composeFilter } from './compose-filter'
+import { buildCoreRuntime, buildEngines, composeFilter } from '@polymorphic-ui/adapter-utils'
 import type { SolidFactoryOptions } from './solid-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
 import type { NormalizedOptions } from './types/normalized-options'
@@ -24,32 +20,8 @@ function normalizeOptions<G extends PolymorphicGenerics>(
   return {
     ...options,
     name: options.name ?? 'PolymorphicComponent',
-    enforcement: {
-      ...options.enforcement,
-      strict: options.enforcement?.strict ?? 'throw',
-    },
+    strict: options.enforcement?.strict ?? 'throw',
   } as NormalizedOptions<G>
-}
-
-function buildCoreRuntime<G extends PolymorphicGenerics>(normalized: NormalizedOptions<G>) {
-  const runtime = createPolymorphic(normalized)
-  const ownedKeys = 'classPlugin' in runtime ? runtime.classPlugin.ownedKeys : undefined
-  return { runtime, ownedKeys }
-}
-
-function buildValidators(
-  strict: StrictMode,
-  childRules?: readonly ChildRuleInput[],
-  ariaRules?: readonly AriaRule[],
-) {
-  const ariaEngine = new AriaPolicyEngine(
-    strict,
-    ariaRules?.length ? { rules: ariaRules } : undefined,
-  )
-  const childrenEvaluator = childRules?.length
-    ? new ChildrenEvaluator(childRules, strict)
-    : undefined
-  return { ariaEngine, childrenEvaluator }
 }
 
 export type { BuiltRuntime }
@@ -66,16 +38,11 @@ export function buildRuntime<
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
   const normalized = normalizeOptions<G>(options)
   const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
-  const { ariaEngine, childrenEvaluator } = buildValidators(
-    normalized.enforcement.strict,
-    normalized.enforcement?.children,
-    normalized.enforcement?.aria,
-  )
+  const { childrenEvaluator } = buildEngines(normalized.strict, normalized.enforcement?.children)
   const filterProps = composeFilter(ownedKeys, normalized.filterProps)
 
   return {
     runtime,
-    ariaEngine,
     filterProps,
     ...(childrenEvaluator !== undefined && { childrenEvaluator }),
   } as BuiltRuntime<G, TOptions>

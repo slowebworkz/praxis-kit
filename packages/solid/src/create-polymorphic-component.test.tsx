@@ -93,7 +93,7 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
   })
 
   it('strips redundant ARIA role from intrinsic element', () => {
-    const Comp = createPolymorphicComponent({ tag: 'button' })
+    const Comp = createPolymorphicComponent({ tag: 'button', enforcement: { strict: false } })
     const { container } = solidRender(() => <Comp role="button" />)
     // button has an implicit role="button" — redundant role should be stripped
     expect(container.querySelector('button')?.getAttribute('role')).toBeNull()

@@ -1,6 +1,9 @@
 node_modules/
 dist/
 *.tsbuildinfo
+lib/**/*.d.ts
+lib/**/*.d.ts.map
+lib/**/*.js.map
 .DS_Store
 .env
 .env.local
