@@ -134,32 +134,50 @@ describe('createPolymorphic — options', () => {
 })
 
 // ---------------------------------------------------------------------------
-// resolveAria
+// resolveAria — primitive-only (no enforcement config)
 // ---------------------------------------------------------------------------
 
-describe('createPolymorphic — resolveAria()', () => {
-  it('returns props unchanged when all aria-* attrs are valid', () => {
+describe('createPolymorphic — resolveAria() without enforcement', () => {
+  it('passes props through unchanged when no enforcement config', () => {
     const runtime = createPolymorphic({ tag: 'button' })
+    const props = { 'aria-label': 'submit' }
+    expect(runtime.resolveAria('button', props).props).toBe(props)
+  })
+
+  it('does not strip aria-* attributes when no enforcement config', () => {
+    const runtime = createPolymorphic({ tag: 'button' })
+    const props = { 'aria-checked': 'true' }
+    expect(runtime.resolveAria('button', props).props).toMatchObject({ 'aria-checked': 'true' })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// resolveAria — with enforcement config
+// ---------------------------------------------------------------------------
+
+describe('createPolymorphic — resolveAria() with enforcement', () => {
+  it('returns props unchanged when all aria-* attrs are valid', () => {
+    const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: false } })
     const props = { 'aria-label': 'submit' }
     expect(runtime.resolveAria('button', props).props).toMatchObject({ 'aria-label': 'submit' })
   })
 
   it('strips an invalid aria-* attribute for the effective role', () => {
-    const runtime = createPolymorphic({ tag: 'button' })
+    const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: false } })
     // aria-checked is not valid on role="button"
     const result = runtime.resolveAria('button', { 'aria-checked': 'true' })
     expect(result.props).not.toHaveProperty('aria-checked')
   })
 
   it('does not strip a valid role-restricted attribute', () => {
-    const runtime = createPolymorphic({ tag: 'button' })
+    const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: false } })
     // aria-expanded is valid on role="button"
     const result = runtime.resolveAria('button', { 'aria-expanded': 'true' })
     expect(result.props).toMatchObject({ 'aria-expanded': 'true' })
   })
 
   it('does not strip global aria-* attributes', () => {
-    const runtime = createPolymorphic({ tag: 'button' })
+    const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: false } })
     const result = runtime.resolveAria('button', { 'aria-label': 'save', 'aria-hidden': 'true' })
     expect(result.props).toMatchObject({ 'aria-label': 'save', 'aria-hidden': 'true' })
   })
@@ -181,7 +199,7 @@ describe('createPolymorphic — resolveAria()', () => {
   })
 
   it('passes through props unchanged for a tag with no implicit role', () => {
-    const runtime = createPolymorphic({ tag: 'div' })
+    const runtime = createPolymorphic({ tag: 'div', enforcement: { strict: false } })
     const props = { 'aria-checked': 'true' }
     expect(runtime.resolveAria('div', props).props).toBe(props)
   })

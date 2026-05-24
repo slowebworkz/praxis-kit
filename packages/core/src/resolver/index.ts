@@ -1,2 +1,2 @@
-export { resolveTag, makeResolveTag } from './resolve-tag'
+export { resolveTag, makeResolveTag } from '@polymorphic-ui/primitive'
 export { createResolverPipeline } from './resolver'

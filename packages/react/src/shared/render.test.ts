@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { createElement, isValidElement } from 'react'
 import type { ReactElement } from 'react'
-import { AriaPolicyEngine } from '@polymorphic-ui/core'
 import { render } from './render'
 import { Slottable } from './slot'
 import { SlotValidator } from './slot/slot-validator'
@@ -13,6 +12,7 @@ function makeRuntime(overrides?: Partial<Runtime>): Runtime {
     resolveTag: (as) => as ?? 'div',
     resolveProps: (props) => props,
     resolveClasses: (_tag, _props, className) => className ?? '',
+    resolveAria: (_tag, props) => ({ props }),
     ...overrides,
   }
 }
@@ -25,7 +25,6 @@ const slotComponent = ({ children }: { children?: unknown }) =>
 
 const noopFilter: FilterPredicate = () => false
 const defaultValidator = new SlotValidator('Test', 'throw')
-const defaultAriaEngine = new AriaPolicyEngine('throw')
 
 describe('render', () => {
   it('renders the default tag when no as prop is given', () => {
@@ -37,7 +36,6 @@ describe('render', () => {
       normalizeChildren: noopNormalize,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(el.type).toBe('div')
   })
@@ -51,7 +49,6 @@ describe('render', () => {
       normalizeChildren: noopNormalize,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(el.type).toBe('button')
   })
@@ -68,7 +65,6 @@ describe('render', () => {
       normalizeChildren: noopNormalize,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect((el.props as { className: string }).className).toBe('resolved-class')
   })
@@ -83,7 +79,6 @@ describe('render', () => {
       normalizeChildren: noopNormalize,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect((el.props as { ref: unknown }).ref).toBe(ref)
   })
@@ -97,7 +92,6 @@ describe('render', () => {
       normalizeChildren: noopNormalize,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect((el.props as Record<string, unknown>)['data-testid']).toBe('box')
   })
@@ -111,7 +105,6 @@ describe('render', () => {
       normalizeChildren: noopNormalize,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect('children' in (el.props as object)).toBe(false)
   })
@@ -126,7 +119,6 @@ describe('render', () => {
       normalizeChildren: noopNormalize,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect((el.props as { children: unknown }).children).toBe(child)
   })
@@ -140,7 +132,6 @@ describe('render', () => {
       normalizeChildren: noopNormalize,
       filterProps: (key) => key === 'size',
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     const props = el.props as Record<string, unknown>
     expect(props['size']).toBeUndefined()
@@ -157,7 +148,6 @@ describe('render', () => {
         normalizeChildren: noopNormalize,
         filterProps: noopFilter,
         slotValidator: defaultValidator,
-        ariaEngine: defaultAriaEngine,
       }),
     ).toThrow('Test: "as" and "asChild" are mutually exclusive')
   })
@@ -172,7 +162,6 @@ describe('render', () => {
         normalizeChildren: () => [],
         filterProps: noopFilter,
         slotValidator: defaultValidator,
-        ariaEngine: defaultAriaEngine,
       }),
     ).toThrow('asChild requires exactly one React element child, got 0')
   })
@@ -188,7 +177,6 @@ describe('render', () => {
         normalizeChildren: () => kids,
         filterProps: noopFilter,
         slotValidator: defaultValidator,
-        ariaEngine: defaultAriaEngine,
       }),
     ).toThrow('asChild requires exactly one React element child, got 2')
   })
@@ -205,7 +193,6 @@ describe('render', () => {
       normalizeChildren: () => kids,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(el.type).toBe(slotComponent)
     const slotChildren = (el.props as { children: unknown }).children
@@ -222,7 +209,6 @@ describe('render', () => {
       normalizeChildren: () => [child],
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(el.type).toBe(slotComponent)
     expect((el.props as { children: unknown }).children).toBe(child)
@@ -239,7 +225,6 @@ describe('render', () => {
       normalizeChildren: () => [child],
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect((el.props as { className: string }).className).toBe('slot-class')
   })
@@ -255,7 +240,6 @@ describe('render', () => {
       normalizeChildren: noopNormalize,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     expect(resolveClasses).toHaveBeenCalledWith(
       expect.anything(),
@@ -279,7 +263,6 @@ describe('render', () => {
       normalizeChildren: () => [child],
       filterProps: noopFilter,
       slotValidator: new SlotValidator('Test', 'warn'),
-      ariaEngine: new AriaPolicyEngine('warn'),
     })
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('discarded 1 non-element child'))
     warnSpy.mockRestore()
@@ -298,7 +281,6 @@ describe('render', () => {
       normalizeChildren: () => [child],
       filterProps: noopFilter,
       slotValidator: new SlotValidator('Test', false),
-      ariaEngine: new AriaPolicyEngine(false),
     })
     expect(warnSpy).not.toHaveBeenCalled()
     warnSpy.mockRestore()
@@ -313,7 +295,6 @@ describe('render', () => {
       normalizeChildren: noopNormalize,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
-      ariaEngine: defaultAriaEngine,
     })
     const props = el.props as Record<string, unknown>
     expect(props['as']).toBeUndefined()

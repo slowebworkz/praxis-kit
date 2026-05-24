@@ -1,1 +1,1 @@
-export { createClassPipeline } from './class-pipeline'
+export { createClassPipeline } from '@polymorphic-ui/styling'

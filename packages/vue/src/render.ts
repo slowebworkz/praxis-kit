@@ -1,6 +1,6 @@
 import { cloneVNode, h } from 'vue'
 import type { VNode } from 'vue'
-import type { AriaPolicyEngine, ElementType, IntrinsicProps } from '@polymorphic-ui/core'
+import type { ElementType, IntrinsicProps } from '@polymorphic-ui/core'
 import { isKnownAriaRole } from '@polymorphic-ui/core'
 import type { SlotValidator } from './slot'
 import { extractSlottable } from './slot/extractSlottable'
@@ -99,9 +99,9 @@ function tryRenderAsChild(
 }
 
 function buildDomProps(
+  runtime: Runtime,
   props: ResolvedProps,
   className: string,
-  ariaEngine: AriaPolicyEngine,
   tag: ElementType,
 ): UnknownProps {
   const { role, ...rest } = props
@@ -116,7 +116,7 @@ function buildDomProps(
 
   // Validate ARIA attrs for intrinsic elements. The engine checks role and
   // aria-* attributes — cast is safe because we only read those keys.
-  const validated = ariaEngine.validate(tag, base as unknown as IntrinsicProps)
+  const validated = runtime.resolveAria(tag, base as unknown as IntrinsicProps)
   // The engine's output shape is React-style (className, ref, children); strip those
   // React-specific keys and restore `class` so the VNode stays Vue-idiomatic.
   const {
@@ -134,7 +134,6 @@ export function render({
   slots,
   filterProps,
   slotValidator,
-  ariaEngine,
   childrenEvaluator,
 }: RenderInput): VNode | null {
   const state = resolveRenderState(runtime, attrs, filterProps)
@@ -145,7 +144,7 @@ export function render({
   const slotResult = tryRenderAsChild(state, children, discarded, slotValidator)
   if (slotResult !== null) return slotResult
 
-  const domProps = buildDomProps(state.props, state.className, ariaEngine, state.tag)
+  const domProps = buildDomProps(runtime, state.props, state.className, state.tag)
   // Pass children as a slot object rather than a flat array so the same code path
   // works for both intrinsic elements and dynamic component tags.
   return h(state.tag, domProps, slots.default ? { default: slots.default } : undefined)

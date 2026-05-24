@@ -16,7 +16,7 @@ describe('createPolymorphicComponent — SSR (solid-js/web renderToString)', () 
   })
 
   it('strips redundant ARIA role — server HTML agrees with what client hydration would produce', () => {
-    const Comp = createPolymorphicComponent({ tag: 'button' })
+    const Comp = createPolymorphicComponent({ tag: 'button', enforcement: { strict: false } })
     const html = renderToString(() => <Comp role="button" />)
     // The redundant role should be stripped before serialisation
     expect(html).not.toContain('role=')

@@ -2,6 +2,7 @@ import type {
   ClassName,
   DefaultOf,
   ElementType,
+  IntrinsicProps,
   PolymorphicGenerics,
   PresetOf,
   PropsOf,
@@ -32,11 +33,16 @@ export type ClassResolver = Readonly<{
   ): string
 }>
 
+export type AriaResolver = Readonly<{
+  resolveAria<P extends IntrinsicProps>(tag: ElementType, props: P): { props: P }
+}>
+
 /** Widened runtime contract used by the render layer. */
 export type Runtime = Readonly<
   TagResolver &
     PropsResolver &
-    ClassResolver & {
+    ClassResolver &
+    AriaResolver & {
       options: RuntimeOptions
     }
 >

@@ -1,10 +1,17 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "..",
+    "rootDir": "../..",
     "jsx": "react-jsx",
     "paths": {
       "@polymorphic-ui/core": ["../core/src/index.ts"],
+      "@polymorphic-ui/core/primitive": ["../core/src/primitive.ts"],
+      "@polymorphic-ui/core/contract": ["../core/src/contract.ts"],
+      "@polymorphic-ui/core/styling": ["../core/src/styling.ts"],
+      "@polymorphic-ui/primitive": ["../../lib/primitive/src"],
+      "@polymorphic-ui/contract": ["../../lib/contract/src"],
+      "@polymorphic-ui/styling": ["../../lib/styling/src"],
+      "@polymorphic-ui/adapter-utils": ["../../lib/adapter-utils/src"],
       "@polymorphic-ui/react": ["../react/src/index.ts"],
       "@polymorphic-ui/tailwind": ["../tailwind/src/index.ts"],
       "@polymorphic-ui/vue": ["../vue/src/index.ts"],

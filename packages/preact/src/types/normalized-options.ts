@@ -1,6 +1,5 @@
 import type {
   DefaultOf,
-  EnforcementOptions,
   PolymorphicGenerics,
   PresetOf,
   PropsOf,
@@ -18,7 +17,5 @@ export type NormalizedOptions<G extends PolymorphicGenerics> = PreactFactoryOpti
 > & {
   readonly slotComponent: SlotComponent
   readonly name: string
-  readonly enforcement: EnforcementOptions & {
-    readonly strict: Exclude<StrictMode, undefined>
-  }
+  readonly strict: Exclude<StrictMode, undefined>
 }

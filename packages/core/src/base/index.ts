@@ -1,1 +1,1 @@
-export { StrictBase } from './polymorphic-base'
+export { StrictBase } from '@polymorphic-ui/contract'

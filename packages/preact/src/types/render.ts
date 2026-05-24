@@ -1,4 +1,4 @@
-import type { AriaPolicyEngine, ChildrenEvaluator, ElementType } from '@polymorphic-ui/core'
+import type { ChildrenEvaluator, ElementType } from '@polymorphic-ui/core'
 import type { Ref } from 'preact'
 import type { SlotValidator } from '../slot/slot-validator'
 import type {
@@ -33,6 +33,5 @@ export type RenderInput<TProps extends KnownProps = KnownProps> = Readonly<{
   normalizeChildren: NormalizeChildren
   filterProps: FilterPredicate
   slotValidator: SlotValidator
-  ariaEngine: AriaPolicyEngine
   childrenEvaluator?: ChildrenEvaluator
 }>

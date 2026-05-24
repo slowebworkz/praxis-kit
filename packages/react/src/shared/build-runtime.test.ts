@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { ReactElement } from 'react'
 import { buildRuntime } from './build-runtime'
 import { SlotValidator } from './slot/slot-validator'
-import { AriaPolicyEngine, ChildrenEvaluator } from '@polymorphic-ui/core'
+import { ChildrenEvaluator } from '@polymorphic-ui/core'
 
 const noopSlot = (() => null) as unknown as Parameters<typeof buildRuntime>[1]
 const noopNormalize = (children: unknown): ReactElement[] =>
@@ -35,11 +35,6 @@ describe('buildRuntime — defaults', () => {
   it('returns a SlotValidator instance', () => {
     const { slotValidator } = buildRuntime({}, noopSlot, noopNormalize)
     expect(slotValidator).toBeInstanceOf(SlotValidator)
-  })
-
-  it('returns an AriaPolicyEngine instance', () => {
-    const { ariaEngine } = buildRuntime({}, noopSlot, noopNormalize)
-    expect(ariaEngine).toBeInstanceOf(AriaPolicyEngine)
   })
 
   it('omits childrenEvaluator when no enforcement.children provided', () => {

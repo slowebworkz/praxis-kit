@@ -1,16 +1,1 @@
-import type { OwnedPropKeys } from '@polymorphic-ui/core'
-import type { FilterPredicate } from './types'
-
-export function composeFilter(
-  ownedKeys: OwnedPropKeys | undefined,
-  filterProps?: FilterPredicate,
-): FilterPredicate {
-  const defaultFilter: FilterPredicate = (key, variantKeys) =>
-    variantKeys.has(key) || ownedKeys?.has(key) === true
-
-  if (!filterProps) {
-    return defaultFilter
-  }
-
-  return (key, variantKeys) => defaultFilter(key, variantKeys) || filterProps(key, variantKeys)
-}
+export { composeFilter } from '@polymorphic-ui/adapter-utils'

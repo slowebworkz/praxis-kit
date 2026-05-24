@@ -1,5 +1,4 @@
 import type {
-  AriaRule,
   ChildRuleInput,
   DefaultOf,
   ElementType,
@@ -11,9 +10,8 @@ import type {
   VariantMap,
   VariantsOf,
 } from '@polymorphic-ui/core'
-import { AriaPolicyEngine, ChildrenEvaluator, createPolymorphic } from '@polymorphic-ui/core'
+import { buildCoreRuntime, buildEngines, composeFilter } from '@polymorphic-ui/adapter-utils'
 import type { ReactElement } from 'react'
-import { composeFilter } from './compose-filter'
 import type { ReactFactoryOptions } from './react-options'
 import { SlotValidator } from './slot'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
@@ -32,42 +30,18 @@ function normalizeOptions<G extends PolymorphicGenerics>(
     ...options,
     slotComponent: options.slotComponent ?? defaultSlot,
     name: options.name ?? 'PolymorphicComponent',
-    enforcement: {
-      ...options.enforcement,
-      strict: options.enforcement?.strict ?? 'throw',
-    },
+    strict: options.enforcement?.strict ?? 'throw',
   } as NormalizedOptions<G>
 }
 
 /* -------------------------------------------------------------------------------------------------
- * Layer 2 — Build core runtime
+ * Layer 2 — Build validators
  * -----------------------------------------------------------------------------------------------*/
 
-function buildCoreRuntime<G extends PolymorphicGenerics>(normalized: NormalizedOptions<G>) {
-  const runtime = createPolymorphic(normalized)
-  const ownedKeys = 'classPlugin' in runtime ? runtime.classPlugin.ownedKeys : undefined
-  return { runtime, ownedKeys }
-}
-
-/* -------------------------------------------------------------------------------------------------
- * Layer 3 — Build validators
- * -----------------------------------------------------------------------------------------------*/
-
-function buildValidators(
-  name: string,
-  strict: StrictMode,
-  childRules?: readonly ChildRuleInput[],
-  ariaRules?: readonly AriaRule[],
-) {
+function buildValidators(name: string, strict: StrictMode, childRules?: readonly ChildRuleInput[]) {
   const slotValidator = new SlotValidator(name, strict)
-  const ariaEngine = new AriaPolicyEngine(
-    strict,
-    ariaRules?.length ? { rules: ariaRules } : undefined,
-  )
-  const childrenEvaluator = childRules?.length
-    ? new ChildrenEvaluator(childRules, strict, name)
-    : undefined
-  return { slotValidator, ariaEngine, childrenEvaluator }
+  const { childrenEvaluator } = buildEngines(strict, childRules, name)
+  return { slotValidator, childrenEvaluator }
 }
 
 /* -------------------------------------------------------------------------------------------------
@@ -90,11 +64,10 @@ export function buildRuntime<
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
   const normalized = normalizeOptions<G>(options, defaultSlot)
   const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
-  const { slotValidator, ariaEngine, childrenEvaluator } = buildValidators(
+  const { slotValidator, childrenEvaluator } = buildValidators(
     normalized.name,
-    normalized.enforcement.strict,
+    normalized.strict,
     normalized.enforcement?.children,
-    normalized.enforcement?.aria,
   )
   const filterProps = composeFilter(ownedKeys, normalized.filterProps)
 
@@ -103,7 +76,6 @@ export function buildRuntime<
     slotComponent: normalized.slotComponent,
     normalizeChildren,
     slotValidator,
-    ariaEngine,
     filterProps,
     ...(childrenEvaluator !== undefined && { childrenEvaluator }),
   } as BuiltRuntime<G, TOptions>

@@ -2,6 +2,35 @@
 
 ---
 
+## Workspace layout
+
+The repository is a pnpm workspace split into two roots:
+
+```text
+lib/                     internal implementation modules (private: true, not published)
+  primitive/             tag resolution, prop merge, slot protocol (zero framework deps)
+  contract/              ARIA engine, children validator, strict mode base
+  styling/               variant resolver, class pipeline, plugin API
+  adapter-utils/         shared logic used by all framework adapters
+  bench/                 benchmark suites
+
+packages/                published artifacts (versioned, npm-facing)
+  core/                  capability-driven factory composing lib/ modules
+  react/                 React 19+ adapter; /legacy sub-path for React 18
+  vue/                   Vue 3 adapter
+  preact/                Preact adapter
+  solid/                 Solid adapter
+  svelte/                Svelte 5 adapter
+  tailwind/              Tailwind layout-aware class pipeline plugin
+  docs/                  cross-framework integration tests
+```
+
+Dependency direction: `lib/primitive` ← `lib/contract` ← `lib/styling` ← `packages/core` ←
+`lib/adapter-utils` ← `packages/<adapter>`. Dependencies flow upward only. `pnpm arch:validate`
+enforces these rules via `dependency-cruiser`.
+
+---
+
 ## `@polymorphic-ui/core`
 
 ### What it is
@@ -39,19 +68,33 @@ frozen resolved configuration.
 
 ### Source layout
 
+`packages/core/src/` is a thin capability-driven factory. The implementation lives in `lib/`:
+
 ```text
-src/
-├── factory/          createPolymorphic — the main entrypoint
-├── options/          resolveFactoryOptions — normalizes factory config
-├── resolver/         resolveTag, resolveProps, createResolverPipeline
-├── styles/           Class pipeline: CVA, static/variant resolvers
-├── children/         ChildrenEvaluator — child structural constraint system
-│                     RuleMatcher, RuleValidator, MatchValidator
-│                     normalizeChildRule, get-type-name, match-validation-error-builder
-├── validator/        AriaPolicyEngine — ARIA role validation
-├── base/             StrictBase — shared strict-mode violation infrastructure
-├── types/            All exported TypeScript types
-└── utils/            cn (clsx wrapper), mergeProps, assertNever
+lib/primitive/src/
+├── resolve-tag.ts        as-prop dispatch
+├── merge-props.ts        prop merge with event chaining
+└── slot/                 slot protocol (mergeProps, applySlot, Slottable)
+
+lib/contract/src/
+├── aria/                 AriaPolicyEngine — implicit role map, attribute policy, engine
+├── children/             ChildrenEvaluator — RuleMatcher, RuleValidator, MatchValidator
+└── base/                 StrictBase — warn() / violate() routing
+
+lib/styling/src/
+├── class-pipeline.ts     createClassPipeline — StaticClassResolver + VariantClassResolver
+├── variant-resolver.ts   CVA integration, LRU cache
+└── plugin/               ClassPlugin API
+
+lib/adapter-utils/src/
+├── build-core-runtime.ts buildCoreRuntime — calls createPolymorphic, extracts ownedKeys
+├── build-engines.ts      buildEngines — ChildrenEvaluator construction
+├── compose-filter.ts     composeFilter — merges plugin + user filterProps predicates
+└── slot/                 SlotValidator — asChild invariant enforcement
+
+packages/core/src/
+├── factory/              createPolymorphic — capability-driven factory
+└── options/              resolveFactoryOptions — unpacks FactoryOptions into flat shape
 ```
 
 ---
@@ -291,10 +334,10 @@ impossible to ever satisfy.
 
 ### ARIA validator
 
-`AriaPolicyEngine` is instantiated once per `createPolymorphic` call (using the factory's `strict`
-setting) and exposed as `runtime.resolveAria(tag, props)`. It is also embedded in
-`createResolverPipeline` so adapters that use the one-shot pipeline get ARIA validation
-automatically.
+`AriaPolicyEngine` is instantiated inside `createPolymorphic` only when `enforcement` is declared in
+the factory options. When no `enforcement` key is present the engine is not created and
+`runtime.resolveAria(tag, props)` returns `{ props }` unchanged. This is the capability-driven gate:
+primitive-only components pay no ARIA overhead at runtime or in the bundle.
 
 The engine uses a **snapshot diagnostic model**: all rules evaluate against the same
 `(tag, props, implicitRole)` snapshot. Violations always reflect pre-fix state. Fixes are
@@ -455,9 +498,9 @@ flowchart TD
 
     buildRuntime["buildRuntime()
     ─────────────
-    normalizeOptions  (fill defaults: name, enforcement.strict)
+    normalizeOptions  (fill defaults: name, strict)
     buildCoreRuntime  (createPolymorphic → PolymorphicRuntime)
-    buildValidators   (SlotValidator, AriaPolicyEngine, ChildrenEvaluator?)
+    buildValidators   (SlotValidator, ChildrenEvaluator?)
     composeFilter     (variant keys + plugin ownedKeys + caller filterProps)"]
 
     bundle["BuiltRuntime
@@ -465,7 +508,7 @@ flowchart TD
 runtime  (PolymorphicRuntime)
 slotComponent
 normalizeChildren
-slotValidator / ariaEngine
+slotValidator
 filterProps
 childrenEvaluator?"]
 
@@ -519,7 +562,8 @@ className, variantKey"]
 })"]
 
     ariaGuard{"string tag?"}
-    aria["ariaEngine.validate(tag, elementProps)"]
+    aria["runtime.resolveAria(tag, elementProps)
+(no-op when enforcement not declared)"]
     normalRender["createElement(tag, domProps)"]
 
     input --> extract
@@ -538,8 +582,9 @@ className, variantKey"]
 exclusivity of `as` and `asChild`; exactly one element child when `asChild` is set; non-element
 children are warned and discarded.
 
-ARIA validation (`ariaEngine.validate`) runs only for intrinsic string tags. Component types
-(`as={MyComponent}`) pass through without validation — there is no implicit ARIA role to check.
+ARIA validation (`runtime.resolveAria`) runs only for intrinsic string tags. Component types
+(`as={MyComponent}`) pass through without validation — there is no implicit ARIA role to check. When
+`enforcement` was not declared the call is a no-op regardless of tag type.
 
 ---
 

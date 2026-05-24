@@ -1,4 +1,4 @@
-import type { AriaPolicyEngine, ChildrenEvaluator, ElementType } from '@polymorphic-ui/core'
+import type { ChildrenEvaluator, ElementType } from '@polymorphic-ui/core'
 import type { Slots } from 'vue'
 import type { SlotValidator } from '../slot'
 import type { FilterPredicate, ResolvedProps, UnknownProps } from './primitives'
@@ -20,6 +20,5 @@ export type RenderInput = Readonly<{
   slots: Slots
   filterProps: FilterPredicate
   slotValidator: SlotValidator
-  ariaEngine: AriaPolicyEngine
   childrenEvaluator?: ChildrenEvaluator
 }>

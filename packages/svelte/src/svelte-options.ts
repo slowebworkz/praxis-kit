@@ -5,7 +5,7 @@ import type {
   PresetMap,
   VariantMap,
 } from '@polymorphic-ui/core'
-import type { UnknownProps } from './types'
+import type { UnknownProps } from './types/primitives'
 
 export type SvelteFactoryOptions<
   TDefault extends CoreElementType,

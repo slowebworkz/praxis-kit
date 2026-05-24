@@ -260,11 +260,11 @@ object. Options are organized into three zones:
 
 **`enforcement`** — structural and accessibility contracts
 
-| Option                 | Type                         | Description                                                      |
-| ---------------------- | ---------------------------- | ---------------------------------------------------------------- |
-| `enforcement.strict`   | `false \| 'warn' \| 'throw'` | How violations are surfaced. Defaults to `'throw'`.              |
-| `enforcement.aria`     | `AriaRule[]`                 | Custom ARIA validation rules extending the built-in role engine. |
-| `enforcement.children` | `ChildRuleInput[]`           | Rules the component's children must satisfy on every render.     |
+| Option                 | Type                         | Description                                                                        |
+| ---------------------- | ---------------------------- | ---------------------------------------------------------------------------------- |
+| `enforcement.strict`   | `false \| 'warn' \| 'throw'` | How violations are surfaced. Defaults to `'throw'` when `enforcement` is declared. |
+| `enforcement.aria`     | `AriaRule[]`                 | Custom ARIA validation rules extending the built-in role engine.                   |
+| `enforcement.children` | `ChildRuleInput[]`           | Rules the component's children must satisfy on every render.                       |
 
 ### `createPolymorphic(options)` — low-level runtime
 
@@ -332,16 +332,19 @@ evaluator.evaluate(flatChildren)
 
 A minimal adapter render function (pseudocode):
 
-```
+```text
 adapter render(as, props, className, variantKey, children):
   tag      = runtime.resolveTag(as)
   merged   = runtime.resolveProps(props)
   cls      = runtime.resolveClasses(tag, merged, className, variantKey)
-  filtered = strip(merged, runtime.classPlugin?.ownedKeys, runtime.options.variantKeys)
-  { props: safeProps } = ariaEngine.validate(tag, filtered)
+  filtered = strip(merged, filterProps, runtime.options.variantKeys)
+  // resolveAria is a no-op when enforcement was not declared
+  domProps = typeof tag === 'string'
+               ? runtime.resolveAria(tag, { ...filtered, className: cls }).props
+               : { ...filtered, className: cls }
   flat     = framework.flattenChildren(children)
-  evaluator?.evaluate(flat)
-  return framework.render(tag, { ...safeProps, className: cls }, children)
+  childrenEvaluator?.evaluate(flat)
+  return framework.render(tag, domProps, children)
 ```
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for a complete walkthrough of the internal pipeline, data
@@ -432,11 +435,13 @@ and composition primitives that a design system's components are built on top of
 
 ```bash
 pnpm install
-pnpm typecheck    # type-check all packages
-pnpm test         # run all tests
-pnpm build        # build all packages
-pnpm lint         # ESLint across workspace
-pnpm format       # Prettier across workspace
+pnpm typecheck       # type-check all packages
+pnpm test            # run all tests
+pnpm build           # build all packages
+pnpm lint            # ESLint across workspace
+pnpm format          # Prettier across workspace
+pnpm arch:validate   # dependency-cruiser: enforce lib/ → packages/ layer rules
+pnpm bench           # run benchmark suites (lib/bench)
 ```
 
 Run any command within a package directory to scope it to that package.

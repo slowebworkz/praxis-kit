@@ -11,16 +11,18 @@ the same boundary. Core required no changes for any of them.
 An adapter connects the framework-agnostic core runtime to a specific framework's rendering model.
 Its responsibilities are:
 
-1. **Build the runtime** — call `createPolymorphic` with the user's factory options and wrap the
-   result with an ARIA engine, child evaluator, and prop filter.
+1. **Build the runtime** — call `buildRuntime` from `@polymorphic-ui/adapter-utils` with the user's
+   factory options. It wires `createPolymorphic`, slot validation, child evaluation, and prop
+   filtering into a `BuiltRuntime` bundle held in the component's closure.
 2. **Resolve the tag** — call `runtime.resolveTag(as)` to get the concrete element type for this
    render.
 3. **Merge props** — call `runtime.resolveProps(rest)` to apply default props and preset merging.
 4. **Resolve classes** — call `runtime.resolveClasses(tag, mergedProps, cls, variantKey)` to produce
    the final class string.
 5. **Filter props** — strip variant keys and owned plugin keys before forwarding to the DOM.
-6. **Normalize ARIA** — call `ariaEngine.validate(tag, elementProps)` on intrinsic (string) tags to
-   remove redundant or invalid roles.
+6. **Normalize ARIA** — call `runtime.resolveAria(tag, elementProps)` on intrinsic (string) tags to
+   remove redundant or invalid roles. The call is safe when `enforcement` was not declared — it
+   returns props unchanged.
 7. **Evaluate children** — call `childrenEvaluator.evaluate(children)` if present
    (framework-permitting — see constraints below).
 8. **Render** — hand off the resolved tag, props, and children to the framework's own rendering
@@ -35,11 +37,10 @@ merging, ARIA rules, or child cardinality logic.
 
 Follow the existing adapter layout:
 
-```
+```text
 packages/<framework>/
   src/
     build-runtime.ts              # normalizeOptions + buildRuntime
-    compose-filter.ts             # composeFilter helper (copy verbatim)
     create-polymorphic-component.ts
     <framework>-options.ts        # FrameworkFactoryOptions type
     index.ts                      # public exports
@@ -61,6 +62,10 @@ packages/<framework>/
   eslint.config.ts
 ```
 
+Add `@polymorphic-ui/adapter-utils` as a dependency in `package.json`. It provides
+`buildCoreRuntime`, `buildEngines`, `composeFilter`, and `SlotValidator` — the shared logic used by
+every adapter.
+
 ---
 
 ## Step 1 — `build-runtime.ts`
@@ -69,8 +74,8 @@ This file is nearly identical across all adapters. Copy from an existing one and
 of `FrameworkFactoryOptions`.
 
 ```ts
-import { AriaPolicyEngine, ChildrenEvaluator, createPolymorphic } from '@polymorphic-ui/core'
-import { composeFilter } from './compose-filter'
+import { buildCoreRuntime, buildEngines, composeFilter } from '@polymorphic-ui/adapter-utils'
+import { SlotValidator } from '@polymorphic-ui/adapter-utils'
 import type { FrameworkFactoryOptions } from './framework-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
 import type { NormalizedOptions } from './types/normalized-options'
@@ -79,53 +84,36 @@ function normalizeOptions<G>(options): NormalizedOptions<G> {
   return {
     ...options,
     name: options.name ?? 'PolymorphicComponent',
-    enforcement: {
-      ...options.enforcement,
-      strict: options.enforcement?.strict ?? 'throw',
-    },
+    strict: options.enforcement?.strict ?? 'throw',
   }
 }
 
 export function buildRuntime(options): BuiltRuntime {
   const normalized = normalizeOptions(options)
-  const runtime = createPolymorphic(normalized)
-  const ownedKeys = 'classPlugin' in runtime ? runtime.classPlugin.ownedKeys : undefined
-  const ariaEngine = new AriaPolicyEngine(normalized.enforcement.strict, ...)
-  const childrenEvaluator = normalized.enforcement.children?.length
-    ? new ChildrenEvaluator(normalized.enforcement.children, normalized.enforcement.strict)
-    : undefined
+  const { runtime, ownedKeys } = buildCoreRuntime(normalized)
+  const slotValidator = new SlotValidator(normalized.name, normalized.strict)
+  const { childrenEvaluator } = buildEngines(
+    normalized.strict,
+    normalized.enforcement?.children,
+    normalized.name,
+  )
   const filterProps = composeFilter(ownedKeys, normalized.filterProps)
-  return { runtime, ariaEngine, filterProps, ...(childrenEvaluator && { childrenEvaluator }) }
+  return { runtime, slotValidator, filterProps, ...(childrenEvaluator && { childrenEvaluator }) }
 }
 ```
 
-The `strict` default is `'throw'`. This matches all existing adapters.
+`normalizeOptions` extracts `strict` as a flat field so `enforcement` passes through to core
+untouched. Core instantiates the ARIA engine only when `enforcement` is declared; without it,
+`runtime.resolveAria()` returns props unchanged and there is no engine overhead.
+
+`buildCoreRuntime` calls `createPolymorphic` and extracts the plugin's owned keys. `buildEngines`
+creates a `ChildrenEvaluator` only when `enforcement.children` is present. `composeFilter` merges
+plugin owned keys with the user-supplied `filterProps` predicate. All three are imported from
+`@polymorphic-ui/adapter-utils`.
 
 ---
 
-## Step 2 — `compose-filter.ts`
-
-Copy this verbatim from any existing adapter. It combines the plugin's owned keys with the
-user-supplied `filterProps` predicate into a single function.
-
-```ts
-import type { OwnedPropKeys } from '@polymorphic-ui/core'
-import type { FilterPredicate } from './types'
-
-export function composeFilter(
-  ownedKeys: OwnedPropKeys | undefined,
-  filterProps?: FilterPredicate,
-): FilterPredicate {
-  const defaultFilter: FilterPredicate = (key, variantKeys) =>
-    variantKeys.has(key) || ownedKeys?.has(key) === true
-  if (!filterProps) return defaultFilter
-  return (key, variantKeys) => defaultFilter(key, variantKeys) || filterProps(key, variantKeys)
-}
-```
-
----
-
-## Step 3 — the render path
+## Step 2 — the render path
 
 This is where frameworks diverge most. The core sequence is the same; only the rendering primitive
 changes.
@@ -134,15 +122,15 @@ changes.
 
 ```ts
 // Pseudocode — see packages/react/src/render.tsx for the full version
-export function render({ runtime, ariaEngine, filterProps, childrenEvaluator, props }) {
+export function render({ runtime, filterProps, childrenEvaluator, props }) {
   const tag = runtime.resolveTag(props.as)
   const merged = runtime.resolveProps(rest) // rest = props minus as/class/variantKey/ref/children
   const cls = runtime.resolveClasses(tag, merged, props.class, props.variantKey)
   const filtered = applyFilter(merged, filterProps, runtime.options.variantKeys)
-  const { role, ...domSafe } = filtered
-  const elementProps = { ...domSafe, class: cls, ...(isKnownAriaRole(role) && { role }) }
+  const elementProps = { ...filtered, class: cls }
+  // resolveAria is a no-op when enforcement was not declared — safe to call unconditionally
   const finalProps =
-    typeof tag === 'string' ? ariaEngine.validate(tag, elementProps).props : elementProps
+    typeof tag === 'string' ? runtime.resolveAria(tag, elementProps).props : elementProps
   childrenEvaluator?.evaluate(toChildArray(props.children))
   return framework.createElement(tag, { ...finalProps, ref: props.ref }, props.children)
 }
@@ -184,7 +172,8 @@ as a `bundle` prop:
   const merged      = $derived(bundle.runtime.resolveProps(rest))
   const resolvedCls = $derived(bundle.runtime.resolveClasses(tag, merged, cls, variantKey))
   const filtered    = $derived(applyFilter(merged, bundle.filterProps, bundle.runtime.options.variantKeys))
-  const domProps    = $derived(buildDomProps(filtered, resolvedCls, tag, bundle.ariaEngine))
+  // resolveAria is a no-op when enforcement was not declared
+  const domProps    = $derived(buildDomProps(bundle.runtime, filtered, resolvedCls, tag))
 </script>
 <svelte:element this={tag} {...domProps}>{@render children?.()}</svelte:element>
 ```
@@ -194,7 +183,7 @@ script block, as Svelte will warn that the destructured values only capture the 
 
 ---
 
-## Step 4 — `PolymorphicProps<G, TAs>`
+## Step 3 — `PolymorphicProps<G, TAs>`
 
 For VDOM adapters, define a typed component surface using the framework's element prop types. The
 pattern across React, Preact, and Vue is:
@@ -226,7 +215,7 @@ assignability issue from the tailwind overload.
 
 ---
 
-## Step 5 — `FrameworkFactoryOptions`
+## Step 4 — `FrameworkFactoryOptions`
 
 Extend `FactoryOptions` from core with framework-specific additions. All current adapters add only
 one field:
@@ -245,7 +234,7 @@ to extend the core runtime contract itself.
 
 ---
 
-## Step 6 — SSR
+## Step 5 — SSR
 
 Every adapter needs an SSR smoke test verifying that server rendering does not access browser
 globals and produces correct HTML.
@@ -259,7 +248,7 @@ produces universal output; no separate compile target required.
 
 ---
 
-## Step 7 — ESLint config
+## Step 6 — ESLint config
 
 Add a per-package `eslint.config.ts` that:
 
@@ -292,22 +281,23 @@ export default [
 ]
 ```
 
-Also add `@polymorphic-ui/<framework>` to every other adapter's restriction list, and add
+Also add `@polymorphic-ui/<framework>` to every other adapter's restriction list, add
 `{ type: '<framework>', pattern: 'packages/<framework>/**/*' }` to `boundaries/elements` in
-`configs/architecture.ts`.
+`configs/architecture.ts`, and add a cross-adapter rule to `.dependency-cruiser.cjs`.
 
 ---
 
 ## What core provides (never reimplement)
 
-| Concern                   | Core export                                                 |
+| Concern                   | How to access                                               |
 | ------------------------- | ----------------------------------------------------------- |
 | Variant resolution        | `createPolymorphic` → `runtime.resolveClasses`              |
 | Tag resolution            | `runtime.resolveTag`                                        |
 | Default prop merging      | `runtime.resolveProps`                                      |
-| ARIA role normalization   | `AriaPolicyEngine` → `.validate()`                          |
-| Child structure contracts | `ChildrenEvaluator` → `.evaluate()`                         |
-| Prop filter composition   | `OwnedPropKeys` + `composeFilter`                           |
+| ARIA role normalization   | `runtime.resolveAria(tag, props)` — no-op when not enforced |
+| Child structure contracts | `ChildrenEvaluator` via `buildEngines` from adapter-utils   |
+| Prop filter composition   | `composeFilter` from `@polymorphic-ui/adapter-utils`        |
+| Core runtime wiring       | `buildCoreRuntime` from `@polymorphic-ui/adapter-utils`     |
 | Strict mode behaviour     | `StrictBase` (via `AriaPolicyEngine` / `ChildrenEvaluator`) |
 
 ---

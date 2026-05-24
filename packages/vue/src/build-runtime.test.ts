@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AriaPolicyEngine, ChildrenEvaluator } from '@polymorphic-ui/core'
+import { ChildrenEvaluator } from '@polymorphic-ui/core'
 import { buildRuntime } from './build-runtime'
 import { SlotValidator } from './slot/slot-validator'
 
@@ -14,11 +14,6 @@ describe('buildRuntime — defaults', () => {
   it('returns a SlotValidator instance', () => {
     const { slotValidator } = buildRuntime({})
     expect(slotValidator).toBeInstanceOf(SlotValidator)
-  })
-
-  it('returns an AriaPolicyEngine instance', () => {
-    const { ariaEngine } = buildRuntime({})
-    expect(ariaEngine).toBeInstanceOf(AriaPolicyEngine)
   })
 
   it('omits childrenEvaluator when no enforcement.children provided', () => {
@@ -86,9 +81,9 @@ describe('buildRuntime — runtime resolveTag', () => {
 })
 
 describe('buildRuntime — strict default', () => {
-  it('defaults strict to throw', () => {
+  it('defaults strict to false when no enforcement is declared', () => {
     const { runtime } = buildRuntime({})
-    expect(runtime.options.strict).toBe('throw')
+    expect(runtime.options.strict).toBe(false)
   })
 
   it('respects an explicit strict value', () => {

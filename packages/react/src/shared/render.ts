@@ -1,7 +1,7 @@
 import { createElement } from 'react'
 import { jsx } from 'react/jsx-runtime'
 import type { ReactElement, Ref } from 'react'
-import type { AriaPolicyEngine, ElementType, IntrinsicProps } from '@polymorphic-ui/core'
+import type { ElementType, IntrinsicProps } from '@polymorphic-ui/core'
 import { isKnownAriaRole } from '@polymorphic-ui/core'
 import type { SlotValidator } from './slot'
 import { isSlottableElement } from './slot'
@@ -15,8 +15,8 @@ import type {
   ResolvedProps,
   ResolvedSlotRender,
   RenderDirectives,
-  FilterPredicate,
   ResolvedRenderState,
+  FilterPredicate,
 } from './types'
 
 function applyFilter<T extends ResolvedProps>(
@@ -173,12 +173,12 @@ function buildElementProps(
 function renderIntrinsic(
   state: ResolvedRenderState,
   ref: Ref<unknown> | null,
-  ariaEngine: AriaPolicyEngine,
+  runtime: Runtime,
 ): ReactElement {
   const elementProps = buildElementProps(state.props, state.className, ref, state.children)
   const domProps =
     typeof state.tag === 'string'
-      ? ariaEngine.validate(state.tag, elementProps).props
+      ? runtime.resolveAria(state.tag, elementProps).props
       : elementProps
   return createElement(state.tag, domProps)
 }
@@ -191,7 +191,6 @@ export function render<TProps extends KnownProps>({
   normalizeChildren,
   filterProps,
   slotValidator,
-  ariaEngine,
   childrenEvaluator,
 }: RenderInput<TProps>): ReactElement {
   const state = resolveRenderState(runtime, props, filterProps)
@@ -200,5 +199,5 @@ export function render<TProps extends KnownProps>({
 
   const slotResult = tryRenderAsChild(state, ref, slotComponent, normalizeChildren, slotValidator)
 
-  return slotResult ?? renderIntrinsic(state, ref, ariaEngine)
+  return slotResult ?? renderIntrinsic(state, ref, runtime)
 }

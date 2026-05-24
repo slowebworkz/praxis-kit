@@ -39,7 +39,7 @@
     const ep: IntrinsicProps = { ...(r as IntrinsicProps), class: classStr }
     if (isKnownAriaRole(role)) ep.role = role
     if (typeof tag !== 'string') return ep as Record<string, unknown>
-    return bundle.ariaEngine.validate(tag, ep).props as Record<string, unknown>
+    return bundle.runtime.resolveAria(tag, ep).props as Record<string, unknown>
   }
 
   const tag = $derived(bundle.runtime.resolveTag(asProp as ElementType | undefined))

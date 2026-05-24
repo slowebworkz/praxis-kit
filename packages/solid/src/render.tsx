@@ -1,6 +1,6 @@
 import { createMemo, splitProps } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
-import type { AriaPolicyEngine, ElementType, IntrinsicProps } from '@polymorphic-ui/core'
+import type { ElementType, IntrinsicProps } from '@polymorphic-ui/core'
 import { isKnownAriaRole } from '@polymorphic-ui/core'
 import type { FilterPredicate, ResolvedProps, SolidElement, UnknownProps } from './types/primitives'
 import type { KnownProps } from './types/props'
@@ -51,10 +51,10 @@ function resolveTag(runtime: Runtime, as: unknown): ElementType {
 function resolveDomProps(
   tag: ElementType,
   elementProps: IntrinsicProps,
-  ariaEngine: AriaPolicyEngine,
+  runtime: Runtime,
 ): Record<string, unknown> {
   return typeof tag === 'string'
-    ? (ariaEngine.validate(tag, elementProps).props as Record<string, unknown>)
+    ? (runtime.resolveAria(tag, elementProps).props as Record<string, unknown>)
     : (elementProps as Record<string, unknown>)
 }
 
@@ -62,7 +62,6 @@ export function render<TProps extends KnownProps>({
   runtime,
   props,
   filterProps,
-  ariaEngine,
   childrenEvaluator,
 }: RenderInput<TProps>): SolidElement {
   const [knownRaw, rest] = splitProps(props, SPLIT_KEYS)
@@ -83,7 +82,7 @@ export function render<TProps extends KnownProps>({
   )
   const domProps = createMemo(() => {
     const ep = buildElementProps(filteredProps(), resolvedClass(), known.ref, known.children)
-    return resolveDomProps(tag(), ep, ariaEngine)
+    return resolveDomProps(tag(), ep, runtime)
   })
 
   childrenEvaluator?.evaluate(toChildArray(known.children))

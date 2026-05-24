@@ -1,4 +1,12 @@
-export { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attribute-policy'
-export { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
-export { KNOWN_ARIA_ROLES, isKnownAriaRole, hasRole } from './aria-roles'
-export { AriaPolicyEngine, isInvalid } from './polymorphic-validator'
+export {
+  isAriaAttributeValidForRole,
+  isGlobalAriaAttribute,
+  getImplicitRole,
+  isStandaloneTag,
+  isStrongImplicitRole,
+  KNOWN_ARIA_ROLES,
+  isKnownAriaRole,
+  hasRole,
+  AriaPolicyEngine,
+  isInvalid,
+} from '@polymorphic-ui/contract'
