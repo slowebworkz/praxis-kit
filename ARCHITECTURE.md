@@ -45,10 +45,9 @@ It has no dependency on React, the DOM, or any specific CSS methodology.
 
 ### Standalone or adapter-required?
 
-**Core is fully standalone.** Every export is usable in any JavaScript/TypeScript environment
-without a framework.
+Core is fully standalone — every export works in any JavaScript environment without a framework.
 
-A **framework adapter layer is optional but beneficial** for ergonomics:
+A framework adapter is optional:
 
 | Concern             | Core provides                                                          | Adapter adds                                                      |
 | ------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------- |
@@ -60,9 +59,8 @@ A **framework adapter layer is optional but beneficial** for ergonomics:
 | Rendering           | —                                                                      | Creates and renders the resolved element                          |
 
 The four `PolymorphicRuntime` methods (`resolveTag`, `resolveProps`, `resolveClasses`,
-`resolveAria`) are designed to be called inside a component render function.
-`createResolverPipeline` bundles them into one call for adapter convenience. `options` exposes the
-frozen resolved configuration.
+`resolveAria`) are called inside a component render function. `createResolverPipeline` bundles them
+into one call for adapter convenience. `options` exposes the frozen resolved configuration.
 
 ---
 

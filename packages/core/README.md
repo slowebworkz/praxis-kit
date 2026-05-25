@@ -1,12 +1,10 @@
 # @polymorphic-ui/core
 
-Framework-agnostic runtime for polymorphic UI components. Handles tag resolution, prop merging,
-variant class generation, children structure validation, and ARIA policy enforcement. Framework
-adapters (e.g. `@polymorphic-ui/react`) consume the `PolymorphicRuntime` this package produces.
+Framework-agnostic runtime: tag resolution, prop merging, variant class generation, children
+structure validation, and ARIA policy enforcement.
 
-The package is designed as runtime infrastructure rather than a framework-specific component
-library. The core runtime is responsible for semantic resolution, policy enforcement, validation,
-and class orchestration. Framework adapters are responsible only for rendering concerns.
+No React, Vue, or DOM dependency. Framework adapters (e.g. `@polymorphic-ui/react`) handle
+rendering; everything else — semantics, validation, class composition — lives here.
 
 ---
 
@@ -27,8 +25,6 @@ and class orchestration. Framework adapters are responsible only for rendering c
 
 ## Core invariants
 
-The runtime relies on several architectural invariants:
-
 - Runtime options are immutable after normalization.
 - Caller props always override preset props.
 - Validation always operates on normalized children.
@@ -37,9 +33,6 @@ The runtime relies on several architectural invariants:
 - Runtime behavior is deterministic after option normalization.
 - Framework adapters never mutate runtime configuration.
 - Validation systems report complete violation batches whenever possible.
-
-These invariants exist to ensure deterministic rendering, stable diagnostics, and predictable
-cross-framework behavior.
 
 ---
 
@@ -74,8 +67,8 @@ FactoryOptions
   → render
 ```
 
-The runtime itself is framework-agnostic. Adapters consume the runtime and integrate it into a
-specific rendering environment.
+Adapters consume the runtime and plug it into a specific rendering environment. The runtime has no
+opinion on which one.
 
 ---
 
@@ -94,13 +87,13 @@ src/
   types/         all shared TypeScript types
 ```
 
-The package is intentionally decomposed into isolated runtime subsystems:
+Each subsystem is isolated:
 
 - **Normalization** — resolves defaults and freezes configuration.
 - **Resolution** — derives tags, props, and classes.
 - **Validation** — enforces structural and semantic correctness.
 - **Policy** — evaluates ARIA semantics and applies optional fixes.
-- **Adapters** — bridge runtime behavior into framework rendering environments.
+- **Adapters** — rendering and framework interop only.
 
 ---
 
@@ -111,8 +104,8 @@ object (defaults filled in, optional fields conditionally spread to satisfy
 `exactOptionalPropertyTypes`). It then calls `createClassPipeline` with those resolved options and
 closes over the result.
 
-The frozen `ResolvedFactoryOptions` object acts as the single source of truth for all downstream
-runtime behavior.
+The frozen `ResolvedFactoryOptions` object is the single source of truth — every resolver reads from
+it and nothing writes to it after construction.
 
 The returned `PolymorphicRuntime` exposes:
 
@@ -128,7 +121,7 @@ The returned `PolymorphicRuntime` exposes:
 
 ## Adapter boundary
 
-Framework adapters consume `PolymorphicRuntime` and are responsible for:
+Framework adapters own rendering and nothing else:
 
 - Rendering framework-specific elements/components.
 - Normalizing framework children into `unknown[]`.
@@ -136,13 +129,8 @@ Framework adapters consume `PolymorphicRuntime` and are responsible for:
 - Wiring runtime diagnostics into framework behavior.
 - Passing normalized runtime state into validators.
 
-The runtime itself remains framework-agnostic and intentionally avoids direct rendering concerns.
-
-This separation allows:
-
-- React, Vue, Svelte, or Solid adapters to share identical runtime semantics.
-- Runtime behavior to remain deterministic across frameworks.
-- Validation and policy systems to evolve independently from rendering.
+React, Vue, Svelte, and Solid share the same runtime semantics because enforcement never enters the
+adapter. Validation and class logic live here, not per-framework.
 
 ---
 
@@ -228,10 +216,9 @@ they never reach the rendered element.
 type OwnedPropKeys = ReadonlySet<string>
 ```
 
-A semantic alias for `ReadonlySet<string>`. The name carries intent: these are keys the plugin
-_owns_, distinct from variant keys (which are also stripped but tracked separately via
-`variantKeys`). The alias exists so ownership-related prop-key handling can be identified and
-evolved independently.
+A semantic alias for `ReadonlySet<string>`. These keys are stripped from the DOM by framework
+adapters — callers never see them and they never reach the rendered element. Tracked separately from
+`variantKeys`, which the runtime owns.
 
 ### Runtime access
 
@@ -253,15 +240,8 @@ ChildrenEvaluator.evaluate(children)
   → MatchValidator.validate(children, matrix)     → unexpected + ambiguous child checks
 ```
 
-The pipeline intentionally separates:
-
-- matching
-- structural validation
-- ambiguity analysis
-- diagnostics reporting
-
-This decomposition allows the validation engine to evolve independently without collapsing into
-single-pass imperative traversal logic.
+Matching, cardinality, ambiguity detection, and reporting are separate steps. Each can be read and
+tested in isolation without untangling a single traversal pass.
 
 ### RuleMatcher
 
@@ -359,10 +339,8 @@ warnings surface without aborting a render.
 
 ## StrictBase
 
-All validation classes extend `StrictBase`. `StrictBase` acts as shared runtime diagnostics
-infrastructure rather than a simple utility superclass.
-
-It holds the `strict` field and exposes three protected methods:
+`StrictBase` is the base class for every validation subsystem. It holds the `strict` field and
+exposes three protected methods:
 
 | Method                 | `strict=true/'throw'`    | `strict='warn'`          | `strict=false` |
 | ---------------------- | ------------------------ | ------------------------ | -------------- |
@@ -370,11 +348,8 @@ It holds the `strict` field and exposes three protected methods:
 | `warn(msg)`            | `console.warn`           | `console.warn`           | silent         |
 | `invariant(cond, msg)` | calls `violate` if false | calls `violate` if false | silent         |
 
-The `warn`/`violate` split exists specifically for the ARIA engine: ARIA warnings should be visible
-in strict environments but must not break a render.
-
-`StrictBase` centralizes runtime error-policy behavior so all validation systems share identical
-strictness semantics.
+The `warn`/`violate` split exists for the ARIA engine: warnings surface in strict mode without
+aborting a render.
 
 ---
 
@@ -391,8 +366,8 @@ Preset values are `Partial<VariantProps<V>>` objects merged _into_ the CVA call 
 This lets compound variant rules fire across the preset boundary and gives callers a clean override
 mechanism (explicit props always win).
 
-An alternative approach of concatenating pre-generated class strings was rejected because it
-bypasses CVA entirely.
+Concatenating pre-generated class strings would bypass CVA entirely — compound variants would never
+fire across the preset boundary.
 
 ---
 
@@ -405,15 +380,11 @@ exhaustive switches and stronger invariant checks.
 
 ### Bidirectional match matrix
 
-The children validation system uses forward + reverse maps rather than a single traversal list.
+The match matrix has two directions built in a single traversal:
 
-Each direction serves a different consumer:
-
-- forward feeds child-level checks (unexpected / ambiguous)
-- reverse feeds rule-level checks (cardinality / position)
-
-Building both in one pass avoids additional traversal and keeps validation responsibilities
-isolated.
+- **forward** (`child → rules`) — detects children with no match (unexpected) or too many
+  (ambiguous)
+- **reverse** (`rule → children`) — counts matches per rule for cardinality and position checks
 
 ---
 
@@ -422,17 +393,11 @@ isolated.
 A cache hit promotes the entry to most-recently-used so frequently accessed variant combinations
 survive eviction even if they were added early.
 
-This avoids cache churn under high-frequency rendering patterns.
+Hot variant combinations stay cached even when the cache is under eviction pressure.
 
 ---
 
-### Runtime-first architecture over component-first architecture
+### Runtime-first, not component-first
 
-The package is intentionally designed around a semantic runtime rather than around framework
-components.
-
-This enables:
-
-- shared runtime semantics across frameworks
-- centralized policy enforcement
-- adapter-level rendering abstraction
+The core export is a `PolymorphicRuntime`, not a component. Framework adapters render; this package
+resolves. That split is what keeps the enforcement logic the same on every framework.
