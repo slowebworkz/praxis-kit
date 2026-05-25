@@ -3,6 +3,7 @@ import type { ESLintConfig } from './configs/types'
 import base from './configs/base.js'
 import ts from './configs/typescript.js'
 import architecture from './configs/architecture.js'
+import polymorphicPlugin from './packages/eslint-plugin/src/index.js'
 
 const TS_FILES = ['**/*.{ts,mts,cts,tsx}']
 
@@ -35,6 +36,17 @@ const config = [
   },
 
   ...architecture,
+
+  // Self-validate: run the plugin's own rules on all workspace source.
+  {
+    files: ['packages/*/src/**/*.{ts,tsx}', 'packages/docs/**/*.{ts,tsx}'],
+    plugins: { '@polymorphic-ui': polymorphicPlugin },
+    rules: {
+      '@polymorphic-ui/no-enforcement-without-strict': 'error',
+      '@polymorphic-ui/no-redundant-role': 'warn',
+      '@polymorphic-ui/valid-cardinality': 'error',
+    },
+  },
 ] satisfies ESLintConfig
 
 export default config

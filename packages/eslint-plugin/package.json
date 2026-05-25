@@ -1,0 +1,39 @@
+{
+  "name": "@polymorphic-ui/eslint-plugin",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint . --fix --config eslint.config.ts",
+    "lint:check": "eslint . --config eslint.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed",
+    "prepublishOnly": "pnpm build",
+    "lint:pkg": "publint"
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "@typescript-eslint/utils": "catalog:"
+  },
+  "peerDependencies": {
+    "eslint": ">=9"
+  },
+  "devDependencies": {
+    "@typescript-eslint/rule-tester": "catalog:",
+    "eslint": "catalog:",
+    "tsup": "catalog:",
+    "typescript-eslint": "catalog:",
+    "vitest": "catalog:"
+  }
+}
