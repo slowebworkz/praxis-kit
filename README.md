@@ -71,6 +71,66 @@ enforcement never enters the adapter layer.
 
 ---
 
+## Same contract, different renderer
+
+Define the contract once:
+
+```ts
+// tabs-contract.ts
+export const tabsContract = {
+  tag: 'div',
+  enforcement: {
+    strict: 'throw',
+    children: [
+      { name: 'Tabs.List', match: isTabList, cardinality: { min: 1, max: 1 } },
+      { name: 'Tabs.Panel', match: isTabPanel, cardinality: { min: 1 } },
+    ],
+  },
+}
+```
+
+One import changes per framework. Everything else is identical:
+
+```ts
+// React
+import { createPolymorphicComponent } from '@polymorphic-ui/react'
+export const Tabs = createPolymorphicComponent(tabsContract)
+```
+
+```ts
+// Vue
+import { createPolymorphicComponent } from '@polymorphic-ui/vue'
+export const Tabs = createPolymorphicComponent(tabsContract)
+```
+
+```ts
+// Solid
+import { createPolymorphicComponent } from '@polymorphic-ui/solid'
+export const Tabs = createPolymorphicComponent(tabsContract)
+```
+
+```ts
+// Preact
+import { createPolymorphicComponent } from '@polymorphic-ui/preact'
+export const Tabs = createPolymorphicComponent(tabsContract)
+```
+
+Render an invalid tree in any of them:
+
+```tsx
+<Tabs>
+  <Tabs.Trigger value="a">First</Tabs.Trigger>
+</Tabs>
+```
+
+```text
+Error: [Tabs] contract violation — expected exactly 1 Tabs.List (got 0), at least 1 Tabs.Panel (got 0)
+```
+
+Same error. Same message. Same throw. The enforcement logic never crossed the adapter boundary.
+
+---
+
 ## Packages
 
 | Package                                         | Description                                                                        |
