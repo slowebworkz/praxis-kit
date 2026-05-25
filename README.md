@@ -2,12 +2,22 @@
 
 Framework-neutral semantic UI contracts.
 
-Define a component once. Enforce its structure, accessibility rules, and class composition in a
-single configuration — across every framework.
+A semantic UI contract defines which elements may render, how they compose, and which accessibility
+rules apply — once, enforced identically across every framework.
 
 ---
 
-## The idea in one example
+## The idea in thirty seconds
+
+```tsx
+// This throws at render time:
+<Tabs>
+  <Tabs.Trigger value="a">First</Tabs.Trigger>
+</Tabs>
+// Error: [Tabs] contract violation — expected exactly 1 Tabs.List (got 0), at least 1 Tabs.Panel (got 0)
+```
+
+The contract that produced it:
 
 ```tsx
 const Tabs = createPolymorphicComponent({
@@ -22,7 +32,7 @@ const Tabs = createPolymorphicComponent({
 })
 ```
 
-That configuration declares a _contract_. At render time:
+Define it once. At render time:
 
 - **Invalid children throw** — wrong types, wrong count, wrong order
 - **Roles normalize automatically** — `<nav role="navigation">` strips the redundant attribute
@@ -201,13 +211,23 @@ Use `Slottable` when the slot child needs to wrap additional content:
 
 ```tsx
 import { Slottable } from '@polymorphic-ui/react'
-
 ;<Button asChild>
   <a href="/dashboard">
     <span aria-hidden>→</span>
     <Slottable>Dashboard</Slottable>
   </a>
 </Button>
+```
+
+---
+
+## React 18
+
+Import from the `/legacy` sub-path. API is identical; the adapter wraps in `forwardRef` for React 18
+compatibility.
+
+```ts
+import { createPolymorphicComponent } from '@polymorphic-ui/react/legacy'
 ```
 
 ---
@@ -233,17 +253,6 @@ const Box = createPolymorphicComponent({
 
 // grid mode — flex-col, grow, shrink-* stripped automatically
 <Box grid className="grid-cols-3 gap-4 flex-col">…</Box>
-```
-
----
-
-## React 18
-
-Import from the `/legacy` sub-path. API is identical; the adapter wraps in `forwardRef` for React 18
-compatibility.
-
-```ts
-import { createPolymorphicComponent } from '@polymorphic-ui/react/legacy'
 ```
 
 ---
