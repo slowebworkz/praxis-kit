@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createElement, act } from 'react'
 import type { ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -67,38 +67,41 @@ describe('ButtonGroup — rendering', () => {
 // ─── childRules enforcement ───────────────────────────────────────────────────
 
 describe('ButtonGroup — childRules enforcement', () => {
-  it('throws when no Button children are provided', () => {
-    expect(() => mount(createElement(grp(ButtonGroup), null))).toThrow(
-      'ButtonGroup: "Button" requires at least 1.',
+  it('warns when no Button children are provided', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    mount(createElement(grp(ButtonGroup), null))
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"Button" requires at least 1'))
+    warnSpy.mockRestore()
+  })
+
+  it('warns when a non-Button child is mixed in', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    mount(
+      createElement(
+        grp(ButtonGroup),
+        null,
+        createElement(btn(Button), { key: 'a' }),
+        createElement('span', { key: 'x' }),
+      ),
     )
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('unexpected child'))
+    warnSpy.mockRestore()
   })
 
-  it('throws when a non-Button child is mixed in', () => {
-    expect(() =>
-      mount(
-        createElement(
-          grp(ButtonGroup),
-          null,
-          createElement(btn(Button), { key: 'a' }),
-          createElement('span', { key: 'x' }),
-        ),
+  it('warns when more than 4 Button children are provided', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    mount(
+      createElement(
+        grp(ButtonGroup),
+        null,
+        createElement(btn(Button), { key: 'a' }),
+        createElement(btn(Button), { key: 'b' }),
+        createElement(btn(Button), { key: 'c' }),
+        createElement(btn(Button), { key: 'd' }),
+        createElement(btn(Button), { key: 'e' }),
       ),
-    ).toThrow('unexpected child')
-  })
-
-  it('throws when more than 4 Button children are provided', () => {
-    expect(() =>
-      mount(
-        createElement(
-          grp(ButtonGroup),
-          null,
-          createElement(btn(Button), { key: 'a' }),
-          createElement(btn(Button), { key: 'b' }),
-          createElement(btn(Button), { key: 'c' }),
-          createElement(btn(Button), { key: 'd' }),
-          createElement(btn(Button), { key: 'e' }),
-        ),
-      ),
-    ).toThrow('ButtonGroup: "Button" allows at most 4.')
+    )
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"Button" allows at most 4'))
+    warnSpy.mockRestore()
   })
 })
