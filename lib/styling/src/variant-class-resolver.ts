@@ -1,23 +1,19 @@
-type CvaFn = (props: Record<string, unknown>) => string
+import type { AnyRecord } from './types'
+
+type CvaFn = (props: AnyRecord) => string
 
 export class VariantClassResolver {
   readonly #cvaFn: CvaFn | null
-  readonly #presetMap: Readonly<Record<string, Record<string, unknown>>>
+  readonly #presetMap: Readonly<Record<string, AnyRecord>>
   readonly #cache = new Map<string, string>()
   readonly #cacheOrder = new Set<string>()
 
-  constructor(cvaFn: CvaFn | null, presetMap?: Record<string, Record<string, unknown>>) {
+  constructor(cvaFn: CvaFn | null, presetMap?: Record<string, AnyRecord>) {
     this.#cvaFn = cvaFn ?? null
     this.#presetMap = Object.freeze(presetMap ?? {})
   }
 
-  resolve({
-    props,
-    variantKey,
-  }: {
-    props: Record<string, unknown>
-    variantKey: string | undefined
-  }): string {
+  resolve({ props, variantKey }: { props: AnyRecord; variantKey: string | undefined }): string {
     // '__none__' distinguishes "no variantKey" from an empty-string key in the cache.
     const normalizedKey = variantKey ?? '__none__'
     const cacheKey = this.#createCacheKey(props, normalizedKey)
@@ -46,7 +42,7 @@ export class VariantClassResolver {
     return result
   }
 
-  #compute(props: Record<string, unknown>, variantKey?: string): string {
+  #compute(props: AnyRecord, variantKey?: string): string {
     const preset = variantKey ? (this.#presetMap[variantKey] ?? {}) : {}
 
     if (!this.#cvaFn) return ''
@@ -55,7 +51,7 @@ export class VariantClassResolver {
     return variantLayer
   }
 
-  #createCacheKey(props: Record<string, unknown>, variantKey: string): string {
+  #createCacheKey(props: AnyRecord, variantKey: string): string {
     const entries = Object.entries(props).toSorted(([a], [b]) => a.localeCompare(b))
     const body = entries
       .map(([k, v]) => `${k}:${VariantClassResolver.#serializeValue(v)}`)

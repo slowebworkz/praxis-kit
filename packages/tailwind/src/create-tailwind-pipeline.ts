@@ -1,5 +1,6 @@
 import { cn, createClassPipeline } from '@polymorphic-ui/core'
 import type {
+  AnyRecord,
   ClassPipelineOptions,
   ClassPlugin,
   OwnedPropKeys,
@@ -29,7 +30,7 @@ export type LayoutProps =
   | { grid: true; flex?: never }
   | { flex?: never; grid?: never }
 
-function resolveLayout(props: Record<string, unknown>): 'flex' | 'grid' | undefined {
+function resolveLayout(props: AnyRecord): 'flex' | 'grid' | undefined {
   if (props.flex && props.grid) {
     console.warn(
       '[createTailwindPipeline] Cannot use both "flex" and "grid" simultaneously; "flex" takes precedence.',

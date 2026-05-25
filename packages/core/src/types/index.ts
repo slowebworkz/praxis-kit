@@ -51,6 +51,7 @@ export type {
   ClassName,
   DefaultProps,
   ElementType,
+  EmptyRecord,
   IntrinsicProps,
   IntrinsicTag,
   KnownAriaRole,

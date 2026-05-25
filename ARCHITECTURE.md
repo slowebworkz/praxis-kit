@@ -710,3 +710,133 @@ The two versions differ in how they flatten children:
   fails the single-element validation rather than being silently flattened.
 - **`legacy/`** — `Children.toArray` (React 18 API). Traverses Fragment boundaries, matching React
   18 expectations.
+
+---
+
+## Debugging
+
+### Why a class wasn't applied
+
+The class pipeline is additive — it never removes classes. If an expected class is absent, the cause
+is one of three things:
+
+**Compound variant didn't fire.** Every key in a compound's conditions must match the effective
+variant props (defaults → preset → caller). Use `diagnoseClassPipeline` to trace each compound:
+
+```ts
+import { diagnoseClassPipeline } from '@polymorphic-ui/core/styling'
+
+const trace = diagnoseClassPipeline(
+  options, // same ClassPipelineOptions passed to createPolymorphicComponent
+  'button', // rendered tag
+  { size: 'sm' }, // variant props after filterProps
+)
+
+trace.compounds
+// [
+//   {
+//     conditions: { size: 'sm', intent: 'primary' },
+//     class: 'btn--sm-primary',
+//     fired: false,
+//     mismatches: [{ key: 'intent', expected: 'primary', got: undefined }]
+//   }
+// ]
+
+trace.effectiveVariants
+// { size: 'sm' }  — what CVA sees: defaults merged with preset merged with caller props
+```
+
+**Tag-map class was bypassed.** `styling.tags` entries are skipped when a preset (`variantKey`) is
+active, because the preset owns the visual treatment. `tagMapBypassed: true` in the trace confirms
+this, and `tagMapClass` shows what would have been added:
+
+```ts
+trace.tagMapBypassed // true
+trace.tagMapClass // 'btn--link' — the class that was skipped
+```
+
+**Preset key not found.** If `variantKey` doesn't match any key in `styling.presets`, the preset
+silently resolves to empty. The trace reports `presetValues: null`:
+
+```ts
+trace.presetKey // 'ghost'
+trace.presetValues // null — key not found in presetMap
+```
+
+---
+
+### Why a role was stripped
+
+The ARIA engine already explains every decision through `ValidationResult.violations`. Set
+`enforcement.strict: 'warn'` to surface the messages as `console.warn` during development:
+
+```ts
+createPolymorphicComponent({
+  tag: 'nav',
+  enforcement: { strict: 'warn', aria: [...] },
+})
+```
+
+Or call the engine directly to inspect violations without enforcement side-effects:
+
+```ts
+import { AriaPolicyEngine } from '@polymorphic-ui/core/contract'
+
+const result = AriaPolicyEngine.evaluate('nav', { role: 'navigation' })
+result.violations
+// [
+//   {
+//     message: '<nav> already has implicit role="navigation". Avoid redundant role assignment.',
+//     tag: 'nav',
+//     role: 'navigation',
+//     attribute: undefined,
+//     severity: 'warning',
+//     phase: 'evaluate',
+//   }
+// ]
+```
+
+Every violation includes `severity` (`'warning'` | `'error'`), `phase`, the affected `tag`, `role`,
+and optionally `attribute` (for invalid `aria-*` removals). Violations with `fixable: true` have a
+corresponding fix already applied to `result.props`.
+
+Common messages:
+
+| Situation                       | Message pattern                                                                  |
+| ------------------------------- | -------------------------------------------------------------------------------- |
+| Redundant explicit role         | `<nav> already has implicit role="navigation". Avoid redundant role assignment.` |
+| Strong implicit role overridden | `<button> should not override its implicit role="button" with role="region".`    |
+| Invalid `aria-*` for role       | `"aria-checked" is not valid on role="navigation". It will be removed.`          |
+| Empty `role=""`                 | `<nav> has an explicit empty role="". Omit the attribute instead.`               |
+
+---
+
+### Why a child rule failed
+
+The children evaluator routes all violations through `StrictBase`, which controls whether they throw
+or warn. Set `enforcement.strict: 'warn'` to see messages without aborting a render:
+
+```ts
+createPolymorphicComponent({
+  tag: 'ul',
+  enforcement: {
+    strict: 'warn',
+    children: [{ name: 'Item', match: (c) => isValidElement(c) && c.type === 'li' }],
+  },
+})
+```
+
+Message patterns:
+
+| Violation              | Message                                                                 |
+| ---------------------- | ----------------------------------------------------------------------- |
+| Below minimum          | `ButtonGroup: "Icon" requires at least 1.`                              |
+| Above maximum          | `ButtonGroup: "Icon" allows at most 3.`                                 |
+| Position wrong         | `ButtonGroup: "Icon" must be first, got index 2`                        |
+| No rule matched        | `ButtonGroup: unexpected child [string] at index 0`                     |
+| Matched multiple rules | `ButtonGroup: [element] at index 0 matches multiple rules: Icon, Label` |
+
+The component name comes from the `name` option passed to `createPolymorphicComponent`. Rule names
+come from each `ChildRuleInput.name` field. The `[string]` / `[element]` / `[null]` notation in
+unexpected-child and multi-match messages comes from `getTypeName`, which classifies the child's
+runtime type for readability.

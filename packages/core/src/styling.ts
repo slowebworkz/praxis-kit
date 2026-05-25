@@ -1,7 +1,8 @@
 // Styling runtime layer — variant composition, class pipeline, plugin API.
 // Includes everything from the primitive entry.
 export * from './primitive'
-export { createClassPipeline } from '@polymorphic-ui/styling'
+export { createClassPipeline, diagnoseClassPipeline } from '@polymorphic-ui/styling'
+export type { ClassDiagnosis, CompoundTrace } from '@polymorphic-ui/styling'
 export type {
   ClassPipelineFn,
   ClassPipelineOptions,

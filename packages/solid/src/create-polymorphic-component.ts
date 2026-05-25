@@ -1,6 +1,7 @@
 import type {
   AnyRecord,
   ElementType,
+  EmptyRecord,
   PolymorphicGenerics,
   PresetMap,
   VariantMap,
@@ -15,12 +16,12 @@ export function createPolymorphicComponent<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
-  TPreset extends PresetMap<Variants> = Readonly<Record<never, never>>,
-  TPluginProps extends AnyRecord = Record<never, never>,
+  TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
+  TPluginProps extends AnyRecord = EmptyRecord,
 >(options: SolidFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps>) {
   const bundle = buildRuntime(options as SolidFactoryOptions<TDefault, Props, Variants, TPreset>)
 
-  const Component = (props: Record<string, unknown>): SolidElement => {
+  const Component = (props: UnknownProps): SolidElement => {
     return render({
       ...bundle,
       props: props as KnownProps,

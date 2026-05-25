@@ -1,8 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "../..",
     "paths": {
       "@polymorphic-ui/core": ["../../packages/core/src/index.ts"],
       "@polymorphic-ui/core/primitive": [

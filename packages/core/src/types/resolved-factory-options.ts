@@ -1,7 +1,7 @@
 import type { CompoundVariant } from './compound-variants'
 import type { ChildRuleInput } from './child-rule'
 import type { AriaRule } from './aria-rule'
-import type { AnyRecord, ClassName, ElementType, TagMap } from './primitives'
+import type { AnyRecord, ClassName, ElementType, EmptyRecord, TagMap } from './primitives'
 import type { StrictMode } from './strict-mode'
 import type { PresetMap, VariantMap, VariantProps } from './variant'
 
@@ -19,9 +19,9 @@ import type { PresetMap, VariantMap, VariantProps } from './variant'
  */
 export type ResolvedFactoryOptions<
   TDefault extends ElementType = ElementType,
-  Props extends AnyRecord = Record<never, never>,
-  V extends Readonly<VariantMap> = Readonly<Record<never, never>>,
-  TPreset extends PresetMap<V> = Readonly<Record<never, never>>,
+  Props extends AnyRecord = EmptyRecord,
+  V extends Readonly<VariantMap> = Readonly<EmptyRecord>,
+  TPreset extends PresetMap<V> = Readonly<EmptyRecord>,
 > = {
   /** Resolved element type. `null` / `undefined` stripped; falls back to `string`. */
   readonly defaultTag: TDefault

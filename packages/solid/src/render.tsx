@@ -52,10 +52,10 @@ function resolveDomProps(
   tag: ElementType,
   elementProps: IntrinsicProps,
   runtime: Runtime,
-): Record<string, unknown> {
+): UnknownProps {
   return typeof tag === 'string'
-    ? (runtime.resolveAria(tag, elementProps).props as Record<string, unknown>)
-    : (elementProps as Record<string, unknown>)
+    ? (runtime.resolveAria(tag, elementProps).props as UnknownProps)
+    : (elementProps as UnknownProps)
 }
 
 export function render<TProps extends KnownProps>({

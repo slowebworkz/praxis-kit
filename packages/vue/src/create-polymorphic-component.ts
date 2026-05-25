@@ -2,6 +2,7 @@ import { defineComponent } from 'vue'
 import type {
   AnyRecord,
   ElementType,
+  EmptyRecord,
   PolymorphicGenerics,
   PresetMap,
   VariantMap,
@@ -16,8 +17,8 @@ export function createPolymorphicComponent<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
-  TPreset extends PresetMap<Variants> = Readonly<Record<never, never>>,
-  TPluginProps extends AnyRecord = Record<never, never>,
+  TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
+  TPluginProps extends AnyRecord = EmptyRecord,
 >(options: VueFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps>) {
   const bundle = buildRuntime(options as VueFactoryOptions<TDefault, Props, Variants, TPreset>)
 

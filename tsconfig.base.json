@@ -7,11 +7,11 @@
     "strict": true,
     "exactOptionalPropertyTypes": true,
     "noUncheckedIndexedAccess": true,
-    "declaration": true,
-    "declarationMap": true,
     "sourceMap": true,
     "isolatedModules": true,
     "skipLibCheck": true,
+    "noEmit": true,
+    "rootDir": ".",
     "paths": {
       "@polymorphic-ui/core": ["./packages/core/src"],
       "@polymorphic-ui/core/primitive": ["./packages/core/src/primitive.ts"],

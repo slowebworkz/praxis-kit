@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "description": "Contract runtime: ARIA engine, children validator, strict mode",
   "scripts": {
     "typecheck": "tsc --noEmit",

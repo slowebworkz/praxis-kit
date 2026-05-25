@@ -1,6 +1,7 @@
 import type {
   AnyRecord,
   ElementType,
+  EmptyRecord,
   PolymorphicGenerics,
   PresetMap,
   VariantMap,
@@ -16,8 +17,8 @@ export function createPolymorphicComponent<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
-  TPreset extends PresetMap<Variants> = Readonly<Record<never, never>>,
-  TPluginProps extends AnyRecord = Record<never, never>,
+  TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
+  TPluginProps extends AnyRecord = EmptyRecord,
 >(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps>) {
   const bundle = buildRuntime(
     options as ReactFactoryOptions<TDefault, Props, Variants, TPreset>,
@@ -25,7 +26,7 @@ export function createPolymorphicComponent<
     normalizeChildren,
   )
 
-  const Component = forwardRef<unknown, Record<string, unknown>>(
+  const Component = forwardRef<unknown, UnknownProps>(
     function PolymorphicComponent(props, ref): ReactElement {
       return render({ ...bundle, props: props as KnownProps, ref })
     },

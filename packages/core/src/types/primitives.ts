@@ -5,6 +5,8 @@
  */
 export type AnyRecord = Record<string, unknown>
 
+export type EmptyRecord = Record<never, never>
+
 /** A CSS class string. Aliased so renaming or narrowing is a one-line change. */
 export type ClassName = string
 

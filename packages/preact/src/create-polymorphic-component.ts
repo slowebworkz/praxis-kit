@@ -1,6 +1,7 @@
 import type {
   AnyRecord,
   ElementType,
+  EmptyRecord,
   PolymorphicGenerics,
   PresetMap,
   VariantMap,
@@ -18,14 +19,14 @@ export function createPolymorphicComponent<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
-  TPreset extends PresetMap<Variants> = Readonly<Record<never, never>>,
-  TPluginProps extends AnyRecord = Record<never, never>,
+  TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
+  TPluginProps extends AnyRecord = EmptyRecord,
 >(options: PreactFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps>) {
   const bundle = buildRuntime(options as PreactFactoryOptions<TDefault, Props, Variants, TPreset>)
 
   // forwardRef from preact/compat is required for refs to reach the underlying DOM element.
   const Component = forwardRef(function Component(
-    props: Record<string, unknown>,
+    props: UnknownProps,
     ref: ForwardedRef<unknown>,
   ): AnyVNode {
     return render({

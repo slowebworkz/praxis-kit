@@ -13,7 +13,14 @@ export type {
   CVADefaults,
   CVAVariants,
 } from './compound-variants'
-export type { AnyRecord, ClassName, NonEmptyArray, TagMap } from './primitives'
+export type {
+  AnyRecord,
+  ClassName,
+  EmptyRecord,
+  NonEmptyArray,
+  TagMap,
+  VariantConditionValue,
+} from './primitives'
 export type {
   DefaultVariants,
   PresetMap,

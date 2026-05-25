@@ -1,0 +1,92 @@
+import type { AnyRecord, ClassPipelineOptions, VariantConditionValue, VariantMap } from './types'
+import { cva } from './cva'
+import { cn } from './utils'
+
+export type CompoundTrace = {
+  conditions: Record<string, VariantConditionValue>
+  class: string | string[]
+  fired: boolean
+  mismatches: Array<{ key: string; expected: VariantConditionValue; got: unknown }>
+}
+
+export type ClassDiagnosis = {
+  base: string
+  tagMapClass: string | null
+  tagMapBypassed: boolean
+  presetKey: string | undefined
+  presetValues: AnyRecord | null
+  effectiveVariants: AnyRecord
+  compounds: CompoundTrace[]
+  callerClass: string | undefined
+  final: string
+}
+
+function conditionMatches(got: unknown, expected: unknown): boolean {
+  if (Array.isArray(expected)) return expected.some((e) => e === got)
+  return got === expected
+}
+
+export function diagnoseClassPipeline<TVariants extends VariantMap>(
+  options: ClassPipelineOptions<TVariants>,
+  tag: unknown,
+  props: AnyRecord,
+  className?: string,
+  variantKey?: string,
+): ClassDiagnosis {
+  const base = options.baseClassName ?? ''
+
+  const tagMapBypassed = variantKey !== undefined
+  const tagMapClass =
+    typeof tag === 'string' && options.tagMap ? (options.tagMap[tag] ?? null) : null
+
+  const presetMap = (options.presetMap as Record<string, AnyRecord> | undefined) ?? {}
+  const presetValues: AnyRecord | null =
+    variantKey !== undefined ? (presetMap[variantKey] ?? null) : null
+
+  const defaults = (options.defaultVariants as AnyRecord | undefined) ?? {}
+  const preset = presetValues ?? {}
+  const effectiveVariants: AnyRecord = { ...defaults, ...preset, ...props }
+
+  const rawCompounds = (options.compoundVariants as ReadonlyArray<AnyRecord>) ?? []
+  const compounds: CompoundTrace[] = rawCompounds.map((compound) => {
+    const { class: cls, ...conditions } = compound
+    const typedConditions = conditions as Record<string, VariantConditionValue>
+    const mismatches: CompoundTrace['mismatches'] = []
+
+    for (const [key, expected] of Object.entries(typedConditions)) {
+      const got = effectiveVariants[key]
+      if (!conditionMatches(got, expected)) mismatches.push({ key, expected, got })
+    }
+
+    return {
+      conditions: typedConditions,
+      class: cls as string | string[],
+      fired: mismatches.length === 0,
+      mismatches,
+    }
+  })
+
+  const cvaFn = options.variants
+    ? cva('', {
+        variants: options.variants as never,
+        defaultVariants: options.defaultVariants as never,
+        compoundVariants: options.compoundVariants as never,
+      })
+    : null
+
+  const variantClasses = cvaFn ? cvaFn({ ...preset, ...props }) : ''
+  const staticPart = tagMapBypassed ? base : cn(base, tagMapClass)
+  const final = cn(staticPart, variantClasses, className)
+
+  return {
+    base,
+    tagMapClass,
+    tagMapBypassed,
+    presetKey: variantKey,
+    presetValues,
+    effectiveVariants,
+    compounds,
+    callerClass: className,
+    final,
+  }
+}

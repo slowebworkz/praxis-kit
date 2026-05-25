@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "description": "Render primitive: tag resolution, prop merge, slot protocol",
   "scripts": {
     "typecheck": "tsc --noEmit",

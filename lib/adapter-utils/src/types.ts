@@ -1,4 +1,4 @@
-import type { ChildrenEvaluator } from '@polymorphic-ui/core'
+import type { ChildrenEvaluator, EmptyRecord } from '@polymorphic-ui/core'
 
 export type FilterPredicate = (key: string, variantKeys: ReadonlySet<string>) => boolean
 
@@ -11,4 +11,4 @@ export type BuiltChildrenEvaluator<TOptions extends WithChildRules> = TOptions e
   enforcement: { children: readonly unknown[] }
 }
   ? { childrenEvaluator: ChildrenEvaluator }
-  : Record<never, never>
+  : EmptyRecord

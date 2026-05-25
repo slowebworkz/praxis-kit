@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "description": "Styling runtime: variant resolver, class pipeline, plugin API",
   "scripts": {
     "typecheck": "tsc --noEmit",

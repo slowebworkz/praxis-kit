@@ -1,1 +1,8 @@
-export type { AnyRecord, ClassName, DefaultProps, ElementType, IntrinsicTag } from './primitives'
+export type {
+  AnyRecord,
+  ClassName,
+  DefaultProps,
+  ElementType,
+  EmptyRecord,
+  IntrinsicTag,
+} from './primitives'
