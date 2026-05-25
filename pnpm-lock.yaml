@@ -162,6 +162,9 @@ importers:
         specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
+      tsup:
+        specifier: 'catalog:'
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(typescript@5.9.3)
       vitest:
         specifier: 'catalog:'
         version: 4.1.6(@vitest/ui@4.1.6)(jsdom@26.1.0)(vite@8.0.13(esbuild@0.28.0)(jiti@2.7.0))
@@ -343,6 +346,9 @@ importers:
 
   packages/preact:
     dependencies:
+      '@polymorphic-ui/adapter-utils':
+        specifier: workspace:*
+        version: link:../../lib/adapter-utils
       '@polymorphic-ui/core':
         specifier: workspace:*
         version: link:../core
@@ -371,6 +377,9 @@ importers:
 
   packages/react:
     dependencies:
+      '@polymorphic-ui/adapter-utils':
+        specifier: workspace:*
+        version: link:../../lib/adapter-utils
       '@polymorphic-ui/core':
         specifier: workspace:*
         version: link:../core
@@ -405,6 +414,9 @@ importers:
 
   packages/solid:
     dependencies:
+      '@polymorphic-ui/adapter-utils':
+        specifier: workspace:*
+        version: link:../../lib/adapter-utils
       '@polymorphic-ui/core':
         specifier: workspace:*
         version: link:../core
@@ -436,6 +448,9 @@ importers:
 
   packages/svelte:
     dependencies:
+      '@polymorphic-ui/adapter-utils':
+        specifier: workspace:*
+        version: link:../../lib/adapter-utils
       '@polymorphic-ui/core':
         specifier: workspace:*
         version: link:../core
@@ -480,6 +495,9 @@ importers:
 
   packages/vue:
     dependencies:
+      '@polymorphic-ui/adapter-utils':
+        specifier: workspace:*
+        version: link:../../lib/adapter-utils
       '@polymorphic-ui/core':
         specifier: workspace:*
         version: link:../core

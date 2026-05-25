@@ -28,6 +28,7 @@
   },
   "sideEffects": false,
   "dependencies": {
+    "@polymorphic-ui/adapter-utils": "workspace:*",
     "@polymorphic-ui/core": "workspace:*",
     "clsx": "catalog:",
     "type-fest": "catalog:"
