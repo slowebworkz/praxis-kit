@@ -251,19 +251,21 @@ describe('Tier 3 — ARIA enforcement', () => {
 
 describe('Tier 4 — children enforcement', () => {
   const child = (key: string) => createElement('span', { key })
-  const Guarded = createPolymorphicComponent({
-    tag: 'div',
-    styling: { base: 'group' },
-    enforcement: {
-      children: [
-        {
-          name: 'Span',
-          match: (c: unknown): c is ReactElement => isValidElement(c) && c.type === 'span',
-          cardinality: { min: 1, max: 3 },
-        },
-      ],
-    },
-  })
+  const Guarded =
+    // eslint-disable-next-line @polymorphic-ui/no-enforcement-without-strict -- intentionally tests the adapter default (React defaults to 'throw')
+    createPolymorphicComponent({
+      tag: 'div',
+      styling: { base: 'group' },
+      enforcement: {
+        children: [
+          {
+            name: 'Span',
+            match: (c: unknown): c is ReactElement => isValidElement(c) && c.type === 'span',
+            cardinality: { min: 1, max: 3 },
+          },
+        ],
+      },
+    })
 
   it('renders without error when child count is within bounds', () => {
     expect(() => mount(createElement(box(Guarded), null, child('a'), child('b')))).not.toThrow()
@@ -304,25 +306,27 @@ describe('Tier 4 — children enforcement', () => {
 // ─── Tier 5 — Combined (styling + ARIA enforcement + children enforcement) ────
 
 describe('Tier 5 — all capabilities combined', () => {
-  const Full = createPolymorphicComponent({
-    tag: 'nav',
-    name: 'FullNav',
-    styling: {
-      base: 'full-nav',
-      variants: { size: { sm: 'full-nav--sm', lg: 'full-nav--lg' } },
-      defaults: { size: 'sm' },
-    },
-    filterProps: (key, variantKeys) => variantKeys.has(key),
-    enforcement: {
-      children: [
-        {
-          name: 'Anchor',
-          match: (c: unknown): c is ReactElement => isValidElement(c) && c.type === 'a',
-          cardinality: { min: 1, max: 5 },
-        },
-      ],
-    },
-  })
+  const Full =
+    // eslint-disable-next-line @polymorphic-ui/no-enforcement-without-strict -- intentionally tests the adapter default (React defaults to 'throw')
+    createPolymorphicComponent({
+      tag: 'nav',
+      name: 'FullNav',
+      styling: {
+        base: 'full-nav',
+        variants: { size: { sm: 'full-nav--sm', lg: 'full-nav--lg' } },
+        defaults: { size: 'sm' },
+      },
+      filterProps: (key, variantKeys) => variantKeys.has(key),
+      enforcement: {
+        children: [
+          {
+            name: 'Anchor',
+            match: (c: unknown): c is ReactElement => isValidElement(c) && c.type === 'a',
+            cardinality: { min: 1, max: 5 },
+          },
+        ],
+      },
+    })
 
   const link = (key: string) => createElement('a', { key, href: '#' })
 
