@@ -6,6 +6,7 @@
   "description": "Benchmark suites for all capability layers",
   "scripts": {
     "bench": "vitest bench --config vitest.bench.config.ts",
+    "bench:render": "vitest bench --config vitest.render.bench.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -13,9 +14,12 @@
   },
   "devDependencies": {
     "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
+    "jsdom": "catalog:",
     "react": "catalog:",
+    "react-dom": "catalog:",
     "vitest": "catalog:"
   }
 }
