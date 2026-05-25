@@ -1,0 +1,44 @@
+[
+  {
+    "name": "react — minimal (no enforcement, no variants)",
+    "path": "src/react-minimal.ts",
+    "import": "{ Box }",
+    "limit": "7 kB",
+    "ignore": ["react", "react/jsx-runtime", "react-dom"]
+  },
+  {
+    "name": "react — enforcement overhead",
+    "path": "src/react-enforcement.ts",
+    "import": "{ ButtonGroup }",
+    "limit": "7 kB",
+    "ignore": ["react", "react/jsx-runtime", "react-dom"]
+  },
+  {
+    "name": "react — variants + class pipeline",
+    "path": "src/react-variants.ts",
+    "import": "{ Button }",
+    "limit": "7.5 kB",
+    "ignore": ["react", "react/jsx-runtime", "react-dom"]
+  },
+  {
+    "name": "react — tailwind pipeline",
+    "path": "src/react-tailwind.ts",
+    "import": "{ Box }",
+    "limit": "8 kB",
+    "ignore": ["react", "react/jsx-runtime", "react-dom"]
+  },
+  {
+    "name": "vue — minimal",
+    "path": "src/vue-minimal.ts",
+    "import": "{ Box }",
+    "limit": "6.5 kB",
+    "ignore": ["vue", "@vue/server-renderer"]
+  },
+  {
+    "name": "solid — minimal",
+    "path": "src/solid-minimal.ts",
+    "import": "{ Box }",
+    "limit": "6 kB",
+    "ignore": ["solid-js", "solid-js/web", "solid-js/store"]
+  }
+]

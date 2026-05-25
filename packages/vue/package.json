@@ -19,7 +19,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:related": "vitest run --changed",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build",
+    "lint:pkg": "publint"
   },
   "sideEffects": false,
   "dependencies": {
