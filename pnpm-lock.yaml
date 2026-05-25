@@ -167,7 +167,7 @@ importers:
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(typescript@5.9.3)
       vitest:
         specifier: 'catalog:'
-        version: 4.1.6(@vitest/ui@4.1.6)(jsdom@26.1.0)(vite@8.0.13(esbuild@0.28.0)(jiti@2.7.0))
+        version: 4.1.6(@vitest/ui@4.1.6)(jsdom@26.1.0)(vite@8.0.13(esbuild@0.27.7)(jiti@2.7.0))
 
   lib/bench:
     dependencies:
@@ -178,15 +178,24 @@ importers:
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.14
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.3(@types/react@19.2.14)
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
+      jsdom:
+        specifier: 'catalog:'
+        version: 26.1.0
       react:
         specifier: 'catalog:'
         version: 19.2.6
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.6(react@19.2.6)
       vitest:
         specifier: 'catalog:'
         version: 4.1.6(@vitest/ui@4.1.6)(jsdom@26.1.0)(vite@8.0.13(esbuild@0.28.0)(jiti@2.7.0))
@@ -302,7 +311,7 @@ importers:
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(typescript@5.9.3)
       vitest:
         specifier: 'catalog:'
-        version: 4.1.6(@vitest/ui@4.1.6)(jsdom@26.1.0)(vite@8.0.13(esbuild@0.27.7)(jiti@2.7.0))
+        version: 4.1.6(@vitest/ui@4.1.6)(jsdom@26.1.0)(vite@8.0.13(esbuild@0.28.0)(jiti@2.7.0))
 
   packages/docs:
     dependencies:
