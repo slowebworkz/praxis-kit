@@ -132,14 +132,16 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
   })
 
   it('enforcement.children throws when child rules are violated', () => {
-    const Comp = createPolymorphicComponent({
-      tag: 'div',
-      enforcement: {
-        children: [
-          { name: 'Button', match: (c): c is Element => (c as Element)?.tagName === 'BUTTON' },
-        ],
-      },
-    })
+    const Comp =
+      // eslint-disable-next-line @polymorphic-ui/no-enforcement-without-strict -- intentionally tests the adapter default (Solid defaults to 'throw')
+      createPolymorphicComponent({
+        tag: 'div',
+        enforcement: {
+          children: [
+            { name: 'Button', match: (c): c is Element => (c as Element)?.tagName === 'BUTTON' },
+          ],
+        },
+      })
     expect(() =>
       solidRender(() => (
         <Comp>

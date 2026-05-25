@@ -8,6 +8,7 @@ export const ButtonGroup = createPolymorphicComponent({
   name: 'ButtonGroup',
   styling: { base: 'inline-flex items-center gap-2' },
   enforcement: {
+    strict: 'warn',
     children: [
       {
         name: 'Button',
