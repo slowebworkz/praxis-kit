@@ -9,7 +9,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:related": "vitest run --related"
+    "test:related": "vitest run --changed"
   },
   "dependencies": {
     "@polymorphic-ui/core": "workspace:*"
