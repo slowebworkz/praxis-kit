@@ -91,3 +91,33 @@ export function getPropertyKey(prop: Property): string | undefined {
   if (key.type === 'Literal' && typeof key.value === 'string') return key.value
   return undefined
 }
+
+// Builds { variantKey → Set<allowedValue> } from a styling.variants ObjectExpression.
+// Returns undefined when the node isn't a static object literal and can't be analyzed.
+export function extractVariantMap(
+  variantsNode: NullableNode,
+): Map<string, Set<string>> | undefined {
+  const variantsObj = asObjectExpression(variantsNode)
+  if (!variantsObj) return undefined
+
+  const map = new Map<string, Set<string>>()
+
+  for (const prop of variantsObj.properties) {
+    if (prop.type !== 'Property') continue
+    const key = getPropertyKey(prop as Property)
+    if (!key) continue
+
+    const valuesObj = asObjectExpression(prop.value)
+    if (!valuesObj) continue
+
+    const values = new Set<string>()
+    for (const vProp of valuesObj.properties) {
+      if (vProp.type !== 'Property') continue
+      const vKey = getPropertyKey(vProp as Property)
+      if (vKey !== undefined) values.add(vKey)
+    }
+    map.set(key, values)
+  }
+
+  return map
+}
