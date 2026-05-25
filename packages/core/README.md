@@ -1,12 +1,11 @@
 # @polymorphic-ui/core
 
-Framework-agnostic runtime for polymorphic UI components. Handles tag resolution, prop merging,
-variant class generation, children structure validation, and ARIA policy enforcement. Framework
-adapters (e.g. `@polymorphic-ui/react`) consume the `PolymorphicRuntime` this package produces.
+This is where the enforcement lives. Tag resolution, prop merging, variant class generation,
+children structure validation, ARIA policy enforcement — all of it framework-neutral, no React or
+DOM dependency.
 
-The package is designed as runtime infrastructure rather than a framework-specific component
-library. The core runtime is responsible for semantic resolution, policy enforcement, validation,
-and class orchestration. Framework adapters are responsible only for rendering concerns.
+Framework adapters like `@polymorphic-ui/react` add a rendering layer on top. This package doesn't
+touch rendering.
 
 ---
 
@@ -27,7 +26,7 @@ and class orchestration. Framework adapters are responsible only for rendering c
 
 ## Core invariants
 
-The runtime relies on several architectural invariants:
+These hold across every render, regardless of which adapter is calling in:
 
 - Runtime options are immutable after normalization.
 - Caller props always override preset props.
@@ -37,9 +36,6 @@ The runtime relies on several architectural invariants:
 - Runtime behavior is deterministic after option normalization.
 - Framework adapters never mutate runtime configuration.
 - Validation systems report complete violation batches whenever possible.
-
-These invariants exist to ensure deterministic rendering, stable diagnostics, and predictable
-cross-framework behavior.
 
 ---
 
@@ -74,8 +70,8 @@ FactoryOptions
   → render
 ```
 
-The runtime itself is framework-agnostic. Adapters consume the runtime and integrate it into a
-specific rendering environment.
+Adapters plug the runtime into a specific rendering environment. The runtime has no opinion on which
+one.
 
 ---
 
@@ -94,25 +90,18 @@ src/
   types/         all shared TypeScript types
 ```
 
-The package is intentionally decomposed into isolated runtime subsystems:
-
-- **Normalization** — resolves defaults and freezes configuration.
-- **Resolution** — derives tags, props, and classes.
-- **Validation** — enforces structural and semantic correctness.
-- **Policy** — evaluates ARIA semantics and applies optional fixes.
-- **Adapters** — bridge runtime behavior into framework rendering environments.
+Each subsystem is isolated. `factory/` knows about all of them; nothing else does. You can read
+`children/` without touching `validator/`.
 
 ---
 
 ## The factory and runtime
 
 `createPolymorphic` calls `resolveFactoryOptions` to produce a frozen `ResolvedFactoryOptions`
-object (defaults filled in, optional fields conditionally spread to satisfy
-`exactOptionalPropertyTypes`). It then calls `createClassPipeline` with those resolved options and
-closes over the result.
+object — defaults filled in, optional fields conditionally spread to satisfy
+`exactOptionalPropertyTypes`. It then calls `createClassPipeline` and closes over the result.
 
-The frozen `ResolvedFactoryOptions` object acts as the single source of truth for all downstream
-runtime behavior.
+Nothing writes to `ResolvedFactoryOptions` after construction. Every resolver reads from it.
 
 The returned `PolymorphicRuntime` exposes:
 
@@ -128,21 +117,16 @@ The returned `PolymorphicRuntime` exposes:
 
 ## Adapter boundary
 
-Framework adapters consume `PolymorphicRuntime` and are responsible for:
+Adapters own rendering and nothing else:
 
-- Rendering framework-specific elements/components.
-- Normalizing framework children into `unknown[]`.
-- Filtering owned props before render.
-- Wiring runtime diagnostics into framework behavior.
-- Passing normalized runtime state into validators.
+- Render framework-specific elements/components.
+- Normalize framework children into `unknown[]`.
+- Filter owned props before render.
+- Wire runtime diagnostics into framework behavior.
+- Pass normalized runtime state into validators.
 
-The runtime itself remains framework-agnostic and intentionally avoids direct rendering concerns.
-
-This separation allows:
-
-- React, Vue, Svelte, or Solid adapters to share identical runtime semantics.
-- Runtime behavior to remain deterministic across frameworks.
-- Validation and policy systems to evolve independently from rendering.
+React, Vue, Svelte, and Solid get the same enforcement behavior because none of them implement it —
+they call into this package. Variant logic, ARIA rules, and child validation are written once.
 
 ---
 
@@ -204,9 +188,8 @@ const runtime = createPolymorphic({
 type ClassPluginFactory = <V extends VariantMap>(options: ClassPipelineOptions<V>) => ClassPlugin
 ```
 
-The factory is called once at `createPolymorphic` time with the resolved `ClassPipelineOptions` and
-must return a `ClassPlugin`. It is generic over `V` to remain assignable under
-`exactOptionalPropertyTypes` regardless of the variant shape the caller declares.
+Called once at `createPolymorphic` time with the resolved `ClassPipelineOptions`. Generic over `V`
+so it stays assignable under `exactOptionalPropertyTypes` regardless of the caller's variant shape.
 
 ### ClassPlugin
 
@@ -217,25 +200,13 @@ type ClassPlugin = Readonly<{
 }>
 ```
 
-`pipeline` replaces the built-in class pipeline. `ownedKeys` is an optional `ReadonlySet<string>`
-that declares which prop keys the plugin consumes. Framework adapters use this set to strip those
-keys from the DOM or framework bindings automatically — callers never see them as unknown props and
-they never reach the rendered element.
-
-### OwnedPropKeys
-
-```ts
-type OwnedPropKeys = ReadonlySet<string>
-```
-
-A semantic alias for `ReadonlySet<string>`. The name carries intent: these are keys the plugin
-_owns_, distinct from variant keys (which are also stripped but tracked separately via
-`variantKeys`). The alias exists so ownership-related prop-key handling can be identified and
-evolved independently.
+`pipeline` replaces the built-in class pipeline. `ownedKeys` declares which prop keys the plugin
+consumes — framework adapters strip these before render so they never reach the DOM. Tracked
+separately from `variantKeys`, which the runtime owns.
 
 ### Runtime access
 
-The instantiated plugin is stored on `PolymorphicRuntime.classPlugin`. Framework adapters read
+The instantiated plugin is stored on `PolymorphicRuntime.classPlugin`. Adapters read
 `runtime.classPlugin?.ownedKeys` to build their prop-filter predicates.
 
 ---
@@ -243,8 +214,8 @@ The instantiated plugin is stored on `PolymorphicRuntime.classPlugin`. Framework
 ## The children validation pipeline
 
 `ChildrenEvaluator` orchestrates four collaborators. Call `evaluate(children)` with a pre-normalised
-`unknown[]` (the React adapter handles `Children.toArray` + `isValidElement` filtering before this
-point).
+`unknown[]` — the React adapter handles `Children.toArray` + `isValidElement` filtering before this
+point.
 
 ```txt
 ChildrenEvaluator.evaluate(children)
@@ -253,24 +224,38 @@ ChildrenEvaluator.evaluate(children)
   → MatchValidator.validate(children, matrix)     → unexpected + ambiguous child checks
 ```
 
-The pipeline intentionally separates:
+Matching, cardinality, ambiguity detection, and reporting are separate steps. Each can be read and
+tested without touching the others.
 
-- matching
-- structural validation
-- ambiguity analysis
-- diagnostics reporting
-
-This decomposition allows the validation engine to evolve independently without collapsing into
-single-pass imperative traversal logic.
+```txt
+children[]
+    │
+    ▼
+RuleMatcher  (single traversal)
+    ├────────────────────────────────────┐
+    │                                    │
+    ▼                                    ▼
+forward map                         reverse map
+child → rules matched               rule → children matched
+    │                                    │
+    ▼                                    ▼
+MatchValidator                      RuleValidator
+· unexpected child?                 · cardinality (min/max)?
+· ambiguous match?                  · position (first/last)?
+    │                                    │
+    └──────────────────┬─────────────────┘
+                       ▼
+                 violations[]
+              throw / warn / silent
+```
 
 ### RuleMatcher
 
-Builds a `MatchMatrix` — a bidirectional map with two directions:
+Builds the `MatchMatrix` in a single traversal — both directions at once:
 
-- **forward** (`child → rules`): used to detect children that matched no rule (unexpected) or
-  matched more than one (ambiguous).
-- **reverse** (`rule → children`): used to count how many children satisfied each rule for
-  cardinality enforcement.
+- **forward** (`child → rules`) — detects children with no match (unexpected) or too many
+  (ambiguous)
+- **reverse** (`rule → children`) — counts matches per rule for cardinality and position checks
 
 ### RuleValidator
 
@@ -287,8 +272,8 @@ Iterates children. For each child, reads the forward map:
 - `size === 1` → valid.
 - `size > 1` → ambiguous (matched multiple rules).
 
-All violations are batched into a single array before reporting so the caller sees the complete
-picture in one throw rather than discovering failures one at a time.
+All violations are batched before reporting so you see the complete picture in one throw, not one
+failure at a time.
 
 ### Cardinality
 
@@ -319,8 +304,8 @@ auto-corrects the props.
 #### Evaluate phase
 
 All rules run against the same frozen `(tag, props, implicitRole)` snapshot captured at the start of
-`evaluate()`. This means every rule sees pre-fix state, so diagnostics accurately reflect the
-original author intent rather than the result of earlier fixes.
+`evaluate()`. Every rule sees pre-fix state — diagnostics reflect the original intent, not the
+outcome of earlier rule applications.
 
 #### Fix phase
 
@@ -329,8 +314,8 @@ are deduplicated by `FixKind` before running: at most one executor per kind fire
 many rules emitted it. Fixes run sequentially on the evolving props, but only if `hasRole` is still
 true after each step.
 
-The return value includes both the full `violations` array and the `props` object (potentially with
-roles stripped). Callers receive both signals independently.
+The return value carries both the full `violations` array and the `props` object (potentially with
+roles stripped). Both signals arrive independently.
 
 ### Current rules
 
@@ -359,10 +344,8 @@ warnings surface without aborting a render.
 
 ## StrictBase
 
-All validation classes extend `StrictBase`. `StrictBase` acts as shared runtime diagnostics
-infrastructure rather than a simple utility superclass.
-
-It holds the `strict` field and exposes three protected methods:
+`StrictBase` is the base class for every validation subsystem. It holds the `strict` field and
+exposes three protected methods:
 
 | Method                 | `strict=true/'throw'`    | `strict='warn'`          | `strict=false` |
 | ---------------------- | ------------------------ | ------------------------ | -------------- |
@@ -370,11 +353,8 @@ It holds the `strict` field and exposes three protected methods:
 | `warn(msg)`            | `console.warn`           | `console.warn`           | silent         |
 | `invariant(cond, msg)` | calls `violate` if false | calls `violate` if false | silent         |
 
-The `warn`/`violate` split exists specifically for the ARIA engine: ARIA warnings should be visible
-in strict environments but must not break a render.
-
-`StrictBase` centralizes runtime error-policy behavior so all validation systems share identical
-strictness semantics.
+The `warn`/`violate` split exists for the ARIA engine: warnings surface in strict mode without
+aborting a render.
 
 ---
 
@@ -382,57 +362,87 @@ strictness semantics.
 
 ### Preset merging via CVA input, not class concatenation
 
-Preset values are `Partial<VariantProps<V>>` objects merged _into_ the CVA call as:
+Preset values are `Partial<VariantProps<V>>` objects merged into the CVA call:
 
 ```ts
 { ...preset, ...props }
 ```
 
-This lets compound variant rules fire across the preset boundary and gives callers a clean override
-mechanism (explicit props always win).
-
-An alternative approach of concatenating pre-generated class strings was rejected because it
-bypasses CVA entirely.
+Caller props win on any conflict. Compound variants can fire across the preset+caller boundary
+because CVA sees the merged object — not two separate strings concatenated afterward. Concatenation
+would bypass CVA entirely.
 
 ---
 
 ### Discriminated union cardinality over `{ min, max }` with `Infinity` sentinels
 
-`kind: 'unbounded'` encodes unboundedness in the type rather than in a magic value, enabling
-exhaustive switches and stronger invariant checks.
+`Infinity` as a sentinel would silently fall through switch statements without a case. The
+discriminated union makes unbounded rules explicitly different in the type — the compiler sees it,
+exhaustive switches work, and invariant checks are unambiguous.
 
 ---
 
 ### Bidirectional match matrix
 
-The children validation system uses forward + reverse maps rather than a single traversal list.
+Two directions, built in a single traversal over the children array:
 
-Each direction serves a different consumer:
+- **forward** (`child → rules`) — feeds child-level checks (unexpected / ambiguous)
+- **reverse** (`rule → children`) — feeds rule-level checks (cardinality / position)
 
-- forward feeds child-level checks (unexpected / ambiguous)
-- reverse feeds rule-level checks (cardinality / position)
-
-Building both in one pass avoids additional traversal and keeps validation responsibilities
-isolated.
+Each validator only needs one direction. Neither has to re-traverse to get it.
 
 ---
 
 ### True LRU over FIFO in `VariantClassResolver`
 
-A cache hit promotes the entry to most-recently-used so frequently accessed variant combinations
-survive eviction even if they were added early.
-
-This avoids cache churn under high-frequency rendering patterns.
+FIFO would evict `{ size: 'md', intent: 'primary' }` — the most-rendered combination in a typical
+app — once 1000 less common entries push through. LRU keeps hot combinations alive regardless of
+when they were first inserted.
 
 ---
 
-### Runtime-first architecture over component-first architecture
+### Runtime-first, not component-first
 
-The package is intentionally designed around a semantic runtime rather than around framework
-components.
+The core export is a `PolymorphicRuntime`, not a component. Framework adapters render; this package
+resolves. That split is what keeps the enforcement logic the same on every framework.
 
-This enables:
+---
 
-- shared runtime semantics across frameworks
-- centralized policy enforcement
-- adapter-level rendering abstraction
+## Non-goals
+
+These are questions that come up when you understand what the package does. They're worth answering
+directly.
+
+### Why not compile-time enforcement?
+
+A Babel plugin or TypeScript transform can catch structural violations on static trees. Most
+component trees aren't static — they're built from props, state, and data. Runtime enforcement
+catches what compile-time can't: children passed as an array, conditional renders, content from a
+server response. The two approaches aren't mutually exclusive, but this package can't be
+compile-time-only without breaking the cases people actually hit in production.
+
+### Why not a TypeScript language service plugin?
+
+TypeScript LSP plugins run in the editor; they can't enforce anything at runtime. They also require
+each consumer to configure a plugin in their `tsconfig`, which is a meaningful friction cost. The
+runtime contract has zero configuration overhead for consumers — the rules run automatically when
+the component renders.
+
+### Why not AST-level enforcement?
+
+AST analysis is framework-specific. JSX trees in React, templates in Vue, `{#each}` blocks in Svelte
+— each has a different representation. The contract engine here works on the normalized `unknown[]`
+children array that every adapter provides. One implementation, five frameworks.
+
+### Why no global registry?
+
+A global component registry would break isolation. Factory calls are self-contained: the returned
+`PolymorphicRuntime` is the only artifact. No side effects, no module-scope state. SSR is safe.
+Tests don't interfere with each other. Hot module replacement works without stale registrations.
+
+### Why is this a runtime package, not a framework utility?
+
+The same `FactoryOptions` definition drives React, Vue, Preact, Svelte, and Solid. If enforcement
+lived in `@polymorphic-ui/react`, every framework adapter would need its own copy — or they'd share
+a peer dependency with no clear ownership. Keeping it here means the contract is written once and
+the behavior is identical everywhere.
