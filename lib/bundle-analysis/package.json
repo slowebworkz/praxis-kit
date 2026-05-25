@@ -1,0 +1,31 @@
+{
+  "name": "@polymorphic-ui/bundle-analysis",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Bundle composition analysis for all published packages",
+  "scripts": {
+    "analyze": "rollup --config rollup.config.ts --configPlugin rollup-plugin-esbuild",
+    "size": "size-limit",
+    "size:ci": "size-limit --json"
+  },
+  "dependencies": {
+    "@polymorphic-ui/adapter-utils": "workspace:*",
+    "@polymorphic-ui/core": "workspace:*",
+    "@polymorphic-ui/preact": "workspace:*",
+    "@polymorphic-ui/react": "workspace:*",
+    "@polymorphic-ui/solid": "workspace:*",
+    "@polymorphic-ui/svelte": "workspace:*",
+    "@polymorphic-ui/tailwind": "workspace:*",
+    "@polymorphic-ui/vue": "workspace:*"
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-node-resolve": "^15.3.1",
+    "@size-limit/preset-small-lib": "^12.1.0",
+    "rollup": "^4.34.0",
+    "rollup-plugin-esbuild": "^6.2.1",
+    "rollup-plugin-visualizer": "^5.14.0",
+    "size-limit": "^12.1.0"
+  }
+}

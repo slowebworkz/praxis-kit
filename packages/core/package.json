@@ -31,7 +31,8 @@
     "lint:check": "eslint . --config eslint.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:related": "vitest run --changed"
+    "test:related": "vitest run --changed",
+    "lint:pkg": "publint"
   },
   "sideEffects": false,
   "dependencies": {
