@@ -1,5 +1,6 @@
 export * from './base'
 export * from './children'
+export * from './diagnose'
 export * from './factory'
 export * from './resolver'
 export * from './styles'
