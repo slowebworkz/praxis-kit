@@ -1,0 +1,100 @@
+import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
+import type { TSESTree } from '@typescript-eslint/utils'
+import {
+  asObjectExpression,
+  asStringLiteral,
+  extractVariantMap,
+  getFirstObjectArg,
+  getObjectProperty,
+  getPropertyKey,
+  isFactoryCall,
+} from '../utils/ast'
+
+type Property = TSESTree.Property
+
+const createRule = RuleCreator((name) => `https://polymorphic-ui.dev/eslint-rules/${name}`)
+
+export type Options = [{ calleeNames?: string[] }]
+
+export type MessageIds = 'unknownDefaultKey' | 'unknownDefaultValue'
+
+export const noInvalidDefault = createRule<Options, MessageIds>({
+  name: 'no-invalid-default',
+  meta: {
+    type: 'problem',
+    docs: {
+      description:
+        'Disallow styling.defaults entries whose keys or values do not exist in styling.variants.',
+    },
+    messages: {
+      unknownDefaultKey:
+        '"{{ key }}" is not a variant defined in styling.variants. This default will have no effect.',
+      unknownDefaultValue:
+        '"{{ value }}" is not a valid value for variant "{{ key }}". Expected one of: {{ allowed }}. This default will have no effect.',
+    },
+    schema: [
+      {
+        type: 'object',
+        properties: {
+          calleeNames: { type: 'array', items: { type: 'string' } },
+        },
+        additionalProperties: false,
+      },
+    ],
+  },
+  defaultOptions: [{}],
+  create(context) {
+    const calleeNames = new Set(context.options[0]?.calleeNames ?? ['createPolymorphicComponent'])
+
+    return {
+      CallExpression(node) {
+        if (!isFactoryCall(node, calleeNames)) return
+
+        const arg = getFirstObjectArg(node)
+        if (!arg) return
+
+        const stylingProp = getObjectProperty(arg, 'styling')
+        if (!stylingProp) return
+
+        const styling = asObjectExpression(stylingProp.value)
+        if (!styling) return
+
+        const variantsProp = getObjectProperty(styling, 'variants')
+        if (!variantsProp) return
+
+        const variantMap = extractVariantMap(variantsProp.value)
+        if (!variantMap || variantMap.size === 0) return
+
+        const defaultsProp = getObjectProperty(styling, 'defaults')
+        if (!defaultsProp) return
+
+        const defaults = asObjectExpression(defaultsProp.value)
+        if (!defaults) return
+
+        for (const prop of defaults.properties) {
+          if (prop.type !== 'Property') continue
+
+          const key = getPropertyKey(prop as Property)
+          if (!key) continue
+
+          if (!variantMap.has(key)) {
+            context.report({ node: prop, messageId: 'unknownDefaultKey', data: { key } })
+            continue
+          }
+
+          const value = asStringLiteral((prop as Property).value)
+          if (value === undefined) continue
+
+          const allowed = variantMap.get(key)!
+          if (!allowed.has(value)) {
+            context.report({
+              node: prop,
+              messageId: 'unknownDefaultValue',
+              data: { key, value, allowed: [...allowed].map((v) => `"${v}"`).join(', ') },
+            })
+          }
+        }
+      },
+    }
+  },
+})
