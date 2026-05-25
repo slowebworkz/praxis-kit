@@ -4,7 +4,9 @@
     "jsx": "react-jsx",
     "paths": {
       "@polymorphic-ui/core": ["../../packages/core/src/index.ts"],
-      "@polymorphic-ui/core/primitive": ["../../packages/core/src/primitive.ts"],
+      "@polymorphic-ui/core/primitive": [
+        "../../packages/core/src/primitive.ts"
+      ],
       "@polymorphic-ui/core/contract": ["../../packages/core/src/contract.ts"],
       "@polymorphic-ui/core/styling": ["../../packages/core/src/styling.ts"],
       "@polymorphic-ui/react": ["../../packages/react/src/index.ts"],
@@ -18,5 +20,9 @@
       "@/current/*": ["../../packages/react/src/current/*"]
     }
   },
-  "include": ["src", "./vitest.bench.config.ts", "./vitest.render.bench.config.ts"]
+  "include": [
+    "src",
+    "./vitest.bench.config.ts",
+    "./vitest.render.bench.config.ts"
+  ]
 }
