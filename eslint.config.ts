@@ -44,6 +44,7 @@ const config = [
     rules: {
       '@polymorphic-ui/no-dead-compound': 'error',
       '@polymorphic-ui/no-enforcement-without-strict': 'error',
+      '@polymorphic-ui/no-invalid-default': 'error',
       '@polymorphic-ui/no-redundant-role': 'warn',
       '@polymorphic-ui/valid-cardinality': 'error',
     },
