@@ -1,11 +1,11 @@
+<!-- markdownlint-disable MD024 -->
+
 # Migration Guides
 
-These guides are for teams already using CVA, Radix Slot, or a full component library who want to
-adopt `@polymorphic-ui`. Each section shows a realistic before state, the equivalent after state,
-and what changes.
+Before/after comparisons for CVA, Radix Slot, and Chakra UI. Each section covers what the migration
+looks like in code and what you stop having to manage manually.
 
-For the strategic reasoning behind each migration, see the [Why not X?](README.md#why-not-x) section
-of the README.
+The [Why not X?](README.md#why-not-x) section of the README covers the positioning reasoning.
 
 ---
 
@@ -366,12 +366,12 @@ For Tailwind-specific layout prop filtering, the `@polymorphic-ui/tailwind` plug
 
 ### Incremental adoption
 
-You do not need to replace all Chakra components at once. A practical incremental path:
+No need to replace everything at once. A reasonable order:
 
-1. Replace layout primitives first (`Box`, `Flex`, `Grid`) — they have no semantic opinions.
-2. Replace atomic components next (`Button`, `Input`) — straightforward variant maps.
-3. Replace composite components last (`ButtonGroup`, `Form`) — structural contracts require defining
-   your own child rules, which take time to specify correctly.
+1. Layout primitives first (`Box`, `Flex`, `Grid`) — they have no semantic opinions.
+2. Atomic components next (`Button`, `Input`) — straightforward variant maps.
+3. Composite components last (`ButtonGroup`, `Form`) — structural contracts require defining your
+   own child rules, which take time to get right.
 
 Chakra components and `@polymorphic-ui` components can coexist in the same render tree during the
 migration. There is no global state conflict.
