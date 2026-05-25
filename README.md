@@ -349,6 +349,8 @@ built on top of, in any framework.
 
 ## Further reading
 
+- [GETTING_STARTED.md](GETTING_STARTED.md) — step-by-step tutorial from a minimal component through
+  variants, enforcement, and slot rendering
 - [ARCHITECTURE.md](ARCHITECTURE.md) — runtime pipeline, data flow, type system, and debugging guide
 - [ADAPTER_AUTHORING.md](ADAPTER_AUTHORING.md) — writing a new framework adapter against the core
   runtime contract
