@@ -5,4 +5,6 @@ export default defineConfig({
   format: ['esm'],
   dts: true,
   clean: true,
+  tsconfig: 'tsconfig.build.json',
+  noExternal: ['@polymorphic-ui/adapter-utils'],
 })
