@@ -261,7 +261,6 @@ children:
 
 ```tsx
 import { Slottable } from '@polymorphic-ui/react'
-
 ;<Button asChild>
   <a href="/dashboard">
     <span aria-hidden>→</span>
