@@ -26,7 +26,8 @@ module.exports = {
     {
       name: 'styling-no-adapters',
       severity: 'error',
-      comment: 'lib/styling must not import framework adapters — styling is orthogonal to rendering',
+      comment:
+        'lib/styling must not import framework adapters — styling is orthogonal to rendering',
       from: { path: '^lib/styling/' },
       to: { path: '^(lib/adapter-utils|packages/(react|vue|preact|solid|svelte))/' },
     },
