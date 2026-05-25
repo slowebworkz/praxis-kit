@@ -42,6 +42,7 @@ const config = [
     files: ['packages/*/src/**/*.{ts,tsx}', 'packages/docs/**/*.{ts,tsx}'],
     plugins: { '@polymorphic-ui': polymorphicPlugin },
     rules: {
+      '@polymorphic-ui/no-dead-compound': 'error',
       '@polymorphic-ui/no-enforcement-without-strict': 'error',
       '@polymorphic-ui/no-redundant-role': 'warn',
       '@polymorphic-ui/valid-cardinality': 'error',

@@ -78,3 +78,16 @@ export function getFirstObjectArg(node: CallExpression): ObjectExpression | unde
 
   return first?.type === 'ObjectExpression' ? first : undefined
 }
+
+export function asStringLiteral(node: NullableNode): string | undefined {
+  if (node?.type === 'Literal' && typeof node.value === 'string') return node.value
+  return undefined
+}
+
+export function getPropertyKey(prop: Property): string | undefined {
+  const { key } = prop
+  if (prop.computed) return undefined
+  if (key.type === 'Identifier') return key.name
+  if (key.type === 'Literal' && typeof key.value === 'string') return key.value
+  return undefined
+}
