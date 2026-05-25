@@ -227,9 +227,31 @@ ChildrenEvaluator.evaluate(children)
 Matching, cardinality, ambiguity detection, and reporting are separate steps. Each can be read and
 tested without touching the others.
 
+```txt
+children[]
+    │
+    ▼
+RuleMatcher  (single traversal)
+    ├────────────────────────────────────┐
+    │                                    │
+    ▼                                    ▼
+forward map                         reverse map
+child → rules matched               rule → children matched
+    │                                    │
+    ▼                                    ▼
+MatchValidator                      RuleValidator
+· unexpected child?                 · cardinality (min/max)?
+· ambiguous match?                  · position (first/last)?
+    │                                    │
+    └──────────────────┬─────────────────┘
+                       ▼
+                 violations[]
+              throw / warn / silent
+```
+
 ### RuleMatcher
 
-Builds a `MatchMatrix` — two directions, one traversal:
+Builds the `MatchMatrix` in a single traversal — both directions at once:
 
 - **forward** (`child → rules`) — detects children with no match (unexpected) or too many
   (ambiguous)
@@ -383,3 +405,44 @@ when they were first inserted.
 
 The core export is a `PolymorphicRuntime`, not a component. Framework adapters render; this package
 resolves. That split is what keeps the enforcement logic the same on every framework.
+
+---
+
+## Non-goals
+
+These are questions that come up when you understand what the package does. They're worth answering
+directly.
+
+### Why not compile-time enforcement?
+
+A Babel plugin or TypeScript transform can catch structural violations on static trees. Most
+component trees aren't static — they're built from props, state, and data. Runtime enforcement
+catches what compile-time can't: children passed as an array, conditional renders, content from a
+server response. The two approaches aren't mutually exclusive, but this package can't be
+compile-time-only without breaking the cases people actually hit in production.
+
+### Why not a TypeScript language service plugin?
+
+TypeScript LSP plugins run in the editor; they can't enforce anything at runtime. They also require
+each consumer to configure a plugin in their `tsconfig`, which is a meaningful friction cost. The
+runtime contract has zero configuration overhead for consumers — the rules run automatically when
+the component renders.
+
+### Why not AST-level enforcement?
+
+AST analysis is framework-specific. JSX trees in React, templates in Vue, `{#each}` blocks in Svelte
+— each has a different representation. The contract engine here works on the normalized `unknown[]`
+children array that every adapter provides. One implementation, five frameworks.
+
+### Why no global registry?
+
+A global component registry would break isolation. Factory calls are self-contained: the returned
+`PolymorphicRuntime` is the only artifact. No side effects, no module-scope state. SSR is safe.
+Tests don't interfere with each other. Hot module replacement works without stale registrations.
+
+### Why is this a runtime package, not a framework utility?
+
+The same `FactoryOptions` definition drives React, Vue, Preact, Svelte, and Solid. If enforcement
+lived in `@polymorphic-ui/react`, every framework adapter would need its own copy — or they'd share
+a peer dependency with no clear ownership. Keeping it here means the contract is written once and
+the behavior is identical everywhere.
