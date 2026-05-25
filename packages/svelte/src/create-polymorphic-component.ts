@@ -1,6 +1,7 @@
 import type {
   AnyRecord,
   ElementType,
+  EmptyRecord,
   PolymorphicGenerics,
   PresetMap,
   VariantMap,
@@ -18,8 +19,8 @@ export function createPolymorphicComponent<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
-  TPreset extends PresetMap<Variants> = Readonly<Record<never, never>>,
-  TPluginProps extends AnyRecord = Record<never, never>,
+  TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
+  TPluginProps extends AnyRecord = EmptyRecord,
   TOptions extends WithChildRules = SvelteFactoryOptions<
     TDefault,
     Props & TPluginProps,

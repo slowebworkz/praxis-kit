@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "../..",
     "jsx": "react-jsx",
     "paths": {
       "@polymorphic-ui/core": ["../core/src/index.ts"],

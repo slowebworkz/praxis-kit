@@ -2,7 +2,7 @@ import type { ClassPluginFactory } from './class-plugin'
 import type { CompoundVariant } from './compound-variants'
 import type { ChildRuleInput } from './child-rule'
 import type { AriaRule } from './aria-rule'
-import type { AnyRecord, ClassName, ElementType, TagMap } from './primitives'
+import type { AnyRecord, ClassName, ElementType, EmptyRecord, TagMap } from './primitives'
 import type { StrictMode } from './strict-mode'
 import type { PresetMap, VariantMap, VariantProps } from './variant'
 
@@ -16,9 +16,9 @@ import type { PresetMap, VariantMap, VariantProps } from './variant'
  *                    inferred from `plugin` — callers do not set this explicitly
  */
 export type StylingOptions<
-  V extends Readonly<VariantMap> = Readonly<Record<never, never>>,
-  TPreset extends PresetMap<V> = Readonly<Record<never, never>>,
-  TPluginProps extends AnyRecord = Record<never, never>,
+  V extends Readonly<VariantMap> = Readonly<EmptyRecord>,
+  TPreset extends PresetMap<V> = Readonly<EmptyRecord>,
+  TPluginProps extends AnyRecord = EmptyRecord,
 > = {
   /** CSS class applied on every render, before variant and tag-map classes. */
   readonly base?: ClassName
@@ -91,10 +91,10 @@ export type EnforcementOptions = {
  */
 export type FactoryOptions<
   TDefault extends ElementType = ElementType,
-  Props extends AnyRecord = Record<never, never>,
-  V extends Readonly<VariantMap> = Readonly<Record<never, never>>,
-  TPreset extends PresetMap<V> = Readonly<Record<never, never>>,
-  TPluginProps extends AnyRecord = Record<never, never>,
+  Props extends AnyRecord = EmptyRecord,
+  V extends Readonly<VariantMap> = Readonly<EmptyRecord>,
+  TPreset extends PresetMap<V> = Readonly<EmptyRecord>,
+  TPluginProps extends AnyRecord = EmptyRecord,
 > = {
   /** The element type rendered when no `as` prop is supplied. Defaults to `'div'`. */
   readonly tag?: TDefault

@@ -1,7 +1,0 @@
-{
-  "name": "@polymorphic-ui/config",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module",
-  "description": "Shared ESLint, TypeScript, and tooling configurations"
-}

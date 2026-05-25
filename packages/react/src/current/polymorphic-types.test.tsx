@@ -15,13 +15,11 @@ import { createRef } from 'react'
 import type { MouseEvent } from 'react'
 import { createPolymorphicComponent } from './create-polymorphic-component'
 import { Slottable } from '@/shared'
-import type { PolymorphicGenerics } from '@polymorphic-ui/core'
+import type { EmptyRecord, PolymorphicGenerics } from '@polymorphic-ui/core'
 import type { PolymorphicProps } from '@/shared'
 
-type E = Record<never, never>
-
-const Button = createPolymorphicComponent<'button', E, E>({ name: 'Button' })
-const Anchor = createPolymorphicComponent<'a', E, E>({ name: 'Anchor' })
+const Button = createPolymorphicComponent<'button', EmptyRecord, EmptyRecord>({ name: 'Button' })
+const Anchor = createPolymorphicComponent<'a', EmptyRecord, EmptyRecord>({ name: 'Anchor' })
 
 // ─── as prop: intrinsic attribute narrowing ───────────────────────────────────
 

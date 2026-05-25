@@ -1,4 +1,6 @@
 export { createClassPipeline } from './create-class-pipeline'
+export { diagnoseClassPipeline } from './diagnose-class-pipeline'
+export type { ClassDiagnosis, CompoundTrace } from './diagnose-class-pipeline'
 export { cva } from './cva'
 export { StaticClassResolver } from './static-class-resolver'
 export { VariantClassResolver } from './variant-class-resolver'
