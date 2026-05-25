@@ -1,6 +1,7 @@
 import {
   noDeadCompound,
   noEnforcementWithoutStrict,
+  noInvalidDefault,
   noRedundantRole,
   validCardinality,
 } from './rules'
@@ -13,6 +14,7 @@ const plugin = {
   rules: {
     'no-dead-compound': noDeadCompound,
     'no-enforcement-without-strict': noEnforcementWithoutStrict,
+    'no-invalid-default': noInvalidDefault,
     'no-redundant-role': noRedundantRole,
     'valid-cardinality': validCardinality,
   },
@@ -26,6 +28,7 @@ const recommended = {
   rules: {
     '@polymorphic-ui/no-dead-compound': 'error',
     '@polymorphic-ui/no-enforcement-without-strict': 'error',
+    '@polymorphic-ui/no-invalid-default': 'error',
     '@polymorphic-ui/no-redundant-role': 'warn',
     '@polymorphic-ui/valid-cardinality': 'error',
   },
@@ -39,6 +42,7 @@ export { plugin, recommended }
 export {
   noDeadCompound,
   noEnforcementWithoutStrict,
+  noInvalidDefault,
   noRedundantRole,
   validCardinality,
 } from './rules'
