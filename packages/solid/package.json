@@ -19,10 +19,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config vitest.config.ts && vitest run --config vitest.ssr.config.ts",
     "test:related": "vitest run --changed --config vitest.config.ts && vitest run --changed --config vitest.ssr.config.ts",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build",
+    "lint:pkg": "publint"
   },
   "sideEffects": false,
   "dependencies": {
+    "@polymorphic-ui/adapter-utils": "workspace:*",
     "@polymorphic-ui/core": "workspace:*",
     "clsx": "catalog:",
     "type-fest": "catalog:"
