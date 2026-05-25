@@ -13,5 +13,5 @@
       "@polymorphic-ui/styling": ["../styling/src"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "./tsup.config.ts"]
 }
