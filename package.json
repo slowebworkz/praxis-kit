@@ -22,7 +22,10 @@
     "clean": "rm -rf node_modules packages/**/node_modules packages/**/dist",
     "prepare": "husky",
     "repo-state": "node --experimental-strip-types scripts/generate-repo-state.ts",
-    "arch:validate": "depcruise --config .dependency-cruiser.cjs lib packages"
+    "arch:validate": "depcruise --config .dependency-cruiser.cjs lib packages",
+    "analyze": "pnpm --filter @polymorphic-ui/bundle-analysis analyze",
+    "size": "pnpm --filter @polymorphic-ui/bundle-analysis size",
+    "lint:pkg": "pnpm -r --if-present lint:pkg"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
@@ -31,10 +34,11 @@
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
     "eslint-plugin-boundaries": "catalog:",
-    "jiti": "catalog:",
     "husky": "catalog:",
+    "jiti": "catalog:",
     "jsdom": "catalog:",
     "prettier": "catalog:",
+    "publint": "^0.3.21",
     "ts-morph": "catalog:",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",
