@@ -2,12 +2,22 @@
 
 Framework-neutral semantic UI contracts.
 
-Define a component once. Enforce its structure, accessibility rules, and class composition in a
-single configuration — across every framework.
+A semantic UI contract defines which elements may render, how they compose, and which accessibility
+rules apply — once, enforced identically across every framework.
 
 ---
 
-## The idea in one example
+## The idea in thirty seconds
+
+```tsx
+// This throws at render time:
+<Tabs>
+  <Tabs.Trigger value="a">First</Tabs.Trigger>
+</Tabs>
+// Error: [Tabs] contract violation — expected exactly 1 Tabs.List (got 0), at least 1 Tabs.Panel (got 0)
+```
+
+The contract that produced it:
 
 ```tsx
 const Tabs = createPolymorphicComponent({
@@ -22,7 +32,7 @@ const Tabs = createPolymorphicComponent({
 })
 ```
 
-That configuration declares a _contract_. At render time:
+Define it once. At render time:
 
 - **Invalid children throw** — wrong types, wrong count, wrong order
 - **Roles normalize automatically** — `<nav role="navigation">` strips the redundant attribute
@@ -58,6 +68,66 @@ Your component definition
 This separation is what makes the library a _runtime architecture_ rather than a React utility. The
 same contract definition produces identical enforcement behavior on every framework because
 enforcement never enters the adapter layer.
+
+---
+
+## Same contract, different renderer
+
+Define the contract once:
+
+```ts
+// tabs-contract.ts
+export const tabsContract = {
+  tag: 'div',
+  enforcement: {
+    strict: 'throw',
+    children: [
+      { name: 'Tabs.List', match: isTabList, cardinality: { min: 1, max: 1 } },
+      { name: 'Tabs.Panel', match: isTabPanel, cardinality: { min: 1 } },
+    ],
+  },
+}
+```
+
+One import changes per framework. Everything else is identical:
+
+```ts
+// React
+import { createPolymorphicComponent } from '@polymorphic-ui/react'
+export const Tabs = createPolymorphicComponent(tabsContract)
+```
+
+```ts
+// Vue
+import { createPolymorphicComponent } from '@polymorphic-ui/vue'
+export const Tabs = createPolymorphicComponent(tabsContract)
+```
+
+```ts
+// Solid
+import { createPolymorphicComponent } from '@polymorphic-ui/solid'
+export const Tabs = createPolymorphicComponent(tabsContract)
+```
+
+```ts
+// Preact
+import { createPolymorphicComponent } from '@polymorphic-ui/preact'
+export const Tabs = createPolymorphicComponent(tabsContract)
+```
+
+Render an invalid tree in any of them:
+
+```tsx
+<Tabs>
+  <Tabs.Trigger value="a">First</Tabs.Trigger>
+</Tabs>
+```
+
+```text
+Error: [Tabs] contract violation — expected exactly 1 Tabs.List (got 0), at least 1 Tabs.Panel (got 0)
+```
+
+Same error. Same message. Same throw. The enforcement logic never crossed the adapter boundary.
 
 ---
 
@@ -201,13 +271,23 @@ Use `Slottable` when the slot child needs to wrap additional content:
 
 ```tsx
 import { Slottable } from '@polymorphic-ui/react'
-
 ;<Button asChild>
   <a href="/dashboard">
     <span aria-hidden>→</span>
     <Slottable>Dashboard</Slottable>
   </a>
 </Button>
+```
+
+---
+
+## React 18
+
+Import from the `/legacy` sub-path. API is identical; the adapter wraps in `forwardRef` for React 18
+compatibility.
+
+```ts
+import { createPolymorphicComponent } from '@polymorphic-ui/react/legacy'
 ```
 
 ---
@@ -233,17 +313,6 @@ const Box = createPolymorphicComponent({
 
 // grid mode — flex-col, grow, shrink-* stripped automatically
 <Box grid className="grid-cols-3 gap-4 flex-col">…</Box>
-```
-
----
-
-## React 18
-
-Import from the `/legacy` sub-path. API is identical; the adapter wraps in `forwardRef` for React 18
-compatibility.
-
-```ts
-import { createPolymorphicComponent } from '@polymorphic-ui/react/legacy'
 ```
 
 ---
