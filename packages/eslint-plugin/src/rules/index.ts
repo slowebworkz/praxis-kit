@@ -1,4 +1,5 @@
 export { noDeadCompound } from './no-dead-compound'
 export { noEnforcementWithoutStrict } from './no-enforcement-without-strict'
+export { noInvalidDefault } from './no-invalid-default'
 export { noRedundantRole } from './no-redundant-role'
 export { validCardinality } from './valid-cardinality'
