@@ -14,9 +14,9 @@ type Property = TSESTree.Property
 
 const createRule = RuleCreator((name) => `https://polymorphic-ui.dev/eslint-rules/${name}`)
 
-export type Options = [{ calleeNames?: string[] }]
+export type Options = [{ calleeNames?: string[]; reportNonLiteral?: boolean }]
 
-export type MessageIds = 'unknownDefaultKey' | 'unknownDefaultValue'
+export type MessageIds = 'unknownDefaultKey' | 'unknownDefaultValue' | 'nonLiteralValue'
 
 export const noInvalidDefault = createRule<Options, MessageIds>({
   name: 'no-invalid-default',
@@ -31,12 +31,15 @@ export const noInvalidDefault = createRule<Options, MessageIds>({
         '"{{ key }}" is not a variant defined in styling.variants. This default will have no effect.',
       unknownDefaultValue:
         '"{{ value }}" is not a valid value for variant "{{ key }}". Expected one of: {{ allowed }}. This default will have no effect.',
+      nonLiteralValue:
+        'Default value for "{{ key }}" is not a string literal and cannot be statically validated.',
     },
     schema: [
       {
         type: 'object',
         properties: {
           calleeNames: { type: 'array', items: { type: 'string' } },
+          reportNonLiteral: { type: 'boolean' },
         },
         additionalProperties: false,
       },
@@ -45,6 +48,7 @@ export const noInvalidDefault = createRule<Options, MessageIds>({
   defaultOptions: [{}],
   create(context) {
     const calleeNames = new Set(context.options[0]?.calleeNames ?? ['createPolymorphicComponent'])
+    const reportNonLiteral = context.options[0]?.reportNonLiteral ?? false
 
     return {
       CallExpression(node) {
@@ -83,7 +87,12 @@ export const noInvalidDefault = createRule<Options, MessageIds>({
           }
 
           const value = asStringLiteral((prop as Property).value)
-          if (value === undefined) continue
+          if (value === undefined) {
+            if (reportNonLiteral) {
+              context.report({ node: prop, messageId: 'nonLiteralValue', data: { key } })
+            }
+            continue
+          }
 
           const allowed = variantMap.get(key)!
           if (!allowed.has(value)) {

@@ -46,6 +46,15 @@ tester.run('no-dead-compound', noDeadCompound, {
       compounds: [{ size: someVar, class: 'x' }],
     } })`,
 
+    // reportNonLiteral off (default) — dynamic value still silent
+    {
+      code: `createPolymorphicComponent({ tag: 'div', styling: {
+        variants: { size: { sm: 'sm', lg: 'lg' } },
+        compounds: [{ size: someVar, class: 'x' }],
+      } })`,
+      options: [{ reportNonLiteral: false }],
+    },
+
     // no styling key at all
     `createPolymorphicComponent({ tag: 'div' })`,
 
@@ -116,6 +125,27 @@ tester.run('no-dead-compound', noDeadCompound, {
       } })`,
       options: [{ calleeNames: ['createContractComponent'] }],
       errors: [{ messageId: 'unknownVariantKey', data: { key: 'color' } }],
+    },
+    {
+      // reportNonLiteral: true — dynamic value is reported
+      code: `createPolymorphicComponent({ tag: 'div', styling: {
+        variants: { size: { sm: 'sm', lg: 'lg' } },
+        compounds: [{ size: someVar, class: 'x' }],
+      } })`,
+      options: [{ reportNonLiteral: true }],
+      errors: [{ messageId: 'nonLiteralValue', data: { key: 'size' } }],
+    },
+    {
+      // reportNonLiteral: true — multiple dynamic values each reported
+      code: `createPolymorphicComponent({ tag: 'div', styling: {
+        variants: { size: { sm: 'sm' }, intent: { primary: 'p' } },
+        compounds: [{ size: someVar, intent: otherVar, class: 'x' }],
+      } })`,
+      options: [{ reportNonLiteral: true }],
+      errors: [
+        { messageId: 'nonLiteralValue', data: { key: 'size' } },
+        { messageId: 'nonLiteralValue', data: { key: 'intent' } },
+      ],
     },
   ],
 })
