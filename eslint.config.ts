@@ -24,11 +24,12 @@ const config = [
             'scripts/*.ts',
             'configs/*.ts',
             'packages/*/eslint.config.ts',
+            'packages/*/tsup.config.ts',
             'lib/*/vitest.config.ts',
             'lib/*/eslint.config.ts',
           ],
-          // ~17 files: 2 root *.ts + 1 scripts + 4 configs src + 3 configs .d.ts + 7 per-package eslint configs + lib/ configs
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 30,
+          // ~17 files: 2 root *.ts + 1 scripts + 4 configs src + 3 configs .d.ts + 7 per-package eslint configs + 10 tsup.config + lib/ configs
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 40,
           defaultProject: './tsconfig.base.json',
         },
       },
@@ -47,6 +48,7 @@ const config = [
       '@polymorphic-ui/no-invalid-default': 'error',
       '@polymorphic-ui/no-redundant-role': 'warn',
       '@polymorphic-ui/valid-cardinality': 'error',
+      '@polymorphic-ui/valid-children-config': 'error',
     },
   },
 ] satisfies ESLintConfig

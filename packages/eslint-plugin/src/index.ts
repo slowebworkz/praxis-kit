@@ -4,6 +4,7 @@ import {
   noInvalidDefault,
   noRedundantRole,
   validCardinality,
+  validChildrenConfig,
 } from './rules'
 
 const plugin = {
@@ -17,6 +18,7 @@ const plugin = {
     'no-invalid-default': noInvalidDefault,
     'no-redundant-role': noRedundantRole,
     'valid-cardinality': validCardinality,
+    'valid-children-config': validChildrenConfig,
   },
   configs: {},
 } as const
@@ -31,6 +33,7 @@ const recommended = {
     '@polymorphic-ui/no-invalid-default': 'error',
     '@polymorphic-ui/no-redundant-role': 'warn',
     '@polymorphic-ui/valid-cardinality': 'error',
+    '@polymorphic-ui/valid-children-config': 'error',
   },
 } as const
 
@@ -45,4 +48,5 @@ export {
   noInvalidDefault,
   noRedundantRole,
   validCardinality,
+  validChildrenConfig,
 } from './rules'
