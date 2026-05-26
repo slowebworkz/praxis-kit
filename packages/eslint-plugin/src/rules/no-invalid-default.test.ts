@@ -40,6 +40,15 @@ tester.run('no-invalid-default', noInvalidDefault, {
       defaults: { size: someVar },
     } })`,
 
+    // reportNonLiteral off (default) — dynamic value still silent
+    {
+      code: `createPolymorphicComponent({ tag: 'div', styling: {
+        variants: { size: { sm: 'sm', lg: 'lg' } },
+        defaults: { size: someVar },
+      } })`,
+      options: [{ reportNonLiteral: false }],
+    },
+
     // no styling key at all
     `createPolymorphicComponent({ tag: 'div' })`,
 
@@ -108,6 +117,27 @@ tester.run('no-invalid-default', noInvalidDefault, {
       } })`,
       options: [{ calleeNames: ['createContractComponent'] }],
       errors: [{ messageId: 'unknownDefaultKey', data: { key: 'color' } }],
+    },
+    {
+      // reportNonLiteral: true — dynamic default value is reported
+      code: `createPolymorphicComponent({ tag: 'div', styling: {
+        variants: { size: { sm: 'sm', lg: 'lg' } },
+        defaults: { size: someVar },
+      } })`,
+      options: [{ reportNonLiteral: true }],
+      errors: [{ messageId: 'nonLiteralValue', data: { key: 'size' } }],
+    },
+    {
+      // reportNonLiteral: true — multiple dynamic defaults each reported
+      code: `createPolymorphicComponent({ tag: 'div', styling: {
+        variants: { size: { sm: 'sm' }, intent: { primary: 'p' } },
+        defaults: { size: someVar, intent: otherVar },
+      } })`,
+      options: [{ reportNonLiteral: true }],
+      errors: [
+        { messageId: 'nonLiteralValue', data: { key: 'size' } },
+        { messageId: 'nonLiteralValue', data: { key: 'intent' } },
+      ],
     },
   ],
 })
