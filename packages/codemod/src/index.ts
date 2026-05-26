@@ -1,0 +1,82 @@
+import { Project, SyntaxKind } from 'ts-morph'
+import { parseArgs } from 'node:util'
+
+function printUsage(): void {
+  console.error(
+    `
+Usage: polymorphic-codemod [options]
+
+Options:
+  --from <name>     Factory function name to rename (default: createPolymorphicComponent)
+  --to <name>       New factory function name (required)
+  --files <glob>    Glob pattern for files to transform (default: **/*.{ts,tsx})
+  --dry-run         Preview changes without writing to disk
+  --help            Show this help message
+`.trim(),
+  )
+}
+
+function main(): void {
+  const { values } = parseArgs({
+    options: {
+      from: { type: 'string', default: 'createPolymorphicComponent' },
+      to: { type: 'string' },
+      files: { type: 'string', default: '**/*.{ts,tsx}' },
+      'dry-run': { type: 'boolean', default: false },
+      help: { type: 'boolean', default: false },
+    },
+    strict: true,
+  })
+
+  if (values.help) {
+    printUsage()
+    process.exit(0)
+  }
+
+  const fromName = values.from!
+  const toName = values.to
+
+  if (!toName) {
+    console.error('Error: --to is required.')
+    printUsage()
+    process.exit(1)
+  }
+
+  const isDryRun = values['dry-run']!
+  const glob = values.files!
+
+  const project = new Project({ skipAddingFilesFromTsConfig: true })
+  project.addSourceFilesFromTsConfig('tsconfig.json')
+  project.addSourceFilesAtPaths(glob)
+
+  const sourceFiles = project.getSourceFiles()
+  let totalRenames = 0
+  let filesModified = 0
+
+  for (const sourceFile of sourceFiles) {
+    let fileRenames = 0
+
+    // Rename identifier references (both call sites and import bindings)
+    const identifiers = sourceFile.getDescendantsOfKind(SyntaxKind.Identifier)
+    for (const ident of identifiers) {
+      if (ident.getText() === fromName) {
+        if (!isDryRun) ident.replaceWithText(toName)
+        fileRenames++
+      }
+    }
+
+    if (fileRenames > 0) {
+      totalRenames += fileRenames
+      filesModified++
+      console.log(
+        `${isDryRun ? '[dry-run] ' : ''}${sourceFile.getFilePath()}: ${fileRenames} rename(s)`,
+      )
+      if (!isDryRun) sourceFile.saveSync()
+    }
+  }
+
+  const dryRunNote = isDryRun ? ' (dry run — no files written)' : ''
+  console.log(`\nDone: ${totalRenames} rename(s) across ${filesModified} file(s)${dryRunNote}.`)
+}
+
+main()
