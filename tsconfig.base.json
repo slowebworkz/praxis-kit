@@ -1,4 +1,5 @@
 {
+  "extends": "./tsconfig.paths.json",
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
@@ -10,17 +11,6 @@
     "sourceMap": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "noEmit": true,
-    "rootDir": ".",
-    "paths": {
-      "@polymorphic-ui/core": ["./packages/core/src"],
-      "@polymorphic-ui/core/primitive": ["./packages/core/src/primitive.ts"],
-      "@polymorphic-ui/core/contract": ["./packages/core/src/contract.ts"],
-      "@polymorphic-ui/core/styling": ["./packages/core/src/styling.ts"],
-      "@polymorphic-ui/primitive": ["./lib/primitive/src"],
-      "@polymorphic-ui/contract": ["./lib/contract/src"],
-      "@polymorphic-ui/styling": ["./lib/styling/src"],
-      "@polymorphic-ui/adapter-utils": ["./lib/adapter-utils/src"]
-    }
+    "noEmit": true
   }
 }
