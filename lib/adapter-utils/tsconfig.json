@@ -1,17 +1,4 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "paths": {
-      "@polymorphic-ui/core": ["../../packages/core/src/index.ts"],
-      "@polymorphic-ui/core/primitive": [
-        "../../packages/core/src/primitive.ts"
-      ],
-      "@polymorphic-ui/core/contract": ["../../packages/core/src/contract.ts"],
-      "@polymorphic-ui/core/styling": ["../../packages/core/src/styling.ts"],
-      "@polymorphic-ui/primitive": ["../primitive/src"],
-      "@polymorphic-ui/contract": ["../contract/src"],
-      "@polymorphic-ui/styling": ["../styling/src"]
-    }
-  },
   "include": ["src", "./tsup.config.ts"]
 }

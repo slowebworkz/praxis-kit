@@ -24,12 +24,17 @@ const config = [
             'scripts/*.ts',
             'configs/*.ts',
             'packages/*/eslint.config.ts',
-            'packages/*/tsup.config.ts',
-            'lib/*/vitest.config.ts',
+            // codemod and ts-plugin have rootDir:src — tsup.config.ts can't be in their tsconfig include
+            'packages/codemod/tsup.config.ts',
+            'packages/ts-plugin/tsup.config.ts',
+            // remaining tsup.config.ts files are included in each package's tsconfig — removed from here
+            // lib/contract and lib/styling include vitest.config.ts in their tsconfig — listed explicitly
+            'lib/adapter-utils/vitest.config.ts',
+            'lib/primitive/vitest.config.ts',
             'lib/*/eslint.config.ts',
           ],
-          // ~17 files: 2 root *.ts + 1 scripts + 4 configs src + 3 configs .d.ts + 7 per-package eslint configs + 10 tsup.config + lib/ configs
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 40,
+          // ~23 files: 2 root *.ts + 1 scripts + 7 configs + 9 per-package eslint configs + 2 lib vitest + 2 tsup (codemod/ts-plugin)
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 28,
           defaultProject: './tsconfig.base.json',
         },
       },

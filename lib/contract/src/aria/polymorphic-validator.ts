@@ -24,7 +24,10 @@ export function isInvalid(result: AriaResult): result is InvalidResult {
 
 const VALID = [{ valid: true }] as const
 
-function isIntrinsicTag(tag: ElementType): tag is IntrinsicTag {
+// Broader than ElementType: accepts component functions so adapters can pass the `as` prop directly.
+type AnyTag = ElementType | ((...args: unknown[]) => unknown)
+
+function isIntrinsicTag(tag: AnyTag): tag is IntrinsicTag {
   return typeof tag === 'string'
 }
 
@@ -36,8 +39,16 @@ function omitProp<T extends Readonly<Record<string, unknown>>, K extends keyof T
   return rest as Omit<T, K>
 }
 
+type AriaPlan = {
+  readonly removals: ReadonlySet<string>
+  readonly violations: readonly ValidationViolation[]
+}
+
 export class AriaPolicyEngine extends StrictBase {
   readonly #extraRules: readonly AriaRule[]
+  readonly #planCache = new Map<string, AriaPlan>()
+  readonly #planCacheOrder = new Set<string>()
+  static readonly #MAX_CACHE = 100
 
   constructor(strict: StrictMode = 'warn', options?: { rules?: readonly AriaRule[] }) {
     super(strict)
@@ -64,7 +75,7 @@ export class AriaPolicyEngine extends StrictBase {
     }
   }
 
-  static #deriveContext(tag: ElementType, props: IntrinsicProps): EvaluationContext {
+  static #deriveContext(tag: AnyTag, props: IntrinsicProps): EvaluationContext {
     if (!isIntrinsicTag(tag)) return { proceed: false, result: { props, violations: [] } }
     const implicitRole = getImplicitRole(tag)
     if (!implicitRole) return { proceed: false, result: { props, violations: [] } }
@@ -114,7 +125,7 @@ export class AriaPolicyEngine extends StrictBase {
       : [AriaPolicyEngine.#checkInvalidAriaAttributes]
   }
 
-  static evaluate(tag: ElementType, props: IntrinsicProps): ValidationResult {
+  static evaluate(tag: AnyTag, props: IntrinsicProps): ValidationResult {
     const derived = AriaPolicyEngine.#deriveContext(tag, props)
     if (!derived.proceed) return derived.result
 
@@ -128,7 +139,7 @@ export class AriaPolicyEngine extends StrictBase {
   }
 
   static #evaluateWithRules(
-    tag: ElementType,
+    tag: AnyTag,
     props: IntrinsicProps,
     extraRules: readonly AriaRule[],
   ): ValidationResult {
@@ -151,11 +162,79 @@ export class AriaPolicyEngine extends StrictBase {
     }
   }
 
-  validate(tag: ElementType, props: IntrinsicProps): ValidationResult {
+  // Cache key covers only the aria-relevant subset of props (tag + role + aria-* attrs).
+  // Non-aria props (className, onClick, etc.) do not affect ARIA decisions and are excluded
+  // so cache hits survive re-renders that only change non-aria props.
+  static #createPlanKey(tag: AnyTag, props: IntrinsicProps): string | null {
+    if (typeof tag !== 'string') return null
+    const parts: string[] = [tag]
+    if (typeof props.role === 'string') parts.push(`role:${props.role}`)
+    const ariaEntries: string[] = []
+    for (const [k, v] of Object.entries(props)) {
+      if (k.startsWith('aria-')) ariaEntries.push(`${k}:${String(v)}`)
+    }
+    if (ariaEntries.length > 0) parts.push(...ariaEntries.sort())
+    return parts.join('|')
+  }
+
+  static #computePlan(
+    inputProps: IntrinsicProps,
+    resultProps: IntrinsicProps,
+  ): ReadonlySet<string> {
+    const removals = new Set<string>()
+    for (const key of Object.keys(inputProps)) {
+      if (!(key in (resultProps as object))) removals.add(key)
+    }
+    return removals
+  }
+
+  static #applyPlan<T extends IntrinsicProps>(props: T, removals: ReadonlySet<string>): T {
+    if (removals.size === 0) return props
+    const next: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(props)) {
+      if (!removals.has(k)) next[k] = v
+    }
+    return next as unknown as T
+  }
+
+  validate(tag: AnyTag, props: IntrinsicProps): ValidationResult {
+    const key = AriaPolicyEngine.#createPlanKey(tag, props)
+
+    if (key !== null) {
+      const cached = this.#planCache.get(key)
+      if (cached !== undefined) {
+        this.#planCacheOrder.delete(key)
+        this.#planCacheOrder.add(key)
+        if (cached.violations.length > 0) this.report(cached.violations as ValidationViolation[])
+        return {
+          props: AriaPolicyEngine.#applyPlan(props, cached.removals),
+          violations: cached.violations as ValidationViolation[],
+        }
+      }
+    }
+
     const result = this.#extraRules.length
       ? AriaPolicyEngine.#evaluateWithRules(tag, props, this.#extraRules)
       : AriaPolicyEngine.evaluate(tag, props)
-    this.report(result.violations)
+
+    if (result.violations.length > 0) this.report(result.violations)
+
+    if (key !== null) {
+      const plan: AriaPlan = {
+        removals: AriaPolicyEngine.#computePlan(props, result.props as IntrinsicProps),
+        violations: result.violations,
+      }
+      this.#planCache.set(key, plan)
+      this.#planCacheOrder.add(key)
+      if (this.#planCache.size > AriaPolicyEngine.#MAX_CACHE) {
+        const lru = this.#planCacheOrder.values().next().value
+        if (lru !== undefined) {
+          this.#planCacheOrder.delete(lru)
+          this.#planCache.delete(lru)
+        }
+      }
+    }
+
     return result
   }
 

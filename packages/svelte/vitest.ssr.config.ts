@@ -7,14 +7,7 @@ export default defineConfig({
   // svelte/server render() and the DOM mount() path.
   plugins: [svelte()],
   resolve: {
-    alias: {
-      '@polymorphic-ui/core': new URL('../core/src/index.ts', import.meta.url).pathname,
-      '@polymorphic-ui/primitive': new URL('../../lib/primitive/src', import.meta.url).pathname,
-      '@polymorphic-ui/contract': new URL('../../lib/contract/src', import.meta.url).pathname,
-      '@polymorphic-ui/styling': new URL('../../lib/styling/src', import.meta.url).pathname,
-      '@polymorphic-ui/adapter-utils': new URL('../../lib/adapter-utils/src', import.meta.url)
-        .pathname,
-    },
+    tsconfigPaths: true,
   },
   test: {
     name: 'svelte-ssr',
