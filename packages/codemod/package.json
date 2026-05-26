@@ -1,0 +1,30 @@
+{
+  "name": "@polymorphic-ui/codemod",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "polymorphic-codemod": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ts-morph": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "catalog:",
+    "typescript": "catalog:"
+  }
+}
