@@ -15,9 +15,9 @@ type Property = TSESTree.Property
 
 const createRule = RuleCreator((name) => `https://polymorphic-ui.dev/eslint-rules/${name}`)
 
-export type Options = [{ calleeNames?: string[] }]
+export type Options = [{ calleeNames?: string[]; reportNonLiteral?: boolean }]
 
-export type MessageIds = 'unknownVariantKey' | 'unknownVariantValue'
+export type MessageIds = 'unknownVariantKey' | 'unknownVariantValue' | 'nonLiteralValue'
 
 export const noDeadCompound = createRule<Options, MessageIds>({
   name: 'no-dead-compound',
@@ -32,12 +32,15 @@ export const noDeadCompound = createRule<Options, MessageIds>({
         '"{{ key }}" is not a variant defined in styling.variants. This compound condition can never match.',
       unknownVariantValue:
         '"{{ value }}" is not a valid value for variant "{{ key }}". Expected one of: {{ allowed }}. This compound condition can never match.',
+      nonLiteralValue:
+        'Compound value for "{{ key }}" is not a string literal and cannot be statically validated.',
     },
     schema: [
       {
         type: 'object',
         properties: {
           calleeNames: { type: 'array', items: { type: 'string' } },
+          reportNonLiteral: { type: 'boolean' },
         },
         additionalProperties: false,
       },
@@ -46,6 +49,7 @@ export const noDeadCompound = createRule<Options, MessageIds>({
   defaultOptions: [{}],
   create(context) {
     const calleeNames = new Set(context.options[0]?.calleeNames ?? ['createPolymorphicComponent'])
+    const reportNonLiteral = context.options[0]?.reportNonLiteral ?? false
 
     return {
       CallExpression(node) {
@@ -90,9 +94,13 @@ export const noDeadCompound = createRule<Options, MessageIds>({
               continue
             }
 
-            // Only validate the value if it's a static string or identifier-as-string.
             const value = asStringLiteral((prop as Property).value)
-            if (value === undefined) continue
+            if (value === undefined) {
+              if (reportNonLiteral) {
+                context.report({ node: prop, messageId: 'nonLiteralValue', data: { key } })
+              }
+              continue
+            }
 
             const allowed = variantMap.get(key)!
             if (!allowed.has(value)) {
