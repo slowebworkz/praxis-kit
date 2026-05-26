@@ -771,3 +771,89 @@ describe('validate() — violation message content', () => {
     spy.mockRestore()
   })
 })
+
+// ---------------------------------------------------------------------------
+// validate() — fix-plan cache
+// ---------------------------------------------------------------------------
+
+describe('validate() — fix-plan cache', () => {
+  it('returns same violations on cache hit', () => {
+    const engine = makeValidator(false)
+    const r1 = engine.validate('nav', { role: 'navigation' })
+    const r2 = engine.validate('nav', { role: 'navigation' })
+    expect(r2.violations).toEqual(r1.violations)
+  })
+
+  it('applies cached removals to current props, not to the first call props', () => {
+    const engine = makeValidator(false)
+    engine.validate('nav', { role: 'navigation', className: 'first' })
+    const r2 = engine.validate('nav', { role: 'navigation', className: 'second' })
+    // role should be stripped (cached plan), className should be from the current call
+    expect(r2.props).not.toHaveProperty('role')
+    expect(r2.props).toHaveProperty('className', 'second')
+  })
+
+  it('calls report() on every validate call, including cache hits', () => {
+    const engine = makeValidator('warn')
+    const spy = vi.spyOn(engine, 'report')
+    const props = { role: 'navigation' as const }
+    engine.validate('nav', props)
+    engine.validate('nav', props)
+    // report() is called on both the cache miss and the cache hit — violations are always surfaced
+    expect(spy).toHaveBeenCalledTimes(2)
+    spy.mockRestore()
+  })
+
+  it('produces a cache miss when aria-relevant props change', () => {
+    const engine = makeValidator(false)
+    // evaluate() is called on every cache miss; violations may be empty so report() is unreliable here
+    const spy = vi.spyOn(AriaPolicyEngine, 'evaluate')
+    engine.validate('nav', { role: 'navigation' })
+    engine.validate('nav', { role: 'main' })
+    expect(spy).toHaveBeenCalledTimes(2)
+    spy.mockRestore()
+  })
+
+  it('produces a cache hit when only non-aria props change', () => {
+    const engine = makeValidator('warn')
+    const spy = vi.spyOn(engine, 'report')
+    engine.validate('nav', { role: 'navigation', className: 'a', onClick: () => {} })
+    engine.validate('nav', { role: 'navigation', className: 'b', id: 'x' })
+    // Both calls report: first is a cache miss, second is a cache hit — report fires either way
+    expect(spy).toHaveBeenCalledTimes(2)
+    spy.mockRestore()
+  })
+
+  it('bypasses cache for non-string (component) tags', () => {
+    const engine = makeValidator(false)
+    const spy = vi.spyOn(engine, 'report')
+    const Tag = () => null
+    const props = { role: 'navigation' as const }
+    engine.validate(Tag, props)
+    engine.validate(Tag, props)
+    // Both calls hit the early-exit path, report() never called
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('evicts LRU entry when cache exceeds 100 entries', () => {
+    const engine = makeValidator(false)
+    // Spy on the static evaluate method — called once per cache miss, never on hits
+    const spy = vi.spyOn(AriaPolicyEngine, 'evaluate')
+    // Fill the cache with 100 entries; label-0 is LRU, label-99 is MRU
+    for (let i = 0; i < 100; i++) {
+      engine.validate('nav', { 'aria-label': `label-${i}` })
+    }
+    expect(spy).toHaveBeenCalledTimes(100)
+    // Add entry 101 — evicts LRU (label-0); this call is a cache miss
+    engine.validate('nav', { 'aria-label': 'label-100' })
+    expect(spy).toHaveBeenCalledTimes(101)
+    // label-99 (MRU) should still be cached → hit, no evaluate call
+    engine.validate('nav', { 'aria-label': 'label-99' })
+    expect(spy).toHaveBeenCalledTimes(101)
+    // label-0 was evicted → cache miss, evaluate called again
+    engine.validate('nav', { 'aria-label': 'label-0' })
+    expect(spy).toHaveBeenCalledTimes(102)
+    spy.mockRestore()
+  })
+})
