@@ -22,6 +22,8 @@ const config = [
         { type: 'svelte', pattern: 'packages/svelte/**/*' },
         { type: 'tailwind', pattern: 'packages/tailwind/**/*' },
         { type: 'eslint-plugin', pattern: 'packages/eslint-plugin/**/*' },
+        { type: 'ts-plugin', pattern: 'packages/ts-plugin/**/*' },
+        { type: 'codemod', pattern: 'packages/codemod/**/*' },
       ],
 
       'boundaries/ignore': ['**/dist/**', '**/node_modules/**'],
