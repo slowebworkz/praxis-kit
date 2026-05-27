@@ -52,11 +52,12 @@ export class VariantClassResolver {
   }
 
   #createCacheKey(props: AnyRecord, variantKey: string): string {
-    const entries = Object.entries(props).toSorted(([a], [b]) => a.localeCompare(b))
-    const body = entries
-      .map(([k, v]) => `${k}:${VariantClassResolver.#serializeValue(v)}`)
-      .join('|')
-    return `${variantKey}:${body}`
+    const keys = Object.keys(props).sort()
+    const parts: string[] = []
+    for (const k of keys) {
+      parts.push(`${k}:${VariantClassResolver.#serializeValue(props[k])}`)
+    }
+    return `${variantKey}:${parts.join('|')}`
   }
 
   static #serializeValue(value: unknown): string {

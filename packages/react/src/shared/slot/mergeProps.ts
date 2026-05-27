@@ -1,9 +1,3 @@
-/**
- * Merges slot props with child props using per-key policies.
- *
- * Iteration is handled here; classification and per-policy logic live in
- * `policies.ts` so each layer has a single responsibility.
- */
 import type { UnknownProps } from '../types'
 import { isReactEventKey, isFunction } from './predicates'
 import { policyHandlers } from './policies'
@@ -11,8 +5,9 @@ import type { PropMergePolicy } from './policies'
 
 export function mergeProps(slotProps: UnknownProps, childProps: UnknownProps): UnknownProps {
   const merged: UnknownProps = { ...slotProps }
-  for (const [key, childVal] of Object.entries(childProps)) {
-    merged[key] = applyMergePolicy(key, slotProps[key], childVal)
+  for (const key in childProps) {
+    if (!Object.hasOwn(childProps, key)) continue
+    merged[key] = applyMergePolicy(key, slotProps[key], childProps[key])
   }
   return merged
 }

@@ -2,11 +2,11 @@ import { h } from 'preact'
 import type { Ref } from 'preact'
 import type { ElementType, IntrinsicProps } from '@polymorphic-ui/core'
 import { isKnownAriaRole } from '@polymorphic-ui/core'
+import { applyFilter } from '@polymorphic-ui/adapter-utils'
 import type { SlotValidator } from './slot/slot-validator'
 import { isSlottableElement } from './slot'
 import type {
   AnyVNode,
-  UnknownProps,
   SlotComponent,
   Runtime,
   KnownProps,
@@ -18,18 +18,6 @@ import type {
   ResolvedRenderState,
   FilterPredicate,
 } from './types'
-
-function applyFilter<T extends ResolvedProps>(
-  props: T,
-  filterProps: FilterPredicate,
-  variantKeys: ReadonlySet<string>,
-): T {
-  const out = {} as T
-  for (const [k, v] of Object.entries(props)) {
-    if (!filterProps(k, variantKeys)) (out as UnknownProps)[k] = v
-  }
-  return out
-}
 
 function buildDirectives(
   as: ElementType | undefined,

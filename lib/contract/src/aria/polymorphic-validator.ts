@@ -170,8 +170,9 @@ export class AriaPolicyEngine extends StrictBase {
     const parts: string[] = [tag]
     if (typeof props.role === 'string') parts.push(`role:${props.role}`)
     const ariaEntries: string[] = []
-    for (const [k, v] of Object.entries(props)) {
-      if (k.startsWith('aria-')) ariaEntries.push(`${k}:${String(v)}`)
+    for (const k in props) {
+      if (Object.hasOwn(props, k) && k.startsWith('aria-'))
+        ariaEntries.push(`${k}:${String(props[k])}`)
     }
     if (ariaEntries.length > 0) parts.push(...ariaEntries.sort())
     return parts.join('|')
@@ -182,8 +183,8 @@ export class AriaPolicyEngine extends StrictBase {
     resultProps: IntrinsicProps,
   ): ReadonlySet<string> {
     const removals = new Set<string>()
-    for (const key of Object.keys(inputProps)) {
-      if (!(key in (resultProps as object))) removals.add(key)
+    for (const key in inputProps) {
+      if (Object.hasOwn(inputProps, key) && !(key in (resultProps as object))) removals.add(key)
     }
     return removals
   }
@@ -191,8 +192,8 @@ export class AriaPolicyEngine extends StrictBase {
   static #applyPlan<T extends IntrinsicProps>(props: T, removals: ReadonlySet<string>): T {
     if (removals.size === 0) return props
     const next: Record<string, unknown> = {}
-    for (const [k, v] of Object.entries(props)) {
-      if (!removals.has(k)) next[k] = v
+    for (const k in props) {
+      if (Object.hasOwn(props, k) && !removals.has(k)) next[k] = props[k]
     }
     return next as unknown as T
   }
@@ -349,7 +350,8 @@ export class AriaPolicyEngine extends StrictBase {
   }: AriaContext): readonly AriaResult[] {
     const results: AriaResult[] = []
 
-    for (const key of Object.keys(props)) {
+    for (const key in props) {
+      if (!Object.hasOwn(props, key)) continue
       if (!key.startsWith('aria-')) continue
       if (isGlobalAriaAttribute(key)) continue
       if (isAriaAttributeValidForRole(key, effectiveRole)) continue
