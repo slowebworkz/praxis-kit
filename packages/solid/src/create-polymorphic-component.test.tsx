@@ -131,6 +131,87 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
     expect(container.querySelector('div')?.className).not.toContain(' a')
   })
 
+  it('asChild renders the child returned by the render function', () => {
+    const Comp = createPolymorphicComponent({ tag: 'div', styling: { base: 'box' } })
+    const { container } = solidRender(() => (
+      <Comp asChild>{(props) => <a href="/home" {...props} />}</Comp>
+    ))
+    expect(container.querySelector('a')).toBeTruthy()
+    expect(container.querySelector('div')).toBeNull()
+  })
+
+  it('asChild passes resolved class to the render function', () => {
+    const Comp = createPolymorphicComponent({ tag: 'div', styling: { base: 'box' } })
+    const { container } = solidRender(() => <Comp asChild>{(props) => <a {...props} />}</Comp>)
+    expect(container.querySelector('a')?.className).toBe('box')
+  })
+
+  it('asChild render function receives merged default props', () => {
+    const Comp = createPolymorphicComponent({ tag: 'button', defaults: { type: 'button' } })
+    const { container } = solidRender(() => <Comp asChild>{(props) => <button {...props} />}</Comp>)
+    expect(container.querySelector('button')?.getAttribute('type')).toBe('button')
+  })
+
+  it('asChild: child props override slot props when spread after', () => {
+    const Comp = createPolymorphicComponent({ tag: 'div', defaults: { 'data-slot': 'yes' } })
+    const { container } = solidRender(() => (
+      <Comp asChild>{(props) => <a {...props} data-slot="no" />}</Comp>
+    ))
+    expect(container.querySelector('a')?.getAttribute('data-slot')).toBe('no')
+  })
+
+  it('asChild forwards ref to the rendered element', () => {
+    const Comp = createPolymorphicComponent({ tag: 'div' })
+    let el: HTMLAnchorElement | undefined
+    solidRender(() => (
+      <Comp
+        asChild
+        ref={(e: HTMLAnchorElement) => {
+          el = e
+        }}
+      >
+        {(props) => <a href="/home" {...props} />}
+      </Comp>
+    ))
+    expect(el).toBeInstanceOf(HTMLAnchorElement)
+  })
+
+  it('asChild throws when as and asChild are both set (strict: throw default)', () => {
+    const Comp = createPolymorphicComponent({ tag: 'div' })
+    expect(() =>
+      solidRender(() => (
+        // @ts-expect-error — intentionally invalid: as + asChild together
+        <Comp as="section" asChild>
+          {(props: Record<string, unknown>) => <a {...props} />}
+        </Comp>
+      )),
+    ).toThrow()
+  })
+
+  it('asChild throws when children is not a function', () => {
+    const Comp = createPolymorphicComponent({ tag: 'div' })
+    expect(() =>
+      solidRender(() => (
+        // @ts-expect-error — intentionally invalid: children must be a render fn
+        <Comp asChild>not a function</Comp>
+      )),
+    ).toThrow()
+  })
+
+  it('asChild reacts to signal-driven class changes', () => {
+    const Comp = createPolymorphicComponent({ tag: 'div', styling: { base: 'base' } })
+    const [extra, setExtra] = createSignal('a')
+    const { container } = solidRender(() => (
+      <Comp asChild class={extra()}>
+        {(props) => <a {...props} />}
+      </Comp>
+    ))
+    expect(container.querySelector('a')?.className).toContain('a')
+    setExtra('b')
+    expect(container.querySelector('a')?.className).toContain('b')
+    expect(container.querySelector('a')?.className).not.toContain(' a')
+  })
+
   it('enforcement.children throws when child rules are violated', () => {
     const Comp =
       // eslint-disable-next-line @polymorphic-ui/no-enforcement-without-strict -- intentionally tests the adapter default (Solid defaults to 'throw')
