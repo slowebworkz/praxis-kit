@@ -44,6 +44,24 @@ export type Diagnostic = {
   severity: Severity
 }
 
+/**
+ * A JSX usage site collected for deferred cross-file cardinality validation.
+ * Stored during `transform` and validated in `buildEnd` once the full
+ * constraint registry is populated.
+ */
+export type PendingUsage = {
+  tagName: string
+  /** Number of static children; undefined when children contain JSX expressions. */
+  count: number | undefined
+  /** 1-based line number. */
+  line: number
+  /** 1-based column number. */
+  col: number
+}
+
+/** A diagnostic extended with the file it originated from, for buildEnd reporting. */
+export type FileDiagnostic = Diagnostic & { fileId: string }
+
 /** Options accepted by contractPlugin() and analyze(). */
 export type PluginOptions = {
   /**
