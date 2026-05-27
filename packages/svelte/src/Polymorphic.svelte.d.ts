@@ -4,9 +4,10 @@ import type { AnyBuiltRuntime } from './types/built-runtime'
 interface PolymorphicProps {
   bundle: AnyBuiltRuntime
   as?: string
+  asChild?: boolean
   class?: string
   variantKey?: string
-  children?: Snippet
+  children?: Snippet | Snippet<[Record<string, unknown>]>
   [key: string]: unknown
 }
 

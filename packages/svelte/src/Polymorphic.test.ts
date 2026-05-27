@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach } from 'vitest'
 import { render, cleanup } from '@testing-library/svelte'
+import { createRawSnippet } from 'svelte'
 import Polymorphic from './Polymorphic.svelte'
 import { createPolymorphicComponent } from './create-polymorphic-component'
 
@@ -66,5 +67,50 @@ describe('Polymorphic (Svelte adapter)', () => {
     const { container } = render(Polymorphic, { bundle, myProp: 'should-be-stripped' })
     expect(container.querySelector('[myProp]')).toBeNull()
     expect(container.querySelector('[myprop]')).toBeNull()
+  })
+
+  describe('asChild', () => {
+    it('renders the slot snippet instead of the host element', () => {
+      const bundle = createPolymorphicComponent({ tag: 'div' })
+      const children = createRawSnippet<[Record<string, unknown>]>(() => ({
+        render: () => '<a href="/home">Home</a>',
+      }))
+      const { container } = render(Polymorphic, { bundle, asChild: true, children })
+      expect(container.querySelector('a')).toBeTruthy()
+      expect(container.querySelector('div')).toBeNull()
+    })
+
+    it('forwards class and props to the slot snippet', () => {
+      const bundle = createPolymorphicComponent({ tag: 'div', styling: { base: 'base-class' } })
+      let receivedProps: Record<string, unknown> = {}
+      const children = createRawSnippet<[Record<string, unknown>]>((getProps) => ({
+        render() {
+          receivedProps = getProps()
+          return `<a>link</a>`
+        },
+      }))
+      render(Polymorphic, { bundle, asChild: true, children, 'data-extra': 'yes' })
+      expect(receivedProps['class']).toContain('base-class')
+      expect(receivedProps['data-extra']).toBe('yes')
+    })
+
+    it('falls back to normal render when asChild is false', () => {
+      const bundle = createPolymorphicComponent({ tag: 'section' })
+      // Without asChild, host element is preserved and snippet renders inside it
+      const children = createRawSnippet(() => ({
+        render: () => '<span>text</span>',
+      }))
+      const { container } = render(Polymorphic, { bundle, asChild: false, children })
+      expect(container.querySelector('section')).toBeTruthy()
+      expect(container.querySelector('section > span')).toBeTruthy()
+    })
+
+    it('throws when as and asChild are both set (strict: throw)', () => {
+      const bundle = createPolymorphicComponent({ tag: 'div', enforcement: { strict: 'throw' } })
+      const children = createRawSnippet<[Record<string, unknown>]>(() => ({
+        render: () => '<a>link</a>',
+      }))
+      expect(() => render(Polymorphic, { bundle, asChild: true, as: 'span', children })).toThrow()
+    })
   })
 })
