@@ -15,7 +15,7 @@ import { render } from './render'
 import type { PreactFactoryOptions } from './preact-options'
 import type { AnyVNode, UnknownProps, KnownProps, PolymorphicComponent } from './types'
 
-export function createPolymorphicComponent<
+export function createContractComponent<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,

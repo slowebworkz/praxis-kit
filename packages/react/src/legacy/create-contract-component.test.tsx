@@ -4,9 +4,9 @@ import { createElement, Fragment, createRef, act } from 'react'
 import type { ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { UnknownProps } from '@/shared'
-import { createPolymorphicComponent } from './create-polymorphic-component'
+import { createContractComponent } from './create-contract-component'
 
-function box(comp: ReturnType<typeof createPolymorphicComponent>) {
+function box(comp: ReturnType<typeof createContractComponent>) {
   return comp as ComponentType<UnknownProps>
 }
 
@@ -32,45 +32,45 @@ afterEach(() => {
   document.body.removeChild(container)
 })
 
-describe('createPolymorphicComponent (legacy / React 18)', () => {
+describe('createContractComponent (legacy / React 18)', () => {
   it('sets displayName', () => {
-    const Comp = createPolymorphicComponent({ name: 'MyBox' })
+    const Comp = createContractComponent({ name: 'MyBox' })
     expect(Comp.displayName).toBe('MyBox')
   })
 
   it('renders the default tag (div)', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     mount(createElement(box(Box), null))
     expect(container.querySelector('div')).toBeTruthy()
   })
 
   it('renders a different tag via the as prop', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     mount(createElement(box(Box), { as: 'section' }))
     expect(container.querySelector('section')).toBeTruthy()
   })
 
   it('forwards a ref to the DOM element via forwardRef', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     const ref = createRef<HTMLDivElement>()
     mount(createElement(box(Box), { ref }))
     expect(ref.current).toBe(container.querySelector('div'))
   })
 
   it('renders children', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     mount(createElement(box(Box), null, createElement('span', { id: 'child' })))
     expect(container.querySelector('span#child')).toBeTruthy()
   })
 
   it('asChild renders the child element type', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     mount(createElement(box(Box), { asChild: true }, createElement('button', { type: 'button' })))
     expect(container.querySelector('button')).toBeTruthy()
   })
 
   it('asChild merges className onto the child element', () => {
-    const Box = createPolymorphicComponent({ styling: { base: 'legacy-cls' } })
+    const Box = createContractComponent({ styling: { base: 'legacy-cls' } })
     mount(createElement(box(Box), { asChild: true }, createElement('button')))
     expect(container.querySelector('button')!.className).toContain('legacy-cls')
   })
@@ -79,14 +79,14 @@ describe('createPolymorphicComponent (legacy / React 18)', () => {
   // current adapters treat a Fragment as a single opaque element. The flattening
   // behavior that distinguished legacy only existed in React 18.
   it('fragment with multiple children does not throw in React 19 (no flattening)', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     const fragment = createElement(Fragment, null, createElement('span'), createElement('div'))
     expect(() => mount(createElement(box(Box), { asChild: true }, fragment))).not.toThrow()
   })
 
   it('nested asChild: both components compose their classes onto the inner element', () => {
-    const BoxA = createPolymorphicComponent({ styling: { base: 'class-a' } })
-    const BoxB = createPolymorphicComponent({ styling: { base: 'class-b' } })
+    const BoxA = createContractComponent({ styling: { base: 'class-a' } })
+    const BoxB = createContractComponent({ styling: { base: 'class-b' } })
     mount(
       createElement(
         box(BoxA),
@@ -100,8 +100,8 @@ describe('createPolymorphicComponent (legacy / React 18)', () => {
   })
 
   it('nested asChild: ref from outer component reaches the innermost element', () => {
-    const BoxA = createPolymorphicComponent({})
-    const BoxB = createPolymorphicComponent({})
+    const BoxA = createContractComponent({})
+    const BoxB = createContractComponent({})
     const ref = createRef<HTMLButtonElement>()
     mount(
       createElement(
@@ -114,7 +114,7 @@ describe('createPolymorphicComponent (legacy / React 18)', () => {
   })
 
   it('applies filterProps', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       filterProps: (key: string) => key === 'size',
     })
     mount(createElement(box(Box), { size: 'lg', 'data-keep': 'yes' } as never))
