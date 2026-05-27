@@ -4,7 +4,7 @@ import { h, Fragment, createRef } from 'preact'
 import { render } from 'preact'
 import type { ComponentType } from 'preact'
 import type { AnyVNode, UnknownProps } from './types'
-import { createPolymorphicComponent } from './create-polymorphic-component'
+import { createContractComponent } from './create-contract-component'
 
 // Cast to bypass the PolymorphicComponent union in h() overloads.
 function box(comp: { displayName?: string }): ComponentType<UnknownProps> {
@@ -27,21 +27,21 @@ afterEach(() => {
   document.body.removeChild(container)
 })
 
-describe('createPolymorphicComponent (Preact adapter)', () => {
+describe('createContractComponent (Preact adapter)', () => {
   it('sets displayName', () => {
-    const Comp = createPolymorphicComponent({ name: 'MyBox' })
+    const Comp = createContractComponent({ name: 'MyBox' })
 
     expect(Comp.displayName).toBe('MyBox')
   })
 
   it('falls back to PolymorphicComponent displayName', () => {
-    const Comp = createPolymorphicComponent({})
+    const Comp = createContractComponent({})
 
     expect(Comp.displayName).toBe('PolymorphicComponent')
   })
 
   it('renders the default tag (div)', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
 
     mount(h(box(Box), null))
 
@@ -49,7 +49,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('renders a different tag via the as prop', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
 
     mount(h(box(Box), { as: 'section' }))
 
@@ -58,7 +58,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('applies base class', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       styling: { base: 'base-cls' },
     })
 
@@ -68,7 +68,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('merges caller className with base', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       styling: { base: 'base' },
     })
 
@@ -81,7 +81,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('forwards a ref to the DOM element', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     const ref = createRef<HTMLDivElement>()
 
     mount(h(box(Box), { ref }))
@@ -90,7 +90,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('forwards a ref when rendered as a different tag', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     const ref = createRef<HTMLButtonElement>()
 
     mount(h(box(Box), { as: 'button', ref }))
@@ -99,7 +99,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('passes extra props to the DOM element', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
 
     mount(h(box(Box), { 'data-testid': 'box' }))
 
@@ -107,7 +107,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('renders children', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
 
     mount(h(box(Box), null, h('span', { id: 'child' })))
 
@@ -115,7 +115,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('asChild renders the child element type instead of the default tag', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
 
     mount(h(box(Box), { asChild: true }, h('button', { type: 'button' })))
 
@@ -124,7 +124,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('asChild merges className onto the child element', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       styling: { base: 'box-cls' },
     })
 
@@ -134,7 +134,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('asChild throws when given zero children', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
 
     expect(() =>
       mount(
@@ -146,7 +146,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('fragment child counts as one element for asChild (no flattening)', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
 
     const fragment = h(Fragment, null, h('span', null))
 
@@ -154,11 +154,11 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('nested asChild: both components compose their classes onto the inner element', () => {
-    const BoxA = createPolymorphicComponent({
+    const BoxA = createContractComponent({
       styling: { base: 'class-a' },
     })
 
-    const BoxB = createPolymorphicComponent({
+    const BoxB = createContractComponent({
       styling: { base: 'class-b' },
     })
 
@@ -171,8 +171,8 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('nested asChild: ref from outer component reaches the innermost element', () => {
-    const BoxA = createPolymorphicComponent({})
-    const BoxB = createPolymorphicComponent({})
+    const BoxA = createContractComponent({})
+    const BoxB = createContractComponent({})
     const ref = createRef<HTMLButtonElement>()
 
     mount(h(box(BoxA), { asChild: true, ref }, h(box(BoxB), { asChild: true }, h('button', null))))
@@ -181,7 +181,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       filterProps: (key: string) => key === 'size',
     })
 
@@ -199,7 +199,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('strips redundant ARIA role from intrinsic element', () => {
-    const Nav = createPolymorphicComponent({
+    const Nav = createContractComponent({
       tag: 'nav',
       enforcement: { strict: false },
     })
@@ -210,7 +210,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('applies variant classes', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       tag: 'div',
       styling: {
         variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
@@ -224,7 +224,7 @@ describe('createPolymorphicComponent (Preact adapter)', () => {
   })
 
   it('enforcement.children throws when child rules are violated', () => {
-    const Group = createPolymorphicComponent({
+    const Group = createContractComponent({
       tag: 'div',
       enforcement: {
         strict: 'throw',
