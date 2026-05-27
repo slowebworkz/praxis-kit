@@ -23,13 +23,20 @@ import type {
   VariantsOf,
 } from '../types'
 import { resolveFactoryOptions } from '../options'
+import { assertPluginShape, guardPipeline } from './plugin-invariants'
 
 function resolveClassPipeline<TVariants extends VariantMap>(
   options: { styling?: { plugin?: ClassPluginFactory } },
   resolved: ClassPipelineOptions<TVariants>,
 ) {
-  const pluginResult = options.styling?.plugin?.(resolved)
-  const classPipeline = pluginResult?.pipeline ?? createClassPipeline(resolved)
+  const factory = options.styling?.plugin
+  if (!factory) {
+    return { pluginResult: undefined, classPipeline: createClassPipeline(resolved) }
+  }
+
+  const pluginResult = factory(resolved)
+  assertPluginShape(pluginResult)
+  const classPipeline = guardPipeline(pluginResult.pipeline)
 
   return { pluginResult, classPipeline }
 }
