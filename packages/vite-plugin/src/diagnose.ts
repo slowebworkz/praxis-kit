@@ -1,6 +1,6 @@
 import ts from 'typescript'
 import { walk } from './ast'
-import type { ComponentConstraint, Diagnostic, Severity } from './types'
+import type { ComponentConstraint, Diagnostic, PendingUsage, Severity } from './types'
 
 /**
  * Returns the count of meaningful JSX children — JSX elements and non-whitespace
@@ -81,4 +81,35 @@ export function diagnoseUsages(
   })
 
   return diagnostics
+}
+
+/**
+ * Walks a source file and collects every uppercase-tag JSX usage as a
+ * PendingUsage. Used by the plugin to build the cross-file validation queue:
+ * usages whose tag name is not locally defined are deferred until `buildEnd`
+ * when the full constraint registry is available.
+ */
+export function collectJsxUsages(source: ts.SourceFile): PendingUsage[] {
+  const usages: PendingUsage[] = []
+
+  walk(source, (node) => {
+    let tagName: string | undefined
+    let count: number | undefined
+
+    if (ts.isJsxElement(node)) {
+      const openTag = node.openingElement
+      tagName = ts.isIdentifier(openTag.tagName) ? openTag.tagName.text : undefined
+      count = countStaticChildren(node)
+    } else if (ts.isJsxSelfClosingElement(node)) {
+      tagName = ts.isIdentifier(node.tagName) ? node.tagName.text : undefined
+      count = 0
+    }
+
+    if (!tagName || !/^[A-Z]/.test(tagName)) return
+
+    const { line, character } = source.getLineAndCharacterOfPosition(node.getStart(source))
+    usages.push({ tagName, count, line: line + 1, col: character + 1 })
+  })
+
+  return usages
 }
