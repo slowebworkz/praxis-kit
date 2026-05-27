@@ -8,7 +8,12 @@ import type {
   VariantMap,
   VariantsOf,
 } from '@polymorphic-ui/core'
-import { buildCoreRuntime, buildEngines, composeFilter } from '@polymorphic-ui/adapter-utils'
+import {
+  buildCoreRuntime,
+  buildEngines,
+  composeFilter,
+  SlotValidator,
+} from '@polymorphic-ui/adapter-utils'
 import type { SvelteFactoryOptions } from './svelte-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
 import type { NormalizedOptions } from './types/normalized-options'
@@ -40,10 +45,12 @@ export function buildRuntime<
   const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
   const { childrenEvaluator } = buildEngines(normalized.strict, normalized.enforcement?.children)
   const filterProps = composeFilter(ownedKeys, normalized.filterProps)
+  const slotValidator = new SlotValidator(normalized.name, normalized.strict, 'Snippet')
 
   return {
     runtime,
     filterProps,
+    slotValidator,
     ...(childrenEvaluator !== undefined && { childrenEvaluator }),
   } as BuiltRuntime<G, TOptions>
 }

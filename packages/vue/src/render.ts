@@ -2,6 +2,7 @@ import { cloneVNode, h } from 'vue'
 import type { VNode } from 'vue'
 import type { ElementType, IntrinsicProps } from '@polymorphic-ui/core'
 import { isKnownAriaRole } from '@polymorphic-ui/core'
+import { applyFilter } from '@polymorphic-ui/adapter-utils'
 import type { SlotValidator } from './slot'
 import { extractSlottable } from './slot/extractSlottable'
 import { normalizeChildren } from './normalize-children'
@@ -16,18 +17,6 @@ import type {
   Runtime,
 } from './types'
 
-function applyFilter<T extends ResolvedProps>(
-  props: T,
-  filterProps: FilterPredicate,
-  variantKeys: ReadonlySet<string>,
-): T {
-  const out = {} as T
-  for (const [k, v] of Object.entries(props)) {
-    if (!filterProps(k, variantKeys)) (out as UnknownProps)[k] = v
-  }
-  return out
-}
-
 function buildDirectives(
   as: ElementType | undefined,
   asChild: boolean | undefined,
@@ -38,7 +27,7 @@ function buildDirectives(
   }
 }
 
-function resolveRenderState(
+export function resolveRenderState(
   runtime: Runtime,
   attrs: Readonly<UnknownProps>,
   filterProps: FilterPredicate,
@@ -135,8 +124,9 @@ export function render({
   filterProps,
   slotValidator,
   childrenEvaluator,
+  resolvedState,
 }: RenderInput): VNode | null {
-  const state = resolveRenderState(runtime, attrs, filterProps)
+  const state = resolvedState ?? resolveRenderState(runtime, attrs, filterProps)
 
   const { vnodes: children, discarded } = normalizeChildren(slots)
   childrenEvaluator?.evaluate(children)
