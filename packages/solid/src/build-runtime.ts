@@ -13,6 +13,7 @@ import type { SolidFactoryOptions } from './solid-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
 import type { NormalizedOptions } from './types/normalized-options'
 import type { UnknownProps } from './types'
+import { SlotValidator } from './slot'
 
 function normalizeOptions<G extends PolymorphicGenerics>(
   options: SolidFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>,
@@ -40,10 +41,12 @@ export function buildRuntime<
   const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
   const { childrenEvaluator } = buildEngines(normalized.strict, normalized.enforcement?.children)
   const filterProps = composeFilter(ownedKeys, normalized.filterProps)
+  const slotValidator = new SlotValidator(normalized.name, normalized.strict)
 
   return {
     runtime,
     filterProps,
+    slotValidator,
     ...(childrenEvaluator !== undefined && { childrenEvaluator }),
   } as BuiltRuntime<G, TOptions>
 }
