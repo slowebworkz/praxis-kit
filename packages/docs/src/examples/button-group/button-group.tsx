@@ -1,9 +1,9 @@
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 import { Button } from '../button/button'
 
-export const ButtonGroup = createPolymorphicComponent({
+export const ButtonGroup = createContractComponent({
   tag: 'div',
   name: 'ButtonGroup',
   styling: { base: 'inline-flex items-center gap-2' },
