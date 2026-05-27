@@ -41,7 +41,7 @@ export const validCardinality = createRule<Options, MessageIds>({
   },
   defaultOptions: [{}],
   create(context) {
-    const calleeNames = new Set(context.options[0]?.calleeNames ?? ['createPolymorphicComponent'])
+    const calleeNames = new Set(context.options[0]?.calleeNames ?? ['createContractComponent'])
 
     return {
       CallExpression(node) {
