@@ -19,6 +19,8 @@ import type {
   FilterPredicate,
 } from './types'
 
+declare const process: { env: { NODE_ENV: string } }
+
 function buildDirectives(
   as: ElementType | undefined,
   asChild: boolean | undefined,
@@ -183,7 +185,8 @@ export function render<TProps extends KnownProps>({
 }: RenderInput<TProps>): ReactElement {
   const state = resolveRenderState(runtime, props, filterProps)
 
-  childrenEvaluator?.evaluate(normalizeChildren(state.children))
+  if (process.env.NODE_ENV !== 'production')
+    childrenEvaluator?.evaluate(normalizeChildren(state.children))
 
   const slotResult = tryRenderAsChild(state, ref, slotComponent, normalizeChildren, slotValidator)
 
