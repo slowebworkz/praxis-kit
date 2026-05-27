@@ -3,7 +3,7 @@
  * AriaPolicyEngine or ChildrenEvaluator. Comparing with react-minimal shows
  * the cost of the variant/class subsystem in isolation.
  */
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 
 const variants = {
   intent: {
@@ -18,7 +18,7 @@ const variants = {
   },
 } as const
 
-export const Button = createPolymorphicComponent<'button', Record<string, never>, typeof variants>({
+export const Button = createContractComponent<'button', Record<string, never>, typeof variants>({
   tag: 'button',
   name: 'Button',
   styling: {

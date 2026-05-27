@@ -5,11 +5,11 @@
  */
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 
-const ButtonChild = createPolymorphicComponent({ tag: 'button', name: 'ButtonChild' })
+const ButtonChild = createContractComponent({ tag: 'button', name: 'ButtonChild' })
 
-export const ButtonGroup = createPolymorphicComponent({
+export const ButtonGroup = createContractComponent({
   tag: 'div',
   name: 'ButtonGroup',
   enforcement: {
