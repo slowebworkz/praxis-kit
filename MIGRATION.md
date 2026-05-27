@@ -18,7 +18,7 @@ The name and the architecture no longer match what the system actually does.
 The core tension:
 
 ```ts
-createPolymorphicComponent({ tag: 'div' })
+createContractComponent({ tag: 'div' })
 ```
 
 — the simplest possible call — currently instantiates the ARIA engine, child validator, and variant
@@ -341,7 +341,7 @@ The factory becomes a capability detector.
 ### Primitive-only component
 
 ```ts
-createPolymorphicComponent({
+createContractComponent({
   tag: 'div',
 })
 ```
@@ -362,7 +362,7 @@ Does not activate:
 ### Styled component
 
 ```ts
-createPolymorphicComponent({
+createContractComponent({
   tag: 'button',
 
   styling: {
@@ -392,7 +392,7 @@ Does not activate:
 ### Fully-contracted component
 
 ```ts
-createPolymorphicComponent({
+createContractComponent({
   tag: 'button',
 
   styling: { ... },
