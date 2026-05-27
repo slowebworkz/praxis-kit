@@ -2,7 +2,7 @@
   "name": "praxis-ui",
   "private": true,
   "version": "1.0.0",
-  "description": "A framework-agnostic polymorphic component system with strict TypeScript types and runtime accessibility validation.",
+  "description": "Praxis UI — framework-neutral component infrastructure with enforced structural contracts, ARIA validation, and polymorphic rendering.",
   "license": "MIT",
   "type": "module",
   "scripts": {
