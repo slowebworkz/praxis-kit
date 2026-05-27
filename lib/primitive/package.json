@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "sideEffects": false,
   "description": "Render primitive: tag resolution, prop merge, slot protocol",
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "sideEffects": false,
   "description": "Styling runtime: variant resolver, class pipeline, plugin API",
   "scripts": {
     "typecheck": "tsc --noEmit",
