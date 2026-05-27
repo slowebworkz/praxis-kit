@@ -1,5 +1,5 @@
-import type { PolymorphicGenerics } from '@polymorphic-ui/core'
-import type { BuiltChildrenEvaluator, WithChildRules } from '@polymorphic-ui/adapter-utils'
+import type { PolymorphicGenerics } from '@praxis-ui/core'
+import type { BuiltChildrenEvaluator, WithChildRules } from '@praxis-ui/adapter-utils'
 import type { SlotValidator } from '../slot/slot-validator'
 import type { AnyVNode, FilterPredicate, SlotComponent } from './primitives'
 import type { TypedRuntime } from './runtime'

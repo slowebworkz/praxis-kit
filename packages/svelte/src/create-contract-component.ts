@@ -5,7 +5,7 @@ import type {
   PolymorphicGenerics,
   PresetMap,
   VariantMap,
-} from '@polymorphic-ui/core'
+} from '@praxis-ui/core'
 import { buildRuntime } from './build-runtime'
 import type { SvelteFactoryOptions } from './svelte-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'

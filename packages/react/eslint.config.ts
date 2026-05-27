@@ -17,11 +17,11 @@ const config = [
           patterns: [
             {
               group: [
-                '@polymorphic-ui/vue',
-                '@polymorphic-ui/preact',
-                '@polymorphic-ui/solid',
-                '@polymorphic-ui/svelte',
-                '@polymorphic-ui/docs',
+                '@praxis-ui/vue',
+                '@praxis-ui/preact',
+                '@praxis-ui/solid',
+                '@praxis-ui/svelte',
+                '@praxis-ui/docs',
               ],
               message: 'react adapter must not import from other adapters',
             },

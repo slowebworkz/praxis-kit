@@ -1,9 +1,9 @@
 {
-  "name": "@polymorphic-ui/codemod",
+  "name": "@praxis-ui/codemod",
   "version": "1.0.0",
   "type": "module",
   "bin": {
-    "polymorphic-codemod": "./dist/index.js"
+    "praxis-codemod": "./dist/index.js"
   },
   "exports": {
     ".": {

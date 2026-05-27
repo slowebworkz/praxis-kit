@@ -9,8 +9,8 @@ import type {
   StrictMode,
   VariantMap,
   VariantsOf,
-} from '@polymorphic-ui/core'
-import { buildCoreRuntime, buildEngines, composeFilter } from '@polymorphic-ui/adapter-utils'
+} from '@praxis-ui/core'
+import { buildCoreRuntime, buildEngines, composeFilter } from '@praxis-ui/adapter-utils'
 import { SlotValidator } from './slot'
 import type { VueFactoryOptions } from './vue-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'

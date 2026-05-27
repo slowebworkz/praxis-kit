@@ -4,7 +4,7 @@ import { parseArgs } from 'node:util'
 function printUsage(): void {
   console.error(
     `
-Usage: polymorphic-codemod [options]
+Usage: praxis-codemod [options]
 
 Options:
   --from <name>     Factory function name to rename (default: createPolymorphicComponent)

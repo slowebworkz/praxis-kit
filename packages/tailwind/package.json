@@ -1,5 +1,5 @@
 {
-  "name": "@polymorphic-ui/tailwind",
+  "name": "@praxis-ui/tailwind",
   "version": "1.0.0",
   "type": "module",
   "sideEffects": false,
@@ -20,7 +20,7 @@
     "lint:pkg": "publint"
   },
   "dependencies": {
-    "@polymorphic-ui/core": "workspace:*"
+    "@praxis-ui/core": "workspace:*"
   },
   "devDependencies": {
     "tsup": "catalog:",

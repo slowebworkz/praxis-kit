@@ -17,12 +17,12 @@ const config = [
           patterns: [
             {
               group: [
-                '@polymorphic-ui/react',
-                '@polymorphic-ui/vue',
-                '@polymorphic-ui/solid',
-                '@polymorphic-ui/svelte',
-                '@polymorphic-ui/preact',
-                '@polymorphic-ui/core',
+                '@praxis-ui/react',
+                '@praxis-ui/vue',
+                '@praxis-ui/solid',
+                '@praxis-ui/svelte',
+                '@praxis-ui/preact',
+                '@praxis-ui/core',
               ],
               message: 'eslint-plugin must not import from framework packages',
             },

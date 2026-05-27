@@ -5,7 +5,7 @@ import type {
   FactoryOptions,
   PresetMap,
   VariantMap,
-} from '@polymorphic-ui/core'
+} from '@praxis-ui/core'
 import type { UnknownProps } from './types/primitives'
 
 export type SvelteFactoryOptions<

@@ -1,5 +1,5 @@
-import { createContractComponent } from '@polymorphic-ui/react'
-import type { EmptyRecord } from '@polymorphic-ui/core'
+import { createContractComponent } from '@praxis-ui/react'
+import type { EmptyRecord } from '@praxis-ui/core'
 
 export const Landmark = createContractComponent<'nav', EmptyRecord, EmptyRecord>({
   tag: 'nav',

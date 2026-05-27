@@ -9,7 +9,7 @@ import {
 
 const plugin = {
   meta: {
-    name: '@polymorphic-ui/eslint-plugin',
+    name: '@praxis-ui/eslint-plugin',
     version: '1.0.0',
   },
   rules: {
@@ -25,15 +25,15 @@ const plugin = {
 
 // Recommended config — all rules at their default severity.
 const recommended = {
-  name: '@polymorphic-ui/recommended',
-  plugins: { '@polymorphic-ui': plugin },
+  name: '@praxis-ui/recommended',
+  plugins: { '@praxis-ui': plugin },
   rules: {
-    '@polymorphic-ui/no-dead-compound': 'error',
-    '@polymorphic-ui/no-enforcement-without-strict': 'error',
-    '@polymorphic-ui/no-invalid-default': 'error',
-    '@polymorphic-ui/no-redundant-role': 'warn',
-    '@polymorphic-ui/valid-cardinality': 'error',
-    '@polymorphic-ui/valid-children-config': 'error',
+    '@praxis-ui/no-dead-compound': 'error',
+    '@praxis-ui/no-enforcement-without-strict': 'error',
+    '@praxis-ui/no-invalid-default': 'error',
+    '@praxis-ui/no-redundant-role': 'warn',
+    '@praxis-ui/valid-cardinality': 'error',
+    '@praxis-ui/valid-children-config': 'error',
   },
 } as const
 

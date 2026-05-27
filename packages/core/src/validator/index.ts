@@ -9,4 +9,4 @@ export {
   hasRole,
   AriaPolicyEngine,
   isInvalid,
-} from '@polymorphic-ui/contract'
+} from '@praxis-ui/contract'

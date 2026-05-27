@@ -1,8 +1,8 @@
 import { h } from 'preact'
 import type { Ref } from 'preact'
-import type { ElementType, IntrinsicProps } from '@polymorphic-ui/core'
-import { isKnownAriaRole } from '@polymorphic-ui/core'
-import { applyFilter } from '@polymorphic-ui/adapter-utils'
+import type { ElementType, IntrinsicProps } from '@praxis-ui/core'
+import { isKnownAriaRole } from '@praxis-ui/core'
+import { applyFilter } from '@praxis-ui/adapter-utils'
 import type { SlotValidator } from './slot/slot-validator'
 import { isSlottableElement } from './slot'
 import type {

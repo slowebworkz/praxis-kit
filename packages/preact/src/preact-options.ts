@@ -5,7 +5,7 @@ import type {
   FactoryOptions,
   PresetMap,
   VariantMap,
-} from '@polymorphic-ui/core'
+} from '@praxis-ui/core'
 import type { SlotComponent, UnknownProps } from './types/primitives'
 
 export type PreactFactoryOptions<

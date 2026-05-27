@@ -17,12 +17,12 @@ export { analyze } from './analyze'
  *
  * @example
  * // vite.config.ts
- * import { contractPlugin } from '@polymorphic-ui/vite-plugin'
+ * import { contractPlugin } from '@praxis-ui/vite-plugin'
  * export default { plugins: [contractPlugin()] }
  */
 export function contractPlugin(options?: PluginOptions): Plugin {
   return {
-    name: 'polymorphic-ui:contract',
+    name: 'praxis-ui:contract',
     transform(code, id) {
       const diagnostics = analyze(code, id, options)
       for (const d of diagnostics) {
