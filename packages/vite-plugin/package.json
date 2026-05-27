@@ -1,0 +1,34 @@
+{
+  "name": "@polymorphic-ui/vite-plugin",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed",
+    "prepublishOnly": "pnpm build"
+  },
+  "sideEffects": false,
+  "peerDependencies": {
+    "vite": ">=5"
+  },
+  "dependencies": {
+    "typescript": "catalog:"
+  },
+  "devDependencies": {
+    "@polymorphic-ui/core": "workspace:*",
+    "tsup": "catalog:",
+    "typescript": "catalog:",
+    "vite": "^6.0.0",
+    "vitest": "catalog:"
+  }
+}
