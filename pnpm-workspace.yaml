@@ -34,7 +34,7 @@ catalog:
   "@vitest/ui": ^4.1.6
   vue: ^3.4.0
   "@vue/test-utils": ^2.4.0
-  "@vue/server-renderer": ^3.4.0
+  "@vue/server-renderer": ^3.5.35
 
   # Preact
   preact: ^10.25.0
