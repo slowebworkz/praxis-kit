@@ -206,6 +206,61 @@ describe('createPolymorphic — resolveAria() with enforcement', () => {
 })
 
 // ---------------------------------------------------------------------------
+// plugin contract enforcement
+// ---------------------------------------------------------------------------
+
+describe('createPolymorphic — plugin contract', () => {
+  it('accepts a well-formed plugin factory', () => {
+    expect(() =>
+      createPolymorphic({
+        styling: {
+          plugin: () => ({ pipeline: (_tag, _props, _cls) => _cls ?? '' }),
+        },
+      }),
+    ).not.toThrow()
+  })
+
+  it('throws at factory time when the plugin factory returns null', () => {
+    expect(() =>
+      createPolymorphic({
+        styling: { plugin: () => null as never },
+      }),
+    ).toThrow("Plugin factory must return an object with a 'pipeline' function. Got: null.")
+  })
+
+  it('throws at factory time when the plugin factory returns a non-object', () => {
+    expect(() =>
+      createPolymorphic({
+        styling: { plugin: () => 'bad' as never },
+      }),
+    ).toThrow("Plugin factory must return an object with a 'pipeline' function. Got: string.")
+  })
+
+  it('throws at factory time when the pipeline field is not a function', () => {
+    expect(() =>
+      createPolymorphic({
+        styling: { plugin: () => ({ pipeline: 'not-a-fn' as never }) },
+      }),
+    ).toThrow("Plugin factory return value is missing a 'pipeline' function. Got pipeline: string.")
+  })
+
+  it('throws at render time when the pipeline returns a non-string (dev mode)', () => {
+    const original = process.env.NODE_ENV
+    process.env.NODE_ENV = 'development'
+    try {
+      const runtime = createPolymorphic({
+        styling: { plugin: () => ({ pipeline: () => undefined as unknown as string }) },
+      })
+      expect(() => runtime.resolveClasses('div', {})).toThrow(
+        'Plugin pipeline must return a string. Got: undefined.',
+      )
+    } finally {
+      process.env.NODE_ENV = original
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
 // enforcement.aria — custom rule extension
 // ---------------------------------------------------------------------------
 
