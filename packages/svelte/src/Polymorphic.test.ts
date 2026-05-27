@@ -3,32 +3,32 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { render, cleanup } from '@testing-library/svelte'
 import { createRawSnippet } from 'svelte'
 import Polymorphic from './Polymorphic.svelte'
-import { createPolymorphicComponent } from './create-polymorphic-component'
+import { createContractComponent } from './create-contract-component'
 
 afterEach(cleanup)
 
 describe('Polymorphic (Svelte adapter)', () => {
   it('renders the default tag', () => {
-    const bundle = createPolymorphicComponent({ tag: 'div' })
+    const bundle = createContractComponent({ tag: 'div' })
     const { container } = render(Polymorphic, { bundle })
     expect(container.querySelector('div')).toBeTruthy()
   })
 
   it('renders a different tag via the as prop', () => {
-    const bundle = createPolymorphicComponent({ tag: 'div' })
+    const bundle = createContractComponent({ tag: 'div' })
     const { container } = render(Polymorphic, { bundle, as: 'section' })
     expect(container.querySelector('section')).toBeTruthy()
     expect(container.querySelector('div')).toBeNull()
   })
 
   it('applies base class', () => {
-    const bundle = createPolymorphicComponent({ tag: 'div', styling: { base: 'base-class' } })
+    const bundle = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
     const { container } = render(Polymorphic, { bundle })
     expect(container.querySelector('div')?.className).toBe('base-class')
   })
 
   it('merges caller class with base', () => {
-    const bundle = createPolymorphicComponent({ tag: 'div', styling: { base: 'base' } })
+    const bundle = createContractComponent({ tag: 'div', styling: { base: 'base' } })
     const { container } = render(Polymorphic, { bundle, class: 'caller' })
     const cls = container.querySelector('div')?.className
     expect(cls).toContain('base')
@@ -36,19 +36,19 @@ describe('Polymorphic (Svelte adapter)', () => {
   })
 
   it('passes extra props to the DOM element', () => {
-    const bundle = createPolymorphicComponent({ tag: 'div' })
+    const bundle = createContractComponent({ tag: 'div' })
     const { container } = render(Polymorphic, { bundle, 'data-testid': 'box' })
     expect(container.querySelector('[data-testid="box"]')).toBeTruthy()
   })
 
   it('strips redundant ARIA role from intrinsic element', () => {
-    const bundle = createPolymorphicComponent({ tag: 'button', enforcement: { strict: false } })
+    const bundle = createContractComponent({ tag: 'button', enforcement: { strict: false } })
     const { container } = render(Polymorphic, { bundle, role: 'button' })
     expect(container.querySelector('button')?.getAttribute('role')).toBeNull()
   })
 
   it('applies variant classes', () => {
-    const bundle = createPolymorphicComponent({
+    const bundle = createContractComponent({
       tag: 'div',
       styling: {
         base: 'box',
@@ -60,7 +60,7 @@ describe('Polymorphic (Svelte adapter)', () => {
   })
 
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
-    const bundle = createPolymorphicComponent({
+    const bundle = createContractComponent({
       tag: 'div',
       filterProps: (key) => key === 'myProp',
     })
@@ -71,7 +71,7 @@ describe('Polymorphic (Svelte adapter)', () => {
 
   describe('asChild', () => {
     it('renders the slot snippet instead of the host element', () => {
-      const bundle = createPolymorphicComponent({ tag: 'div' })
+      const bundle = createContractComponent({ tag: 'div' })
       const children = createRawSnippet<[Record<string, unknown>]>(() => ({
         render: () => '<a href="/home">Home</a>',
       }))
@@ -81,7 +81,7 @@ describe('Polymorphic (Svelte adapter)', () => {
     })
 
     it('forwards class and props to the slot snippet', () => {
-      const bundle = createPolymorphicComponent({ tag: 'div', styling: { base: 'base-class' } })
+      const bundle = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
       let receivedProps: Record<string, unknown> = {}
       const children = createRawSnippet<[Record<string, unknown>]>((getProps) => ({
         render() {
@@ -95,7 +95,7 @@ describe('Polymorphic (Svelte adapter)', () => {
     })
 
     it('falls back to normal render when asChild is false', () => {
-      const bundle = createPolymorphicComponent({ tag: 'section' })
+      const bundle = createContractComponent({ tag: 'section' })
       // Without asChild, host element is preserved and snippet renders inside it
       const children = createRawSnippet(() => ({
         render: () => '<span>text</span>',
@@ -106,7 +106,7 @@ describe('Polymorphic (Svelte adapter)', () => {
     })
 
     it('throws when as and asChild are both set (strict: throw)', () => {
-      const bundle = createPolymorphicComponent({ tag: 'div', enforcement: { strict: 'throw' } })
+      const bundle = createContractComponent({ tag: 'div', enforcement: { strict: 'throw' } })
       const children = createRawSnippet<[Record<string, unknown>]>(() => ({
         render: () => '<a>link</a>',
       }))
