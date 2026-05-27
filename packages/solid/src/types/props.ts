@@ -9,6 +9,7 @@ export type AsProp<T extends ElementType = ElementType> = Readonly<{
 export type PolymorphicPropsBase = Readonly<
   Simplify<
     {
+      asChild?: boolean
       children?: unknown
       class?: ClassName
       variantKey?: VariantKey
