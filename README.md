@@ -20,7 +20,7 @@ rules apply — once, enforced identically across every framework.
 The contract that produced it:
 
 ```tsx
-const Tabs = createPolymorphicComponent({
+const Tabs = createContractComponent({
   tag: 'div',
   enforcement: {
     strict: 'throw',
@@ -49,7 +49,7 @@ adapters are thin rendering wrappers — they carry no enforcement logic of thei
 
 ```text
 Your component definition
-    createPolymorphicComponent(options)
+    createContractComponent(options)
               │
               ▼
   ┌───────────────────────┐
@@ -93,26 +93,26 @@ One import changes per framework. Everything else is identical:
 
 ```ts
 // React
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
-export const Tabs = createPolymorphicComponent(tabsContract)
+import { createContractComponent } from '@polymorphic-ui/react'
+export const Tabs = createContractComponent(tabsContract)
 ```
 
 ```ts
 // Vue
-import { createPolymorphicComponent } from '@polymorphic-ui/vue'
-export const Tabs = createPolymorphicComponent(tabsContract)
+import { createContractComponent } from '@polymorphic-ui/vue'
+export const Tabs = createContractComponent(tabsContract)
 ```
 
 ```ts
 // Solid
-import { createPolymorphicComponent } from '@polymorphic-ui/solid'
-export const Tabs = createPolymorphicComponent(tabsContract)
+import { createContractComponent } from '@polymorphic-ui/solid'
+export const Tabs = createContractComponent(tabsContract)
 ```
 
 ```ts
 // Preact
-import { createPolymorphicComponent } from '@polymorphic-ui/preact'
-export const Tabs = createPolymorphicComponent(tabsContract)
+import { createContractComponent } from '@polymorphic-ui/preact'
+export const Tabs = createContractComponent(tabsContract)
 ```
 
 Render an invalid tree in any of them:
@@ -161,10 +161,10 @@ Declare which children are valid and how many are allowed. The evaluator runs on
 
 ```tsx
 import { isValidElement } from 'react'
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 import { PrimaryAction, SecondaryAction } from './actions'
 
-const ActionBar = createPolymorphicComponent({
+const ActionBar = createContractComponent({
   tag: 'div',
   styling: { base: 'flex gap-2' },
   enforcement: {
@@ -198,7 +198,7 @@ The built-in ARIA engine validates role assignments against the element's implic
 strips invalid or redundant attributes before they reach the DOM.
 
 ```tsx
-const Nav = createPolymorphicComponent({
+const Nav = createContractComponent({
   tag: 'nav',
   enforcement: { strict: 'warn' },
 })
@@ -217,7 +217,7 @@ Custom ARIA rules can extend the built-in engine via `enforcement.aria`.
 ### Class contracts — variants and composition
 
 ```tsx
-const Button = createPolymorphicComponent<'button', { loading?: boolean }>({
+const Button = createContractComponent<'button', { loading?: boolean }>({
   tag: 'button',
   styling: {
     base: 'btn',
@@ -287,7 +287,7 @@ Import from the `/legacy` sub-path. API is identical; the adapter wraps in `forw
 compatibility.
 
 ```ts
-import { createPolymorphicComponent } from '@polymorphic-ui/react/legacy'
+import { createContractComponent } from '@polymorphic-ui/react/legacy'
 ```
 
 ---
@@ -304,7 +304,7 @@ pnpm add @polymorphic-ui/tailwind
 ```tsx
 import { createTailwindPipeline } from '@polymorphic-ui/tailwind'
 
-const Box = createPolymorphicComponent({
+const Box = createContractComponent({
   styling: { plugin: createTailwindPipeline, base: 'rounded p-4' },
 })
 

@@ -161,7 +161,7 @@ return <Dynamic component={tag()} {...dom()} />
 
 ### Compile-time adapters (Svelte)
 
-Svelte components must come from `.svelte` files (compiler constraint). `createPolymorphicComponent`
+Svelte components must come from `.svelte` files (compiler constraint). `createContractComponent`
 returns the `BuiltRuntime` bundle rather than a component function. The `.svelte` file receives it
 as a `bundle` prop:
 
