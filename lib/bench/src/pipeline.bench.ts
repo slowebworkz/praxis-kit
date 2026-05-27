@@ -11,14 +11,14 @@ import { createElement, memo } from 'react'
 import type { ComponentType, ReactElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 import type { AnyRecord } from '@polymorphic-ui/core'
 
 // ─── Module-level components — factory cost excluded from all groups ───────────
 
-const Box = createPolymorphicComponent({ tag: 'div', name: 'Box' })
+const Box = createContractComponent({ tag: 'div', name: 'Box' })
 
-const Button = createPolymorphicComponent({
+const Button = createContractComponent({
   tag: 'button',
   name: 'Button',
   styling: {
