@@ -1,5 +1,5 @@
 /**
- * Compile-time type contract tests for createPolymorphicComponent.
+ * Compile-time type contract tests for createContractComponent.
  *
  * Each test either:
  *   (a) contains JSX/code that must compile without error, or
@@ -13,13 +13,13 @@
 import { describe, it } from 'vitest'
 import { createRef } from 'react'
 import type { MouseEvent } from 'react'
-import { createPolymorphicComponent } from './create-polymorphic-component'
+import { createContractComponent } from './create-contract-component'
 import { Slottable } from '@/shared'
 import type { EmptyRecord, PolymorphicGenerics } from '@polymorphic-ui/core'
 import type { PolymorphicProps } from '@/shared'
 
-const Button = createPolymorphicComponent<'button', EmptyRecord, EmptyRecord>({ name: 'Button' })
-const Anchor = createPolymorphicComponent<'a', EmptyRecord, EmptyRecord>({ name: 'Anchor' })
+const Button = createContractComponent<'button', EmptyRecord, EmptyRecord>({ name: 'Button' })
+const Anchor = createContractComponent<'a', EmptyRecord, EmptyRecord>({ name: 'Anchor' })
 
 // ─── as prop: intrinsic attribute narrowing ───────────────────────────────────
 
