@@ -4,7 +4,7 @@ import { checkValidCardinality } from './diagnostics/valid-cardinality'
 
 type TS = typeof tsserverlibrary
 
-const DEFAULT_CALLEE_NAMES: readonly string[] = ['createPolymorphicComponent']
+const DEFAULT_CALLEE_NAMES: readonly string[] = ['createContractComponent']
 
 function init(modules: { typescript: TS }) {
   const ts = modules.typescript
