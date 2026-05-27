@@ -409,6 +409,132 @@ so they surface in strict environments without aborting a render.
 
 ---
 
+## Runtime lifecycle
+
+Four phases define when each layer of the runtime runs, what it can mutate, and which results are
+safe to memoize. The execution order within each render is deterministic and guaranteed by the
+adapter — not by core itself.
+
+---
+
+### Phase 1: Factory time _(once per `createPolymorphicComponent` call)_
+
+| What runs                                                                                                     | Where           |
+| ------------------------------------------------------------------------------------------------------------- | --------------- |
+| `resolveFactoryOptions` — unpacks `FactoryOptions` → frozen `ResolvedFactoryOptions`                          | `packages/core` |
+| `createClassPipeline` — constructs `StaticClassResolver` (LRU 200) + `VariantClassResolver` (LRU 1000)        | `lib/styling`   |
+| `AriaPolicyEngine` — instantiated only when `enforcement` is declared; holds its own LRU plan cache (cap 100) | `lib/contract`  |
+| `ChildrenEvaluator` — instantiated only when `enforcement.children` is declared; normalizes rules once        | `lib/contract`  |
+| `PolymorphicRuntime` — returned to the adapter; holds frozen options + all pipeline and engine instances      | `packages/core` |
+
+Pure; no DOM access, no framework involvement. Safe to call at module load time. All per-component
+state is captured in the runtime closure here — the capability-driven gate (`AriaPolicyEngine` and
+`ChildrenEvaluator` only constructed when declared) means components that don't use enforcement pay
+zero runtime overhead.
+
+---
+
+### Phase 2: Render time _(once per component render)_
+
+The adapter calls these in order inside the component function:
+
+```text
+resolveTag → resolveProps → resolveClasses → filterProps → [evaluate children] → resolveAria → createElement
+```
+
+| Step | API                                                   | Pure?            | Side effects                                         |
+| ---- | ----------------------------------------------------- | ---------------- | ---------------------------------------------------- |
+| 1    | `resolveTag(as?)`                                     | ✓                | none                                                 |
+| 2    | `resolveProps(props)`                                 | ✓                | none                                                 |
+| 3    | `resolveClasses(tag, props, className?, variantKey?)` | ✓ (functionally) | LRU internal state only                              |
+| 4    | `filterProps(merged)`                                 | ✓                | none                                                 |
+| 5    | `ChildrenEvaluator.evaluate(children)`                | ✗                | `console.warn` or `throw` when `strict` is non-false |
+| 6    | `resolveAria(tag, props)`                             | ✗                | `console.warn` or `throw` when `strict` is non-false |
+| 7    | `createElement(tag, props, children)`                 | ✗                | VDOM / DOM                                           |
+
+**Ordering rationale:**
+
+- ARIA validation (step 6) runs after prop merge (step 2) — it needs the merged props, not raw
+  caller props.
+- Class resolution (step 3) runs before ARIA — the class string is not ARIA-relevant and has no
+  effect on the engine.
+- Children evaluation (step 5) runs before the `asChild` branch — the adapter must validate children
+  before deciding how to render them.
+- `filterProps` (step 4) strips variant keys and implementation-detail props from the DOM; it runs
+  before ARIA so the engine never sees props that won't reach the element.
+
+**Memoization safety:**
+
+| Steps                                                               | Safety                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1–4 (`resolveTag`, `resolveProps`, `resolveClasses`, `filterProps`) | Pure functions of their inputs. Safe to memoize with `useMemo` / `createMemo` using input identity. `resolveClasses` has internal LRU state but is functionally transparent — same input always produces the same output.                             |
+| 5–6 (`ChildrenEvaluator.evaluate`, `resolveAria`)                   | Functionally deterministic (same input → same violations + same fixed props), but side-effecting when `strict` is non-false. Safe to memoize **only when `strict: false`** — a memoized hit would silence the `console.warn` or suppress the `throw`. |
+| 7 (`createElement`)                                                 | Framework-owned; not applicable.                                                                                                                                                                                                                      |
+
+---
+
+### Phase 3: Fix time _(embedded inside `resolveAria`, not a separate call)_
+
+Fix application runs inside `AriaPolicyEngine.validate()` before the result is returned to the
+adapter. It is documented separately because its semantics differ from violation reporting:
+
+- Violations always reflect **pre-fix state** (snapshot model). The adapter receives violations that
+  describe the original props, even though the returned `props` object already has fixes applied.
+- Fixes are accumulated by `FixKind` and deduplicated — at most one executor per kind fires
+  regardless of how many rules emit it.
+- Prop stripping (removing invalid `aria-*` attributes, clearing invalid explicit roles) happens
+  here.
+
+The adapter receives already-fixed props from `resolveAria`. No post-processing of violations is
+required to produce the rendered output.
+
+---
+
+### Phase 4: Diagnosis time _(dev / debug only; always side-effect free)_
+
+`diagnose(options, tag, props, children?, className?, variantKey?)` constructs transient
+`strict: false` engine instances, runs all three engines, and returns a `ComponentDiagnosis` without
+throwing or warning:
+
+```ts
+type ComponentDiagnosis = {
+  classes: ClassDiagnosis // class pipeline trace — compound matches, tag-map, preset
+  aria: ValidationViolation[] // pre-fix violations from AriaPolicyEngine
+  children: ChildViolation[] // all rule violations from ChildrenEvaluator
+}
+```
+
+The internal engines are not the same instances used by the component — diagnosis is fully isolated
+from production behavior. Safe to call inside render functions during development.
+
+Sub-entrypoints for targeted inspection:
+
+| API                     | Package                        | Returns                                                                                    |
+| ----------------------- | ------------------------------ | ------------------------------------------------------------------------------------------ |
+| `diagnoseClassPipeline` | `@polymorphic-ui/core/styling` | `ClassDiagnosis` — compound traces, tag-map bypass status, effective variants              |
+| `diagnoseChildren`      | `@polymorphic-ui/contract`     | `ChildViolation[]` — all cardinality, position, unexpected, and ambiguous child violations |
+
+See [§Debugging](#debugging) for usage examples.
+
+---
+
+### Plugin lifecycle
+
+Class plugins (`styling.plugin`) are factory-time values. The plugin function is called once during
+`createClassPipeline` and its return value — the pipeline function — is captured in the runtime
+closure:
+
+```text
+factory time:  plugin(basePipeline) → ClassPipeline   [called once; result cached in closure]
+render time:   pipeline(classes, context) → string     [called per render; must be deterministic]
+```
+
+The plugin function must be pure at factory time. The pipeline function must be deterministic at
+render time — it receives the merged class string and a `PipelineContext`, and returns a transformed
+string. It must not capture render-time mutable state in the factory closure.
+
+This is the contract that must stabilize before broader third-party plugin APIs can be opened.
+
 ---
 
 ## `@polymorphic-ui/react`
