@@ -12,7 +12,7 @@ import { render } from './render'
 import type { SolidFactoryOptions } from './solid-options'
 import type { KnownProps, PolymorphicComponent, SolidElement, UnknownProps } from './types'
 
-export function createPolymorphicComponent<
+export function createContractComponent<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
