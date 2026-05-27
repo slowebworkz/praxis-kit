@@ -1,4 +1,4 @@
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 
 // Non-variant props the component owns. These are merged into the resolved
 // prop set and must also be stripped from the DOM via filterProps.
@@ -19,7 +19,7 @@ type ButtonVariants = {
   }
 }
 
-export const Button = createPolymorphicComponent<'button', ButtonProps, ButtonVariants>({
+export const Button = createContractComponent<'button', ButtonProps, ButtonVariants>({
   tag: 'button',
   name: 'Button',
   styling: {

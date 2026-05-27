@@ -10,7 +10,7 @@
 // suites asserting against the same EXPECTED_* constants — divergence fails one side.
 import { describe, it, expect } from 'vitest'
 import { renderToString } from 'solid-js/web'
-import { createPolymorphicComponent } from './create-polymorphic-component'
+import { createContractComponent } from './create-contract-component'
 
 function parseAttributes(html: string): Record<string, string> {
   // Node environment: use regex to parse attributes from the first tag.
@@ -45,7 +45,7 @@ function normalizeAttrs(attrs: Record<string, string>): Record<string, string> {
 
 describe('SSR hydration parity — Solid (server side)', () => {
   it('base class present in server-rendered HTML', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       tag: 'div',
       styling: { base: 'box-base' },
       enforcement: { strict: false },
@@ -56,7 +56,7 @@ describe('SSR hydration parity — Solid (server side)', () => {
   })
 
   it('variant class present in server-rendered HTML', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       tag: 'div',
       styling: {
         base: 'box',
@@ -71,7 +71,7 @@ describe('SSR hydration parity — Solid (server side)', () => {
   })
 
   it('compound variant class present in server-rendered HTML', () => {
-    const Button = createPolymorphicComponent({
+    const Button = createContractComponent({
       tag: 'button',
       styling: {
         base: 'btn',
@@ -91,19 +91,19 @@ describe('SSR hydration parity — Solid (server side)', () => {
   })
 
   it('ARIA strip: redundant role absent from server-rendered HTML', () => {
-    const Nav = createPolymorphicComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
     const html = renderToString(() => <Nav role="navigation" />)
     expect(parseAttributes(html)).not.toHaveProperty('role')
   })
 
   it('ARIA strip: invalid aria-* absent from server-rendered HTML', () => {
-    const Button = createPolymorphicComponent({ tag: 'button', enforcement: { strict: false } })
+    const Button = createContractComponent({ tag: 'button', enforcement: { strict: false } })
     const html = renderToString(() => <Button aria-checked="true" />)
     expect(html).not.toContain('aria-checked')
   })
 
   it('as prop override: correct tag in server-rendered HTML', () => {
-    const Nav = createPolymorphicComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
     const html = renderToString(() => <Nav as="section" />)
     expect(html).toContain('<section')
     expect(html).not.toContain('<nav')

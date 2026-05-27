@@ -11,7 +11,7 @@ import { createElement, isValidElement, act } from 'react'
 import type { ComponentType, ReactElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { UnknownProps } from '@/shared'
-import { createPolymorphicComponent } from './create-polymorphic-component'
+import { createContractComponent } from './create-contract-component'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function box(comp: any): ComponentType<UnknownProps> {
@@ -44,7 +44,7 @@ afterEach(() => {
 // ─── Tier 1 — Render primitive (no styling, no enforcement) ──────────────────
 
 describe('Tier 1 — primitive', () => {
-  const Primitive = createPolymorphicComponent({ tag: 'div' })
+  const Primitive = createContractComponent({ tag: 'div' })
 
   it('renders the default tag', () => {
     mount(createElement(box(Primitive), null))
@@ -134,7 +134,7 @@ describe('Tier 1 — primitive', () => {
 // ─── Tier 2 — Styling (variants, base class, filterProps) ────────────────────
 
 describe('Tier 2 — styling', () => {
-  const Styled = createPolymorphicComponent({
+  const Styled = createContractComponent({
     tag: 'button',
     styling: {
       base: 'btn',
@@ -210,7 +210,7 @@ describe('Tier 2 — styling', () => {
 // ─── Tier 3 — ARIA enforcement ────────────────────────────────────────────────
 
 describe('Tier 3 — ARIA enforcement', () => {
-  const Enforced = createPolymorphicComponent({
+  const Enforced = createContractComponent({
     tag: 'nav',
     styling: { base: 'nav-bar' },
     enforcement: { strict: false },
@@ -234,14 +234,14 @@ describe('Tier 3 — ARIA enforcement', () => {
 
   it('warns for invalid aria when strict is "warn"', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const W = createPolymorphicComponent({ tag: 'nav', enforcement: { strict: 'warn' } })
+    const W = createContractComponent({ tag: 'nav', enforcement: { strict: 'warn' } })
     mount(createElement(box(W), { 'aria-checked': 'true' }))
     expect(warn).toHaveBeenCalled()
   })
 
   it('does not warn when no enforcement is configured (primitive tier)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const NoEnf = createPolymorphicComponent({ tag: 'nav' })
+    const NoEnf = createContractComponent({ tag: 'nav' })
     mount(createElement(box(NoEnf), { 'aria-checked': 'true' }))
     expect(warn).not.toHaveBeenCalled()
   })
@@ -253,7 +253,7 @@ describe('Tier 4 — children enforcement', () => {
   const child = (key: string) => createElement('span', { key })
   const Guarded =
     // eslint-disable-next-line @polymorphic-ui/no-enforcement-without-strict -- intentionally tests the adapter default (React defaults to 'throw')
-    createPolymorphicComponent({
+    createContractComponent({
       tag: 'div',
       styling: { base: 'group' },
       enforcement: {
@@ -308,7 +308,7 @@ describe('Tier 4 — children enforcement', () => {
 describe('Tier 5 — all capabilities combined', () => {
   const Full =
     // eslint-disable-next-line @polymorphic-ui/no-enforcement-without-strict -- intentionally tests the adapter default (React defaults to 'throw')
-    createPolymorphicComponent({
+    createContractComponent({
       tag: 'nav',
       name: 'FullNav',
       styling: {
