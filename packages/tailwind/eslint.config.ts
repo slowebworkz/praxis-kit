@@ -1,7 +1,7 @@
 import type { ESLintConfig } from '../../configs/types'
 
-import base from '../../configs/base.js'
-import ts from '../../configs/typescript.js'
+import base from '../../configs/base'
+import ts from '../../configs/typescript'
 
 const config = [
   ...base,
