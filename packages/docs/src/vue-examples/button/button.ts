@@ -1,4 +1,4 @@
-import { createPolymorphicComponent } from '@polymorphic-ui/vue'
+import { createContractComponent } from '@polymorphic-ui/vue'
 
 type ButtonProps = {
   loading?: boolean
@@ -17,7 +17,7 @@ type ButtonVariants = {
   }
 }
 
-export const Button = createPolymorphicComponent<'button', ButtonProps, ButtonVariants>({
+export const Button = createContractComponent<'button', ButtonProps, ButtonVariants>({
   tag: 'button',
   name: 'Button',
   styling: {
