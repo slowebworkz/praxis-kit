@@ -1,5 +1,9 @@
 import type { ChildrenEvaluator, PolymorphicGenerics } from '@polymorphic-ui/core'
-import type { BuiltChildrenEvaluator, WithChildRules } from '@polymorphic-ui/adapter-utils'
+import type {
+  BuiltChildrenEvaluator,
+  SlotValidator,
+  WithChildRules,
+} from '@polymorphic-ui/adapter-utils'
 import type { FilterPredicate } from './primitives'
 import type { Runtime, TypedRuntime } from './runtime'
 
@@ -11,6 +15,7 @@ export type BuiltRuntime<
 > = BuiltChildrenEvaluator<TOptions> & {
   runtime: TypedRuntime<G>
   filterProps: FilterPredicate
+  slotValidator: SlotValidator
 }
 
 // Structural alias used when generic precision is not needed (e.g. as a prop type).
@@ -20,5 +25,6 @@ export type BuiltRuntime<
 export type AnyBuiltRuntime = {
   runtime: Runtime
   filterProps: FilterPredicate
+  slotValidator: SlotValidator
   childrenEvaluator?: ChildrenEvaluator
 }
