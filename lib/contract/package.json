@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "sideEffects": false,
   "description": "Contract runtime: ARIA engine, children validator, strict mode",
   "scripts": {
     "typecheck": "tsc --noEmit",
