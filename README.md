@@ -1,16 +1,25 @@
 # praxis-ui
 
-Framework-neutral semantic UI contracts.
+A semantic runtime for component systems.
 
-A semantic UI contract defines which elements may render, how they compose, and which accessibility
-rules apply — once, enforced identically across every framework.
+Praxis UI defines which elements may render, how they compose, and which accessibility rules apply.
+The same validation runs in every framework.
 
 ---
 
-## The idea in thirty seconds
+## Three concepts
+
+1. Define a semantic contract. One configuration object declares the tag, variant classes, ARIA
+   rules, and structural invariants for a component.
+
+2. Bind to any framework. Change one import. The semantic runtime (validation, class resolution,
+   ARIA normalization) runs identically in React, Vue, Solid, Svelte, and Preact.
+
+3. Invalid UI cannot render silently. Structural violations throw or warn at render time, before
+   anything reaches the DOM.
 
 ```tsx
-// This throws at render time:
+// This throws:
 <Tabs>
   <Tabs.Trigger value="a">First</Tabs.Trigger>
 </Tabs>
@@ -32,17 +41,6 @@ const Tabs = createContractComponent({
 })
 ```
 
-Define it once. At render time:
-
-- **Invalid children throw** — wrong types, wrong count, wrong order
-- **Roles normalize automatically** — `<nav role="navigation">` strips the redundant attribute
-  without any handler code
-- **Semantics validate automatically** — invalid role overrides are caught and reported before they
-  reach the DOM
-
-The enforcement logic lives in `@praxis-ui/core`. The React, Vue, Svelte, Solid, and Preact adapters
-are thin rendering wrappers — they carry no enforcement logic of their own.
-
 ---
 
 ## Architecture
@@ -53,25 +51,63 @@ Your component definition
               │
               ▼
   ┌───────────────────────┐
-  │  @praxis-ui/core │   ← enforcement lives here
+  │   @praxis-ui/core     │  ← semantic runtime
   │                       │
   │  class pipeline       │   base · variants · tag-map · compounds
   │  ARIA engine          │   role normalization · redundancy stripping
-  │  child evaluator      │   structural contracts · cardinality rules
+  │  structural validator │   invariants · cardinality rules
   └──────────┬────────────┘
-             │  thin render adapters — no enforcement logic
+             │  framework bindings — no runtime logic
      ┌───────┼───────┬──────────┬──────────┐
      ▼       ▼       ▼          ▼          ▼
   React     Vue   Svelte     Solid      Preact
 ```
 
-This separation is what makes the library a _runtime architecture_ rather than a React utility. The
-same contract definition produces identical enforcement behavior on every framework because
-enforcement never enters the adapter layer.
+The semantic runtime lives entirely in `@praxis-ui/core`. Framework packages are bindings: they
+translate each framework's rendering model into calls against the runtime. No validation logic is
+duplicated across them.
 
 ---
 
-## Same contract, different renderer
+## Not a component library
+
+Radix UI, Headless UI, and Ark UI ship pre-built components (tabs, dialogs, menus) with
+accessibility handling baked into each one individually. You adopt their structure.
+
+Praxis UI ships none of that. It is the semantic runtime that a design system's components are built
+on: the validation layer, ARIA guarantees, and class pipeline, without prescribing what those
+components are.
+
+| Library         | Ships components  | Structural validation   | Shared runtime across frameworks |
+| --------------- | ----------------- | ----------------------- | -------------------------------- |
+| **Radix UI**    | Yes               | Partial, implicit       | No — React only                  |
+| **Headless UI** | Yes               | No                      | No — React + Vue separately      |
+| **Ark UI**      | Yes               | Partial, state machine  | No — bindings are independent    |
+| **Praxis UI**   | No — runtime only | Yes — declarative rules | Yes — bindings share one runtime |
+
+"Partial" means structure is validated incidentally, as a side effect of the component's
+implementation. You cannot add an invariant, change a cardinality rule, or extend the validation
+layer. The library owns the shape; you follow it.
+
+### Why do structural guarantees require a runtime?
+
+Structural misuse (wrong children, invalid ARIA, composition violations) produces no TypeScript
+errors. It produces broken DOM and accessibility failures that only surface in a browser, often only
+under specific usage patterns. A runtime validation layer catches these at render time, before they
+reach QA or production. `strict: 'throw'` hard-fails the render; `strict: 'warn'` surfaces
+violations without interrupting the render cycle.
+
+### Why are framework packages bindings, not runtimes?
+
+If validation logic lived in the React binding, it would have to be duplicated in the Vue binding,
+the Solid binding, and every binding added later. A bug fix or rule change would mean coordinated
+changes across five packages. Keeping the semantic runtime in `@praxis-ui/core` means one
+implementation with identical behaviour in every framework. Bindings only translate the framework's
+rendering model into calls against the runtime.
+
+---
+
+## One runtime, any framework
 
 Define the contract once:
 
@@ -127,21 +163,21 @@ Render an invalid tree in any of them:
 Error: [Tabs] contract violation — expected exactly 1 Tabs.List (got 0), at least 1 Tabs.Panel (got 0)
 ```
 
-Same error. Same message. Same throw. The enforcement logic never crossed the adapter boundary.
+Same error. Same message. Same throw. The semantic runtime never crossed the binding boundary.
 
 ---
 
 ## Packages
 
-| Package                                    | Description                                                                        |
-| ------------------------------------------ | ---------------------------------------------------------------------------------- |
-| [`@praxis-ui/core`](packages/core)         | Framework-agnostic runtime — factory, class pipeline, ARIA engine, child evaluator |
-| [`@praxis-ui/react`](packages/react)       | React adapter · React 19+ · `/legacy` sub-path for React 18                        |
-| [`@praxis-ui/vue`](packages/vue)           | Vue 3 adapter                                                                      |
-| [`@praxis-ui/tailwind`](packages/tailwind) | Layout-aware class pipeline plugin                                                 |
-| [`@praxis-ui/solid`](packages/solid)       | Solid adapter · client and SSR                                                     |
-| [`@praxis-ui/preact`](packages/preact)     | Preact adapter                                                                     |
-| [`@praxis-ui/svelte`](packages/svelte)     | Svelte adapter                                                                     |
+| Package                                    | Description                                                                   |
+| ------------------------------------------ | ----------------------------------------------------------------------------- |
+| [`@praxis-ui/core`](packages/core)         | Semantic runtime — class pipeline, ARIA engine, structural validator, factory |
+| [`@praxis-ui/react`](packages/react)       | React binding · React 19+ · `/legacy` sub-path for React 18                   |
+| [`@praxis-ui/vue`](packages/vue)           | Vue 3 binding                                                                 |
+| [`@praxis-ui/solid`](packages/solid)       | Solid binding · client and SSR                                                |
+| [`@praxis-ui/preact`](packages/preact)     | Preact binding                                                                |
+| [`@praxis-ui/svelte`](packages/svelte)     | Svelte binding                                                                |
+| [`@praxis-ui/tailwind`](packages/tailwind) | Layout-aware class pipeline plugin                                            |
 
 ---
 
@@ -190,7 +226,7 @@ const ActionBar = createContractComponent({
 ```
 
 `strict: 'warn'` surfaces violations as console warnings instead of throwing. Omit `enforcement`
-entirely to skip all validation — zero cost at runtime.
+entirely to skip all validation; there is no runtime cost.
 
 ### Accessibility contracts
 
@@ -331,7 +367,7 @@ top of CVA, that is the gap this fills.
 ### Why not Radix Slot?
 
 [Radix Slot](https://www.radix-ui.com/primitives/docs/utilities/slot) solves `asChild` prop merging
-for React. This library's `asChild` implementation is modeled on Radix Slot — but the contract layer
+for React. This library's `asChild` implementation follows the same model, but the contract layer
 above it (structural validation, ARIA normalization, framework portability) is out of scope for
 Slot.
 
@@ -339,9 +375,9 @@ Slot.
 
 ### Why not a component library?
 
-A component library enforces its own constraints. `praxis-ui` is infrastructure — it provides the
+A component library enforces its own constraints. `praxis-ui` is infrastructure: it provides the
 enforcement, normalization, and composition primitives that your design system's components are
-built on top of, in any framework.
+built on, in any framework.
 
 → [Migrating from Chakra UI](MIGRATING.md#migrating-from-chakra-ui-or-any-full-component-library)
 
