@@ -2,7 +2,8 @@ import { createMemo, splitProps } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import type { ElementType, IntrinsicProps } from '@polymorphic-ui/core'
 import { isKnownAriaRole } from '@polymorphic-ui/core'
-import type { FilterPredicate, ResolvedProps, SolidElement, UnknownProps } from './types/primitives'
+import { applyFilter } from '@polymorphic-ui/adapter-utils'
+import type { ResolvedProps, SolidElement, UnknownProps } from './types/primitives'
 import type { KnownProps } from './types/props'
 import type { RenderInput } from './types/render'
 import type { Runtime } from './types/runtime'
@@ -10,18 +11,6 @@ import type { SlotValidator } from './slot/slot-validator'
 
 // Keys consumed by the adapter — split from pass-through DOM props.
 const SPLIT_KEYS = ['as', 'asChild', 'children', 'class', 'variantKey', 'ref'] as const
-
-function applyFilter<T extends ResolvedProps>(
-  props: T,
-  filterProps: FilterPredicate,
-  variantKeys: ReadonlySet<string>,
-): T {
-  const out = {} as T
-  for (const [k, v] of Object.entries(props)) {
-    if (!filterProps(k, variantKeys)) (out as UnknownProps)[k] = v
-  }
-  return out
-}
 
 function toChildArray(children: unknown): unknown[] {
   if (children === undefined || children === null) return []
