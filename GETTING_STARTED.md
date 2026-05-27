@@ -36,9 +36,9 @@ import path changes.
 The minimum required option is `tag`: the HTML element to render.
 
 ```ts
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 
-const Box = createPolymorphicComponent({ tag: 'div' })
+const Box = createContractComponent({ tag: 'div' })
 ```
 
 ```tsx
@@ -55,7 +55,7 @@ That's a working component. Every option from here is opt-in.
 `styling.base` is applied unconditionally on every render.
 
 ```ts
-const Box = createPolymorphicComponent({
+const Box = createContractComponent({
   tag: 'div',
   styling: { base: 'rounded border bg-white' },
 })
@@ -80,7 +80,7 @@ Pass a `className` prop to append additional classes:
 Add named variant dimensions. Each variant key maps to a set of class strings.
 
 ```ts
-const Box = createPolymorphicComponent({
+const Box = createContractComponent({
   tag: 'div',
   styling: {
     base: 'rounded border',
@@ -139,7 +139,7 @@ compound rule.
 Pass `as` to change the rendered element without changing the component's classes or props.
 
 ```tsx
-const Button = createPolymorphicComponent({
+const Button = createContractComponent({
   tag: 'button',
   styling: { base: 'btn', variants: { size: { sm: 'btn--sm', lg: 'btn--lg' } } },
 })
@@ -164,7 +164,7 @@ TypeScript narrows the allowed props to match the active element. `href` is only
 corrects attribute problems before they reach the DOM.
 
 ```ts
-const Nav = createPolymorphicComponent({
+const Nav = createContractComponent({
   tag: 'nav',
   enforcement: { strict: 'warn' },
 })
@@ -195,10 +195,10 @@ Two strictness levels:
 
 ```tsx
 import { isValidElement } from 'react'
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 import { CardHeader, CardBody } from './card-parts'
 
-const Card = createPolymorphicComponent({
+const Card = createContractComponent({
   tag: 'div',
   enforcement: {
     strict: 'throw',
@@ -243,7 +243,7 @@ Use `strict: 'warn'` while developing and switch to `strict: 'throw'` for produc
 rendering its own DOM node. The child's element type becomes the rendered tag.
 
 ```tsx
-const Button = createPolymorphicComponent({
+const Button = createContractComponent({
   tag: 'button',
   styling: { base: 'btn', variants: { size: { sm: 'btn--sm', lg: 'btn--lg' } } },
 })
@@ -303,7 +303,7 @@ Import from the `/legacy` sub-path. The API is identical — the adapter wraps i
 React 18 compatibility.
 
 ```ts
-import { createPolymorphicComponent } from '@polymorphic-ui/react/legacy'
+import { createContractComponent } from '@polymorphic-ui/react/legacy'
 ```
 
 ---
@@ -320,7 +320,7 @@ pnpm add @polymorphic-ui/tailwind
 ```ts
 import { createTailwindPipeline } from '@polymorphic-ui/tailwind'
 
-const Box = createPolymorphicComponent({
+const Box = createContractComponent({
   tag: 'div',
   styling: {
     plugin: createTailwindPipeline,

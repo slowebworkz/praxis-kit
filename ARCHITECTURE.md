@@ -417,7 +417,7 @@ adapter — not by core itself.
 
 ---
 
-### Phase 1: Factory time _(once per `createPolymorphicComponent` call)_
+### Phase 1: Factory time _(once per `createContractComponent` call)_
 
 | What runs                                                                                                     | Where           |
 | ------------------------------------------------------------------------------------------------------------- | --------------- |
@@ -605,7 +605,7 @@ src/
 
 ---
 
-### `createPolymorphicComponent`
+### `createContractComponent`
 
 Calls `buildRuntime` once at factory time and returns a typed React component that holds the
 resulting `BuiltRuntime` bundle in its closure.
@@ -796,7 +796,7 @@ type PresetOf<G> = G['preset']
 ```
 
 Internal helpers use `G extends PolymorphicGenerics` to avoid repeating the four-parameter chain.
-Public factory functions (`createPolymorphic`, `createPolymorphicComponent`, `buildRuntime`) keep
+Public factory functions (`createPolymorphic`, `createContractComponent`, `buildRuntime`) keep
 individual parameters so TypeScript can infer each one from the call-site options literal.
 
 ---
@@ -851,7 +851,7 @@ variant props (defaults → preset → caller). Use `diagnoseClassPipeline` to t
 import { diagnoseClassPipeline } from '@polymorphic-ui/core/styling'
 
 const trace = diagnoseClassPipeline(
-  options, // same ClassPipelineOptions passed to createPolymorphicComponent
+  options, // same ClassPipelineOptions passed to createContractComponent
   'button', // rendered tag
   { size: 'sm' }, // variant props after filterProps
 )
@@ -895,7 +895,7 @@ The ARIA engine already explains every decision through `ValidationResult.violat
 `enforcement.strict: 'warn'` to surface the messages as `console.warn` during development:
 
 ```ts
-createPolymorphicComponent({
+createContractComponent({
   tag: 'nav',
   enforcement: { strict: 'warn', aria: [...] },
 })
@@ -941,7 +941,7 @@ The children evaluator routes all violations through `StrictBase`, which control
 or warn. Set `enforcement.strict: 'warn'` to see messages without aborting a render:
 
 ```ts
-createPolymorphicComponent({
+createContractComponent({
   tag: 'ul',
   enforcement: {
     strict: 'warn',
@@ -960,7 +960,7 @@ Message patterns:
 | No rule matched        | `ButtonGroup: unexpected child [string] at index 0`                     |
 | Matched multiple rules | `ButtonGroup: [element] at index 0 matches multiple rules: Icon, Label` |
 
-The component name comes from the `name` option passed to `createPolymorphicComponent`. Rule names
-come from each `ChildRuleInput.name` field. The `[string]` / `[element]` / `[null]` notation in
+The component name comes from the `name` option passed to `createContractComponent`. Rule names come
+from each `ChildRuleInput.name` field. The `[string]` / `[element]` / `[null]` notation in
 unexpected-child and multi-match messages comes from `getTypeName`, which classifies the child's
 runtime type for readability.

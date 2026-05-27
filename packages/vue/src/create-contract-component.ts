@@ -13,7 +13,7 @@ import { render, resolveRenderState } from './render'
 import type { VueFactoryOptions } from './vue-options'
 import type { UnknownProps, PolymorphicComponent } from './types'
 
-export function createPolymorphicComponent<
+export function createContractComponent<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
