@@ -3,6 +3,6 @@
  * render primitive. No AriaPolicyEngine, no ChildrenEvaluator, no class
  * pipeline should appear in this bundle slice.
  */
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 
-export const Box = createPolymorphicComponent({ tag: 'div', name: 'Box' })
+export const Box = createContractComponent({ tag: 'div', name: 'Box' })

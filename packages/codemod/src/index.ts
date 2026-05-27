@@ -8,7 +8,7 @@ Usage: polymorphic-codemod [options]
 
 Options:
   --from <name>     Factory function name to rename (default: createPolymorphicComponent)
-  --to <name>       New factory function name (required)
+  --to <name>       New factory function name (default: createContractComponent)
   --files <glob>    Glob pattern for files to transform (default: **/*.{ts,tsx})
   --dry-run         Preview changes without writing to disk
   --help            Show this help message
@@ -20,7 +20,7 @@ function main(): void {
   const { values } = parseArgs({
     options: {
       from: { type: 'string', default: 'createPolymorphicComponent' },
-      to: { type: 'string' },
+      to: { type: 'string', default: 'createContractComponent' },
       files: { type: 'string', default: '**/*.{ts,tsx}' },
       'dry-run': { type: 'boolean', default: false },
       help: { type: 'boolean', default: false },
@@ -34,13 +34,7 @@ function main(): void {
   }
 
   const fromName = values.from!
-  const toName = values.to
-
-  if (!toName) {
-    console.error('Error: --to is required.')
-    printUsage()
-    process.exit(1)
-  }
+  const toName = values.to!
 
   const isDryRun = values['dry-run']!
   const glob = values.files!
