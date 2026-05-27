@@ -5,7 +5,7 @@ import type {
   PropsOf,
   StrictMode,
   VariantsOf,
-} from '@polymorphic-ui/core'
+} from '@praxis-ui/core'
 import type { PreactFactoryOptions } from '../preact-options'
 import type { SlotComponent } from './primitives'
 

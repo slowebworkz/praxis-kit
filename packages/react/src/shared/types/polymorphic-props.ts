@@ -10,7 +10,7 @@ import type {
   PropsOf,
   VariantProps,
   VariantsOf,
-} from '@polymorphic-ui/core'
+} from '@praxis-ui/core'
 import type { UnknownProps } from './primitives'
 
 /** Maps a core ElementType to its DOM instance type for ref inference. */

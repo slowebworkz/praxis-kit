@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ChildrenEvaluator } from '@polymorphic-ui/core'
+import { ChildrenEvaluator } from '@praxis-ui/core'
 import { buildRuntime } from './build-runtime'
 import { SlotValidator } from './slot/slot-validator'
 

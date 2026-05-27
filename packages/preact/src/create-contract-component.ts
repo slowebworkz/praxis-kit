@@ -5,7 +5,7 @@ import type {
   PolymorphicGenerics,
   PresetMap,
   VariantMap,
-} from '@polymorphic-ui/core'
+} from '@praxis-ui/core'
 import { forwardRef } from 'preact/compat'
 import type { ForwardedRef } from 'preact/compat'
 import { normalizeChildren } from './normalize-children'

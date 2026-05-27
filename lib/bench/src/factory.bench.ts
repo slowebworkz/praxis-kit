@@ -1,7 +1,7 @@
 import { bench, describe } from 'vitest'
-import { createPolymorphic } from '@polymorphic-ui/core'
+import { createPolymorphic } from '@praxis-ui/core'
 import { cva } from 'class-variance-authority'
-import type { AnyRecord } from '@polymorphic-ui/core'
+import type { AnyRecord } from '@praxis-ui/core'
 
 // ─── Shared configs ────────────────────────────────────────────────────────────
 // Module-level runtimes exclude factory cost from resolver benchmarks.

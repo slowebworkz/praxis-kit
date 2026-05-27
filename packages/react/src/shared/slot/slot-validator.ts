@@ -1,5 +1,5 @@
-import { SlotValidator as BaseSlotValidator } from '@polymorphic-ui/adapter-utils'
-import type { StrictMode } from '@polymorphic-ui/core'
+import { SlotValidator as BaseSlotValidator } from '@praxis-ui/adapter-utils'
+import type { StrictMode } from '@praxis-ui/core'
 
 export class SlotValidator extends BaseSlotValidator {
   constructor(name: string, strict: StrictMode) {

@@ -1,1 +1,1 @@
-export { composeFilter } from '@polymorphic-ui/adapter-utils'
+export { composeFilter } from '@praxis-ui/adapter-utils'

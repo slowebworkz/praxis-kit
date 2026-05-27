@@ -13,7 +13,7 @@ import {
 
 type Property = TSESTree.Property
 
-const createRule = RuleCreator((name) => `https://polymorphic-ui.dev/eslint-rules/${name}`)
+const createRule = RuleCreator((name) => `https://praxis-ui.dev/eslint-rules/${name}`)
 
 export type Options = [{ calleeNames?: string[]; reportNonLiteral?: boolean }]
 

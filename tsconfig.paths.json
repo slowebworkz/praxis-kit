@@ -1,19 +1,19 @@
 {
   "compilerOptions": {
     "paths": {
-      "@polymorphic-ui/core": ["./packages/core/src"],
-      "@polymorphic-ui/core/primitive": ["./packages/core/src/primitive.ts"],
-      "@polymorphic-ui/core/contract": ["./packages/core/src/contract.ts"],
-      "@polymorphic-ui/core/styling": ["./packages/core/src/styling.ts"],
-      "@polymorphic-ui/core/*": ["./packages/core/src/*"],
-      "@polymorphic-ui/primitive": ["./lib/primitive/src"],
-      "@polymorphic-ui/primitive/*": ["./lib/primitive/src/*"],
-      "@polymorphic-ui/contract": ["./lib/contract/src"],
-      "@polymorphic-ui/contract/*": ["./lib/contract/src/*"],
-      "@polymorphic-ui/styling": ["./lib/styling/src"],
-      "@polymorphic-ui/styling/*": ["./lib/styling/src/*"],
-      "@polymorphic-ui/adapter-utils": ["./lib/adapter-utils/src"],
-      "@polymorphic-ui/adapter-utils/*": ["./lib/adapter-utils/src/*"]
+      "@praxis-ui/core": ["./packages/core/src"],
+      "@praxis-ui/core/primitive": ["./packages/core/src/primitive.ts"],
+      "@praxis-ui/core/contract": ["./packages/core/src/contract.ts"],
+      "@praxis-ui/core/styling": ["./packages/core/src/styling.ts"],
+      "@praxis-ui/core/*": ["./packages/core/src/*"],
+      "@praxis-ui/primitive": ["./lib/primitive/src"],
+      "@praxis-ui/primitive/*": ["./lib/primitive/src/*"],
+      "@praxis-ui/contract": ["./lib/contract/src"],
+      "@praxis-ui/contract/*": ["./lib/contract/src/*"],
+      "@praxis-ui/styling": ["./lib/styling/src"],
+      "@praxis-ui/styling/*": ["./lib/styling/src/*"],
+      "@praxis-ui/adapter-utils": ["./lib/adapter-utils/src"],
+      "@praxis-ui/adapter-utils/*": ["./lib/adapter-utils/src/*"]
     }
   }
 }

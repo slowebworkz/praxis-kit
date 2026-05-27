@@ -1,6 +1,6 @@
-import { makeResolveTag, mergeProps } from '@polymorphic-ui/primitive'
-import { AriaPolicyEngine } from '@polymorphic-ui/contract'
-import { createClassPipeline } from '@polymorphic-ui/styling'
+import { makeResolveTag, mergeProps } from '@praxis-ui/primitive'
+import { AriaPolicyEngine } from '@praxis-ui/contract'
+import { createClassPipeline } from '@praxis-ui/styling'
 import type {
   AnyRecord,
   ClassName,

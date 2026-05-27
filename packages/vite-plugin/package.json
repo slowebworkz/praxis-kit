@@ -1,5 +1,5 @@
 {
-  "name": "@polymorphic-ui/vite-plugin",
+  "name": "@praxis-ui/vite-plugin",
   "version": "1.0.0",
   "type": "module",
   "exports": {
@@ -25,7 +25,7 @@
     "typescript": "catalog:"
   },
   "devDependencies": {
-    "@polymorphic-ui/core": "workspace:*",
+    "@praxis-ui/core": "workspace:*",
     "tsup": "catalog:",
     "typescript": "catalog:",
     "vite": "^6.0.0",

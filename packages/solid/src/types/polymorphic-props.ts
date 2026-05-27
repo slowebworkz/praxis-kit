@@ -10,7 +10,7 @@ import type {
   PropsOf,
   VariantProps,
   VariantsOf,
-} from '@polymorphic-ui/core'
+} from '@praxis-ui/core'
 import type { SlotRenderFn, UnknownProps } from './primitives'
 
 export type ElementRef<T extends ElementType> = T extends IntrinsicTag

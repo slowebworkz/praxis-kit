@@ -5,7 +5,7 @@ import type {
   PolymorphicGenerics,
   PresetMap,
   VariantMap,
-} from '@polymorphic-ui/core'
+} from '@praxis-ui/core'
 import type { ReactElement, Ref } from 'react'
 import { Slot } from './slot'
 import { normalizeChildren } from './normalize-children'

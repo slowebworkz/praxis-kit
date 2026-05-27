@@ -1,7 +1,7 @@
 /**
  * generate-repo-state.ts
  *
- * Generates architecture manifests for the polymorphic-ui monorepo into .repo-state/.
+ * Generates architecture manifests for the praxis-ui monorepo into .repo-state/.
  * Run: node --experimental-strip-types scripts/generate-repo-state.ts
  *
  * Outputs:
@@ -379,13 +379,13 @@ function buildRuntimeGraph() {
 function buildAdaptersMap(packages: PackageMeta[]) {
   const ADAPTER_SPECS = [
     {
-      pkg: '@polymorphic-ui/react',
+      pkg: '@praxis-ui/react',
       framework: 'react',
       optionsType: 'ReactFactoryOptions',
       frameworkSpecificOptions: ['slotComponent', 'filterProps'],
     },
     {
-      pkg: '@polymorphic-ui/vue',
+      pkg: '@praxis-ui/vue',
       framework: 'vue',
       optionsType: 'VueFactoryOptions',
       frameworkSpecificOptions: ['filterProps'],

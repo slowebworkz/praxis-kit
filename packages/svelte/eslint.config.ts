@@ -17,11 +17,11 @@ const config = [
           patterns: [
             {
               group: [
-                '@polymorphic-ui/react',
-                '@polymorphic-ui/vue',
-                '@polymorphic-ui/preact',
-                '@polymorphic-ui/solid',
-                '@polymorphic-ui/docs',
+                '@praxis-ui/react',
+                '@praxis-ui/vue',
+                '@praxis-ui/preact',
+                '@praxis-ui/solid',
+                '@praxis-ui/docs',
               ],
               message: 'svelte adapter must not import from other adapters',
             },

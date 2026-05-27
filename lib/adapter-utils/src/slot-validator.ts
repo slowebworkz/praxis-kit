@@ -1,5 +1,5 @@
-import { StrictBase } from '@polymorphic-ui/core'
-import type { StrictMode } from '@polymorphic-ui/core'
+import { StrictBase } from '@praxis-ui/core'
+import type { StrictMode } from '@praxis-ui/core'
 
 export class SlotValidator extends StrictBase {
   readonly #name: string

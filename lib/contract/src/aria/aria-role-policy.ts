@@ -1,4 +1,4 @@
-import type { IntrinsicTag } from '@polymorphic-ui/primitive'
+import type { IntrinsicTag } from '@praxis-ui/primitive'
 
 const IMPLICIT_ROLE_RECORD = {
   article: 'article',

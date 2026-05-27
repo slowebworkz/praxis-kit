@@ -1,5 +1,5 @@
 {
-  "name": "@polymorphic-ui/adapter-utils",
+  "name": "@praxis-ui/adapter-utils",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -18,7 +18,7 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@polymorphic-ui/core": "workspace:*"
+    "@praxis-ui/core": "workspace:*"
   },
   "devDependencies": {
     "tsup": "catalog:",
