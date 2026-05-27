@@ -4,7 +4,7 @@ import type { Component } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { mount } from '@vue/test-utils'
 import type { UnknownProps } from './types'
-import { createPolymorphicComponent } from './create-polymorphic-component'
+import { createContractComponent } from './create-contract-component'
 
 function parseAttributes(html: string): Record<string, string> {
   const container = document.createElement('div')
@@ -37,7 +37,7 @@ function csr(comp: Component, props?: UnknownProps): string {
 
 describe('SSR/CSR hydration parity — Vue', () => {
   it('base class matches between server and client render', async () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       tag: 'div',
       styling: { base: 'box-base' },
       enforcement: { strict: false },
@@ -48,7 +48,7 @@ describe('SSR/CSR hydration parity — Vue', () => {
   })
 
   it('variant class matches between server and client render', async () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       tag: 'div',
       styling: {
         base: 'box',
@@ -63,7 +63,7 @@ describe('SSR/CSR hydration parity — Vue', () => {
   })
 
   it('compound variant class matches between server and client render', async () => {
-    const Button = createPolymorphicComponent({
+    const Button = createContractComponent({
       tag: 'button',
       styling: {
         base: 'btn',
@@ -86,7 +86,7 @@ describe('SSR/CSR hydration parity — Vue', () => {
   })
 
   it('ARIA strip: redundant role absent on both server and client', async () => {
-    const Nav = createPolymorphicComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
     const props = { role: 'navigation' } as UnknownProps
 
     const serverAttrs = parseAttributes(await ssr(Nav, props))
@@ -98,7 +98,7 @@ describe('SSR/CSR hydration parity — Vue', () => {
   })
 
   it('ARIA strip: invalid aria-* absent on both server and client', async () => {
-    const Button = createPolymorphicComponent({ tag: 'button', enforcement: { strict: false } })
+    const Button = createContractComponent({ tag: 'button', enforcement: { strict: false } })
     const props = { 'aria-checked': 'true' } as UnknownProps
 
     const serverAttrs = parseAttributes(await ssr(Button, props))
@@ -110,7 +110,7 @@ describe('SSR/CSR hydration parity — Vue', () => {
   })
 
   it('as prop override: tag and attributes match between server and client', async () => {
-    const Nav = createPolymorphicComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
     const props = { as: 'section' } as UnknownProps
 
     const serverHtml = await ssr(Nav, props)

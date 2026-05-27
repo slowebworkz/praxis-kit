@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { createRoot } from 'react-dom/client'
 import { act } from 'react'
 import type { UnknownProps } from '@/shared'
-import { createPolymorphicComponent } from './create-polymorphic-component'
+import { createContractComponent } from './create-contract-component'
 
 type AnyComp = ComponentType<UnknownProps>
 
@@ -55,7 +55,7 @@ afterEach(() => {
 
 describe('SSR/CSR hydration parity — class and tag attributes', () => {
   it('base class matches between server and client render', async () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       tag: 'div',
       styling: { base: 'box-base' },
       enforcement: { strict: false },
@@ -68,7 +68,7 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
   })
 
   it('variant class matches between server and client render', async () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       tag: 'div',
       styling: {
         base: 'box',
@@ -85,7 +85,7 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
   })
 
   it('ARIA strip result matches: redundant role absent on both server and client', async () => {
-    const Nav = createPolymorphicComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
     const props = { role: 'navigation' } as UnknownProps
 
     const serverAttrs = parseAttributes(ssr(Nav, props))
@@ -97,7 +97,7 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
   })
 
   it('ARIA strip result matches: invalid aria-* absent on both server and client', async () => {
-    const Button = createPolymorphicComponent({ tag: 'button', enforcement: { strict: false } })
+    const Button = createContractComponent({ tag: 'button', enforcement: { strict: false } })
     const props = { 'aria-checked': 'true' } as UnknownProps
 
     const serverAttrs = parseAttributes(ssr(Button, props))
@@ -109,7 +109,7 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
   })
 
   it('as prop override: tag and attributes match between server and client', async () => {
-    const Nav = createPolymorphicComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
     const props = { as: 'section' } as UnknownProps
 
     const serverHtml = ssr(Nav, props)
@@ -123,7 +123,7 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
   })
 
   it('compound variant class matches between server and client', async () => {
-    const Button = createPolymorphicComponent({
+    const Button = createContractComponent({
       tag: 'button',
       styling: {
         base: 'btn',
