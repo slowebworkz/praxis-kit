@@ -1,8 +1,23 @@
 {
   "files": [],
   "references": [
+    { "path": "./lib/primitive" },
+    { "path": "./lib/contract" },
+    { "path": "./lib/styling" },
+    { "path": "./lib/adapter-utils" },
+    { "path": "./lib/bench" },
+    { "path": "./lib/bundle-analysis" },
     { "path": "./packages/core" },
     { "path": "./packages/react" },
-    { "path": "./packages/tailwind" }
+    { "path": "./packages/preact" },
+    { "path": "./packages/solid" },
+    { "path": "./packages/svelte" },
+    { "path": "./packages/vue" },
+    { "path": "./packages/tailwind" },
+    { "path": "./packages/eslint-plugin" },
+    { "path": "./packages/ts-plugin" },
+    { "path": "./packages/codemod" },
+    { "path": "./packages/vite-plugin" },
+    { "path": "./packages/docs" }
   ]
 }

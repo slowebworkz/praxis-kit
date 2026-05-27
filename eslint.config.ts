@@ -1,10 +1,12 @@
 import type { ESLintConfig } from './configs/types'
-import type { Plugin } from 'eslint'
+import type { Linter } from 'eslint'
 
-import base from './configs/base.js'
-import ts from './configs/typescript.js'
-import architecture from './configs/architecture.js'
-import praxisPlugin from './packages/eslint-plugin/src/index.js'
+type EslintPlugin = NonNullable<Linter.Config['plugins']>[string]
+
+import base from './configs/base'
+import ts from './configs/typescript'
+import architecture from './configs/architecture'
+import praxisPlugin from './packages/eslint-plugin/src/index'
 
 const TS_FILES = ['**/*.{ts,mts,cts,tsx}']
 
@@ -47,7 +49,7 @@ const config = [
   // Self-validate: run the plugin's own rules on all workspace source.
   {
     files: ['packages/*/src/**/*.{ts,tsx}', 'packages/docs/**/*.{ts,tsx}'],
-    plugins: { '@praxis-ui': praxisPlugin as unknown as Plugin },
+    plugins: { '@praxis-ui': praxisPlugin as unknown as EslintPlugin },
     rules: {
       '@praxis-ui/no-dead-compound': 'error',
       '@praxis-ui/no-enforcement-without-strict': 'error',
