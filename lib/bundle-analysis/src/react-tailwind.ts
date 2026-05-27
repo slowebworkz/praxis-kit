@@ -3,7 +3,7 @@
  * pipeline on top of the base class pipeline. Comparing with react-variants
  * shows the marginal cost of the tailwind adapter.
  */
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 import type { EmptyRecord } from '@polymorphic-ui/core'
 import { createTailwindPipeline } from '@polymorphic-ui/tailwind'
 
@@ -13,7 +13,7 @@ const variants = {
   align: { start: 'items-start', center: 'items-center', end: 'items-end' },
 } as const
 
-export const Box = createPolymorphicComponent<'div', EmptyRecord, typeof variants>({
+export const Box = createContractComponent<'div', EmptyRecord, typeof variants>({
   tag: 'div',
   name: 'Box',
   styling: {
