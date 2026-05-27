@@ -42,6 +42,8 @@ export class ChildrenEvaluator extends StrictBase {
   }
 
   evaluate(children: unknown[]): void {
+    // strict:false means all violations are swallowed — skip the full match/validate cycle.
+    if (!this.strict) return
     const matrix = this.#matcher.match(children, this.#rules)
     this.#ruleValidator.validate(this.#rules, matrix, children.length)
     this.#matchValidator.validate(children, matrix, this.#ruleNames)
