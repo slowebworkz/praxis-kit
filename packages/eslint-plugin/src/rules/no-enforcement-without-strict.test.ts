@@ -13,19 +13,19 @@ const tester = new RuleTester({
 tester.run('no-enforcement-without-strict', noEnforcementWithoutStrict, {
   valid: [
     // no enforcement at all
-    `createPolymorphicComponent({ tag: 'div' })`,
+    `createContractComponent({ tag: 'div' })`,
 
     // enforcement with strict and children
-    `createPolymorphicComponent({ tag: 'div', enforcement: { strict: 'warn', children: [{ name: 'X', match: () => true, cardinality: { min: 1 } }] } })`,
+    `createContractComponent({ tag: 'div', enforcement: { strict: 'warn', children: [{ name: 'X', match: () => true, cardinality: { min: 1 } }] } })`,
 
     // enforcement with strict and aria
-    `createPolymorphicComponent({ tag: 'nav', enforcement: { strict: 'throw', aria: [] } })`,
+    `createContractComponent({ tag: 'nav', enforcement: { strict: 'throw', aria: [] } })`,
 
     // enforcement with strict only (no children/aria)
-    `createPolymorphicComponent({ tag: 'div', enforcement: { strict: 'warn' } })`,
+    `createContractComponent({ tag: 'div', enforcement: { strict: 'warn' } })`,
 
     // empty children array — no meaningful enforcement, strict not required
-    `createPolymorphicComponent({ tag: 'div', enforcement: { children: [] } })`,
+    `createContractComponent({ tag: 'div', enforcement: { children: [] } })`,
 
     // not the factory function
     `somethingElse({ tag: 'div', enforcement: { children: [{ name: 'X', match: () => true, cardinality: { min: 1 } }] } })`,
@@ -34,12 +34,12 @@ tester.run('no-enforcement-without-strict', noEnforcementWithoutStrict, {
   invalid: [
     {
       // children without strict
-      code: `createPolymorphicComponent({ tag: 'div', enforcement: { children: [{ name: 'X', match: () => true, cardinality: { min: 1 } }] } })`,
+      code: `createContractComponent({ tag: 'div', enforcement: { children: [{ name: 'X', match: () => true, cardinality: { min: 1 } }] } })`,
       errors: [{ messageId: 'missingStrict' }],
     },
     {
       // aria without strict
-      code: `createPolymorphicComponent({ tag: 'nav', enforcement: { aria: [{ role: 'navigation' }] } })`,
+      code: `createContractComponent({ tag: 'nav', enforcement: { aria: [{ role: 'navigation' }] } })`,
       errors: [{ messageId: 'missingStrict' }],
     },
     {

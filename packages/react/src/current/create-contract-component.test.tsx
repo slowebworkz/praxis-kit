@@ -4,10 +4,10 @@ import { createElement, Fragment, createRef, act } from 'react'
 import type { ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { UnknownProps } from '@/shared'
-import { createPolymorphicComponent } from './create-polymorphic-component'
+import { createContractComponent } from './create-contract-component'
 
 // Cast to bypass the PolymorphicComponent union in createElement overloads.
-function box(comp: ReturnType<typeof createPolymorphicComponent>) {
+function box(comp: ReturnType<typeof createContractComponent>) {
   return comp as ComponentType<UnknownProps>
 }
 
@@ -34,21 +34,21 @@ afterEach(() => {
   document.body.removeChild(container)
 })
 
-describe('createPolymorphicComponent (current / React 19)', () => {
+describe('createContractComponent (current / React 19)', () => {
   it('sets displayName', () => {
-    const Comp = createPolymorphicComponent({ name: 'MyBox' })
+    const Comp = createContractComponent({ name: 'MyBox' })
 
     expect(Comp.displayName).toBe('MyBox')
   })
 
   it('falls back to PolymorphicComponent displayName', () => {
-    const Comp = createPolymorphicComponent({})
+    const Comp = createContractComponent({})
 
     expect(Comp.displayName).toBe('PolymorphicComponent')
   })
 
   it('renders the default tag (div)', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
 
     mount(createElement(box(Box), null))
 
@@ -56,7 +56,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   })
 
   it('renders a different tag via the as prop', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
 
     mount(createElement(box(Box), { as: 'section' }))
 
@@ -65,7 +65,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   })
 
   it('applies baseClassName', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       styling: { base: 'base-cls' },
     })
 
@@ -75,7 +75,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   })
 
   it('merges caller className with base', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       styling: { base: 'base' },
     })
 
@@ -88,7 +88,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   })
 
   it('forwards a ref to the DOM element', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     const ref = createRef<HTMLDivElement>()
 
     mount(createElement(box(Box), { ref }))
@@ -97,7 +97,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   })
 
   it('forwards a ref when rendered as a different tag', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     const ref = createRef<HTMLButtonElement>()
 
     mount(createElement(box(Box), { as: 'button', ref }))
@@ -106,7 +106,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   })
 
   it('passes extra props to the DOM element', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
 
     mount(
       createElement(box(Box), {
@@ -118,7 +118,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   })
 
   it('renders children', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
 
     mount(createElement(box(Box), null, createElement('span', { id: 'child' })))
 
@@ -126,7 +126,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   })
 
   it('asChild renders the child element type instead of the default tag', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
 
     mount(createElement(box(Box), { asChild: true }, createElement('button', { type: 'button' })))
 
@@ -135,7 +135,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   })
 
   it('asChild merges className onto the child element', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       styling: { base: 'box-cls' },
     })
 
@@ -145,7 +145,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   })
 
   it('asChild throws when given zero children', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
 
     expect(() =>
       mount(
@@ -160,7 +160,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   // asChild with a Fragment child is valid (one element), but Slot receives
   // the Fragment as the child, which is then treated as one slot child.
   it('fragment child counts as one element for asChild (no flattening)', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
 
     const fragment = createElement(Fragment, null, createElement('span'))
 
@@ -169,11 +169,11 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   })
 
   it('nested asChild: both components compose their classes onto the inner element', () => {
-    const BoxA = createPolymorphicComponent({
+    const BoxA = createContractComponent({
       styling: { base: 'class-a' },
     })
 
-    const BoxB = createPolymorphicComponent({
+    const BoxB = createContractComponent({
       styling: { base: 'class-b' },
     })
 
@@ -192,8 +192,8 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   })
 
   it('nested asChild: ref from outer component reaches the innermost element', () => {
-    const BoxA = createPolymorphicComponent({})
-    const BoxB = createPolymorphicComponent({})
+    const BoxA = createContractComponent({})
+    const BoxB = createContractComponent({})
     const ref = createRef<HTMLButtonElement>()
 
     mount(
@@ -208,7 +208,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   })
 
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       filterProps: (key: string) => key === 'size',
     })
 

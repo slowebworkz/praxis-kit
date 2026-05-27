@@ -6,14 +6,13 @@ import type {
   PresetMap,
   VariantMap,
 } from '@polymorphic-ui/core'
-import { forwardRef } from 'react'
-import type { ReactElement } from 'react'
+import type { ReactElement, Ref } from 'react'
 import { Slot } from './slot'
 import { normalizeChildren } from './normalize-children'
 import { applyDisplayName, buildRuntime, render } from '@/shared'
 import type { UnknownProps, KnownProps, PolymorphicComponent, ReactFactoryOptions } from '@/shared'
 
-export function createPolymorphicComponent<
+export function createContractComponent<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
@@ -26,11 +25,9 @@ export function createPolymorphicComponent<
     normalizeChildren,
   )
 
-  const Component = forwardRef<unknown, UnknownProps>(
-    function PolymorphicComponent(props, ref): ReactElement {
-      return render({ ...bundle, props: props as KnownProps, ref })
-    },
-  )
+  function Component({ ref, ...props }: UnknownProps & { ref?: Ref<unknown> }): ReactElement {
+    return render({ ...bundle, props: props as KnownProps, ref: ref ?? null })
+  }
 
   applyDisplayName(Component, options.name)
   return Component as unknown as PolymorphicComponent<

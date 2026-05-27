@@ -1,69 +1,69 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { h, defineComponent } from 'vue'
-import { createPolymorphicComponent } from './create-polymorphic-component'
+import { createContractComponent } from './create-contract-component'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function box(comp: unknown): any {
   return comp
 }
 
-describe('createPolymorphicComponent — displayName', () => {
+describe('createContractComponent — displayName', () => {
   it('sets displayName on the component', () => {
-    const Comp = createPolymorphicComponent({ name: 'MyBox' })
+    const Comp = createContractComponent({ name: 'MyBox' })
     expect((Comp as { displayName?: string }).displayName).toBe('MyBox')
   })
 
   it('falls back to PolymorphicComponent when displayName is omitted', () => {
-    const Comp = createPolymorphicComponent({})
+    const Comp = createContractComponent({})
     expect((Comp as { displayName?: string }).displayName).toBe('PolymorphicComponent')
   })
 })
 
-describe('createPolymorphicComponent — tag rendering', () => {
+describe('createContractComponent — tag rendering', () => {
   it('renders the default tag (div)', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     const wrapper = mount(box(Box))
     expect(wrapper.element.tagName.toLowerCase()).toBe('div')
   })
 
   it('renders a different tag via the as prop', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     const wrapper = mount(box(Box), { props: { as: 'section' } })
     expect(wrapper.element.tagName.toLowerCase()).toBe('section')
   })
 
   it('respects a custom defaultTag', () => {
-    const Box = createPolymorphicComponent({ tag: 'span' })
+    const Box = createContractComponent({ tag: 'span' })
     const wrapper = mount(box(Box))
     expect(wrapper.element.tagName.toLowerCase()).toBe('span')
   })
 })
 
-describe('createPolymorphicComponent — class merging', () => {
+describe('createContractComponent — class merging', () => {
   it('applies baseClassName', () => {
-    const Box = createPolymorphicComponent({ styling: { base: 'base-cls' } })
+    const Box = createContractComponent({ styling: { base: 'base-cls' } })
     const wrapper = mount(box(Box))
     expect(wrapper.element.className).toBe('base-cls')
   })
 
   it('merges caller class with baseClassName', () => {
-    const Box = createPolymorphicComponent({ styling: { base: 'base' } })
+    const Box = createContractComponent({ styling: { base: 'base' } })
     const wrapper = mount(box(Box), { props: { class: 'extra' } })
     expect(wrapper.element.className).toContain('base')
     expect(wrapper.element.className).toContain('extra')
   })
 })
 
-describe('createPolymorphicComponent — attrs', () => {
+describe('createContractComponent — attrs', () => {
   it('forwards extra attrs to the DOM element', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     const wrapper = mount(box(Box), { attrs: { 'data-testid': 'box' } })
     expect(wrapper.element.getAttribute('data-testid')).toBe('box')
   })
 
   it('strips variant keys before DOM forwarding', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
     })
     const wrapper = mount(box(Box), { props: { size: 'lg' } as never })
@@ -71,7 +71,7 @@ describe('createPolymorphicComponent — attrs', () => {
   })
 
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       filterProps: (key: string) => key === 'loading',
     })
     const wrapper = mount(box(Box), { attrs: { loading: 'true', 'data-keep': 'yes' } })
@@ -80,9 +80,9 @@ describe('createPolymorphicComponent — attrs', () => {
   })
 })
 
-describe('createPolymorphicComponent — children', () => {
+describe('createContractComponent — children', () => {
   it('renders slot children', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     const wrapper = mount(box(Box), {
       slots: { default: () => [h('span', { id: 'child' })] },
     })
@@ -90,9 +90,9 @@ describe('createPolymorphicComponent — children', () => {
   })
 })
 
-describe('createPolymorphicComponent — asChild', () => {
+describe('createContractComponent — asChild', () => {
   it('renders the slot child element type instead of the default tag', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     const wrapper = mount(box(Box), {
       props: { asChild: true },
       slots: { default: () => [h('button', { type: 'button' })] },
@@ -102,7 +102,7 @@ describe('createPolymorphicComponent — asChild', () => {
   })
 
   it('merges baseClassName onto the asChild element', () => {
-    const Box = createPolymorphicComponent({ styling: { base: 'box-cls' } })
+    const Box = createContractComponent({ styling: { base: 'box-cls' } })
     const wrapper = mount(box(Box), {
       props: { asChild: true },
       slots: { default: () => [h('button')] },
@@ -111,7 +111,7 @@ describe('createPolymorphicComponent — asChild', () => {
   })
 
   it('throws when asChild has zero children', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     expect(() =>
       mount(box(Box), {
         props: { asChild: true },
@@ -121,7 +121,7 @@ describe('createPolymorphicComponent — asChild', () => {
   })
 
   it('throws when as and asChild are both provided', () => {
-    const Box = createPolymorphicComponent({})
+    const Box = createContractComponent({})
     expect(() =>
       mount(box(Box), {
         props: { as: 'button', asChild: true },
@@ -131,8 +131,8 @@ describe('createPolymorphicComponent — asChild', () => {
   })
 
   it('nested asChild: both components compose their classes onto the inner element', () => {
-    const BoxA = createPolymorphicComponent({ styling: { base: 'class-a' } })
-    const BoxB = createPolymorphicComponent({ styling: { base: 'class-b' } })
+    const BoxA = createContractComponent({ styling: { base: 'class-a' } })
+    const BoxB = createContractComponent({ styling: { base: 'class-b' } })
 
     const Outer = defineComponent({
       setup() {
@@ -154,9 +154,9 @@ describe('createPolymorphicComponent — asChild', () => {
   })
 })
 
-describe('createPolymorphicComponent — variants', () => {
+describe('createContractComponent — variants', () => {
   it('applies variant classes when variant props are passed', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       styling: {
         variants: {
           intent: { primary: 'bg-blue-500', secondary: 'bg-gray-500' },
@@ -168,7 +168,7 @@ describe('createPolymorphicComponent — variants', () => {
   })
 
   it('does not forward variant prop keys to the DOM', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       styling: { variants: { intent: { primary: 'bg-blue-500' } } },
     })
     const wrapper = mount(box(Box), { props: { intent: 'primary' } as never })
@@ -176,7 +176,7 @@ describe('createPolymorphicComponent — variants', () => {
   })
 
   it('activates a preset via variantKey', () => {
-    const Box = createPolymorphicComponent({
+    const Box = createContractComponent({
       styling: {
         variants: {
           intent: { primary: 'bg-blue-500', secondary: 'bg-gray-500' },
