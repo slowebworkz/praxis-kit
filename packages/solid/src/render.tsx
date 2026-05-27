@@ -6,9 +6,10 @@ import type { FilterPredicate, ResolvedProps, SolidElement, UnknownProps } from 
 import type { KnownProps } from './types/props'
 import type { RenderInput } from './types/render'
 import type { Runtime } from './types/runtime'
+import type { SlotValidator } from './slot/slot-validator'
 
 // Keys consumed by the adapter — split from pass-through DOM props.
-const SPLIT_KEYS = ['as', 'children', 'class', 'variantKey', 'ref'] as const
+const SPLIT_KEYS = ['as', 'asChild', 'children', 'class', 'variantKey', 'ref'] as const
 
 function applyFilter<T extends ResolvedProps>(
   props: T,
@@ -44,6 +45,19 @@ function buildElementProps(
   }
 }
 
+// Slot props handed to the render function: fully resolved DOM props + class.
+// ref is included so the render fn can forward it to the actual DOM element.
+// children is excluded — the render fn decides its own children.
+function buildSlotProps(props: ResolvedProps, classStr: string, ref: unknown): UnknownProps {
+  const { role, ...rest } = props
+  return {
+    ...rest,
+    class: classStr,
+    ...(ref !== undefined && { ref }),
+    ...(isKnownAriaRole(role) && { role }),
+  }
+}
+
 function resolveTag(runtime: Runtime, as: unknown): ElementType {
   return runtime.resolveTag(as as ElementType | undefined)
 }
@@ -58,10 +72,30 @@ function resolveDomProps(
     : (elementProps as UnknownProps)
 }
 
+function tryRenderAsChild(
+  known: KnownProps,
+  filteredProps: () => ResolvedProps,
+  resolvedClass: () => string,
+  slotValidator: SlotValidator,
+): SolidElement | null {
+  if (!known.asChild) return null
+  if (known.as !== undefined) {
+    slotValidator.assertExclusive()
+    return null
+  }
+  if (!slotValidator.assertRenderFn(known.children)) return null
+  const renderFn = known.children as (p: UnknownProps) => SolidElement
+  // createMemo tracks filteredProps() and resolvedClass() so slot props stay reactive.
+  return createMemo(() =>
+    renderFn(buildSlotProps(filteredProps(), resolvedClass(), known.ref)),
+  ) as unknown as SolidElement
+}
+
 export function render<TProps extends KnownProps>({
   runtime,
   props,
   filterProps,
+  slotValidator,
   childrenEvaluator,
 }: RenderInput<TProps>): SolidElement {
   const [knownRaw, rest] = splitProps(props, SPLIT_KEYS)
@@ -80,12 +114,16 @@ export function render<TProps extends KnownProps>({
   const filteredProps = createMemo(() =>
     applyFilter(mergedProps(), filterProps, runtime.options.variantKeys),
   )
+
+  childrenEvaluator?.evaluate(toChildArray(known.children))
+
+  const slotResult = tryRenderAsChild(known, filteredProps, resolvedClass, slotValidator)
+  if (slotResult !== null) return slotResult
+
   const domProps = createMemo(() => {
     const ep = buildElementProps(filteredProps(), resolvedClass(), known.ref, known.children)
     return resolveDomProps(tag(), ep, runtime)
   })
-
-  childrenEvaluator?.evaluate(toChildArray(known.children))
 
   // Dynamic dispatch — tag() and domProps() called directly in JSX so Solid's babel
   // transform wraps them in reactive getters, preserving fine-grained DOM updates.
