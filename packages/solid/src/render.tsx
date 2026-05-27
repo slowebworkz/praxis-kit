@@ -9,6 +9,8 @@ import type { RenderInput } from './types/render'
 import type { Runtime } from './types/runtime'
 import type { SlotValidator } from './slot/slot-validator'
 
+declare const process: { env: { NODE_ENV: string } }
+
 // Keys consumed by the adapter — split from pass-through DOM props.
 const SPLIT_KEYS = ['as', 'asChild', 'children', 'class', 'variantKey', 'ref'] as const
 
@@ -104,7 +106,8 @@ export function render<TProps extends KnownProps>({
     applyFilter(mergedProps(), filterProps, runtime.options.variantKeys),
   )
 
-  childrenEvaluator?.evaluate(toChildArray(known.children))
+  if (process.env.NODE_ENV !== 'production')
+    childrenEvaluator?.evaluate(toChildArray(known.children))
 
   const slotResult = tryRenderAsChild(known, filteredProps, resolvedClass, slotValidator)
   if (slotResult !== null) return slotResult
