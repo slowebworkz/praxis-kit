@@ -9,7 +9,7 @@ import type {
   PropsOf,
   VariantProps,
   VariantsOf,
-} from '@polymorphic-ui/core'
+} from '@praxis-ui/core'
 import type { UnknownProps } from './primitives'
 
 type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = PropsOf<G> &

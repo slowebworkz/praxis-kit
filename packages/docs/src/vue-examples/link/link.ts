@@ -1,5 +1,5 @@
-import { createContractComponent } from '@polymorphic-ui/vue'
-import type { EmptyRecord } from '@polymorphic-ui/core'
+import { createContractComponent } from '@praxis-ui/vue'
+import type { EmptyRecord } from '@praxis-ui/core'
 
 export const Link = createContractComponent<'a', EmptyRecord, EmptyRecord>({
   tag: 'a',

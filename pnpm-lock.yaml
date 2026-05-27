@@ -164,7 +164,7 @@ importers:
 
   lib/adapter-utils:
     dependencies:
-      '@polymorphic-ui/core':
+      '@praxis-ui/core':
         specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
@@ -177,7 +177,7 @@ importers:
 
   lib/bench:
     dependencies:
-      '@polymorphic-ui/core':
+      '@praxis-ui/core':
         specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
@@ -208,28 +208,28 @@ importers:
 
   lib/bundle-analysis:
     dependencies:
-      '@polymorphic-ui/adapter-utils':
+      '@praxis-ui/adapter-utils':
         specifier: workspace:*
         version: link:../adapter-utils
-      '@polymorphic-ui/core':
+      '@praxis-ui/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@polymorphic-ui/preact':
+      '@praxis-ui/preact':
         specifier: workspace:*
         version: link:../../packages/preact
-      '@polymorphic-ui/react':
+      '@praxis-ui/react':
         specifier: workspace:*
         version: link:../../packages/react
-      '@polymorphic-ui/solid':
+      '@praxis-ui/solid':
         specifier: workspace:*
         version: link:../../packages/solid
-      '@polymorphic-ui/svelte':
+      '@praxis-ui/svelte':
         specifier: workspace:*
         version: link:../../packages/svelte
-      '@polymorphic-ui/tailwind':
+      '@praxis-ui/tailwind':
         specifier: workspace:*
         version: link:../../packages/tailwind
-      '@polymorphic-ui/vue':
+      '@praxis-ui/vue':
         specifier: workspace:*
         version: link:../../packages/vue
     devDependencies:
@@ -257,7 +257,7 @@ importers:
 
   lib/contract:
     dependencies:
-      '@polymorphic-ui/primitive':
+      '@praxis-ui/primitive':
         specifier: workspace:*
         version: link:../primitive
       type-fest:
@@ -280,7 +280,7 @@ importers:
 
   lib/styling:
     dependencies:
-      '@polymorphic-ui/primitive':
+      '@praxis-ui/primitive':
         specifier: workspace:*
         version: link:../primitive
       class-variance-authority:
@@ -315,13 +315,13 @@ importers:
 
   packages/core:
     dependencies:
-      '@polymorphic-ui/contract':
+      '@praxis-ui/contract':
         specifier: workspace:*
         version: link:../../lib/contract
-      '@polymorphic-ui/primitive':
+      '@praxis-ui/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
-      '@polymorphic-ui/styling':
+      '@praxis-ui/styling':
         specifier: workspace:*
         version: link:../../lib/styling
       type-fest:
@@ -337,16 +337,16 @@ importers:
 
   packages/docs:
     dependencies:
-      '@polymorphic-ui/core':
+      '@praxis-ui/core':
         specifier: workspace:*
         version: link:../core
-      '@polymorphic-ui/react':
+      '@praxis-ui/react':
         specifier: workspace:*
         version: link:../react
-      '@polymorphic-ui/tailwind':
+      '@praxis-ui/tailwind':
         specifier: workspace:*
         version: link:../tailwind
-      '@polymorphic-ui/vue':
+      '@praxis-ui/vue':
         specifier: workspace:*
         version: link:../vue
     devDependencies:
@@ -399,10 +399,10 @@ importers:
 
   packages/preact:
     dependencies:
-      '@polymorphic-ui/adapter-utils':
+      '@praxis-ui/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
-      '@polymorphic-ui/core':
+      '@praxis-ui/core':
         specifier: workspace:*
         version: link:../core
       clsx:
@@ -430,10 +430,10 @@ importers:
 
   packages/react:
     dependencies:
-      '@polymorphic-ui/adapter-utils':
+      '@praxis-ui/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
-      '@polymorphic-ui/core':
+      '@praxis-ui/core':
         specifier: workspace:*
         version: link:../core
       clsx:
@@ -467,10 +467,10 @@ importers:
 
   packages/solid:
     dependencies:
-      '@polymorphic-ui/adapter-utils':
+      '@praxis-ui/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
-      '@polymorphic-ui/core':
+      '@praxis-ui/core':
         specifier: workspace:*
         version: link:../core
       clsx:
@@ -501,10 +501,10 @@ importers:
 
   packages/svelte:
     dependencies:
-      '@polymorphic-ui/adapter-utils':
+      '@praxis-ui/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
-      '@polymorphic-ui/core':
+      '@praxis-ui/core':
         specifier: workspace:*
         version: link:../core
       clsx:
@@ -535,7 +535,7 @@ importers:
 
   packages/tailwind:
     dependencies:
-      '@polymorphic-ui/core':
+      '@praxis-ui/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -561,7 +561,7 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
     devDependencies:
-      '@polymorphic-ui/core':
+      '@praxis-ui/core':
         specifier: workspace:*
         version: link:../core
       tsup:
@@ -576,10 +576,10 @@ importers:
 
   packages/vue:
     dependencies:
-      '@polymorphic-ui/adapter-utils':
+      '@praxis-ui/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
-      '@polymorphic-ui/core':
+      '@praxis-ui/core':
         specifier: workspace:*
         version: link:../core
       type-fest:

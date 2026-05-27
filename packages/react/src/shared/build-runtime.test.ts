@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { ReactElement } from 'react'
 import { buildRuntime } from './build-runtime'
 import { SlotValidator } from './slot/slot-validator'
-import { ChildrenEvaluator } from '@polymorphic-ui/core'
+import { ChildrenEvaluator } from '@praxis-ui/core'
 
 const noopSlot = (() => null) as unknown as Parameters<typeof buildRuntime>[1]
 const noopNormalize = (children: unknown): ReactElement[] =>

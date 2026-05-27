@@ -11,11 +11,11 @@ function panic(message: string): never {
 export function assertPluginShape(result: unknown): asserts result is ClassPlugin {
   if (result === null || typeof result !== 'object')
     panic(
-      `[polymorphic-ui] Plugin factory must return an object with a 'pipeline' function. Got: ${result === null ? 'null' : typeof result}.`,
+      `[praxis-ui] Plugin factory must return an object with a 'pipeline' function. Got: ${result === null ? 'null' : typeof result}.`,
     )
   if (typeof (result as Record<string, unknown>).pipeline !== 'function')
     panic(
-      `[polymorphic-ui] Plugin factory return value is missing a 'pipeline' function. Got pipeline: ${typeof (result as Record<string, unknown>).pipeline}.`,
+      `[praxis-ui] Plugin factory return value is missing a 'pipeline' function. Got pipeline: ${typeof (result as Record<string, unknown>).pipeline}.`,
     )
 }
 
@@ -24,7 +24,7 @@ export function guardPipeline(pipeline: ClassPipelineFn): ClassPipelineFn {
   return function guardedPipeline(tag, props, className, variantKey) {
     const result = pipeline(tag, props, className, variantKey)
     if (typeof result !== 'string')
-      panic(`[polymorphic-ui] Plugin pipeline must return a string. Got: ${typeof result}.`)
+      panic(`[praxis-ui] Plugin pipeline must return a string. Got: ${typeof result}.`)
     return result
   }
 }

@@ -1,6 +1,6 @@
-import type { IntrinsicTag } from '@polymorphic-ui/primitive'
+import type { IntrinsicTag } from '@praxis-ui/primitive'
 
-export type { AnyRecord, ClassName, EmptyRecord } from '@polymorphic-ui/primitive'
+export type { AnyRecord, ClassName, EmptyRecord } from '@praxis-ui/primitive'
 
 export type NonEmptyArray<T> = [T, ...T[]]
 

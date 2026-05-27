@@ -1,5 +1,5 @@
 {
-  "name": "@polymorphic-ui/svelte",
+  "name": "@praxis-ui/svelte",
   "version": "1.0.0",
   "type": "module",
   "exports": {
@@ -28,8 +28,8 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@polymorphic-ui/adapter-utils": "workspace:*",
-    "@polymorphic-ui/core": "workspace:*",
+    "@praxis-ui/adapter-utils": "workspace:*",
+    "@praxis-ui/core": "workspace:*",
     "clsx": "catalog:",
     "type-fest": "catalog:"
   },

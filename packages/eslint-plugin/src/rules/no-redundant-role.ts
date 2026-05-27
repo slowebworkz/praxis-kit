@@ -2,7 +2,7 @@ import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
 import type { TSESTree } from '@typescript-eslint/utils'
 import { IMPLICIT_ROLES } from '../utils/implicit-roles'
 
-const createRule = RuleCreator((name) => `https://polymorphic-ui.dev/eslint-rules/${name}`)
+const createRule = RuleCreator((name) => `https://praxis-ui.dev/eslint-rules/${name}`)
 
 export type Options = []
 

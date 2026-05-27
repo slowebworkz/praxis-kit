@@ -12,11 +12,11 @@ backward-compatible for common usage; the internal structure is wholly new.
 
 The monolithic `packages/core` is now backed by three private library packages:
 
-| Package                     | Role                                                     |
-| --------------------------- | -------------------------------------------------------- |
-| `@polymorphic-ui/primitive` | Tag resolution, prop merging, base types                 |
-| `@polymorphic-ui/contract`  | ARIA policy engine, children evaluator, strict-mode base |
-| `@polymorphic-ui/styling`   | CVA wrapper, class pipeline, variant resolver            |
+| Package                | Role                                                     |
+| ---------------------- | -------------------------------------------------------- |
+| `@praxis-ui/primitive` | Tag resolution, prop merging, base types                 |
+| `@praxis-ui/contract`  | ARIA policy engine, children evaluator, strict-mode base |
+| `@praxis-ui/styling`   | CVA wrapper, class pipeline, variant resolver            |
 
 These packages are private (`lib/`). `packages/core` is still the single import point for consumers;
 the lib/ split is an implementation boundary, not a new surface.
@@ -62,14 +62,14 @@ detail. Intended for debugging, not production rendering.
 
 **Framework adapter coverage**
 
-| Adapter                    | Strategy                                                          |
-| -------------------------- | ----------------------------------------------------------------- |
-| `@polymorphic-ui/react`    | React 19 (`current/`) + React 18 (`legacy/`) ref split            |
-| `@polymorphic-ui/vue`      | `defineComponent`, `h()`, `cloneVNode` slot protocol              |
-| `@polymorphic-ui/tailwind` | Layout-aware class pipeline plugin                                |
-| `@polymorphic-ui/preact`   | `forwardRef` from `preact/compat`                                 |
-| `@polymorphic-ui/solid`    | Client + SSR (separate vitest configs)                            |
-| `@polymorphic-ui/svelte`   | Returns a `BuiltRuntime` bundle; renders via `Polymorphic.svelte` |
+| Adapter               | Strategy                                                          |
+| --------------------- | ----------------------------------------------------------------- |
+| `@praxis-ui/react`    | React 19 (`current/`) + React 18 (`legacy/`) ref split            |
+| `@praxis-ui/vue`      | `defineComponent`, `h()`, `cloneVNode` slot protocol              |
+| `@praxis-ui/tailwind` | Layout-aware class pipeline plugin                                |
+| `@praxis-ui/preact`   | `forwardRef` from `preact/compat`                                 |
+| `@praxis-ui/solid`    | Client + SSR (separate vitest configs)                            |
+| `@praxis-ui/svelte`   | Returns a `BuiltRuntime` bundle; renders via `Polymorphic.svelte` |
 
 ### Migration
 

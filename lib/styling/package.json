@@ -1,5 +1,5 @@
 {
-  "name": "@polymorphic-ui/styling",
+  "name": "@praxis-ui/styling",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "test:related": "vitest related --run"
   },
   "dependencies": {
-    "@polymorphic-ui/primitive": "workspace:*",
+    "@praxis-ui/primitive": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "type-fest": "catalog:"

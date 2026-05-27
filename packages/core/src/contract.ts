@@ -1,7 +1,7 @@
 // Contract runtime layer — ARIA enforcement, children validation, strict mode.
 // Includes everything from the primitive entry.
 export * from './primitive'
-export { StrictBase } from '@polymorphic-ui/contract'
+export { StrictBase } from '@praxis-ui/contract'
 export {
   AriaPolicyEngine,
   ChildrenEvaluator,
@@ -14,7 +14,7 @@ export {
   KNOWN_ARIA_ROLES,
   isKnownAriaRole,
   hasRole,
-} from '@polymorphic-ui/contract'
+} from '@praxis-ui/contract'
 export { createResolverPipeline } from './resolver'
 export type {
   StrictMode,

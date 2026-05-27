@@ -1,9 +1,12 @@
 import type { ESLintConfig } from './configs/types'
+import type { Linter } from 'eslint'
 
-import base from './configs/base.js'
-import ts from './configs/typescript.js'
-import architecture from './configs/architecture.js'
-import polymorphicPlugin from './packages/eslint-plugin/src/index.js'
+type EslintPlugin = NonNullable<Linter.Config['plugins']>[string]
+
+import base from './configs/base'
+import ts from './configs/typescript'
+import architecture from './configs/architecture'
+import praxisPlugin from './packages/eslint-plugin/src/index'
 
 const TS_FILES = ['**/*.{ts,mts,cts,tsx}']
 
@@ -46,14 +49,14 @@ const config = [
   // Self-validate: run the plugin's own rules on all workspace source.
   {
     files: ['packages/*/src/**/*.{ts,tsx}', 'packages/docs/**/*.{ts,tsx}'],
-    plugins: { '@polymorphic-ui': polymorphicPlugin },
+    plugins: { '@praxis-ui': praxisPlugin as unknown as EslintPlugin },
     rules: {
-      '@polymorphic-ui/no-dead-compound': 'error',
-      '@polymorphic-ui/no-enforcement-without-strict': 'error',
-      '@polymorphic-ui/no-invalid-default': 'error',
-      '@polymorphic-ui/no-redundant-role': 'warn',
-      '@polymorphic-ui/valid-cardinality': 'error',
-      '@polymorphic-ui/valid-children-config': 'error',
+      '@praxis-ui/no-dead-compound': 'error',
+      '@praxis-ui/no-enforcement-without-strict': 'error',
+      '@praxis-ui/no-invalid-default': 'error',
+      '@praxis-ui/no-redundant-role': 'warn',
+      '@praxis-ui/valid-cardinality': 'error',
+      '@praxis-ui/valid-children-config': 'error',
     },
   },
 ] satisfies ESLintConfig

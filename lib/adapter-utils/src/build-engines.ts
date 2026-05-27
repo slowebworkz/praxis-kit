@@ -1,5 +1,5 @@
-import type { ChildRuleInput, StrictMode } from '@polymorphic-ui/core'
-import { ChildrenEvaluator } from '@polymorphic-ui/core'
+import type { ChildRuleInput, StrictMode } from '@praxis-ui/core'
+import { ChildrenEvaluator } from '@praxis-ui/core'
 
 export function buildEngines(
   strict: StrictMode,

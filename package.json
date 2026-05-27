@@ -1,8 +1,8 @@
 {
-  "name": "polymorphic-ui",
+  "name": "praxis-ui",
   "private": true,
   "version": "1.0.0",
-  "description": "A framework-agnostic polymorphic component system with strict TypeScript types and runtime accessibility validation.",
+  "description": "Praxis UI — framework-neutral component infrastructure with enforced structural contracts, ARIA validation, and polymorphic rendering.",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -12,8 +12,8 @@
     "test": "pnpm -r --if-present test",
     "test:ci": "pnpm -r --if-present test",
     "test:related": "pnpm -r --if-present test:related",
-    "bench": "pnpm --filter @polymorphic-ui/bench bench",
-    "bench:render": "pnpm --filter @polymorphic-ui/bench bench:render",
+    "bench": "pnpm --filter @praxis-ui/bench bench",
+    "bench:render": "pnpm --filter @praxis-ui/bench bench:render",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "lint:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' | xargs eslint --fix",
@@ -24,8 +24,8 @@
     "prepare": "husky",
     "repo-state": "node --experimental-strip-types scripts/generate-repo-state.ts",
     "arch:validate": "depcruise --config .dependency-cruiser.cjs lib packages",
-    "analyze": "pnpm --filter @polymorphic-ui/bundle-analysis analyze",
-    "size": "pnpm --filter @polymorphic-ui/bundle-analysis size",
+    "analyze": "pnpm --filter @praxis-ui/bundle-analysis analyze",
+    "size": "pnpm --filter @praxis-ui/bundle-analysis size",
     "lint:pkg": "pnpm -r --if-present lint:pkg"
   },
   "devDependencies": {

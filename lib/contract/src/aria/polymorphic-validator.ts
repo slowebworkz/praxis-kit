@@ -1,4 +1,4 @@
-import type { ElementType, IntrinsicTag } from '@polymorphic-ui/primitive'
+import type { ElementType, IntrinsicTag } from '@praxis-ui/primitive'
 import { StrictBase } from '../strict'
 import type {
   AriaContext,

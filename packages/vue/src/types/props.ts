@@ -1,4 +1,4 @@
-import type { ClassName, ElementType } from '@polymorphic-ui/core'
+import type { ClassName, ElementType } from '@praxis-ui/core'
 import type { UnknownProps, VariantKey } from './primitives'
 
 export type AsProp<T extends ElementType = ElementType> = Readonly<{

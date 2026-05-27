@@ -5,7 +5,7 @@ import type {
   PropsOf,
   StrictMode,
   VariantsOf,
-} from '@polymorphic-ui/core'
+} from '@praxis-ui/core'
 import type { SvelteFactoryOptions } from '../svelte-options'
 
 export type NormalizedOptions<G extends PolymorphicGenerics> = SvelteFactoryOptions<
