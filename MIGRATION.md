@@ -447,10 +447,10 @@ Absent subsystems incur:
 Separate entry points allow bundlers to remove unused runtime layers entirely.
 
 ```txt
-@polymorphic-ui/core
-@polymorphic-ui/core/primitive
-@polymorphic-ui/core/contract
-@polymorphic-ui/core/styling
+@praxis-ui/core
+@praxis-ui/core/primitive
+@praxis-ui/core/contract
+@praxis-ui/core/styling
 ```
 
 Goals:
@@ -694,7 +694,7 @@ All adapters require:
 The name remains:
 
 ```txt
-@polymorphic-ui/*
+@praxis-ui/*
 ```
 
 Polymorphism is the foundational rendering principle.

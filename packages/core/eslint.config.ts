@@ -16,13 +16,13 @@ const config = [
           patterns: [
             {
               group: [
-                '@polymorphic-ui/react',
-                '@polymorphic-ui/vue',
-                '@polymorphic-ui/preact',
-                '@polymorphic-ui/solid',
-                '@polymorphic-ui/svelte',
-                '@polymorphic-ui/tailwind',
-                '@polymorphic-ui/docs',
+                '@praxis-ui/react',
+                '@praxis-ui/vue',
+                '@praxis-ui/preact',
+                '@praxis-ui/solid',
+                '@praxis-ui/svelte',
+                '@praxis-ui/tailwind',
+                '@praxis-ui/docs',
               ],
 
               message: 'core must not import from framework adapters',

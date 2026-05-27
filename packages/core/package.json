@@ -1,5 +1,5 @@
 {
-  "name": "@polymorphic-ui/core",
+  "name": "@praxis-ui/core",
   "version": "1.0.0",
   "type": "module",
   "exports": {
@@ -36,9 +36,9 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@polymorphic-ui/contract": "workspace:*",
-    "@polymorphic-ui/primitive": "workspace:*",
-    "@polymorphic-ui/styling": "workspace:*",
+    "@praxis-ui/contract": "workspace:*",
+    "@praxis-ui/primitive": "workspace:*",
+    "@praxis-ui/styling": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {

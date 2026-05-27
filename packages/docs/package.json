@@ -1,5 +1,5 @@
 {
-  "name": "@polymorphic-ui/docs",
+  "name": "@praxis-ui/docs",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,10 +10,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@polymorphic-ui/core": "workspace:*",
-    "@polymorphic-ui/react": "workspace:*",
-    "@polymorphic-ui/tailwind": "workspace:*",
-    "@polymorphic-ui/vue": "workspace:*"
+    "@praxis-ui/core": "workspace:*",
+    "@praxis-ui/react": "workspace:*",
+    "@praxis-ui/tailwind": "workspace:*",
+    "@praxis-ui/vue": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "catalog:",

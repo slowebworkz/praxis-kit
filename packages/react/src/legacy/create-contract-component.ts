@@ -5,7 +5,7 @@ import type {
   PolymorphicGenerics,
   PresetMap,
   VariantMap,
-} from '@polymorphic-ui/core'
+} from '@praxis-ui/core'
 import { forwardRef } from 'react'
 import type { ReactElement } from 'react'
 import { Slot } from './slot'

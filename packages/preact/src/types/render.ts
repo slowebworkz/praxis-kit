@@ -1,4 +1,4 @@
-import type { ChildrenEvaluator, ElementType } from '@polymorphic-ui/core'
+import type { ChildrenEvaluator, ElementType } from '@praxis-ui/core'
 import type { Ref } from 'preact'
 import type { SlotValidator } from '../slot/slot-validator'
 import type {

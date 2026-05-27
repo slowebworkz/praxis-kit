@@ -5,8 +5,8 @@ import type {
   PresetOf,
   PropsOf,
   VariantsOf,
-} from '@polymorphic-ui/core'
-import { createPolymorphic } from '@polymorphic-ui/core'
+} from '@praxis-ui/core'
+import { createPolymorphic } from '@praxis-ui/core'
 
 export function buildCoreRuntime<G extends PolymorphicGenerics>(
   normalized: FactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>,

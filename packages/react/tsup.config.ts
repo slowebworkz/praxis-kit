@@ -6,5 +6,5 @@ export default defineConfig({
   dts: true,
   clean: true,
   tsconfig: 'tsconfig.build.json',
-  noExternal: ['@polymorphic-ui/adapter-utils'],
+  noExternal: ['@praxis-ui/adapter-utils'],
 })

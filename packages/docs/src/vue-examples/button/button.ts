@@ -1,4 +1,4 @@
-import { createContractComponent } from '@polymorphic-ui/vue'
+import { createContractComponent } from '@praxis-ui/vue'
 
 type ButtonProps = {
   loading?: boolean

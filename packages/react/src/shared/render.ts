@@ -1,9 +1,9 @@
 import { createElement } from 'react'
 import { jsx } from 'react/jsx-runtime'
 import type { ReactElement, Ref } from 'react'
-import type { ElementType, IntrinsicProps } from '@polymorphic-ui/core'
-import { isKnownAriaRole } from '@polymorphic-ui/core'
-import { applyFilter } from '@polymorphic-ui/adapter-utils'
+import type { ElementType, IntrinsicProps } from '@praxis-ui/core'
+import { isKnownAriaRole } from '@praxis-ui/core'
+import { applyFilter } from '@praxis-ui/adapter-utils'
 import type { SlotValidator } from './slot'
 import { isSlottableElement } from './slot'
 import type {
