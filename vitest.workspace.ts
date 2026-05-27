@@ -15,4 +15,5 @@ export default defineWorkspace([
   './packages/solid/vitest.ssr.config.ts',
   './packages/svelte/vitest.config.ts',
   './packages/svelte/vitest.ssr.config.ts',
+  './packages/vite-plugin/vitest.config.ts',
 ])
