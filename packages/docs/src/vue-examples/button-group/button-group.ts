@@ -1,9 +1,9 @@
 import { isVNode } from 'vue'
 import type { VNode } from 'vue'
-import { createPolymorphicComponent } from '@polymorphic-ui/vue'
+import { createContractComponent } from '@polymorphic-ui/vue'
 import { Button } from '../button/button'
 
-export const ButtonGroup = createPolymorphicComponent({
+export const ButtonGroup = createContractComponent({
   tag: 'div',
   name: 'ButtonGroup',
   styling: { base: 'inline-flex items-center gap-2' },

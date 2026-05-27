@@ -16,10 +16,10 @@
  *
  * The `flex`/`grid` props are typed automatically — they flow in via the plugin's
  * `ClassPlugin<LayoutProps>` return type and are merged into the component's prop
- * surface by `createPolymorphicComponent`. No explicit `LayoutProps` import is
+ * surface by `createContractComponent`. No explicit `LayoutProps` import is
  * needed at the definition site.
  */
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 import type { EmptyRecord } from '@polymorphic-ui/core'
 import { createTailwindPipeline } from '@polymorphic-ui/tailwind'
 
@@ -47,7 +47,7 @@ const variants = {
   },
 } as const
 
-export const Box = createPolymorphicComponent<'div', EmptyRecord, typeof variants>({
+export const Box = createContractComponent<'div', EmptyRecord, typeof variants>({
   tag: 'div',
   name: 'Box',
   styling: {

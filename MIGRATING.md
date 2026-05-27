@@ -61,9 +61,9 @@ export function Button<T extends ElementType = 'button'>({
 ### After
 
 ```tsx
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 
-export const Button = createPolymorphicComponent({
+export const Button = createContractComponent({
   tag: 'button',
   name: 'Button',
   styling: {
@@ -120,7 +120,7 @@ type ButtonProps<TAs extends ElementType = 'button'> = PolymorphicProps<
 >
 ```
 
-Where `typeof variants` references the variants object passed to `createPolymorphicComponent`.
+Where `typeof variants` references the variants object passed to `createContractComponent`.
 
 ### What you gain over the CVA pattern
 
@@ -182,9 +182,9 @@ export function Button({
 ### After
 
 ```tsx
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 
-export const Button = createPolymorphicComponent({
+export const Button = createContractComponent({
   tag: 'button',
   styling: {
     base: 'btn',
@@ -212,9 +212,9 @@ export const Button = createPolymorphicComponent({
 When the slot child needs to wrap inner content, use `Slottable`:
 
 ```tsx
-import { createPolymorphicComponent, Slottable } from '@polymorphic-ui/react'
+import { createContractComponent, Slottable } from '@polymorphic-ui/react'
 
-const Button = createPolymorphicComponent({ tag: 'button', /* ... */ })
+const Button = createContractComponent({ tag: 'button', /* ... */ })
 
 <Button asChild>
   <a href="/dashboard">
@@ -278,13 +278,13 @@ import { Button, ButtonGroup, Box } from '@chakra-ui/react'
 ### After — your own components with your own rules
 
 ```tsx
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
 import { Button } from './button'
 
 // Button — your variant surface, not Chakra's
-export const Button = createPolymorphicComponent({
+export const Button = createContractComponent({
   tag: 'button',
   name: 'Button',
   styling: {
@@ -299,7 +299,7 @@ export const Button = createPolymorphicComponent({
 })
 
 // ButtonGroup — your cardinality rule, not Chakra's
-export const ButtonGroup = createPolymorphicComponent({
+export const ButtonGroup = createContractComponent({
   tag: 'div',
   name: 'ButtonGroup',
   styling: { base: 'btn-group' },
@@ -336,9 +336,9 @@ export const ButtonGroup = createPolymorphicComponent({
 Chakra's `Box` is a polymorphic wrapper that applies design-token props. The equivalent:
 
 ```tsx
-import { createPolymorphicComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@polymorphic-ui/react'
 
-export const Box = createPolymorphicComponent({ tag: 'div' })
+export const Box = createContractComponent({ tag: 'div' })
 
 // Renders <div>
 <Box>content</Box>

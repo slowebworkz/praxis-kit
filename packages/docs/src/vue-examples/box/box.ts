@@ -12,7 +12,7 @@
  *
  * Gap classes are kept in both modes and stripped only when no layout mode is active.
  */
-import { createPolymorphicComponent } from '@polymorphic-ui/vue'
+import { createContractComponent } from '@polymorphic-ui/vue'
 import type { EmptyRecord } from '@polymorphic-ui/core'
 import { createTailwindPipeline } from '@polymorphic-ui/tailwind'
 
@@ -40,7 +40,7 @@ const variants = {
   },
 } as const
 
-export const Box = createPolymorphicComponent<'div', EmptyRecord, typeof variants>({
+export const Box = createContractComponent<'div', EmptyRecord, typeof variants>({
   tag: 'div',
   name: 'Box',
   styling: {
