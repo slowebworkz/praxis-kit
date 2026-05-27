@@ -11,11 +11,11 @@ import type { SvelteFactoryOptions } from './svelte-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
 import type { UnknownProps } from './types'
 
-// Unlike the React/Solid/Preact adapters, createPolymorphicComponent in Svelte
+// Unlike the React/Solid/Preact adapters, createContractComponent in Svelte
 // returns a BuiltRuntime bundle rather than a component function. Svelte
 // components must come from .svelte files (compile-time constraint); the bundle
 // is passed as the `bundle` prop to <Polymorphic> from Polymorphic.svelte.
-export function createPolymorphicComponent<
+export function createContractComponent<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,

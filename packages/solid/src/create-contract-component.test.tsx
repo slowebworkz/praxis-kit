@@ -2,49 +2,49 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { render as solidRender, cleanup } from '@solidjs/testing-library'
 import { createSignal } from 'solid-js'
-import { createPolymorphicComponent } from './create-polymorphic-component'
+import { createContractComponent } from './create-contract-component'
 
 afterEach(cleanup)
 
-describe('createPolymorphicComponent (Solid adapter)', () => {
+describe('createContractComponent (Solid adapter)', () => {
   it('sets displayName', () => {
-    const Comp = createPolymorphicComponent({ name: 'MyBox', tag: 'div' })
+    const Comp = createContractComponent({ name: 'MyBox', tag: 'div' })
     expect(Comp.displayName).toBe('MyBox')
   })
 
   it('falls back to PolymorphicComponent displayName', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div' })
+    const Comp = createContractComponent({ tag: 'div' })
     expect(Comp.displayName).toBe('PolymorphicComponent')
   })
 
   it('renders the default tag', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div' })
+    const Comp = createContractComponent({ tag: 'div' })
     const { container } = solidRender(() => <Comp />)
     expect(container.querySelector('div')).toBeTruthy()
   })
 
   it('renders a different tag via the as prop', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div' })
+    const Comp = createContractComponent({ tag: 'div' })
     const { container } = solidRender(() => <Comp as="section" />)
     expect(container.querySelector('section')).toBeTruthy()
     expect(container.querySelector('div')).toBeNull()
   })
 
   it('applies base class', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div', styling: { base: 'base-class' } })
+    const Comp = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
     const { container } = solidRender(() => <Comp />)
     expect(container.querySelector('div')?.className).toBe('base-class')
   })
 
   it('merges caller class with base', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div', styling: { base: 'base' } })
+    const Comp = createContractComponent({ tag: 'div', styling: { base: 'base' } })
     const { container } = solidRender(() => <Comp class="caller" />)
     expect(container.querySelector('div')?.className).toContain('base')
     expect(container.querySelector('div')?.className).toContain('caller')
   })
 
   it('forwards a ref to the DOM element', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div' })
+    const Comp = createContractComponent({ tag: 'div' })
     let el: HTMLDivElement | undefined
     solidRender(() => (
       <Comp
@@ -57,7 +57,7 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
   })
 
   it('forwards a ref when rendered as a different tag', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div' })
+    const Comp = createContractComponent({ tag: 'div' })
     let el: HTMLButtonElement | undefined
     solidRender(() => (
       <Comp
@@ -71,19 +71,19 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
   })
 
   it('passes extra props to the DOM element', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div' })
+    const Comp = createContractComponent({ tag: 'div' })
     const { container } = solidRender(() => <Comp data-testid="box" />)
     expect(container.querySelector('[data-testid="box"]')).toBeTruthy()
   })
 
   it('renders children', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div' })
+    const Comp = createContractComponent({ tag: 'div' })
     const { getByText } = solidRender(() => <Comp>hello</Comp>)
     expect(getByText('hello')).toBeTruthy()
   })
 
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
-    const Comp = createPolymorphicComponent({
+    const Comp = createContractComponent({
       tag: 'div',
       filterProps: (key) => key === 'myProp',
     })
@@ -93,14 +93,14 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
   })
 
   it('strips redundant ARIA role from intrinsic element', () => {
-    const Comp = createPolymorphicComponent({ tag: 'button', enforcement: { strict: false } })
+    const Comp = createContractComponent({ tag: 'button', enforcement: { strict: false } })
     const { container } = solidRender(() => <Comp role="button" />)
     // button has an implicit role="button" — redundant role should be stripped
     expect(container.querySelector('button')?.getAttribute('role')).toBeNull()
   })
 
   it('applies variant classes', () => {
-    const Comp = createPolymorphicComponent({
+    const Comp = createContractComponent({
       tag: 'div',
       styling: {
         base: 'box',
@@ -112,7 +112,7 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
   })
 
   it('reacts to signal-driven as prop change', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div' })
+    const Comp = createContractComponent({ tag: 'div' })
     const [tag, setTag] = createSignal<'div' | 'section'>('div')
     const { container } = solidRender(() => <Comp as={tag()} />)
     expect(container.querySelector('div')).toBeTruthy()
@@ -122,7 +122,7 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
   })
 
   it('reacts to signal-driven class change', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div', styling: { base: 'base' } })
+    const Comp = createContractComponent({ tag: 'div', styling: { base: 'base' } })
     const [extra, setExtra] = createSignal('a')
     const { container } = solidRender(() => <Comp class={extra()} />)
     expect(container.querySelector('div')?.className).toContain('a')
@@ -132,7 +132,7 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
   })
 
   it('asChild renders the child returned by the render function', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div', styling: { base: 'box' } })
+    const Comp = createContractComponent({ tag: 'div', styling: { base: 'box' } })
     const { container } = solidRender(() => (
       <Comp asChild>{(props) => <a href="/home" {...props} />}</Comp>
     ))
@@ -141,19 +141,19 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
   })
 
   it('asChild passes resolved class to the render function', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div', styling: { base: 'box' } })
+    const Comp = createContractComponent({ tag: 'div', styling: { base: 'box' } })
     const { container } = solidRender(() => <Comp asChild>{(props) => <a {...props} />}</Comp>)
     expect(container.querySelector('a')?.className).toBe('box')
   })
 
   it('asChild render function receives merged default props', () => {
-    const Comp = createPolymorphicComponent({ tag: 'button', defaults: { type: 'button' } })
+    const Comp = createContractComponent({ tag: 'button', defaults: { type: 'button' } })
     const { container } = solidRender(() => <Comp asChild>{(props) => <button {...props} />}</Comp>)
     expect(container.querySelector('button')?.getAttribute('type')).toBe('button')
   })
 
   it('asChild: child props override slot props when spread after', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div', defaults: { 'data-slot': 'yes' } })
+    const Comp = createContractComponent({ tag: 'div', defaults: { 'data-slot': 'yes' } })
     const { container } = solidRender(() => (
       <Comp asChild>{(props) => <a {...props} data-slot="no" />}</Comp>
     ))
@@ -161,7 +161,7 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
   })
 
   it('asChild forwards ref to the rendered element', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div' })
+    const Comp = createContractComponent({ tag: 'div' })
     let el: HTMLAnchorElement | undefined
     solidRender(() => (
       <Comp
@@ -177,7 +177,7 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
   })
 
   it('asChild throws when as and asChild are both set (strict: throw default)', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div' })
+    const Comp = createContractComponent({ tag: 'div' })
     expect(() =>
       solidRender(() => (
         // @ts-expect-error — intentionally invalid: as + asChild together
@@ -189,7 +189,7 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
   })
 
   it('asChild throws when children is not a function', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div' })
+    const Comp = createContractComponent({ tag: 'div' })
     expect(() =>
       solidRender(() => (
         // @ts-expect-error — intentionally invalid: children must be a render fn
@@ -199,7 +199,7 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
   })
 
   it('asChild reacts to signal-driven class changes', () => {
-    const Comp = createPolymorphicComponent({ tag: 'div', styling: { base: 'base' } })
+    const Comp = createContractComponent({ tag: 'div', styling: { base: 'base' } })
     const [extra, setExtra] = createSignal('a')
     const { container } = solidRender(() => (
       <Comp asChild class={extra()}>
@@ -215,7 +215,7 @@ describe('createPolymorphicComponent (Solid adapter)', () => {
   it('enforcement.children throws when child rules are violated', () => {
     const Comp =
       // eslint-disable-next-line @polymorphic-ui/no-enforcement-without-strict -- intentionally tests the adapter default (Solid defaults to 'throw')
-      createPolymorphicComponent({
+      createContractComponent({
         tag: 'div',
         enforcement: {
           children: [
