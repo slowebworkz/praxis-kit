@@ -11,7 +11,7 @@ export default defineConfig({
   },
   test: {
     name: 'solid-ssr',
-    include: ['src/ssr.test.tsx'],
+    include: ['src/ssr.test.tsx', 'src/hydration-parity.test.tsx'],
     environment: 'node',
   },
 })
