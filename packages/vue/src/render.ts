@@ -17,6 +17,8 @@ import type {
   Runtime,
 } from './types'
 
+declare const process: { env: { NODE_ENV: string } }
+
 function buildDirectives(
   as: ElementType | undefined,
   asChild: boolean | undefined,
@@ -129,7 +131,7 @@ export function render({
   const state = resolvedState ?? resolveRenderState(runtime, attrs, filterProps)
 
   const { vnodes: children, discarded } = normalizeChildren(slots)
-  childrenEvaluator?.evaluate(children)
+  if (process.env.NODE_ENV !== 'production') childrenEvaluator?.evaluate(children)
 
   const slotResult = tryRenderAsChild(state, children, discarded, slotValidator)
   if (slotResult !== null) return slotResult
