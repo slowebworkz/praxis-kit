@@ -1,4 +1,4 @@
-# polymorphic-ui — Architecture
+# praxis-ui — Architecture
 
 ---
 
@@ -31,13 +31,13 @@ enforces these rules via `dependency-cruiser`.
 
 ---
 
-## `@polymorphic-ui/core`
+## `@praxis-ui/core`
 
 ### What it is
 
-`@polymorphic-ui/core` is a framework-agnostic TypeScript library that resolves **polymorphic
-component behavior**: which HTML element or component to render (`as` prop), how to merge default
-and consumer props, and how to compose class strings from variants, presets, and layout state.
+`@praxis-ui/core` is a framework-agnostic TypeScript library that resolves **polymorphic component
+behavior**: which HTML element or component to render (`as` prop), how to merge default and consumer
+props, and how to compose class strings from variants, presets, and layout state.
 
 It has no dependency on React, the DOM, or any specific CSS methodology.
 
@@ -53,7 +53,7 @@ A framework adapter is optional:
 | ------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | Tag resolution      | `resolveTag(defaultTag, as)`                                           | Narrows `ElementType` to the framework's element union            |
 | Prop merging        | `resolveProps(props)`                                                  | Event handler merging, framework-specific prop normalisation      |
-| Class composition   | `resolveClasses(...)`                                                  | CSS-methodology post-processing (e.g. `@polymorphic-ui/tailwind`) |
+| Class composition   | `resolveClasses(...)`                                                  | CSS-methodology post-processing (e.g. `@praxis-ui/tailwind`)      |
 | Children validation | `ChildrenEvaluator.evaluate(unknown[])`                                | Flattens framework children before calling                        |
 | ARIA validation     | `AriaPolicyEngine` wired into `resolveAria` / `createResolverPipeline` | Strips invalid `aria-*` attrs; reports violations via strict mode |
 | Rendering           | —                                                                      | Creates and renders the resolved element                          |
@@ -206,8 +206,8 @@ CVA fn
 ```
 
 CSS-methodology-specific post-processing (such as Tailwind layout-aware class filtering) is handled
-by `@polymorphic-ui/tailwind`, which wraps `createClassPipeline` and applies it after the base
-pipeline runs.
+by `@praxis-ui/tailwind`, which wraps `createClassPipeline` and applies it after the base pipeline
+runs.
 
 ---
 
@@ -509,10 +509,10 @@ from production behavior. Safe to call inside render functions during developmen
 
 Sub-entrypoints for targeted inspection:
 
-| API                     | Package                        | Returns                                                                                    |
-| ----------------------- | ------------------------------ | ------------------------------------------------------------------------------------------ |
-| `diagnoseClassPipeline` | `@polymorphic-ui/core/styling` | `ClassDiagnosis` — compound traces, tag-map bypass status, effective variants              |
-| `diagnoseChildren`      | `@polymorphic-ui/contract`     | `ChildViolation[]` — all cardinality, position, unexpected, and ambiguous child violations |
+| API                     | Package                   | Returns                                                                                    |
+| ----------------------- | ------------------------- | ------------------------------------------------------------------------------------------ |
+| `diagnoseClassPipeline` | `@praxis-ui/core/styling` | `ClassDiagnosis` — compound traces, tag-map bypass status, effective variants              |
+| `diagnoseChildren`      | `@praxis-ui/contract`     | `ChildViolation[]` — all cardinality, position, unexpected, and ambiguous child violations |
 
 See [§Debugging](#debugging) for usage examples.
 
@@ -537,18 +537,18 @@ This is the contract that must stabilize before broader third-party plugin APIs 
 
 ---
 
-## `@polymorphic-ui/react`
+## `@praxis-ui/react`
 
-`@polymorphic-ui/react` is the React adapter for core. It wraps `createPolymorphic` with
-React-specific rendering, ref handling, and a Slot/Slottable protocol that implements `asChild`.
+`@praxis-ui/react` is the React adapter for core. It wraps `createPolymorphic` with React-specific
+rendering, ref handling, and a Slot/Slottable protocol that implements `asChild`.
 
 The package exports two entry points that share a common `shared/` implementation layer but differ
 in how they handle refs:
 
-| Entry point                    | Target    | Ref strategy           |
-| ------------------------------ | --------- | ---------------------- |
-| `@polymorphic-ui/react`        | React 19+ | `ref` as a plain prop  |
-| `@polymorphic-ui/react/legacy` | React 18  | `ref` via `forwardRef` |
+| Entry point               | Target    | Ref strategy           |
+| ------------------------- | --------- | ---------------------- |
+| `@praxis-ui/react`        | React 19+ | `ref` as a plain prop  |
+| `@praxis-ui/react/legacy` | React 18  | `ref` via `forwardRef` |
 
 ---
 
@@ -558,7 +558,7 @@ in how they handle refs:
 src/
 ├── index.ts              re-exports current/
 ├── current/              React 19 implementation
-│   ├── create-polymorphic-component.ts
+│   ├── create-contract-component.ts
 │   ├── normalize-children.ts
 │   └── slot/
 │       ├── Slot.tsx          thin shell: destructures ref as plain prop
@@ -566,7 +566,7 @@ src/
 │       ├── composeRefs.ts    getChildRef (reads props.ref) + composeRefs alias
 │       └── index.ts          exports Slot only
 ├── legacy/               React 18 implementation (forwardRef wrappers)
-│   ├── create-polymorphic-component.ts
+│   ├── create-contract-component.ts
 │   ├── normalize-children.ts
 │   └── slot/
 │       ├── Slot.tsx          thin shell: forwardRef wrapper
@@ -848,7 +848,7 @@ is one of three things:
 variant props (defaults → preset → caller). Use `diagnoseClassPipeline` to trace each compound:
 
 ```ts
-import { diagnoseClassPipeline } from '@polymorphic-ui/core/styling'
+import { diagnoseClassPipeline } from '@praxis-ui/core/styling'
 
 const trace = diagnoseClassPipeline(
   options, // same ClassPipelineOptions passed to createContractComponent
@@ -904,7 +904,7 @@ createContractComponent({
 Or call the engine directly to inspect violations without enforcement side-effects:
 
 ```ts
-import { AriaPolicyEngine } from '@polymorphic-ui/core/contract'
+import { AriaPolicyEngine } from '@praxis-ui/core/contract'
 
 const result = AriaPolicyEngine.evaluate('nav', { role: 'navigation' })
 result.violations

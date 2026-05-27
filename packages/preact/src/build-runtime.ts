@@ -9,8 +9,8 @@ import type {
   StrictMode,
   VariantMap,
   VariantsOf,
-} from '@polymorphic-ui/core'
-import { buildCoreRuntime, buildEngines, composeFilter } from '@polymorphic-ui/adapter-utils'
+} from '@praxis-ui/core'
+import { buildCoreRuntime, buildEngines, composeFilter } from '@praxis-ui/adapter-utils'
 import { normalizeChildren } from './normalize-children'
 import type { PreactFactoryOptions } from './preact-options'
 import { Slot, SlotValidator } from './slot'

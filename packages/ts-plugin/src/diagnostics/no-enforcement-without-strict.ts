@@ -44,7 +44,7 @@ export function checkNoEnforcementWithoutStrict(
                   category: ts.DiagnosticCategory.Warning,
                   code: MISSING_STRICT_CODE,
                   messageText: `enforcement.${field} is defined but enforcement.strict is not explicitly set. Adapter defaults vary — declare strict explicitly so the behavior is clear at the call site.`,
-                  source: '@polymorphic-ui/ts-plugin',
+                  source: '@praxis-ui/ts-plugin',
                 })
                 break
               }

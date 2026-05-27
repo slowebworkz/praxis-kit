@@ -7,23 +7,23 @@ step produces something you can render before the next layer of complexity is in
 
 ## Installation
 
-Pick the adapter for your framework. Every adapter depends on `@polymorphic-ui/core` — add both:
+Pick the adapter for your framework. Every adapter depends on `@praxis-ui/core` — add both:
 
 ```bash
 # React
-pnpm add @polymorphic-ui/react @polymorphic-ui/core
+pnpm add @praxis-ui/react @praxis-ui/core
 
 # Vue 3
-pnpm add @polymorphic-ui/vue @polymorphic-ui/core
+pnpm add @praxis-ui/vue @praxis-ui/core
 
 # Solid
-pnpm add @polymorphic-ui/solid @polymorphic-ui/core
+pnpm add @praxis-ui/solid @praxis-ui/core
 
 # Preact
-pnpm add @polymorphic-ui/preact @polymorphic-ui/core
+pnpm add @praxis-ui/preact @praxis-ui/core
 
 # Svelte 5
-pnpm add @polymorphic-ui/svelte @polymorphic-ui/core
+pnpm add @praxis-ui/svelte @praxis-ui/core
 ```
 
 The rest of this guide uses the React adapter. The API is identical across frameworks; only the
@@ -36,7 +36,7 @@ import path changes.
 The minimum required option is `tag`: the HTML element to render.
 
 ```ts
-import { createContractComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@praxis-ui/react'
 
 const Box = createContractComponent({ tag: 'div' })
 ```
@@ -195,7 +195,7 @@ Two strictness levels:
 
 ```tsx
 import { isValidElement } from 'react'
-import { createContractComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@praxis-ui/react'
 import { CardHeader, CardBody } from './card-parts'
 
 const Card = createContractComponent({
@@ -260,7 +260,7 @@ Use `Slottable` when the slot child wraps additional content that should receive
 children:
 
 ```tsx
-import { Slottable } from '@polymorphic-ui/react'
+import { Slottable } from '@praxis-ui/react'
 ;<Button asChild>
   <a href="/dashboard">
     <span aria-hidden>→</span>
@@ -303,22 +303,22 @@ Import from the `/legacy` sub-path. The API is identical — the adapter wraps i
 React 18 compatibility.
 
 ```ts
-import { createContractComponent } from '@polymorphic-ui/react/legacy'
+import { createContractComponent } from '@praxis-ui/react/legacy'
 ```
 
 ---
 
 ## Tailwind layout-aware classes
 
-`@polymorphic-ui/tailwind` provides a class pipeline plugin that filters layout utilities based on
-the active layout mode. Install separately:
+`@praxis-ui/tailwind` provides a class pipeline plugin that filters layout utilities based on the
+active layout mode. Install separately:
 
 ```bash
-pnpm add @polymorphic-ui/tailwind
+pnpm add @praxis-ui/tailwind
 ```
 
 ```ts
-import { createTailwindPipeline } from '@polymorphic-ui/tailwind'
+import { createTailwindPipeline } from '@praxis-ui/tailwind'
 
 const Box = createContractComponent({
   tag: 'div',

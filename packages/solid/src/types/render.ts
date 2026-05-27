@@ -1,11 +1,11 @@
-import type { ChildrenEvaluator } from '@polymorphic-ui/core'
+import type { ChildrenEvaluator } from '@praxis-ui/core'
 import type { FilterPredicate, ResolvedProps } from './primitives'
 import type { KnownProps } from './props'
 import type { Runtime } from './runtime'
 import type { SlotValidator } from '../slot/slot-validator'
 
 export type ResolvedRenderState = Readonly<{
-  tag: import('@polymorphic-ui/core').ElementType
+  tag: import('@praxis-ui/core').ElementType
   children?: unknown
   class: string
   props: ResolvedProps

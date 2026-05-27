@@ -1,5 +1,5 @@
 {
-  "name": "@polymorphic-ui/bench",
+  "name": "@praxis-ui/bench",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@polymorphic-ui/core": "workspace:*"
+    "@praxis-ui/core": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "catalog:",

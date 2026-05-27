@@ -2,7 +2,7 @@ import { bench, describe } from 'vitest'
 import { createElement, cloneElement, Fragment } from 'react'
 import type { ReactElement } from 'react'
 
-import type { AnyRecord } from '@polymorphic-ui/core'
+import type { AnyRecord } from '@praxis-ui/core'
 import { mergeProps } from '@/shared/slot/mergeProps'
 import { applySlot } from '@/shared/slot/applySlot'
 import { Slottable } from '@/shared/slot/Slottable'

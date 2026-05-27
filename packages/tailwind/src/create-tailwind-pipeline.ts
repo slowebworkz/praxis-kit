@@ -1,11 +1,11 @@
-import { cn, createClassPipeline } from '@polymorphic-ui/core'
+import { cn, createClassPipeline } from '@praxis-ui/core'
 import type {
   AnyRecord,
   ClassPipelineOptions,
   ClassPlugin,
   OwnedPropKeys,
   VariantMap,
-} from '@polymorphic-ui/core'
+} from '@praxis-ui/core'
 
 import { ClassBuilder } from './class-builder'
 import { ClassClassifier } from './class-classifier'

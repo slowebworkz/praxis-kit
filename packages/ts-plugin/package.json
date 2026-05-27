@@ -1,5 +1,5 @@
 {
-  "name": "@polymorphic-ui/ts-plugin",
+  "name": "@praxis-ui/ts-plugin",
   "version": "1.0.0",
   "main": "dist/index.js",
   "exports": {

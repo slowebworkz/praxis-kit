@@ -1,5 +1,5 @@
 import { bench, describe } from 'vitest'
-import { ChildrenEvaluator } from '@polymorphic-ui/core'
+import { ChildrenEvaluator } from '@praxis-ui/core'
 
 // strict: false — violations are silently swallowed so the matching work
 // is measured without the cost of exception construction or console output.

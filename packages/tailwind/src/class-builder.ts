@@ -1,4 +1,4 @@
-import { assertNever } from '@polymorphic-ui/core'
+import { assertNever } from '@praxis-ui/core'
 import type { ClassifiedToken } from './types/classified-token'
 
 export class ClassBuilder {

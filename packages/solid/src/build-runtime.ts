@@ -7,8 +7,8 @@ import type {
   PropsOf,
   VariantMap,
   VariantsOf,
-} from '@polymorphic-ui/core'
-import { buildCoreRuntime, buildEngines, composeFilter } from '@polymorphic-ui/adapter-utils'
+} from '@praxis-ui/core'
+import { buildCoreRuntime, buildEngines, composeFilter } from '@praxis-ui/adapter-utils'
 import type { SolidFactoryOptions } from './solid-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
 import type { NormalizedOptions } from './types/normalized-options'

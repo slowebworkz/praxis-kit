@@ -1,5 +1,5 @@
 {
-  "name": "@polymorphic-ui/contract",
+  "name": "@praxis-ui/contract",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@polymorphic-ui/primitive": "workspace:*",
+    "@praxis-ui/primitive": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {

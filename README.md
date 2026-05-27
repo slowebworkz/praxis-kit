@@ -1,4 +1,4 @@
-# polymorphic-ui
+# praxis-ui
 
 Framework-neutral semantic UI contracts.
 
@@ -40,8 +40,8 @@ Define it once. At render time:
 - **Semantics validate automatically** — invalid role overrides are caught and reported before they
   reach the DOM
 
-The enforcement logic lives in `@polymorphic-ui/core`. The React, Vue, Svelte, Solid, and Preact
-adapters are thin rendering wrappers — they carry no enforcement logic of their own.
+The enforcement logic lives in `@praxis-ui/core`. The React, Vue, Svelte, Solid, and Preact adapters
+are thin rendering wrappers — they carry no enforcement logic of their own.
 
 ---
 
@@ -53,7 +53,7 @@ Your component definition
               │
               ▼
   ┌───────────────────────┐
-  │  @polymorphic-ui/core │   ← enforcement lives here
+  │  @praxis-ui/core │   ← enforcement lives here
   │                       │
   │  class pipeline       │   base · variants · tag-map · compounds
   │  ARIA engine          │   role normalization · redundancy stripping
@@ -93,25 +93,25 @@ One import changes per framework. Everything else is identical:
 
 ```ts
 // React
-import { createContractComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@praxis-ui/react'
 export const Tabs = createContractComponent(tabsContract)
 ```
 
 ```ts
 // Vue
-import { createContractComponent } from '@polymorphic-ui/vue'
+import { createContractComponent } from '@praxis-ui/vue'
 export const Tabs = createContractComponent(tabsContract)
 ```
 
 ```ts
 // Solid
-import { createContractComponent } from '@polymorphic-ui/solid'
+import { createContractComponent } from '@praxis-ui/solid'
 export const Tabs = createContractComponent(tabsContract)
 ```
 
 ```ts
 // Preact
-import { createContractComponent } from '@polymorphic-ui/preact'
+import { createContractComponent } from '@praxis-ui/preact'
 export const Tabs = createContractComponent(tabsContract)
 ```
 
@@ -133,22 +133,22 @@ Same error. Same message. Same throw. The enforcement logic never crossed the ad
 
 ## Packages
 
-| Package                                         | Description                                                                        |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------- |
-| [`@polymorphic-ui/core`](packages/core)         | Framework-agnostic runtime — factory, class pipeline, ARIA engine, child evaluator |
-| [`@polymorphic-ui/react`](packages/react)       | React adapter · React 19+ · `/legacy` sub-path for React 18                        |
-| [`@polymorphic-ui/vue`](packages/vue)           | Vue 3 adapter                                                                      |
-| [`@polymorphic-ui/tailwind`](packages/tailwind) | Layout-aware class pipeline plugin                                                 |
-| [`@polymorphic-ui/solid`](packages/solid)       | Solid adapter · client and SSR                                                     |
-| [`@polymorphic-ui/preact`](packages/preact)     | Preact adapter                                                                     |
-| [`@polymorphic-ui/svelte`](packages/svelte)     | Svelte adapter                                                                     |
+| Package                                    | Description                                                                        |
+| ------------------------------------------ | ---------------------------------------------------------------------------------- |
+| [`@praxis-ui/core`](packages/core)         | Framework-agnostic runtime — factory, class pipeline, ARIA engine, child evaluator |
+| [`@praxis-ui/react`](packages/react)       | React adapter · React 19+ · `/legacy` sub-path for React 18                        |
+| [`@praxis-ui/vue`](packages/vue)           | Vue 3 adapter                                                                      |
+| [`@praxis-ui/tailwind`](packages/tailwind) | Layout-aware class pipeline plugin                                                 |
+| [`@praxis-ui/solid`](packages/solid)       | Solid adapter · client and SSR                                                     |
+| [`@praxis-ui/preact`](packages/preact)     | Preact adapter                                                                     |
+| [`@praxis-ui/svelte`](packages/svelte)     | Svelte adapter                                                                     |
 
 ---
 
 ## Installation
 
 ```bash
-pnpm add @polymorphic-ui/react @polymorphic-ui/core
+pnpm add @praxis-ui/react @praxis-ui/core
 ```
 
 ---
@@ -161,7 +161,7 @@ Declare which children are valid and how many are allowed. The evaluator runs on
 
 ```tsx
 import { isValidElement } from 'react'
-import { createContractComponent } from '@polymorphic-ui/react'
+import { createContractComponent } from '@praxis-ui/react'
 import { PrimaryAction, SecondaryAction } from './actions'
 
 const ActionBar = createContractComponent({
@@ -270,7 +270,7 @@ element instead of rendering its own DOM node.
 Use `Slottable` when the slot child needs to wrap additional content:
 
 ```tsx
-import { Slottable } from '@polymorphic-ui/react'
+import { Slottable } from '@praxis-ui/react'
 ;<Button asChild>
   <a href="/dashboard">
     <span aria-hidden>→</span>
@@ -287,7 +287,7 @@ Import from the `/legacy` sub-path. API is identical; the adapter wraps in `forw
 compatibility.
 
 ```ts
-import { createContractComponent } from '@polymorphic-ui/react/legacy'
+import { createContractComponent } from '@praxis-ui/react/legacy'
 ```
 
 ---
@@ -295,14 +295,14 @@ import { createContractComponent } from '@polymorphic-ui/react/legacy'
 ## Tailwind
 
 ```bash
-pnpm add @polymorphic-ui/tailwind
+pnpm add @praxis-ui/tailwind
 ```
 
 `createTailwindPipeline` filters layout-specific utility classes based on the active layout mode
 (`flex` or `grid`).
 
 ```tsx
-import { createTailwindPipeline } from '@polymorphic-ui/tailwind'
+import { createTailwindPipeline } from '@praxis-ui/tailwind'
 
 const Box = createContractComponent({
   styling: { plugin: createTailwindPipeline, base: 'rounded p-4' },
@@ -322,7 +322,7 @@ const Box = createContractComponent({
 ### Why not CVA?
 
 [CVA](https://cva.style) produces a class string. You still wire up tag resolution, prop forwarding,
-ARIA normalization, and child validation yourself. `polymorphic-ui` uses CVA internally for variant
+ARIA normalization, and child validation yourself. `praxis-ui` uses CVA internally for variant
 resolution and adds the surrounding infrastructure. If you find yourself rebuilding those pieces on
 top of CVA, that is the gap this fills.
 
@@ -339,8 +339,8 @@ Slot.
 
 ### Why not a component library?
 
-A component library enforces its own constraints. `polymorphic-ui` is infrastructure — it provides
-the enforcement, normalization, and composition primitives that your design system's components are
+A component library enforces its own constraints. `praxis-ui` is infrastructure — it provides the
+enforcement, normalization, and composition primitives that your design system's components are
 built on top of, in any framework.
 
 → [Migrating from Chakra UI](MIGRATING.md#migrating-from-chakra-ui-or-any-full-component-library)

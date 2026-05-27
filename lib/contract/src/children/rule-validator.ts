@@ -1,5 +1,5 @@
 import type { MatchMatrix, NormalizedChildRule, RuleIndex, StrictMode } from '../types'
-import { assertNever } from '@polymorphic-ui/primitive'
+import { assertNever } from '@praxis-ui/primitive'
 import { StrictBase } from '../strict'
 
 export class RuleValidator extends StrictBase {

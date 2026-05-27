@@ -1,4 +1,4 @@
-import type { ChildrenEvaluator, EmptyRecord } from '@polymorphic-ui/core'
+import type { ChildrenEvaluator, EmptyRecord } from '@praxis-ui/core'
 
 export type FilterPredicate = (key: string, variantKeys: ReadonlySet<string>) => boolean
 

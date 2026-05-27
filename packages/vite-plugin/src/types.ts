@@ -1,4 +1,4 @@
-import type { Cardinality, ChildRulePosition, Severity } from '@polymorphic-ui/core'
+import type { Cardinality, ChildRulePosition, Severity } from '@praxis-ui/core'
 
 export type { Cardinality, ChildRulePosition, Severity }
 
@@ -38,7 +38,7 @@ export type Diagnostic = {
   col: number
   /**
    * Uses the same Severity vocabulary as ValidationViolation in
-   * @polymorphic-ui/contract — 'error' | 'warning'. The plugin wrapper maps
+   * @praxis-ui/contract — 'error' | 'warning'. The plugin wrapper maps
    * 'warning' → this.warn() and 'error' → this.error() for Rollup/Vite.
    */
   severity: Severity

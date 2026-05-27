@@ -7,13 +7,13 @@ import type {
   PropsOf,
   VariantMap,
   VariantsOf,
-} from '@polymorphic-ui/core'
+} from '@praxis-ui/core'
 import {
   buildCoreRuntime,
   buildEngines,
   composeFilter,
   SlotValidator,
-} from '@polymorphic-ui/adapter-utils'
+} from '@praxis-ui/adapter-utils'
 import type { SvelteFactoryOptions } from './svelte-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
 import type { NormalizedOptions } from './types/normalized-options'

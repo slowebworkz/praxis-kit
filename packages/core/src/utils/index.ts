@@ -1,1 +1,1 @@
-export { assertNever, cn, mergeProps } from '@polymorphic-ui/primitive'
+export { assertNever, cn, mergeProps } from '@praxis-ui/primitive'

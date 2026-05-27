@@ -9,7 +9,7 @@ updates:
     groups:
       internal:
         patterns:
-          - "@polymorphic-ui/*"
+          - "@praxis-ui/*"
 
       build:
         patterns:

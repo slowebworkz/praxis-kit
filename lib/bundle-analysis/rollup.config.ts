@@ -19,7 +19,7 @@ const workspaceAlias = () =>
   alias({
     entries: [
       {
-        find: '@polymorphic-ui/adapter-utils',
+        find: '@praxis-ui/adapter-utils',
         replacement: join(root, 'lib/adapter-utils/src/index.ts'),
       },
     ],
