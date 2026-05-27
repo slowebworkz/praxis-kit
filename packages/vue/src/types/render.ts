@@ -21,4 +21,5 @@ export type RenderInput = Readonly<{
   filterProps: FilterPredicate
   slotValidator: SlotValidator
   childrenEvaluator?: ChildrenEvaluator
+  resolvedState?: ResolvedRenderState
 }>
