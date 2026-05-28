@@ -3,11 +3,14 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createElement, Fragment, createRef, act } from 'react'
 import type { ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { UnknownProps } from '@/shared'
+import type { PolymorphicComponent, RenderCallbackProps, UnknownProps } from '@/shared'
 import { createContractComponent } from './create-contract-component'
 
 // Cast to bypass the PolymorphicComponent union in createElement overloads.
-function box(comp: ReturnType<typeof createContractComponent>) {
+// Accepts PolymorphicComponent<any> so concrete generic instantiations (e.g. EmptyRecord
+// variants) are assignable regardless of the three-overload variance check.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function box(comp: PolymorphicComponent<any>) {
   return comp as ComponentType<UnknownProps>
 }
 
@@ -223,5 +226,95 @@ describe('createContractComponent (current / React 19)', () => {
 
     expect(el.getAttribute('size')).toBeNull()
     expect(el.getAttribute('data-keep')).toBe('yes')
+  })
+
+  // ── render prop ────────────────────────────────────────────────────────────
+
+  it('render prop: renders the element returned by the callback', () => {
+    const Box = createContractComponent({ tag: 'div' })
+
+    mount(
+      createElement(box(Box), {
+        render: () => createElement('a', { href: '/' }, 'link'),
+      }),
+    )
+
+    expect(container.querySelector('a')).toBeTruthy()
+    expect(container.querySelector('div')).toBeNull()
+  })
+
+  it('render prop: passes resolved className to the callback', () => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'box-cls' },
+    })
+
+    mount(
+      createElement(box(Box), {
+        render: (p: RenderCallbackProps) => createElement('a', p as never),
+      }),
+    )
+
+    expect(container.querySelector('a')!.className).toContain('box-cls')
+  })
+
+  it('render prop: passes variant-resolved className to the callback', () => {
+    const Button = createContractComponent({
+      tag: 'button',
+      styling: {
+        base: 'btn',
+        variants: { size: { lg: 'btn--lg' } },
+        defaults: { size: 'lg' },
+      },
+    })
+
+    mount(
+      createElement(box(Button), {
+        render: (p: RenderCallbackProps) => createElement('a', p as never),
+      }),
+    )
+
+    expect(container.querySelector('a')!.className).toContain('btn--lg')
+  })
+
+  it('render prop: does not forward the render key as a DOM attribute', () => {
+    const Box = createContractComponent({ tag: 'div' })
+
+    mount(
+      createElement(box(Box), {
+        render: (p: RenderCallbackProps) => createElement('a', p as never),
+      }),
+    )
+
+    const el = container.querySelector('a')!
+    expect(el.hasAttribute('render')).toBe(false)
+  })
+
+  it('render prop: passes ref to the callback so the caller can forward it', () => {
+    const Box = createContractComponent({ tag: 'div' })
+    const ref = createRef<HTMLAnchorElement>()
+
+    mount(
+      createElement(box(Box), {
+        ref,
+        render: (p: RenderCallbackProps) => createElement('a', { ...p, href: '/' } as never),
+      }),
+    )
+
+    expect(ref.current).toBe(container.querySelector('a'))
+  })
+
+  it('render prop: takes priority over asChild when both are present', () => {
+    // asChild is stripped by the discriminated union; providing render takes the render path.
+    const Box = createContractComponent({ tag: 'div', styling: { base: 'box-cls' } })
+
+    mount(
+      createElement(box(Box), {
+        render: (p: RenderCallbackProps) => createElement('section', p as never),
+      }),
+    )
+
+    expect(container.querySelector('section')).toBeTruthy()
+    expect(container.querySelector('div')).toBeNull()
   })
 })

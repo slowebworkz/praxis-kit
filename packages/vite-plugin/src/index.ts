@@ -4,10 +4,12 @@ import { collectConstraints } from './collect'
 import { collectJsxUsages, diagnoseUsages } from './diagnose'
 import { extractImportSpecifiers } from './imports'
 import { ConstraintRegistry } from './registry'
+import { transformAsChild } from './slot-transform'
 import type { PluginOptions } from './types'
 
 export type { PluginOptions, Diagnostic, ComponentConstraint, StaticBound } from './types'
 export { analyze } from './analyze'
+export { transformAsChild } from './slot-transform'
 
 const DEFAULT_CALLEE_NAMES = ['createPolymorphicComponent', 'createContractComponent']
 
@@ -93,6 +95,37 @@ export function contractPlugin(options?: PluginOptions): Plugin {
           this.warn({ message: d.message, loc })
         }
       }
+    },
+  }
+}
+
+/**
+ * Vite plugin that transforms `asChild` JSX usage sites to the render-prop form
+ * at build time, eliminating the Slot/cloneElement/mergeProps runtime path.
+ *
+ * Only transforms sites where the transform is semantically safe:
+ * - Exactly one static child element
+ * - Child has no `className`, `style`, or event handler props
+ *
+ * Complex asChild patterns (conflicting props, dynamic children, Slottable
+ * siblings) are left unchanged and handled by the runtime Slot path.
+ *
+ * Place before `contractPlugin` so cardinality analysis sees the transformed
+ * source.
+ *
+ * @example
+ * // vite.config.ts
+ * import { slotTransformPlugin, contractPlugin } from '@praxis-ui/vite-plugin'
+ * export default { plugins: [slotTransformPlugin(), contractPlugin()] }
+ */
+export function slotTransformPlugin(): Plugin {
+  return {
+    name: 'praxis-ui:slot-transform',
+    transform(code, id) {
+      const ext = id.split('.').pop() ?? ''
+      if (!['tsx', 'jsx'].includes(ext)) return null
+      const result = transformAsChild(parseSource(id, code))
+      return result !== null ? { code: result } : null
     },
   }
 }
