@@ -11,6 +11,7 @@ import type {
   VariantProps,
   VariantsOf,
 } from '@praxis-ui/core'
+import type { RenderCallbackProps } from './props'
 import type { UnknownProps } from './primitives'
 
 /** Maps a core ElementType to its DOM instance type for ref inference. */
@@ -85,13 +86,41 @@ export type PolymorphicWithAsChild<
 >
 
 /**
+ * Props for the render-prop path. The `render` callback receives all resolved
+ * props (className, ref, filtered component props) and returns the target element.
+ * Spread the callback argument onto the element you want to receive the resolved
+ * styles and attributes.
+ *
+ * This is the output form for the compile-time `asChild` transform: keeps the
+ * same rendering flexibility as `asChild` without the `cloneElement` cost at
+ * runtime. Unlike `asChild`, the render callback does not auto-merge conflicting
+ * event handlers — spread position determines precedence.
+ *
+ * ```tsx
+ * <Button render={(p) => <a href="/home" {...p} />} size="lg" />
+ * ```
+ */
+export type PolymorphicWithRender<
+  G extends PolymorphicGenerics,
+  TAs extends ElementType = DefaultOf<G>,
+> = Simplify<
+  Omit<SharedProps<G, TAs>, 'children'> & {
+    render: (props: RenderCallbackProps) => ReactElement
+    asChild?: never
+    children?: never
+  }
+>
+
+/**
  * A polymorphic component that infers HTML attributes and ref type from the `as` prop.
  *
- * Two call signatures form a discriminated union on `asChild`:
- * - `asChild: true`  → slot path; exactly one `ReactElement` child required
- * - `asChild?: false` → normal path; any `ReactNode` children accepted
+ * Three call signatures form a discriminated union:
+ * - `render` present       → render-prop path; no Slot or cloneElement at runtime
+ * - `asChild: true`        → slot path; exactly one `ReactElement` child required
+ * - `asChild?: false`      → normal path; any `ReactNode` children accepted
  */
 export type PolymorphicComponent<G extends PolymorphicGenerics> = {
+  <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicWithRender<G, TAs>): ReactElement
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicWithAsChild<G, TAs>): ReactElement
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicProps<G, TAs>): ReactElement
   displayName?: string

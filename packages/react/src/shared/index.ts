@@ -29,7 +29,9 @@ export type {
   PolymorphicComponent,
   PolymorphicProps,
   PolymorphicWithAsChild,
+  PolymorphicWithRender,
 } from './types/polymorphic-props'
+export type { RenderCallbackProps } from './types/props'
 export { mergeRefs } from './merge-refs'
 export { buildRuntime } from './build-runtime'
 export { applyDisplayName } from './apply-display-name'

@@ -1,6 +1,6 @@
 import ts from 'typescript'
 import { walk } from './ast'
-import type { ComponentConstraint, Diagnostic, Severity } from './types'
+import type { ComponentConstraint, Diagnostic, PendingUsage, Severity } from './types'
 
 /**
  * Returns the count of meaningful JSX children — JSX elements and non-whitespace
@@ -37,7 +37,7 @@ export function diagnoseUsages(
 ): Diagnostic[] {
   if (constraints.length === 0) return []
 
-  const byName = new Map(constraints.map((c) => [c.name, c]))
+  const byName = new Map(constraints.filter((c) => c.rules.length > 0).map((c) => [c.name, c]))
   const diagnostics: Diagnostic[] = []
 
   walk(source, (node) => {
@@ -81,4 +81,107 @@ export function diagnoseUsages(
   })
 
   return diagnostics
+}
+
+/**
+ * Walks a source file and emits a diagnostic for each JSX usage of a
+ * constrained component where a static `as="tag"` prop overrides the default
+ * element type on a component that has ARIA enforcement rules.
+ *
+ * Changing the element type silently changes the implicit ARIA role, which can
+ * cause ARIA rules to behave unexpectedly. This is not a hard error — the
+ * override may be intentional — but it surfaces a site that warrants review.
+ */
+export function diagnoseAriaTagOverrides(
+  source: ts.SourceFile,
+  constraints: ComponentConstraint[],
+  severity: Severity,
+): Diagnostic[] {
+  const byName = new Map(
+    constraints.filter((c) => c.hasAriaRules && c.defaultTag !== undefined).map((c) => [c.name, c]),
+  )
+  if (byName.size === 0) return []
+
+  const diagnostics: Diagnostic[] = []
+
+  walk(source, (node) => {
+    let tagName: string | undefined
+    let attributes: ts.JsxAttributes | undefined
+
+    if (ts.isJsxElement(node)) {
+      tagName = ts.isIdentifier(node.openingElement.tagName)
+        ? node.openingElement.tagName.text
+        : undefined
+      attributes = node.openingElement.attributes
+    } else if (ts.isJsxSelfClosingElement(node)) {
+      tagName = ts.isIdentifier(node.tagName) ? node.tagName.text : undefined
+      attributes = node.attributes
+    }
+
+    if (!tagName || !attributes) return
+
+    const constraint = byName.get(tagName)
+    if (!constraint) return
+
+    for (const attr of attributes.properties) {
+      if (!ts.isJsxAttribute(attr)) continue
+      const attrName = ts.isIdentifier(attr.name) ? attr.name.text : undefined
+      if (attrName !== 'as') continue
+      if (!attr.initializer) continue
+
+      let asValue: string | undefined
+      if (ts.isStringLiteral(attr.initializer)) {
+        asValue = attr.initializer.text
+      } else if (
+        ts.isJsxExpression(attr.initializer) &&
+        attr.initializer.expression !== undefined &&
+        ts.isStringLiteral(attr.initializer.expression)
+      ) {
+        asValue = attr.initializer.expression.text
+      }
+
+      if (asValue === undefined || asValue === constraint.defaultTag) continue
+
+      const { line, character } = source.getLineAndCharacterOfPosition(node.getStart(source))
+      diagnostics.push({
+        message: `<${tagName} as="${asValue}"> changes the element type from '${constraint.defaultTag}' — ARIA enforcement rules may not apply as expected.`,
+        line: line + 1,
+        col: character + 1,
+        severity,
+      })
+    }
+  })
+
+  return diagnostics
+}
+
+/**
+ * Walks a source file and collects every uppercase-tag JSX usage as a
+ * PendingUsage. Used by the plugin to build the cross-file validation queue:
+ * usages whose tag name is not locally defined are deferred until `buildEnd`
+ * when the full constraint registry is available.
+ */
+export function collectJsxUsages(source: ts.SourceFile): PendingUsage[] {
+  const usages: PendingUsage[] = []
+
+  walk(source, (node) => {
+    let tagName: string | undefined
+    let count: number | undefined
+
+    if (ts.isJsxElement(node)) {
+      const openTag = node.openingElement
+      tagName = ts.isIdentifier(openTag.tagName) ? openTag.tagName.text : undefined
+      count = countStaticChildren(node)
+    } else if (ts.isJsxSelfClosingElement(node)) {
+      tagName = ts.isIdentifier(node.tagName) ? node.tagName.text : undefined
+      count = 0
+    }
+
+    if (!tagName || !/^[A-Z]/.test(tagName)) return
+
+    const { line, character } = source.getLineAndCharacterOfPosition(node.getStart(source))
+    usages.push({ tagName, count, line: line + 1, col: character + 1 })
+  })
+
+  return usages
 }
