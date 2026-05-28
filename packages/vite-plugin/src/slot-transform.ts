@@ -14,12 +14,13 @@
  * element cloning.
  *
  * **Safety conditions** — the transform is skipped if any of these are true:
- *   1. The child has a `style` or event handler (`on*`) prop. These need the
- *      merge semantics that Slot provides; a simple spread would silently drop
- *      the child's handlers. A string-literal `className` on the child IS
- *      handled: the transform generates `{..._p, className: _p.className + ' ' + childCls}`.
- *   2. The child is a self-closing element with no stable attributes to preserve
- *      in the render callback (degenerate case — leave as-is).
+ *   1. The child has a dynamic `className` expression (cannot merge safely).
+ *      A string-literal `className` IS handled: the transform generates
+ *      `{..._p, className: _p.className + ' childCls'}`.
+ *   2. The child has a bare `style` or `on*` attribute without an initializer.
+ *      Static object-literal and expression-valued `style` props are merged:
+ *      `style={{..._p.style, ...childStyle}}`.  Event handlers are composed:
+ *      `onClick={(_e) => { (childHandler)(_e); _p.onClick?.(_e); }}`.
  *   3. The component name starts with a lowercase letter (HTML intrinsic — not
  *      a polymorphic component).
  *   4. There are zero or more than one meaningful child elements.
@@ -39,11 +40,6 @@ function isUpperCase(s: string): boolean {
 /** Returns the attribute name string; empty string for namespaced names. */
 function jsxAttrName(attr: ts.JsxAttribute): string {
   return ts.isIdentifier(attr.name) ? attr.name.text : ''
-}
-
-/** Returns true if the attribute name is unconditionally conflicting (cannot be merged). */
-function isConflictingProp(name: string): boolean {
-  return name === 'style' || /^on[A-Z]/.test(name)
 }
 
 /**
@@ -76,6 +72,61 @@ function getStaticClassName(
     return null
   }
   return { absent: true }
+}
+
+/**
+ * Extracts the child's `style` prop expression.
+ *
+ * Returns:
+ * - `{ absent: true }` when no style prop is present
+ * - `{ absent: false, expr }` when style is a JSX expression (any inner expr)
+ * - `null` when style is present but cannot be safely handled (bare attr, string literal)
+ */
+type StyleResult = { absent: true } | { absent: false; expr: ts.Expression }
+
+function getStyleInfo(child: ts.JsxElement | ts.JsxSelfClosingElement): StyleResult | null {
+  const attrs = ts.isJsxElement(child)
+    ? child.openingElement.attributes.properties
+    : child.attributes.properties
+  for (const attr of attrs) {
+    if (!ts.isJsxAttribute(attr) || jsxAttrName(attr) !== 'style') continue
+    const init = attr.initializer
+    // Bare `style` or string-literal style — not a valid style shape; bail.
+    if (!init || ts.isStringLiteral(init)) return null
+    if (ts.isJsxExpression(init) && init.expression !== undefined)
+      return { absent: false, expr: init.expression }
+    return null
+  }
+  return { absent: true }
+}
+
+/**
+ * Collects all `on*` event handler props from the child element.
+ *
+ * Returns:
+ * - Array of `{ name, expr }` for each handler (may be empty when none present)
+ * - `null` when any handler lacks an expression initializer (bail)
+ */
+type HandlerEntry = { name: string; expr: ts.Expression }
+
+function getEventHandlers(child: ts.JsxElement | ts.JsxSelfClosingElement): HandlerEntry[] | null {
+  const attrs = ts.isJsxElement(child)
+    ? child.openingElement.attributes.properties
+    : child.attributes.properties
+  const handlers: HandlerEntry[] = []
+  for (const attr of attrs) {
+    if (!ts.isJsxAttribute(attr)) continue
+    const name = jsxAttrName(attr)
+    if (!/^on[A-Z]/.test(name)) continue
+    const init = attr.initializer
+    if (!init) return null // bare on* without value — bail
+    if (ts.isJsxExpression(init) && init.expression !== undefined) {
+      handlers.push({ name, expr: init.expression })
+      continue
+    }
+    return null // unhandleable initializer form — bail
+  }
+  return handlers
 }
 
 /** Returns true if the opening element has an `asChild` attribute (bare or `={true}`). */
@@ -115,18 +166,6 @@ function getSingleElementChild(
   return meaningful.length === 1 ? meaningful[0] : undefined
 }
 
-/** Returns true if the child has any unconditionally conflicting props (style, on*). */
-function childHasConflictingProps(child: ts.JsxElement | ts.JsxSelfClosingElement): boolean {
-  const attrs = ts.isJsxElement(child)
-    ? child.openingElement.attributes.properties
-    : child.attributes.properties
-
-  for (const attr of attrs) {
-    if (ts.isJsxAttribute(attr) && isConflictingProp(jsxAttrName(attr))) return true
-  }
-  return false
-}
-
 /** Returns the tag name string if the opening element has a simple identifier tag. */
 function getTagName(child: ts.JsxElement | ts.JsxSelfClosingElement): string | undefined {
   const tag = ts.isJsxElement(child) ? child.openingElement.tagName : child.tagName
@@ -137,9 +176,10 @@ function getTagName(child: ts.JsxElement | ts.JsxSelfClosingElement): string | u
  * Builds the attribute list for the transformed parent, omitting `asChild`
  * and adding `render={(_p) => <childTag ...childAttrs {..._p} />}`.
  *
- * When the child has a string-literal `className`, a merged className attr is
- * appended after the spread so the child's static classes are preserved:
- * `{..._p, className: _p.className + ' childCls'}`.
+ * Merged props are placed after the `{..._p}` spread so they override _p:
+ * - Static `className` → `className={_p.className + ' childCls'}`
+ * - `style` → `style={{..._p.style, ...childStyleExpr}}`
+ * - `on*` handlers → `onClick={(_e) => { (childHandler)(_e); _p.onClick?.(_e); }}`
  */
 function buildTransformedAttributes(
   factory: ts.NodeFactory,
@@ -147,6 +187,8 @@ function buildTransformedAttributes(
   child: ts.JsxElement | ts.JsxSelfClosingElement,
   tagName: string,
   clsResult: ClassNameResult,
+  styleInfo: StyleResult,
+  handlers: HandlerEntry[],
 ): ts.JsxAttributes {
   // Parent attrs without asChild
   const parentAttrs = original.attributes.properties.filter(
@@ -154,9 +196,10 @@ function buildTransformedAttributes(
   )
 
   const hasStaticCls = !clsResult.absent
+  const hasStyle = !styleInfo.absent
+  const handlerNames = new Set(handlers.map((h) => h.name))
 
-  // Child's own attributes (excluding ref and, when we have a static className,
-  // className itself — it's re-emitted as a merged prop after the spread).
+  // Child's own attributes — exclude ref and any props we're overriding after the spread.
   const childOpeningAttrs = (
     ts.isJsxElement(child)
       ? child.openingElement.attributes.properties
@@ -165,7 +208,10 @@ function buildTransformedAttributes(
     (attr) =>
       !(
         ts.isJsxAttribute(attr) &&
-        (jsxAttrName(attr) === 'ref' || (hasStaticCls && jsxAttrName(attr) === 'className'))
+        (jsxAttrName(attr) === 'ref' ||
+          (hasStaticCls && jsxAttrName(attr) === 'className') ||
+          (hasStyle && jsxAttrName(attr) === 'style') ||
+          handlerNames.has(jsxAttrName(attr)))
       ),
   )
 
@@ -175,10 +221,10 @@ function buildTransformedAttributes(
   // Spread: `{..._p}`
   const spreadProp = factory.createJsxSpreadAttribute(factory.createIdentifier('_p'))
 
-  // When the child declared a static className, append a merged className prop after
-  // the spread: `className={_p.className + ' childCls'}` — the spread sets _p.className
-  // first, then we override with the merged value. Empty static className is a no-op.
+  // Extra attrs placed after spread so they override _p values.
   const extraAttrs: ts.JsxAttributeLike[] = []
+
+  // Merged className: `_p.className + ' childCls'`
   if (hasStaticCls && clsResult.value !== '') {
     const mergedExpr = factory.createBinaryExpression(
       factory.createPropertyAccessExpression(factory.createIdentifier('_p'), 'className'),
@@ -193,7 +239,67 @@ function buildTransformedAttributes(
     )
   }
 
-  // Reconstruct the child element with child's own attrs + spread (+ optional merged className)
+  // Merged style: `{..._p.style, ...childStyleExpr}` or inlined object properties.
+  if (hasStyle) {
+    const styleExpr = styleInfo.expr
+    const pStyleSpread = factory.createSpreadAssignment(
+      factory.createPropertyAccessExpression(factory.createIdentifier('_p'), 'style'),
+    )
+    let mergedStyleObj: ts.ObjectLiteralExpression
+    if (ts.isObjectLiteralExpression(styleExpr)) {
+      // Inline child's properties directly after _p.style spread.
+      mergedStyleObj = factory.createObjectLiteralExpression(
+        [pStyleSpread, ...styleExpr.properties],
+        false,
+      )
+    } else {
+      // Non-literal expression: spread it.
+      mergedStyleObj = factory.createObjectLiteralExpression(
+        [pStyleSpread, factory.createSpreadAssignment(styleExpr)],
+        false,
+      )
+    }
+    extraAttrs.push(
+      factory.createJsxAttribute(
+        factory.createIdentifier('style'),
+        factory.createJsxExpression(undefined, mergedStyleObj),
+      ),
+    )
+  }
+
+  // Composed event handlers: `(_e) => { (childHandler)(_e); _p.name?.(_e); }`
+  for (const { name, expr } of handlers) {
+    const eParam = factory.createParameterDeclaration(undefined, undefined, '_e')
+    const callChild = factory.createExpressionStatement(
+      factory.createCallExpression(factory.createParenthesizedExpression(expr), undefined, [
+        factory.createIdentifier('_e'),
+      ]),
+    )
+    const callParent = factory.createExpressionStatement(
+      factory.createCallChain(
+        factory.createPropertyAccessExpression(factory.createIdentifier('_p'), name),
+        factory.createToken(ts.SyntaxKind.QuestionDotToken),
+        undefined,
+        [factory.createIdentifier('_e')],
+      ),
+    )
+    const composedFn = factory.createArrowFunction(
+      undefined,
+      undefined,
+      [eParam],
+      undefined,
+      factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+      factory.createBlock([callChild, callParent], true),
+    )
+    extraAttrs.push(
+      factory.createJsxAttribute(
+        factory.createIdentifier(name),
+        factory.createJsxExpression(undefined, composedFn),
+      ),
+    )
+  }
+
+  // Reconstruct the child element with child's own attrs + spread (+ overrides)
   const childAttrsWithSpread = factory.createJsxAttributes([
     ...childOpeningAttrs,
     spreadProp,
@@ -258,17 +364,31 @@ function createAsChildTransformer(factory: ts.NodeFactory): ts.TransformerFactor
       const child = getSingleElementChild(node)
       if (!child) return ts.visitEachChild(node, visit, context)
 
-      if (childHasConflictingProps(child)) return ts.visitEachChild(node, visit, context)
-
       // null means className is dynamic — bail since we cannot safely merge it.
       const clsResult = getStaticClassName(child)
       if (clsResult === null) return ts.visitEachChild(node, visit, context)
+
+      // null means style is present but cannot be handled — bail.
+      const styleInfo = getStyleInfo(child)
+      if (styleInfo === null) return ts.visitEachChild(node, visit, context)
+
+      // null means a handler lacks an expression — bail.
+      const handlers = getEventHandlers(child)
+      if (handlers === null) return ts.visitEachChild(node, visit, context)
 
       const childTag = getTagName(child)
       if (!childTag) return ts.visitEachChild(node, visit, context)
 
       // All conditions met — emit render-prop form as a self-closing element.
-      const newAttrs = buildTransformedAttributes(factory, opening, child, childTag, clsResult)
+      const newAttrs = buildTransformedAttributes(
+        factory,
+        opening,
+        child,
+        childTag,
+        clsResult,
+        styleInfo,
+        handlers,
+      )
 
       return factory.createJsxSelfClosingElement(opening.tagName, opening.typeArguments, newAttrs)
     }

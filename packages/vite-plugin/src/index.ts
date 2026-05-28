@@ -7,6 +7,7 @@ import { collectJsxUsages, diagnoseAriaTagOverrides, diagnoseUsages } from './di
 import { extractImportSpecifiers } from './imports'
 import { ConstraintRegistry } from './registry'
 import { transformAsChild } from './slot-transform'
+import { composeStatically } from './static-compose'
 import type { PluginOptions } from './types'
 
 export type { PluginOptions, Diagnostic, ComponentConstraint, StaticBound } from './types'
@@ -16,6 +17,7 @@ export { transformAsChild } from './slot-transform'
 export { pruneDeadCompounds } from './compound-prune'
 export { buildPrecomputedClasses, injectPrecomputedClasses } from './class-extract'
 export { collectFileTokens, buildManifest, designTokensPlugin } from './design-tokens'
+export { composeStatically } from './static-compose'
 
 const DEFAULT_CALLEE_NAMES = ['createPolymorphicComponent', 'createContractComponent']
 
@@ -205,4 +207,66 @@ export function slotTransformPlugin(): Plugin {
       return result !== null ? { code: result } : null
     },
   }
+}
+
+/**
+ * Vite plugin that replaces same-file polymorphic component usage sites with
+ * direct element creation at build time, eliminating the runtime render
+ * pipeline for statically-analyzable usages.
+ *
+ * **Requires classExtractPlugin to run first** so that `precomputedClasses` is
+ * present in the factory call before this plugin reads it. Place after
+ * `classExtractPlugin` in the plugins array.
+ *
+ * A usage site is inlined when:
+ * - The component is defined in the same file with `precomputedClasses` injected
+ * - No `as`, `asChild`, `render`, or spread attributes at the site
+ * - All variant props are static string literals
+ * - `className` is absent or a static string literal
+ * - The factory config has no `defaults` or `enforcement`
+ *
+ * Sites that do not meet all conditions fall through to the normal runtime path
+ * unchanged.
+ *
+ * @example
+ * // vite.config.ts
+ * import { classExtractPlugin, staticCompositionPlugin } from '@praxis-ui/vite-plugin'
+ * export default { plugins: [classExtractPlugin(), staticCompositionPlugin()] }
+ */
+export function staticCompositionPlugin(options?: Pick<PluginOptions, 'calleeNames'>): Plugin {
+  const calleeNames = new Set(options?.calleeNames ?? DEFAULT_CALLEE_NAMES)
+  return {
+    name: 'praxis-ui:static-compose',
+    transform(code, id) {
+      const ext = id.split('.').pop() ?? ''
+      if (!['tsx', 'jsx'].includes(ext)) return null
+      const result = composeStatically(parseSource(id, code), calleeNames)
+      return result !== null ? { code: result } : null
+    },
+  }
+}
+
+/**
+ * Convenience plugin bundle that applies all three build-time rendering
+ * optimisations in the correct dependency order:
+ *
+ *   1. `slotTransformPlugin`       — rewrites `asChild` → render-prop form,
+ *                                    eliminating `cloneElement` for static sites
+ *   2. `classExtractPlugin`        — injects `precomputedClasses` into factory
+ *                                    calls for O(1) variant class resolution
+ *   3. `staticCompositionPlugin`   — inlines same-file static usages into direct
+ *                                    element creation, bypassing the runtime
+ *                                    pipeline entirely
+ *
+ * Place before `contractPlugin` so cardinality analysis sees the transformed
+ * source. Especially effective for SSR builds where each component renders
+ * exactly once per request and eliminates per-render pipeline overhead.
+ *
+ * @example
+ * // vite.config.ts
+ * import { ssrOptimizePlugin, contractPlugin } from '@praxis-ui/vite-plugin'
+ * export default { plugins: [ssrOptimizePlugin(), contractPlugin()] }
+ */
+export function ssrOptimizePlugin(options?: Pick<PluginOptions, 'calleeNames'>): Plugin[] {
+  return [slotTransformPlugin(), classExtractPlugin(options), staticCompositionPlugin(options)]
 }
