@@ -1,0 +1,29 @@
+{
+  "name": "@praxis-ui/tree-shaking-tests",
+  "private": true,
+  "type": "module",
+  "description": "CI-gated tree-shaking assertions and gzip regression tracking for all published packages",
+  "scripts": {
+    "build": "node --experimental-strip-types scripts/analyze.ts",
+    "report": "node --experimental-strip-types scripts/report.ts",
+    "assert": "node --experimental-strip-types scripts/assert.ts",
+    "gzip": "node --experimental-strip-types scripts/gzip.ts",
+    "test": "pnpm build && pnpm assert && pnpm gzip",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@praxis-ui/adapter-utils": "workspace:*",
+    "@praxis-ui/core": "workspace:*",
+    "@praxis-ui/preact": "workspace:*",
+    "@praxis-ui/react": "workspace:*",
+    "@praxis-ui/solid": "workspace:*",
+    "@praxis-ui/svelte": "workspace:*",
+    "@praxis-ui/tailwind": "workspace:*",
+    "@praxis-ui/vue": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "esbuild": "^0.25.0",
+    "react": "catalog:",
+    "typescript": "catalog:"
+  }
+}

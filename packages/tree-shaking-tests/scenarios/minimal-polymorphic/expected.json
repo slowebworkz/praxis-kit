@@ -1,0 +1,16 @@
+{
+  "mustInclude": [
+    "lib/primitive/src",
+    "packages/core/src",
+    "packages/react/src"
+  ],
+  "mustExclude": [
+    "lib/styling/src",
+    "lib/contract/src/aria/polymorphic-validator",
+    "lib/contract/src/children",
+    "packages/vue/src",
+    "packages/solid/src",
+    "packages/preact/src",
+    "packages/tailwind/src"
+  ]
+}
