@@ -1,4 +1,5 @@
 export * from './create-contract-component'
+export * from './create-polymorphic-component'
 export * from './slot'
 export { Slottable } from '@/shared'
 export type { SlottableProps } from '@/shared'

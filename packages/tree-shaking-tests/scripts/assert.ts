@@ -2,8 +2,11 @@
  * Reads each scenario's esbuild metafile and validates it against the scenario's
  * expected.json.
  *
- * mustInclude entries must match at least one input path in the metafile.
- * mustExclude entries must match zero input paths.
+ * mustInclude entries must match at least one input that contributed bytes to the output.
+ * mustExclude entries must match zero inputs that contributed bytes to the output.
+ *
+ * Uses outputs[].inputs[].bytesInOutput rather than top-level inputs so tree-shaken
+ * modules (analyzed but contributing 0 bytes) do not trigger false failures.
  *
  * Exits with code 1 if any assertion fails.
  */
@@ -20,25 +23,40 @@ type Expected = {
   mustExclude: string[]
 }
 
+type OutputInputs = Record<string, { bytesInOutput: number }>
+
 type Metafile = {
   inputs: Record<string, unknown>
+  outputs: Record<string, { inputs: OutputInputs }>
+}
+
+function getLiveInputPaths(metafile: Metafile): string[] {
+  const live: string[] = []
+  for (const outData of Object.values(metafile.outputs)) {
+    for (const [path, data] of Object.entries(outData.inputs)) {
+      if (data.bytesInOutput > 0) live.push(path)
+    }
+  }
+  return live
 }
 
 function check(scenario: string, metafile: Metafile, expected: Expected): string[] {
-  const paths = Object.keys(metafile.inputs)
+  const live = getLiveInputPaths(metafile)
   const failures: string[] = []
 
   for (const fragment of expected.mustInclude) {
-    if (!paths.some((p) => p.includes(fragment))) {
-      failures.push(`FAIL [${scenario}] mustInclude "${fragment}" — not found in bundle inputs`)
+    if (!live.some((p) => p.includes(fragment))) {
+      failures.push(
+        `FAIL [${scenario}] mustInclude "${fragment}" — not found in bundle output (0 live bytes)`,
+      )
     }
   }
 
   for (const fragment of expected.mustExclude) {
-    const matched = paths.filter((p) => p.includes(fragment))
+    const matched = live.filter((p) => p.includes(fragment))
     if (matched.length > 0) {
       failures.push(
-        `FAIL [${scenario}] mustExclude "${fragment}" — unexpectedly retained:\n` +
+        `FAIL [${scenario}] mustExclude "${fragment}" — unexpectedly contributed live code:\n` +
           matched.map((p) => `       ${p}`).join('\n'),
       )
     }
@@ -75,9 +93,10 @@ for (const scenario of scenarios) {
     continue
   }
 
+  const liveCount = getLiveInputPaths(metafile).length
   const failures = check(scenario, metafile, expected)
   if (failures.length === 0) {
-    console.log(`  pass   ${scenario} (${Object.keys(metafile.inputs).length} modules)`)
+    console.log(`  pass   ${scenario} (${liveCount} live modules)`)
     passed++
   } else {
     failures.forEach((f) => console.error(f))

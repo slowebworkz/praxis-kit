@@ -1,8 +1,7 @@
 import { makeResolveTag, mergeProps } from '@praxis-ui/primitive'
-import { AriaPolicyEngine } from '@praxis-ui/contract'
-import { createClassPipeline } from '@praxis-ui/styling'
 import type {
   AnyRecord,
+  AriaRule,
   ClassName,
   ClassPipelineFn,
   ClassPipelineOptions,
@@ -19,19 +18,41 @@ import type {
   PresetOf,
   PropsOf,
   ResolvedFactoryOptions,
+  StrictMode,
   VariantMap,
   VariantsOf,
 } from '../types'
 import { resolveFactoryOptions } from '../options'
 import { assertPluginShape, guardPipeline } from './plugin-invariants'
 
+// Structural interface — matches AriaPolicyEngine.validate without importing the class.
+type AriaEngine = {
+  validate: (tag: ElementType, props: IntrinsicProps) => { props: IntrinsicProps }
+}
+
+export type Capabilities = {
+  readonly createClassPipeline: <TVariants extends VariantMap>(
+    opts: ClassPipelineOptions<TVariants>,
+  ) => ClassPipelineFn
+  readonly AriaEngine: new (
+    strict?: StrictMode,
+    options?: { rules?: readonly AriaRule[] },
+  ) => AriaEngine
+}
+
+// Noop pipeline used when no capabilities are injected (primitive-only path).
+const NOOP_CLASS_PIPELINE: ClassPipelineFn = () => ''
+
 function resolveClassPipeline<TVariants extends VariantMap>(
   options: { styling?: { plugin?: ClassPluginFactory } },
   resolved: ClassPipelineOptions<TVariants>,
+  capabilities?: Capabilities,
 ) {
   const factory = options.styling?.plugin
   if (!factory) {
-    return { pluginResult: undefined, classPipeline: createClassPipeline(resolved) }
+    const createClassPipeline = capabilities?.createClassPipeline
+    const classPipeline = createClassPipeline ? createClassPipeline(resolved) : NOOP_CLASS_PIPELINE
+    return { pluginResult: undefined, classPipeline }
   }
 
   const pluginResult = factory(resolved)
@@ -44,7 +65,7 @@ function resolveClassPipeline<TVariants extends VariantMap>(
 function createRuntimeMethods<G extends PolymorphicGenerics>(
   resolved: ResolvedFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>,
   classPipeline: ClassPipelineFn,
-  engine: AriaPolicyEngine | null,
+  engine: AriaEngine | null,
 ) {
   return {
     resolveTag: makeResolveTag(resolved.defaultTag),
@@ -90,15 +111,15 @@ export function createPolymorphic<
   TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
 >(
   options: FactoryOptions<TDefault, Props, Variants, TPreset> = {},
+  capabilities?: Capabilities,
 ): PolymorphicRuntime<TDefault, Props, Variants, Extract<keyof TPreset, string>, TPreset> {
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
   const resolved = resolveFactoryOptions(options)
-  const { pluginResult, classPipeline } = resolveClassPipeline(options, resolved)
+  const { pluginResult, classPipeline } = resolveClassPipeline(options, resolved, capabilities)
 
-  // Capability-driven: only instantiate the ARIA engine when enforcement is declared.
   const engine =
-    options.enforcement !== undefined
-      ? new AriaPolicyEngine(
+    options.enforcement !== undefined && capabilities?.AriaEngine
+      ? new capabilities.AriaEngine(
           resolved.strict,
           resolved.ariaRules?.length ? { rules: resolved.ariaRules } : undefined,
         )
