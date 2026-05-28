@@ -1,0 +1,95 @@
+/**
+ * Prints a human-readable summary of all built scenarios: module count, unique
+ * lib packages retained, and gzip size vs snapshot.
+ *
+ * Run after `pnpm build`. Does not exit with an error code — use assert and gzip
+ * scripts for CI-gating.
+ */
+import { readdir, readFile } from 'node:fs/promises'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { gzipSync } from 'node:zlib'
+
+const pkg = dirname(fileURLToPath(import.meta.url))
+const distDir = join(pkg, '../dist')
+const scenariosDir = join(pkg, '../scenarios')
+const snapshotPath = join(pkg, '../snapshots/gzip.json')
+
+type Metafile = { inputs: Record<string, unknown> }
+type Snapshot = Record<string, { gzip: number }>
+
+const scenarios = await readdir(scenariosDir, { withFileTypes: true }).then((entries) =>
+  entries.filter((e) => e.isDirectory()).map((e) => e.name),
+)
+
+let snapshot: Snapshot = {}
+try {
+  snapshot = JSON.parse(await readFile(snapshotPath, 'utf8')) as Snapshot
+} catch {
+  /* no snapshot yet */
+}
+
+const LIB_TAGS = [
+  'lib/primitive',
+  'lib/styling',
+  'lib/contract/src/aria',
+  'lib/contract/src/children',
+]
+
+console.log('\nTree-shaking report\n' + '─'.repeat(72))
+console.log(
+  'Scenario'.padEnd(28) +
+    'Modules'.padStart(8) +
+    'Gzip'.padStart(10) +
+    'vs snap'.padStart(10) +
+    '  Retained lib features',
+)
+console.log('─'.repeat(72))
+
+for (const scenario of scenarios) {
+  let metafile: Metafile | null = null
+  let bundleSize: number | null = null
+
+  try {
+    metafile = JSON.parse(await readFile(join(distDir, scenario, 'meta.json'), 'utf8')) as Metafile
+  } catch {
+    /* not built */
+  }
+
+  try {
+    const raw = await readFile(join(distDir, scenario, 'bundle.js'))
+    bundleSize = gzipSync(raw).length
+  } catch {
+    /* not built */
+  }
+
+  if (!metafile) {
+    console.log(`${'  ' + scenario} (not built — run pnpm build)`)
+    continue
+  }
+
+  const inputs = Object.keys(metafile.inputs)
+  const moduleCount = inputs.length
+
+  const gzipStr = bundleSize !== null ? `${bundleSize}B` : '—'
+  const snapBaseline = snapshot[scenario]?.gzip
+  const deltaStr =
+    bundleSize !== null && snapBaseline !== undefined
+      ? `${bundleSize >= snapBaseline ? '+' : ''}${bundleSize - snapBaseline}`
+      : '—'
+
+  const features = LIB_TAGS.filter((tag) => inputs.some((p) => p.includes(tag)))
+    .map((tag) => tag.replace('lib/', '').replace('src/', ''))
+    .join(', ')
+
+  console.log(
+    scenario.padEnd(28) +
+      String(moduleCount).padStart(8) +
+      gzipStr.padStart(10) +
+      deltaStr.padStart(10) +
+      '  ' +
+      (features || '(baseline)'),
+  )
+}
+
+console.log('─'.repeat(72))
