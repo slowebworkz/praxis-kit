@@ -27,6 +27,10 @@ export type ComponentConstraint = {
   totalMin: number
   /** Sum of all rule.cardinality.max values; Infinity if any rule is unbounded. */
   totalMax: number
+  /** The default HTML tag declared in the factory call (`tag: 'button'`), if statically present. */
+  defaultTag?: string
+  /** True when `enforcement.aria` is a non-empty array literal in the factory call. */
+  hasAriaRules: boolean
 }
 
 /** A diagnostic produced by the static analysis pass. */

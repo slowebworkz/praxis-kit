@@ -1,4 +1,4 @@
-import type { UnknownProps } from '../types/primitives'
+import type { UnknownProps } from '../types'
 import { isReactEventKey, isFunction } from './predicates'
 import { policyHandlers } from './policies'
 import type { PropMergePolicy } from './policies'

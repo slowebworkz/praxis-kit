@@ -1,5 +1,5 @@
 import type { Ref } from 'preact'
-import type { AnyVNode, UnknownProps } from '../types/primitives'
+import type { AnyVNode, UnknownProps } from '../types'
 
 export type EventHandler<Args extends unknown[] = unknown[]> = (...args: Args) => void
 
