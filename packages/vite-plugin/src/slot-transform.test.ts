@@ -162,29 +162,132 @@ describe('transformAsChild — className merge', () => {
   })
 })
 
-describe('transformAsChild — safety conditions prevent transform', () => {
-  it('does not transform when the child has a style prop', () => {
+describe('transformAsChild — style merge', () => {
+  it('transforms when child has an object-literal style prop', () => {
     const result = transform(`
       function App() {
         return <Button asChild><a href="/" style={{ color: 'red' }}>Home</a></Button>
       }
     `)
-    if (result !== null) {
-      expect(result).toContain('asChild')
-    }
+    expect(result).not.toBeNull()
+    expect(result).not.toContain('asChild')
+    expect(result).toContain('render=')
+    expect(result).toContain('_p.style')
+    expect(result).toContain('color')
+    expect(result).toContain('red')
   })
 
-  it('does not transform when the child has an event handler', () => {
+  it('merges style with multiple properties', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/" style={{ color: 'red', fontWeight: 'bold' }}>Home</a></Button>
+      }
+    `)
+    expect(result).not.toBeNull()
+    expect(result).not.toContain('asChild')
+    expect(result).toContain('_p.style')
+    expect(result).toContain('fontWeight')
+  })
+
+  it('transforms when child has a style expression reference', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/" style={myStyle}>Home</a></Button>
+      }
+    `)
+    expect(result).not.toBeNull()
+    expect(result).not.toContain('asChild')
+    expect(result).toContain('_p.style')
+    expect(result).toContain('myStyle')
+  })
+
+  it('does not bail when child has no style', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/">Home</a></Button>
+      }
+    `)
+    expect(result).not.toBeNull()
+    expect(result).not.toContain('_p.style')
+  })
+})
+
+describe('transformAsChild — event handler composition', () => {
+  it('transforms when child has a single event handler', () => {
     const result = transform(`
       function App() {
         return <Button asChild><a href="/" onClick={handleNav}>Home</a></Button>
       }
     `)
-    if (result !== null) {
-      expect(result).toContain('asChild')
-    }
+    expect(result).not.toBeNull()
+    expect(result).not.toContain('asChild')
+    expect(result).toContain('render=')
+    expect(result).toContain('handleNav')
+    expect(result).toContain('_p.onClick')
+    expect(result).toMatch(/_e/)
   })
 
+  it('composes multiple event handlers independently', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/" onClick={handleClick} onFocus={handleFocus}>Home</a></Button>
+      }
+    `)
+    expect(result).not.toBeNull()
+    expect(result).not.toContain('asChild')
+    expect(result).toContain('handleClick')
+    expect(result).toContain('handleFocus')
+    expect(result).toContain('_p.onClick')
+    expect(result).toContain('_p.onFocus')
+  })
+
+  it('handles inline arrow function handlers', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/" onClick={() => doSomething()}>Home</a></Button>
+      }
+    `)
+    expect(result).not.toBeNull()
+    expect(result).not.toContain('asChild')
+    expect(result).toContain('doSomething')
+    expect(result).toContain('_p.onClick')
+  })
+
+  it('generates optional-chain call to parent handler (_p.name?.(_e))', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/" onClick={handleNav}>Home</a></Button>
+      }
+    `)
+    expect(result).not.toBeNull()
+    expect(result).toMatch(/_p\.onClick\?\./)
+  })
+
+  it('does not bail when child has no event handlers', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/">Home</a></Button>
+      }
+    `)
+    expect(result).not.toBeNull()
+    expect(result).not.toMatch(/_e/)
+  })
+
+  it('transforms child with both style and handler together', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/" style={{ color: 'red' }} onClick={handleNav}>Home</a></Button>
+      }
+    `)
+    expect(result).not.toBeNull()
+    expect(result).not.toContain('asChild')
+    expect(result).toContain('_p.style')
+    expect(result).toContain('_p.onClick')
+    expect(result).toContain('handleNav')
+  })
+})
+
+describe('transformAsChild — safety conditions prevent transform', () => {
   it('does not transform when there are multiple child elements', () => {
     const result = transform(`
       function App() {
