@@ -154,6 +154,8 @@ module.exports = {
           'tsup\\.config',
           'test-setup\\.ts$',
           'packages/docs/src/(examples|vue-examples)/',
+          'lib/bundle-analysis/src/',
+          'packages/tree-shaking-tests/scenarios/',
         ],
       },
       to: {},
