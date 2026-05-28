@@ -1,1 +1,1 @@
-export { createPolymorphic } from './create-polymorphic'
+export { createPolymorphic } from './create-polymorphic-full'

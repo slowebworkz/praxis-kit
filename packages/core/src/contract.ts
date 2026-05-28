@@ -15,6 +15,7 @@ export {
   isKnownAriaRole,
   hasRole,
 } from '@praxis-ui/contract'
+export { createContractedPolymorphic } from './factory/create-polymorphic-contracted'
 export { createResolverPipeline } from './resolver'
 export type {
   StrictMode,

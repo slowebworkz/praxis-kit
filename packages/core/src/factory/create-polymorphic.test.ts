@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { createPolymorphic } from './create-polymorphic'
+// Full version injects AriaPolicyEngine + createClassPipeline as capabilities.
+// The raw create-polymorphic is tested separately for primitive-only behavior.
+import { createPolymorphic } from './create-polymorphic-full'
 
 // ---------------------------------------------------------------------------
 // resolveTag
