@@ -1,6 +1,6 @@
 /**
- * Prints a human-readable summary of all built scenarios: module count, unique
- * lib packages retained, and gzip size vs snapshot.
+ * Prints a human-readable summary of all built scenarios: live module count (bytesInOutput > 0),
+ * unique lib packages retained, and gzip size vs snapshot.
  *
  * Run after `pnpm build`. Does not exit with an error code — use assert and gzip
  * scripts for CI-gating.
@@ -15,7 +15,8 @@ const distDir = join(pkg, '../dist')
 const scenariosDir = join(pkg, '../scenarios')
 const snapshotPath = join(pkg, '../snapshots/gzip.json')
 
-type Metafile = { inputs: Record<string, unknown> }
+type OutputInputs = Record<string, { bytesInOutput: number }>
+type Metafile = { outputs: Record<string, { inputs: OutputInputs }> }
 type Snapshot = Record<string, { gzip: number }>
 
 const scenarios = await readdir(scenariosDir, { withFileTypes: true }).then((entries) =>
@@ -47,11 +48,19 @@ console.log(
 console.log('─'.repeat(72))
 
 for (const scenario of scenarios) {
-  let metafile: Metafile | null = null
+  let livePaths: string[] | null = null
   let bundleSize: number | null = null
 
   try {
-    metafile = JSON.parse(await readFile(join(distDir, scenario, 'meta.json'), 'utf8')) as Metafile
+    const metafile = JSON.parse(
+      await readFile(join(distDir, scenario, 'meta.json'), 'utf8'),
+    ) as Metafile
+    livePaths = []
+    for (const outData of Object.values(metafile.outputs)) {
+      for (const [path, data] of Object.entries(outData.inputs)) {
+        if (data.bytesInOutput > 0) livePaths.push(path)
+      }
+    }
   } catch {
     /* not built */
   }
@@ -63,13 +72,12 @@ for (const scenario of scenarios) {
     /* not built */
   }
 
-  if (!metafile) {
+  if (!livePaths) {
     console.log(`${'  ' + scenario} (not built — run pnpm build)`)
     continue
   }
 
-  const inputs = Object.keys(metafile.inputs)
-  const moduleCount = inputs.length
+  const moduleCount = livePaths.length
 
   const gzipStr = bundleSize !== null ? `${bundleSize}B` : '—'
   const snapBaseline = snapshot[scenario]?.gzip
@@ -78,7 +86,7 @@ for (const scenario of scenarios) {
       ? `${bundleSize >= snapBaseline ? '+' : ''}${bundleSize - snapBaseline}`
       : '—'
 
-  const features = LIB_TAGS.filter((tag) => inputs.some((p) => p.includes(tag)))
+  const features = LIB_TAGS.filter((tag) => livePaths!.some((p) => p.includes(tag)))
     .map((tag) => tag.replace('lib/', '').replace('src/', ''))
     .join(', ')
 

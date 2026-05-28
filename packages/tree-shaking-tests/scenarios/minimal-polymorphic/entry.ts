@@ -1,8 +1,8 @@
 /**
- * Claim: a component with no enforcement and no styling retains only the core
- * render primitive and the React adapter. No Tailwind pipeline, no other
- * framework adapter should appear in this bundle slice.
+ * Claim: a purely polymorphic component (no styling, no contract enforcement)
+ * retains only the render primitive and React adapter. The ARIA engine,
+ * children evaluator, and class pipeline must all be absent from this bundle.
  */
-import { createContractComponent } from '@praxis-ui/react'
+import { createPolymorphicComponent } from '@praxis-ui/react'
 
-export const Box = createContractComponent({ tag: 'div', name: 'Box' })
+export const Box = createPolymorphicComponent({ tag: 'div', name: 'Box' })
