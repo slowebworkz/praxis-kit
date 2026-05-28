@@ -36,3 +36,12 @@ jobs:
 
       - name: Test
         run: pnpm test:ci
+
+      - name: Duplicate Analysis
+        run: pnpm analyze:duplicates
+
+      - name: Dependency Analysis
+        run: pnpm analyze:deps
+
+      - name: Structural Analysis
+        run: pnpm analyze:patterns

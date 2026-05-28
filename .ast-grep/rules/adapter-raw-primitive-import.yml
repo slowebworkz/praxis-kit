@@ -1,0 +1,16 @@
+id: adapter-raw-primitive-import
+language: TypeScript
+severity: warning
+message: |
+  Adapter importing directly from @praxis-ui/primitive instead of @praxis-ui/core/primitive.
+  Use the @praxis-ui/core sub-entry to stay within the public API facade.
+rule:
+  any:
+    - pattern: "import $NAMES from '@praxis-ui/primitive'"
+    - pattern: "import type $NAMES from '@praxis-ui/primitive'"
+files:
+  - packages/react/src/**
+  - packages/vue/src/**
+  - packages/preact/src/**
+  - packages/solid/src/**
+  - packages/svelte/src/**
