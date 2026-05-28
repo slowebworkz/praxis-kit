@@ -4,11 +4,11 @@
  */
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
-import { createContractComponent } from '@praxis-ui/react'
+import { createChildrenEnforcedComponent } from '@praxis-ui/react'
 
-const Item = createContractComponent({ tag: 'li', name: 'Item' })
+const Item = createChildrenEnforcedComponent({ tag: 'li', name: 'Item' })
 
-export const List = createContractComponent({
+export const List = createChildrenEnforcedComponent({
   tag: 'ul',
   name: 'List',
   enforcement: {

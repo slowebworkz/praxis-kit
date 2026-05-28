@@ -5,7 +5,7 @@
  */
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractedComponent } from '@praxis-ui/react'
 import type { AriaRule } from '@praxis-ui/core/contract'
 
 const requireAriaLabel: AriaRule = ({ props }) =>
@@ -13,9 +13,9 @@ const requireAriaLabel: AriaRule = ({ props }) =>
     ? [{ valid: true }]
     : [{ valid: false, severity: 'warning', fixable: false, message: 'Missing accessible label' }]
 
-const Item = createContractComponent({ tag: 'li', name: 'Item' })
+const Item = createContractedComponent({ tag: 'li', name: 'Item' })
 
-export const ButtonGroup = createContractComponent({
+export const ButtonGroup = createContractedComponent({
   tag: 'ul',
   name: 'ButtonGroup',
   enforcement: {
