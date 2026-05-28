@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
+    "@types/node": "catalog:",
     "@vitest/ui": "catalog:",
     "dependency-cruiser": "catalog:",
     "eslint": "catalog:",
