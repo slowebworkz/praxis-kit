@@ -1,6 +1,6 @@
-import { KNOWN_ARIA_ROLES } from '../types/aria-role'
-import type { KnownAriaRole } from '../types/aria-role'
-import type { IntrinsicProps, PropsWithRole } from '../types/contract-primitives'
+import { KNOWN_ARIA_ROLES } from '../types'
+import type { KnownAriaRole } from '../types'
+import type { IntrinsicProps, PropsWithRole } from '../types'
 
 export { KNOWN_ARIA_ROLES }
 

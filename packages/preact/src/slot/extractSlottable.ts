@@ -1,5 +1,5 @@
 import { h, Fragment, isValidElement } from 'preact'
-import type { AnyVNode } from '../types/primitives'
+import type { AnyVNode } from '../types'
 import { invariant } from './invariant'
 import { isSlottableElement } from './predicates'
 
