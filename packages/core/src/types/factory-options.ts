@@ -55,6 +55,13 @@ export type StylingOptions<
    * use to strip those keys before they reach the DOM or framework bindings.
    */
   readonly plugin?: ClassPluginFactory<TPluginProps>
+
+  /**
+   * Pre-computed variant-class lookup map. Injected by `classExtractPlugin` at build time;
+   * not intended for manual use. Keys use the same format as the `VariantClassResolver`
+   * cache (variant-only props, sorted, serialized).
+   */
+  readonly precomputedClasses?: Readonly<Record<string, string>>
 }
 
 /**
