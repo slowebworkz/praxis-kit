@@ -1,3 +1,4 @@
+import { resolve } from 'node:path'
 import tseslint from 'typescript-eslint'
 import type { ESLintConfig } from './types'
 
@@ -9,6 +10,15 @@ const config = [
     ...cfg,
     files: FILES,
   })),
+
+  {
+    files: FILES,
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir: resolve(import.meta.dirname, '..'),
+      },
+    },
+  },
 
   {
     files: FILES,
