@@ -1,0 +1,16 @@
+id: adapter-raw-contract-import
+language: TypeScript
+severity: warning
+message: |
+  Adapter importing directly from @praxis-ui/contract instead of @praxis-ui/core/contract.
+  Use the @praxis-ui/core sub-entry to stay within the public API facade.
+rule:
+  any:
+    - pattern: "import $NAMES from '@praxis-ui/contract'"
+    - pattern: "import type $NAMES from '@praxis-ui/contract'"
+files:
+  - packages/react/src/**
+  - packages/vue/src/**
+  - packages/preact/src/**
+  - packages/solid/src/**
+  - packages/svelte/src/**
