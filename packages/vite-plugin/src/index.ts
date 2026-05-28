@@ -1,5 +1,6 @@
 import type { Plugin } from 'vite'
 import { parseSource } from './ast'
+import { injectPrecomputedClasses } from './class-extract'
 import { collectConstraints } from './collect'
 import { pruneDeadCompounds } from './compound-prune'
 import { collectJsxUsages, diagnoseAriaTagOverrides, diagnoseUsages } from './diagnose'
@@ -9,9 +10,12 @@ import { transformAsChild } from './slot-transform'
 import type { PluginOptions } from './types'
 
 export type { PluginOptions, Diagnostic, ComponentConstraint, StaticBound } from './types'
+export type { ComponentTokens, DesignTokenManifest, DesignTokensOptions } from './design-tokens'
 export { analyze } from './analyze'
 export { transformAsChild } from './slot-transform'
 export { pruneDeadCompounds } from './compound-prune'
+export { buildPrecomputedClasses, injectPrecomputedClasses } from './class-extract'
+export { collectFileTokens, buildManifest, designTokensPlugin } from './design-tokens'
 
 const DEFAULT_CALLEE_NAMES = ['createPolymorphicComponent', 'createContractComponent']
 
@@ -130,6 +134,43 @@ export function compoundPrunePlugin(options?: Pick<PluginOptions, 'calleeNames'>
       const ext = id.split('.').pop() ?? ''
       if (!['tsx', 'jsx', 'ts', 'js'].includes(ext)) return null
       const result = pruneDeadCompounds(parseSource(id, code), calleeNames)
+      return result !== null ? { code: result } : null
+    },
+  }
+}
+
+/**
+ * Vite plugin that pre-computes variant class strings at build time and injects
+ * them as a static `precomputedClasses` map into each factory call's `styling`
+ * object.
+ *
+ * At runtime, `VariantClassResolver` checks this map before calling CVA — a
+ * plain object lookup replaces a CVA invocation + LRU cache write for every
+ * statically-known combination. Only combinations that appear in the map are
+ * accelerated; invalid or dynamic variant values fall through to the existing
+ * compute path unchanged.
+ *
+ * Injection is skipped when:
+ * - `styling.variants` is absent or contains non-literal values
+ * - `styling.compounds` contains non-literal conditions or classes
+ * - The number of valid combinations exceeds 512
+ *
+ * Place after `compoundPrunePlugin` so the injected map reflects the live
+ * compound set.
+ *
+ * @example
+ * // vite.config.ts
+ * import { compoundPrunePlugin, classExtractPlugin, contractPlugin } from '@praxis-ui/vite-plugin'
+ * export default { plugins: [compoundPrunePlugin(), classExtractPlugin(), contractPlugin()] }
+ */
+export function classExtractPlugin(options?: Pick<PluginOptions, 'calleeNames'>): Plugin {
+  const calleeNames = new Set(options?.calleeNames ?? DEFAULT_CALLEE_NAMES)
+  return {
+    name: 'praxis-ui:class-extract',
+    transform(code, id) {
+      const ext = id.split('.').pop() ?? ''
+      if (!['ts', 'tsx', 'js', 'jsx'].includes(ext)) return null
+      const result = injectPrecomputedClasses(parseSource(id, code), calleeNames)
       return result !== null ? { code: result } : null
     },
   }
