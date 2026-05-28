@@ -54,7 +54,8 @@ function resolveRenderState(
   props: KnownProps,
   filterProps: FilterPredicate,
 ): ResolvedRenderState {
-  const { as, asChild, children, className, variantKey, ...rest } = props
+  // render is stripped here so it never reaches the DOM as an HTML attribute.
+  const { as, asChild, render: _render, children, className, variantKey, ...rest } = props
   const tag = runtime.resolveTag(as)
   const mergedProps = runtime.resolveProps(rest)
   const resolvedClass = runtime.resolveClasses(tag, mergedProps, className, variantKey)
@@ -187,6 +188,11 @@ export function render<TProps extends KnownProps>({
 
   if (process.env.NODE_ENV !== 'production')
     childrenEvaluator?.evaluate(normalizeChildren(state.children))
+
+  // Render-prop path — caller receives resolved props directly; no Slot, no cloneElement.
+  if (typeof props.render === 'function') {
+    return props.render({ ...state.props, className: state.className, ref })
+  }
 
   const slotResult = tryRenderAsChild(state, ref, slotComponent, normalizeChildren, slotValidator)
 
