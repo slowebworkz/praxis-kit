@@ -23,8 +23,14 @@ interface PresetOptions<TVariants extends VariantMap = VariantMap> {
   presetMap?: Record<string, PresetTarget<TVariants>>
 }
 
+interface PrecomputedClassesOptions {
+  /** Static variant-class map injected by `classExtractPlugin`. Keys use the same format as `VariantClassResolver` cache keys (variant-only props, sorted). */
+  precomputedClasses?: Readonly<Record<string, string>>
+}
+
 type CompositionOptions<TVariants extends VariantMap = VariantMap> = TagMapOptions &
-  PresetOptions<TVariants>
+  PresetOptions<TVariants> &
+  PrecomputedClassesOptions
 
 export type ClassPipelineOptions<TVariants extends VariantMap = VariantMap> =
   StyleOptions<TVariants> & CompositionOptions<TVariants>

@@ -112,19 +112,57 @@ describe('transformAsChild — safe transforms', () => {
 // Safety conditions — must NOT transform
 // ---------------------------------------------------------------------------
 
-describe('transformAsChild — safety conditions prevent transform', () => {
-  it('does not transform when the child has a className prop', () => {
+describe('transformAsChild — className merge', () => {
+  it('transforms when child has a string-literal className', () => {
     const result = transform(`
       function App() {
         return <Button asChild><a href="/" className="link">Home</a></Button>
       }
     `)
-    // Either null (fast-path skip) or the output still has asChild
+    expect(result).not.toBeNull()
+    expect(result).not.toContain('asChild')
+    expect(result).toContain('render=')
+    // Merged: _p.className + ' link'
+    expect(result).toContain('_p.className')
+    expect(result).toContain('" link"')
+  })
+
+  it('transforms when child has a JSX-expression string-literal className', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/" className={"my-link"}>Home</a></Button>
+      }
+    `)
+    expect(result).not.toBeNull()
+    expect(result).not.toContain('asChild')
+    expect(result).toContain('_p.className')
+  })
+
+  it('does not transform when child has a dynamic className expression', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/" className={active ? 'a' : 'b'}>Home</a></Button>
+      }
+    `)
     if (result !== null) {
       expect(result).toContain('asChild')
     }
   })
 
+  it('omits the className merge when child className is empty string', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/" className="">Home</a></Button>
+      }
+    `)
+    // Should still transform (empty className is not a conflict), but no + expr needed
+    expect(result).not.toBeNull()
+    expect(result).toContain('render=')
+    expect(result).not.toContain('_p.className +')
+  })
+})
+
+describe('transformAsChild — safety conditions prevent transform', () => {
   it('does not transform when the child has a style prop', () => {
     const result = transform(`
       function App() {

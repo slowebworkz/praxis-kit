@@ -18,8 +18,14 @@ export function createClassPipeline<TVariants extends VariantMap = VariantMap>(
       })
     : null
 
+  const variantKeys = resolved.variants ? new Set(Object.keys(resolved.variants)) : undefined
   const staticResolver = new StaticClassResolver(baseClass, resolved.tagMap)
-  const variantResolver = new VariantClassResolver(cvaFn, resolved.presetMap)
+  const variantResolver = new VariantClassResolver(
+    cvaFn,
+    resolved.presetMap,
+    variantKeys,
+    resolved.precomputedClasses,
+  )
 
   return function resolveClasses(tag, props, className, variantKey) {
     const staticClasses = staticResolver.resolve(tag, variantKey !== undefined)

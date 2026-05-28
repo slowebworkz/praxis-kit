@@ -14,9 +14,10 @@
  * element cloning.
  *
  * **Safety conditions** — the transform is skipped if any of these are true:
- *   1. The child has a `className`, `style`, or event handler (`on*`) prop.
- *      These need the merge semantics that Slot provides; a simple spread would
- *      silently drop the child's handlers.
+ *   1. The child has a `style` or event handler (`on*`) prop. These need the
+ *      merge semantics that Slot provides; a simple spread would silently drop
+ *      the child's handlers. A string-literal `className` on the child IS
+ *      handled: the transform generates `{..._p, className: _p.className + ' ' + childCls}`.
  *   2. The child is a self-closing element with no stable attributes to preserve
  *      in the render callback (degenerate case — leave as-is).
  *   3. The component name starts with a lowercase letter (HTML intrinsic — not
@@ -40,9 +41,41 @@ function jsxAttrName(attr: ts.JsxAttribute): string {
   return ts.isIdentifier(attr.name) ? attr.name.text : ''
 }
 
-/** Returns true if the attribute name indicates a conflicting prop. */
+/** Returns true if the attribute name is unconditionally conflicting (cannot be merged). */
 function isConflictingProp(name: string): boolean {
-  return name === 'className' || name === 'style' || /^on[A-Z]/.test(name)
+  return name === 'style' || /^on[A-Z]/.test(name)
+}
+
+/**
+ * Extracts the static string value of the child's `className` prop.
+ *
+ * Returns:
+ * - `{ absent: true }` when no className prop is present (safe to transform)
+ * - `{ absent: false, value: string }` when className is a string literal
+ * - `null` when className is present but dynamic (bail — cannot merge safely)
+ */
+type ClassNameResult = { absent: true } | { absent: false; value: string }
+
+function getStaticClassName(
+  child: ts.JsxElement | ts.JsxSelfClosingElement,
+): ClassNameResult | null {
+  const attrs = ts.isJsxElement(child)
+    ? child.openingElement.attributes.properties
+    : child.attributes.properties
+  for (const attr of attrs) {
+    if (!ts.isJsxAttribute(attr) || jsxAttrName(attr) !== 'className') continue
+    const init = attr.initializer
+    if (!init) return { absent: false, value: '' }
+    if (ts.isStringLiteral(init)) return { absent: false, value: init.text }
+    if (
+      ts.isJsxExpression(init) &&
+      init.expression !== undefined &&
+      ts.isStringLiteral(init.expression)
+    )
+      return { absent: false, value: init.expression.text }
+    return null
+  }
+  return { absent: true }
 }
 
 /** Returns true if the opening element has an `asChild` attribute (bare or `={true}`). */
@@ -82,7 +115,7 @@ function getSingleElementChild(
   return meaningful.length === 1 ? meaningful[0] : undefined
 }
 
-/** Returns true if the child element has any conflicting props. */
+/** Returns true if the child has any unconditionally conflicting props (style, on*). */
 function childHasConflictingProps(child: ts.JsxElement | ts.JsxSelfClosingElement): boolean {
   const attrs = ts.isJsxElement(child)
     ? child.openingElement.attributes.properties
@@ -103,24 +136,38 @@ function getTagName(child: ts.JsxElement | ts.JsxSelfClosingElement): string | u
 /**
  * Builds the attribute list for the transformed parent, omitting `asChild`
  * and adding `render={(_p) => <childTag ...childAttrs {..._p} />}`.
+ *
+ * When the child has a string-literal `className`, a merged className attr is
+ * appended after the spread so the child's static classes are preserved:
+ * `{..._p, className: _p.className + ' childCls'}`.
  */
 function buildTransformedAttributes(
   factory: ts.NodeFactory,
   original: ts.JsxOpeningElement,
   child: ts.JsxElement | ts.JsxSelfClosingElement,
   tagName: string,
+  clsResult: ClassNameResult,
 ): ts.JsxAttributes {
   // Parent attrs without asChild
   const parentAttrs = original.attributes.properties.filter(
     (attr) => !(ts.isJsxAttribute(attr) && jsxAttrName(attr) === 'asChild'),
   )
 
-  // Child's own attributes (excluding ref — the render callback receives ref from the slot)
+  const hasStaticCls = !clsResult.absent
+
+  // Child's own attributes (excluding ref and, when we have a static className,
+  // className itself — it's re-emitted as a merged prop after the spread).
   const childOpeningAttrs = (
     ts.isJsxElement(child)
       ? child.openingElement.attributes.properties
       : child.attributes.properties
-  ).filter((attr) => !(ts.isJsxAttribute(attr) && jsxAttrName(attr) === 'ref'))
+  ).filter(
+    (attr) =>
+      !(
+        ts.isJsxAttribute(attr) &&
+        (jsxAttrName(attr) === 'ref' || (hasStaticCls && jsxAttrName(attr) === 'className'))
+      ),
+  )
 
   // Child's children content (for non-self-closing child elements)
   const childContent = ts.isJsxElement(child) ? child.children : undefined
@@ -128,8 +175,30 @@ function buildTransformedAttributes(
   // Spread: `{..._p}`
   const spreadProp = factory.createJsxSpreadAttribute(factory.createIdentifier('_p'))
 
-  // Reconstruct the child element with child's own attrs + spread
-  const childAttrsWithSpread = factory.createJsxAttributes([...childOpeningAttrs, spreadProp])
+  // When the child declared a static className, append a merged className prop after
+  // the spread: `className={_p.className + ' childCls'}` — the spread sets _p.className
+  // first, then we override with the merged value. Empty static className is a no-op.
+  const extraAttrs: ts.JsxAttributeLike[] = []
+  if (hasStaticCls && clsResult.value !== '') {
+    const mergedExpr = factory.createBinaryExpression(
+      factory.createPropertyAccessExpression(factory.createIdentifier('_p'), 'className'),
+      ts.SyntaxKind.PlusToken,
+      factory.createStringLiteral(` ${clsResult.value}`),
+    )
+    extraAttrs.push(
+      factory.createJsxAttribute(
+        factory.createIdentifier('className'),
+        factory.createJsxExpression(undefined, mergedExpr),
+      ),
+    )
+  }
+
+  // Reconstruct the child element with child's own attrs + spread (+ optional merged className)
+  const childAttrsWithSpread = factory.createJsxAttributes([
+    ...childOpeningAttrs,
+    spreadProp,
+    ...extraAttrs,
+  ])
 
   const childElement = ts.isJsxElement(child)
     ? factory.createJsxElement(
@@ -191,11 +260,15 @@ function createAsChildTransformer(factory: ts.NodeFactory): ts.TransformerFactor
 
       if (childHasConflictingProps(child)) return ts.visitEachChild(node, visit, context)
 
+      // null means className is dynamic — bail since we cannot safely merge it.
+      const clsResult = getStaticClassName(child)
+      if (clsResult === null) return ts.visitEachChild(node, visit, context)
+
       const childTag = getTagName(child)
       if (!childTag) return ts.visitEachChild(node, visit, context)
 
       // All conditions met — emit render-prop form as a self-closing element.
-      const newAttrs = buildTransformedAttributes(factory, opening, child, childTag)
+      const newAttrs = buildTransformedAttributes(factory, opening, child, childTag, clsResult)
 
       return factory.createJsxSelfClosingElement(opening.tagName, opening.typeArguments, newAttrs)
     }
