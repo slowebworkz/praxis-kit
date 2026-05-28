@@ -27,6 +27,9 @@
  * remains exportable for cross-file consumption that falls back to the runtime
  * path. Dead-code elimination at the bundler level can remove it when no
  * runtime path remains.
+ *
+ * **Deferred:** cross-file inlining (component defined in one module, used in
+ * another) requires Vite module-graph traversal and is not yet implemented.
  */
 import ts from 'typescript'
 import { asObject, firstObjectArg, getProperty, isFactoryCall, walk } from './ast'

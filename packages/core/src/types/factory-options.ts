@@ -38,6 +38,9 @@ export type StylingOptions<
   /**
    * Named bundles of variant selections, activated by `variantKey` at render time.
    * Keys become the valid `variantKey` literal union on `PolymorphicRuntime`.
+   *
+   * @remarks Planned rename: `presets` → `recipes`, `variantKey` → `recipe`.
+   * Not yet shipped — use the current names until the breaking change lands.
    */
   readonly presets?: TPreset
 
