@@ -2,7 +2,7 @@ import type { ChildrenEvaluator } from '@praxis-ui/core'
 import type { FilterPredicate, ResolvedProps } from './primitives'
 import type { KnownProps } from './props'
 import type { Runtime } from './runtime'
-import type { SlotValidator } from '../slot/slot-validator'
+import type { SlotValidator } from '../slot'
 
 export type ResolvedRenderState = Readonly<{
   tag: import('@praxis-ui/core').ElementType
