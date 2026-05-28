@@ -1,0 +1,10 @@
+id: current-no-forwardRef
+language: TypeScript
+severity: warning
+message: |
+  current/ React adapter should use plain ref prop (React 19), not forwardRef.
+  forwardRef belongs in legacy/ only.
+rule:
+  pattern: "forwardRef($$$)"
+files:
+  - packages/react/src/current/**
