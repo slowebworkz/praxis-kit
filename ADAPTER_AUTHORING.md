@@ -284,6 +284,12 @@ Also add `@praxis-ui/<framework>` to every other adapter's restriction list, add
 `{ type: '<framework>', pattern: 'packages/<framework>/**/*' }` to `boundaries/elements` in
 `configs/architecture.ts`, and add a cross-adapter rule to `.dependency-cruiser.cjs`.
 
+Finally, add `packages/<framework>/src/**` to the `files:` list in both
+`.ast-grep/rules/adapter-raw-primitive-import.yml` and
+`.ast-grep/rules/adapter-raw-contract-import.yml`. These rules warn when adapters import directly
+from `@praxis-ui/primitive` or `@praxis-ui/contract` instead of going through the `@praxis-ui/core`
+sub-entries.
+
 ---
 
 ## What core provides (never reimplement)

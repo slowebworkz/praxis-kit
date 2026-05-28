@@ -105,22 +105,31 @@ export const Button = createContractComponent({
 
 ### Typing component consumers
 
-The `PolymorphicProps` type replaces the manual `ButtonProps<T>` construction:
+The `PolymorphicProps` type replaces the manual `ButtonProps<T>` construction. Extract the variants
+object so its type is available, then wrap it in `PolymorphicGenerics`:
 
 ```ts
+import type { PolymorphicGenerics } from '@praxis-ui/core'
 import type { PolymorphicProps, ElementType } from '@praxis-ui/react'
 
-// Declares the variant surface once; TAs defaults to 'button'
-type ButtonProps<TAs extends ElementType = 'button'> = PolymorphicProps<
-  'button',
-  Record<never, never>,
-  typeof variants,
-  Record<never, never>,
+const variants = {
+  size: { sm: 'btn--sm', md: 'btn--md', lg: 'btn--lg' },
+  intent: { primary: 'btn--primary', ghost: 'btn--ghost' },
+} as const
+
+export const Button = createContractComponent({
+  tag: 'button',
+  name: 'Button',
+  styling: { base: 'btn', variants, defaults: { size: 'md', intent: 'primary' } },
+  filterProps: (key, variantKeys) => variantKeys.has(key),
+})
+
+// TAs defaults to 'button'; override it when the component renders as another element
+export type ButtonProps<TAs extends ElementType = 'button'> = PolymorphicProps<
+  PolymorphicGenerics<'button', Record<never, never>, typeof variants>,
   TAs
 >
 ```
-
-Where `typeof variants` references the variants object passed to `createContractComponent`.
 
 ### What you gain over the CVA pattern
 
@@ -304,6 +313,7 @@ export const ButtonGroup = createContractComponent({
   name: 'ButtonGroup',
   styling: { base: 'btn-group' },
   enforcement: {
+    strict: 'warn',
     children: [
       {
         name: 'Button',
