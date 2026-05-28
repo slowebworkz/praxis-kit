@@ -47,7 +47,7 @@ catalog:
 
   # Svelte
   svelte: ^5.0.0
-  "@sveltejs/vite-plugin-svelte": ^5.0.0
+  "@sveltejs/vite-plugin-svelte": ^6.0.0
   "@testing-library/svelte": ^5.0.0
 
   jiti: ^2.7.0

@@ -132,6 +132,7 @@ describe('ConstraintRegistry', () => {
         rules: [{ cardinality: { kind: 'bounded', min: 1, max: 1 }, position: 'any' }],
         totalMin: 1,
         totalMax: 1,
+        hasAriaRules: false,
       },
     ])
     registry.registerImports('/abs/app.tsx', new Map([['Button', '/abs/button.tsx']]))
@@ -162,6 +163,7 @@ describe('ConstraintRegistry', () => {
         rules: [{ cardinality: { kind: 'bounded', min: 1, max: 1 }, position: 'any' }],
         totalMin: 1,
         totalMax: 1,
+        hasAriaRules: false,
       },
     ])
     expect(registry.resolveConstraint('/abs/app.tsx', 'Button')).toBeUndefined()

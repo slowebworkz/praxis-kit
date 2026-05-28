@@ -1,6 +1,6 @@
 import { Fragment } from 'preact'
 import type { ComponentChildren } from 'preact'
-import type { AnyVNode } from '../types/primitives'
+import type { AnyVNode } from '../types'
 
 export type SlottableProps = { children?: ComponentChildren }
 

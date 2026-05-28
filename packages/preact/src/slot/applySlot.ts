@@ -1,6 +1,6 @@
 import { isValidElement } from 'preact'
 import type { Ref } from 'preact'
-import type { AnyVNode, UnknownProps } from '../types/primitives'
+import type { AnyVNode, UnknownProps } from '../types'
 import { invariant } from './invariant'
 import { extractSlottable } from './extractSlottable'
 import type { CloneSlotChildFn } from './types'

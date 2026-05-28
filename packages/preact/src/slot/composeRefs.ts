@@ -1,5 +1,5 @@
 import type { Ref } from 'preact'
-import type { AnyVNode } from '../types/primitives'
+import type { AnyVNode } from '../types'
 
 export function mergeRefs<T>(...refs: (Ref<T> | null | undefined)[]): Ref<T> | null {
   const active = refs.filter((r): r is NonNullable<typeof r> => r != null)
