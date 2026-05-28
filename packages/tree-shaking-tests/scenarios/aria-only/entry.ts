@@ -2,7 +2,7 @@
  * Claim: a component with ARIA enforcement retains AriaPolicyEngine.
  * No Tailwind pipeline, no other framework adapter should appear.
  */
-import { createContractComponent } from '@praxis-ui/react'
+import { createAriaEnforcedComponent } from '@praxis-ui/react'
 import type { AriaRule } from '@praxis-ui/core/contract'
 
 const requireAriaLabel: AriaRule = ({ props }) =>
@@ -10,7 +10,7 @@ const requireAriaLabel: AriaRule = ({ props }) =>
     ? [{ valid: true }]
     : [{ valid: false, severity: 'warning', fixable: false, message: 'Missing accessible label' }]
 
-export const Button = createContractComponent({
+export const Button = createAriaEnforcedComponent({
   tag: 'button',
   name: 'Button',
   enforcement: {

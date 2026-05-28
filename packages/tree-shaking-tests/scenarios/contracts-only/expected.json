@@ -6,6 +6,7 @@
     "packages/react/src"
   ],
   "mustExclude": [
+    "lib/styling/src",
     "packages/vue/src",
     "packages/solid/src",
     "packages/preact/src",

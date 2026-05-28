@@ -31,17 +31,17 @@ type AriaEngine = {
 }
 
 export type Capabilities = {
-  readonly createClassPipeline: <TVariants extends VariantMap>(
+  readonly createClassPipeline?: <TVariants extends VariantMap>(
     opts: ClassPipelineOptions<TVariants>,
   ) => ClassPipelineFn
-  readonly AriaEngine: new (
+  readonly AriaEngine?: new (
     strict?: StrictMode,
     options?: { rules?: readonly AriaRule[] },
   ) => AriaEngine
 }
 
 // Noop pipeline used when no capabilities are injected (primitive-only path).
-const NOOP_CLASS_PIPELINE: ClassPipelineFn = () => ''
+const NOOP_CLASS_PIPELINE: ClassPipelineFn = (_tag, _props, className) => className ?? ''
 
 function resolveClassPipeline<TVariants extends VariantMap>(
   options: { styling?: { plugin?: ClassPluginFactory } },
