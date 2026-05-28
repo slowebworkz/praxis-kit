@@ -64,8 +64,11 @@ function cardinalityMax(c: Cardinality): number {
  * where at least one children rule has a statically-extractable cardinality.
  *
  * Only handles simple `const X = factory(...)` declarations — named exports,
- * default exports, and destructured patterns are not collected (cross-file
- * analysis is out of scope for the prototype).
+ * default exports, and destructured patterns are not collected. Cross-file
+ * constraint collection (factory defined in module A, consumed in module B)
+ * is handled separately via the registry + import resolver path in the plugin.
+ * Dynamic cardinality values (computed variables, spreads) are silently skipped;
+ * extending to data-flow patterns is deferred.
  */
 export function collectConstraints(
   source: ts.SourceFile,
