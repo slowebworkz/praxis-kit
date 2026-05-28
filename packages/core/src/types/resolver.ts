@@ -30,7 +30,10 @@ export type ResolveInput<
   as?: ElementType
   props: Props
   className?: ClassName
-  /** Selects a named preset from `presetMap`, applied before prop-level variants. */
+  /**
+   * Selects a named preset from `presetMap`, applied before prop-level variants.
+   * @remarks Planned rename to `recipe` (paired with `presets` → `recipes`). Not yet shipped.
+   */
   variantKey?: TSlot
   children?: Children
 }
