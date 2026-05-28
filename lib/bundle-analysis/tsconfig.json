@@ -3,9 +3,7 @@
   "compilerOptions": {
     "paths": {
       "@praxis-ui/core": ["../../packages/core/src/index.ts"],
-      "@praxis-ui/core/primitive": [
-        "../../packages/core/src/primitive.ts"
-      ],
+      "@praxis-ui/core/primitive": ["../../packages/core/src/primitive.ts"],
       "@praxis-ui/core/contract": ["../../packages/core/src/contract.ts"],
       "@praxis-ui/core/styling": ["../../packages/core/src/styling.ts"],
       "@praxis-ui/primitive": ["../primitive/src"],

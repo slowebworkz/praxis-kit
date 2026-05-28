@@ -5,8 +5,10 @@ export type { SlottableProps } from '@/shared'
 export type {
   PolymorphicProps,
   PolymorphicWithAsChild,
+  PolymorphicWithRender,
   PolymorphicComponent,
   ElementRef,
+  RenderCallbackProps,
 } from '@/shared'
 export type { ReactFactoryOptions } from '@/shared'
 export { mergeRefs } from '@/shared'

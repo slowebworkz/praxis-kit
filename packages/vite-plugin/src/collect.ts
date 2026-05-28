@@ -83,21 +83,31 @@ export function collectConstraints(
       const arg = firstObjectArg(decl.initializer)
       if (!arg) continue
 
+      // Extract default tag (top-level `tag: 'button'`).
+      const tagNode = getProperty(arg, 'tag')
+      const defaultTag = tagNode && ts.isStringLiteral(tagNode) ? tagNode.text : undefined
+
+      // Check whether enforcement.aria is a non-empty array literal.
       const enforcementProp = getProperty(arg, 'enforcement')
       const enfObj = asObject(enforcementProp)
-      if (!enfObj) continue
+      const ariaNode = enfObj ? getProperty(enfObj, 'aria') : undefined
+      const ariaArr = asArray(ariaNode)
+      const hasAriaRules = ariaArr !== undefined && ariaArr.elements.length > 0
 
-      const childrenProp = getProperty(enfObj, 'children')
+      const childrenProp = enfObj ? getProperty(enfObj, 'children') : undefined
       const childrenArr = asArray(childrenProp)
-      if (!childrenArr) continue
 
       const rules: StaticBound[] = []
-      for (const element of childrenArr.elements) {
-        const bound = extractBound(element)
-        if (bound) rules.push(bound)
+      if (childrenArr) {
+        for (const element of childrenArr.elements) {
+          const bound = extractBound(element)
+          if (bound) rules.push(bound)
+        }
       }
 
-      if (rules.length === 0) continue
+      // Collect the constraint even when there are no children rules, if the component
+      // has a default tag or ARIA rules — needed for the ARIA as-override check.
+      if (rules.length === 0 && !hasAriaRules && !defaultTag) continue
 
       const totalMin = rules.reduce((s, r) => s + cardinalityMin(r.cardinality), 0)
       const totalMax = rules.reduce(
@@ -108,7 +118,14 @@ export function collectConstraints(
       const componentName = ts.isIdentifier(decl.name) ? decl.name.text : undefined
       if (!componentName) continue
 
-      constraints.push({ name: componentName, rules, totalMin, totalMax })
+      constraints.push({
+        name: componentName,
+        rules,
+        totalMin,
+        totalMax,
+        ...(defaultTag !== undefined && { defaultTag }),
+        hasAriaRules,
+      })
     }
   })
 

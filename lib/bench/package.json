@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@praxis-ui/core": "workspace:*"
+    "@praxis-ui/core": "workspace:*",
+    "@praxis-ui/react": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "catalog:",

@@ -8,7 +8,9 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -28,7 +30,7 @@
     "@praxis-ui/core": "workspace:*",
     "tsup": "catalog:",
     "typescript": "catalog:",
-    "vite": "^6.0.0",
+    "vite": "^8.0.14",
     "vitest": "catalog:"
   }
 }
