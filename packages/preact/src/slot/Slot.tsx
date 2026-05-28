@@ -1,6 +1,6 @@
 import { forwardRef } from 'preact/compat'
 import type { ForwardedRef } from 'preact/compat'
-import type { AnyVNode } from '../types/primitives'
+import type { AnyVNode } from '../types'
 import { SLOT_NAME } from './constants'
 import { applySlot } from './applySlot'
 import { cloneSlotChild } from './cloneSlotChild'

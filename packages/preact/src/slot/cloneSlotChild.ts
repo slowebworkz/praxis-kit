@@ -1,6 +1,6 @@
 import { cloneElement, Fragment } from 'preact'
 import type { Ref } from 'preact'
-import type { AnyVNode, UnknownProps } from '../types/primitives'
+import type { AnyVNode, UnknownProps } from '../types'
 import { mergeProps } from './mergeProps'
 import { getChildRef, mergeRefs } from './composeRefs'
 
