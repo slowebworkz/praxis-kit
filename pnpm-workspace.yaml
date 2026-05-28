@@ -6,19 +6,19 @@ allowBuilds:
 
 catalog:
   # Core
-  "@eslint/js": ^9.9.0
+  "@eslint/js": ^10.0.0
   "@types/react": ^19.2.15
   "@types/react-dom": ^19.0.0
   class-variance-authority: ^0.7.1
 
   # Styling
   clsx: ^2.1.1
-  eslint: ^9.9.0
+  eslint: ^10.0.0
   eslint-config-prettier: ^10.0.0
 
   # Tooling
   husky: ^9.1.7
-  jsdom: ^26.1.0
+  jsdom: ^29.0.0
   prettier: ^3.3.3
 
   # React
@@ -27,12 +27,13 @@ catalog:
   tsup: ^8.5.1
   type-fest: ^5.4.4
   typescript: ^6.0.3
-  typescript-eslint: 8.59.4
+  typescript-eslint: 8.60.0
+  "@types/node": ^24.0.0
   "@typescript-eslint/utils": 8.60.0
-  "@typescript-eslint/rule-tester": 8.59.4
+  "@typescript-eslint/rule-tester": 8.60.0
   vitest: ^4.1.7
-  "@vitest/ui": ^4.1.6
-  vue: ^3.4.0
+  "@vitest/ui": ^4.1.7
+  vue: ^3.5.35
   "@vue/test-utils": ^2.4.0
   "@vue/server-renderer": ^3.5.35
 
@@ -47,12 +48,12 @@ catalog:
 
   # Svelte
   svelte: ^5.0.0
-  "@sveltejs/vite-plugin-svelte": ^6.0.0
+  "@sveltejs/vite-plugin-svelte": ^7.0.0
   "@testing-library/svelte": ^5.0.0
 
   jiti: ^2.7.0
 
   # Architecture tooling
-  ts-morph: ^23.0.0
+  ts-morph: ^28.0.0
   eslint-plugin-boundaries: ^6.0.2
-  dependency-cruiser: ^16.0.0
+  dependency-cruiser: ^17.0.0

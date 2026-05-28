@@ -21,6 +21,7 @@ const config = [
     files: TS_FILES,
     languageOptions: {
       parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
         projectService: {
           allowDefaultProject: [
             '*.ts',
@@ -46,10 +47,14 @@ const config = [
 
   ...architecture,
 
+  // Register plugin globally so disable-directive validation can always find it.
+  {
+    plugins: { '@praxis-ui': praxisPlugin as unknown as EslintPlugin },
+  },
+
   // Self-validate: run the plugin's own rules on all workspace source.
   {
     files: ['packages/*/src/**/*.{ts,tsx}', 'packages/docs/**/*.{ts,tsx}'],
-    plugins: { '@praxis-ui': praxisPlugin as unknown as EslintPlugin },
     rules: {
       '@praxis-ui/no-dead-compound': 'error',
       '@praxis-ui/no-enforcement-without-strict': 'error',
