@@ -32,5 +32,8 @@ export function resolveFactoryOptions<
     ...(styling?.compounds !== undefined && { compoundVariants: styling.compounds }),
     ...(enforcement?.aria !== undefined && { ariaRules: enforcement.aria }),
     ...(enforcement?.children !== undefined && { childRules: enforcement.children }),
+    ...(styling?.precomputedClasses !== undefined && {
+      precomputedClasses: styling.precomputedClasses,
+    }),
   })
 }

@@ -41,4 +41,6 @@ export type ResolvedFactoryOptions<
   readonly childRules?: readonly ChildRuleInput[]
   /** Additional ARIA policy rules. Absent when none were declared. */
   readonly ariaRules?: readonly AriaRule[]
+  /** Pre-computed variant-class lookup map. Absent when not injected by classExtractPlugin. */
+  readonly precomputedClasses?: Readonly<Record<string, string>>
 }
