@@ -2,7 +2,7 @@ import type { PolymorphicGenerics } from '@praxis-ui/core'
 import type { BuiltChildrenEvaluator, WithChildRules } from '@praxis-ui/adapter-utils'
 import type { FilterPredicate } from './primitives'
 import type { TypedRuntime } from './runtime'
-import type { SlotValidator } from '../slot/slot-validator'
+import type { SlotValidator } from '../slot'
 
 export type { WithChildRules, BuiltChildrenEvaluator }
 

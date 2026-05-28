@@ -1,7 +1,8 @@
 import type { Plugin } from 'vite'
 import { parseSource } from './ast'
 import { collectConstraints } from './collect'
-import { collectJsxUsages, diagnoseUsages } from './diagnose'
+import { pruneDeadCompounds } from './compound-prune'
+import { collectJsxUsages, diagnoseAriaTagOverrides, diagnoseUsages } from './diagnose'
 import { extractImportSpecifiers } from './imports'
 import { ConstraintRegistry } from './registry'
 import { transformAsChild } from './slot-transform'
@@ -10,6 +11,7 @@ import type { PluginOptions } from './types'
 export type { PluginOptions, Diagnostic, ComponentConstraint, StaticBound } from './types'
 export { analyze } from './analyze'
 export { transformAsChild } from './slot-transform'
+export { pruneDeadCompounds } from './compound-prune'
 
 const DEFAULT_CALLEE_NAMES = ['createPolymorphicComponent', 'createContractComponent']
 
@@ -48,7 +50,11 @@ export function contractPlugin(options?: PluginOptions): Plugin {
       registry.registerConstraints(id, constraints)
 
       // Emit same-file violations immediately.
-      for (const d of diagnoseUsages(source, constraints, severity)) {
+      const sameFileDiagnostics = [
+        ...diagnoseUsages(source, constraints, severity),
+        ...diagnoseAriaTagOverrides(source, constraints, severity),
+      ]
+      for (const d of sameFileDiagnostics) {
         const loc = { file: id, line: d.line, column: d.col }
         if (d.severity === 'error') {
           this.error({ message: d.message, loc })
@@ -95,6 +101,36 @@ export function contractPlugin(options?: PluginOptions): Plugin {
           this.warn({ message: d.message, loc })
         }
       }
+    },
+  }
+}
+
+/**
+ * Vite plugin that removes dead `styling.compounds` entries from factory calls
+ * at build time, reducing bundle size and eliminating unreachable CVA compound
+ * checks at runtime.
+ *
+ * A compound entry is dead when any of its conditions reference a variant key
+ * that does not exist in `styling.variants`, or a value that is not valid for
+ * that key. Only entries whose conditions are fully static (string/array
+ * literals) are pruned — dynamic conditions are left unchanged.
+ *
+ * Place before `contractPlugin` so the pruned source is what gets analyzed.
+ *
+ * @example
+ * // vite.config.ts
+ * import { compoundPrunePlugin, contractPlugin } from '@praxis-ui/vite-plugin'
+ * export default { plugins: [compoundPrunePlugin(), contractPlugin()] }
+ */
+export function compoundPrunePlugin(options?: Pick<PluginOptions, 'calleeNames'>): Plugin {
+  const calleeNames = new Set(options?.calleeNames ?? DEFAULT_CALLEE_NAMES)
+  return {
+    name: 'praxis-ui:compound-prune',
+    transform(code, id) {
+      const ext = id.split('.').pop() ?? ''
+      if (!['tsx', 'jsx', 'ts', 'js'].includes(ext)) return null
+      const result = pruneDeadCompounds(parseSource(id, code), calleeNames)
+      return result !== null ? { code: result } : null
     },
   }
 }
