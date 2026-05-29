@@ -1,5 +1,6 @@
 import { bench, describe } from 'vitest'
 import { ChildrenEvaluator, diagnoseChildren } from '@praxis-ui/core'
+import { isObject } from '@praxis-ui/primitive'
 
 // strict:'warn' — evaluate() runs the full match cycle. Unbounded-cardinality rules
 // ensure passing-path children never trigger console.warn.
@@ -21,13 +22,13 @@ const CT = Symbol('C')
 const DT = Symbol('D')
 
 const isA = (c: unknown): c is { type: typeof AT } =>
-  typeof c === 'object' && c !== null && 'type' in c && (c as { type: unknown }).type === AT
+  isObject(c) && 'type' in c && (c as { type: unknown }).type === AT
 const isB = (c: unknown): c is { type: typeof BT } =>
-  typeof c === 'object' && c !== null && 'type' in c && (c as { type: unknown }).type === BT
+  isObject(c) && 'type' in c && (c as { type: unknown }).type === BT
 const isC = (c: unknown): c is { type: typeof CT } =>
-  typeof c === 'object' && c !== null && 'type' in c && (c as { type: unknown }).type === CT
+  isObject(c) && 'type' in c && (c as { type: unknown }).type === CT
 const isD = (c: unknown): c is { type: typeof DT } =>
-  typeof c === 'object' && c !== null && 'type' in c && (c as { type: unknown }).type === DT
+  isObject(c) && 'type' in c && (c as { type: unknown }).type === DT
 
 const el = (type: symbol): { type: symbol } => ({ type })
 
