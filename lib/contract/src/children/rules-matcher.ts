@@ -1,8 +1,9 @@
 import type { MatchMatrix, NormalizedChildRule } from '../types'
+import { isObject } from '@praxis-ui/primitive'
 
 /** Reads child.type without assuming a framework — works for React elements and Vue vnodes. */
 function getChildType(child: unknown): unknown | undefined {
-  if (child === null || typeof child !== 'object' || !('type' in child)) return undefined
+  if (!isObject(child) || !('type' in child)) return undefined
   return child.type
 }
 
@@ -49,6 +50,14 @@ function buildPartialIndex(rules: NormalizedChildRule[]): PartialIndex {
   return { typeIndex, untypedIndices }
 }
 
+export type MatchResult = {
+  matrix: MatchMatrix
+  /** Child indices with no rule match — detected inline during the match pass. */
+  unexpectedIndices: ReadonlySet<number>
+  /** Child indices that matched more than one rule — detected inline. */
+  ambiguousIndices: ReadonlySet<number>
+}
+
 export class RuleMatcher {
   readonly #rules: NormalizedChildRule[]
   readonly #typeIndex: Map<unknown, number>
@@ -61,11 +70,13 @@ export class RuleMatcher {
     this.#untypedIndices = untypedIndices
   }
 
-  match(children: unknown[]): MatchMatrix {
+  match(children: unknown[]): MatchResult {
     // forward: child → rules it matched  (detects unexpected/ambiguous children)
     // reverse: rule  → children it matched (counts matches per rule for cardinality)
     const forward = new Map<number, Set<number>>()
     const reverse = new Map<number, Set<number>>()
+    const unexpectedIndices = new Set<number>()
+    const ambiguousIndices = new Set<number>()
 
     for (let ri = 0; ri < this.#rules.length; ri++) {
       reverse.set(ri, new Set())
@@ -98,8 +109,16 @@ export class RuleMatcher {
         childEntry.add(ri)
         reverse.get(ri)!.add(ci)
       }
+
+      // Classify inline — eliminates the need for a second children traversal.
+      const entry = forward.get(ci)
+      if (!entry) {
+        unexpectedIndices.add(ci)
+      } else if (entry.size > 1) {
+        ambiguousIndices.add(ci)
+      }
     }
 
-    return { childToRules: { forward, reverse } }
+    return { matrix: { childToRules: { forward, reverse } }, unexpectedIndices, ambiguousIndices }
   }
 }
