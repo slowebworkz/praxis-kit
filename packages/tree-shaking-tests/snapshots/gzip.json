@@ -13,5 +13,14 @@
   },
   "polymorphic-validation": {
     "gzip": 4391
+  },
+  "primitive-direct": {
+    "gzip": 830
+  },
+  "solid-minimal": {
+    "gzip": 6067
+  },
+  "vue-minimal": {
+    "gzip": 6603
   }
 }
