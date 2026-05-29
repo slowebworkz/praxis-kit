@@ -27,7 +27,7 @@ export function diagnoseChildren(
   if (rules.length === 0) return []
 
   const normalized = rules.map(normalizeChildRule)
-  const matrix = new RuleMatcher().match(children, normalized)
+  const matrix = new RuleMatcher(normalized).match(children)
   const violations: ChildViolation[] = []
 
   const firstIndex = 0
