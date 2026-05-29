@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import type { ChildIndex, NormalizedChildRule, MatchMatrix, RuleIndex } from '../types'
+import type { NormalizedChildRule, MatchMatrix } from '../types'
 import { RuleValidator } from './rule-validator'
 
 // ---------------------------------------------------------------------------
@@ -21,9 +21,9 @@ function rule(overrides: Partial<NormalizedChildRule> & { name: string }): Norma
 }
 
 function matrix(byRule: Set<number>[], _childCount = 3): MatchMatrix {
-  const reverse = new Map<RuleIndex, Set<ChildIndex>>()
+  const reverse = new Map<number, Set<number>>()
   for (const [ri, children] of byRule.entries()) {
-    if (children.size > 0) reverse.set(ri as RuleIndex, children as unknown as Set<ChildIndex>)
+    reverse.set(ri, children)
   }
   return { childToRules: { forward: new Map(), reverse } }
 }
