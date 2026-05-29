@@ -1,4 +1,4 @@
-import type { ChildIndex, MatchMatrix, StrictMode } from '../types'
+import type { MatchMatrix, StrictMode } from '../types'
 import { StrictBase } from '../strict'
 import { MatchValidationErrorBuilder } from './match-validation-error-builder'
 import { getTypeName } from './get-type-name'
@@ -16,7 +16,7 @@ export class MatchValidator extends StrictBase {
     const errors: string[] = []
 
     for (const [i, child] of children.entries()) {
-      const matches = matrix.childToRules.forward.get(i as ChildIndex)
+      const matches = matrix.childToRules.forward.get(i)
 
       if (!matches) {
         errors.push(this.#builder.unexpectedChild(getTypeName(child), i))
