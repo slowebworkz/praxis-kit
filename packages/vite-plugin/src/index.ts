@@ -1,11 +1,10 @@
 import type { Plugin } from 'vite'
 import { parseSource } from './ast'
 import { injectPrecomputedClasses } from './class-extract'
-import { collectConstraints } from './collect'
+import { collectFileDeclarations } from './collect'
 import { pruneDeadCompounds } from './compound-prune'
 import { ALL_EXTS, DEFAULT_CALLEE_NAMES, JSX_EXTS } from './constants'
-import { collectJsxUsages, diagnoseAriaTagOverrides, diagnoseUsages } from './diagnose'
-import { extractImportSpecifiers } from './imports'
+import { analyzeJsxSites } from './diagnose'
 import { ConstraintRegistry } from './registry'
 import { transformAsChild } from './slot-transform'
 import { composeStatically } from './static-compose'
@@ -50,16 +49,15 @@ export function contractPlugin(options?: PluginOptions): Plugin {
       if (!JSX_EXTS.has(ext)) return null
 
       const source = parseSource(id, code)
-      const constraints = collectConstraints(source, calleeNames)
+      // One walk for factory declarations + import specifiers (replaces two separate walks).
+      const { constraints, importSpecifiers } = collectFileDeclarations(source, calleeNames)
 
       registry.registerConstraints(id, constraints)
 
-      // Emit same-file violations immediately.
-      const sameFileDiagnostics = [
-        ...diagnoseUsages(source, constraints, severity),
-        ...diagnoseAriaTagOverrides(source, constraints, severity),
-      ]
-      for (const d of sameFileDiagnostics) {
+      // One walk for cardinality violations + ARIA overrides + cross-file usages (replaces three).
+      const { diagnostics, usages: allUsages } = analyzeJsxSites(source, constraints, severity)
+
+      for (const d of diagnostics) {
         const loc = { file: id, line: d.line, column: d.col }
         if (d.severity === 'error') {
           this.error({ message: d.message, loc })
@@ -68,10 +66,7 @@ export function contractPlugin(options?: PluginOptions): Plugin {
         }
       }
 
-      // Collect cross-file pending usages for imported component names.
-      const importSpecifiers = extractImportSpecifiers(source)
       const localNames = new Set(constraints.map((c) => c.name))
-      const allUsages = collectJsxUsages(source)
 
       // Only resolve imports for names actually used in JSX.
       const importedTagsInUse = new Set(
