@@ -1,4 +1,4 @@
-import type { Merge, Tagged } from 'type-fest'
+import type { Merge } from 'type-fest'
 
 export type ChildRuleMatch<T, U extends T = T> = (child: T) => child is U
 
@@ -22,14 +22,11 @@ export type NormalizedChildRule<T = unknown, U extends T = T> = Readonly<
   Merge<ChildRuleInput<T, U>, { cardinality: Cardinality; position: ChildRulePosition }>
 >
 
-export type RuleIndex = Tagged<number, 'RuleIndex'>
-export type ChildIndex = Tagged<number, 'ChildIndex'>
-
-export type BiDirectionalMap<A, B> = Readonly<{
-  forward: ReadonlyMap<A, ReadonlySet<B>>
-  reverse: ReadonlyMap<B, ReadonlySet<A>>
-}>
-
 export type MatchMatrix = Readonly<{
-  childToRules: BiDirectionalMap<ChildIndex, RuleIndex>
+  childToRules: Readonly<{
+    /** child position → rule indices that matched it */
+    forward: ReadonlyMap<number, ReadonlySet<number>>
+    /** rule index → child positions that matched it (pre-initialized for every rule) */
+    reverse: ReadonlyMap<number, ReadonlySet<number>>
+  }>
 }>

@@ -1,7 +1,6 @@
 export class StaticClassResolver {
   readonly #baseClass: string
   readonly #cache = new Map<string, string>()
-  readonly #cacheOrder = new Set<string>()
   readonly #resolveTag: (tag: string) => string
 
   constructor(baseClass: string, tagMap?: Record<string, string | undefined>) {
@@ -22,21 +21,18 @@ export class StaticClassResolver {
 
     const cached = this.#cache.get(tag)
     if (cached !== undefined) {
-      this.#cacheOrder.delete(tag)
-      this.#cacheOrder.add(tag)
+      // Promote to MRU: delete + re-add moves key to Map insertion-order tail.
+      this.#cache.delete(tag)
+      this.#cache.set(tag, cached)
       return cached
     }
 
     const result = this.#resolveTag(tag)
     this.#cache.set(tag, result)
-    this.#cacheOrder.add(tag)
 
     if (this.#cache.size > 200) {
-      const lru = this.#cacheOrder.values().next().value
-      if (lru) {
-        this.#cacheOrder.delete(lru)
-        this.#cache.delete(lru)
-      }
+      const lru = this.#cache.keys().next().value
+      if (lru !== undefined) this.#cache.delete(lru)
     }
 
     return result

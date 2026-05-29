@@ -14,16 +14,13 @@ export type {
   ValidResult,
 } from './aria-rule'
 export type {
-  BiDirectionalMap,
   Cardinality,
   CardinalityInput,
-  ChildIndex,
   ChildRuleInput,
   ChildRuleMatch,
   ChildRulePosition,
   MatchMatrix,
   NormalizedChildRule,
-  RuleIndex,
 } from './child-rule'
 export type { ClassPipelineFn } from './class-pipeline'
 export type { ClassPipelineOptions } from './class-pipeline-options'
