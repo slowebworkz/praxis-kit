@@ -27,13 +27,15 @@ export function diagnoseChildren(
   if (rules.length === 0) return []
 
   const normalized = rules.map(normalizeChildRule)
-  const matrix = new RuleMatcher().match(children, normalized)
+  const { matrix, unexpectedIndices, ambiguousIndices } = new RuleMatcher(normalized).match(
+    children,
+  )
   const violations: ChildViolation[] = []
 
   const firstIndex = 0
   const lastIndex = children.length - 1
 
-  // Cardinality and position violations (mirrors RuleValidator)
+  // Cardinality and position violations
   for (const [ri, rule] of normalized.entries()) {
     const matches = matrix.childToRules.reverse.get(ri as never)
     const matchCount = matches?.size ?? 0
@@ -71,28 +73,23 @@ export function diagnoseChildren(
     }
   }
 
-  // Unexpected and ambiguous violations (mirrors MatchValidator)
-  for (const [i, child] of children.entries()) {
-    const matches = matrix.childToRules.forward.get(i as never)
-    const typeName = getTypeName(child)
+  // Unexpected and ambiguous violations — iterate only violating child indices.
+  for (const ci of unexpectedIndices) {
+    violations.push({
+      kind: 'unexpected',
+      message: `unexpected child "${getTypeName(children[ci])}" at index ${ci}.`,
+      childIndex: ci,
+    })
+  }
 
-    if (!matches) {
-      violations.push({
-        kind: 'unexpected',
-        message: `unexpected child "${typeName}" at index ${i}.`,
-        childIndex: i,
-      })
-      continue
-    }
-
-    if (matches.size > 1) {
-      const names = [...matches].map((ri) => `"${normalized[ri]?.name ?? `#${ri}`}"`)
-      violations.push({
-        kind: 'ambiguous',
-        message: `child "${typeName}" at index ${i} matches multiple child rules: ${names.join(' and ')}.`,
-        childIndex: i,
-      })
-    }
+  for (const ci of ambiguousIndices) {
+    const matches = matrix.childToRules.forward.get(ci as never)!
+    const names = [...matches].map((ri) => `"${normalized[ri]?.name ?? `#${ri}`}"`)
+    violations.push({
+      kind: 'ambiguous',
+      message: `child "${getTypeName(children[ci])}" at index ${ci} matches multiple child rules: ${names.join(' and ')}.`,
+      childIndex: ci,
+    })
   }
 
   return violations

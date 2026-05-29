@@ -22,7 +22,7 @@
     "@praxis-ui/vue": "workspace:*",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.0",
     "react": "catalog:",
     "typescript": "catalog:"
   }

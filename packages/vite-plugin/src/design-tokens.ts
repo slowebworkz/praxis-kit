@@ -31,6 +31,7 @@ import { resolve } from 'node:path'
 import type { Plugin } from 'vite'
 import ts from 'typescript'
 import { asArray, asObject, firstObjectArg, getProperty, isFactoryCall, parseSource } from './ast'
+import { ALL_EXTS, DEFAULT_CALLEE_NAMES } from './constants'
 import type { PluginOptions } from './types'
 
 // ─── Internal types ───────────────────────────────────────────────────────────
@@ -188,8 +189,6 @@ export type DesignTokensOptions = {
   outFile?: string
 } & Pick<PluginOptions, 'calleeNames'>
 
-const DEFAULT_CALLEE_NAMES = ['createPolymorphicComponent', 'createContractComponent']
-
 /**
  * Vite plugin that collects every statically-declared class string from
  * `createContractComponent` factory calls and writes a design token manifest
@@ -218,7 +217,7 @@ export function designTokensPlugin(options?: DesignTokensOptions): Plugin {
 
     transform(code, id) {
       const ext = id.split('.').pop() ?? ''
-      if (!['ts', 'tsx', 'js', 'jsx'].includes(ext)) return null
+      if (!ALL_EXTS.has(ext)) return null
       const source = parseSource(id, code)
       for (const [name, tokens] of collectFileTokens(source, calleeNames)) {
         accumulated.set(name, mergeTokens(accumulated.get(name), tokens))

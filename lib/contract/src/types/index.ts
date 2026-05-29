@@ -24,14 +24,11 @@ export type {
   ValidationViolation,
 } from './validation'
 export type {
-  BiDirectionalMap,
   Cardinality,
   CardinalityInput,
-  ChildIndex,
   ChildRuleInput,
   ChildRuleMatch,
   ChildRulePosition,
   MatchMatrix,
   NormalizedChildRule,
-  RuleIndex,
 } from './child-rule'
