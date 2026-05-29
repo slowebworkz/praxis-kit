@@ -1,4 +1,5 @@
 export * from './base'
+export * from './html'
 export * from './children'
 export * from './diagnose'
 export * from './factory'
