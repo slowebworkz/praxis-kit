@@ -1,9 +1,8 @@
 import { parseSource } from './ast'
 import { collectConstraints } from './collect'
+import { DEFAULT_CALLEE_NAMES, JSX_EXTS } from './constants'
 import { diagnoseUsages } from './diagnose'
 import type { Diagnostic, PluginOptions } from './types'
-
-const DEFAULT_CALLEE_NAMES = ['createPolymorphicComponent', 'createContractComponent']
 
 /**
  * Pure analysis entry point. Parses `code` as TypeScript/TSX, extracts
@@ -19,7 +18,7 @@ const DEFAULT_CALLEE_NAMES = ['createPolymorphicComponent', 'createContractCompo
  */
 export function analyze(code: string, filename: string, options?: PluginOptions): Diagnostic[] {
   const ext = filename.split('.').pop() ?? ''
-  if (!['tsx', 'jsx'].includes(ext)) return []
+  if (!JSX_EXTS.has(ext)) return []
 
   const calleeNames = new Set(options?.calleeNames ?? DEFAULT_CALLEE_NAMES)
   const severity = options?.severity ?? 'warning'
