@@ -1,5 +1,142 @@
 # Changelog
 
+## v2.0.0 — Static/Runtime Contract System
+
+### Breaking changes
+
+#### Package scope rename
+
+All packages moved from `@polymorphic-ui/*` to `@praxis-ui/*`. Update every import and
+`package.json` dependency entry. The `@praxis-ui/codemod` CLI automates the factory rename below;
+the package scope rename requires a find-and-replace across your project.
+
+#### Factory rename: `createPolymorphicComponent` → `createContractComponent`
+
+```bash
+# Automated migration
+npx @praxis-ui/codemod --from createPolymorphicComponent --to createContractComponent --files "src/**/*.ts"
+npx @praxis-ui/codemod --from createPolymorphicComponent --to createContractComponent --files "src/**/*.tsx"
+```
+
+The codemod handles renames in all positions (call sites, type annotations, re-exports).
+
+### New packages
+
+| Package                    | Role                                                                     |
+| -------------------------- | ------------------------------------------------------------------------ |
+| `@praxis-ui/eslint-plugin` | Six lint rules enforcing contract API correctness                        |
+| `@praxis-ui/ts-plugin`     | TypeScript language service plugin — inline editor diagnostics           |
+| `@praxis-ui/codemod`       | CLI for factory rename migrations                                        |
+| `@praxis-ui/vite-plugin`   | Build-time optimization and enforcement pipeline (expanded from v1 stub) |
+
+### ESLint rules (`@praxis-ui/eslint-plugin`)
+
+| Rule                            | Severity | Description                                                                              |
+| ------------------------------- | -------- | ---------------------------------------------------------------------------------------- |
+| `no-enforcement-without-strict` | error    | Requires `enforcement.strict` whenever `children` or `aria` is declared                  |
+| `no-redundant-role`             | warn     | Flags `role` attrs that duplicate the element's implicit ARIA role (auto-fix)            |
+| `valid-cardinality`             | error    | Rejects impossible cardinality rules (negative bounds, max < min, max === 0)             |
+| `no-dead-compound`              | error    | Catches compound variant entries whose conditions can never fire                         |
+| `no-invalid-default`            | error    | Validates `styling.defaults` entries against `styling.variants`                          |
+| `valid-children-config`         | error    | Cross-rule consistency: duplicate `first`/`last` positions, `only` + other min conflicts |
+
+### TypeScript plugin (`@praxis-ui/ts-plugin`)
+
+Editor-integrated diagnostics via the TypeScript language service (tsserver / VS Code). No `tsc` run
+required — violations surface inline as you type.
+
+- Code 90001 (warning) — mirrors `no-enforcement-without-strict`
+- Codes 90002/90003/90004/90005 (error/warning) — mirrors `valid-cardinality`
+
+Configure in `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "plugins": [
+      { "name": "@praxis-ui/ts-plugin", "config": { "calleeNames": ["createContractComponent"] } }
+    ]
+  }
+}
+```
+
+### Vite plugin expansion (`@praxis-ui/vite-plugin`)
+
+All plugins are pure transforms — no side effects, no Vite internals, tree-shakeable.
+
+| Plugin                      | What it does                                                                            |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| `classExtractPlugin()`      | Precomputes all static variant combinations (≤512) and injects `precomputedClasses`     |
+| `designTokensPlugin()`      | Emits `praxis-tokens.json` with per-component tokens and a flat Tailwind safelist       |
+| `staticCompositionPlugin()` | Replaces same-file static JSX usage sites with direct element creation                  |
+| `ssrOptimizePlugin()`       | Bundles slot transform + class extract + static composition in dependency order         |
+| `slotTransformPlugin()`     | Rewrites safe `asChild` usage sites to render-prop form at build time                   |
+| `contractPlugin()`          | Build-time cardinality enforcement — single-file and cross-file via constraint registry |
+| `pruneDeadCompounds()`      | Eliminates unreachable `styling.compounds` entries from the output bundle               |
+
+`staticCompositionPlugin` eligibility: same-file factory definition, no spread attributes, no
+`as`/`asChild`/`render`, all variant props static, `className` absent or static, no top-level
+`defaults` or `enforcement`. Cross-file composition is deferred (requires module-graph traversal).
+
+### Per-capability tree shaking (React)
+
+Five factory tiers let consumers pay only for the capabilities they use:
+
+```txt
+Factory                         Modules  Gzip    Excluded
+createPolymorphicComponent      30       3146 B  styling engine · ARIA engine · children evaluator
+createAriaEnforcedComponent     34       5353 B  styling engine · children evaluator
+createChildrenEnforcedComponent 39       4395 B  styling engine · ARIA engine
+createContractedComponent       43       6546 B  styling engine
+createContractComponent         51       7641 B  —
+```
+
+All five ship in both `current/` (React 19, plain ref) and `legacy/` (React 18, `forwardRef`)
+variants.
+
+### Runtime improvements
+
+#### Lazy enforcement + production stripping
+
+- `ChildrenEvaluator.evaluate()` exits immediately when `strict: false` — the full match/validate
+  cycle no longer runs with output suppressed
+- All adapters wrap `childrenEvaluator.evaluate()` in `process.env.NODE_ENV !== 'production'` —
+  dead-code-eliminated in production bundles by every major bundler
+
+#### O(1) class lookup
+
+`VariantClassResolver` checks the `precomputedClasses` map (injected by `classExtractPlugin`) before
+the LRU cache — O(1) map lookup replaces a CVA call + cache write for every statically-known variant
+combination.
+
+#### Svelte `asChild` via parameterized Snippet
+
+`asChild` implemented in `@praxis-ui/svelte` using `Snippet<[Props]>` — callers pass a typed snippet
+and the adapter calls it with merged slot props. Mutual exclusion of `as` + `asChild` enforced via
+`SlotValidator`.
+
+### Analysis tooling
+
+Three workspace-level commands, all CI-gated after the test step:
+
+- `pnpm analyze:deps` — dependency-cruiser layer enforcement
+- `pnpm analyze:duplicates` — jscpd copy-paste detection (15% threshold)
+- `pnpm analyze:patterns` — ast-grep structural rules (`current-no-forwardRef`,
+  `adapter-raw-primitive-import`, `adapter-raw-contract-import`)
+
+### Unified debug surface
+
+`diagnose(options, tag, props, children?, className?, variantKey?)` in `@praxis-ui/core` returns a
+single `ComponentDiagnosis` covering class pipeline, ARIA violations, and children violations —
+without side effects or `strict` mode interference.
+
+### Migration
+
+See [MIGRATING.md](./MIGRATING.md) for upgrade paths. The `@praxis-ui/codemod` CLI handles the
+factory rename; the package scope rename requires a global find-and-replace.
+
+---
+
 ## v1.0.0 — Architectural Launch
 
 This is not an incremental release. v1.0.0 is a complete architectural rewrite that replaces the
@@ -8,7 +145,7 @@ backward-compatible for common usage; the internal structure is wholly new.
 
 ### What changed
 
-**Layered lib/ runtime**
+#### Layered lib/ runtime
 
 The monolithic `packages/core` is now backed by three private library packages:
 
@@ -21,7 +158,7 @@ The monolithic `packages/core` is now backed by three private library packages:
 These packages are private (`lib/`). `packages/core` is still the single import point for consumers;
 the lib/ split is an implementation boundary, not a new surface.
 
-**Capability-driven factory**
+#### Capability-driven factory
 
 The ARIA policy engine is no longer instantiated unconditionally. A component only pays for the
 engine if it declares `enforcement` in its factory options. A pure styling component has zero ARIA
@@ -38,19 +175,19 @@ createPolymorphic({
 })
 ```
 
-**Shared adapter infrastructure (`lib/adapter-utils`)**
+#### Shared adapter infrastructure (`lib/adapter-utils`)
 
 All six framework adapters (React, Vue, Tailwind, Preact, Solid, Svelte) now share a common
 `lib/adapter-utils` package for runtime construction and prop filtering. Per-framework code is
 reduced to render mechanics and lifecycle integration only.
 
-**Class pipeline diagnostics**
+#### Class pipeline diagnostics
 
 A new `diagnoseClassPipeline` function exposes the full resolution trace: base class, tag-map
 (applied or bypassed), preset values, effective variants, and per-compound-variant match/mismatch
 detail. Intended for debugging, not production rendering.
 
-**Type system hardening**
+#### Type system hardening
 
 - `EmptyRecord = Record<never, never>` — replaces 25+ inline occurrences of the empty record pattern
   used as generic defaults across all adapter signatures.
@@ -60,7 +197,7 @@ detail. Intended for debugging, not production rendering.
 - `AnyRecord` and `UnknownProps` are used consistently throughout; raw `Record<string, unknown>` no
   longer appears at API boundaries.
 
-**Framework adapter coverage**
+#### Framework adapter coverage
 
 | Adapter               | Strategy                                                          |
 | --------------------- | ----------------------------------------------------------------- |
@@ -71,7 +208,7 @@ detail. Intended for debugging, not production rendering.
 | `@praxis-ui/solid`    | Client + SSR (separate vitest configs)                            |
 | `@praxis-ui/svelte`   | Returns a `BuiltRuntime` bundle; renders via `Polymorphic.svelte` |
 
-### Migration
+### Upgrading from v0
 
 See [MIGRATING.md](./MIGRATING.md) for upgrade paths from CVA, Radix Slot, and Chakra UI. The
 [ARCHITECTURE.md](./ARCHITECTURE.md) documents the full runtime model including debugging guidance.
@@ -80,7 +217,7 @@ See [MIGRATING.md](./MIGRATING.md) for upgrade paths from CVA, Radix Slot, and C
 
 The v1.0.0 history is a clean linear rebase of the rewrite branch onto main:
 
-```
+```text
 87655cc  chore(workspace): monorepo scaffold
 5d91787  feat(lib): add runtime foundation — primitive, contract, styling
 d0d5f98  feat(architecture): capability-driven factory — lib/ modules, adapter-utils, ARIA gating
