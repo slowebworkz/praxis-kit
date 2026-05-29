@@ -1,5 +1,5 @@
-import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'rollup'
 import alias from '@rollup/plugin-alias'
 import resolve from '@rollup/plugin-node-resolve'

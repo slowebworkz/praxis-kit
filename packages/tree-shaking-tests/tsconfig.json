@@ -25,5 +25,9 @@
       "@/current/*": ["../../packages/react/src/current/*"]
     }
   },
-  "include": ["scripts/**/*", "scenarios/**/*"]
+  "include": ["scripts/**/*", "scenarios/**/*"],
+  "exclude": [
+    "scenarios/solid-minimal",
+    "scenarios/vue-minimal"
+  ]
 }
