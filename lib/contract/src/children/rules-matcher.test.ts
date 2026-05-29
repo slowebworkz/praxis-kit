@@ -3,10 +3,8 @@ import { describe, expect, it } from 'vitest'
 import type { ChildRuleMatch, NormalizedChildRule } from '../types'
 import { RuleMatcher } from './rules-matcher'
 
-const matcher = new RuleMatcher()
-
 // ---------------------------------------------------------------------------
-// Helpers — plain class instances (match via instanceof)
+// Helpers — plain class instances (match via instanceof, no .type — linear path)
 // ---------------------------------------------------------------------------
 
 class Foo {}
@@ -18,12 +16,15 @@ const barEl = new Bar()
 const bazEl = new Baz()
 
 function rule(name: string, match: ChildRuleMatch<unknown>): NormalizedChildRule {
-  return {
-    name,
-    match,
-    cardinality: { kind: 'unbounded' },
-    position: 'any',
-  }
+  return { name, match, cardinality: { kind: 'unbounded' }, position: 'any' }
+}
+
+function typedRule(
+  name: string,
+  type: unknown,
+  match: ChildRuleMatch<unknown>,
+): NormalizedChildRule {
+  return { name, type, match, cardinality: { kind: 'unbounded' }, position: 'any' }
 }
 
 const fooRule = rule('foo', (c) => c instanceof Foo)
@@ -36,47 +37,47 @@ const anyRule = rule('any', (_: unknown): _ is unknown => true)
 
 describe('RuleMatcher.match() — empty', () => {
   it('returns empty matrix for no children and no rules', () => {
-    const m = matcher.match([], [])
+    const m = new RuleMatcher([]).match([])
     expect(m.childToRules.forward.size).toBe(0)
     expect(m.childToRules.reverse.size).toBe(0)
   })
 
   it('reverse has an empty Set for each rule when there are no children', () => {
-    const m = matcher.match([], [fooRule])
+    const m = new RuleMatcher([fooRule]).match([])
     expect(m.childToRules.reverse.get(0)).toEqual(new Set())
   })
 
   it('forward has no entry when there are no rules', () => {
-    const m = matcher.match([fooEl], [])
+    const m = new RuleMatcher([]).match([fooEl])
     expect(m.childToRules.forward.has(0)).toBe(false)
   })
 })
 
 // ---------------------------------------------------------------------------
-// Single child × single rule
+// Single child × single rule (linear path — no type field)
 // ---------------------------------------------------------------------------
 
 describe('RuleMatcher.match() — single child × single rule', () => {
   it('records match in forward and reverse when rule matches', () => {
-    const m = matcher.match([fooEl], [fooRule])
+    const m = new RuleMatcher([fooRule]).match([fooEl])
     expect(m.childToRules.forward.get(0)).toEqual(new Set([0]))
     expect(m.childToRules.reverse.get(0)).toEqual(new Set([0]))
   })
 
   it('leaves forward empty and reverse as empty Set when rule does not match', () => {
-    const m = matcher.match([barEl], [fooRule])
+    const m = new RuleMatcher([fooRule]).match([barEl])
     expect(m.childToRules.forward.has(0)).toBe(false)
     expect(m.childToRules.reverse.get(0)).toEqual(new Set())
   })
 })
 
 // ---------------------------------------------------------------------------
-// Multiple children × multiple rules
+// Multiple children × multiple rules (linear path)
 // ---------------------------------------------------------------------------
 
 describe('RuleMatcher.match() — multiple children × multiple rules', () => {
   it('matches each child to its correct rule', () => {
-    const m = matcher.match([fooEl, barEl], [fooRule, barRule])
+    const m = new RuleMatcher([fooRule, barRule]).match([fooEl, barEl])
     expect(m.childToRules.forward.get(0)).toEqual(new Set([0]))
     expect(m.childToRules.forward.get(1)).toEqual(new Set([1]))
     expect(m.childToRules.reverse.get(0)).toEqual(new Set([0]))
@@ -84,14 +85,14 @@ describe('RuleMatcher.match() — multiple children × multiple rules', () => {
   })
 
   it('records multiple rule matches for one child', () => {
-    const m = matcher.match([fooEl], [fooRule, anyRule])
+    const m = new RuleMatcher([fooRule, anyRule]).match([fooEl])
     expect(m.childToRules.forward.get(0)).toEqual(new Set([0, 1]))
     expect(m.childToRules.reverse.get(0)).toEqual(new Set([0]))
     expect(m.childToRules.reverse.get(1)).toEqual(new Set([0]))
   })
 
   it('records one rule matching multiple children', () => {
-    const m = matcher.match([fooEl, barEl, bazEl], [anyRule])
+    const m = new RuleMatcher([anyRule]).match([fooEl, barEl, bazEl])
     expect(m.childToRules.reverse.get(0)).toEqual(new Set([0, 1, 2]))
     expect(m.childToRules.forward.get(0)).toEqual(new Set([0]))
     expect(m.childToRules.forward.get(1)).toEqual(new Set([0]))
@@ -99,20 +100,20 @@ describe('RuleMatcher.match() — multiple children × multiple rules', () => {
   })
 
   it('only maps matched children and rules', () => {
-    const m = matcher.match([fooEl, barEl, bazEl], [fooRule, barRule])
+    const m = new RuleMatcher([fooRule, barRule]).match([fooEl, barEl, bazEl])
     expect(m.childToRules.forward.size).toBe(2) // bazEl has no match
     expect(m.childToRules.reverse.size).toBe(2)
   })
 })
 
 // ---------------------------------------------------------------------------
-// Primitives as children (unknown[])
+// Primitives as children (unknown[], linear path)
 // ---------------------------------------------------------------------------
 
 describe('RuleMatcher.match() — primitive children', () => {
   it('matches string children via a custom rule', () => {
     const strRule = rule('string', (c): c is string => typeof c === 'string')
-    const m = matcher.match(['hello', 42, 'world'], [strRule])
+    const m = new RuleMatcher([strRule]).match(['hello', 42, 'world'])
     expect(m.childToRules.reverse.get(0)).toEqual(new Set([0, 2]))
     expect(m.childToRules.forward.has(1)).toBe(false)
   })
@@ -120,8 +121,102 @@ describe('RuleMatcher.match() — primitive children', () => {
   it('matches by reference equality', () => {
     const obj = { id: 1 }
     const objRule = rule('ref', (c): c is typeof obj => c === obj)
-    const m = matcher.match([obj, { id: 1 }], [objRule])
+    const m = new RuleMatcher([objRule]).match([obj, { id: 1 }])
     expect(m.childToRules.reverse.get(0)).toEqual(new Set([0]))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Type-indexed fast path — children with .type property
+// ---------------------------------------------------------------------------
+
+// Simulate framework elements: { type: ComponentRef, ... }
+const FooComponent = { name: 'FooComponent' }
+const BarComponent = { name: 'BarComponent' }
+const fooVNode = { type: FooComponent, props: {} }
+const barVNode = { type: BarComponent, props: {} }
+const bazVNode = { type: { name: 'BazComponent' }, props: {} }
+
+describe('RuleMatcher.match() — type-indexed fast path', () => {
+  it('uses the fast path when all rules have unique type fields', () => {
+    const r0 = typedRule(
+      'Foo',
+      FooComponent,
+      (c): c is typeof fooVNode => (c as typeof fooVNode).type === FooComponent,
+    )
+    const r1 = typedRule(
+      'Bar',
+      BarComponent,
+      (c): c is typeof barVNode => (c as typeof barVNode).type === BarComponent,
+    )
+    const m = new RuleMatcher([r0, r1]).match([fooVNode, barVNode])
+    expect(m.childToRules.forward.get(0)).toEqual(new Set([0]))
+    expect(m.childToRules.forward.get(1)).toEqual(new Set([1]))
+    expect(m.childToRules.reverse.get(0)).toEqual(new Set([0]))
+    expect(m.childToRules.reverse.get(1)).toEqual(new Set([1]))
+  })
+
+  it('treats unrecognised .type as no match (leaves forward empty)', () => {
+    const r0 = typedRule(
+      'Foo',
+      FooComponent,
+      (c): c is typeof fooVNode => (c as typeof fooVNode).type === FooComponent,
+    )
+    const m = new RuleMatcher([r0]).match([bazVNode])
+    expect(m.childToRules.forward.has(0)).toBe(false)
+    expect(m.childToRules.reverse.get(0)).toEqual(new Set())
+  })
+
+  it('ignores children without a .type property (primitives)', () => {
+    const r0 = typedRule(
+      'Foo',
+      FooComponent,
+      (c): c is typeof fooVNode => (c as typeof fooVNode).type === FooComponent,
+    )
+    const m = new RuleMatcher([r0]).match(['string-child', 42, fooVNode])
+    // string and number have no .type → skipped; only fooVNode matches
+    expect(m.childToRules.forward.size).toBe(1)
+    expect(m.childToRules.forward.get(2)).toEqual(new Set([0]))
+  })
+
+  it('falls back to linear scan when any rule lacks a type field', () => {
+    // fooRule has no .type — index disabled, anyRule fires for all children
+    const r0 = typedRule(
+      'Foo',
+      FooComponent,
+      (c): c is typeof fooVNode => (c as typeof fooVNode).type === FooComponent,
+    )
+    const mixed = [r0, anyRule] // anyRule has no type → linear
+    const m = new RuleMatcher(mixed).match([fooVNode])
+    // Both rules match fooVNode in the linear path
+    expect(m.childToRules.forward.get(0)).toEqual(new Set([0, 1]))
+  })
+
+  it('falls back to linear scan when two rules share the same type', () => {
+    const r0 = typedRule(
+      'Foo1',
+      FooComponent,
+      (c): c is typeof fooVNode => (c as typeof fooVNode).type === FooComponent,
+    )
+    const r1 = typedRule(
+      'Foo2',
+      FooComponent,
+      (c): c is typeof fooVNode => (c as typeof fooVNode).type === FooComponent,
+    )
+    // Duplicate type disables the index — linear scan catches both matches
+    const m = new RuleMatcher([r0, r1]).match([fooVNode])
+    expect(m.childToRules.forward.get(0)).toEqual(new Set([0, 1]))
+  })
+
+  it('handles multiple children of the same type correctly', () => {
+    const r0 = typedRule(
+      'Foo',
+      FooComponent,
+      (c): c is typeof fooVNode => (c as typeof fooVNode).type === FooComponent,
+    )
+    const fooVNode2 = { type: FooComponent, props: { id: 2 } }
+    const m = new RuleMatcher([r0]).match([fooVNode, fooVNode2])
+    expect(m.childToRules.reverse.get(0)).toEqual(new Set([0, 1]))
   })
 })
 

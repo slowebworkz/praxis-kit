@@ -25,6 +25,15 @@ export type ChildRuleInput<T = unknown, U extends T = T> = {
   match: ChildRuleMatch<T, U>
   cardinality?: CardinalityInput
   position?: ChildRulePosition
+  /**
+   * Optional component-type reference used to build an O(1) dispatch index.
+   * When provided for every rule in a set, the matcher reads child.type instead
+   * of calling every rule's match function on every child (O(n×m) → O(n+m)).
+   * Must equal the value that child.type produces for matching children
+   * (e.g. the component function or object). Omit for rules that match on
+   * criteria other than component type.
+   */
+  type?: unknown
 }
 
 /**
