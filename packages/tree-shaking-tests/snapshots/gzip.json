@@ -1,26 +1,26 @@
 {
   "aria-only": {
-    "gzip": 5353
+    "gzip": 5383
   },
   "contracts-only": {
-    "gzip": 6546
+    "gzip": 6815
   },
   "full-runtime": {
-    "gzip": 7641
+    "gzip": 7907
   },
   "minimal-polymorphic": {
-    "gzip": 3146
+    "gzip": 3161
   },
   "polymorphic-validation": {
-    "gzip": 4391
+    "gzip": 4658
   },
   "primitive-direct": {
     "gzip": 830
   },
   "solid-minimal": {
-    "gzip": 6067
+    "gzip": 6328
   },
   "vue-minimal": {
-    "gzip": 6603
+    "gzip": 6859
   }
 }

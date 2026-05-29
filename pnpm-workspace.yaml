@@ -12,7 +12,7 @@ catalog:
   "@solidjs/testing-library": ^0.8.0
   "@sveltejs/vite-plugin-svelte": ^7.0.0
   "@testing-library/svelte": ^5.0.0
-  "@types/node": ^24.0.0
+  "@types/node": ^25.9.1
   "@types/react": ^19.2.15
   "@types/react-dom": ^19.0.0
   "@typescript-eslint/rule-tester": 8.60.0
