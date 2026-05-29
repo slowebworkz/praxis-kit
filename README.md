@@ -228,6 +228,40 @@ const ActionBar = createContractComponent({
 `strict: 'warn'` surfaces violations as console warnings instead of throwing. Omit `enforcement`
 entirely to skip all validation; there is no runtime cost.
 
+#### HTML5 built-in contracts
+
+`htmlContracts` from `@praxis-ui/core` provides ready-made enforcement for standard HTML elements
+with restricted content models — no custom `match` predicates required:
+
+```ts
+import { htmlContracts } from '@praxis-ui/core'
+import { createContractComponent } from '@praxis-ui/react'
+
+const List = createContractComponent({ tag: 'ul', enforcement: htmlContracts.ul })
+const Table = createContractComponent({ tag: 'table', enforcement: htmlContracts.table })
+const Figure = createContractComponent({ tag: 'figure', enforcement: htmlContracts.figure })
+```
+
+```tsx
+// ✗ warns — <div> is not a valid direct child of <ul>
+<List><div>bad</div></List>
+
+// ✗ warns — <p> is not a valid direct child of <table>
+<Table><p>bad</p></Table>
+
+// ✗ warns — <figure> allows at most one <figcaption>
+<Figure>
+  <img src="photo.jpg" alt="" />
+  <figcaption>First</figcaption>
+  <figcaption>Second</figcaption>
+</Figure>
+```
+
+Available for `ul`, `ol`, `table`, `thead`/`tbody`/`tfoot`, `tr`, `colgroup`, `dl`, `select`,
+`optgroup`, `picture`, `figure`, `details`, and `fieldset`. All default to `strict: 'warn'`. The
+companion ESLint rule `@praxis-ui/no-invalid-html-nesting` catches the same violations statically at
+author time.
+
 ### Accessibility contracts
 
 The built-in ARIA engine validates role assignments against the element's implicit landmark role and

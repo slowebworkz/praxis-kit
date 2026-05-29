@@ -328,6 +328,35 @@ The constructor invariant check (positional rule with max > 1 or unbounded) thro
 unconditionally — it is not gated on `strict` mode, because the configuration is structurally
 impossible to ever satisfy.
 
+#### HTML5 built-in contracts (`htmlContracts`)
+
+`@praxis-ui/core` exports `htmlContracts`, a keyed map of ready-made `EnforcementOptions` objects
+for HTML elements whose content model restricts direct children. The contracts are authored against
+the public `ChildRuleInput` API — no internal types are used.
+
+**Match predicate design:**
+
+Two internal helpers produce the `match` predicates:
+
+- `isTag(...tags)` — accepts children whose `type` string is in the allowlist. Rejects component
+  children (whose `type` is a function/class), so `<MyListItem />` inside `<ul>` is flagged.
+- `isFlowContent(...blockedTags)` — accepts any element whose `type` is NOT in the blocked set,
+  including component children. Used as the open catch-all in `figure`, `details`, and `fieldset`,
+  which constrain one specific child type (e.g. `figcaption`) while permitting arbitrary flow
+  content alongside it.
+
+**Why no transparent-node guard:**
+
+Adapter `normalizeChildren` implementations filter children to valid elements via `isValidElement`
+before calling `ChildrenEvaluator.evaluate`. Text nodes, `null`, `false`, and `undefined` are
+discarded before the evaluator runs — no special handling is needed in the predicates.
+
+**Complementary static layer:**
+
+The `no-invalid-html-nesting` ESLint rule in `@praxis-ui/eslint-plugin` checks the same allowlists
+at author time (JSX AST analysis, no runtime required). The two layers are independent — the ESLint
+rule runs on raw JSX; the runtime contract runs on the rendered element tree.
+
 ---
 
 ### ARIA validator

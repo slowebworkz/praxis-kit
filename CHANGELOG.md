@@ -1,5 +1,66 @@
 # Changelog
 
+## [Unreleased]
+
+### HTML5 structural contracts (`@praxis-ui/core`)
+
+`htmlContracts` is a new export from `@praxis-ui/core` providing ready-made `EnforcementOptions`
+objects for HTML elements with restricted content models. Pass directly to `createContractComponent`
+instead of writing `match` predicates by hand:
+
+```ts
+import { htmlContracts } from '@praxis-ui/core'
+import { createContractComponent } from '@praxis-ui/react'
+
+const List = createContractComponent({ tag: 'ul', enforcement: htmlContracts.ul })
+```
+
+All contracts default to `strict: 'warn'`. Override the severity with a spread:
+
+```ts
+enforcement: { ...htmlContracts.table, strict: 'throw' }
+```
+
+| Export              | Tag(s)                    | Constraint summary                                                     |
+| ------------------- | ------------------------- | ---------------------------------------------------------------------- |
+| `listContract`      | `ul`, `ol`                | Only `li`, `script`, `template`                                        |
+| `tableContract`     | `table`                   | `caption` (≤1, first), `colgroup`, `thead`/`tfoot` (≤1), `tbody`, `tr` |
+| `tableBodyContract` | `thead`, `tbody`, `tfoot` | Only `tr`, `script`, `template`                                        |
+| `tableRowContract`  | `tr`                      | Only `td`, `th`, `script`, `template`                                  |
+| `colgroupContract`  | `colgroup`                | Only `col`, `template`                                                 |
+| `dlContract`        | `dl`                      | Only `dt`, `dd`, `div`, `script`, `template`                           |
+| `selectContract`    | `select`                  | Only `option`, `optgroup`, `hr`, `script`, `template`                  |
+| `optgroupContract`  | `optgroup`                | Only `option`, `script`, `template`                                    |
+| `pictureContract`   | `picture`                 | `source` (any), `img` (exactly 1)                                      |
+| `figureContract`    | `figure`                  | `figcaption` (≤1) + any flow content                                   |
+| `detailsContract`   | `details`                 | `summary` (≤1, first) + any flow content                               |
+| `fieldsetContract`  | `fieldset`                | `legend` (≤1, first) + any flow content                                |
+
+`htmlContracts` is a keyed map (`htmlContracts.ul`, `htmlContracts.table`, etc.) covering all of the
+above. Named exports are also available for explicit imports.
+
+The `match` predicates duck-type on the child's `type` property — compatible with React, Preact, and
+Vue VNodes. Adapters filter children to valid elements before the evaluator runs, so text nodes and
+falsy conditional values are never flagged.
+
+### `no-invalid-html-nesting` rule (`@praxis-ui/eslint-plugin`)
+
+New lint rule (error in recommended config) that statically checks JSX for direct children that
+violate the HTML5 content model of their parent. Covers `ul`/`ol`, `table`/`thead`/`tbody`/`tfoot`/
+`tr`, `dl`, `select`, `optgroup`, `colgroup`, and `picture`.
+
+```tsx
+<ul>
+  <div>bad</div>{' '}
+  {/* ← error: <div> is not a valid direct child of <ul>. Allowed: li, script, template */}
+</ul>
+```
+
+Component children (uppercase tags) and dynamic expression containers are always skipped — the rule
+only flags statically-known intrinsic HTML tags.
+
+---
+
 ## v2.0.0 — Static/Runtime Contract System
 
 ### Breaking changes
