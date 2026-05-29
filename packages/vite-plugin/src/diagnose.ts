@@ -3,6 +3,107 @@ import { walk } from './ast'
 import type { ComponentConstraint, Diagnostic, PendingUsage, Severity } from './types'
 
 /**
+ * Single-pass variant of diagnoseUsages + diagnoseAriaTagOverrides + collectJsxUsages.
+ * Visits each JSX node once and dispatches to all three checks, rather than walking
+ * the source three times. For use in the hot Vite transform hook.
+ */
+export function analyzeJsxSites(
+  source: ts.SourceFile,
+  constraints: ComponentConstraint[],
+  severity: Severity,
+): { diagnostics: Diagnostic[]; usages: PendingUsage[] } {
+  const byName = new Map(constraints.filter((c) => c.rules.length > 0).map((c) => [c.name, c]))
+  const byNameAria = new Map(
+    constraints.filter((c) => c.hasAriaRules && c.defaultTag !== undefined).map((c) => [c.name, c]),
+  )
+  const diagnostics: Diagnostic[] = []
+  const usages: PendingUsage[] = []
+
+  walk(source, (node) => {
+    let tagName: string | undefined
+    let attributes: ts.JsxAttributes | undefined
+    let count: number | undefined
+
+    if (ts.isJsxElement(node)) {
+      const opening = node.openingElement
+      tagName = ts.isIdentifier(opening.tagName) ? opening.tagName.text : undefined
+      attributes = opening.attributes
+      count = countStaticChildren(node)
+    } else if (ts.isJsxSelfClosingElement(node)) {
+      tagName = ts.isIdentifier(node.tagName) ? node.tagName.text : undefined
+      attributes = node.attributes
+      count = 0
+    }
+
+    if (!tagName) return
+
+    // Lazy — computed once and shared across all three checks if needed.
+    let pos: ts.LineAndCharacter | undefined
+    const getPos = () => (pos ??= source.getLineAndCharacterOfPosition(node.getStart(source)))
+
+    // 1. Cardinality diagnostics
+    if (count !== undefined) {
+      const c = byName.get(tagName)
+      if (c && (count < c.totalMin || count > c.totalMax)) {
+        const { line, character } = getPos()
+        const { totalMin, totalMax, name } = c
+        const rangeText =
+          totalMax === Infinity
+            ? `at least ${totalMin}`
+            : totalMin === totalMax
+              ? `exactly ${totalMin}`
+              : `${totalMin}–${totalMax}`
+        diagnostics.push({
+          message: `<${name}> expects ${rangeText} ${totalMax === 1 && totalMin === 1 ? 'child' : 'children'} but received ${count}.`,
+          line: line + 1,
+          col: character + 1,
+          severity,
+        })
+      }
+    }
+
+    // 2. ARIA tag-override diagnostics
+    if (attributes) {
+      const c = byNameAria.get(tagName)
+      if (c) {
+        for (const attr of attributes.properties) {
+          if (!ts.isJsxAttribute(attr)) continue
+          const attrName = ts.isIdentifier(attr.name) ? attr.name.text : undefined
+          if (attrName !== 'as' || !attr.initializer) continue
+          let asValue: string | undefined
+          if (ts.isStringLiteral(attr.initializer)) {
+            asValue = attr.initializer.text
+          } else if (
+            ts.isJsxExpression(attr.initializer) &&
+            attr.initializer.expression !== undefined &&
+            ts.isStringLiteral(attr.initializer.expression)
+          ) {
+            asValue = attr.initializer.expression.text
+          }
+          if (asValue !== undefined && asValue !== c.defaultTag) {
+            const { line, character } = getPos()
+            diagnostics.push({
+              message: `<${tagName} as="${asValue}"> changes the element type from '${c.defaultTag}' — ARIA enforcement rules may not apply as expected.`,
+              line: line + 1,
+              col: character + 1,
+              severity,
+            })
+          }
+        }
+      }
+    }
+
+    // 3. Cross-file usage collection
+    if (/^[A-Z]/.test(tagName)) {
+      const { line, character } = getPos()
+      usages.push({ tagName, count, line: line + 1, col: character + 1 })
+    }
+  })
+
+  return { diagnostics, usages }
+}
+
+/**
  * Returns the count of meaningful JSX children — JSX elements and non-whitespace
  * text — in a JSX element's children array. JSX expressions (`{...}`) make the
  * count unknowable and signal that the site is not statically analyzable.
