@@ -1,6 +1,7 @@
 export { noDeadCompound } from './no-dead-compound'
 export { noEnforcementWithoutStrict } from './no-enforcement-without-strict'
 export { noInvalidDefault } from './no-invalid-default'
+export { noInvalidHtmlNesting } from './no-invalid-html-nesting'
 export { noRedundantRole } from './no-redundant-role'
 export { validCardinality } from './valid-cardinality'
 export { validChildrenConfig } from './valid-children-config'
