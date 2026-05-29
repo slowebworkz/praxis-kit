@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import type { ChildIndex, MatchMatrix, RuleIndex } from '../types'
+import type { MatchMatrix } from '../types'
 import { MatchValidator } from './match-validator'
 
 // ---------------------------------------------------------------------------
@@ -16,9 +16,9 @@ const barEl = new Bar()
 const bazEl = new Baz()
 
 function matrix(byChild: Set<number>[]): MatchMatrix {
-  const forward = new Map<ChildIndex, Set<RuleIndex>>()
+  const forward = new Map<number, Set<number>>()
   for (const [i, rules] of byChild.entries()) {
-    if (rules.size > 0) forward.set(i as ChildIndex, rules as unknown as Set<RuleIndex>)
+    if (rules.size > 0) forward.set(i, rules)
   }
   return { childToRules: { forward, reverse: new Map() } }
 }

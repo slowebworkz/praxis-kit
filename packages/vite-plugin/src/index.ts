@@ -1,10 +1,10 @@
 import type { Plugin } from 'vite'
 import { parseSource } from './ast'
 import { injectPrecomputedClasses } from './class-extract'
-import { collectConstraints } from './collect'
+import { collectFileDeclarations } from './collect'
 import { pruneDeadCompounds } from './compound-prune'
-import { collectJsxUsages, diagnoseAriaTagOverrides, diagnoseUsages } from './diagnose'
-import { extractImportSpecifiers } from './imports'
+import { ALL_EXTS, DEFAULT_CALLEE_NAMES, JSX_EXTS } from './constants'
+import { analyzeJsxSites } from './diagnose'
 import { ConstraintRegistry } from './registry'
 import { transformAsChild } from './slot-transform'
 import { composeStatically } from './static-compose'
@@ -18,8 +18,6 @@ export { pruneDeadCompounds } from './compound-prune'
 export { buildPrecomputedClasses, injectPrecomputedClasses } from './class-extract'
 export { collectFileTokens, buildManifest, designTokensPlugin } from './design-tokens'
 export { composeStatically } from './static-compose'
-
-const DEFAULT_CALLEE_NAMES = ['createPolymorphicComponent', 'createContractComponent']
 
 /**
  * Vite plugin that performs static enforcement.children cardinality checks at
@@ -48,19 +46,18 @@ export function contractPlugin(options?: PluginOptions): Plugin {
 
     async transform(code, id) {
       const ext = id.split('.').pop() ?? ''
-      if (!['tsx', 'jsx'].includes(ext)) return null
+      if (!JSX_EXTS.has(ext)) return null
 
       const source = parseSource(id, code)
-      const constraints = collectConstraints(source, calleeNames)
+      // One walk for factory declarations + import specifiers (replaces two separate walks).
+      const { constraints, importSpecifiers } = collectFileDeclarations(source, calleeNames)
 
       registry.registerConstraints(id, constraints)
 
-      // Emit same-file violations immediately.
-      const sameFileDiagnostics = [
-        ...diagnoseUsages(source, constraints, severity),
-        ...diagnoseAriaTagOverrides(source, constraints, severity),
-      ]
-      for (const d of sameFileDiagnostics) {
+      // One walk for cardinality violations + ARIA overrides + cross-file usages (replaces three).
+      const { diagnostics, usages: allUsages } = analyzeJsxSites(source, constraints, severity)
+
+      for (const d of diagnostics) {
         const loc = { file: id, line: d.line, column: d.col }
         if (d.severity === 'error') {
           this.error({ message: d.message, loc })
@@ -69,10 +66,7 @@ export function contractPlugin(options?: PluginOptions): Plugin {
         }
       }
 
-      // Collect cross-file pending usages for imported component names.
-      const importSpecifiers = extractImportSpecifiers(source)
       const localNames = new Set(constraints.map((c) => c.name))
-      const allUsages = collectJsxUsages(source)
 
       // Only resolve imports for names actually used in JSX.
       const importedTagsInUse = new Set(
@@ -134,7 +128,7 @@ export function compoundPrunePlugin(options?: Pick<PluginOptions, 'calleeNames'>
     name: 'praxis-ui:compound-prune',
     transform(code, id) {
       const ext = id.split('.').pop() ?? ''
-      if (!['tsx', 'jsx', 'ts', 'js'].includes(ext)) return null
+      if (!ALL_EXTS.has(ext)) return null
       const result = pruneDeadCompounds(parseSource(id, code), calleeNames)
       return result !== null ? { code: result } : null
     },
@@ -171,7 +165,7 @@ export function classExtractPlugin(options?: Pick<PluginOptions, 'calleeNames'>)
     name: 'praxis-ui:class-extract',
     transform(code, id) {
       const ext = id.split('.').pop() ?? ''
-      if (!['ts', 'tsx', 'js', 'jsx'].includes(ext)) return null
+      if (!ALL_EXTS.has(ext)) return null
       const result = injectPrecomputedClasses(parseSource(id, code), calleeNames)
       return result !== null ? { code: result } : null
     },
@@ -202,7 +196,7 @@ export function slotTransformPlugin(): Plugin {
     name: 'praxis-ui:slot-transform',
     transform(code, id) {
       const ext = id.split('.').pop() ?? ''
-      if (!['tsx', 'jsx'].includes(ext)) return null
+      if (!JSX_EXTS.has(ext)) return null
       const result = transformAsChild(parseSource(id, code))
       return result !== null ? { code: result } : null
     },
@@ -239,7 +233,7 @@ export function staticCompositionPlugin(options?: Pick<PluginOptions, 'calleeNam
     name: 'praxis-ui:static-compose',
     transform(code, id) {
       const ext = id.split('.').pop() ?? ''
-      if (!['tsx', 'jsx'].includes(ext)) return null
+      if (!JSX_EXTS.has(ext)) return null
       const result = composeStatically(parseSource(id, code), calleeNames)
       return result !== null ? { code: result } : null
     },

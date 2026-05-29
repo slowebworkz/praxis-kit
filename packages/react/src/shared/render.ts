@@ -11,7 +11,6 @@ import type {
   Runtime,
   KnownProps,
   RenderInput,
-  NormalizeChildren,
   ResolvedProps,
   ResolvedSlotRender,
   RenderDirectives,
@@ -79,10 +78,9 @@ function isSingleElementArray(arr: ReactElement[]): arr is [ReactElement] {
 
 function resolveSlotChildren(
   children: unknown,
-  normalizeChildren: NormalizeChildren,
+  normalized: ReactElement[],
   validator: SlotValidator,
 ): ReactElement | ReactElement[] | null {
-  const normalized = normalizeChildren(children)
   warnDiscardedChildren(children, normalized, validator)
   if (isSingleElementArray(normalized)) {
     return normalized[0]
@@ -109,11 +107,11 @@ function validateSlotDirectives(directives: RenderDirectives, validator: SlotVal
 
 function resolveSlotRender(
   state: ResolvedRenderState,
-  normalizeChildren: NormalizeChildren,
+  getNormalized: () => ReactElement[],
   validator: SlotValidator,
 ): ResolvedSlotRender | null {
   if (!validateSlotDirectives(state.directives, validator)) return null
-  const child = resolveSlotChildren(state.children, normalizeChildren, validator)
+  const child = resolveSlotChildren(state.children, getNormalized(), validator)
   if (child === null) return null
   return { child }
 }
@@ -136,10 +134,10 @@ function tryRenderAsChild(
   state: ResolvedRenderState,
   ref: Ref<unknown> | null,
   slotComponent: SlotComponent,
-  normalizeChildren: NormalizeChildren,
+  getNormalized: () => ReactElement[],
   validator: SlotValidator,
 ): ReactElement | null {
-  const resolved = resolveSlotRender(state, normalizeChildren, validator)
+  const resolved = resolveSlotRender(state, getNormalized, validator)
   if (resolved === null) return null
   return renderResolvedSlot(slotComponent, state, resolved, ref)
 }
@@ -186,15 +184,19 @@ export function render<TProps extends KnownProps>({
 }: RenderInput<TProps>): ReactElement {
   const state = resolveRenderState(runtime, props, filterProps)
 
-  if (process.env.NODE_ENV !== 'production')
-    childrenEvaluator?.evaluate(normalizeChildren(state.children))
+  // Lazy — normalizeChildren is called at most once per render, with the result
+  // shared between the children evaluator and slot resolution.
+  let cached: ReactElement[] | undefined
+  const once = (): ReactElement[] => (cached ??= normalizeChildren(state.children))
+
+  if (process.env.NODE_ENV !== 'production') childrenEvaluator?.evaluate(once())
 
   // Render-prop path — caller receives resolved props directly; no Slot, no cloneElement.
   if (typeof props.render === 'function') {
     return props.render({ ...state.props, className: state.className, ref })
   }
 
-  const slotResult = tryRenderAsChild(state, ref, slotComponent, normalizeChildren, slotValidator)
+  const slotResult = tryRenderAsChild(state, ref, slotComponent, once, slotValidator)
 
   return slotResult ?? renderIntrinsic(state, ref, runtime)
 }

@@ -47,8 +47,10 @@ type AriaPlan = {
 export class AriaPolicyEngine extends StrictBase {
   readonly #extraRules: readonly AriaRule[]
   readonly #planCache = new Map<string, AriaPlan>()
-  readonly #planCacheOrder = new Set<string>()
   static readonly #MAX_CACHE = 100
+  // Memoized AriaFix objects keyed by attribute name — the ARIA attribute set is
+  // finite so this Map is bounded and avoids recreating closures on every cache miss.
+  static readonly #removeAttributeFixCache = new Map<string, AriaFix>()
 
   constructor(strict: StrictMode = 'warn', options?: { rules?: readonly AriaRule[] }) {
     super(strict)
@@ -204,8 +206,9 @@ export class AriaPolicyEngine extends StrictBase {
     if (key !== null) {
       const cached = this.#planCache.get(key)
       if (cached !== undefined) {
-        this.#planCacheOrder.delete(key)
-        this.#planCacheOrder.add(key)
+        // Promote to MRU: delete + re-add moves key to Map insertion-order tail.
+        this.#planCache.delete(key)
+        this.#planCache.set(key, cached)
         if (cached.violations.length > 0) this.report(cached.violations as ValidationViolation[])
         return {
           props: AriaPolicyEngine.#applyPlan(props, cached.removals),
@@ -226,13 +229,9 @@ export class AriaPolicyEngine extends StrictBase {
         violations: result.violations,
       }
       this.#planCache.set(key, plan)
-      this.#planCacheOrder.add(key)
       if (this.#planCache.size > AriaPolicyEngine.#MAX_CACHE) {
-        const lru = this.#planCacheOrder.values().next().value
-        if (lru !== undefined) {
-          this.#planCacheOrder.delete(lru)
-          this.#planCache.delete(lru)
-        }
+        const lru = this.#planCache.keys().next().value
+        if (lru !== undefined) this.#planCache.delete(lru)
       }
     }
 
@@ -272,13 +271,17 @@ export class AriaPolicyEngine extends StrictBase {
   }
 
   static #makeRemoveAttributeFix(attr: string): AriaFix {
-    return {
+    const cached = AriaPolicyEngine.#removeAttributeFixCache.get(attr)
+    if (cached) return cached
+    const fix: AriaFix = {
       kind: `removeAttribute:${attr}`,
       apply: ({ props }) => {
         if (!(attr in props)) return { applied: false, next: props }
         return { applied: true, next: omitProp(props, attr), previous: props }
       },
     }
+    AriaPolicyEngine.#removeAttributeFixCache.set(attr, fix)
+    return fix
   }
 
   // Snapshot diagnostic model: all rules evaluate against the same (tag, props, implicitRole) snapshot.

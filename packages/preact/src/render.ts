@@ -11,7 +11,6 @@ import type {
   Runtime,
   KnownProps,
   RenderInput,
-  NormalizeChildren,
   ResolvedProps,
   ResolvedSlotRender,
   RenderDirectives,
@@ -78,10 +77,9 @@ function isSingleElementArray(arr: AnyVNode[]): arr is [AnyVNode] {
 
 function resolveSlotChildren(
   children: unknown,
-  normalizeChildren: NormalizeChildren,
+  normalized: AnyVNode[],
   validator: SlotValidator,
 ): AnyVNode | AnyVNode[] | null {
-  const normalized = normalizeChildren(children)
   warnDiscardedChildren(children, normalized, validator)
   if (isSingleElementArray(normalized)) {
     return normalized[0]
@@ -105,11 +103,11 @@ function validateSlotDirectives(directives: RenderDirectives, validator: SlotVal
 
 function resolveSlotRender(
   state: ResolvedRenderState,
-  normalizeChildren: NormalizeChildren,
+  getNormalized: () => AnyVNode[],
   validator: SlotValidator,
 ): ResolvedSlotRender | null {
   if (!validateSlotDirectives(state.directives, validator)) return null
-  const child = resolveSlotChildren(state.children, normalizeChildren, validator)
+  const child = resolveSlotChildren(state.children, getNormalized(), validator)
   if (child === null) return null
   return { child }
 }
@@ -133,10 +131,10 @@ function tryRenderAsChild(
   state: ResolvedRenderState,
   ref: Ref<unknown> | null,
   slotComponent: SlotComponent,
-  normalizeChildren: NormalizeChildren,
+  getNormalized: () => AnyVNode[],
   validator: SlotValidator,
 ): AnyVNode | null {
-  const resolved = resolveSlotRender(state, normalizeChildren, validator)
+  const resolved = resolveSlotRender(state, getNormalized, validator)
   if (resolved === null) return null
   return renderResolvedSlot(slotComponent, state, resolved, ref)
 }
@@ -184,10 +182,14 @@ export function render<TProps extends KnownProps>({
 }: RenderInput<TProps>): AnyVNode {
   const state = resolveRenderState(runtime, props, filterProps)
 
-  if (process.env.NODE_ENV !== 'production')
-    childrenEvaluator?.evaluate(normalizeChildren(state.children))
+  // Lazy — normalizeChildren is called at most once per render, with the result
+  // shared between the children evaluator and slot resolution.
+  let cached: AnyVNode[] | undefined
+  const once = (): AnyVNode[] => (cached ??= normalizeChildren(state.children))
 
-  const slotResult = tryRenderAsChild(state, ref, slotComponent, normalizeChildren, slotValidator)
+  if (process.env.NODE_ENV !== 'production') childrenEvaluator?.evaluate(once())
+
+  const slotResult = tryRenderAsChild(state, ref, slotComponent, once, slotValidator)
 
   return slotResult ?? renderIntrinsic(state, ref, runtime)
 }

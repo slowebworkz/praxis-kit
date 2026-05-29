@@ -8,7 +8,6 @@ export class VariantClassResolver {
   readonly #variantKeys: ReadonlySet<string> | null
   readonly #precomputedClasses: Readonly<Record<string, string>> | null
   readonly #cache = new Map<string, string>()
-  readonly #cacheOrder = new Set<string>()
 
   constructor(
     cvaFn: CvaFn | null,
@@ -35,51 +34,49 @@ export class VariantClassResolver {
 
     const cached = this.#cache.get(cacheKey)
     if (cached !== undefined) {
-      // Promote to MRU: delete then re-add moves the key to the tail of Set iteration order.
-      this.#cacheOrder.delete(cacheKey)
-      this.#cacheOrder.add(cacheKey)
+      // Promote to MRU: delete + re-add moves key to Map insertion-order tail.
+      this.#cache.delete(cacheKey)
+      this.#cache.set(cacheKey, cached)
       return cached
     }
 
     const result = this.#compute(props, variantKey)
-
     this.#cache.set(cacheKey, result)
-    this.#cacheOrder.add(cacheKey)
 
     if (this.#cache.size > 1000) {
-      const first = this.#cacheOrder.values().next().value
-      if (first) {
-        this.#cacheOrder.delete(first)
-        this.#cache.delete(first)
-      }
+      const lru = this.#cache.keys().next().value
+      if (lru !== undefined) this.#cache.delete(lru)
     }
 
     return result
   }
 
   #compute(props: AnyRecord, variantKey?: string): string {
-    const preset = variantKey ? (this.#presetMap[variantKey] ?? {}) : {}
-
     if (!this.#cvaFn) return ''
-
-    const variantLayer = this.#cvaFn({ ...preset, ...props })
-    return variantLayer
+    // No active preset — pass props directly; avoids a spread allocation.
+    if (!variantKey) return this.#cvaFn(props)
+    const preset = this.#presetMap[variantKey]
+    if (!preset) return this.#cvaFn(props)
+    return this.#cvaFn({ ...preset, ...props })
   }
 
   // When variantKeys is provided, only those keys are included in the cache key — non-variant
   // props (className, id, etc.) produce identical CVA output and must not fragment the cache.
+  // Iterating #variantKeys directly (fixed Set insertion order) avoids Object.keys + filter + sort.
+  // String is built incrementally to avoid a parts[] array allocation on every render.
   #createCacheKey(props: AnyRecord, variantKey: string): string {
-    const keys =
-      this.#variantKeys !== null
-        ? Object.keys(props)
-            .filter((k) => (this.#variantKeys as ReadonlySet<string>).has(k))
-            .sort()
-        : Object.keys(props).sort()
-    const parts: string[] = []
-    for (const k of keys) {
-      parts.push(`${k}:${VariantClassResolver.#serializeValue(props[k])}`)
+    if (this.#variantKeys !== null) {
+      let key = variantKey
+      for (const k of this.#variantKeys) {
+        if (k in props) key += `|${k}:${VariantClassResolver.#serializeValue(props[k])}`
+      }
+      return key
     }
-    return `${variantKey}:${parts.join('|')}`
+    let key = variantKey
+    for (const k of Object.keys(props).sort()) {
+      key += `|${k}:${VariantClassResolver.#serializeValue(props[k])}`
+    }
+    return key
   }
 
   static #serializeValue(value: unknown): string {

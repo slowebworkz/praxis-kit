@@ -1,4 +1,4 @@
-import type { MatchMatrix, NormalizedChildRule, RuleIndex, StrictMode } from '../types'
+import type { MatchMatrix, NormalizedChildRule, StrictMode } from '../types'
 import { assertNever } from '@praxis-ui/primitive'
 import { StrictBase } from '../strict'
 
@@ -15,13 +15,13 @@ export class RuleValidator extends StrictBase {
     const lastIndex = childCount - 1
 
     for (const [ri, rule] of rules.entries()) {
-      const matches = matrix.childToRules.reverse.get(ri as RuleIndex)
-
-      const matchCount = matches?.size ?? 0
+      // reverse is pre-initialized for every rule index, so .get() is always defined.
+      const matches = matrix.childToRules.reverse.get(ri)!
+      const matchCount = matches.size
 
       this.#validateCardinality(rule, matchCount)
 
-      if (!matches) continue
+      if (matchCount === 0) continue
 
       this.#validatePositions(rule, matches, firstIndex, lastIndex)
     }

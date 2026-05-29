@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { ChildIndex, ChildRuleMatch, NormalizedChildRule, RuleIndex } from '../types'
+import type { ChildRuleMatch, NormalizedChildRule } from '../types'
 import { RuleMatcher } from './rules-matcher'
 
 const matcher = new RuleMatcher()
@@ -30,9 +30,6 @@ const fooRule = rule('foo', (c) => c instanceof Foo)
 const barRule = rule('bar', (c) => c instanceof Bar)
 const anyRule = rule('any', (_: unknown): _ is unknown => true)
 
-const ci = (n: number) => n as ChildIndex
-const ri = (n: number) => n as RuleIndex
-
 // ---------------------------------------------------------------------------
 // Empty inputs
 // ---------------------------------------------------------------------------
@@ -44,14 +41,14 @@ describe('RuleMatcher.match() — empty', () => {
     expect(m.childToRules.reverse.size).toBe(0)
   })
 
-  it('reverse has no entry when there are no children', () => {
+  it('reverse has an empty Set for each rule when there are no children', () => {
     const m = matcher.match([], [fooRule])
-    expect(m.childToRules.reverse.has(ri(0))).toBe(false)
+    expect(m.childToRules.reverse.get(0)).toEqual(new Set())
   })
 
   it('forward has no entry when there are no rules', () => {
     const m = matcher.match([fooEl], [])
-    expect(m.childToRules.forward.has(ci(0))).toBe(false)
+    expect(m.childToRules.forward.has(0)).toBe(false)
   })
 })
 
@@ -62,14 +59,14 @@ describe('RuleMatcher.match() — empty', () => {
 describe('RuleMatcher.match() — single child × single rule', () => {
   it('records match in forward and reverse when rule matches', () => {
     const m = matcher.match([fooEl], [fooRule])
-    expect(m.childToRules.forward.get(ci(0))).toEqual(new Set([0]))
-    expect(m.childToRules.reverse.get(ri(0))).toEqual(new Set([0]))
+    expect(m.childToRules.forward.get(0)).toEqual(new Set([0]))
+    expect(m.childToRules.reverse.get(0)).toEqual(new Set([0]))
   })
 
-  it('leaves maps empty when rule does not match', () => {
+  it('leaves forward empty and reverse as empty Set when rule does not match', () => {
     const m = matcher.match([barEl], [fooRule])
-    expect(m.childToRules.forward.has(ci(0))).toBe(false)
-    expect(m.childToRules.reverse.has(ri(0))).toBe(false)
+    expect(m.childToRules.forward.has(0)).toBe(false)
+    expect(m.childToRules.reverse.get(0)).toEqual(new Set())
   })
 })
 
@@ -80,25 +77,25 @@ describe('RuleMatcher.match() — single child × single rule', () => {
 describe('RuleMatcher.match() — multiple children × multiple rules', () => {
   it('matches each child to its correct rule', () => {
     const m = matcher.match([fooEl, barEl], [fooRule, barRule])
-    expect(m.childToRules.forward.get(ci(0))).toEqual(new Set([0]))
-    expect(m.childToRules.forward.get(ci(1))).toEqual(new Set([1]))
-    expect(m.childToRules.reverse.get(ri(0))).toEqual(new Set([0]))
-    expect(m.childToRules.reverse.get(ri(1))).toEqual(new Set([1]))
+    expect(m.childToRules.forward.get(0)).toEqual(new Set([0]))
+    expect(m.childToRules.forward.get(1)).toEqual(new Set([1]))
+    expect(m.childToRules.reverse.get(0)).toEqual(new Set([0]))
+    expect(m.childToRules.reverse.get(1)).toEqual(new Set([1]))
   })
 
   it('records multiple rule matches for one child', () => {
     const m = matcher.match([fooEl], [fooRule, anyRule])
-    expect(m.childToRules.forward.get(ci(0))).toEqual(new Set([0, 1]))
-    expect(m.childToRules.reverse.get(ri(0))).toEqual(new Set([0]))
-    expect(m.childToRules.reverse.get(ri(1))).toEqual(new Set([0]))
+    expect(m.childToRules.forward.get(0)).toEqual(new Set([0, 1]))
+    expect(m.childToRules.reverse.get(0)).toEqual(new Set([0]))
+    expect(m.childToRules.reverse.get(1)).toEqual(new Set([0]))
   })
 
   it('records one rule matching multiple children', () => {
     const m = matcher.match([fooEl, barEl, bazEl], [anyRule])
-    expect(m.childToRules.reverse.get(ri(0))).toEqual(new Set([0, 1, 2]))
-    expect(m.childToRules.forward.get(ci(0))).toEqual(new Set([0]))
-    expect(m.childToRules.forward.get(ci(1))).toEqual(new Set([0]))
-    expect(m.childToRules.forward.get(ci(2))).toEqual(new Set([0]))
+    expect(m.childToRules.reverse.get(0)).toEqual(new Set([0, 1, 2]))
+    expect(m.childToRules.forward.get(0)).toEqual(new Set([0]))
+    expect(m.childToRules.forward.get(1)).toEqual(new Set([0]))
+    expect(m.childToRules.forward.get(2)).toEqual(new Set([0]))
   })
 
   it('only maps matched children and rules', () => {
@@ -116,15 +113,15 @@ describe('RuleMatcher.match() — primitive children', () => {
   it('matches string children via a custom rule', () => {
     const strRule = rule('string', (c): c is string => typeof c === 'string')
     const m = matcher.match(['hello', 42, 'world'], [strRule])
-    expect(m.childToRules.reverse.get(ri(0))).toEqual(new Set([0, 2]))
-    expect(m.childToRules.forward.has(ci(1))).toBe(false)
+    expect(m.childToRules.reverse.get(0)).toEqual(new Set([0, 2]))
+    expect(m.childToRules.forward.has(1)).toBe(false)
   })
 
   it('matches by reference equality', () => {
     const obj = { id: 1 }
     const objRule = rule('ref', (c): c is typeof obj => c === obj)
     const m = matcher.match([obj, { id: 1 }], [objRule])
-    expect(m.childToRules.reverse.get(ri(0))).toEqual(new Set([0]))
+    expect(m.childToRules.reverse.get(0)).toEqual(new Set([0]))
   })
 })
 
