@@ -1,5 +1,6 @@
 import { bench, describe } from 'vitest'
 import { ChildrenEvaluator, diagnoseChildren } from '@praxis-ui/core'
+import { isObject } from '@praxis-ui/primitive'
 
 // strict:'warn' — evaluate() runs the full match cycle. Unbounded-cardinality rules
 // ensure passing-path children never trigger console.warn.
@@ -15,19 +16,19 @@ const isStringOrNumber = (c: unknown): c is string | number =>
 // Symbols stand in for component-function references (e.g. a React element's .type).
 // getChildType reads child.type — the same path real framework elements take.
 
-const ButtonT = Symbol('Button')
-const IconT = Symbol('Icon')
-const BadgeT = Symbol('Badge')
-const ListItemT = Symbol('ListItem')
+const AT = Symbol('A')
+const BT = Symbol('B')
+const CT = Symbol('C')
+const DT = Symbol('D')
 
-const isButton = (c: unknown): c is { type: typeof ButtonT } =>
-  typeof c === 'object' && c !== null && 'type' in c && (c as { type: unknown }).type === ButtonT
-const isIcon = (c: unknown): c is { type: typeof IconT } =>
-  typeof c === 'object' && c !== null && 'type' in c && (c as { type: unknown }).type === IconT
-const isBadge = (c: unknown): c is { type: typeof BadgeT } =>
-  typeof c === 'object' && c !== null && 'type' in c && (c as { type: unknown }).type === BadgeT
-const isListItem = (c: unknown): c is { type: typeof ListItemT } =>
-  typeof c === 'object' && c !== null && 'type' in c && (c as { type: unknown }).type === ListItemT
+const isA = (c: unknown): c is { type: typeof AT } =>
+  isObject(c) && 'type' in c && (c as { type: unknown }).type === AT
+const isB = (c: unknown): c is { type: typeof BT } =>
+  isObject(c) && 'type' in c && (c as { type: unknown }).type === BT
+const isC = (c: unknown): c is { type: typeof CT } =>
+  isObject(c) && 'type' in c && (c as { type: unknown }).type === CT
+const isD = (c: unknown): c is { type: typeof DT } =>
+  isObject(c) && 'type' in c && (c as { type: unknown }).type === DT
 
 const el = (type: symbol): { type: symbol } => ({ type })
 
@@ -43,35 +44,61 @@ const twoRuleEvaluator = new ChildrenEvaluator(
   'warn',
 )
 
-// All-typed: every rule carries a type field → O(n) dispatch via Map, no predicate scan.
-const allTypedEvaluator = new ChildrenEvaluator(
+// ── Rule index expansion: fallback-frequency evaluators ───────────────────────
+// 4-rule contracts with varying proportions of typed (indexed) vs predicate rules.
+// Measures how the O(n×m_untyped) fallback cost scales with fallback rate.
+
+// 0% typed — all 4 rules predicate-only: every child requires 4 predicate calls
+const pct0TypedEvaluator = new ChildrenEvaluator(
   [
-    { name: 'Button', match: isButton, type: ButtonT },
-    { name: 'Icon', match: isIcon, type: IconT },
-    { name: 'Badge', match: isBadge, type: BadgeT },
-    { name: 'ListItem', match: isListItem, type: ListItemT },
+    { name: 'A', match: isA },
+    { name: 'B', match: isB },
+    { name: 'C', match: isC },
+    { name: 'D', match: isD },
   ],
   'warn',
 )
 
-// All-predicate: same rules, no type field → O(n×m) linear scan for every child.
-const allPredicateEvaluator = new ChildrenEvaluator(
+// 25% typed — 1 of 4 rules indexed: matched children skip 1 predicate, still scan 3
+const pct25TypedEvaluator = new ChildrenEvaluator(
   [
-    { name: 'Button', match: isButton },
-    { name: 'Icon', match: isIcon },
-    { name: 'Badge', match: isBadge },
-    { name: 'ListItem', match: isListItem },
+    { name: 'A', match: isA, type: AT },
+    { name: 'B', match: isB },
+    { name: 'C', match: isC },
+    { name: 'D', match: isD },
   ],
   'warn',
 )
 
-// Mixed: 2 typed (O(1) dispatch) + 2 predicate (still scanned for every child).
-const mixedEvaluator = new ChildrenEvaluator(
+// 50% typed — 2 of 4 rules indexed: two rule types dispatched O(1), two scan
+const pct50TypedEvaluator = new ChildrenEvaluator(
   [
-    { name: 'Button', match: isButton, type: ButtonT },
-    { name: 'Icon', match: isIcon, type: IconT },
-    { name: 'Badge', match: isBadge },
-    { name: 'ListItem', match: isListItem },
+    { name: 'A', match: isA, type: AT },
+    { name: 'B', match: isB, type: BT },
+    { name: 'C', match: isC },
+    { name: 'D', match: isD },
+  ],
+  'warn',
+)
+
+// 75% typed — 3 of 4 rules indexed: only 1 rule requires predicate scan
+const pct75TypedEvaluator = new ChildrenEvaluator(
+  [
+    { name: 'A', match: isA, type: AT },
+    { name: 'B', match: isB, type: BT },
+    { name: 'C', match: isC, type: CT },
+    { name: 'D', match: isD },
+  ],
+  'warn',
+)
+
+// 100% typed — all 4 rules indexed: O(n) dispatch, zero predicate calls
+const pct100TypedEvaluator = new ChildrenEvaluator(
+  [
+    { name: 'A', match: isA, type: AT },
+    { name: 'B', match: isB, type: BT },
+    { name: 'C', match: isC, type: CT },
+    { name: 'D', match: isD, type: DT },
   ],
   'warn',
 )
@@ -94,14 +121,13 @@ const NESTED_CHILDREN = [
   ['e', 'f', 'g', 'h'],
 ]
 
-const TYPES = [ButtonT, IconT, BadgeT, ListItemT] as const
-const TYPED_10 = Array.from({ length: 10 }, (_, i) => el(TYPES[i % 4]!))
+const TYPES = [AT, BT, CT, DT] as const
+const TYPED_20 = Array.from({ length: 20 }, (_, i) => el(TYPES[i % 4]!))
 const TYPED_50 = Array.from({ length: 50 }, (_, i) => el(TYPES[i % 4]!))
 const TYPED_100 = Array.from({ length: 100 }, (_, i) => el(TYPES[i % 4]!))
 const TYPED_500 = Array.from({ length: 500 }, (_, i) => el(TYPES[i % 4]!))
 const TYPED_1000 = Array.from({ length: 1000 }, (_, i) => el(TYPES[i % 4]!))
 
-// violation-path rule set (bounded max) — used only with diagnoseChildren
 const BOUNDED_RULE = [{ name: 'Item', match: isString, cardinality: { max: 4 } }]
 const OVERLAP_RULES = [
   { name: 'Renderable', match: isStringOrNumber },
@@ -128,7 +154,6 @@ describe('RuleMatcher — single predicate rule', () => {
     singlePredicateEvaluator.evaluate(CHILDREN_50)
   })
 
-  // diagnoseChildren runs the matcher + builds a violations array without side effects.
   bench('10 children, max=4 — cardinality-max violation', () => {
     diagnoseChildren(BOUNDED_RULE, CHILDREN_10)
   })
@@ -142,7 +167,7 @@ describe('RuleMatcher — two predicate rules, positional', () => {
   })
 })
 
-// ── Heterogeneous non-matching ────────────────────────────────────────────────
+// ── Unexpected children ───────────────────────────────────────────────────────
 
 // V8 cannot optimize predicate calls across polymorphic shapes — each element has
 // a different hidden class, so typeof checks at call sites become megamorphic.
@@ -155,10 +180,9 @@ describe('RuleMatcher — unexpected children', () => {
   })
 })
 
-// ── Overlapping rule matches ──────────────────────────────────────────────────
+// ── Overlapping rules ─────────────────────────────────────────────────────────
 
-// When a child matches multiple rules, RuleMatcher builds a multi-entry forward Set
-// and the ambiguity-detection path fires.
+// When a child matches multiple rules, the ambiguity-detection path fires.
 describe('RuleMatcher — overlapping rules (ambiguous children)', () => {
   bench('4 strings (all match both Renderable + Text)', () => {
     diagnoseChildren(OVERLAP_RULES, OVERLAP_4)
@@ -168,56 +192,62 @@ describe('RuleMatcher — overlapping rules (ambiguous children)', () => {
   })
 })
 
-// ── Typed vs predicate-only dispatch ─────────────────────────────────────────
+// ── Rule index expansion: fallback-frequency measurement ─────────────────────
+//
+// Each suite holds 4 rules. Typed rules are O(1) dispatch; predicate rules are
+// O(m_untyped) linear scan per child. The suites vary the typed:predicate ratio
+// from 0% to 100% to show how fallback frequency affects throughput.
+//
+// All children carry a .type symbol, so Phase 1 always runs. Predicate rules
+// receive 0 matches from Phase 1 and proceed to Phase 2.
 
-// Isolates the O(1) type-index dispatch benefit over O(n×m) predicate scanning.
-// Same children and same predicate logic in both evaluators; only the presence of
-// the type field differs.
-describe('RuleMatcher — typed vs predicate-only (4-rule contract)', () => {
-  bench('10 children — all-typed', () => {
-    allTypedEvaluator.evaluate(TYPED_10)
+describe('RuleMatcher — rule index expansion (fallback frequency, 4 rules, 50 children)', () => {
+  bench('0% typed — 4 predicate rules (full fallback scan)', () => {
+    pct0TypedEvaluator.evaluate(TYPED_50)
   })
-  bench('10 children — all-predicate', () => {
-    allPredicateEvaluator.evaluate(TYPED_10)
+  bench('25% typed — 1 indexed, 3 predicate', () => {
+    pct25TypedEvaluator.evaluate(TYPED_50)
   })
-  bench('10 children — mixed (2 typed + 2 predicate)', () => {
-    mixedEvaluator.evaluate(TYPED_10)
+  bench('50% typed — 2 indexed, 2 predicate', () => {
+    pct50TypedEvaluator.evaluate(TYPED_50)
   })
+  bench('75% typed — 3 indexed, 1 predicate', () => {
+    pct75TypedEvaluator.evaluate(TYPED_50)
+  })
+  bench('100% typed — 4 indexed (no fallback scan)', () => {
+    pct100TypedEvaluator.evaluate(TYPED_50)
+  })
+})
 
-  bench('50 children — all-typed', () => {
-    allTypedEvaluator.evaluate(TYPED_50)
+describe('RuleMatcher — rule index expansion (fallback frequency, 4 rules, 20 children)', () => {
+  bench('0% typed', () => {
+    pct0TypedEvaluator.evaluate(TYPED_20)
   })
-  bench('50 children — all-predicate', () => {
-    allPredicateEvaluator.evaluate(TYPED_50)
-  })
-  bench('50 children — mixed', () => {
-    mixedEvaluator.evaluate(TYPED_50)
-  })
-
-  bench('100 children — all-typed', () => {
-    allTypedEvaluator.evaluate(TYPED_100)
-  })
-  bench('100 children — all-predicate', () => {
-    allPredicateEvaluator.evaluate(TYPED_100)
+  bench('100% typed', () => {
+    pct100TypedEvaluator.evaluate(TYPED_20)
   })
 })
 
 // ── Large component trees ─────────────────────────────────────────────────────
 
-// Validates O(n) vs O(n×m) scaling at production-scale tree sizes.
 describe('RuleMatcher — large trees', () => {
+  bench('100 children — all-typed', () => {
+    pct100TypedEvaluator.evaluate(TYPED_100)
+  })
+  bench('100 children — all-predicate', () => {
+    pct0TypedEvaluator.evaluate(TYPED_100)
+  })
   bench('500 children — all-typed', () => {
-    allTypedEvaluator.evaluate(TYPED_500)
+    pct100TypedEvaluator.evaluate(TYPED_500)
   })
   bench('500 children — all-predicate', () => {
-    allPredicateEvaluator.evaluate(TYPED_500)
+    pct0TypedEvaluator.evaluate(TYPED_500)
   })
-
   bench('1000 children — all-typed', () => {
-    allTypedEvaluator.evaluate(TYPED_1000)
+    pct100TypedEvaluator.evaluate(TYPED_1000)
   })
   bench('1000 children — all-predicate', () => {
-    allPredicateEvaluator.evaluate(TYPED_1000)
+    pct0TypedEvaluator.evaluate(TYPED_1000)
   })
 })
 
