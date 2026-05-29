@@ -1,6 +1,7 @@
 // Contract runtime layer — ARIA enforcement, children validation, strict mode.
 // Includes everything from the primitive entry.
 export * from './primitive'
+export * from './html'
 export { StrictBase } from '@praxis-ui/contract'
 export {
   AriaPolicyEngine,

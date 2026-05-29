@@ -235,6 +235,26 @@ const Card = createContractComponent({
 Use `strict: 'warn'` while developing and switch to `strict: 'throw'` for production contracts. Omit
 `enforcement` entirely to skip all validation — zero runtime cost.
 
+For standard HTML elements, `htmlContracts` from `@praxis-ui/core` provides ready-made rules so you
+don't need to write `match` predicates by hand:
+
+```ts
+import { htmlContracts } from '@praxis-ui/core'
+
+const List = createContractComponent({
+  tag: 'ul',
+  enforcement: htmlContracts.ul, // only li, script, template allowed as direct children
+})
+
+const Details = createContractComponent({
+  tag: 'details',
+  enforcement: htmlContracts.details, // summary (≤1, must be first) + any flow content
+})
+```
+
+`htmlContracts` covers `ul`, `ol`, `table`, `thead`/`tbody`/`tfoot`, `tr`, `colgroup`, `dl`,
+`select`, `optgroup`, `picture`, `figure`, `details`, and `fieldset`.
+
 ---
 
 ## Step 8 — Slot rendering with `asChild`

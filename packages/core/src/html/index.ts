@@ -1,0 +1,15 @@
+export {
+  listContract,
+  tableContract,
+  tableBodyContract,
+  tableRowContract,
+  colgroupContract,
+  dlContract,
+  selectContract,
+  optgroupContract,
+  pictureContract,
+  figureContract,
+  detailsContract,
+  fieldsetContract,
+  htmlContracts,
+} from './contracts'
