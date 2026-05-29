@@ -52,29 +52,31 @@ export class VariantClassResolver {
   }
 
   #compute(props: AnyRecord, variantKey?: string): string {
-    const preset = variantKey ? (this.#presetMap[variantKey] ?? {}) : {}
-
     if (!this.#cvaFn) return ''
-
-    const variantLayer = this.#cvaFn({ ...preset, ...props })
-    return variantLayer
+    // No active preset — pass props directly; avoids a spread allocation.
+    if (!variantKey) return this.#cvaFn(props)
+    const preset = this.#presetMap[variantKey]
+    if (!preset) return this.#cvaFn(props)
+    return this.#cvaFn({ ...preset, ...props })
   }
 
   // When variantKeys is provided, only those keys are included in the cache key — non-variant
   // props (className, id, etc.) produce identical CVA output and must not fragment the cache.
   // Iterating #variantKeys directly (fixed Set insertion order) avoids Object.keys + filter + sort.
+  // String is built incrementally to avoid a parts[] array allocation on every render.
   #createCacheKey(props: AnyRecord, variantKey: string): string {
-    const parts: string[] = []
     if (this.#variantKeys !== null) {
+      let key = variantKey
       for (const k of this.#variantKeys) {
-        if (k in props) parts.push(`${k}:${VariantClassResolver.#serializeValue(props[k])}`)
+        if (k in props) key += `|${k}:${VariantClassResolver.#serializeValue(props[k])}`
       }
-    } else {
-      for (const k of Object.keys(props).sort()) {
-        parts.push(`${k}:${VariantClassResolver.#serializeValue(props[k])}`)
-      }
+      return key
     }
-    return `${variantKey}:${parts.join('|')}`
+    let key = variantKey
+    for (const k of Object.keys(props).sort()) {
+      key += `|${k}:${VariantClassResolver.#serializeValue(props[k])}`
+    }
+    return key
   }
 
   static #serializeValue(value: unknown): string {
