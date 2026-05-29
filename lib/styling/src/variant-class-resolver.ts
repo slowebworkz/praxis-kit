@@ -8,7 +8,6 @@ export class VariantClassResolver {
   readonly #variantKeys: ReadonlySet<string> | null
   readonly #precomputedClasses: Readonly<Record<string, string>> | null
   readonly #cache = new Map<string, string>()
-  readonly #cacheOrder = new Set<string>()
 
   constructor(
     cvaFn: CvaFn | null,
@@ -35,23 +34,18 @@ export class VariantClassResolver {
 
     const cached = this.#cache.get(cacheKey)
     if (cached !== undefined) {
-      // Promote to MRU: delete then re-add moves the key to the tail of Set iteration order.
-      this.#cacheOrder.delete(cacheKey)
-      this.#cacheOrder.add(cacheKey)
+      // Promote to MRU: delete + re-add moves key to Map insertion-order tail.
+      this.#cache.delete(cacheKey)
+      this.#cache.set(cacheKey, cached)
       return cached
     }
 
     const result = this.#compute(props, variantKey)
-
     this.#cache.set(cacheKey, result)
-    this.#cacheOrder.add(cacheKey)
 
     if (this.#cache.size > 1000) {
-      const first = this.#cacheOrder.values().next().value
-      if (first) {
-        this.#cacheOrder.delete(first)
-        this.#cache.delete(first)
-      }
+      const lru = this.#cache.keys().next().value
+      if (lru !== undefined) this.#cache.delete(lru)
     }
 
     return result
@@ -68,16 +62,17 @@ export class VariantClassResolver {
 
   // When variantKeys is provided, only those keys are included in the cache key — non-variant
   // props (className, id, etc.) produce identical CVA output and must not fragment the cache.
+  // Iterating #variantKeys directly (fixed Set insertion order) avoids Object.keys + filter + sort.
   #createCacheKey(props: AnyRecord, variantKey: string): string {
-    const keys =
-      this.#variantKeys !== null
-        ? Object.keys(props)
-            .filter((k) => (this.#variantKeys as ReadonlySet<string>).has(k))
-            .sort()
-        : Object.keys(props).sort()
     const parts: string[] = []
-    for (const k of keys) {
-      parts.push(`${k}:${VariantClassResolver.#serializeValue(props[k])}`)
+    if (this.#variantKeys !== null) {
+      for (const k of this.#variantKeys) {
+        if (k in props) parts.push(`${k}:${VariantClassResolver.#serializeValue(props[k])}`)
+      }
+    } else {
+      for (const k of Object.keys(props).sort()) {
+        parts.push(`${k}:${VariantClassResolver.#serializeValue(props[k])}`)
+      }
     }
     return `${variantKey}:${parts.join('|')}`
   }

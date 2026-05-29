@@ -14,13 +14,19 @@ export class RuleMatcher {
         const ci = i as ChildIndex
         const ri_ = ri as RuleIndex
 
-        const childEntry = forward.get(ci) ?? new Set<RuleIndex>()
+        let childEntry = forward.get(ci)
+        if (!childEntry) {
+          childEntry = new Set()
+          forward.set(ci, childEntry)
+        }
         childEntry.add(ri_)
-        forward.set(ci, childEntry)
 
-        const ruleEntry = reverse.get(ri_) ?? new Set<ChildIndex>()
+        let ruleEntry = reverse.get(ri_)
+        if (!ruleEntry) {
+          ruleEntry = new Set()
+          reverse.set(ri_, ruleEntry)
+        }
         ruleEntry.add(ci)
-        reverse.set(ri_, ruleEntry)
       }
     }
 

@@ -17,12 +17,12 @@ import type { ComponentConstraint, FileDiagnostic, PendingUsage, Severity } from
  *    cardinality violation.
  */
 export class ConstraintRegistry {
-  private readonly constraints = new Map<string, ComponentConstraint[]>()
+  private readonly constraints = new Map<string, Map<string, ComponentConstraint>>()
   private readonly importMap = new Map<string, Map<string, string>>()
   private readonly pending = new Map<string, PendingUsage[]>()
 
   registerConstraints(fileId: string, cs: ComponentConstraint[]): void {
-    this.constraints.set(fileId, cs)
+    this.constraints.set(fileId, new Map(cs.map((c) => [c.name, c])))
   }
 
   /** resolvedImports: local name → absolute file ID of the exporting module. */
@@ -45,7 +45,7 @@ export class ConstraintRegistry {
     if (!imports) return undefined
     const sourceId = imports.get(name)
     if (!sourceId) return undefined
-    return this.constraints.get(sourceId)?.find((c) => c.name === name)
+    return this.constraints.get(sourceId)?.get(name)
   }
 
   /** Returns cardinality violations across all pending cross-file usages. */
