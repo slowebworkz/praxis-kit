@@ -179,17 +179,36 @@ describe('RuleMatcher.match() — type-indexed fast path', () => {
     expect(m.childToRules.forward.get(2)).toEqual(new Set([0]))
   })
 
-  it('falls back to linear scan when any rule lacks a type field', () => {
-    // fooRule has no .type — index disabled, anyRule fires for all children
+  it('hybrid: typed rule uses index, predicate-only rule scans linearly', () => {
+    // r0 is type-indexed; anyRule has no type so it goes to the linear path.
+    // Both paths run per child — r0 via Map lookup, anyRule via match().
     const r0 = typedRule(
       'Foo',
       FooComponent,
       (c): c is typeof fooVNode => (c as typeof fooVNode).type === FooComponent,
     )
-    const mixed = [r0, anyRule] // anyRule has no type → linear
-    const m = new RuleMatcher(mixed).match([fooVNode])
-    // Both rules match fooVNode in the linear path
+    const m = new RuleMatcher([r0, anyRule]).match([fooVNode])
+    // r0 matched via type index; anyRule matched via linear scan.
     expect(m.childToRules.forward.get(0)).toEqual(new Set([0, 1]))
+  })
+
+  it('hybrid: typed rule fires for typed children, predicate rule fires independently', () => {
+    const r0 = typedRule(
+      'Foo',
+      FooComponent,
+      (c): c is typeof fooVNode => (c as typeof fooVNode).type === FooComponent,
+    )
+    const isDisabled = rule(
+      'disabled',
+      (c): c is { disabled: true } =>
+        typeof c === 'object' && c !== null && (c as Record<string, unknown>).disabled === true,
+    )
+    const disabledBar = { type: BarComponent, disabled: true }
+    const m = new RuleMatcher([r0, isDisabled]).match([fooVNode, disabledBar])
+    // fooVNode: matched r0 via type index; no `disabled` → isDisabled does not fire
+    expect(m.childToRules.forward.get(0)).toEqual(new Set([0]))
+    // disabledBar: BarComponent not in index → no r0 match; has disabled → isDisabled fires
+    expect(m.childToRules.forward.get(1)).toEqual(new Set([1]))
   })
 
   it('falls back to linear scan when two rules share the same type', () => {

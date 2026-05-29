@@ -6,30 +6,59 @@ function getChildType(child: unknown): unknown | undefined {
   return child.type
 }
 
+type PartialIndex = {
+  /** type → rule index, for rules with a unique type field. */
+  typeIndex: Map<unknown, number>
+  /** Rule indices that lack a type field, or share a type with another rule.
+   *  These require a linear match() call per child. */
+  untypedIndices: readonly number[]
+}
+
 /**
- * Builds a type-dispatch index from rules when every rule declares a `type`.
- * Returns null if any rule omits `type` or if two rules share the same type
- * (ambiguous — the linear fallback handles that correctly).
+ * Separates rules into an O(1) type-dispatch index and a linear-scan remainder.
+ *
+ * Rules without a type field go straight to untypedIndices.
+ * Rules whose type is shared with another rule are removed from the index and
+ * demoted to untypedIndices — the linear path handles ambiguous multi-matches
+ * correctly, the index cannot.
  */
-function buildTypeIndex(rules: NormalizedChildRule[]): Map<unknown, number> | null {
-  const index = new Map<unknown, number>()
+function buildPartialIndex(rules: NormalizedChildRule[]): PartialIndex {
+  const typeIndex = new Map<unknown, number>()
+  const duplicateTypes = new Set<unknown>()
+  const untypedIndices: number[] = []
+
   for (let ri = 0; ri < rules.length; ri++) {
     const t = rules[ri]!.type
-    if (t === undefined) return null
-    if (index.has(t)) return null // duplicate type — can't do O(1) dispatch
-    index.set(t, ri)
+    if (t === undefined) {
+      untypedIndices.push(ri)
+    } else if (typeIndex.has(t)) {
+      duplicateTypes.add(t)
+    } else {
+      typeIndex.set(t, ri)
+    }
   }
-  return index.size > 0 ? index : null
+
+  // Demote duplicate-type rules: remove from index, add to linear path.
+  if (duplicateTypes.size > 0) {
+    for (const t of duplicateTypes) typeIndex.delete(t)
+    for (let ri = 0; ri < rules.length; ri++) {
+      if (duplicateTypes.has(rules[ri]!.type)) untypedIndices.push(ri)
+    }
+  }
+
+  return { typeIndex, untypedIndices }
 }
 
 export class RuleMatcher {
   readonly #rules: NormalizedChildRule[]
-  /** Non-null when every rule has a unique `type` — enables O(n) dispatch. */
-  readonly #typeIndex: Map<unknown, number> | null
+  readonly #typeIndex: Map<unknown, number>
+  readonly #untypedIndices: readonly number[]
 
   constructor(rules: NormalizedChildRule[]) {
     this.#rules = rules
-    this.#typeIndex = buildTypeIndex(rules)
+    const { typeIndex, untypedIndices } = buildPartialIndex(rules)
+    this.#typeIndex = typeIndex
+    this.#untypedIndices = untypedIndices
   }
 
   match(children: unknown[]): MatchMatrix {
@@ -42,28 +71,12 @@ export class RuleMatcher {
       reverse.set(ri, new Set())
     }
 
-    if (this.#typeIndex !== null) {
-      // O(n) fast path: one Map lookup per child instead of checking every rule.
-      for (let ci = 0; ci < children.length; ci++) {
-        const t = getChildType(children[ci])
-        if (t === undefined) continue
+    for (const [ci, child] of children.entries()) {
+      // Phase 1 — O(1): type dispatch for indexed rules.
+      const t = getChildType(child)
+      if (t !== undefined) {
         const ri = this.#typeIndex.get(t)
-        if (ri === undefined) continue
-
-        let childEntry = forward.get(ci)
-        if (!childEntry) {
-          childEntry = new Set()
-          forward.set(ci, childEntry)
-        }
-        childEntry.add(ri)
-        reverse.get(ri)!.add(ci)
-      }
-    } else {
-      // O(n×m) linear fallback: used when rules lack type fields or share types.
-      for (const [ci, child] of children.entries()) {
-        for (const [ri, rule] of this.#rules.entries()) {
-          if (!rule.match(child)) continue
-
+        if (ri !== undefined) {
           let childEntry = forward.get(ci)
           if (!childEntry) {
             childEntry = new Set()
@@ -72,6 +85,18 @@ export class RuleMatcher {
           childEntry.add(ri)
           reverse.get(ri)!.add(ci)
         }
+      }
+
+      // Phase 2 — O(m_untyped): linear scan for predicate-only and demoted rules.
+      for (const ri of this.#untypedIndices) {
+        if (!this.#rules[ri]!.match(child)) continue
+        let childEntry = forward.get(ci)
+        if (!childEntry) {
+          childEntry = new Set()
+          forward.set(ci, childEntry)
+        }
+        childEntry.add(ri)
+        reverse.get(ri)!.add(ci)
       }
     }
 
