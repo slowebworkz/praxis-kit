@@ -175,11 +175,12 @@ describe('RuleValidator.validate() — no children', () => {
 // ---------------------------------------------------------------------------
 
 describe('RuleValidator.validate() — StrictMode', () => {
-  it('warns instead of throwing when strict is "warn"', () => {
+  it('warns instead of throwing when strict is "warn"', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const r = rule({ name: 'required', cardinality: { kind: 'bounded', min: 1, max: Infinity } })
     const m = matrix([new Set()], 0)
     expect(() => warnValidator.validate([r], m, 0)).not.toThrow()
+    await Promise.resolve()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })

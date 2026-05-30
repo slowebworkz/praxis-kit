@@ -56,7 +56,7 @@ describe('AriaPolicyEngine.evaluate() — static', () => {
 // ---------------------------------------------------------------------------
 
 describe('report()', () => {
-  it('calls console.warn for warning-severity violations', () => {
+  it('calls console.warn for warning-severity violations', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const v = makeValidator('warn')
     v.report([
@@ -69,6 +69,7 @@ describe('report()', () => {
         phase: 'evaluate',
       },
     ])
+    await Promise.resolve()
     expect(spy).toHaveBeenCalledWith('a warning')
     spy.mockRestore()
   })
@@ -180,9 +181,10 @@ describe('validate() — tags with no implicit role', () => {
 // ---------------------------------------------------------------------------
 
 describe('validate() — redundant role', () => {
-  it('warns when nav has role="navigation" (redundant)', () => {
+  it('warns when nav has role="navigation" (redundant)', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     makeValidator('warn').validate('nav', { role: 'navigation' })
+    await Promise.resolve()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
@@ -194,9 +196,10 @@ describe('validate() — redundant role', () => {
     spy.mockRestore()
   })
 
-  it('warns but does not throw when strict is "throw" (warning severity)', () => {
+  it('warns but does not throw when strict is "throw" (warning severity)', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     expect(() => makeValidator('throw').validate('nav', { role: 'navigation' })).not.toThrow()
+    await Promise.resolve()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
@@ -209,13 +212,14 @@ describe('validate() — redundant role', () => {
     spy.mockRestore()
   })
 
-  it('validates all landmark elements for redundant role', () => {
+  it('validates all landmark elements for redundant role', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const v = makeValidator('warn')
     v.validate('main', { role: 'main' })
     v.validate('aside', { role: 'complementary' })
     v.validate('header', { role: 'banner' })
     v.validate('footer', { role: 'contentinfo' })
+    await Promise.resolve()
     expect(spy).toHaveBeenCalledTimes(4)
     spy.mockRestore()
   })
@@ -226,9 +230,10 @@ describe('validate() — redundant role', () => {
 // ---------------------------------------------------------------------------
 
 describe('validate() — region override on strong landmark', () => {
-  it('warns when nav has role="region"', () => {
+  it('warns when nav has role="region"', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     makeValidator('warn').validate('nav', { role: 'region' })
+    await Promise.resolve()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
@@ -240,16 +245,18 @@ describe('validate() — region override on strong landmark', () => {
     spy.mockRestore()
   })
 
-  it('warns when main has role="region"', () => {
+  it('warns when main has role="region"', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     makeValidator('warn').validate('main', { role: 'region' })
+    await Promise.resolve()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
 
-  it('warns when aside has role="region"', () => {
+  it('warns when aside has role="region"', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     makeValidator('warn').validate('aside', { role: 'region' })
+    await Promise.resolve()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
@@ -264,9 +271,10 @@ describe('validate() — region override on strong landmark', () => {
 // ---------------------------------------------------------------------------
 
 describe('validate() — standalone element + role="region"', () => {
-  it('warns when article has role="region"', () => {
+  it('warns when article has role="region"', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     makeValidator('warn').validate('article', { role: 'region' })
+    await Promise.resolve()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
@@ -337,9 +345,10 @@ describe('validate() — valid role assignments', () => {
 // ---------------------------------------------------------------------------
 
 describe('validate() — aria-* attribute on wrong role', () => {
-  it('warns for aria-checked on role="button"', () => {
+  it('warns for aria-checked on role="button"', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     makeValidator('warn').validate('nav', { role: 'button', 'aria-checked': 'true' })
+    await Promise.resolve()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
@@ -354,9 +363,10 @@ describe('validate() — aria-* attribute on wrong role', () => {
     spy.mockRestore()
   })
 
-  it('warns for aria-pressed on role="checkbox"', () => {
+  it('warns for aria-pressed on role="checkbox"', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     makeValidator('warn').validate('nav', { role: 'checkbox', 'aria-pressed': 'true' })
+    await Promise.resolve()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
@@ -371,9 +381,10 @@ describe('validate() — aria-* attribute on wrong role', () => {
     spy.mockRestore()
   })
 
-  it('warns for aria-level on role="button"', () => {
+  it('warns for aria-level on role="button"', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     makeValidator('warn').validate('nav', { role: 'button', 'aria-level': '2' })
+    await Promise.resolve()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
@@ -454,9 +465,10 @@ describe('validate() — implicit role expansion', () => {
     expect(violations).toHaveLength(0)
   })
 
-  it('warns for aria-checked on <button> (implicit button role does not permit it)', () => {
+  it('warns for aria-checked on <button> (implicit button role does not permit it)', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     makeValidator('warn').validate('button', { 'aria-checked': 'true' })
+    await Promise.resolve()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
@@ -473,9 +485,10 @@ describe('validate() — implicit role expansion', () => {
     expect(violations).toHaveLength(0)
   })
 
-  it('warns for aria-pressed on <a> (implicit link role does not permit it)', () => {
+  it('warns for aria-pressed on <a> (implicit link role does not permit it)', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     makeValidator('warn').validate('a', { 'aria-pressed': 'true' })
+    await Promise.resolve()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
