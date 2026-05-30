@@ -1,0 +1,19 @@
+{
+  "name": "@praxis-ui/metrics",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Metrics collection, snapshotting, and reporting for the praxis-ui monorepo",
+  "scripts": {
+    "collect": "node --experimental-strip-types scripts/collect.ts",
+    "report": "node --experimental-strip-types scripts/report.ts",
+    "assert": "node --experimental-strip-types scripts/assert.ts",
+    "metrics": "node --experimental-strip-types scripts/collect.ts && node --experimental-strip-types scripts/report.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "ts-morph": "catalog:",
+    "type-fest": "catalog:"
+  }
+}

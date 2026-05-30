@@ -1,0 +1,62 @@
+{
+  "generated": "2026-05-30T17:37:57.833Z",
+  "bundles": {
+    "full-runtime": 7907,
+    "vue-minimal": 6859,
+    "contracts-only": 6815,
+    "solid-minimal": 6328,
+    "aria-only": 5383,
+    "polymorphic-validation": 4658,
+    "minimal-polymorphic": 3161,
+    "primitive-direct": 830
+  },
+  "architecture": {
+    "status": "CLEAN",
+    "violations": 0,
+    "exports": {
+      "@polymorphic-ui/core": {
+        "values": 20,
+        "types": 66
+      },
+      "@polymorphic-ui/react": {
+        "values": 2,
+        "types": 0
+      },
+      "@polymorphic-ui/tailwind": {
+        "values": 6,
+        "types": 10
+      },
+      "@polymorphic-ui/vue": {
+        "values": 2,
+        "types": 5
+      }
+    }
+  },
+  "complexity": {
+    "lib/primitive": {
+      "files": 16,
+      "functions": 16,
+      "loc": 151
+    },
+    "lib/contract": {
+      "files": 23,
+      "functions": 54,
+      "loc": 1078
+    },
+    "lib/styling": {
+      "files": 15,
+      "functions": 12,
+      "loc": 373
+    },
+    "lib/adapter-utils": {
+      "files": 7,
+      "functions": 8,
+      "loc": 95
+    },
+    "packages/core": {
+      "files": 43,
+      "functions": 21,
+      "loc": 1961
+    }
+  }
+}
