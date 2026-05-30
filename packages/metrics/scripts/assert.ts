@@ -11,6 +11,7 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import type { ReadonlyDeep } from 'type-fest'
 
 const pkg = dirname(fileURLToPath(import.meta.url))
 const snapshotPath = join(pkg, '../snapshots/metrics.json')
@@ -26,9 +27,9 @@ type Snapshot = {
   complexity: Record<string, { files: number; functions: number; loc: number }>
 }
 
-let current: Snapshot
+let current: ReadonlyDeep<Snapshot>
 try {
-  current = JSON.parse(await readFile(snapshotPath, 'utf8')) as Snapshot
+  current = JSON.parse(await readFile(snapshotPath, 'utf8')) as ReadonlyDeep<Snapshot>
 } catch {
   console.log('No snapshot found — run `pnpm collect` first.')
   process.exit(1)
@@ -50,9 +51,9 @@ if (current.architecture.violations > 0) {
 // ── Public API growth (soft gate — warn only) ─────────────────────────────────
 
 const prevSnapshotPath = join(pkg, '../snapshots/metrics.previous.json')
-let previous: Snapshot | null = null
+let previous: ReadonlyDeep<Snapshot> | null = null
 try {
-  previous = JSON.parse(await readFile(prevSnapshotPath, 'utf8')) as Snapshot
+  previous = JSON.parse(await readFile(prevSnapshotPath, 'utf8')) as ReadonlyDeep<Snapshot>
 } catch {
   // No previous snapshot — first run, save current as previous
   await writeFile(prevSnapshotPath, JSON.stringify(current, null, 2) + '\n')

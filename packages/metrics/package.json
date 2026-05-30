@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "ts-morph": "catalog:",
-    "@types/node": "catalog:"
+    "type-fest": "catalog:"
   }
 }
