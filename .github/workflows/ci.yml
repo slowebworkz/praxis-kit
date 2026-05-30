@@ -45,3 +45,6 @@ jobs:
 
       - name: Structural Analysis
         run: pnpm analyze:patterns
+
+      - name: Metrics
+        run: pnpm metrics:collect && pnpm metrics:assert
