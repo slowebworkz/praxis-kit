@@ -1,15 +1,16 @@
 import type { FilterPredicate } from './types'
+import type { AnyRecord } from '@praxis-ui/core'
 
-export function applyFilter<T extends Readonly<Record<string, unknown>>>(
-  props: T,
+export function applyFilter(
+  props: Readonly<AnyRecord>,
   filterProps: FilterPredicate,
   variantKeys: ReadonlySet<string>,
-): T {
-  const out = {} as T
+): AnyRecord {
+  const out: AnyRecord = {}
   for (const k in props) {
-    if (Object.hasOwn(props, k) && !filterProps(k, variantKeys)) {
-      ;(out as Record<string, unknown>)[k] = props[k]
-    }
+    if (!Object.hasOwn(props, k)) continue
+    if (filterProps(k, variantKeys)) continue
+    out[k] = props[k]
   }
   return out
 }

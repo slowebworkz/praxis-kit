@@ -29,7 +29,7 @@ export function createChildrenEnforcedComponent<
   const slotComponent = options.slotComponent ?? Slot
 
   const runtime = createPolymorphic(options)
-  const filterProps = composeFilter(undefined, options.filterProps)
+  const filterProps = composeFilter(new Set(), options.filterProps)
   const slotValidator = new SlotValidator(name, strict)
   const { childrenEvaluator } = buildEngines(strict, options.enforcement?.children, name)
 

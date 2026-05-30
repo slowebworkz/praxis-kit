@@ -117,7 +117,7 @@ describe('createContractComponent — asChild', () => {
         props: { asChild: true },
         slots: { default: () => [] },
       }),
-    ).toThrow('asChild requires exactly one VNode child, got 0')
+    ).toThrow('asChild requires a VNode child')
   })
 
   it('throws when as and asChild are both provided', () => {

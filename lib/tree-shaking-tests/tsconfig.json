@@ -26,8 +26,5 @@
     }
   },
   "include": ["scripts/**/*", "scenarios/**/*"],
-  "exclude": [
-    "scenarios/solid-minimal",
-    "scenarios/vue-minimal"
-  ]
+  "exclude": ["scenarios/solid-minimal", "scenarios/vue-minimal"]
 }

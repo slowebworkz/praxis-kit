@@ -148,7 +148,7 @@ describe('createPolymorphicComponent (current / React 19)', () => {
   it('asChild throws when given zero children', () => {
     const Box = createPolymorphicComponent({})
     expect(() => mount(createElement(box(Box), { asChild: true }))).toThrow(
-      'asChild requires exactly one React element child, got 0',
+      'asChild requires a React element child',
     )
   })
 

@@ -24,8 +24,10 @@ export class SlotValidator extends StrictBase {
   }
 
   assertSingleChild(count: number): void {
-    this.violate(
-      `${this.#name}: asChild requires exactly one ${this.#elementTerm} child, got ${count}`,
-    )
+    const msg =
+      count === 0
+        ? `${this.#name}: asChild requires a ${this.#elementTerm} child`
+        : `${this.#name}: asChild requires exactly one ${this.#elementTerm} child, got ${count}`
+    this.violate(msg)
   }
 }
