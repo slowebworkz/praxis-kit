@@ -174,7 +174,7 @@ describe('render — asChild', () => {
         filterProps: noopFilter,
         slotValidator: defaultValidator,
       }),
-    ).toThrow('asChild requires exactly one VNode child, got 0')
+    ).toThrow('asChild requires a VNode child')
   })
 
   it('throws when asChild has more than one child', () => {
