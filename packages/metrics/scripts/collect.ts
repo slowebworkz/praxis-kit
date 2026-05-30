@@ -24,9 +24,10 @@ const gzipRaw = JSON.parse(
   await readFile(join(root, 'packages/tree-shaking-tests/snapshots/gzip.json'), 'utf8'),
 ) as GzipSnapshot
 
-const bundles = Object.fromEntries(
-  Object.entries(gzipRaw).map(([scenario, { gzip }]) => [scenario, gzip]),
-) as Record<string, number>
+const bundles: Record<string, number> = {}
+for (const scenario of Object.keys(gzipRaw).sort((a, b) => gzipRaw[b]!.gzip - gzipRaw[a]!.gzip)) {
+  bundles[scenario] = gzipRaw[scenario]!.gzip
+}
 
 // ── Architecture ──────────────────────────────────────────────────────────────
 
@@ -52,14 +53,17 @@ const exportsFile = JSON.parse(
 const architecture = {
   status: depGraph.status,
   violations: depGraph.violations.length,
-  exports: Object.fromEntries(
-    Object.entries(exportsFile)
-      .filter(([key]) => key !== 'generated' && key.startsWith('@'))
-      .map(([name, data]) => {
-        const d = data as { values?: string[]; types?: string[] }
-        return [name, { values: (d.values ?? []).length, types: (d.types ?? []).length }]
-      }),
-  ) as Record<string, { values: number; types: number }>,
+  exports: (() => {
+    const out: Record<string, { values: number; types: number }> = {}
+    const keys = Object.keys(exportsFile)
+      .filter((k) => k !== 'generated' && k.startsWith('@'))
+      .sort()
+    for (const name of keys) {
+      const d = exportsFile[name] as { values?: string[]; types?: string[] }
+      out[name] = { values: (d.values ?? []).length, types: (d.types ?? []).length }
+    }
+    return out
+  })(),
 }
 
 // ── Complexity ────────────────────────────────────────────────────────────────
@@ -107,9 +111,10 @@ function measurePackage(glob: string): { files: number; functions: number; loc: 
   return { files, functions, loc }
 }
 
-const complexity = Object.fromEntries(
-  SOURCE_PACKAGES.map(({ key, glob }) => [key, measurePackage(glob)]),
-) as Record<string, { files: number; functions: number; loc: number }>
+const complexity: Record<string, { files: number; functions: number; loc: number }> = {}
+for (const { key, glob } of SOURCE_PACKAGES) {
+  complexity[key] = measurePackage(glob)
+}
 
 // ── Write snapshot ────────────────────────────────────────────────────────────
 

@@ -60,11 +60,12 @@ try {
 }
 
 if (previous) {
-  for (const [name, { values, types }] of Object.entries(current.architecture.exports)) {
+  for (const name in current.architecture.exports) {
+    const curr = current.architecture.exports[name]!
     const prev = previous.architecture.exports[name]
     if (!prev) continue
     const prevTotal = prev.values + prev.types
-    const currTotal = values + types
+    const currTotal = curr.values + curr.types
     if (currTotal > prevTotal) {
       console.warn(
         `  ⚠ public API: ${name} grew by ${currTotal - prevTotal} exports (${prevTotal} → ${currTotal})`,

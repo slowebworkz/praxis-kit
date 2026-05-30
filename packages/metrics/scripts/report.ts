@@ -26,49 +26,53 @@ const W = 72
 const hr = '─'.repeat(W)
 const generated = new Date(snap.generated).toLocaleString()
 
-console.log(`\nPraxis UI — Metrics Dashboard  (${generated})`)
+const lines: string[] = []
+lines.push(`\nPraxis UI — Metrics Dashboard  (${generated})`)
 
 // ── Bundles ───────────────────────────────────────────────────────────────────
+// Snapshot is written gzip-descending by collect.ts — no re-sort needed.
 
-console.log(`\n${'BUNDLES'.padEnd(30)}${'gzip'.padStart(8)}`)
-console.log(hr)
-for (const [scenario, gzip] of Object.entries(snap.bundles).sort((a, b) => b[1] - a[1])) {
+lines.push(`\n${'BUNDLES'.padEnd(30)}${'gzip'.padStart(8)}`)
+lines.push(hr)
+for (const scenario in snap.bundles) {
+  const gzip = snap.bundles[scenario]!
   const bar = '█'.repeat(Math.round((gzip / 8500) * 20))
-  console.log(`  ${scenario.padEnd(28)}${String(gzip).padStart(7)}B  ${bar}`)
+  lines.push(`  ${scenario.padEnd(28)}${String(gzip).padStart(7)}B  ${bar}`)
 }
 
 // ── Architecture ──────────────────────────────────────────────────────────────
+// Snapshot exports are written alpha-sorted by collect.ts — no re-sort needed.
 
 const { status, violations, exports: exp } = snap.architecture
 const statusLabel = violations === 0 ? `✓ ${status}` : `✗ ${violations} violation(s)`
 
-console.log(`\n${'ARCHITECTURE'.padEnd(30)}`)
-console.log(hr)
-console.log(`  Dependency graph          ${statusLabel}`)
-console.log(`\n  Public API surface (values + types):`)
-for (const [name, { values, types }] of Object.entries(exp).sort((a, b) =>
-  a[0].localeCompare(b[0]),
-)) {
+lines.push(`\n${'ARCHITECTURE'.padEnd(30)}`)
+lines.push(hr)
+lines.push(`  Dependency graph          ${statusLabel}`)
+lines.push(`\n  Public API surface (values + types):`)
+for (const name in exp) {
+  const { values, types } = exp[name]!
   const total = values + types
-  console.log(
+  lines.push(
     `    ${name.replace('@praxis-ui/', '').padEnd(20)}  ${String(total).padStart(4)}  (${values}v + ${types}t)`,
   )
 }
 
 // ── Complexity ────────────────────────────────────────────────────────────────
 
-console.log(
+lines.push(
   `\n${'COMPLEXITY'.padEnd(22)}${'files'.padStart(8)}${'funcs'.padStart(8)}${'loc'.padStart(8)}`,
 )
-console.log(hr)
+lines.push(hr)
 
 let totalFiles = 0
 let totalFunctions = 0
 let totalLoc = 0
 
-for (const [key, { files, functions, loc }] of Object.entries(snap.complexity)) {
+for (const key in snap.complexity) {
+  const { files, functions, loc } = snap.complexity[key]!
   const label = key.replace('packages/', '').replace('lib/', '')
-  console.log(
+  lines.push(
     `  ${label.padEnd(20)}${String(files).padStart(8)}${String(functions).padStart(8)}${String(loc).padStart(8)}`,
   )
   totalFiles += files
@@ -76,9 +80,10 @@ for (const [key, { files, functions, loc }] of Object.entries(snap.complexity)) 
   totalLoc += loc
 }
 
-console.log(hr)
-console.log(
+lines.push(hr)
+lines.push(
   `  ${'total'.padEnd(20)}${String(totalFiles).padStart(8)}${String(totalFunctions).padStart(8)}${String(totalLoc).padStart(8)}`,
 )
+lines.push('')
 
-console.log('')
+console.log(lines.join('\n'))

@@ -1,14 +1,14 @@
 {
-  "generated": "2026-05-30T16:54:12.685Z",
+  "generated": "2026-05-30T16:58:43.007Z",
   "bundles": {
-    "aria-only": 5383,
-    "contracts-only": 6815,
     "full-runtime": 7907,
-    "minimal-polymorphic": 3161,
-    "polymorphic-validation": 4658,
-    "primitive-direct": 830,
+    "vue-minimal": 6859,
+    "contracts-only": 6815,
     "solid-minimal": 6328,
-    "vue-minimal": 6859
+    "aria-only": 5383,
+    "polymorphic-validation": 4658,
+    "minimal-polymorphic": 3161,
+    "primitive-direct": 830
   },
   "architecture": {
     "status": "CLEAN",
