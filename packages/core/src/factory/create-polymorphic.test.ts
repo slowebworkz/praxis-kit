@@ -184,10 +184,11 @@ describe('createPolymorphic — resolveAria() with enforcement', () => {
     expect(result.props).toMatchObject({ 'aria-label': 'save', 'aria-hidden': 'true' })
   })
 
-  it('warns for invalid attribute when strict is "warn"', () => {
+  it('warns for invalid attribute when strict is "warn"', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: 'warn' } })
     runtime.resolveAria('button', { 'aria-checked': 'true' })
+    await Promise.resolve()
     expect(warn).toHaveBeenCalled()
     warn.mockRestore()
   })
@@ -267,7 +268,7 @@ describe('createPolymorphic — plugin contract', () => {
 // ---------------------------------------------------------------------------
 
 describe('createPolymorphic — enforcement.aria option', () => {
-  it('custom rule fires through resolveAria() — reported as warning', () => {
+  it('custom rule fires through resolveAria() — reported as warning', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const customRule = () => [
       {
@@ -282,6 +283,7 @@ describe('createPolymorphic — enforcement.aria option', () => {
       enforcement: { strict: 'warn', aria: [customRule] },
     })
     runtime.resolveAria('nav', {})
+    await Promise.resolve()
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('custom-aria-rule'))
     warn.mockRestore()
   })
