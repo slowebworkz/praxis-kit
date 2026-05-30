@@ -27,7 +27,7 @@ export function createPolymorphicComponent<
   const slotComponent = options.slotComponent ?? Slot
 
   const runtime = createPolymorphic(options)
-  const filterProps = composeFilter(undefined, options.filterProps)
+  const filterProps = composeFilter(new Set(), options.filterProps)
   const slotValidator = new SlotValidator(name, 'throw')
 
   function Component({ ref, ...props }: UnknownProps & { ref?: Ref<unknown> }): ReactElement {

@@ -1,0 +1,414 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import type { ConformanceAdapter } from './types'
+export type {
+  ChildSpec,
+  ConformanceAdapter,
+  ConformanceComponent,
+  ConformanceFactoryOptions,
+  ConformanceRef,
+  RenderResult,
+} from './types'
+
+export function conformanceSuite(adapter: ConformanceAdapter): void {
+  const caps = { asChild: true, ...adapter.capabilities }
+
+  beforeEach(() => adapter.setup())
+  afterEach(() => adapter.cleanup())
+
+  // ── displayName ──────────────────────────────────────────────────────────────
+
+  describe('conformance — displayName', () => {
+    it('sets displayName from name option', () => {
+      const Comp = adapter.createComponent({ name: 'MyBox' })
+      expect(Comp.displayName).toBe('MyBox')
+    })
+
+    it('defaults to PolymorphicComponent', () => {
+      const Comp = adapter.createComponent({})
+      expect(Comp.displayName).toBe('PolymorphicComponent')
+    })
+  })
+
+  // ── tag rendering ─────────────────────────────────────────────────────────────
+
+  describe('conformance — tag rendering', () => {
+    it('renders default tag (div)', () => {
+      const Box = adapter.createComponent({})
+      const { element } = adapter.render(Box)
+      expect(element.tagName.toLowerCase()).toBe('div')
+    })
+
+    it('renders a different tag via the as prop', () => {
+      const Box = adapter.createComponent({})
+      const { element } = adapter.render(Box, { as: 'section' })
+      expect(element.tagName.toLowerCase()).toBe('section')
+    })
+
+    it('respects a custom tag option', () => {
+      const Box = adapter.createComponent({ tag: 'span' })
+      const { element } = adapter.render(Box)
+      expect(element.tagName.toLowerCase()).toBe('span')
+    })
+  })
+
+  // ── class merging ─────────────────────────────────────────────────────────────
+
+  describe('conformance — class merging', () => {
+    it('applies base class', () => {
+      const Box = adapter.createComponent({ styling: { base: 'base-cls' } })
+      const { element } = adapter.render(Box)
+      expect(element.className).toContain('base-cls')
+    })
+
+    it('merges caller class with base class', () => {
+      const Box = adapter.createComponent({ styling: { base: 'base' } })
+      const { element } = adapter.render(Box, { class: 'extra' })
+      expect(element.className).toContain('base')
+      expect(element.className).toContain('extra')
+    })
+  })
+
+  // ── style forwarding ──────────────────────────────────────────────────────────
+
+  describe('conformance — style forwarding', () => {
+    it('applies an inline style object', () => {
+      const Box = adapter.createComponent({})
+      const { element } = adapter.render(Box, { style: { color: 'red' } })
+      expect(element.style.color).toBe('red')
+    })
+  })
+
+  // ── prop forwarding ───────────────────────────────────────────────────────────
+
+  describe('conformance — prop forwarding', () => {
+    it('forwards extra attributes to the DOM element', () => {
+      const Box = adapter.createComponent({})
+      const { element } = adapter.render(Box, { 'data-testid': 'box' })
+      expect(element.getAttribute('data-testid')).toBe('box')
+    })
+
+    it('strips variant keys before DOM forwarding', () => {
+      const Box = adapter.createComponent({
+        styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
+      })
+      const { element } = adapter.render(Box, { size: 'lg' })
+      expect(element.getAttribute('size')).toBeNull()
+    })
+
+    it('custom filterProps strips matching keys', () => {
+      const Box = adapter.createComponent({
+        filterProps: (key) => key === 'loading',
+      })
+      const { element } = adapter.render(Box, { loading: 'true', 'data-keep': 'yes' })
+      expect(element.getAttribute('loading')).toBeNull()
+      expect(element.getAttribute('data-keep')).toBe('yes')
+    })
+  })
+
+  // ── ARIA forwarding ───────────────────────────────────────────────────────────
+
+  describe('conformance — ARIA forwarding', () => {
+    it('forwards aria-label to the DOM element', () => {
+      const Box = adapter.createComponent({})
+      const { element } = adapter.render(Box, { 'aria-label': 'Close' })
+      expect(element.getAttribute('aria-label')).toBe('Close')
+    })
+
+    it('forwards aria-describedby to the DOM element', () => {
+      const Box = adapter.createComponent({})
+      const { element } = adapter.render(Box, { 'aria-describedby': 'hint' })
+      expect(element.getAttribute('aria-describedby')).toBe('hint')
+    })
+
+    it('forwards a non-redundant role to the DOM element', () => {
+      // 'dialog' is not the implicit role of a div — it must be forwarded.
+      const Box = adapter.createComponent({})
+      const { element } = adapter.render(Box, { role: 'dialog' })
+      expect(element.getAttribute('role')).toBe('dialog')
+    })
+  })
+
+  // ── event forwarding ──────────────────────────────────────────────────────────
+
+  describe('conformance — event forwarding', () => {
+    it('fires onClick handler', () => {
+      let called = false
+      const Box = adapter.createComponent({})
+      const { element } = adapter.render(Box, {
+        onClick: () => {
+          called = true
+        },
+      })
+      element.click()
+      expect(called).toBe(true)
+    })
+
+    it('fires onFocus handler', () => {
+      let called = false
+      const Box = adapter.createComponent({})
+      const { element } = adapter.render(Box, {
+        onFocus: () => {
+          called = true
+        },
+      })
+      element.dispatchEvent(new FocusEvent('focus'))
+      expect(called).toBe(true)
+    })
+
+    it('fires onBlur handler', () => {
+      let called = false
+      const Box = adapter.createComponent({})
+      const { element } = adapter.render(Box, {
+        onBlur: () => {
+          called = true
+        },
+      })
+      element.dispatchEvent(new FocusEvent('blur'))
+      expect(called).toBe(true)
+    })
+  })
+
+  // ── ref forwarding ────────────────────────────────────────────────────────────
+
+  if (adapter.createRef) {
+    describe('conformance — ref forwarding', () => {
+      it('forwards ref to the DOM element', () => {
+        const ref = adapter.createRef!()
+        const Box = adapter.createComponent({})
+        adapter.render(Box, { ref })
+        expect(ref.current).toBeInstanceOf(HTMLElement)
+      })
+
+      it('forwards ref when rendered as a different tag', () => {
+        const ref = adapter.createRef!()
+        const Box = adapter.createComponent({})
+        adapter.render(Box, { as: 'button', ref })
+        expect(ref.current).toBeInstanceOf(HTMLElement)
+        expect(ref.current!.tagName.toLowerCase()).toBe('button')
+      })
+
+      if (caps.asChild)
+        it('forwards ref through asChild to the inner element', () => {
+          const ref = adapter.createRef!()
+          const Box = adapter.createComponent({})
+          adapter.render(Box, { asChild: true, ref }, [{ tag: 'button' }])
+          expect(ref.current).toBeInstanceOf(HTMLElement)
+          expect(ref.current!.tagName.toLowerCase()).toBe('button')
+        })
+    })
+  }
+
+  // ── children ──────────────────────────────────────────────────────────────────
+
+  describe('conformance — children', () => {
+    it('renders children', () => {
+      const Box = adapter.createComponent({})
+      const { element } = adapter.render(Box, {}, [{ tag: 'span', props: { id: 'child' } }])
+      expect(element.querySelector('span#child')).toBeTruthy()
+    })
+  })
+
+  // ── asChild ───────────────────────────────────────────────────────────────────
+
+  if (caps.asChild)
+    describe('conformance — asChild', () => {
+      it('renders the child element type instead of the default tag', () => {
+        const Box = adapter.createComponent({})
+        const { element } = adapter.render(Box, { asChild: true }, [{ tag: 'button' }])
+        expect(element.tagName.toLowerCase()).toBe('button')
+      })
+
+      it('merges base class onto the asChild element', () => {
+        const Box = adapter.createComponent({ styling: { base: 'box-cls' } })
+        const { element } = adapter.render(Box, { asChild: true }, [{ tag: 'button' }])
+        expect(element.className).toContain('box-cls')
+      })
+
+      it('throws when asChild has zero children', () => {
+        const Box = adapter.createComponent({})
+        expect(() => adapter.render(Box, { asChild: true }, [])).toThrow()
+      })
+
+      it('throws when asChild has multiple children', () => {
+        const Box = adapter.createComponent({})
+        expect(() =>
+          adapter.render(Box, { asChild: true }, [{ tag: 'span' }, { tag: 'span' }]),
+        ).toThrow()
+      })
+
+      it('throws when as and asChild are both provided', () => {
+        const Box = adapter.createComponent({})
+        expect(() => adapter.render(Box, { as: 'button', asChild: true }, [{ tag: 'a' }])).toThrow()
+      })
+
+      it('nested asChild: composes classes from both components onto the inner element', () => {
+        const BoxA = adapter.createComponent({ styling: { base: 'class-a' } })
+        const BoxB = adapter.createComponent({ styling: { base: 'class-b' } })
+        // <BoxA asChild><BoxB asChild><button /></BoxB></BoxA>
+        const { element } = adapter.render(BoxA, { asChild: true }, [
+          { component: BoxB, props: { asChild: true }, children: [{ tag: 'button' }] },
+        ])
+        expect(element.className).toContain('class-a')
+        expect(element.className).toContain('class-b')
+        expect(element.tagName.toLowerCase()).toBe('button')
+      })
+    })
+
+  // ── variants ──────────────────────────────────────────────────────────────────
+
+  describe('conformance — variants', () => {
+    it('applies variant class via default', () => {
+      const Box = adapter.createComponent({
+        styling: {
+          variants: { intent: { primary: 'bg-blue', secondary: 'bg-gray' } },
+          defaults: { intent: 'primary' },
+        },
+      })
+      const { element } = adapter.render(Box)
+      expect(element.className).toContain('bg-blue')
+    })
+
+    it('applies variant class from prop', () => {
+      const Box = adapter.createComponent({
+        styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
+      })
+      const { element } = adapter.render(Box, { size: 'lg' })
+      expect(element.className).toContain('text-lg')
+    })
+
+    it('applies compound class when all conditions are met', () => {
+      const Box = adapter.createComponent({
+        styling: {
+          variants: {
+            intent: { primary: 'btn-primary', secondary: 'btn-secondary' },
+            size: { sm: 'btn-sm', lg: 'btn-lg' },
+          },
+          compounds: [{ intent: 'primary', size: 'lg', class: 'btn-primary-lg' }],
+        },
+      })
+      const { element } = adapter.render(Box, { intent: 'primary', size: 'lg' })
+      expect(element.className).toContain('btn-primary-lg')
+    })
+
+    it('does not apply compound class when only some conditions are met', () => {
+      const Box = adapter.createComponent({
+        styling: {
+          variants: {
+            intent: { primary: 'btn-primary', secondary: 'btn-secondary' },
+            size: { sm: 'btn-sm', lg: 'btn-lg' },
+          },
+          compounds: [{ intent: 'primary', size: 'lg', class: 'btn-primary-lg' }],
+        },
+      })
+      const { element } = adapter.render(Box, { intent: 'primary', size: 'sm' })
+      expect(element.className).not.toContain('btn-primary-lg')
+    })
+
+    it('activates a preset via variantKey', () => {
+      const Box = adapter.createComponent({
+        styling: {
+          variants: {
+            intent: { primary: 'bg-blue', secondary: 'bg-gray' },
+            size: { sm: 'text-sm', lg: 'text-lg' },
+          },
+          presets: { cta: { intent: 'primary', size: 'lg' } },
+        },
+      })
+      const { element } = adapter.render(Box, { variantKey: 'cta' })
+      expect(element.className).toContain('bg-blue')
+      expect(element.className).toContain('text-lg')
+    })
+  })
+
+  // ── enforcement ───────────────────────────────────────────────────────────────
+
+  describe('conformance — enforcement', () => {
+    it('throws when children count is below min (strict: throw)', () => {
+      const Group = adapter.createComponent({
+        enforcement: {
+          strict: 'throw',
+          children: [
+            { name: 'Item', match: (c): c is unknown => !!c || !c, cardinality: { min: 2 } },
+          ],
+        },
+      })
+      // 1 child provided; rule requires at least 2
+      expect(() => adapter.render(Group, {}, [{ tag: 'span' }])).toThrow()
+    })
+
+    it('throws when children count exceeds max (strict: throw)', () => {
+      const Group = adapter.createComponent({
+        enforcement: {
+          strict: 'throw',
+          children: [
+            { name: 'Item', match: (c): c is unknown => !!c || !c, cardinality: { max: 2 } },
+          ],
+        },
+      })
+      // 3 children provided; rule allows at most 2
+      expect(() =>
+        adapter.render(Group, {}, [{ tag: 'span' }, { tag: 'span' }, { tag: 'span' }]),
+      ).toThrow()
+    })
+
+    it('warns but does not throw when strict is warn', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const Group = adapter.createComponent({
+        enforcement: {
+          strict: 'warn',
+          children: [
+            {
+              name: 'Item',
+              match: (c): c is unknown => !!c || !c,
+              cardinality: { min: 2, max: 2 },
+            },
+          ],
+        },
+      })
+      expect(() => adapter.render(Group, {}, [{ tag: 'span' }])).not.toThrow()
+      expect(warnSpy).toHaveBeenCalled()
+      warnSpy.mockRestore()
+    })
+
+    it('is silent when strict is false', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const Group = adapter.createComponent({
+        enforcement: {
+          strict: false,
+          children: [
+            {
+              name: 'Item',
+              match: (c): c is unknown => !!c || !c,
+              cardinality: { min: 2, max: 2 },
+            },
+          ],
+        },
+      })
+      expect(() => adapter.render(Group, {}, [{ tag: 'span' }])).not.toThrow()
+      expect(warnSpy).not.toHaveBeenCalled()
+      warnSpy.mockRestore()
+    })
+  })
+
+  // ── reactivity ────────────────────────────────────────────────────────────────
+
+  describe('conformance — reactivity', () => {
+    it('updates class when variant prop changes on rerender', () => {
+      const Box = adapter.createComponent({
+        styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
+      })
+      const result = adapter.render(Box, { size: 'sm' })
+      expect(result.element.className).toContain('text-sm')
+      result.rerender({ size: 'lg' })
+      expect(result.element.className).toContain('text-lg')
+    })
+
+    it('switches rendered tag on rerender with a new as prop', () => {
+      const Box = adapter.createComponent({})
+      const result = adapter.render(Box, { as: 'div' })
+      expect(result.element.tagName.toLowerCase()).toBe('div')
+      result.rerender({ as: 'section' })
+      expect(result.element.tagName.toLowerCase()).toBe('section')
+    })
+  })
+}

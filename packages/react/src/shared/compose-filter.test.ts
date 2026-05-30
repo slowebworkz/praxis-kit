@@ -5,7 +5,7 @@ import { composeFilter } from './compose-filter'
 const variantKeys: ReadonlySet<string> = new Set(['size', 'intent'])
 
 describe('composeFilter — no ownedKeys, no userFilter', () => {
-  const filter = composeFilter(undefined, undefined)
+  const filter = composeFilter(new Set(), undefined)
 
   it('strips variant keys', () => {
     expect(filter('size', variantKeys)).toBe(true)
@@ -39,7 +39,7 @@ describe('composeFilter — ownedKeys only', () => {
 
 describe('composeFilter — userFilter only', () => {
   const userFilter = (key: string) => key === 'data-internal'
-  const filter = composeFilter(undefined, userFilter)
+  const filter = composeFilter(new Set(), userFilter)
 
   it('strips keys matched by userFilter', () => {
     expect(filter('data-internal', variantKeys)).toBe(true)

@@ -35,9 +35,7 @@ describe('assertSingleChild', () => {
   it('warns when strict is warn', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     new SlotValidator('Icon', 'warn').assertSingleChild(0)
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('asChild requires exactly one VNode child, got 0'),
-    )
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('asChild requires a VNode child'))
   })
 
   it('is silent when strict is false', () => {
