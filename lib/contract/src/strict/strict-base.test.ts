@@ -33,10 +33,11 @@ describe('StrictBase.violate()', () => {
     spy.mockRestore()
   })
 
-  it('warns when strict is "warn"', () => {
+  it('warns when strict is "warn"', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const s = new TestStrict('warn')
     s.callViolate('something wrong')
+    await Promise.resolve()
     expect(spy).toHaveBeenCalledWith('something wrong')
     spy.mockRestore()
   })
@@ -48,11 +49,12 @@ describe('StrictBase.violate()', () => {
     spy.mockRestore()
   })
 
-  it('warns exactly once per call when strict is "warn"', () => {
+  it('warns exactly once per call when strict is "warn"', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const s = new TestStrict('warn')
     s.callViolate('first')
     s.callViolate('second')
+    await Promise.resolve()
     expect(spy).toHaveBeenCalledTimes(2)
     expect(spy).toHaveBeenNthCalledWith(1, 'first')
     expect(spy).toHaveBeenNthCalledWith(2, 'second')
@@ -101,12 +103,13 @@ describe('StrictBase.violate()', () => {
     expect((caught as Error).message).toBe('exact message')
   })
 
-  it('is stateless — mode does not change between calls', () => {
+  it('is stateless — mode does not change between calls', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const s = new TestStrict('warn')
     s.callViolate('a')
     s.callViolate('b')
     s.callViolate('c')
+    await Promise.resolve()
     expect(spy).toHaveBeenCalledTimes(3)
     spy.mockRestore()
   })
@@ -125,26 +128,29 @@ describe('StrictBase.warn()', () => {
     spy.mockRestore()
   })
 
-  it('warns when strict is "warn"', () => {
+  it('warns when strict is "warn"', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const s = new TestStrict('warn')
     s.callWarn('something wrong')
+    await Promise.resolve()
     expect(spy).toHaveBeenCalledWith('something wrong')
     spy.mockRestore()
   })
 
-  it('warns but does not throw when strict is "throw"', () => {
+  it('warns but does not throw when strict is "throw"', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const s = new TestStrict('throw')
     expect(() => s.callWarn('something wrong')).not.toThrow()
+    await Promise.resolve()
     expect(spy).toHaveBeenCalledWith('something wrong')
     spy.mockRestore()
   })
 
-  it('warns but does not throw when strict is true', () => {
+  it('warns but does not throw when strict is true', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const s = new TestStrict(true)
     expect(() => s.callWarn('something wrong')).not.toThrow()
+    await Promise.resolve()
     expect(spy).toHaveBeenCalledWith('something wrong')
     spy.mockRestore()
   })
@@ -170,10 +176,11 @@ describe('StrictBase.invariant() — truthy conditions never violate', () => {
 describe('StrictBase.invariant() — falsy conditions delegate to violate()', () => {
   it.each([false, null, undefined, 0, '', NaN])(
     'delegates for falsy value %o when strict is "warn"',
-    (condition) => {
+    async (condition) => {
       const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
       const s = new TestStrict('warn')
       s.callInvariant(condition, 'invariant failed')
+      await Promise.resolve()
       expect(spy).toHaveBeenCalledWith('invariant failed')
       spy.mockRestore()
     },
@@ -208,10 +215,11 @@ describe('StrictBase.invariant() — falsy conditions delegate to violate()', ()
 })
 
 describe('StrictBase.invariant() — message forwarding', () => {
-  it('passes the exact message to console.warn', () => {
+  it('passes the exact message to console.warn', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const s = new TestStrict('warn')
     s.callInvariant(false, 'exact invariant message')
+    await Promise.resolve()
     expect(spy).toHaveBeenCalledWith('exact invariant message')
     spy.mockRestore()
   })
