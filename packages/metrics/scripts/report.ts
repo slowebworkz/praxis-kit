@@ -30,7 +30,8 @@ const lines: string[] = []
 lines.push(`\nPraxis UI — Metrics Dashboard  (${generated})`)
 
 // ── Bundles ───────────────────────────────────────────────────────────────────
-// Snapshot is written gzip-descending by collect.ts — no re-sort needed.
+// collect.ts writes bundles gzip-descending; JSON.parse preserves insertion
+// order for string keys (ES2015+), so for...in reflects that order here.
 
 lines.push(`\n${'BUNDLES'.padEnd(30)}${'gzip'.padStart(8)}`)
 lines.push(hr)
@@ -41,7 +42,8 @@ for (const scenario in snap.bundles) {
 }
 
 // ── Architecture ──────────────────────────────────────────────────────────────
-// Snapshot exports are written alpha-sorted by collect.ts — no re-sort needed.
+// collect.ts writes exports alpha-sorted; JSON.parse preserves insertion
+// order for string keys (ES2015+), so for...in reflects that order here.
 
 const { status, violations, exports: exp } = snap.architecture
 const statusLabel = violations === 0 ? `✓ ${status}` : `✗ ${violations} violation(s)`
