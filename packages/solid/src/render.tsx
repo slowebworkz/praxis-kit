@@ -1,4 +1,4 @@
-import { createMemo, splitProps } from 'solid-js'
+import { createEffect, createMemo, splitProps } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import type { ElementType, IntrinsicProps } from '@praxis-ui/core'
 import { isKnownAriaRole } from '@praxis-ui/core'
@@ -106,8 +106,10 @@ export function render<TProps extends KnownProps>({
     applyFilter(mergedProps(), filterProps, runtime.options.variantKeys),
   )
 
-  if (process.env.NODE_ENV !== 'production')
-    childrenEvaluator?.evaluate(toChildArray(known.children))
+  // createEffect so validation re-runs reactively when known.children changes.
+  if (process.env.NODE_ENV !== 'production' && childrenEvaluator) {
+    createEffect(() => childrenEvaluator.evaluate(toChildArray(known.children)))
+  }
 
   const slotResult = tryRenderAsChild(known, filteredProps, resolvedClass, slotValidator)
   if (slotResult !== null) return slotResult
