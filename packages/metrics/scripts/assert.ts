@@ -12,20 +12,10 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { ReadonlyDeep } from 'type-fest'
+import type { Snapshot } from './types.ts'
 
 const pkg = dirname(fileURLToPath(import.meta.url))
 const snapshotPath = join(pkg, '../snapshots/metrics.json')
-
-type Snapshot = {
-  generated: string
-  bundles: Record<string, number>
-  architecture: {
-    status: string
-    violations: number
-    exports: Record<string, { values: number; types: number }>
-  }
-  complexity: Record<string, { files: number; functions: number; loc: number }>
-}
 
 let current: ReadonlyDeep<Snapshot>
 try {
