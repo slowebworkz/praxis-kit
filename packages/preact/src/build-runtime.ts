@@ -1,12 +1,10 @@
 import type {
-  ChildRuleInput,
   DefaultOf,
   ElementType,
   PolymorphicGenerics,
   PresetMap,
   PresetOf,
   PropsOf,
-  StrictMode,
   VariantMap,
   VariantsOf,
 } from '@praxis-ui/core'
@@ -29,12 +27,6 @@ function normalizeOptions<G extends PolymorphicGenerics>(
   } as NormalizedOptions<G>
 }
 
-function buildValidators(name: string, strict: StrictMode, childRules?: readonly ChildRuleInput[]) {
-  const slotValidator = new SlotValidator(name, strict)
-  const { childrenEvaluator } = buildEngines(strict, childRules, name)
-  return { slotValidator, childrenEvaluator }
-}
-
 export type { BuiltRuntime }
 
 export function buildRuntime<
@@ -49,10 +41,11 @@ export function buildRuntime<
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
   const normalized = normalizeOptions<G>(options)
   const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
-  const { slotValidator, childrenEvaluator } = buildValidators(
-    normalized.name,
+  const slotValidator = new SlotValidator(normalized.name, normalized.strict)
+  const { childrenEvaluator } = buildEngines(
     normalized.strict,
     normalized.enforcement?.children,
+    normalized.name,
   )
   const filterProps = composeFilter(ownedKeys, normalized.filterProps)
 
