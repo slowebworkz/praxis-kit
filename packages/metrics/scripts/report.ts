@@ -5,6 +5,7 @@
 import { readFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import type { ReadonlyDeep } from 'type-fest'
 
 const pkg = dirname(fileURLToPath(import.meta.url))
 const snapshotPath = join(pkg, '../snapshots/metrics.json')
@@ -20,7 +21,7 @@ type Snapshot = {
   complexity: Record<string, { files: number; functions: number; loc: number }>
 }
 
-const snap = JSON.parse(await readFile(snapshotPath, 'utf8')) as Snapshot
+const snap = JSON.parse(await readFile(snapshotPath, 'utf8')) as ReadonlyDeep<Snapshot>
 
 const W = 72
 const hr = '─'.repeat(W)
