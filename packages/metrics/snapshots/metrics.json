@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-30T17:15:22.564Z",
+  "generated": "2026-05-30T17:37:57.833Z",
   "bundles": {
     "full-runtime": 7907,
     "vue-minimal": 6859,
@@ -50,12 +50,12 @@
     },
     "lib/adapter-utils": {
       "files": 7,
-      "functions": 9,
+      "functions": 8,
       "loc": 95
     },
     "packages/core": {
       "files": 43,
-      "functions": 24,
+      "functions": 21,
       "loc": 1961
     }
   }
