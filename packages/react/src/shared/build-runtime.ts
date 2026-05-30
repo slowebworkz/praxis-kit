@@ -1,12 +1,10 @@
 import type {
-  ChildRuleInput,
   DefaultOf,
   ElementType,
   PolymorphicGenerics,
   PresetMap,
   PresetOf,
   PropsOf,
-  StrictMode,
   VariantMap,
   VariantsOf,
 } from '@praxis-ui/core'
@@ -17,10 +15,6 @@ import { SlotValidator } from './slot'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
 import type { NormalizedOptions } from './types/normalized-options'
 import type { SlotComponent, UnknownProps } from './types'
-
-/* -------------------------------------------------------------------------------------------------
- * Layer 1 — Normalize options
- * -----------------------------------------------------------------------------------------------*/
 
 function normalizeOptions<G extends PolymorphicGenerics>(
   options: ReactFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>,
@@ -33,20 +27,6 @@ function normalizeOptions<G extends PolymorphicGenerics>(
     strict: options.enforcement?.strict ?? 'throw',
   } as NormalizedOptions<G>
 }
-
-/* -------------------------------------------------------------------------------------------------
- * Layer 2 — Build validators
- * -----------------------------------------------------------------------------------------------*/
-
-function buildValidators(name: string, strict: StrictMode, childRules?: readonly ChildRuleInput[]) {
-  const slotValidator = new SlotValidator(name, strict)
-  const { childrenEvaluator } = buildEngines(strict, childRules, name)
-  return { slotValidator, childrenEvaluator }
-}
-
-/* -------------------------------------------------------------------------------------------------
- * Public entry point
- * -----------------------------------------------------------------------------------------------*/
 
 export type { BuiltRuntime }
 
@@ -64,10 +44,11 @@ export function buildRuntime<
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
   const normalized = normalizeOptions<G>(options, defaultSlot)
   const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
-  const { slotValidator, childrenEvaluator } = buildValidators(
-    normalized.name,
+  const slotValidator = new SlotValidator(normalized.name, normalized.strict)
+  const { childrenEvaluator } = buildEngines(
     normalized.strict,
     normalized.enforcement?.children,
+    normalized.name,
   )
   const filterProps = composeFilter(ownedKeys, normalized.filterProps)
 
