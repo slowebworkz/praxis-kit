@@ -30,7 +30,7 @@ export function createAriaEnforcedComponent<
   const slotComponent = options.slotComponent ?? Slot
 
   const runtime = createContractedPolymorphic(options)
-  const filterProps = composeFilter(undefined, options.filterProps)
+  const filterProps = composeFilter(new Set(), options.filterProps)
   const slotValidator = new SlotValidator(name, strict)
 
   const Component = forwardRef<unknown, UnknownProps>(

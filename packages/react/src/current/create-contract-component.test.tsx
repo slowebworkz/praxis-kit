@@ -156,7 +156,7 @@ describe('createContractComponent (current / React 19)', () => {
           asChild: true,
         }),
       ),
-    ).toThrow('asChild requires exactly one React element child, got 0')
+    ).toThrow('asChild requires a React element child')
   })
 
   // Fragment is NOT flattened in current/ — it counts as one element.

@@ -185,7 +185,13 @@ importers:
       '@praxis-ui/core':
         specifier: workspace:*
         version: link:../../packages/core
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.6.0
     devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.1
       tsup:
         specifier: 'catalog:'
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
@@ -289,6 +295,18 @@ importers:
         specifier: 'catalog:'
         version: 4.1.7(@types/node@25.9.1)(@vitest/ui@4.1.7)(jsdom@29.1.1)(vite@8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0))
 
+  lib/metrics:
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.1
+      ts-morph:
+        specifier: 'catalog:'
+        version: 28.0.0
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.6.0
+
   lib/primitive:
     dependencies:
       clsx:
@@ -317,6 +335,48 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.7(@types/node@25.9.1)(@vitest/ui@4.1.7)(jsdom@29.1.1)(vite@8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0))
+
+  lib/tree-shaking-tests:
+    devDependencies:
+      '@praxis-ui/adapter-utils':
+        specifier: workspace:*
+        version: link:../adapter-utils
+      '@praxis-ui/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@praxis-ui/preact':
+        specifier: workspace:*
+        version: link:../../packages/preact
+      '@praxis-ui/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@praxis-ui/solid':
+        specifier: workspace:*
+        version: link:../../packages/solid
+      '@praxis-ui/svelte':
+        specifier: workspace:*
+        version: link:../../packages/svelte
+      '@praxis-ui/tailwind':
+        specifier: workspace:*
+        version: link:../../packages/tailwind
+      '@praxis-ui/vue':
+        specifier: workspace:*
+        version: link:../../packages/vue
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.1
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.15
+      esbuild:
+        specifier: ^0.28.0
+        version: 0.28.0
+      react:
+        specifier: 'catalog:'
+        version: 19.2.6
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
 
   packages/codemod:
     dependencies:
@@ -417,18 +477,6 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.7(@types/node@25.9.1)(@vitest/ui@4.1.7)(jsdom@29.1.1)(vite@8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0))
-
-  packages/metrics:
-    devDependencies:
-      '@types/node':
-        specifier: 'catalog:'
-        version: 25.9.1
-      ts-morph:
-        specifier: 'catalog:'
-        version: 28.0.0
-      type-fest:
-        specifier: 'catalog:'
-        version: 5.6.0
 
   packages/preact:
     dependencies:
@@ -578,48 +626,6 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.7(@types/node@25.9.1)(@vitest/ui@4.1.7)(jsdom@29.1.1)(vite@8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0))
-
-  packages/tree-shaking-tests:
-    devDependencies:
-      '@praxis-ui/adapter-utils':
-        specifier: workspace:*
-        version: link:../../lib/adapter-utils
-      '@praxis-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@praxis-ui/preact':
-        specifier: workspace:*
-        version: link:../preact
-      '@praxis-ui/react':
-        specifier: workspace:*
-        version: link:../react
-      '@praxis-ui/solid':
-        specifier: workspace:*
-        version: link:../solid
-      '@praxis-ui/svelte':
-        specifier: workspace:*
-        version: link:../svelte
-      '@praxis-ui/tailwind':
-        specifier: workspace:*
-        version: link:../tailwind
-      '@praxis-ui/vue':
-        specifier: workspace:*
-        version: link:../vue
-      '@types/node':
-        specifier: 'catalog:'
-        version: 25.9.1
-      '@types/react':
-        specifier: 'catalog:'
-        version: 19.2.15
-      esbuild:
-        specifier: ^0.28.0
-        version: 0.28.0
-      react:
-        specifier: 'catalog:'
-        version: 19.2.6
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
 
   packages/ts-plugin:
     devDependencies:

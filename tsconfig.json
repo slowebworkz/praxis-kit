@@ -19,6 +19,7 @@
     { "path": "./packages/codemod" },
     { "path": "./packages/vite-plugin" },
     { "path": "./packages/docs" },
-    { "path": "./packages/tree-shaking-tests" }
+    { "path": "./lib/tree-shaking-tests" },
+    { "path": "./lib/metrics" }
   ]
 }

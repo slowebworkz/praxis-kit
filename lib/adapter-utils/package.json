@@ -8,6 +8,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing/index.js"
     }
   },
   "scripts": {
@@ -18,10 +22,20 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@praxis-ui/core": "workspace:*"
+    "@praxis-ui/core": "workspace:*",
+    "type-fest": "catalog:"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "tsup": "catalog:",
     "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "vitest": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    }
   }
 }

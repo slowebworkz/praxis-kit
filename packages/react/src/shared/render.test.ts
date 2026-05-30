@@ -163,7 +163,7 @@ describe('render', () => {
         filterProps: noopFilter,
         slotValidator: defaultValidator,
       }),
-    ).toThrow('asChild requires exactly one React element child, got 0')
+    ).toThrow('asChild requires a React element child')
   })
 
   it('throws when asChild has more than one child', () => {

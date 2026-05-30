@@ -142,7 +142,7 @@ describe('createContractComponent (Preact adapter)', () => {
           asChild: true,
         }),
       ),
-    ).toThrow('asChild requires exactly one Preact element child, got 0')
+    ).toThrow('asChild requires a Preact element child')
   })
 
   it('fragment child counts as one element for asChild (no flattening)', () => {
