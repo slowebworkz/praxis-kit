@@ -16,6 +16,7 @@ import type { ReadonlyDeep } from 'type-fest'
 import type { Snapshot } from './types.ts'
 
 const totalExports = (pkg: { values: number; types: number }) => pkg.values + pkg.types
+const percentGrowth = (previous: number, current: number) => ((current - previous) / previous) * 100
 
 const pkg = dirname(fileURLToPath(import.meta.url))
 const snapshotPath = join(pkg, '../snapshots/metrics.json')
@@ -45,13 +46,22 @@ if (current.architecture.violations > 0) {
 // Baseline is the committed snapshot in git HEAD, so the comparison always
 // reflects "what changed since the last commit" rather than a stale one-time file.
 
+// HEAD~1 is the commit before the current one — the state before this PR's
+// changes landed. Comparing against HEAD would always show zero diff when
+// metrics.json is committed as part of the same commit that triggered CI.
 let previous: ReadonlyDeep<Snapshot> | null = null
-try {
-  const gitPath = 'packages/metrics/snapshots/metrics.json'
-  const raw = execSync(`git show HEAD:${gitPath}`, { encoding: 'utf8' })
-  previous = JSON.parse(raw) as ReadonlyDeep<Snapshot>
-} catch {
-  console.log('✓ public API: no committed baseline yet — skipping growth check')
+const gitPath = 'packages/metrics/snapshots/metrics.json'
+for (const ref of ['HEAD~1', 'HEAD']) {
+  try {
+    const raw = execSync(`git show ${ref}:${gitPath}`, { encoding: 'utf8' })
+    previous = JSON.parse(raw) as ReadonlyDeep<Snapshot>
+    break
+  } catch {
+    // try next ref
+  }
+}
+if (!previous) {
+  console.log('✓ public API: no committed baseline found — skipping growth check')
 }
 
 if (previous) {
@@ -86,7 +96,7 @@ if (previous) {
     const prev = previous.complexity[key]
     if (!prev) continue
     if (prev.loc === 0) continue
-    const pct = ((curr.loc - prev.loc) / prev.loc) * 100
+    const pct = percentGrowth(prev.loc, curr.loc)
     if (pct >= 20) {
       console.warn(`  ⚠ complexity: ${key} LOC grew ${pct.toFixed(0)}% (${prev.loc} → ${curr.loc})`)
     }
