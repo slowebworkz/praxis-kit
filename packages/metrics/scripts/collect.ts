@@ -125,8 +125,14 @@ for (const sf of project.getSourceFiles()) {
         metrics.functions++
         break
       case SyntaxKind.VariableDeclaration:
-        // Module-level named arrow functions only — not inline callbacks
-        if (Node.isVariableDeclaration(node) && node.getInitializerIfKind(SyntaxKind.ArrowFunction))
+        // Arrow functions declared directly in module scope only.
+        // AST path: VariableDeclaration → VariableDeclarationList
+        //           → VariableStatement → SourceFile
+        if (
+          Node.isVariableDeclaration(node) &&
+          node.getInitializerIfKind(SyntaxKind.ArrowFunction) &&
+          Node.isSourceFile(node.getParent()?.getParent()?.getParent())
+        )
           metrics.functions++
         break
     }
