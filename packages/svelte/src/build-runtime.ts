@@ -43,7 +43,11 @@ export function buildRuntime<
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
   const normalized = normalizeOptions<G>(options)
   const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
-  const { childrenEvaluator } = buildEngines(normalized.strict, normalized.enforcement?.children)
+  const { childrenEvaluator } = buildEngines(
+    normalized.strict,
+    normalized.enforcement?.children,
+    normalized.name,
+  )
   const filterProps = composeFilter(ownedKeys, normalized.filterProps)
   const slotValidator = new SlotValidator(normalized.name, normalized.strict, 'Snippet')
 
