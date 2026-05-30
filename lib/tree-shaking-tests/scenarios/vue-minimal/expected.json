@@ -1,11 +1,8 @@
 {
-  "mustInclude": [
-    "lib/primitive/src",
-    "packages/solid/src"
-  ],
+  "mustInclude": ["lib/primitive/src", "packages/vue/src"],
   "mustExclude": [
     "packages/react/src",
-    "packages/vue/src",
+    "packages/solid/src",
     "packages/preact/src",
     "packages/tailwind/src"
   ]

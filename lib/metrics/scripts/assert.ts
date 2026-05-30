@@ -3,7 +3,7 @@
  *   - Architecture violations must be zero
  *   - Public API export count must not grow unexpectedly (warns only)
  *
- * Bundle size regression is already gated by packages/tree-shaking-tests/scripts/gzip.ts.
+ * Bundle size regression is already gated by lib/tree-shaking-tests/scripts/gzip.ts.
  * Complexity growth is reported but not gated (informational).
  *
  * Exits 1 if hard gates fail; exits 0 with warnings for soft gates.
@@ -50,7 +50,7 @@ if (current.architecture.violations > 0) {
 // changes landed. Comparing against HEAD would always show zero diff when
 // metrics.json is committed as part of the same commit that triggered CI.
 let previous: ReadonlyDeep<Snapshot> | null = null
-const gitPath = 'packages/metrics/snapshots/metrics.json'
+const gitPath = 'lib/metrics/snapshots/metrics.json'
 for (const ref of ['HEAD~1', 'HEAD']) {
   try {
     const raw = execSync(`git show ${ref}:${gitPath}`, { encoding: 'utf8' })
