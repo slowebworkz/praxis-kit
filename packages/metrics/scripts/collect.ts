@@ -12,13 +12,12 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Node, Project, SyntaxKind } from 'ts-morph'
+import type { DepGraph, ExportsFile, GzipSnapshot, PackageMetrics, Snapshot } from './types.ts'
 
 const pkg = dirname(fileURLToPath(import.meta.url))
 const root = join(pkg, '../../..')
 
 // ── Bundles ───────────────────────────────────────────────────────────────────
-
-type GzipSnapshot = Record<string, { gzip: number }>
 
 const gzipRaw = JSON.parse(
   await readFile(join(root, 'packages/tree-shaking-tests/snapshots/gzip.json'), 'utf8'),
@@ -30,17 +29,6 @@ for (const scenario of Object.keys(gzipRaw).sort((a, b) => gzipRaw[b]!.gzip - gz
 }
 
 // ── Architecture ──────────────────────────────────────────────────────────────
-
-type DepGraph = {
-  status: string
-  violations: unknown[]
-  packageImports: Record<string, string[]>
-}
-
-type ExportsFile = {
-  generated: string
-  [pkg: string]: { values?: string[]; types?: string[] } | string
-}
 
 const depGraph = JSON.parse(
   await readFile(join(root, '.repo-state/dependency-graph.json'), 'utf8'),
@@ -84,8 +72,6 @@ project.addSourceFilesAtPaths([
   `!${join(root, '**/*.bench.ts')}`,
   `!${join(root, '**/*.d.ts')}`,
 ])
-
-type PackageMetrics = { files: number; functions: number; loc: number }
 
 // Pre-compute absolute prefix for each package so each source file can be
 // routed to its bucket with a single startsWith check.
@@ -154,7 +140,7 @@ const snapshot = {
   bundles,
   architecture,
   complexity,
-}
+} satisfies Snapshot
 
 const outPath = join(pkg, '../snapshots/metrics.json')
 await writeFile(outPath, JSON.stringify(snapshot, null, 2) + '\n')
