@@ -29,7 +29,11 @@
     "analyze:patterns": "sh scripts/ast-grep.sh scan --config .ast-grep/sgconfig.yml",
     "analyze": "pnpm --filter @praxis-ui/bundle-analysis analyze",
     "size": "pnpm --filter @praxis-ui/bundle-analysis size",
-    "lint:pkg": "pnpm -r --if-present lint:pkg"
+    "lint:pkg": "pnpm -r --if-present lint:pkg",
+    "metrics": "pnpm --filter @praxis-ui/metrics metrics",
+    "metrics:collect": "pnpm --filter @praxis-ui/metrics collect",
+    "metrics:report": "pnpm --filter @praxis-ui/metrics report",
+    "metrics:assert": "pnpm --filter @praxis-ui/metrics assert"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
