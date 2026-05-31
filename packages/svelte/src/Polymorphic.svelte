@@ -20,13 +20,37 @@
 
   let { bundle, as: asProp, asChild, class: cls, variantKey, children, ...rest }: Props = $props()
 
+  // Svelte 5 event delegation requires lowercase handler names (onclick, onfocus…).
+  // Normalize React-style camelCase handlers so spreads on <svelte:element> work.
+  function normalizeEventKeys(props: UnknownProps): UnknownProps {
+    const out: Record<string, unknown> = {}
+    for (const k in props) {
+      if (k.length > 2 && k[0] === 'o' && k[1] === 'n' && k[2] === k[2]?.toUpperCase()) {
+        out[k.toLowerCase()] = (props as Record<string, unknown>)[k]
+      } else {
+        out[k] = (props as Record<string, unknown>)[k]
+      }
+    }
+    return out as UnknownProps
+  }
+
   function buildDomProps(
     props: UnknownProps,
     classStr: string,
     tag: ElementType,
   ): Record<string, unknown> {
-    const { role, ...r } = props
-    const ep: IntrinsicProps = { ...(r as IntrinsicProps), class: classStr }
+    const { role, style, ...r } = normalizeEventKeys(props)
+    const styleStr =
+      style !== undefined && typeof style === 'object'
+        ? Object.entries(style as Record<string, string>)
+            .map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}:${v}`)
+            .join(';')
+        : (style as string | undefined)
+    const ep: IntrinsicProps = {
+      ...(r as IntrinsicProps),
+      class: classStr,
+      ...(styleStr !== undefined && { style: styleStr }),
+    }
     if (isKnownAriaRole(role)) ep.role = role
     if (typeof tag !== 'string') return ep as Record<string, unknown>
     return bundle.runtime.resolveAria(tag, ep).props as Record<string, unknown>
