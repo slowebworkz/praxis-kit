@@ -1,31 +1,31 @@
 # praxis-ui
 
-**Prevent invalid component composition.**
+**Stop invalid component composition.**
 
-Write component rules once. Enforce them in React, Vue, Svelte, Solid, and Preact.
+Write component rules once. Use them in React, Vue, Svelte, Solid, and Preact.
 
 ---
 
 ## Who this is for
 
-Praxis UI is infrastructure for **design system authors** — teams building a component library that
-needs to work across multiple frameworks and hold up over time.
+Praxis UI is for teams creating a component library that works across different frameworks and lasts
+over time.
 
-If you are building a single Button component for a single React app, you don't need this.
+If you're building a single button for a React app, you don't need this.
 
-If you are building Tabs, Dialogs, Accordions, and Menus that need to:
+If you're building Tabs, Dialogs, Accordions, and Menus that need to:
 
-- reject invalid structure before it reaches the DOM
-- strip incorrect ARIA attributes automatically
-- work identically in React and Vue without duplicating logic
+- reject wrong structure before it hits the DOM
+- remove incorrect ARIA attributes automatically
+- work the same in React and Vue without repeating logic
 
-…this is built for that.
+…this is for you.
 
 ---
 
 ## The problems it solves
 
-### Problem 1 — Your Tabs component silently accepts wrong children
+### Problem 1 — Your Tabs component accepts wrong children
 
 ```tsx
 // This renders. Nothing breaks immediately.
@@ -67,7 +67,7 @@ Screen readers and audit tools flag these. They're subtle and they slip through 
 
 **With Praxis UI:**
 
-Both attributes are stripped before the DOM is touched. In strict mode, a warning is emitted. No
+Both attributes are removed before the DOM is touched. In strict mode, a warning is emitted. No
 false positives — the engine knows which roles are implicit and which overrides are valid.
 
 ---
@@ -76,7 +76,7 @@ false positives — the engine knows which roles are implicit and which override
 
 You've built your design system. Now a project needs Vue. Your options are:
 
-- Copy every component and maintain two codebases in sync
+- Copy every component and keep two codebases in sync
 - Pick a headless library that has its own Vue bindings (which may not match your React version)
 - Abstract at the design token level and rebuild rendering in each framework
 
