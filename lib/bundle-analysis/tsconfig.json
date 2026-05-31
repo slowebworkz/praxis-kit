@@ -16,10 +16,8 @@
       "@praxis-ui/preact": ["../../packages/preact/src/index.ts"],
       "@praxis-ui/svelte": ["../../packages/svelte/src/index.ts"],
       "@praxis-ui/tailwind": ["../../packages/tailwind/src/index.ts"],
-      "@/shared": ["../../packages/react/src/shared"],
-      "@/shared/*": ["../../packages/react/src/shared/*"],
-      "@/current": ["../../packages/react/src/current"],
-      "@/current/*": ["../../packages/react/src/current/*"]
+      "@praxis-ui/react/shared": ["../../packages/react/src/shared"],
+      "@praxis-ui/react/shared/*": ["../../packages/react/src/shared/*"]
     }
   },
   "include": ["rollup.config.ts", "src/**/*.ts"]

@@ -11,9 +11,14 @@ import { composeFilter } from '@praxis-ui/adapter-utils'
 import type { Ref, ReactElement } from 'react'
 import { Slot } from './slot'
 import { normalizeChildren } from './normalize-children'
-import { applyDisplayName, render } from '@/shared'
-import { SlotValidator } from '@/shared'
-import type { UnknownProps, KnownProps, PolymorphicComponent, ReactFactoryOptions } from '@/shared'
+import { applyDisplayName, render } from '@praxis-ui/react/shared'
+import { SlotValidator } from '@praxis-ui/react/shared'
+import type {
+  UnknownProps,
+  KnownProps,
+  PolymorphicComponent,
+  ReactFactoryOptions,
+} from '@praxis-ui/react/shared'
 
 // Primitive factory — tag resolution, prop merge, asChild, no styling runtime, no contract engine.
 export function createPolymorphicComponent<

@@ -12,9 +12,14 @@ import { forwardRef } from 'react'
 import type { ReactElement } from 'react'
 import { Slot } from './slot'
 import { normalizeChildren } from './normalize-children'
-import { applyDisplayName, render } from '@/shared'
-import { SlotValidator } from '@/shared'
-import type { UnknownProps, KnownProps, PolymorphicComponent, ReactFactoryOptions } from '@/shared'
+import { applyDisplayName, render } from '@praxis-ui/react/shared'
+import { SlotValidator } from '@praxis-ui/react/shared'
+import type {
+  UnknownProps,
+  KnownProps,
+  PolymorphicComponent,
+  ReactFactoryOptions,
+} from '@praxis-ui/react/shared'
 
 // ARIA-only enforcement factory: AriaPolicyEngine, no ChildrenEvaluator, no class pipeline.
 // Tree-shakes lib/styling/src and lib/contract/src/children for consumers that only need ARIA contracts.

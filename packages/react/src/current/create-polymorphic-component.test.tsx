@@ -3,7 +3,11 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createElement, Fragment, createRef, act } from 'react'
 import type { ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { PolymorphicComponent, RenderCallbackProps, UnknownProps } from '@/shared'
+import type {
+  PolymorphicComponent,
+  RenderCallbackProps,
+  UnknownProps,
+} from '@praxis-ui/react/shared'
 import { createPolymorphicComponent } from './create-polymorphic-component'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
