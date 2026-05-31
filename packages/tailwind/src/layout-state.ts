@@ -1,23 +1,18 @@
-import type { ClassifiedToken } from './types/classified-token'
-import type { LayoutKey, LayoutMode } from './types/layout'
+import type { LayoutMode } from './types/layout'
 
+/**
+ * The resolved layout mode for a single render.
+ *
+ * The mode is owned by the `flex`/`grid` props (resolved in `createTailwindPipeline`),
+ * never inferred from class tokens — a `flex`/`grid` class appearing in the resolved
+ * class string is a reserved-literal authoring mistake, not a mode source. Defaults to
+ * `'none'` when neither prop is set.
+ */
 export class LayoutState {
   readonly #mode: LayoutMode
 
-  constructor(tokens: ClassifiedToken[], layoutOverride?: LayoutKey) {
-    const hasFlex = tokens.some((t) => t.kind === 'layout' && t.value === 'flex')
-    const hasGrid = tokens.some((t) => t.kind === 'layout' && t.value === 'grid')
-
-    if (layoutOverride) {
-      this.#mode = layoutOverride
-    } else if (hasFlex) {
-      this.#mode = 'flex'
-    } else if (hasGrid) {
-      this.#mode = 'grid'
-    } else {
-      this.#mode = 'none'
-    }
-
+  constructor(mode: LayoutMode) {
+    this.#mode = mode
     Object.freeze(this)
   }
 

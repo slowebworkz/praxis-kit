@@ -11,20 +11,24 @@ function resolve(
   return plugin.pipeline('div', props, className, undefined)
 }
 
-describe('createTailwindPipeline — no layout (pass-through)', () => {
+describe('createTailwindPipeline — none mode (no layout prop)', () => {
   const pipeline = createTailwindPipeline({ baseClassName: 'base' })
 
-  it('returns raw class string when no layout is given', () => {
-    expect(resolve(pipeline, 'flex flex-col gap-4 rounded')).toBe(
-      'base flex flex-col gap-4 rounded',
-    )
+  it('strips the flex display literal and flex utilities (and gap), keeps plain utilities', () => {
+    const cls = resolve(pipeline, 'flex flex-col gap-4 rounded')
+    expect(cls).not.toMatch(/\bflex\b/)
+    expect(cls).not.toMatch(/\bflex-col\b/)
+    expect(cls).not.toMatch(/\bgap-4\b/) // gap requires an active layout mode
+    expect(cls).toMatch(/\bbase\b/)
+    expect(cls).toMatch(/\brounded\b/)
   })
 
-  it('does not strip any classes when layout is omitted', () => {
-    const result = resolve(pipeline, 'grid grid-cols-3 col-span-2')
-    expect(result).toContain('grid')
-    expect(result).toContain('grid-cols-3')
-    expect(result).toContain('col-span-2')
+  it('strips the grid display literal and grid utilities', () => {
+    const cls = resolve(pipeline, 'grid grid-cols-3 col-span-2 rounded')
+    expect(cls).not.toMatch(/\bgrid\b/)
+    expect(cls).not.toMatch(/\bgrid-cols-3\b/)
+    expect(cls).not.toMatch(/\bcol-span-2\b/)
+    expect(cls).toMatch(/\brounded\b/)
   })
 })
 
@@ -134,8 +138,10 @@ describe('createTailwindPipeline — conditional tokens', () => {
     )
   })
 
-  it('preserves [&.flex]: token when no layout is active', () => {
-    expect(resolve(pipeline, '[&.flex]:items-center rounded')).toMatch(/\[&\.flex\]:items-center/)
+  it('strips [&.flex]: token when no layout is active (none mode)', () => {
+    expect(resolve(pipeline, '[&.flex]:items-center rounded')).not.toMatch(
+      /\[&\.flex\]:items-center/,
+    )
   })
 
   it('includes [&.grid]: token when grid is active', () => {
@@ -242,13 +248,39 @@ describe('createTailwindPipeline — flex/grid mutual exclusion', () => {
   })
 })
 
+describe('createTailwindPipeline — reserved layout literals', () => {
+  const pipeline = createTailwindPipeline({})
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('warns when a flex display literal appears in the resolved input', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    pipeline.pipeline('div', { flex: true }, 'flex rounded', undefined)
+    expect(warn.mock.calls.some((c) => /reserved layout class/i.test(String(c[0])))).toBe(true)
+  })
+
+  it('warns when a grid display literal appears under none mode', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    pipeline.pipeline('div', {}, 'grid rounded', undefined)
+    expect(warn.mock.calls.some((c) => /reserved layout class/i.test(String(c[0])))).toBe(true)
+  })
+
+  it('does not warn when only utilities (no display literal) are present', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    pipeline.pipeline('div', { flex: true }, 'flex-col gap-4 rounded', undefined)
+    expect(warn).not.toHaveBeenCalled()
+  })
+})
+
 describe('createTailwindPipeline — baseClassName layout stripping', () => {
-  it('preserves all classes from baseClassName when no layout is active', () => {
+  it('strips layout classes from baseClassName when no layout is active (none mode)', () => {
     const pipeline = createTailwindPipeline({ baseClassName: 'flex flex-col gap-4 rounded' })
     const cls = resolve(pipeline)
-    expect(cls).toMatch(/\bflex\b/)
-    expect(cls).toMatch(/\bflex-col\b/)
-    expect(cls).toMatch(/\bgap-4\b/)
+    expect(cls).not.toMatch(/\bflex\b/)
+    expect(cls).not.toMatch(/\bflex-col\b/)
+    expect(cls).not.toMatch(/\bgap-4\b/)
     expect(cls).toMatch(/\brounded\b/)
   })
 
