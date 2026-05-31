@@ -40,6 +40,7 @@
     const styleStr =
       style !== undefined && typeof style === 'object'
         ? Object.entries(style as Record<string, string>)
+            .filter(([, v]) => v != null)
             .map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}:${v}`)
             .join(';')
         : (style as string | undefined)
