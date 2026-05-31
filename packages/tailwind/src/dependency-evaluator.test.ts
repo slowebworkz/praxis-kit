@@ -12,9 +12,9 @@ const rules: DependencyRules = {
 
 const ev = new DependencyEvaluator(rules)
 
-const flexState = new LayoutState([], 'flex')
-const gridState = new LayoutState([], 'grid')
-const noneState = new LayoutState([])
+const flexState = new LayoutState('flex')
+const gridState = new LayoutState('grid')
+const noneState = new LayoutState('none')
 
 function tok(t: ClassifiedToken) {
   return t
