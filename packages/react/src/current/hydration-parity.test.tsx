@@ -5,6 +5,8 @@ import type { ComponentType, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createRoot } from 'react-dom/client'
 import { act } from 'react'
+import { hydrationParitySuite } from '@praxis-ui/adapter-utils/testing'
+import type { BareFactoryOptions } from '@praxis-ui/adapter-utils/testing'
 import type { UnknownProps } from '@/shared'
 import { createContractComponent } from './create-contract-component'
 
@@ -144,4 +146,38 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
     expect(serverAttrs).toEqual(clientAttrs)
     expect(serverAttrs['class']).toContain('btn-lg-ghost')
   })
+})
+
+let hydContainer: HTMLElement | null = null
+
+hydrationParitySuite({
+  createComponent: (options) =>
+    createContractComponent(options as BareFactoryOptions) as ComponentType<UnknownProps> & {
+      displayName?: string
+    },
+  renderToString: (component, props = {}) => {
+    const { class: cls, ...rest } = props
+    const normalized = cls !== undefined ? { ...rest, className: cls } : rest
+    return renderToStaticMarkup(
+      createElement(component as ComponentType<UnknownProps>, normalized as UnknownProps),
+    )
+  },
+  renderToDOM: async (component, props = {}) => {
+    hydContainer = document.createElement('div')
+    document.body.appendChild(hydContainer)
+    const root = createRoot(hydContainer)
+    const { class: cls, ...rest } = props
+    const normalized = cls !== undefined ? { ...rest, className: cls } : rest
+    await act(async () =>
+      root.render(
+        createElement(component as ComponentType<UnknownProps>, normalized as UnknownProps),
+      ),
+    )
+    return hydContainer.firstElementChild as HTMLElement
+  },
+  setup: () => {},
+  cleanup: () => {
+    if (hydContainer?.parentNode) hydContainer.parentNode.removeChild(hydContainer)
+    hydContainer = null
+  },
 })

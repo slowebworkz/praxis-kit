@@ -2,8 +2,12 @@
 import { createElement, createRef, act } from 'react'
 import type { Root } from 'react-dom/client'
 import { createRoot } from 'react-dom/client'
-import { conformanceSuite } from '@praxis-ui/adapter-utils/testing'
-import type { BareFactoryOptions, ChildSpec } from '@praxis-ui/adapter-utils/testing'
+import { conformanceSuite, conformanceA11ySuite } from '@praxis-ui/adapter-utils/testing'
+import type {
+  BareFactoryOptions,
+  ChildSpec,
+  ConformanceAdapter,
+} from '@praxis-ui/adapter-utils/testing'
 import type { ComponentType, ReactNode } from 'react'
 import type { UnknownProps } from '@/shared'
 import { createContractComponent } from './create-contract-component'
@@ -29,7 +33,7 @@ function normalizeClass<T extends Record<string, unknown>>(props: T): T {
 let container: HTMLElement
 let root: Root
 
-conformanceSuite<ReactConformanceComponent>({
+const adapter: ConformanceAdapter<ReactConformanceComponent> = {
   createComponent: (options) =>
     createContractComponent(options as BareFactoryOptions) as ReactConformanceComponent,
   render: (component, props = {}, children = []) => {
@@ -63,4 +67,7 @@ conformanceSuite<ReactConformanceComponent>({
     if (container?.parentNode) container.parentNode.removeChild(container)
   },
   createRef: () => createRef<HTMLElement>(),
-})
+}
+
+conformanceSuite(adapter)
+conformanceA11ySuite(adapter)

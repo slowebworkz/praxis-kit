@@ -1,8 +1,12 @@
 // @vitest-environment jsdom
 import { h, createRef } from 'preact'
 import { render } from 'preact'
-import { conformanceSuite } from '@praxis-ui/adapter-utils/testing'
-import type { BareFactoryOptions, ChildSpec } from '@praxis-ui/adapter-utils/testing'
+import { conformanceSuite, conformanceA11ySuite } from '@praxis-ui/adapter-utils/testing'
+import type {
+  BareFactoryOptions,
+  ChildSpec,
+  ConformanceAdapter,
+} from '@praxis-ui/adapter-utils/testing'
 import type { ComponentType, VNode } from 'preact'
 import type { UnknownProps } from './types'
 import { createContractComponent } from './create-contract-component'
@@ -27,7 +31,7 @@ function normalizeClass<T extends Record<string, unknown>>(props: T): T {
 
 let container: HTMLElement
 
-conformanceSuite<PreactConformanceComponent>({
+const adapter: ConformanceAdapter<PreactConformanceComponent> = {
   createComponent: (options) =>
     createContractComponent(options as BareFactoryOptions) as PreactConformanceComponent,
   render: (component, props = {}, children = []) => {
@@ -56,4 +60,7 @@ conformanceSuite<PreactConformanceComponent>({
     if (container?.parentNode) container.parentNode.removeChild(container)
   },
   createRef: () => createRef<HTMLElement>(),
-})
+}
+
+conformanceSuite(adapter)
+conformanceA11ySuite(adapter)
