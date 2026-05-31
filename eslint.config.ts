@@ -36,10 +36,12 @@ const config = [
             'lib/adapter-utils/vitest.config.ts',
             'lib/primitive/vitest.config.ts',
             'lib/*/eslint.config.ts',
-            // solid-minimal and vue-minimal are excluded from the tree-shaking-tests tsconfig
-            // (jsxImportSource:react conflicts with Solid/Vue component return types)
+            // framework-specific scenarios are excluded from the tree-shaking-tests tsconfig
+            // (jsxImportSource:react conflicts with Solid/Vue/Preact/Svelte JSX/return types)
             'lib/tree-shaking-tests/scenarios/solid-minimal/*.ts',
             'lib/tree-shaking-tests/scenarios/vue-minimal/*.ts',
+            'lib/tree-shaking-tests/scenarios/preact-minimal/*.ts',
+            'lib/tree-shaking-tests/scenarios/svelte-minimal/*.ts',
           ],
           // ~23 files: 2 root *.ts + 1 scripts + 7 configs + 9 per-package eslint configs + 2 lib vitest + 2 tsup (codemod/ts-plugin) + 2 non-React adapter scenarios
           maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 30,
