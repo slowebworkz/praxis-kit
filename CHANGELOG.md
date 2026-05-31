@@ -24,6 +24,13 @@ pass the prop: `<Box grid className="grid-cols-2" />`.
 appearing in resolved classes (base, variants, or `className`) is an authoring mistake and now emits
 a dev `console.warn`. Use the prop, not the class.
 
+**Dead-variant detection.** When an active variant's _entire_ class contribution is stripped under
+the resolved mode — e.g. `<Box flex cols="2" />` where `cols="2"` resolves only to `grid-cols-2` —
+the variant is an exposed prop that produces nothing. The plugin reconstructs each active variant's
+classes (from props, the active preset, and `defaultVariants`) and emits a dev `console.warn` naming
+the dead variant. Limitation: compound variants are not attributed (a compound's class fires across
+dimensions and can't be charged to one variant), so only per-dimension variants are checked.
+
 **Stripping is resemblance-based (accepted break point).** A class is stripped under a conflicting
 mode because its name matches a Tailwind grid/flex prefix, **not** because it's verified to be a
 real Tailwind utility. So a custom class like `grid-triplets-1` is stripped in flex mode purely
