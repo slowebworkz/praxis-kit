@@ -1,6 +1,4 @@
-import type { Cardinality, ChildRulePosition, Severity } from '@praxis-ui/core'
-
-export type { Cardinality, ChildRulePosition, Severity }
+import type { Cardinality, ChildRulePosition } from '@praxis-ui/core'
 
 /**
  * One enforcement.children rule whose cardinality is statically extractable
@@ -33,21 +31,6 @@ export type ComponentConstraint = {
   hasAriaRules: boolean
 }
 
-/** A diagnostic produced by the static analysis pass. */
-export type Diagnostic = {
-  message: string
-  /** 1-based line number in the source file. */
-  line: number
-  /** 1-based column number. */
-  col: number
-  /**
-   * Uses the same Severity vocabulary as ValidationViolation in
-   * @praxis-ui/contract — 'error' | 'warning'. The plugin wrapper maps
-   * 'warning' → this.warn() and 'error' → this.error() for Rollup/Vite.
-   */
-  severity: Severity
-}
-
 /**
  * A JSX usage site collected for deferred cross-file cardinality validation.
  * Stored during `transform` and validated in `buildEnd` once the full
@@ -61,22 +44,4 @@ export type PendingUsage = {
   line: number
   /** 1-based column number. */
   col: number
-}
-
-/** A diagnostic extended with the file it originated from, for buildEnd reporting. */
-export type FileDiagnostic = Diagnostic & { fileId: string }
-
-/** Options accepted by contractPlugin() and analyze(). */
-export type PluginOptions = {
-  /**
-   * Factory function names to look for.
-   * @default ['createPolymorphicComponent', 'createContractComponent']
-   */
-  calleeNames?: string[]
-  /**
-   * Severity of cardinality violations in Vite build output.
-   * Matches the Severity vocabulary used by ValidationViolation.
-   * @default 'warning'
-   */
-  severity?: Severity
 }
