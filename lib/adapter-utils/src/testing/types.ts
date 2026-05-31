@@ -1,4 +1,14 @@
-import type { AnyRecord, StrictMode } from '@praxis-ui/core'
+import type { AnyRecord, FactoryOptions, VariantMap, StrictMode } from '@praxis-ui/core'
+
+/**
+ * A maximally-wide FactoryOptions shape used as the bridge cast in adapter
+ * conformance tests. ConformanceFactoryOptions uses simplified field types
+ * (e.g. `defaults?: Record<string, string>`) that don't satisfy FactoryOptions'
+ * constrained generics (`Partial<VariantProps<V>>`, `TPreset extends PresetMap<V>`).
+ * Casting through this alias makes the intent explicit rather than using
+ * `Parameters<typeof createContractComponent>[0]`.
+ */
+export type BareFactoryOptions = FactoryOptions<string, AnyRecord, Readonly<VariantMap>>
 
 // Component returned by createComponent — must carry displayName.
 export type ConformanceComponent = { displayName?: string }
@@ -43,8 +53,10 @@ export type ConformanceFactoryOptions = {
 /**
  * Adapter contract for the conformance suite.
  *
- * Implement for each framework adapter (React/Preact/Vue) to verify that
- * createContractComponent honours the shared behavioral contracts.
+ * Generic parameter C is the framework's component type — e.g.
+ * `ComponentType<UnknownProps>` for React, `Component<UnknownProps>` for Solid.
+ * Providing it lets render() receive a properly typed value without casting.
+ * Defaults to ConformanceComponent for adapters that don't need typed dispatch.
  *
  * Notes on framework-specific limitations:
  *   Solid  — asChild uses a render-function pattern (children must be
@@ -53,11 +65,13 @@ export type ConformanceFactoryOptions = {
  *             tests in the adapter directly.
  *   Svelte — createContractComponent returns a BuiltRuntime bundle, not a
  *             component, and children are Svelte snippets. Wire Svelte tests
- *             directly against Polymorphic.svelte.
+ *             directly against Polymorphic.svelte. ChildSpec children are
+ *             serialised to an HTML string via createRawSnippet; component
+ *             ChildSpec nodes are not supported and throw at runtime.
  */
-export type ConformanceAdapter = {
-  createComponent(options: ConformanceFactoryOptions): ConformanceComponent
-  render(component: ConformanceComponent, props?: AnyRecord, children?: ChildSpec[]): RenderResult
+export type ConformanceAdapter<C extends ConformanceComponent = ConformanceComponent> = {
+  createComponent(options: ConformanceFactoryOptions): C
+  render(component: C, props?: AnyRecord, children?: ChildSpec[]): RenderResult
   setup(): void
   cleanup(): void
   /**

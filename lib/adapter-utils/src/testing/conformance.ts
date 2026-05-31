@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import type { ConformanceAdapter } from './types'
+import type { ConformanceAdapter, ConformanceComponent } from './types'
 export type {
+  BareFactoryOptions,
   ChildSpec,
   ConformanceAdapter,
   ConformanceComponent,
@@ -9,7 +10,9 @@ export type {
   RenderResult,
 } from './types'
 
-export function conformanceSuite(adapter: ConformanceAdapter): void {
+export function conformanceSuite<C extends ConformanceComponent = ConformanceComponent>(
+  adapter: ConformanceAdapter<C>,
+): void {
   const caps = { asChild: true, ...adapter.capabilities }
 
   beforeEach(() => adapter.setup())
