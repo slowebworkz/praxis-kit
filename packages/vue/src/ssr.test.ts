@@ -3,6 +3,8 @@ import { describe, it, expect } from 'vitest'
 import { h, createSSRApp } from 'vue'
 import type { Component } from 'vue'
 import { renderToString } from '@vue/server-renderer'
+import { ssrConformanceSuite } from '@praxis-ui/adapter-utils/testing'
+import type { BareFactoryOptions } from '@praxis-ui/adapter-utils/testing'
 import type { UnknownProps } from './types'
 import { createContractComponent } from './create-contract-component'
 
@@ -84,4 +86,11 @@ describe('createContractComponent — SSR (@vue/server-renderer)', () => {
     expect(html).toContain('slot-cls')
     expect(html).toContain('child-cls')
   })
+})
+
+ssrConformanceSuite({
+  createComponent: (options) =>
+    createContractComponent(options as BareFactoryOptions) as Component & { displayName?: string },
+  renderToString: (component, props = {}) =>
+    renderToString(createSSRApp({ render: () => h(component, props as UnknownProps) })),
 })

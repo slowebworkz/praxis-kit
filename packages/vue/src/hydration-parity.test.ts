@@ -3,6 +3,8 @@ import { h, createSSRApp } from 'vue'
 import type { Component } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { mount } from '@vue/test-utils'
+import { hydrationParitySuite } from '@praxis-ui/adapter-utils/testing'
+import type { BareFactoryOptions } from '@praxis-ui/adapter-utils/testing'
 import type { UnknownProps } from './types'
 import { createContractComponent } from './create-contract-component'
 
@@ -122,4 +124,17 @@ describe('SSR/CSR hydration parity — Vue', () => {
       normalizeAttrs(parseAttributes(clientHtml)),
     )
   })
+})
+
+hydrationParitySuite({
+  createComponent: (options) =>
+    createContractComponent(options as BareFactoryOptions) as Component & { displayName?: string },
+  renderToString: (component, props = {}) =>
+    renderToString(createSSRApp({ render: () => h(component, props as UnknownProps) })),
+  renderToDOM: async (component, props = {}) => {
+    const wrapper = mount(component as never, { props: props as never })
+    return wrapper.element as HTMLElement
+  },
+  setup: () => {},
+  cleanup: () => {},
 })

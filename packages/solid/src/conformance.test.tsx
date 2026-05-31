@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 import { render as solidRender, cleanup } from '@solidjs/testing-library'
-import { createSignal } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import type { Component } from 'solid-js'
-import { conformanceSuite } from '@praxis-ui/adapter-utils/testing'
+import { conformanceSuite, conformanceA11ySuite } from '@praxis-ui/adapter-utils/testing'
 import type { AnyRecord } from '@praxis-ui/core'
 import type {
   BareFactoryOptions,
   ChildSpec,
+  ConformanceAdapter,
   ConformanceRef,
 } from '@praxis-ui/adapter-utils/testing'
 import type { UnknownProps } from './types'
@@ -43,29 +43,26 @@ function normalizeProps(props: AnyRecord): UnknownProps {
   return out as UnknownProps
 }
 
-conformanceSuite<SolidConformanceComponent>({
+const adapter: ConformanceAdapter<SolidConformanceComponent> = {
   createComponent: (options) =>
     createContractComponent(options as BareFactoryOptions) as SolidConformanceComponent,
   render: (component, props = {}, children = []) => {
     // Solid JSX requires a capitalized identifier for component rendering.
     const Comp = component
-    // Use signals so rerender() updates props reactively without unmounting.
-    const [getProps, setProps] = createSignal<AnyRecord>(props)
-    const [getChildren, setChildren] = createSignal<ChildSpec[]>(children)
-
-    const result = solidRender(() => {
-      const p = getProps()
-      const ch = getChildren()
-      return <Comp {...normalizeProps(p)}>{ch.map(toSolidElement)}</Comp>
-    })
-
+    let result = solidRender(() => (
+      <Comp {...normalizeProps(props)}>{children.map(toSolidElement)}</Comp>
+    ))
     return {
       get element() {
         return result.container.firstElementChild as HTMLElement
       },
       rerender(newProps = {}, newChildren = []) {
-        setProps(newProps)
-        setChildren(newChildren)
+        // @solidjs/testing-library has no rerender() API; unmount+remount
+        // produces correct DOM state for conformance assertions.
+        result.unmount()
+        result = solidRender(() => (
+          <Comp {...normalizeProps(newProps)}>{newChildren.map(toSolidElement)}</Comp>
+        ))
       },
       unmount() {
         result.unmount()
@@ -76,4 +73,7 @@ conformanceSuite<SolidConformanceComponent>({
   cleanup: () => cleanup(),
   createRef: () => ({ current: null }),
   capabilities: { asChild: false },
-})
+}
+
+conformanceSuite(adapter)
+conformanceA11ySuite(adapter)
