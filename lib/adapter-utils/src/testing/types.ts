@@ -87,5 +87,15 @@ export type ConformanceAdapter<C extends ConformanceComponent = ConformanceCompo
   capabilities?: {
     /** false for Solid, which uses a render-function asChild pattern. */
     asChild?: boolean
+    /**
+     * true if this adapter supports server-side rendering via ssrConformanceSuite.
+     * Informational — wire ssrConformanceSuite separately in a node-environment test file.
+     */
+    ssr?: boolean
+    /**
+     * true if this adapter supports hydration parity via hydrationParitySuite.
+     * Informational — wire hydrationParitySuite separately in a jsdom-environment test file.
+     */
+    hydration?: boolean
   }
 }

@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { render, cleanup } from '@testing-library/svelte'
 import { createRawSnippet } from 'svelte'
-import { conformanceSuite } from '@praxis-ui/adapter-utils/testing'
+import { conformanceSuite, conformanceA11ySuite } from '@praxis-ui/adapter-utils/testing'
 import type {
   BareFactoryOptions,
   ChildSpec,
+  ConformanceAdapter,
   ConformanceComponent,
 } from '@praxis-ui/adapter-utils/testing'
 import Polymorphic from './Polymorphic.svelte'
@@ -31,17 +32,16 @@ function childSpecToHTML(specs: ChildSpec[]): string {
     .join('')
 }
 
-conformanceSuite({
-  createComponent: (options): ConformanceComponent => {
+const adapter: ConformanceAdapter<SvelteComponent> = {
+  createComponent: (options): SvelteComponent => {
     const bundle = createContractComponent(options as BareFactoryOptions) as AnyBuiltRuntime
-    const comp: SvelteComponent = {
+    return {
       displayName: options.name ?? 'PolymorphicComponent',
       _bundle: bundle,
     }
-    return comp
   },
   render: (component, props = {}, children = []) => {
-    const { _bundle: bundle } = component as SvelteComponent
+    const { _bundle: bundle } = component
     const { class: cls, ...rest } = props
 
     const snippetChildren =
@@ -87,4 +87,7 @@ conformanceSuite({
   setup: () => {},
   cleanup: () => cleanup(),
   capabilities: { asChild: false },
-})
+}
+
+conformanceSuite(adapter)
+conformanceA11ySuite(adapter)

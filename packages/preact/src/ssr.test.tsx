@@ -3,6 +3,8 @@ import { describe, it, expect } from 'vitest'
 import { h } from 'preact'
 import type { ComponentType } from 'preact'
 import { renderToString } from 'preact-render-to-string'
+import { ssrConformanceSuite } from '@praxis-ui/adapter-utils/testing'
+import type { BareFactoryOptions } from '@praxis-ui/adapter-utils/testing'
 import type { UnknownProps } from './types'
 import { createContractComponent } from './create-contract-component'
 
@@ -71,4 +73,16 @@ describe('createContractComponent — SSR (preact-render-to-string)', () => {
     expect(html).toContain('slot-cls')
     expect(html).toContain('child-cls')
   })
+})
+
+ssrConformanceSuite({
+  createComponent: (options) =>
+    createContractComponent(options as BareFactoryOptions) as ComponentType<UnknownProps> & {
+      displayName?: string
+    },
+  renderToString: (component, props = {}) => {
+    const { class: cls, ...rest } = props
+    const normalized = cls !== undefined ? { ...rest, className: cls } : rest
+    return renderToString(h(component as ComponentType<UnknownProps>, normalized as UnknownProps))
+  },
 })
