@@ -16,11 +16,9 @@ export abstract class StrictBase {
 
   // Always caps at console.warn — never throws. ARIA 'warning' violations route here
   // so they surface even in strict='throw' mode without aborting a render.
-  // queueMicrotask defers console.warn past the render commit so diagnostics don't
-  // block the frame; the warning still appears before the next macrotask.
   protected warn(message: string): void {
     if (this.strict) {
-      queueMicrotask(() => console.warn(message))
+      console.warn(message)
     }
   }
 
