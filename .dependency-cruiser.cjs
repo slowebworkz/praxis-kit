@@ -152,6 +152,7 @@ module.exports = {
           '\\.json$',
           'vitest[^/]*\\.config',
           'tsup\\.config',
+          'eslint\\.config\\.ts$',
           'test-setup\\.ts$',
           'packages/docs/src/(examples|vue-examples)/',
           'lib/bundle-analysis/src/',
