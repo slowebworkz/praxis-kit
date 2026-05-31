@@ -314,7 +314,7 @@ function buildDependencyGraph() {
 
   return {
     status: summary.error > 0 ? 'VIOLATIONS' : summary.warn > 0 ? 'WARNINGS' : 'CLEAN',
-    violations: summary.violations,
+    violations: summary.violations.filter((v) => v.rule.severity === 'error'),
     packageImports: Object.fromEntries(
       Object.entries(packageImports).map(([k, v]) => [k, [...v].sort()]),
     ),
