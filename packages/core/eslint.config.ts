@@ -24,7 +24,8 @@ const config = [
                 '@praxis-ui/solid',
                 '@praxis-ui/svelte',
                 '@praxis-ui/tailwind',
-                '@praxis-ui/docs',
+                '@praxis-ui/example-react',
+                '@praxis-ui/example-vue',
               ],
 
               message: 'core must not import from framework adapters',

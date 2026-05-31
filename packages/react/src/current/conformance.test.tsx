@@ -9,7 +9,7 @@ import type {
   ConformanceAdapter,
 } from '@praxis-ui/adapter-utils/testing'
 import type { ComponentType, ReactNode } from 'react'
-import type { UnknownProps } from '@/shared'
+import type { UnknownProps } from '@praxis-ui/react/shared'
 import { createContractComponent } from './create-contract-component'
 
 type ReactConformanceComponent = ComponentType<UnknownProps> & { displayName?: string }

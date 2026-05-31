@@ -37,10 +37,11 @@ const workspaceAlias: Record<string, string> = {
   '@praxis-ui/adapter-utils': join(root, 'lib/adapter-utils/src/index.ts'),
 }
 
-// React adapter uses @/shared and @/current as internal path aliases (tsconfig-only).
-// esbuild alias only handles exact strings, so this plugin resolves the regex variants.
+// The React adapter's source imports its own internal subpath @praxis-ui/react/shared,
+// which is a tsconfig-only path (not a published export), so esbuild can't resolve it
+// against the package's exports map. This plugin maps it to the adapter's source.
 function reactInternalAliasPlugin(): Plugin {
-  const re = /^@\/(shared|current|legacy)(\/.*)?$/
+  const re = /^@praxis-ui\/react\/(shared|current|legacy)(\/.*)?$/
   return {
     name: 'react-internal-alias',
     setup(b) {

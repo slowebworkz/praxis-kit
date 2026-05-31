@@ -110,9 +110,9 @@ describe('Box — presets via variantKey', () => {
     expect(cls).toContain('gap-2')
   })
 
-  it('grid2 preset with grid applies grid-cols-2 and md gap', () => {
+  it('grid mode with cols=2 applies grid-cols-2 and md gap', () => {
     const wrapper = mount(wrap(Box), {
-      props: { variantKey: 'grid2', grid: true } as never,
+      props: { grid: true, cols: '2', gap: 'md' } as never,
     })
     const cls = div(wrapper).className
     expect(cls).toContain('grid')

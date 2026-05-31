@@ -4,8 +4,8 @@ export * from './create-contract-component'
 export * from './create-contracted-component'
 export * from './create-polymorphic-component'
 export * from './slot'
-export { Slottable } from '@/shared'
-export type { SlottableProps } from '@/shared'
+export { Slottable } from '@praxis-ui/react/shared'
+export type { SlottableProps } from '@praxis-ui/react/shared'
 export type {
   PolymorphicProps,
   PolymorphicWithAsChild,
@@ -13,6 +13,6 @@ export type {
   PolymorphicComponent,
   ElementRef,
   RenderCallbackProps,
-} from '@/shared'
-export type { ReactFactoryOptions } from '@/shared'
-export { mergeRefs } from '@/shared'
+} from '@praxis-ui/react/shared'
+export type { ReactFactoryOptions } from '@praxis-ui/react/shared'
+export { mergeRefs } from '@praxis-ui/react/shared'

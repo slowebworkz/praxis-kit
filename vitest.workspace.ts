@@ -8,7 +8,6 @@ export default defineWorkspace([
   './packages/core/vitest.config.ts',
   './packages/tailwind/vitest.config.ts',
   './packages/react/vitest.config.ts',
-  './packages/docs/vitest.config.ts',
   './packages/vue/vitest.config.ts',
   './packages/preact/vitest.config.ts',
   './packages/solid/vitest.config.ts',
@@ -16,4 +15,6 @@ export default defineWorkspace([
   './packages/svelte/vitest.config.ts',
   './packages/svelte/vitest.ssr.config.ts',
   './packages/vite-plugin/vitest.config.ts',
+  './examples/react/vitest.config.ts',
+  './examples/vue/vitest.config.ts',
 ])

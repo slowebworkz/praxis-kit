@@ -1,6 +1,7 @@
 packages:
   - "packages/*"
   - "lib/*"
+  - "examples/*"
 allowBuilds:
   "@ast-grep/cli": true
   esbuild: true

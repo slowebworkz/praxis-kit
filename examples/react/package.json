@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-ui/docs",
+  "name": "@praxis-ui/example-react",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,17 +12,14 @@
   "dependencies": {
     "@praxis-ui/core": "workspace:*",
     "@praxis-ui/react": "workspace:*",
-    "@praxis-ui/tailwind": "workspace:*",
-    "@praxis-ui/vue": "workspace:*"
+    "@praxis-ui/tailwind": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@vue/test-utils": "catalog:",
     "jsdom": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "vitest": "catalog:",
-    "vue": "catalog:"
+    "vitest": "catalog:"
   }
 }

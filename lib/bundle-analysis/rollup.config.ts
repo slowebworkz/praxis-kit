@@ -25,12 +25,19 @@ const workspaceAlias = () =>
     ],
   })
 
-// @/shared and @/current are internal React adapter path aliases (tsconfig-only)
+// The React adapter's source imports its own internal subpath @praxis-ui/react/shared
+// (a tsconfig-only path, not a published export), so it must be resolved to source here.
 const reactAlias = () =>
   alias({
     entries: [
-      { find: /^@\/shared(\/.*)?$/, replacement: join(root, 'packages/react/src/shared$1') },
-      { find: /^@\/current(\/.*)?$/, replacement: join(root, 'packages/react/src/current$1') },
+      {
+        find: /^@praxis-ui\/react\/shared(\/.*)?$/,
+        replacement: join(root, 'packages/react/src/shared$1'),
+      },
+      {
+        find: /^@praxis-ui\/react\/current(\/.*)?$/,
+        replacement: join(root, 'packages/react/src/current$1'),
+      },
     ],
   })
 
