@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-30T17:37:57.833Z",
+  "generated": "2026-05-31T02:26:20.296Z",
   "bundles": {
     "full-runtime": 7907,
     "vue-minimal": 6859,
@@ -11,22 +11,50 @@
     "primitive-direct": 830
   },
   "architecture": {
-    "status": "CLEAN",
+    "status": "WARNINGS",
     "violations": 0,
     "exports": {
-      "@polymorphic-ui/core": {
-        "values": 20,
-        "types": 66
-      },
-      "@polymorphic-ui/react": {
-        "values": 2,
+      "@praxis-ui/codemod": {
+        "values": 0,
         "types": 0
       },
-      "@polymorphic-ui/tailwind": {
+      "@praxis-ui/core": {
+        "values": 35,
+        "types": 69
+      },
+      "@praxis-ui/eslint-plugin": {
+        "values": 10,
+        "types": 0
+      },
+      "@praxis-ui/preact": {
+        "values": 2,
+        "types": 5
+      },
+      "@praxis-ui/react": {
+        "values": 6,
+        "types": 0
+      },
+      "@praxis-ui/solid": {
+        "values": 1,
+        "types": 4
+      },
+      "@praxis-ui/svelte": {
+        "values": 1,
+        "types": 5
+      },
+      "@praxis-ui/tailwind": {
         "values": 6,
         "types": 10
       },
-      "@polymorphic-ui/vue": {
+      "@praxis-ui/ts-plugin": {
+        "values": 0,
+        "types": 0
+      },
+      "@praxis-ui/vite-plugin": {
+        "values": 15,
+        "types": 7
+      },
+      "@praxis-ui/vue": {
         "values": 2,
         "types": 5
       }
@@ -34,29 +62,29 @@
   },
   "complexity": {
     "lib/primitive": {
-      "files": 16,
+      "files": 18,
       "functions": 16,
-      "loc": 151
+      "loc": 278
     },
     "lib/contract": {
-      "files": 23,
-      "functions": 54,
-      "loc": 1078
+      "files": 32,
+      "functions": 65,
+      "loc": 2903
     },
     "lib/styling": {
-      "files": 15,
-      "functions": 12,
-      "loc": 373
+      "files": 20,
+      "functions": 13,
+      "loc": 869
     },
     "lib/adapter-utils": {
-      "files": 7,
-      "functions": 8,
-      "loc": 95
+      "files": 11,
+      "functions": 9,
+      "loc": 618
     },
     "packages/core": {
-      "files": 43,
+      "files": 39,
       "functions": 21,
-      "loc": 1961
+      "loc": 1457
     }
   }
 }
