@@ -5,7 +5,7 @@
  * `getChildRef` detects which location is live and reads from there.
  */
 import type { ReactElement, Ref } from 'react'
-import { mergeRefs, isFunction, isPlainObject } from '@/shared'
+import { mergeRefs, isFunction, isPlainObject } from '@praxis-ui/react/shared'
 
 type ReactWarningGetter = { isReactWarning?: unknown }
 /** A ref value that may be absent — the raw shape before normalizing to `Ref | null`. */

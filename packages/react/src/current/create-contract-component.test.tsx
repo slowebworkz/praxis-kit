@@ -3,7 +3,11 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createElement, Fragment, createRef, act } from 'react'
 import type { ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { PolymorphicComponent, RenderCallbackProps, UnknownProps } from '@/shared'
+import type {
+  PolymorphicComponent,
+  RenderCallbackProps,
+  UnknownProps,
+} from '@praxis-ui/react/shared'
 import { createContractComponent } from './create-contract-component'
 
 // Cast to bypass the PolymorphicComponent union in createElement overloads.

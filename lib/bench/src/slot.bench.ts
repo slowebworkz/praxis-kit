@@ -3,10 +3,10 @@ import { createElement, cloneElement, Fragment } from 'react'
 import type { ReactElement } from 'react'
 
 import type { AnyRecord } from '@praxis-ui/core'
-import { mergeProps } from '@/shared/slot/mergeProps'
-import { applySlot } from '@/shared/slot/applySlot'
-import { Slottable } from '@/shared/slot/Slottable'
-import { cloneSlotChild } from '@/current/slot/cloneSlotChild'
+import { mergeProps } from '@praxis-ui/react/shared/slot/mergeProps'
+import { applySlot } from '@praxis-ui/react/shared/slot/applySlot'
+import { Slottable } from '@praxis-ui/react/shared/slot/Slottable'
+import { cloneSlotChild } from '@praxis-ui/react/current/slot/cloneSlotChild'
 
 type AnyFn = (...args: unknown[]) => void
 

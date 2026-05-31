@@ -13,7 +13,12 @@
       "@praxis-ui/styling": ["./lib/styling/src"],
       "@praxis-ui/styling/*": ["./lib/styling/src/*"],
       "@praxis-ui/adapter-utils": ["./lib/adapter-utils/src"],
-      "@praxis-ui/adapter-utils/*": ["./lib/adapter-utils/src/*"]
+      "@praxis-ui/adapter-utils/*": ["./lib/adapter-utils/src/*"],
+      "@praxis-ui/react": ["./packages/react/src/index.ts"],
+      "@praxis-ui/react/shared": ["./packages/react/src/shared/index.ts"],
+      "@praxis-ui/react/shared/*": ["./packages/react/src/shared/*"],
+      "@praxis-ui/vue": ["./packages/vue/src/index.ts"],
+      "@praxis-ui/tailwind": ["./packages/tailwind/src/index.ts"]
     }
   }
 }

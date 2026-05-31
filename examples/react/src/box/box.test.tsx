@@ -128,8 +128,8 @@ describe('Box — presets via variantKey', () => {
     expect(cls).toContain('gap-2')
   })
 
-  it('grid2 preset with grid applies grid-cols-2 and md gap', () => {
-    mount(createElement(box(Box), { variantKey: 'grid2', grid: true }))
+  it('grid mode with cols=2 applies grid-cols-2 and md gap', () => {
+    mount(createElement(box(Box), { grid: true, cols: '2', gap: 'md' }))
     const cls = div().className
     expect(cls).toContain('grid')
     expect(cls).toContain('grid-cols-2')

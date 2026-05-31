@@ -12,10 +12,9 @@
       "@praxis-ui/contract": ["../contract/src"],
       "@praxis-ui/styling": ["../styling/src"],
       "@praxis-ui/adapter-utils": ["../adapter-utils/src"],
-      "@/shared": ["../../packages/react/src/shared"],
-      "@/shared/*": ["../../packages/react/src/shared/*"],
-      "@/current": ["../../packages/react/src/current"],
-      "@/current/*": ["../../packages/react/src/current/*"]
+      "@praxis-ui/react/shared": ["../../packages/react/src/shared"],
+      "@praxis-ui/react/shared/*": ["../../packages/react/src/shared/*"],
+      "@praxis-ui/react/current/*": ["../../packages/react/src/current/*"]
     }
   },
   "include": [

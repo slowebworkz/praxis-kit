@@ -154,7 +154,7 @@ module.exports = {
           'tsup\\.config',
           'eslint\\.config\\.ts$',
           'test-setup\\.ts$',
-          'packages/docs/src/(examples|vue-examples)/',
+          'examples/(react|vue)/src/',
           'lib/bundle-analysis/src/',
           'packages/tree-shaking-tests/scenarios/',
         ],

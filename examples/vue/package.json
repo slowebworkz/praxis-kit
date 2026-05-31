@@ -1,0 +1,23 @@
+{
+  "name": "@praxis-ui/example-vue",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . --fix --config eslint.config.ts",
+    "lint:check": "eslint . --config eslint.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@praxis-ui/core": "workspace:*",
+    "@praxis-ui/tailwind": "workspace:*",
+    "@praxis-ui/vue": "workspace:*"
+  },
+  "devDependencies": {
+    "@vue/test-utils": "catalog:",
+    "jsdom": "catalog:",
+    "vitest": "catalog:",
+    "vue": "catalog:"
+  }
+}
