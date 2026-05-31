@@ -1,8 +1,13 @@
 // @vitest-environment jsdom
 import { h } from 'vue'
 import { mount } from '@vue/test-utils'
-import { conformanceSuite } from '@praxis-ui/adapter-utils/testing'
-import type { ChildSpec, ConformanceComponent } from '@praxis-ui/adapter-utils/testing'
+import { conformanceSuite, conformanceA11ySuite } from '@praxis-ui/adapter-utils/testing'
+import type {
+  BareFactoryOptions,
+  ChildSpec,
+  ConformanceAdapter,
+  ConformanceComponent,
+} from '@praxis-ui/adapter-utils/testing'
 import { createContractComponent } from './create-contract-component'
 import type { VNode } from 'vue'
 
@@ -14,11 +19,13 @@ function toVNode(c: ChildSpec): VNode {
   return h(c.tag, c.props ?? {})
 }
 
-conformanceSuite({
-  createComponent: (options) => createContractComponent(options as never) as ConformanceComponent,
+const adapter: ConformanceAdapter<ConformanceComponent> = {
+  createComponent: (options) =>
+    createContractComponent(options as BareFactoryOptions) as ConformanceComponent,
   render: (component, props = {}, children = []) => {
     let wrapper = mount(component as never, {
       props: props as never,
+      attachTo: document.body,
       ...(props.asChild === true || children.length > 0
         ? { slots: { default: () => children.map(toVNode) } }
         : {}),
@@ -31,6 +38,7 @@ conformanceSuite({
         wrapper.unmount()
         wrapper = mount(component as never, {
           props: newProps as never,
+          attachTo: document.body,
           ...(newProps.asChild === true || newChildren.length > 0
             ? { slots: { default: () => newChildren.map(toVNode) } }
             : {}),
@@ -43,4 +51,7 @@ conformanceSuite({
   },
   setup: () => {},
   cleanup: () => {},
-})
+}
+
+conformanceSuite(adapter)
+conformanceA11ySuite(adapter)

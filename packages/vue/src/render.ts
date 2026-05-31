@@ -89,13 +89,27 @@ function tryRenderAsChild(
   return null
 }
 
+// Vue's hyphenate converts onKeyDown → 'key-down' (an invalid event name).
+// Normalize multi-word camelCase event handlers to all-lowercase so Vue's
+// hyphenate produces the correct DOM event type: onKeydown → 'keydown'.
+const MULTI_WORD_EVENT_RE = /^on[A-Z][a-z]+[A-Z]/
+function normalizeEventKeys(props: UnknownProps): UnknownProps {
+  const out: Record<string, unknown> = {}
+  for (const k in props) {
+    out[MULTI_WORD_EVENT_RE.test(k) ? 'on' + k.slice(2).toLowerCase() : k] = (
+      props as Record<string, unknown>
+    )[k]
+  }
+  return out as UnknownProps
+}
+
 function buildDomProps(
   runtime: Runtime,
   props: ResolvedProps,
   className: string,
   tag: ElementType,
 ): UnknownProps {
-  const { role, ...rest } = props
+  const { role, ...rest } = normalizeEventKeys(props)
 
   const base: UnknownProps = {
     ...rest,

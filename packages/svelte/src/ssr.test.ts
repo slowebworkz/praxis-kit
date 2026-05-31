@@ -1,8 +1,13 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import { render } from 'svelte/server'
+import { ssrConformanceSuite } from '@praxis-ui/adapter-utils/testing'
+import type { BareFactoryOptions, ConformanceComponent } from '@praxis-ui/adapter-utils/testing'
 import Polymorphic from './Polymorphic.svelte'
 import { createContractComponent } from './create-contract-component'
+import type { AnyBuiltRuntime } from './types/built-runtime'
+
+type SvelteSSRComponent = ConformanceComponent & { _bundle: AnyBuiltRuntime }
 
 describe('Polymorphic — SSR (svelte/server render)', () => {
   it('renders to HTML without accessing browser globals', () => {
@@ -40,4 +45,17 @@ describe('Polymorphic — SSR (svelte/server render)', () => {
     expect(html).toContain('<section')
     expect(html).not.toContain('<div')
   })
+})
+
+ssrConformanceSuite<SvelteSSRComponent>({
+  createComponent: (options): SvelteSSRComponent => ({
+    displayName: options.name ?? 'PolymorphicComponent',
+    _bundle: createContractComponent(options as BareFactoryOptions) as AnyBuiltRuntime,
+  }),
+  renderToString: (component, props = {}) => {
+    const { html } = render(Polymorphic, {
+      props: { bundle: component._bundle, ...props },
+    } as never)
+    return html
+  },
 })

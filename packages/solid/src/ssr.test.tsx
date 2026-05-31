@@ -1,7 +1,11 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import { renderToString } from 'solid-js/web'
+import type { Component } from 'solid-js'
+import { ssrConformanceSuite } from '@praxis-ui/adapter-utils/testing'
+import type { BareFactoryOptions } from '@praxis-ui/adapter-utils/testing'
 import { createContractComponent } from './create-contract-component'
+import type { UnknownProps } from './types'
 
 describe('createContractComponent — SSR (solid-js/web renderToString)', () => {
   it('renders to HTML without accessing browser globals', () => {
@@ -40,4 +44,15 @@ describe('createContractComponent — SSR (solid-js/web renderToString)', () => 
     expect(html).toContain('<section')
     expect(html).not.toContain('<div')
   })
+})
+
+ssrConformanceSuite({
+  createComponent: (options) =>
+    createContractComponent(options as BareFactoryOptions) as Component<UnknownProps> & {
+      displayName?: string
+    },
+  renderToString: (component, props = {}) => {
+    const Comp = component
+    return renderToString(() => <Comp {...(props as UnknownProps)} />)
+  },
 })
