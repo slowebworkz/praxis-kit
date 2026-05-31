@@ -1,0 +1,9 @@
+{
+  "mustInclude": ["lib/primitive/src", "packages/react/src"],
+  "mustExclude": [
+    "packages/vue/src",
+    "packages/solid/src",
+    "packages/preact/src",
+    "packages/tailwind/src"
+  ]
+}
