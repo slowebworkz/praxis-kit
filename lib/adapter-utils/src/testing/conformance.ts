@@ -151,6 +151,8 @@ export function conformanceSuite(adapter: ConformanceAdapter): void {
           called = true
         },
       })
+      // React/Preact compat listen on focusin; Vue listens on native focus
+      element.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
       element.dispatchEvent(new FocusEvent('focus'))
       expect(called).toBe(true)
     })
@@ -163,6 +165,8 @@ export function conformanceSuite(adapter: ConformanceAdapter): void {
           called = true
         },
       })
+      // React/Preact compat listen on focusout; Vue listens on native blur
+      element.dispatchEvent(new FocusEvent('focusout', { bubbles: true }))
       element.dispatchEvent(new FocusEvent('blur'))
       expect(called).toBe(true)
     })
