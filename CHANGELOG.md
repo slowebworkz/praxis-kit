@@ -2,6 +2,37 @@
 
 ## [Unreleased]
 
+### BREAKING — `@praxis-ui/tailwind` layout pipeline: `none` is now a real mode
+
+When **neither** the `flex` nor `grid` prop is set, the layout pipeline previously returned the raw
+class string **unchanged** (passthrough). It now resolves to an explicit `'none'` mode and **strips
+all layout-dependent classes**: the `flex`/`grid` display literals, every flex-family utility
+(`flex-*`, `grow`, `shrink`, `basis-*`), every grid-family utility (`grid-*`, `col-*`, `row-*`,
+`auto-cols-*`, `auto-rows-*`), and `gap-*` (gap requires an active display mode).
+
+```tsx
+// Before: passthrough — grid-cols-2 survived.
+// After:  none mode — grid-cols-2 (and gap-4) are stripped.
+<Box className="grid-cols-2 gap-4 rounded" /> // → "rounded"
+```
+
+The display mode is now owned **solely** by the `flex`/`grid` props. A `flex`/`grid` class in a
+class string no longer sets the mode (`LayoutState` no longer infers from tokens). To get a layout,
+pass the prop: `<Box grid className="grid-cols-2" />`.
+
+**Reserved layout literals.** Because the mode is prop-owned, a `flex`/`grid` _display literal_
+appearing in resolved classes (base, variants, or `className`) is an authoring mistake and now emits
+a dev `console.warn`. Use the prop, not the class.
+
+**Stripping is resemblance-based (accepted break point).** A class is stripped under a conflicting
+mode because its name matches a Tailwind grid/flex prefix, **not** because it's verified to be a
+real Tailwind utility. So a custom class like `grid-triplets-1` is stripped in flex mode purely
+because it resembles a grid utility. The plugin does not resolve against the Tailwind config — do
+not name custom classes after Tailwind grid/flex prefixes if they must survive a mode switch.
+
+Migration: if you relied on layout utilities rendering without a `flex`/`grid` prop, add the
+matching prop (`<Box flex …>` / `<Box grid …>`).
+
 ### HTML5 structural contracts (`@praxis-ui/core`)
 
 `htmlContracts` is a new export from `@praxis-ui/core` providing ready-made `EnforcementOptions`
