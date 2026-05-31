@@ -1,18 +1,4 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "paths": {
-      "@praxis-ui/core": ["../core/src/index.ts"],
-      "@praxis-ui/core/primitive": ["../core/src/primitive.ts"],
-      "@praxis-ui/core/contract": ["../core/src/contract.ts"],
-      "@praxis-ui/core/styling": ["../core/src/styling.ts"],
-      "@praxis-ui/primitive": ["../../lib/primitive/src"],
-      "@praxis-ui/contract": ["../../lib/contract/src"],
-      "@praxis-ui/styling": ["../../lib/styling/src"],
-      "@praxis-ui/adapter-utils": ["../../lib/adapter-utils/src"],
-      "@/shared": ["./src/shared/index.ts"],
-      "@/shared/*": ["./src/shared/*"]
-    }
-  },
   "include": ["src", "./vitest.config.ts", "./tsup.config.ts"]
 }

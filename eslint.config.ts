@@ -36,6 +36,7 @@ const config = [
             'lib/adapter-utils/vitest.config.ts',
             'lib/primitive/vitest.config.ts',
             'lib/*/eslint.config.ts',
+            'examples/*/eslint.config.ts',
             // framework-specific scenarios are excluded from the tree-shaking-tests tsconfig
             // (jsxImportSource:react conflicts with Solid/Vue/Preact/Svelte JSX/return types)
             'lib/tree-shaking-tests/scenarios/solid-minimal/*.ts',
@@ -60,7 +61,7 @@ const config = [
 
   // Self-validate: run the plugin's own rules on all workspace source.
   {
-    files: ['packages/*/src/**/*.{ts,tsx}', 'packages/docs/**/*.{ts,tsx}'],
+    files: ['packages/*/src/**/*.{ts,tsx}', 'examples/*/src/**/*.{ts,tsx}'],
     rules: {
       '@praxis-ui/no-dead-compound': 'error',
       '@praxis-ui/no-enforcement-without-strict': 'error',

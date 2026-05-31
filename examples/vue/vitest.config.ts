@@ -5,9 +5,8 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   test: {
-    name: 'docs',
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    name: 'example-vue',
+    include: ['src/**/*.test.ts'],
     environment: 'jsdom',
-    setupFiles: ['src/test-setup.ts'],
   },
 })

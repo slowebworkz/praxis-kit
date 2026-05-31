@@ -56,8 +56,6 @@ export const Box = createContractComponent<'div', EmptyRecord, typeof variants>(
     presets: {
       row: { direction: 'row', align: 'center', gap: 'md' },
       stack: { direction: 'col', gap: 'sm' },
-      grid2: { cols: '2', gap: 'md' },
     },
   },
-  filterProps: (key: string, variantKeys: ReadonlySet<string>) => variantKeys.has(key),
 })

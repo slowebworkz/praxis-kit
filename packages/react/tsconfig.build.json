@@ -3,12 +3,8 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "paths": {
-      "@/shared": ["./src/shared/index.ts"],
-      "@/shared/*": ["./src/shared/*"],
-      "@/current": ["./src/current/index.ts"],
-      "@/current/*": ["./src/current/*"],
-      "@/legacy": ["./src/legacy/index.ts"],
-      "@/legacy/*": ["./src/legacy/*"]
+      "@praxis-ui/react/shared": ["./src/shared/index.ts"],
+      "@praxis-ui/react/shared/*": ["./src/shared/*"]
     }
   },
   "include": ["src"]
