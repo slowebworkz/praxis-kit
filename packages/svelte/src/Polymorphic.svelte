@@ -22,14 +22,11 @@
 
   // Svelte 5 event delegation requires lowercase handler names (onclick, onfocus…).
   // Normalize React-style camelCase handlers so spreads on <svelte:element> work.
+  const EVENT_RE = /^on[A-Z]/
   function normalizeEventKeys(props: UnknownProps): UnknownProps {
     const out: Record<string, unknown> = {}
     for (const k in props) {
-      if (k.length > 2 && k[0] === 'o' && k[1] === 'n' && k[2] === k[2]?.toUpperCase()) {
-        out[k.toLowerCase()] = (props as Record<string, unknown>)[k]
-      } else {
-        out[k] = (props as Record<string, unknown>)[k]
-      }
+      out[EVENT_RE.test(k) ? k.toLowerCase() : k] = (props as Record<string, unknown>)[k]
     }
     return out as UnknownProps
   }
