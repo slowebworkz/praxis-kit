@@ -21,13 +21,12 @@ type IntrinsicJSXProps<T extends ElementType> = T extends IntrinsicTag
   ? JSX.IntrinsicElements[T]
   : UnknownProps
 
-type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = PropsOf<G> &
-  // OmitIndexSignature strips the [k: string]: string|undefined leak from
-  // VariantProps<VariantMap> (the default when no variants are defined).
-  // Named variant keys (size, intent, …) are literal and survive the strip.
+type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = OmitIndexSignature<
+  PropsOf<G>
+> &
   OmitIndexSignature<VariantProps<VariantsOf<G>>> & {
     as?: TAs
-    class?: ClassName
+    class?: ClassName | undefined
     variantKey?: keyof PresetOf<G>
     ref?: (el: ElementRef<TAs>) => void
   }
@@ -43,12 +42,12 @@ type SharedProps<G extends PolymorphicGenerics, TAs extends ElementType> = Omit<
 // defaults) is made Partial because those values are filled by the runtime; callers
 // should not be forced to re-supply them. ref is typed loosely because the actual
 // element type depends on what the render function produces.
-type AsChildProps<G extends PolymorphicGenerics> = Partial<PropsOf<G>> &
+type AsChildProps<G extends PolymorphicGenerics> = Partial<OmitIndexSignature<PropsOf<G>>> &
   OmitIndexSignature<VariantProps<VariantsOf<G>>> & {
     as?: never
     asChild: true
     children: SlotRenderFn
-    class?: ClassName
+    class?: ClassName | undefined
     variantKey?: keyof PresetOf<G>
     ref?: unknown
   }

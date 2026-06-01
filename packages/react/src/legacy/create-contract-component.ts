@@ -20,8 +20,8 @@ import type {
 
 export function createContractComponent<
   TDefault extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
+  Props extends UnknownProps = EmptyRecord,
+  Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
 >(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps>) {

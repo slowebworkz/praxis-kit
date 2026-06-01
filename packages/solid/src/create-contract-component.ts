@@ -14,8 +14,8 @@ import type { KnownProps, PolymorphicComponent, SolidElement, UnknownProps } fro
 
 export function createContractComponent<
   TDefault extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
+  Props extends UnknownProps = EmptyRecord,
+  Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
 >(options: SolidFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps>) {

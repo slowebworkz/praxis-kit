@@ -1,4 +1,4 @@
-import type { ClassPlugin, ClassPipelineFn } from '../types'
+import type { AnyRecord, ClassPlugin, ClassPipelineFn } from '../types'
 
 // Bundlers (esbuild, Rollup, webpack) replace process.env.NODE_ENV with a string literal,
 // enabling dead-code elimination of the dev guard in production builds.
@@ -13,9 +13,10 @@ export function assertPluginShape(result: unknown): asserts result is ClassPlugi
     panic(
       `[praxis-ui] Plugin factory must return an object with a 'pipeline' function. Got: ${result === null ? 'null' : typeof result}.`,
     )
-  if (typeof (result as Record<string, unknown>).pipeline !== 'function')
+  const plugin = result as AnyRecord
+  if (typeof plugin.pipeline !== 'function')
     panic(
-      `[praxis-ui] Plugin factory return value is missing a 'pipeline' function. Got pipeline: ${typeof (result as Record<string, unknown>).pipeline}.`,
+      `[praxis-ui] Plugin factory return value is missing a 'pipeline' function. Got pipeline: ${typeof plugin.pipeline}.`,
     )
 }
 

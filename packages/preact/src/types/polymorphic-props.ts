@@ -1,6 +1,6 @@
 import type { JSX, Ref } from 'preact'
 import type { AnyVNode } from './primitives'
-import type { Simplify } from 'type-fest'
+import type { OmitIndexSignature, Simplify } from 'type-fest'
 import type {
   ClassName,
   DefaultOf,
@@ -22,10 +22,12 @@ type IntrinsicJSXProps<T extends ElementType> = T extends IntrinsicTag
   ? JSX.IntrinsicElements[T]
   : UnknownProps
 
-type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = PropsOf<G> &
-  VariantProps<VariantsOf<G>> & {
+type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = OmitIndexSignature<
+  PropsOf<G>
+> &
+  OmitIndexSignature<VariantProps<VariantsOf<G>>> & {
     as?: TAs
-    className?: ClassName
+    className?: ClassName | undefined
     variantKey?: keyof PresetOf<G>
     ref?: Ref<ElementRef<TAs>>
   }
