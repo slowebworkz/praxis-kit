@@ -167,6 +167,91 @@ export const fieldsetContract: EnforcementOptions = {
   ],
 }
 
+// ─── Additional contracts ─────────────────────────────────────────────────────
+
+/**
+ * <menu> — same content model as <ul>/<ol>.
+ */
+export const menuContract: EnforcementOptions = {
+  strict: 'warn',
+  children: [{ name: 'menu-item', match: isTag('li', ...METADATA_TAGS) }],
+}
+
+/**
+ * <datalist> — direct children must be <option>, <script>, or <template>.
+ */
+export const datalistContract: EnforcementOptions = {
+  strict: 'warn',
+  children: [{ name: 'option', match: isTag('option', ...METADATA_TAGS) }],
+}
+
+/**
+ * <audio> — zero or more <source>/<track> elements plus fallback flow content.
+ */
+export const audioContract: EnforcementOptions = {
+  strict: 'warn',
+  children: [
+    { name: 'source', match: isTag('source') },
+    { name: 'track', match: isTag('track') },
+    { name: 'content', match: isFlowContent('source', 'track') },
+  ],
+}
+
+/**
+ * <video> — zero or more <source>/<track> elements plus fallback flow content.
+ */
+export const videoContract: EnforcementOptions = {
+  strict: 'warn',
+  children: [
+    { name: 'source', match: isTag('source') },
+    { name: 'track', match: isTag('track') },
+    { name: 'content', match: isFlowContent('source', 'track') },
+  ],
+}
+
+/**
+ * <head> — metadata content only.
+ */
+export const headContract: EnforcementOptions = {
+  strict: 'warn',
+  children: [
+    {
+      name: 'metadata',
+      match: isTag('base', 'link', 'meta', 'noscript', 'script', 'style', 'template', 'title'),
+    },
+  ],
+}
+
+/**
+ * <html> — one <head> and one <body>.
+ */
+export const htmlContract: EnforcementOptions = {
+  strict: 'warn',
+  children: [
+    {
+      name: 'head',
+      match: isTag('head'),
+      cardinality: { min: 1, max: 1 },
+      position: 'first',
+    },
+    {
+      name: 'body',
+      match: isTag('body'),
+      cardinality: { min: 1, max: 1 },
+    },
+  ],
+}
+
+export const buttonContract: EnforcementOptions = {
+  strict: 'warn',
+  children: [
+    {
+      name: 'interactive-content',
+      match: isTag('a', 'button', 'input', 'select', 'textarea', 'details'),
+    },
+  ],
+}
+
 // ─── Convenience map ──────────────────────────────────────────────────────────
 
 /**
@@ -185,6 +270,10 @@ export const fieldsetContract: EnforcementOptions = {
 export const htmlContracts: Record<string, EnforcementOptions> = {
   ul: listContract,
   ol: listContract,
+  menu: menuContract,
+  datalist: datalistContract,
+  audio: audioContract,
+  video: videoContract,
   table: tableContract,
   thead: tableBodyContract,
   tbody: tableBodyContract,
@@ -198,4 +287,6 @@ export const htmlContracts: Record<string, EnforcementOptions> = {
   figure: figureContract,
   details: detailsContract,
   fieldset: fieldsetContract,
+  head: headContract,
+  html: htmlContract,
 }

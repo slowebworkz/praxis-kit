@@ -83,7 +83,7 @@ describe('createContractComponent (Solid adapter)', () => {
   })
 
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
-    const Comp = createContractComponent({
+    const Comp = createContractComponent<'div', { myProp?: string }>({
       tag: 'div',
       filterProps: (key) => key === 'myProp',
     })
