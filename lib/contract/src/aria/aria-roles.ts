@@ -1,1 +1,2 @@
-export { KNOWN_ARIA_ROLES, isKnownAriaRole, hasRole } from '../types/aria-role'
+export { KNOWN_ARIA_ROLES, isKnownAriaRole } from '../types/aria-role'
+export { hasRole } from '../types/intrinsic-props'

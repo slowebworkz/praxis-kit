@@ -1,7 +1,8 @@
 export type { StrictMode } from './strict-mode'
 export type { IntrinsicProps, PropsWithRole } from './contract-primitives'
+export { hasRole } from './intrinsic-props'
 export type { AriaRole, KnownAriaRole } from './aria-role'
-export { KNOWN_ARIA_ROLES, isKnownAriaRole, hasRole } from './aria-role'
+export { KNOWN_ARIA_ROLES, isKnownAriaRole } from './aria-role'
 export type {
   AriaContext,
   AriaFix,
