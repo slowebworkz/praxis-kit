@@ -17,4 +17,7 @@ export default defineWorkspace([
   './packages/vite-plugin/vitest.config.ts',
   './examples/react/vitest.config.ts',
   './examples/vue/vitest.config.ts',
+  './examples/preact/vitest.config.ts',
+  './examples/solid/vitest.config.ts',
+  './examples/svelte/vitest.config.ts',
 ])

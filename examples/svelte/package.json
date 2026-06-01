@@ -1,0 +1,24 @@
+{
+  "name": "@praxis-ui/example-svelte",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . --fix --config eslint.config.ts",
+    "lint:check": "eslint . --config eslint.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@praxis-ui/core": "workspace:*",
+    "@praxis-ui/svelte": "workspace:*",
+    "@praxis-ui/tailwind": "workspace:*"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "catalog:",
+    "@testing-library/svelte": "catalog:",
+    "jsdom": "catalog:",
+    "svelte": "catalog:",
+    "vitest": "catalog:"
+  }
+}
