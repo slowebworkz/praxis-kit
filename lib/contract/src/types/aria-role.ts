@@ -21,7 +21,7 @@ export type KnownAriaRole = (typeof KNOWN_ARIA_ROLES)[number]
 
 export type AriaRole = KnownAriaRole | (string & {})
 
-import type { IntrinsicProps, PropsWithRole } from './contract-primitives'
+import type { IntrinsicProps, PropsWithRole } from './intrinsic-props'
 
 const KNOWN_ARIA_ROLES_SET: ReadonlySet<string> = new Set(KNOWN_ARIA_ROLES)
 

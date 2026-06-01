@@ -1,6 +1,1 @@
-import type { AnyRecord } from '@praxis-ui/primitive'
-import type { AriaRole } from './aria-role'
-
-export type IntrinsicProps = AnyRecord & { role?: AriaRole }
-
-export type PropsWithRole = Readonly<IntrinsicProps & { role: string }>
+export type { IntrinsicProps, PropsWithRole } from './intrinsic-props'
