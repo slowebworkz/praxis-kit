@@ -274,6 +274,91 @@ describe('createTailwindPipeline — reserved layout literals', () => {
   })
 })
 
+describe('createTailwindPipeline — dead-variant detection (Case B)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  // A component whose `cols` variant emits only grid utilities.
+  const make = () =>
+    createTailwindPipeline({
+      variants: { cols: { '2': 'grid-cols-2', '3': 'grid-cols-3' }, pad: { sm: 'p-2', lg: 'p-8' } },
+    })
+
+  function deadVariantWarned(warn: ReturnType<typeof vi.spyOn>): boolean {
+    return warn.mock.calls.some((c: unknown[]) =>
+      /produces nothing in this mode/i.test(String(c[0])),
+    )
+  }
+
+  it('warns when a grid-only variant (via prop) is fully stripped in flex mode', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    make().pipeline('div', { flex: true, cols: '2' }, '', undefined)
+    expect(deadVariantWarned(warn)).toBe(true)
+    expect(warn.mock.calls.some((c) => /cols=2/.test(String(c[0])))).toBe(true)
+  })
+
+  it('warns when a grid-only variant is dead in none mode', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    make().pipeline('div', { cols: '3' }, '', undefined)
+    expect(deadVariantWarned(warn)).toBe(true)
+  })
+
+  it('does not warn when the variant survives (grid mode)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    make().pipeline('div', { grid: true, cols: '2' }, '', undefined)
+    expect(deadVariantWarned(warn)).toBe(false)
+  })
+
+  it('does not warn for a non-layout variant (always survives)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    make().pipeline('div', { flex: true, pad: 'lg' }, '', undefined)
+    expect(deadVariantWarned(warn)).toBe(false)
+  })
+
+  it('detects a dead variant activated via preset (variantKey)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const pipeline = createTailwindPipeline({
+      variants: { cols: { '2': 'grid-cols-2' } },
+      presetMap: { grid2: { cols: '2' } },
+    })
+    pipeline.pipeline('div', { flex: true }, '', 'grid2')
+    expect(deadVariantWarned(warn)).toBe(true)
+  })
+
+  it('detects a dead variant from defaultVariants', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const pipeline = createTailwindPipeline({
+      variants: { cols: { '2': 'grid-cols-2' } },
+      defaultVariants: { cols: '2' },
+    })
+    pipeline.pipeline('div', { flex: true }, '', undefined)
+    expect(deadVariantWarned(warn)).toBe(true)
+  })
+
+  it('does not warn for a variant whose contribution only partially strips', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const pipeline = createTailwindPipeline({
+      // grid-cols-2 strips in flex mode, but rounded survives → not dead.
+      variants: { box: { a: 'grid-cols-2 rounded' } },
+    })
+    pipeline.pipeline('div', { flex: true, box: 'a' }, '', undefined)
+    expect(deadVariantWarned(warn)).toBe(false)
+  })
+
+  it('does not warn for a dimension that participates in a compound variant', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const pipeline = createTailwindPipeline({
+      // cols=2 alone strips in flex mode, but a compound on `cols` may rescue it,
+      // so the dimension is skipped to avoid a false positive.
+      variants: { cols: { '2': 'grid-cols-2' }, size: { lg: 'text-lg' } },
+      compoundVariants: [{ cols: '2', size: 'lg', class: 'flex-row' }],
+    })
+    pipeline.pipeline('div', { flex: true, cols: '2' }, '', undefined)
+    expect(deadVariantWarned(warn)).toBe(false)
+  })
+})
+
 describe('createTailwindPipeline — baseClassName layout stripping', () => {
   it('strips layout classes from baseClassName when no layout is active (none mode)', () => {
     const pipeline = createTailwindPipeline({ baseClassName: 'flex flex-col gap-4 rounded' })
