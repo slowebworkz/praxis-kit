@@ -1,0 +1,78 @@
+import type {
+  AnyRecord,
+  ElementType,
+  PresetMap,
+  ResolvedFactoryOptions,
+  StrictMode,
+  VariantMap,
+} from '../types'
+
+// Mirrors the StrictBase semantics: silent when off, console.warn on 'warn',
+// throw on 'throw' / true. Used for construction-time misconfiguration checks.
+function report(strict: StrictMode, message: string): void {
+  if (strict === false) return
+  if (strict === true || strict === 'throw') throw new Error(message)
+  console.warn(message)
+}
+
+/**
+ * Construction-time validation of the variant surface, gated on `strict`.
+ *
+ * A `presets` selection or `defaults` entry that references a variant key — or a
+ * value of a key — not declared in `variants` resolves to no class at runtime,
+ * silently. TypeScript catches this in typed usage, but untyped JS consumers and
+ * `as`-cast escapes bypass it. This mirrors the type contract at runtime: warn
+ * (`strict: 'warn'`) or throw (`strict: 'throw'`/`true`); a no-op when `false`.
+ *
+ * Runs once per factory (not per render). Render-time checks — unknown
+ * `variantKey`, undefined variant value at the call site — are a separate
+ * follow-up (they require `strict` threaded into the class resolver).
+ */
+export function validateFactoryOptions<
+  TDefault extends ElementType,
+  Props extends AnyRecord,
+  V extends Readonly<VariantMap>,
+  TPreset extends PresetMap<V>,
+>(resolved: ResolvedFactoryOptions<TDefault, Props, V, TPreset>): void {
+  const { strict } = resolved
+  if (strict === false) return
+
+  const name = resolved.displayName ?? 'Component'
+  const { variants } = resolved
+
+  // `selection` is a variant-selection object (a preset value or `defaults`).
+  // Typed as `object` so callers pass it without a cast; the single cast to an
+  // indexable record is localized here.
+  const checkSelection = (label: string, selection: object): void => {
+    const record = selection as AnyRecord
+    for (const dim in record) {
+      const value = record[dim]
+      // `null`/`undefined` is the "unset" sentinel and is skipped: a selection
+      // that doesn't pick a dimension is a missing reference, not a dead one.
+      // Only present values are checked against the declared variant states.
+      if (value === undefined || value === null) continue
+      const states = variants?.[dim]
+      if (!states) {
+        report(strict, `${name}: ${label} references unknown variant "${dim}".`)
+        continue
+      }
+      const stateKey = String(value)
+      if (!(stateKey in states)) {
+        report(
+          strict,
+          `${name}: ${label} sets "${dim}" to unknown value "${stateKey}" ` +
+            `(valid: ${Object.keys(states).join(', ')}).`,
+        )
+      }
+    }
+  }
+
+  const { presetMap } = resolved
+  if (presetMap) {
+    for (const presetKey in presetMap) {
+      checkSelection(`preset "${presetKey}"`, presetMap[presetKey]!)
+    }
+  }
+
+  if (resolved.defaultVariants) checkSelection('defaults', resolved.defaultVariants)
+}
