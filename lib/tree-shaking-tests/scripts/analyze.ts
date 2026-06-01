@@ -34,6 +34,7 @@ const workspaceAlias: Record<string, string> = {
   '@praxis-ui/primitive': join(root, 'lib/primitive/src/index.ts'),
   '@praxis-ui/styling': join(root, 'lib/styling/src/index.ts'),
   '@praxis-ui/contract': join(root, 'lib/contract/src/index.ts'),
+  '@praxis-ui/contract/types': join(root, 'lib/contract/src/types/index.ts'),
   '@praxis-ui/adapter-utils': join(root, 'lib/adapter-utils/src/index.ts'),
 }
 
