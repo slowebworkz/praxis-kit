@@ -777,19 +777,45 @@ consumer/example workspaces pure-inherit (`packages/react`, `packages/vue`, both
 redundant local `paths` blocks). Box example cleaned (removed the incoherent `grid2` preset + a
 no-op `filterProps`).
 
-### Next — compound + runnable examples
+---
 
-The restructure set up the home; the original goal (prove the API on real, stateful components) is
-still open:
+## Shipped — Tabs compound component + cross-adapter examples (PRs #88, #89, #90)
 
-- [ ] Build compound examples — **Tabs** (the README's flagship), then Accordion / Dialog — as
-      contract components + framework context, in `examples/react` (and mirror to `examples/vue`).
-      This is the real API stress test: context, state, multi-part children, enforcement.
-- [ ] `docs/` prose tree + `docs/examples.md` catalog linking into `examples/*` (the
-      earlier-discussed documentation reorganization, deferred when scope shifted to the
-      restructure).
-- [ ] Runnable shell (Vite dev server per example workspace) — deferred during the restructure;
-      revisit once compound examples exist and there's something worth viewing in a browser.
+Tabs is the flagship compound component demonstrating the full praxis-ui contract stack: ARIA
+enforcement, structural child rules, and per-framework state/context — all with the contract layer
+owned by praxis-ui and state owned by the framework.
+
+**PR #88** — React Tabs (`examples/react`): Root, List, Trigger, Content, Indicator sub-components.
+React Context owns active-tab state. Split into `context.ts` / `types.ts` / `utils.ts` / `Tabs.tsx`.
+
+**PR #89** — Test suite for React Tabs + `tab`/`tablist`/`tabpanel` added to `KNOWN_ARIA_ROLES`.
+Uncovered a silent bug: missing role names caused `render.ts` to drop `role` from the DOM entirely.
+Roles are now forwarded correctly. `isKnownAriaRole`/`hasRole`/`KNOWN_ARIA_ROLES` consolidated to a
+single source of truth in `lib/contract/src/types/`; `@praxis-ui/contract/types` sub-entry added so
+`packages/core/primitive` can import them without pulling in the full ARIA engine (tree-shaking
+preserved). `@praxis-ui/solid` and `@praxis-ui/svelte` added to `tsconfig.paths.json` so example
+packages resolve adapter source, enabling correct JSX transforms.
+
+**PR #90** — Tabs + Box + Button for all remaining adapters:
+
+- Vue — `provide`/`inject` for context; `toComponent()` helper replaces `as never` casts
+- Preact — `preact/compat` context; `@testing-library/preact` (added to catalog)
+- Solid — `createSignal` + `createContext`; `@solidjs/testing-library`
+- Svelte — `setContext`/`getContext`; per-sub-component `.svelte` files; `@testing-library/svelte`
+  with `await act()` for reactive flush
+
+Circular dependency in `lib/contract/src/types/` fixed: `aria-role.ts` had no imports, then gained
+`IntrinsicProps`/`PropsWithRole` imports from `intrinsic-props.ts`, which in turn imported
+`AriaRole` back. Resolved by moving `hasRole` into `intrinsic-props.ts` — `aria-role.ts` now has
+zero imports from the contract types layer.
+
+### Next — runnable examples + documentation
+
+- [ ] Vite dev server per example workspace — now that compound examples exist, there is something
+      worth viewing in a browser. The dev server story is the missing piece.
+- [ ] `docs/` prose tree + `docs/examples.md` catalog linking into `examples/*`.
+- [ ] Overhead benchmark — implement the vanilla React Tabs baseline in `lib/bench` and wire up the
+      comparison suite (see P2 — Praxis UI vs. Vanilla React Overhead Benchmark above).
 
 ---
 
