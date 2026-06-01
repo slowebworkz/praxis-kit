@@ -11,7 +11,7 @@
  * No runtime assertions are made. These tests exist to catch type regressions.
  */
 import { describe, it } from 'vitest'
-import type { LayoutProps } from './create-tailwind-pipeline'
+import type { LayoutProps } from './types/layout'
 
 // ─── Valid usages ─────────────────────────────────────────────────────────────
 

@@ -1,5 +1,4 @@
 export { createTailwindPipeline } from './create-tailwind-pipeline'
-export type { LayoutProps } from './create-tailwind-pipeline'
 
 export { ClassBuilder } from './class-builder'
 export { ClassClassifier } from './class-classifier'

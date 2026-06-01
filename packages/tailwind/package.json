@@ -20,7 +20,8 @@
     "lint:pkg": "publint"
   },
   "dependencies": {
-    "@praxis-ui/core": "workspace:*"
+    "@praxis-ui/core": "workspace:*",
+    "type-fest": "catalog:"
   },
   "devDependencies": {
     "tsup": "catalog:",
