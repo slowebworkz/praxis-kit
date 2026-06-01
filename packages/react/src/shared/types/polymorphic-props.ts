@@ -26,6 +26,18 @@ type IntrinsicJSXProps<T extends ElementType> = T extends IntrinsicTag
 
 /**
  * @internal
+ * Removes index signatures (e.g. `[key: string]: T`) from a type, keeping only
+ * explicitly named properties. Used to prevent fallback-to-constraint generics
+ * like `Record<string, unknown>` or `Readonly<VariantMap>` from producing a
+ * `[key: string]: T` member that makes `keyof` resolve to `string` — which
+ * would cause `Omit<IntrinsicJSXProps<TAs>, string>` to remove all HTML props.
+ */
+type StripIndexSignature<T> = {
+  [K in keyof T as string extends K ? never : K]: T[K]
+}
+
+/**
+ * @internal
  * Control props owned by the polymorphic system. Separated so they can be
  * stripped from the intrinsic props via Omit before intersecting, which is
  * what lets TypeScript infer TAs from the `as` prop value.
@@ -33,11 +45,20 @@ type IntrinsicJSXProps<T extends ElementType> = T extends IntrinsicTag
  * `asChild` and `children` are excluded — they are typed separately in the
  * discriminated union below so the slot and non-slot branches can enforce
  * different child constraints.
+ *
+ * `StripIndexSignature` is applied to `PropsOf<G>` and `VariantProps` so that
+ * when TypeScript falls back to the constraint bound for an unresolved generic
+ * (`Record<string, unknown>` or `Readonly<VariantMap>`), the resulting index
+ * signature does not propagate into `keyof ControlProps` and collapse the Omit.
  */
-type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = PropsOf<G> &
-  VariantProps<VariantsOf<G>> & {
+type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = StripIndexSignature<
+  PropsOf<G>
+> &
+  StripIndexSignature<VariantProps<VariantsOf<G>>> & {
     as?: TAs
-    className?: ClassName
+    // Accept explicit `undefined` so exactOptionalPropertyTypes doesn't flag spreads
+    // from wrapper components whose optional props arrive as `T | undefined` via Omit.
+    className?: ClassName | undefined
     variantKey?: keyof PresetOf<G>
     ref?: Ref<ElementRef<TAs>>
   }
@@ -64,7 +85,7 @@ type SharedProps<G extends PolymorphicGenerics, TAs extends ElementType> = Omit<
 export type PolymorphicProps<
   G extends PolymorphicGenerics,
   TAs extends ElementType = DefaultOf<G>,
-> = Simplify<SharedProps<G, TAs> & { asChild?: false; children?: ReactNode }>
+> = Simplify<SharedProps<G, TAs> & { asChild?: false; children?: ReactNode | undefined }>
 
 /**
  * Props for the slot render path (`asChild: true`). One or more `ReactElement`

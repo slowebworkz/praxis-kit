@@ -17,8 +17,8 @@ import type { UnknownProps } from './types'
 // is passed as the `bundle` prop to <Polymorphic> from Polymorphic.svelte.
 export function createContractComponent<
   TDefault extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
+  Props extends UnknownProps = EmptyRecord,
+  Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
   TOptions extends WithChildRules = SvelteFactoryOptions<
