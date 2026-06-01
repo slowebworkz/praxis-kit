@@ -1,0 +1,24 @@
+{
+  "name": "@praxis-ui/example-solid",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . --fix --config eslint.config.ts",
+    "lint:check": "eslint . --config eslint.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@praxis-ui/core": "workspace:*",
+    "@praxis-ui/solid": "workspace:*",
+    "@praxis-ui/tailwind": "workspace:*"
+  },
+  "devDependencies": {
+    "@solidjs/testing-library": "catalog:",
+    "jsdom": "catalog:",
+    "solid-js": "catalog:",
+    "vite-plugin-solid": "catalog:",
+    "vitest": "catalog:"
+  }
+}
