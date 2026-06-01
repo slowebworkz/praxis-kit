@@ -113,7 +113,7 @@ export type FactoryOptions<
   readonly name?: string
 
   /** Prop values merged in before caller-supplied props. Caller wins on conflict. */
-  readonly defaults?: Partial<Props>
+  readonly defaults?: Partial<NoInfer<Props>>
 
   /** Class composition — variants, base class, presets, tag overrides, and pipeline plugin. */
   readonly styling?: StylingOptions<V, TPreset, TPluginProps>
