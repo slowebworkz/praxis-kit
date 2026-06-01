@@ -6,4 +6,4 @@ export type {
   LayoutToken,
   UtilityToken,
 } from './classified-token'
-export type { LayoutKey, LayoutMode } from './layout'
+export type { LayoutKey, LayoutMode, LayoutProps } from './layout'
