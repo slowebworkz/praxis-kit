@@ -18,6 +18,10 @@
       "@praxis-ui/react/shared": ["./packages/react/src/shared/index.ts"],
       "@praxis-ui/react/shared/*": ["./packages/react/src/shared/*"],
       "@praxis-ui/vue": ["./packages/vue/src/index.ts"],
+      "@praxis-ui/preact": ["./packages/preact/src/index.ts"],
+      "@praxis-ui/solid": ["./packages/solid/src/index.ts"],
+      "@praxis-ui/svelte": ["./packages/svelte/src/index.ts"],
+      "@praxis-ui/svelte/*": ["./packages/svelte/src/*"],
       "@praxis-ui/tailwind": ["./packages/tailwind/src/index.ts"]
     }
   }
