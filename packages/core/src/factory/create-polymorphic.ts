@@ -22,8 +22,10 @@ import type {
   VariantMap,
   VariantsOf,
 } from '../types'
-import { resolveFactoryOptions } from '../options'
+import { resolveFactoryOptions, validateFactoryOptions } from '../options'
 import { assertPluginShape, guardPipeline } from './plugin-invariants'
+
+declare const process: { env: { NODE_ENV: string } }
 
 // Structural interface — matches AriaPolicyEngine.validate without importing the class.
 type AriaEngine = {
@@ -115,6 +117,9 @@ export function createPolymorphic<
 ): PolymorphicRuntime<TDefault, Props, Variants, Extract<keyof TPreset, string>, TPreset> {
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
   const resolved = resolveFactoryOptions(options)
+  // Construction-time contract check — dev-only (tree-shaken from production) and
+  // further gated on `strict` inside.
+  if (process.env.NODE_ENV !== 'production') validateFactoryOptions(resolved)
   const { pluginResult, classPipeline } = resolveClassPipeline(options, resolved, capabilities)
 
   const engine =

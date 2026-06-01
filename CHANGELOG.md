@@ -2,6 +2,30 @@
 
 ## [Unreleased]
 
+### Preset / default variant validation (`@praxis-ui/core`)
+
+`createContractComponent` now validates the variant surface at construction time: a
+`styling.presets` selection or `styling.defaults` entry that references a variant key — or a value
+of a key — not declared in `styling.variants` resolves to no class at runtime, silently. TypeScript
+catches this in typed usage, but untyped JS consumers and `as`-cast escapes bypass it.
+
+The check mirrors the type contract at runtime, gated on `enforcement.strict`:
+
+```ts
+createContractComponent({
+  tag: 'div',
+  styling: {
+    variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
+    presets: { compact: { size: 'xl' } }, // 'xl' is not a declared size
+  },
+  enforcement: { strict: 'warn' }, // → console.warn; 'throw' → throws; false → silent (default)
+})
+```
+
+Dev-only (tree-shaken from production builds) and a no-op when `strict` is `false`, so existing
+components are unaffected. Render-time checks — unknown `variantKey`, undefined variant value at the
+call site — are a planned follow-up (they require `strict` threaded into the class resolver).
+
 ### BREAKING — `@praxis-ui/tailwind` layout pipeline: `none` is now a real mode
 
 When **neither** the `flex` nor `grid` prop is set, the layout pipeline previously returned the raw
