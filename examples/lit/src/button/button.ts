@@ -1,5 +1,4 @@
 import { createContractComponent } from '@praxis-ui/lit'
-import { createTailwindPipeline } from '@praxis-ui/tailwind'
 
 type ButtonProps = { loading?: boolean; type?: string }
 
@@ -21,7 +20,6 @@ export const Button = createContractComponent<'button', ButtonProps, typeof vari
   name: 'Button',
   defaults: { type: 'button' },
   styling: {
-    plugin: createTailwindPipeline,
     base: 'inline-flex items-center justify-center rounded font-medium transition-colors',
     variants,
     defaults: { intent: 'secondary', size: 'md' },
