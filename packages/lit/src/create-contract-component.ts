@@ -1,38 +1,26 @@
 import { LitElement, html } from 'lit'
-import type {
-  AnyRecord,
-  ElementType,
-  EmptyRecord,
-  PolymorphicGenerics,
-  PresetMap,
-  VariantMap,
-} from '@praxis-ui/core'
+import type { AnyRecord, ElementType, EmptyRecord, PresetMap, VariantMap } from '@praxis-ui/core'
 import { applyFilter } from '@praxis-ui/adapter-utils'
 import { buildRuntime } from './build-runtime'
-import type { LitFactoryOptions } from './types/index'
-import type { BuiltRuntime, LooseRuntime, UnknownProps } from './types/index'
+import type { LooseBundle, LitFactoryOptions, UnknownProps } from './types/index'
 
-/**
- * Applies resolved class string and filtered ARIA props to the host element.
- *
- * In Lit the component IS the host custom element — we cannot swap the
- * rendered tag (custom elements have a fixed tag name). The `as` prop is
- * forwarded to `resolveTag` solely for ARIA role inference; it does not
- * change the element tag.
- *
- * This adapter targets Light DOM composition only. Shadow DOM slot protocol
- * is out of scope: `createRenderRoot` returns `this` so the class pipeline
- * applies directly to the host and Tailwind utilities resolve correctly.
- */
-// applyToHost receives the runtime erased to LooseRuntime so resolveClasses
-// accepts a plain string variantKey rather than a specific preset key union.
-type LooseBundle = {
-  runtime: LooseRuntime
-  filterProps: BuiltRuntime<PolymorphicGenerics>['filterProps']
-  childrenEvaluator?: BuiltRuntime<PolymorphicGenerics>['childrenEvaluator']
+// Encapsulates the double cast required to erase the BuiltRuntime generic.
+// See ROADMAP: a RuntimeContract interface would eliminate this.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function asLooseBundle(bundle: any): LooseBundle {
+  return bundle as LooseBundle
 }
 
-function applyToHost(host: LitElement, bundle: LooseBundle, props: UnknownProps): void {
+/**
+ * Pure: resolves the class string and filtered attribute map from current props.
+ *
+ * Separating resolution from DOM mutation makes this logic testable without a
+ * real DOM and keeps applyHostState as a simple write-only function.
+ */
+function resolveHostState(
+  bundle: LooseBundle,
+  props: UnknownProps,
+): { className: string; attributes: AnyRecord } {
   const { as, className, variantKey, ...rest } = props
   const tag = bundle.runtime.resolveTag(as as ElementType | undefined)
   const mergedProps = bundle.runtime.resolveProps(rest)
@@ -43,17 +31,45 @@ function applyToHost(host: LitElement, bundle: LooseBundle, props: UnknownProps)
     variantKey as string | undefined,
   )
   const ariaResult = bundle.runtime.resolveAria(tag, mergedProps)
-  const filteredProps = applyFilter(
+  const attributes = applyFilter(
     ariaResult.props,
     bundle.filterProps,
     bundle.runtime.options.variantKeys,
   )
+  return { className: resolvedClass, attributes }
+}
 
-  host.className = resolvedClass
+/**
+ * Applies resolved state to the host element.
+ *
+ * In Lit Light DOM the custom element IS the DOM element — variant props
+ * managed by Lit's property system remain as DOM attributes (expected Lit
+ * behaviour). applyHostState sets/removes non-variant attributes from the
+ * ARIA-filtered output. Attributes that the ARIA engine removed (e.g. a
+ * redundant role="navigation" on a <nav>) are explicitly cleared so they
+ * don't persist on the host from the original setAttribute call.
+ */
+function applyHostState(
+  host: LitElement,
+  state: ReturnType<typeof resolveHostState>,
+  incomingProps: UnknownProps,
+): void {
+  host.className = state.className
 
-  for (const key in filteredProps) {
-    if (!Object.hasOwn(filteredProps, key)) continue
-    const value = filteredProps[key]
+  // Explicitly remove aria-* and role attributes that the ARIA engine stripped
+  // (e.g. redundant role="navigation" on a <nav>). Variant keys are excluded —
+  // removing them would trigger Lit's attribute observation and reset the property.
+  for (const key in incomingProps) {
+    if (!Object.hasOwn(incomingProps, key)) continue
+    if (!key.startsWith('aria-') && key !== 'role') continue
+    if (!Object.hasOwn(state.attributes, key)) {
+      host.removeAttribute(key)
+    }
+  }
+
+  for (const key in state.attributes) {
+    if (!Object.hasOwn(state.attributes, key)) continue
+    const value = state.attributes[key]
     if (value === undefined || value === null || value === false) {
       host.removeAttribute(key)
     } else if (value === true) {
@@ -83,27 +99,19 @@ function applyToHost(host: LitElement, bundle: LooseBundle, props: UnknownProps)
  *
  * customElements.define('praxis-button', Button)
  * ```
- *
- * Usage in Lit templates:
- * ```ts
- * html`<praxis-button intent="primary">Save</praxis-button>`
- * ```
  */
 export function createContractComponent<
   TDefault extends ElementType,
-  Props extends UnknownProps = EmptyRecord,
-  Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
-  TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
+  TProps extends UnknownProps = EmptyRecord,
+  TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
+  TPreset extends PresetMap<TVariants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
->(options: LitFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps>) {
-  const bundle = buildRuntime(options as LitFactoryOptions<TDefault, Props, Variants, TPreset>)
-  const looseBundle = bundle as unknown as LooseBundle
+>(options: LitFactoryOptions<TDefault, TProps, TVariants, TPreset, TPluginProps>) {
+  const bundle = buildRuntime(options as LitFactoryOptions<TDefault, TProps, TVariants, TPreset>)
+  const looseBundle = asLooseBundle(bundle)
 
   const variantKeys = options.styling?.variants ? Object.keys(options.styling.variants) : []
 
-  // Static properties map for Lit reactive property system.
-  // Variant keys are declared as string-typed properties so Lit observes them
-  // and triggers updated() when they change.
   const staticProps: Record<string, { type: typeof String; attribute: string | boolean }> = {
     as: { type: String, attribute: 'as' },
     variantKey: { type: String, attribute: 'variant-key' },
@@ -113,19 +121,20 @@ export function createContractComponent<
   }
 
   class PolymorphicLitElement extends LitElement {
-    // Declare static properties for Lit reactivity — no decorators needed.
     static override get properties() {
       return staticProps
     }
 
-    // Light DOM: class pipeline applies directly to the host element.
+    // Light DOM — class pipeline applies directly to the host element.
     protected override createRenderRoot() {
       return this
     }
 
-    // Lit calls updated() after every render including the first, so there is
-    // no need to also call _applyPraxis() in connectedCallback(). Using updated()
-    // alone avoids double-applying on initial mount.
+    // Run after every Lit update. Non-reactive attributes (aria-*, role, data-*)
+    // don't trigger Lit's property system so they can't be guarded by `changed`;
+    // always running ensures they're picked up from this.attributes on the next
+    // reactive property change that does trigger an update.
+    // TODO: add selective guard once the adapter is production-proven.
     override updated(changed: Map<PropertyKey, unknown>) {
       super.updated(changed)
       this._applyPraxis()
@@ -133,11 +142,25 @@ export function createContractComponent<
 
     private _applyPraxis() {
       const self = this as unknown as AnyRecord
-      const props: UnknownProps = { as: self['as'], variantKey: self['variantKey'] }
-      for (const key of variantKeys) {
-        if (self[key] !== undefined) props[key] = self[key]
+
+      // Start with all current DOM attributes so the ARIA engine sees role,
+      // aria-*, and any other pass-through attributes.
+      const props: UnknownProps = {}
+      for (const attr of Array.from(this.attributes)) {
+        if (attr.name !== 'class') props[attr.name] = attr.value
       }
-      applyToHost(this, looseBundle, props)
+
+      // Overlay Lit-managed properties for variant keys — these may differ
+      // from raw attribute strings if Lit has type-coerced them.
+      props['as'] = self['as']
+      props['variantKey'] = self['variantKey']
+      for (const key of variantKeys) {
+        // Lit sets removed attributes to null; treat null the same as undefined
+        // so CVA falls back to defaultVariants when no explicit value is present.
+        if (self[key] != null) props[key] = self[key]
+      }
+
+      applyHostState(this, resolveHostState(looseBundle, props), props)
     }
 
     override render() {
