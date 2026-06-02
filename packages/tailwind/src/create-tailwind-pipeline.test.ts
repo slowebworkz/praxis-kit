@@ -12,7 +12,7 @@ function resolve(
 }
 
 describe('createTailwindPipeline — none mode (no layout prop)', () => {
-  const pipeline = createTailwindPipeline({ baseClassName: 'base' })
+  const pipeline = createTailwindPipeline({ baseClassName: 'base' }, false)
 
   it('strips the flex display literal and flex utilities (and gap), keeps plain utilities', () => {
     const cls = resolve(pipeline, 'flex flex-col gap-4 rounded')
@@ -33,7 +33,7 @@ describe('createTailwindPipeline — none mode (no layout prop)', () => {
 })
 
 describe('createTailwindPipeline — flex active', () => {
-  const pipeline = createTailwindPipeline({})
+  const pipeline = createTailwindPipeline({}, false)
 
   it('prepends flex to className', () => {
     expect(resolve(pipeline, 'rounded', 'flex')).toMatch(/\bflex\b/)
@@ -72,7 +72,7 @@ describe('createTailwindPipeline — flex active', () => {
 })
 
 describe('createTailwindPipeline — grid active', () => {
-  const pipeline = createTailwindPipeline({})
+  const pipeline = createTailwindPipeline({}, false)
 
   it('prepends grid to className', () => {
     expect(resolve(pipeline, 'rounded', 'grid')).toMatch(/\bgrid\b/)
@@ -104,7 +104,7 @@ describe('createTailwindPipeline — grid active', () => {
 })
 
 describe('createTailwindPipeline — inline layout variants', () => {
-  const pipeline = createTailwindPipeline({})
+  const pipeline = createTailwindPipeline({}, false)
 
   it('preserves inline-flex when flex is active', () => {
     expect(resolve(pipeline, 'inline-flex rounded', 'flex')).toMatch(/\binline-flex\b/)
@@ -124,7 +124,7 @@ describe('createTailwindPipeline — inline layout variants', () => {
 })
 
 describe('createTailwindPipeline — conditional tokens', () => {
-  const pipeline = createTailwindPipeline({})
+  const pipeline = createTailwindPipeline({}, false)
 
   it('includes [&.flex]: token when flex is active', () => {
     expect(resolve(pipeline, '[&.flex]:items-center rounded', 'flex')).toMatch(
@@ -158,7 +158,7 @@ describe('createTailwindPipeline — conditional tokens', () => {
 })
 
 describe('createTailwindPipeline — arbitrary variant prefixes', () => {
-  const pipeline = createTailwindPipeline({})
+  const pipeline = createTailwindPipeline({}, false)
 
   it('strips prefixed grid class when flex is active', () => {
     const cls = resolve(pipeline, 'data-[orientation=horizontal]:grid-cols-3 rounded', 'flex')
@@ -191,7 +191,7 @@ describe('createTailwindPipeline — arbitrary variant prefixes', () => {
 })
 
 describe('createTailwindPipeline — layout param overrides className tokens', () => {
-  const pipeline = createTailwindPipeline({})
+  const pipeline = createTailwindPipeline({}, false)
 
   it('flex param forces flex mode even when className contains grid tokens', () => {
     const cls = resolve(pipeline, 'grid grid-cols-3 gap-4 rounded', 'flex')
@@ -211,7 +211,9 @@ describe('createTailwindPipeline — layout param overrides className tokens', (
 })
 
 describe('createTailwindPipeline — flex/grid mutual exclusion', () => {
-  const pipeline = createTailwindPipeline({})
+  // flex+grid conflict warning fires regardless of strict — it is a misuse, not a
+  // contract violation. strict gates the layout-literal and dead-variant warnings only.
+  const pipeline = createTailwindPipeline({}, false)
 
   afterEach(() => {
     vi.restoreAllMocks()
@@ -249,7 +251,7 @@ describe('createTailwindPipeline — flex/grid mutual exclusion', () => {
 })
 
 describe('createTailwindPipeline — reserved layout literals', () => {
-  const pipeline = createTailwindPipeline({})
+  const pipeline = createTailwindPipeline({}, 'warn')
 
   afterEach(() => {
     vi.restoreAllMocks()
@@ -272,6 +274,13 @@ describe('createTailwindPipeline — reserved layout literals', () => {
     pipeline.pipeline('div', { flex: true }, 'flex-col gap-4 rounded', undefined)
     expect(warn).not.toHaveBeenCalled()
   })
+
+  it('is silent when strict is false', () => {
+    const silent = createTailwindPipeline({}, false)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    silent.pipeline('div', { flex: true }, 'flex rounded', undefined)
+    expect(warn.mock.calls.some((c) => /reserved layout class/i.test(String(c[0])))).toBe(false)
+  })
 })
 
 describe('createTailwindPipeline — dead-variant detection (Case B)', () => {
@@ -281,9 +290,15 @@ describe('createTailwindPipeline — dead-variant detection (Case B)', () => {
 
   // A component whose `cols` variant emits only grid utilities.
   const make = () =>
-    createTailwindPipeline({
-      variants: { cols: { '2': 'grid-cols-2', '3': 'grid-cols-3' }, pad: { sm: 'p-2', lg: 'p-8' } },
-    })
+    createTailwindPipeline(
+      {
+        variants: {
+          cols: { '2': 'grid-cols-2', '3': 'grid-cols-3' },
+          pad: { sm: 'p-2', lg: 'p-8' },
+        },
+      },
+      'warn',
+    )
 
   function deadVariantWarned(warn: ReturnType<typeof vi.spyOn>): boolean {
     return warn.mock.calls.some((c: unknown[]) =>
@@ -318,42 +333,53 @@ describe('createTailwindPipeline — dead-variant detection (Case B)', () => {
 
   it('detects a dead variant activated via preset (variantKey)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    const pipeline = createTailwindPipeline({
-      variants: { cols: { '2': 'grid-cols-2' } },
-      presetMap: { grid2: { cols: '2' } },
-    })
+    const pipeline = createTailwindPipeline(
+      { variants: { cols: { '2': 'grid-cols-2' } }, presetMap: { grid2: { cols: '2' } } },
+      'warn',
+    )
     pipeline.pipeline('div', { flex: true }, '', 'grid2')
     expect(deadVariantWarned(warn)).toBe(true)
   })
 
   it('detects a dead variant from defaultVariants', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    const pipeline = createTailwindPipeline({
-      variants: { cols: { '2': 'grid-cols-2' } },
-      defaultVariants: { cols: '2' },
-    })
+    const pipeline = createTailwindPipeline(
+      { variants: { cols: { '2': 'grid-cols-2' } }, defaultVariants: { cols: '2' } },
+      'warn',
+    )
     pipeline.pipeline('div', { flex: true }, '', undefined)
     expect(deadVariantWarned(warn)).toBe(true)
   })
 
   it('does not warn for a variant whose contribution only partially strips', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    const pipeline = createTailwindPipeline({
+    const pipeline = createTailwindPipeline(
       // grid-cols-2 strips in flex mode, but rounded survives → not dead.
-      variants: { box: { a: 'grid-cols-2 rounded' } },
-    })
+      { variants: { box: { a: 'grid-cols-2 rounded' } } },
+      'warn',
+    )
     pipeline.pipeline('div', { flex: true, box: 'a' }, '', undefined)
     expect(deadVariantWarned(warn)).toBe(false)
   })
 
   it('does not warn for a dimension that participates in a compound variant', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    const pipeline = createTailwindPipeline({
-      // cols=2 alone strips in flex mode, but a compound on `cols` may rescue it,
-      // so the dimension is skipped to avoid a false positive.
-      variants: { cols: { '2': 'grid-cols-2' }, size: { lg: 'text-lg' } },
-      compoundVariants: [{ cols: '2', size: 'lg', class: 'flex-row' }],
-    })
+    const pipeline = createTailwindPipeline(
+      {
+        // cols=2 alone strips in flex mode, but a compound on `cols` may rescue it,
+        // so the dimension is skipped to avoid a false positive.
+        variants: { cols: { '2': 'grid-cols-2' }, size: { lg: 'text-lg' } },
+        compoundVariants: [{ cols: '2', size: 'lg', class: 'flex-row' }],
+      },
+      'warn',
+    )
+    pipeline.pipeline('div', { flex: true, cols: '2' }, '', undefined)
+    expect(deadVariantWarned(warn)).toBe(false)
+  })
+
+  it('is silent when strict is false', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const pipeline = createTailwindPipeline({ variants: { cols: { '2': 'grid-cols-2' } } }, false)
     pipeline.pipeline('div', { flex: true, cols: '2' }, '', undefined)
     expect(deadVariantWarned(warn)).toBe(false)
   })
@@ -361,7 +387,7 @@ describe('createTailwindPipeline — dead-variant detection (Case B)', () => {
 
 describe('createTailwindPipeline — baseClassName layout stripping', () => {
   it('strips layout classes from baseClassName when no layout is active (none mode)', () => {
-    const pipeline = createTailwindPipeline({ baseClassName: 'flex flex-col gap-4 rounded' })
+    const pipeline = createTailwindPipeline({ baseClassName: 'flex flex-col gap-4 rounded' }, false)
     const cls = resolve(pipeline)
     expect(cls).not.toMatch(/\bflex\b/)
     expect(cls).not.toMatch(/\bflex-col\b/)
@@ -370,7 +396,7 @@ describe('createTailwindPipeline — baseClassName layout stripping', () => {
   })
 
   it('preserves layout classes from baseClassName when flex is active', () => {
-    const pipeline = createTailwindPipeline({ baseClassName: 'items-center gap-4 rounded' })
+    const pipeline = createTailwindPipeline({ baseClassName: 'items-center gap-4 rounded' }, false)
     const cls = resolve(pipeline, '', 'flex')
     expect(cls).toMatch(/\bitems-center\b/)
     expect(cls).toMatch(/\bgap-4\b/)
