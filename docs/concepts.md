@@ -87,6 +87,87 @@ Presets are merged at render time, not pre-compiled. Explicit props always win o
 <Button variantKey="cta" intent="ghost">Override</Button>  {/* ghost wins */}
 ```
 
+## Tailwind layout pipeline and variant naming
+
+This section applies **only to components using `createTailwindPipeline`** (i.e. components with
+`styling.plugin: createTailwindPipeline`). Plain CVA-based components are unaffected.
+
+### How the layout pipeline works
+
+The `@praxis-ui/tailwind` plugin activates a layout mode based on the `flex` and `grid` props:
+
+| Props passed    | Layout mode | What happens                              |
+| --------------- | ----------- | ----------------------------------------- |
+| neither         | `none`      | All flex/grid utilities stripped          |
+| `flex={true}`   | `flex`      | Grid utilities stripped; `flex` prepended |
+| `grid={true}`   | `grid`      | Flex utilities stripped; `grid` prepended |
+| both (conflict) | `flex` wins | Warning emitted; grid utilities stripped  |
+
+Stripping is **prefix-based** — a class is removed because its name matches a known layout prefix
+(`flex-`, `grow`, `shrink`, `basis-`, `grid-`, `col-`, `row-`, `auto-cols-`, `auto-rows-`), not
+because it was validated against the Tailwind config. A custom class named `grid-triplets-1` strips
+in flex mode even though it is not a real Tailwind utility. This is the accepted design contract.
+
+### Variant naming rules
+
+Because stripping is prefix-based, variant classes that start with these prefixes will be stripped
+under a conflicting layout mode. This has two practical consequences:
+
+**1. Don't drive display mode through variants.**
+
+The `flex` and `grid` display classes are reserved emitters for the pipeline. Embedding them in a
+variant's class string will produce silent no-ops or stripped output depending on which layout prop
+is active:
+
+```ts
+// ❌ Don't do this — the pipeline owns display mode, not variants
+styling: {
+  variants: {
+    layout: { row: 'flex flex-row', column: 'flex flex-col' },
+  },
+}
+```
+
+Use the `flex` / `grid` props instead. The pipeline prepends the display class automatically.
+
+**2. Don't name custom classes after layout prefixes if they must survive a mode switch.**
+
+If your design system uses custom utility names that happen to begin with `grid-`, `flex-`, `col-`,
+etc., those classes will be stripped under a conflicting layout mode even though they have no
+semantic relationship to Tailwind's layout system:
+
+```ts
+// ❌ Risky — 'grid-brand-card' is stripped in flex mode
+styling: {
+  variants: {
+    style: { card: 'grid-brand-card rounded-lg' },
+  },
+}
+
+// ✅ Safe — no layout prefix
+styling: {
+  variants: {
+    style: { card: 'brand-card rounded-lg' },
+  },
+}
+```
+
+This rule applies **only** to components using `createTailwindPipeline`. A component with no layout
+plugin has no stripping behavior — variant class names are free.
+
+### Dead-variant detection
+
+With `strict: 'warn'` or higher, the pipeline warns when a variant's **entire** class contribution
+is stripped under the active layout mode:
+
+```text
+[createTailwindPipeline] Variant "cols=2" contributes only classes stripped under
+layout mode "flex" ("grid-cols-2") — it produces nothing in this mode.
+```
+
+This fires once per unique message (deduplicated). Use it to catch variants that accidentally
+produce nothing in a given layout context.
+
 ## filterProps
 
 Props that should never reach the DOM must be declared in `filterProps`. This keeps variant keys and
