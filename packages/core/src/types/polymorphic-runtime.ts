@@ -1,6 +1,6 @@
 import type { Simplify } from 'type-fest'
 import type { ClassPlugin } from './class-plugin'
-import type { AnyRecord, ClassName, ElementType, EmptyRecord, IntrinsicProps } from './primitives'
+import type { AnyRecord, ClassName, ElementType, IntrinsicProps } from './primitives'
 import type { ResolvedFactoryOptions } from './resolved-factory-options'
 import type { PresetMap, VariantMap, VariantSelection } from './variant'
 
@@ -35,8 +35,8 @@ type ResolveAriaFn = <P extends IntrinsicProps>(tag: ElementType, props: P) => {
 
 // Present only when a plugin was supplied; absent entirely on plugin-less runtimes.
 type RuntimePluginField<TPlugin extends ClassPlugin | undefined> = TPlugin extends ClassPlugin
-  ? { readonly classPlugin: TPlugin }
-  : EmptyRecord
+  ? { readonly classPlugin: TPlugin; readonly hasStyling: true }
+  : { readonly hasStyling: false }
 
 export type PolymorphicRuntime<
   TDefault extends ElementType,
