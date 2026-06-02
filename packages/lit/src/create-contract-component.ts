@@ -139,6 +139,9 @@ export function createContractComponent<
   const staticProps: Record<string, { type: typeof String; attribute: string | boolean }> = {
     as: { type: String, attribute: 'as' },
     variantKey: { type: String, attribute: 'variant-key' },
+    // External className input — separate from the pipeline-output `class`
+    // attribute so _applyPraxis can read it without a circular class→pipeline→class loop.
+    praxisClass: { type: String, attribute: 'praxis-class' },
   }
   for (const key of variantKeys) {
     staticProps[key] = { type: String, attribute: key }
@@ -178,6 +181,7 @@ export function createContractComponent<
       // from raw attribute strings if Lit has type-coerced them.
       props['as'] = self['as']
       props['variantKey'] = self['variantKey']
+      props['className'] = self['praxisClass'] as string | undefined
       for (const key of variantKeys) {
         // Lit sets removed attributes to null; treat null the same as undefined
         // so CVA falls back to defaultVariants when no explicit value is present.
