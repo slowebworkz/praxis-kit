@@ -1,6 +1,5 @@
 import { createContractComponent } from '@praxis-ui/lit'
 import type { EmptyRecord } from '@praxis-ui/core'
-import { createTailwindPipeline } from '@praxis-ui/tailwind'
 
 const variants = {
   direction: {
@@ -25,7 +24,6 @@ export const Box = createContractComponent<'div', EmptyRecord, typeof variants>(
   tag: 'div',
   name: 'Box',
   styling: {
-    plugin: createTailwindPipeline,
     variants,
     presets: {
       row: { direction: 'row', align: 'center', gap: 'md' },
