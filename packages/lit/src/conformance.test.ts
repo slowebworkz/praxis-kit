@@ -44,7 +44,22 @@ const EVENT_MAP: Record<string, string> = {
 
 type ListenerMap = Map<string, EventListener>
 
-function applyProps(el: HTMLElement, props: AnyRecord, listeners: ListenerMap): void {
+function applyStyle(el: HTMLElement, nextStyle: AnyRecord, prevStyle: AnyRecord): void {
+  // Remove properties present in the previous style but absent in the new one.
+  for (const prop of Object.keys(prevStyle)) {
+    if (!(prop in nextStyle)) el.style.removeProperty(prop)
+  }
+  for (const [prop, value] of Object.entries(nextStyle)) {
+    el.style.setProperty(prop, String(value))
+  }
+}
+
+function applyProps(
+  el: HTMLElement,
+  props: AnyRecord,
+  listeners: ListenerMap,
+  prevStyle: AnyRecord = {},
+): void {
   for (const [key, value] of Object.entries(props)) {
     const nativeEvent = EVENT_MAP[key]
     if (nativeEvent) {
@@ -57,18 +72,19 @@ function applyProps(el: HTMLElement, props: AnyRecord, listeners: ListenerMap): 
       continue
     }
     if (key === 'className' || key === 'class') {
-      // Route through praxis-class so _applyPraxis reads it as the external
-      // className input without a circular class → pipeline → class loop.
       el.setAttribute('praxis-class', value as string)
       continue
     }
     if (key === 'variantKey') {
-      // Conformance suite passes variantKey in camelCase; the Lit attribute is kebab.
       el.setAttribute('variant-key', value as string)
       continue
     }
-    if (key === 'style' && typeof value === 'object' && value !== null) {
-      Object.assign(el.style, value)
+    if (key === 'style') {
+      applyStyle(
+        el,
+        typeof value === 'object' && value !== null ? (value as AnyRecord) : {},
+        prevStyle,
+      )
       continue
     }
     if (value === true) {
@@ -83,11 +99,24 @@ function applyProps(el: HTMLElement, props: AnyRecord, listeners: ListenerMap): 
   }
 }
 
-function clearStaleProps(el: HTMLElement, prevProps: AnyRecord, nextProps: AnyRecord): void {
-  // Remove attributes present in prevProps but absent in nextProps.
+function clearStaleProps(
+  el: HTMLElement,
+  prevProps: AnyRecord,
+  nextProps: AnyRecord,
+  listeners: ListenerMap,
+): void {
+  // Remove attributes and event listeners present in prevProps but absent in nextProps.
   for (const key of Object.keys(prevProps)) {
     if (key in nextProps) continue
-    if (EVENT_MAP[key]) continue
+    const nativeEvent = EVENT_MAP[key]
+    if (nativeEvent) {
+      const listener = listeners.get(nativeEvent)
+      if (listener) {
+        el.removeEventListener(nativeEvent, listener)
+        listeners.delete(nativeEvent)
+      }
+      continue
+    }
     const attr =
       key === 'variantKey'
         ? 'variant-key'
@@ -153,7 +182,8 @@ const adapter: ConformanceAdapter<LitConformanceComponent> = {
         return container.firstElementChild as HTMLElement
       },
       rerender(newProps = {}, newChildren = []) {
-        clearStaleProps(elHtml, lastProps, newProps)
+        const prevStyle = (lastProps['style'] as AnyRecord | undefined) ?? {}
+        clearStaleProps(elHtml, lastProps, newProps, listeners)
         lastProps = { ...newProps }
 
         // Remove only the user-provided children — Lit's slot and comment
@@ -164,7 +194,7 @@ const adapter: ConformanceAdapter<LitConformanceComponent> = {
         for (const c of fresh) elHtml.appendChild(c)
         userChildren.push(...fresh)
 
-        applyProps(elHtml, newProps, listeners)
+        applyProps(elHtml, newProps, listeners, prevStyle)
         el.performUpdate()
       },
       unmount() {
