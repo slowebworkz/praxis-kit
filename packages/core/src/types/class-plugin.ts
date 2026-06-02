@@ -1,6 +1,7 @@
 import type { ClassPipelineFn } from './class-pipeline'
 import type { ClassPipelineOptions } from './class-pipeline-options'
 import type { AnyRecord, EmptyRecord } from './primitives'
+import type { StrictMode } from './strict-mode'
 import type { VariantMap } from './variant'
 
 /**
@@ -43,4 +44,5 @@ export type ClassPlugin<TProps extends AnyRecord = EmptyRecord> = Readonly<{
  */
 export type ClassPluginFactory<TProps extends AnyRecord = EmptyRecord> = <V extends VariantMap>(
   options: ClassPipelineOptions<V>,
+  strict: StrictMode,
 ) => ClassPlugin<TProps>

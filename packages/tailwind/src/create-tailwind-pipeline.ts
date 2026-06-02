@@ -1,5 +1,11 @@
 import { cn, createClassPipeline } from '@praxis-ui/core'
-import type { AnyRecord, ClassPipelineOptions, ClassPlugin, VariantMap } from '@praxis-ui/core'
+import type {
+  AnyRecord,
+  ClassPipelineOptions,
+  ClassPlugin,
+  StrictMode,
+  VariantMap,
+} from '@praxis-ui/core'
 
 import { ClassBuilder } from './class-builder'
 import { ClassClassifier } from './class-classifier'
@@ -36,7 +42,8 @@ function resolveLayout(props: LayoutProps & AnyRecord): LayoutMode {
   return props.flex ? 'flex' : props.grid ? 'grid' : 'none'
 }
 
-function warnReservedLayoutLiterals(tokens: ClassifiedToken[]): void {
+function warnReservedLayoutLiterals(strict: StrictMode, tokens: ClassifiedToken[]): void {
+  if (!strict) return
   const reserved: string[] = []
   for (const token of tokens) {
     if (token.kind === 'layout') reserved.push(token.raw)
@@ -104,12 +111,14 @@ function resolveActiveSelection<V extends VariantMap>(
 }
 
 function warnDeadVariants<V extends VariantMap>(
+  strict: StrictMode,
   options: ClassPipelineOptions<V>,
   compoundDims: ReadonlySet<string>,
   props: AnyRecord,
   variantKey: string | undefined,
   state: LayoutState,
 ): void {
+  if (!strict) return
   const variants = getVariantConfig(options)
   if (!variants) return
 
@@ -137,6 +146,7 @@ function warnDeadVariants<V extends VariantMap>(
 
 export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   options: ClassPipelineOptions<V>,
+  strict: StrictMode,
 ): ClassPlugin<LayoutProps> {
   const pipeline = createClassPipeline(options)
   const compoundDims = compoundDimensions(getCompoundVariants(options))
@@ -151,8 +161,8 @@ export function createTailwindPipeline<V extends VariantMap = VariantMap>(
       const state = new LayoutState(mode)
 
       if (process.env.NODE_ENV !== 'production') {
-        warnReservedLayoutLiterals(tokens)
-        warnDeadVariants(options, compoundDims, props, variantKey, state)
+        warnReservedLayoutLiterals(strict, tokens)
+        warnDeadVariants(strict, options, compoundDims, props, variantKey, state)
       }
 
       const filtered = tokens.filter((token) => evaluator.evaluate(token, state))
