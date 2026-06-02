@@ -67,17 +67,24 @@ describe('validateRenderProps — unknown presetKey', () => {
     validateRenderProps({ strict: 'warn', variants, presetMap }, {}, 'unknown')
     expect(warn).toHaveBeenCalledOnce()
   })
+
+  it('does not treat inherited properties as valid presets', () => {
+    const inherited = Object.create({ inheritedPreset: {} }) as Record<string, unknown>
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    validateRenderProps({ strict: 'warn', variants, presetMap: inherited }, {}, 'inheritedPreset')
+    expect(warn).toHaveBeenCalledOnce()
+  })
 })
 
-describe('validateRenderProps — undefined variant value', () => {
-  it('warns when a known variant dimension receives an undefined value (strict: warn)', () => {
+describe('validateRenderProps — invalid variant value', () => {
+  it('warns when a known variant dimension receives an invalid value (strict: warn)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     validateRenderProps({ strict: 'warn', variants }, { size: 'enormous' }, undefined)
     expect(warn).toHaveBeenCalledOnce()
     expect(warn.mock.calls[0]![0]).toMatch(/size=enormous/i)
   })
 
-  it('throws when a known variant dimension receives an undefined value (strict: throw)', () => {
+  it('throws when a known variant dimension receives an invalid value (strict: throw)', () => {
     expect(() =>
       validateRenderProps({ strict: 'throw', variants }, { size: 'enormous' }, undefined),
     ).toThrow(/size=enormous/i)
@@ -113,5 +120,20 @@ describe('validateRenderProps — undefined variant value', () => {
     validateRenderProps({ strict: 'warn', variants }, { size: 'enormous' }, undefined)
     validateRenderProps({ strict: 'warn', variants }, { size: 'enormous' }, undefined)
     expect(warn).toHaveBeenCalledOnce()
+  })
+
+  it('does not dedupe distinct warnings', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    validateRenderProps({ strict: 'warn', variants }, { size: 'enormous' }, undefined)
+    validateRenderProps({ strict: 'warn', variants }, { size: 'gigantic' }, undefined)
+    expect(warn).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('validateRenderProps — multiple violations', () => {
+  it('reports both preset and variant violations in the same call', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    validateRenderProps({ strict: 'warn', variants, presetMap }, { size: 'enormous' }, 'unknown')
+    expect(warn).toHaveBeenCalledTimes(2)
   })
 })
