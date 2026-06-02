@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
     "lint": "eslint . --fix --config eslint.config.ts",
     "lint:check": "eslint . --config eslint.config.ts",
     "typecheck": "tsc --noEmit",
@@ -19,6 +21,7 @@
     "@testing-library/svelte": "catalog:",
     "jsdom": "catalog:",
     "svelte": "catalog:",
+    "vite": "catalog:",
     "vitest": "catalog:"
   }
 }
