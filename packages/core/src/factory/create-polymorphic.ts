@@ -107,7 +107,7 @@ function createRuntimeObject<
 ) {
   return pluginResult
     ? { ...methods, options: resolved, hasStyling: true as const, classPlugin: pluginResult }
-    : { ...methods, options: resolved, hasStyling: false as const }
+    : { ...methods, options: resolved }
 }
 
 export function createPolymorphic<
