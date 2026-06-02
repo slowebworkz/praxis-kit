@@ -37,6 +37,7 @@ const config = [
             'lib/primitive/vitest.config.ts',
             'lib/*/eslint.config.ts',
             'examples/*/eslint.config.ts',
+            'examples/*/vite.config.ts',
             // framework-specific scenarios are excluded from the tree-shaking-tests tsconfig
             // (jsxImportSource:react conflicts with Solid/Vue/Preact/Svelte JSX/return types)
             'lib/tree-shaking-tests/scenarios/solid-minimal/*.ts',

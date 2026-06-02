@@ -6,9 +6,9 @@ export default defineConfig({
   },
   test: {
     name: 'bench-render',
-    include: ['src/pipeline.bench.ts', 'src/react-compiler.bench.ts'],
+    include: ['src/pipeline.bench.ts', 'src/react-compiler.bench.ts', 'src/tabs.bench.ts'],
     benchmark: {
-      include: ['src/pipeline.bench.ts', 'src/react-compiler.bench.ts'],
+      include: ['src/pipeline.bench.ts', 'src/react-compiler.bench.ts', 'src/tabs.bench.ts'],
     },
     environment: 'jsdom',
   },
