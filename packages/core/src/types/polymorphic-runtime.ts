@@ -34,8 +34,11 @@ type ResolveAriaFn = <P extends IntrinsicProps>(tag: ElementType, props: P) => {
 /* ---------------------------------- */
 
 // Present only when a plugin was supplied; absent entirely on plugin-less runtimes.
+// hasStyling: true is set on the plugin branch only — the no-plugin branch emits
+// no extra bytes (EmptyRecord = {}), keeping the primitive-direct bundle unchanged.
+// Consumers check `runtime.hasStyling` which is `true | undefined` (truthy/falsy).
 type RuntimePluginField<TPlugin extends ClassPlugin | undefined> = TPlugin extends ClassPlugin
-  ? { readonly classPlugin: TPlugin }
+  ? { readonly classPlugin: TPlugin; readonly hasStyling: true }
   : EmptyRecord
 
 export type PolymorphicRuntime<
