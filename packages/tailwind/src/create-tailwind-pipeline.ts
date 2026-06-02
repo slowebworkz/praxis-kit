@@ -5,6 +5,7 @@ import type {
   ClassPlugin,
   StrictMode,
   VariantMap,
+  VariantValue,
 } from '@praxis-ui/core'
 
 import { ClassBuilder } from './class-builder'
@@ -15,12 +16,7 @@ import { LayoutState } from './layout-state'
 import { LAYOUT_OWNED_KEYS } from './layout-keys'
 import type { ClassifiedToken } from './types/classified-token'
 import type { LayoutMode, LayoutProps } from './types/layout'
-import type {
-  CompoundVariant,
-  VariantConfig,
-  VariantValue,
-  VariantSelection,
-} from './types/variant-config'
+import type { CompoundVariant, VariantSelection } from './types/variant-config'
 
 declare const process: { env: { NODE_ENV: string } }
 
@@ -62,8 +58,8 @@ const EMPTY_SET: ReadonlySet<string> = new Set()
 
 function getVariantConfig<V extends VariantMap>(
   options: ClassPipelineOptions<V>,
-): VariantConfig | undefined {
-  return options.variants as VariantConfig | undefined
+): VariantMap | undefined {
+  return options.variants
 }
 
 function getCompoundVariants<V extends VariantMap>(
@@ -95,7 +91,7 @@ function getDefaultVariants<V extends VariantMap>(
 
 function resolveActiveSelection<V extends VariantMap>(
   options: ClassPipelineOptions<V>,
-  variants: VariantConfig,
+  variants: VariantMap,
   props: AnyRecord,
   variantKey: string | undefined,
 ): VariantSelection {
