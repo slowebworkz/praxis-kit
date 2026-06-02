@@ -2,7 +2,12 @@ import { LitElement, html } from 'lit'
 import type { AnyRecord, ElementType, EmptyRecord, PresetMap, VariantMap } from '@praxis-ui/core'
 import { applyFilter } from '@praxis-ui/adapter-utils'
 import { buildRuntime } from './build-runtime'
-import type { LooseBundle, LitFactoryOptions, UnknownProps } from './types/index'
+import type {
+  LitContractComponent,
+  LooseBundle,
+  LitFactoryOptions,
+  UnknownProps,
+} from './types/index'
 
 function isLooseBundle(arg: unknown): arg is LooseBundle {
   if (typeof arg !== 'object' || arg === null) return false
@@ -130,7 +135,9 @@ export function createContractComponent<
   TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends PresetMap<TVariants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
->(options: LitFactoryOptions<TDefault, TProps, TVariants, TPreset, TPluginProps>) {
+>(
+  options: LitFactoryOptions<TDefault, TProps, TVariants, TPreset, TPluginProps>,
+): LitContractComponent<TVariants> {
   const bundle = buildRuntime(options as LitFactoryOptions<TDefault, TProps, TVariants, TPreset>)
   const looseBundle = toLooseBundle(bundle)
 
@@ -147,7 +154,20 @@ export function createContractComponent<
     staticProps[key] = { type: String, attribute: key }
   }
 
+  // Typed view of the reactive instance properties that _applyPraxis reads.
+  // `declare` emits no JS — Lit's finalize() installs the actual getters/setters
+  // at runtime. The variant key index covers dynamic variant properties.
+  type InstanceProps = {
+    as: string | undefined
+    variantKey: string | undefined
+    praxisClass: string | undefined
+  } & { [K in Extract<keyof TVariants, string>]?: string | null }
+
   class PolymorphicLitElement extends LitElement {
+    declare as: string | undefined
+    declare variantKey: string | undefined
+    declare praxisClass: string | undefined
+
     static override get properties() {
       return staticProps
     }
@@ -168,7 +188,7 @@ export function createContractComponent<
     }
 
     private _applyPraxis() {
-      const self = this as unknown as AnyRecord
+      const self = this as unknown as InstanceProps
 
       // Start with all current DOM attributes so the ARIA engine sees role,
       // aria-*, and any other pass-through attributes.
@@ -179,13 +199,14 @@ export function createContractComponent<
 
       // Overlay Lit-managed properties for variant keys — these may differ
       // from raw attribute strings if Lit has type-coerced them.
-      props['as'] = self['as']
-      props['variantKey'] = self['variantKey']
-      props['className'] = self['praxisClass'] as string | undefined
+      props['as'] = self.as
+      props['variantKey'] = self.variantKey
+      props['className'] = self.praxisClass
       for (const key of variantKeys) {
         // Lit sets removed attributes to null; treat null the same as undefined
         // so CVA falls back to defaultVariants when no explicit value is present.
-        if (self[key] != null) props[key] = self[key]
+        const val = self[key as Extract<keyof TVariants, string>]
+        if (val != null) props[key] = val
       }
 
       applyHostState(this, resolveHostState(looseBundle, props), props)
@@ -203,5 +224,7 @@ export function createContractComponent<
     Object.defineProperty(PolymorphicLitElement, 'name', { value: options.name })
   }
 
-  return PolymorphicLitElement
+  // Variant key properties are installed by Lit's finalize() at runtime, not
+  // statically declared — cast to the exported contract type here at the boundary.
+  return PolymorphicLitElement as unknown as LitContractComponent<TVariants>
 }
