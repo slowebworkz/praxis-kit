@@ -5,7 +5,7 @@ const variantKeys: ReadonlySet<string> = new Set(['size', 'intent'])
 const NO_OWNED: ReadonlySet<string> = new Set()
 
 describe('composeFilter — no ownedKeys, no userFilter', () => {
-  const filter = composeFilter(NO_OWNED, undefined)
+  const filter = composeFilter(NO_OWNED)
 
   it('strips variant keys', () => {
     expect(filter('size', variantKeys)).toBe(true)
@@ -20,7 +20,7 @@ describe('composeFilter — no ownedKeys, no userFilter', () => {
 
 describe('composeFilter — ownedKeys only', () => {
   const ownedKeys = new Set(['flex', 'grid'])
-  const filter = composeFilter(ownedKeys, undefined)
+  const filter = composeFilter(ownedKeys)
 
   it('strips owned keys', () => {
     expect(filter('flex', variantKeys)).toBe(true)

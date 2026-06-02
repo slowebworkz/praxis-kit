@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { createClassPipeline } from './create-class-pipeline'
 
 function resolve(pipeline: ReturnType<typeof createClassPipeline>, className = '') {
-  return pipeline('div', {}, className, undefined)
+  return pipeline('div', {}, className)
 }
 
 describe('class pipeline — baseClassName', () => {
@@ -28,14 +28,14 @@ describe('class pipeline — baseClassName', () => {
 describe('class pipeline — tagMap', () => {
   it('applies tagMap class for matching string tag', () => {
     const pipeline = createClassPipeline({ baseClassName: 'base', tagMap: { section: 'sec' } })
-    const result = pipeline('section', {}, '', undefined)
+    const result = pipeline('section', {}, '')
     expect(result).toContain('base')
     expect(result).toContain('sec')
   })
 
   it('does not apply tagMap for non-matching tag', () => {
     const pipeline = createClassPipeline({ baseClassName: 'base', tagMap: { section: 'sec' } })
-    const result = pipeline('div', {}, '', undefined)
+    const result = pipeline('div', {}, '')
     expect(result).toContain('base')
     expect(result).not.toContain('sec')
   })
@@ -55,11 +55,11 @@ describe('class pipeline — variants', () => {
   })
 
   it('applies defaultVariants when no variant props provided', () => {
-    expect(pipeline('div', {}, '', undefined)).toContain('text-sm')
+    expect(pipeline('div', {}, '')).toContain('text-sm')
   })
 
   it('applies explicit variant prop over defaultVariants', () => {
-    const result = pipeline('div', { size: 'lg' }, '', undefined)
+    const result = pipeline('div', { size: 'lg' }, '')
     expect(result).toContain('text-lg')
     expect(result).not.toContain('text-sm')
   })

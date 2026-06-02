@@ -29,7 +29,7 @@ describe('resolveTag()', () => {
   })
 
   it('returns defaultTag when as is explicitly undefined', () => {
-    expect(resolveTag('div', undefined)).toBe('div')
+    expect(resolveTag('div')).toBe('div')
   })
 })
 

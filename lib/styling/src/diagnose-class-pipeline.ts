@@ -22,7 +22,7 @@ export type ClassDiagnosis = {
 }
 
 function conditionMatches(got: unknown, expected: unknown): boolean {
-  if (Array.isArray(expected)) return expected.some((e) => e === got)
+  if (Array.isArray(expected)) return expected.includes(got)
   return got === expected
 }
 

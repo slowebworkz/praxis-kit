@@ -232,17 +232,17 @@ describe('factory — repeated identical config (V8 shape stability)', () => {
 
 describe('runtime execution — no variants (hot path, per-render)', () => {
   bench('resolveTag + resolveProps + resolveClasses', () => {
-    const tag = noVariantRuntime.resolveTag(undefined)
+    const tag = noVariantRuntime.resolveTag()
     const merged = noVariantRuntime.resolveProps({ className: 'extra' })
-    noVariantRuntime.resolveClasses(tag, merged, 'extra', undefined)
+    noVariantRuntime.resolveClasses(tag, merged, 'extra')
   })
 })
 
 describe('runtime execution — with variants, warm cache (hot path, per-render)', () => {
   bench('resolveTag + resolveProps + resolveClasses', () => {
-    const tag = variantRuntime.resolveTag(undefined)
+    const tag = variantRuntime.resolveTag()
     const merged = variantRuntime.resolveProps(WARM_PROPS)
-    variantRuntime.resolveClasses(tag, merged, undefined, undefined)
+    variantRuntime.resolveClasses(tag, merged)
   })
 
   bench('cva direct (baseline)', () => {
@@ -252,9 +252,9 @@ describe('runtime execution — with variants, warm cache (hot path, per-render)
 
 describe('runtime execution — with variants + compounds, warm cache (hot path, per-render)', () => {
   bench('resolveTag + resolveProps + resolveClasses', () => {
-    const tag = compoundRuntime.resolveTag(undefined)
+    const tag = compoundRuntime.resolveTag()
     const merged = compoundRuntime.resolveProps(WARM_PROPS)
-    compoundRuntime.resolveClasses(tag, merged, undefined, undefined)
+    compoundRuntime.resolveClasses(tag, merged)
   })
 
   bench('cva direct (baseline)', () => {
@@ -290,14 +290,14 @@ describe('factory — large variant matrix, 6 dims × 30 compounds (cold path)',
 
 describe('runtime execution — large variant matrix, warm cache (hot path, per-render)', () => {
   bench('resolveTag + resolveProps + resolveClasses (compound hit)', () => {
-    const tag = largeVariantRuntime.resolveTag(undefined)
+    const tag = largeVariantRuntime.resolveTag()
     const merged = largeVariantRuntime.resolveProps(LARGE_COMPOUND_HIT)
-    largeVariantRuntime.resolveClasses(tag, merged, undefined, undefined)
+    largeVariantRuntime.resolveClasses(tag, merged)
   })
 
   bench('resolveTag + resolveProps + resolveClasses (no compound hit)', () => {
-    const tag = largeVariantRuntime.resolveTag(undefined)
+    const tag = largeVariantRuntime.resolveTag()
     const merged = largeVariantRuntime.resolveProps(LARGE_WARM_PROPS)
-    largeVariantRuntime.resolveClasses(tag, merged, undefined, undefined)
+    largeVariantRuntime.resolveClasses(tag, merged)
   })
 })

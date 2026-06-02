@@ -99,7 +99,7 @@ for (const scenario of scenarios) {
     console.log(`  pass   ${scenario} (${liveCount} live modules)`)
     passed++
   } else {
-    failures.forEach((f) => console.error(f))
+    for (const f of failures) console.error(f)
     allFailures.push(...failures)
   }
 }

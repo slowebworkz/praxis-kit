@@ -22,7 +22,7 @@
 // Run via `pnpm bench:render` (vitest.render.bench.config.ts, jsdom).
 
 import { bench, describe } from 'vitest'
-import { createElement, useState, useId } from 'react'
+import { createElement, useState, useId, createContext, useContext } from 'react'
 import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
@@ -30,8 +30,6 @@ import { createContractComponent } from '@praxis-ui/react'
 
 // ─── Praxis-ui Tabs ───────────────────────────────────────────────────────────
 // Mirrors examples/react/src/tabs — factories are module-level singletons.
-
-import { createContext, useContext } from 'react'
 
 type TabsCtx = { instanceId: string; value: string; setValue(v: string): void }
 const TabsContext = createContext<TabsCtx | null>(null)

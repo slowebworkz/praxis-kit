@@ -1,12 +1,13 @@
 import type { ESLintConfig } from './configs/types'
 import type { Linter } from 'eslint'
-
-type EslintPlugin = NonNullable<Linter.Config['plugins']>[string]
-
 import base from './configs/base'
 import ts from './configs/typescript'
 import architecture from './configs/architecture'
+import imports from './configs/imports'
+import unicorn from './configs/unicorn'
 import praxisPlugin from './packages/eslint-plugin/src/index'
+
+type EslintPlugin = NonNullable<Linter.Config['plugins']>[string]
 
 const TS_FILES = ['**/*.{ts,mts,cts,tsx}']
 
@@ -45,8 +46,8 @@ const config = [
             'lib/tree-shaking-tests/scenarios/preact-minimal/*.ts',
             'lib/tree-shaking-tests/scenarios/svelte-minimal/*.ts',
           ],
-          // ~28 files: 2 root *.ts + 1 scripts + 7 configs + 9 per-package eslint configs + 2 lib vitest + 2 tsup (codemod/ts-plugin) + 5 examples/*/vite.config.ts + 2 non-React adapter scenarios
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 35,
+          // ~30 files: 2 root *.ts + 1 scripts + 9 configs + 9 per-package eslint configs + 2 lib vitest + 2 tsup (codemod/ts-plugin) + 5 examples/*/vite.config.ts + 2 non-React adapter scenarios
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 40,
           defaultProject: './tsconfig.base.json',
         },
       },
@@ -54,6 +55,8 @@ const config = [
   },
 
   ...architecture,
+  ...imports,
+  ...unicorn,
 
   // Register plugin globally so disable-directive validation can always find it.
   {

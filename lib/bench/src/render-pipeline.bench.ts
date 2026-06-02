@@ -151,7 +151,7 @@ const FnComponent = () => null
 
 describe('resolveTag — tag type dispatch', () => {
   bench('undefined (uses default tag)', () => {
-    variantRuntime.resolveTag(undefined)
+    variantRuntime.resolveTag()
   })
   bench('intrinsic override (as="a")', () => {
     variantRuntime.resolveTag('a' as never)
@@ -179,13 +179,13 @@ describe('resolveProps — by tag (ARIA cost varies by implicit role)', () => {
 
 describe('resolveClasses — no variants (warm cache)', () => {
   bench('resolveClasses', () => {
-    noVariantRuntime.resolveClasses('div', {}, undefined, undefined)
+    noVariantRuntime.resolveClasses('div', {})
   })
 })
 
 describe('resolveClasses — with variants, warm cache', () => {
   bench('resolveClasses', () => {
-    variantRuntime.resolveClasses('button', WARM_PROPS, undefined, undefined)
+    variantRuntime.resolveClasses('button', WARM_PROPS)
   })
 
   bench('cva direct (baseline)', () => {
@@ -195,12 +195,7 @@ describe('resolveClasses — with variants, warm cache', () => {
 
 describe('resolveClasses — with variants, cold cache (nonce variant, genuine resolver churn)', () => {
   bench('resolveClasses', () => {
-    coldCacheRuntime.resolveClasses(
-      'button',
-      COLD_POOL[coldIdx++ % COLD_POOL.length]!,
-      undefined,
-      undefined,
-    )
+    coldCacheRuntime.resolveClasses('button', COLD_POOL[coldIdx++ % COLD_POOL.length]!)
   })
 
   bench('cva direct (baseline)', () => {
@@ -215,7 +210,7 @@ describe('resolveClasses — with variants, cold cache (nonce variant, genuine r
 
 describe('resolveClasses — 200 compound rules, no hit (full scan)', () => {
   bench('resolveClasses', () => {
-    largeCompoundRuntime.resolveClasses('button', LARGE_NO_HIT, undefined, undefined)
+    largeCompoundRuntime.resolveClasses('button', LARGE_NO_HIT)
   })
   bench('cva direct (baseline)', () => {
     largeCompoundCvaFn(LARGE_NO_HIT)
@@ -224,7 +219,7 @@ describe('resolveClasses — 200 compound rules, no hit (full scan)', () => {
 
 describe('resolveClasses — 200 compound rules, first rule hits (early exit)', () => {
   bench('resolveClasses', () => {
-    largeCompoundRuntime.resolveClasses('button', LARGE_HIT, undefined, undefined)
+    largeCompoundRuntime.resolveClasses('button', LARGE_HIT)
   })
   bench('cva direct (baseline)', () => {
     largeCompoundCvaFn(LARGE_HIT)
@@ -235,14 +230,14 @@ describe('resolveClasses — 200 compound rules, first rule hits (early exit)', 
 
 describe('full render pipeline (resolveTag + resolveProps + resolveClasses)', () => {
   bench('pipeline — no variants', () => {
-    const tag = noVariantRuntime.resolveTag(undefined)
+    const tag = noVariantRuntime.resolveTag()
     const merged = noVariantRuntime.resolveProps({ className: 'extra' })
-    noVariantRuntime.resolveClasses(tag, merged, 'extra', undefined)
+    noVariantRuntime.resolveClasses(tag, merged, 'extra')
   })
 
   bench('pipeline — with variants (warm)', () => {
-    const tag = variantRuntime.resolveTag(undefined)
+    const tag = variantRuntime.resolveTag()
     const merged = variantRuntime.resolveProps(WARM_PROPS)
-    variantRuntime.resolveClasses(tag, merged, undefined, undefined)
+    variantRuntime.resolveClasses(tag, merged)
   })
 })

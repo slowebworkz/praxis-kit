@@ -94,8 +94,8 @@ describe('StrictBase.violate()', () => {
     let caught: unknown
     try {
       s.callViolate('exact message')
-    } catch (e) {
-      caught = e
+    } catch (error) {
+      caught = error
     }
     expect(caught).toBeInstanceOf(Error)
     expect((caught as Error).message).toBe('exact message')
