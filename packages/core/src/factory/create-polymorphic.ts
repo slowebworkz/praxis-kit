@@ -22,7 +22,7 @@ import type {
   VariantMap,
   VariantsOf,
 } from '../types'
-import { resolveFactoryOptions, validateFactoryOptions } from '../options'
+import { resolveFactoryOptions, validateFactoryOptions, validateRenderProps } from '../options'
 import { assertPluginShape, guardPipeline } from './plugin-invariants'
 
 declare const process: { env: { NODE_ENV: string } }
@@ -48,6 +48,7 @@ const NOOP_CLASS_PIPELINE: ClassPipelineFn = (_tag, _props, className) => classN
 function resolveClassPipeline<TVariants extends VariantMap>(
   options: { styling?: { plugin?: ClassPluginFactory } },
   resolved: ClassPipelineOptions<TVariants>,
+  strict: StrictMode,
   capabilities?: Capabilities,
 ) {
   const factory = options.styling?.plugin
@@ -57,7 +58,7 @@ function resolveClassPipeline<TVariants extends VariantMap>(
     return { pluginResult: undefined, classPipeline }
   }
 
-  const pluginResult = factory(resolved)
+  const pluginResult = factory(resolved, strict)
   assertPluginShape(pluginResult)
   const classPipeline = guardPipeline(pluginResult.pipeline)
 
@@ -82,6 +83,9 @@ function createRuntimeMethods<G extends PolymorphicGenerics>(
       className?: ClassName,
       variantKey?: Extract<keyof PresetOf<G>, string>,
     ) {
+      if (process.env.NODE_ENV !== 'production') {
+        validateRenderProps(resolved, props as AnyRecord, variantKey)
+      }
       return classPipeline(tag, props, className, variantKey)
     },
 
@@ -120,7 +124,12 @@ export function createPolymorphic<
   // Construction-time contract check — dev-only (tree-shaken from production) and
   // further gated on `strict` inside.
   if (process.env.NODE_ENV !== 'production') validateFactoryOptions(resolved)
-  const { pluginResult, classPipeline } = resolveClassPipeline(options, resolved, capabilities)
+  const { pluginResult, classPipeline } = resolveClassPipeline(
+    options,
+    resolved,
+    resolved.strict,
+    capabilities,
+  )
 
   const engine =
     options.enforcement !== undefined && capabilities?.AriaEngine
