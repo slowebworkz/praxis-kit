@@ -16,7 +16,8 @@ export function buildCoreRuntime<G extends PolymorphicGenerics>(
   const runtime = createPolymorphic(normalized)
   // classPlugin is absent when no styling plugin is provided; fall back to EMPTY_SET
   // so consumers can call ownedKeys.has(key) unconditionally.
-  const ownedKeys: ReadonlySet<string> =
-    'classPlugin' in runtime ? (runtime.classPlugin.ownedKeys ?? EMPTY_SET) : EMPTY_SET
+  const ownedKeys: ReadonlySet<string> = runtime.hasStyling
+    ? (runtime.classPlugin.ownedKeys ?? EMPTY_SET)
+    : EMPTY_SET
   return { runtime, ownedKeys }
 }
