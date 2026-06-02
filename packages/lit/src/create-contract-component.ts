@@ -147,7 +147,20 @@ export function createContractComponent<
     staticProps[key] = { type: String, attribute: key }
   }
 
+  // Typed view of the reactive instance properties that _applyPraxis reads.
+  // `declare` emits no JS — Lit's finalize() installs the actual getters/setters
+  // at runtime. The variant key index covers dynamic variant properties.
+  type InstanceProps = {
+    as: string | undefined
+    variantKey: string | undefined
+    praxisClass: string | undefined
+  } & { [K in Extract<keyof TVariants, string>]?: string | null }
+
   class PolymorphicLitElement extends LitElement {
+    declare as: string | undefined
+    declare variantKey: string | undefined
+    declare praxisClass: string | undefined
+
     static override get properties() {
       return staticProps
     }
@@ -168,7 +181,7 @@ export function createContractComponent<
     }
 
     private _applyPraxis() {
-      const self = this as unknown as AnyRecord
+      const self = this as unknown as InstanceProps
 
       // Start with all current DOM attributes so the ARIA engine sees role,
       // aria-*, and any other pass-through attributes.
@@ -179,13 +192,14 @@ export function createContractComponent<
 
       // Overlay Lit-managed properties for variant keys — these may differ
       // from raw attribute strings if Lit has type-coerced them.
-      props['as'] = self['as']
-      props['variantKey'] = self['variantKey']
-      props['className'] = self['praxisClass'] as string | undefined
+      props['as'] = self.as
+      props['variantKey'] = self.variantKey
+      props['className'] = self.praxisClass
       for (const key of variantKeys) {
         // Lit sets removed attributes to null; treat null the same as undefined
         // so CVA falls back to defaultVariants when no explicit value is present.
-        if (self[key] != null) props[key] = self[key]
+        const val = self[key as Extract<keyof TVariants, string>]
+        if (val != null) props[key] = val
       }
 
       applyHostState(this, resolveHostState(looseBundle, props), props)
