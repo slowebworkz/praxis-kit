@@ -88,6 +88,19 @@ export type ConformanceAdapter<C extends ConformanceComponent = ConformanceCompo
     /** false for Solid, which uses a render-function asChild pattern. */
     asChild?: boolean
     /**
+     * false for adapters where the rendered element tag is fixed at registration
+     * time (e.g. Lit custom elements). Skips tests that assert element.tagName
+     * matches options.tag or the as prop value.
+     */
+    tagPolymorphism?: boolean
+    /**
+     * false for adapters where variant keys and filterProps targets remain as
+     * DOM attributes (e.g. Lit, where Lit's reactive property system owns the
+     * attribute lifecycle). Skips tests that assert those keys are absent from
+     * the rendered element's attribute set.
+     */
+    domPropFiltering?: boolean
+    /**
      * true if this adapter supports server-side rendering via ssrConformanceSuite.
      * Informational — wire ssrConformanceSuite separately in a node-environment test file.
      */
