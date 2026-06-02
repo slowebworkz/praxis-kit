@@ -22,7 +22,8 @@
       "@praxis-ui/solid": ["./packages/solid/src/index.ts"],
       "@praxis-ui/svelte": ["./packages/svelte/src/index.ts"],
       "@praxis-ui/svelte/*": ["./packages/svelte/src/*"],
-      "@praxis-ui/tailwind": ["./packages/tailwind/src/index.ts"]
+      "@praxis-ui/tailwind": ["./packages/tailwind/src/index.ts"],
+      "@praxis-ui/lit": ["./packages/lit/src/index.ts"]
     }
   }
 }
