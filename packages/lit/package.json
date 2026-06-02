@@ -1,0 +1,41 @@
+{
+  "name": "@praxis-ui/lit",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint . --fix --config eslint.config.ts",
+    "lint:check": "eslint . --config eslint.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed",
+    "prepublishOnly": "pnpm build",
+    "lint:pkg": "publint"
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "@praxis-ui/adapter-utils": "workspace:*",
+    "@praxis-ui/core": "workspace:*",
+    "type-fest": "catalog:"
+  },
+  "peerDependencies": {
+    "lit": ">=3.0"
+  },
+  "devDependencies": {
+    "@lit-labs/testing": "^0.2.0",
+    "@web/test-runner": "^0.19.0",
+    "lit": "catalog:",
+    "tsup": "catalog:",
+    "vitest": "catalog:"
+  }
+}
