@@ -13,7 +13,12 @@ export type {
 export function conformanceSuite<C extends ConformanceComponent = ConformanceComponent>(
   adapter: ConformanceAdapter<C>,
 ): void {
-  const caps = { asChild: true, ...adapter.capabilities }
+  const caps = {
+    asChild: true,
+    tagPolymorphism: true,
+    domPropFiltering: true,
+    ...adapter.capabilities,
+  }
 
   beforeEach(() => adapter.setup())
   afterEach(() => adapter.cleanup())
@@ -34,25 +39,26 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
 
   // ── tag rendering ─────────────────────────────────────────────────────────────
 
-  describe('conformance — tag rendering', () => {
-    it('renders default tag (div)', () => {
-      const Box = adapter.createComponent({})
-      const { element } = adapter.render(Box)
-      expect(element.tagName.toLowerCase()).toBe('div')
-    })
+  if (caps.tagPolymorphism)
+    describe('conformance — tag rendering', () => {
+      it('renders default tag (div)', () => {
+        const Box = adapter.createComponent({})
+        const { element } = adapter.render(Box)
+        expect(element.tagName.toLowerCase()).toBe('div')
+      })
 
-    it('renders a different tag via the as prop', () => {
-      const Box = adapter.createComponent({})
-      const { element } = adapter.render(Box, { as: 'section' })
-      expect(element.tagName.toLowerCase()).toBe('section')
-    })
+      it('renders a different tag via the as prop', () => {
+        const Box = adapter.createComponent({})
+        const { element } = adapter.render(Box, { as: 'section' })
+        expect(element.tagName.toLowerCase()).toBe('section')
+      })
 
-    it('respects a custom tag option', () => {
-      const Box = adapter.createComponent({ tag: 'span' })
-      const { element } = adapter.render(Box)
-      expect(element.tagName.toLowerCase()).toBe('span')
+      it('respects a custom tag option', () => {
+        const Box = adapter.createComponent({ tag: 'span' })
+        const { element } = adapter.render(Box)
+        expect(element.tagName.toLowerCase()).toBe('span')
+      })
     })
-  })
 
   // ── class merging ─────────────────────────────────────────────────────────────
 
@@ -90,22 +96,24 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       expect(element.getAttribute('data-testid')).toBe('box')
     })
 
-    it('strips variant keys before DOM forwarding', () => {
-      const Box = adapter.createComponent({
-        styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
+    if (caps.domPropFiltering)
+      it('strips variant keys before DOM forwarding', () => {
+        const Box = adapter.createComponent({
+          styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
+        })
+        const { element } = adapter.render(Box, { size: 'lg' })
+        expect(element.getAttribute('size')).toBeNull()
       })
-      const { element } = adapter.render(Box, { size: 'lg' })
-      expect(element.getAttribute('size')).toBeNull()
-    })
 
-    it('custom filterProps strips matching keys', () => {
-      const Box = adapter.createComponent({
-        filterProps: (key) => key === 'loading',
+    if (caps.domPropFiltering)
+      it('custom filterProps strips matching keys', () => {
+        const Box = adapter.createComponent({
+          filterProps: (key) => key === 'loading',
+        })
+        const { element } = adapter.render(Box, { loading: 'true', 'data-keep': 'yes' })
+        expect(element.getAttribute('loading')).toBeNull()
+        expect(element.getAttribute('data-keep')).toBe('yes')
       })
-      const { element } = adapter.render(Box, { loading: 'true', 'data-keep': 'yes' })
-      expect(element.getAttribute('loading')).toBeNull()
-      expect(element.getAttribute('data-keep')).toBe('yes')
-    })
   })
 
   // ── ARIA forwarding ───────────────────────────────────────────────────────────
@@ -410,12 +418,13 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       expect(result.element.className).toContain('text-lg')
     })
 
-    it('switches rendered tag on rerender with a new as prop', () => {
-      const Box = adapter.createComponent({})
-      const result = adapter.render(Box, { as: 'div' })
-      expect(result.element.tagName.toLowerCase()).toBe('div')
-      result.rerender({ as: 'section' })
-      expect(result.element.tagName.toLowerCase()).toBe('section')
-    })
+    if (caps.tagPolymorphism)
+      it('switches rendered tag on rerender with a new as prop', () => {
+        const Box = adapter.createComponent({})
+        const result = adapter.render(Box, { as: 'div' })
+        expect(result.element.tagName.toLowerCase()).toBe('div')
+        result.rerender({ as: 'section' })
+        expect(result.element.tagName.toLowerCase()).toBe('section')
+      })
   })
 }
