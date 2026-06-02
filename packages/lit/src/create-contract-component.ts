@@ -4,11 +4,35 @@ import { applyFilter } from '@praxis-ui/adapter-utils'
 import { buildRuntime } from './build-runtime'
 import type { LooseBundle, LitFactoryOptions, UnknownProps } from './types/index'
 
-// Encapsulates the double cast required to erase the BuiltRuntime generic.
-// See ROADMAP: a RuntimeContract interface would eliminate this.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function asLooseBundle(bundle: any): LooseBundle {
-  return bundle as LooseBundle
+function isLooseBundle(arg: unknown): arg is LooseBundle {
+  if (typeof arg !== 'object' || arg === null) return false
+  const obj = arg as AnyRecord
+
+  const runtime = obj['runtime']
+  if (typeof runtime !== 'object' || runtime === null) return false
+  const rt = runtime as AnyRecord
+  if (typeof rt['resolveTag'] !== 'function') return false
+  if (typeof rt['resolveProps'] !== 'function') return false
+  if (typeof rt['resolveClasses'] !== 'function') return false
+  if (typeof rt['resolveAria'] !== 'function') return false
+  if (typeof rt['options'] !== 'object' || rt['options'] === null) return false
+
+  if (typeof obj['filterProps'] !== 'function') return false
+
+  if (Object.hasOwn(obj, 'childrenEvaluator') && obj['childrenEvaluator'] !== undefined) {
+    const ce = obj['childrenEvaluator']
+    if (typeof ce !== 'object' || ce === null) return false
+    if (typeof (ce as AnyRecord)['evaluate'] !== 'function') return false
+  }
+
+  return true
+}
+
+function toLooseBundle(bundle: unknown): LooseBundle {
+  if (!isLooseBundle(bundle)) {
+    throw new Error('[createContractComponent] buildRuntime returned an unexpected shape.')
+  }
+  return bundle
 }
 
 /**
@@ -108,7 +132,7 @@ export function createContractComponent<
   TPluginProps extends AnyRecord = EmptyRecord,
 >(options: LitFactoryOptions<TDefault, TProps, TVariants, TPreset, TPluginProps>) {
   const bundle = buildRuntime(options as LitFactoryOptions<TDefault, TProps, TVariants, TPreset>)
-  const looseBundle = asLooseBundle(bundle)
+  const looseBundle = toLooseBundle(bundle)
 
   const variantKeys = options.styling?.variants ? Object.keys(options.styling.variants) : []
 
