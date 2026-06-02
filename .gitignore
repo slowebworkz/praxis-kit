@@ -10,3 +10,4 @@ lib/**/*.js.map
 coverage/
 pnpm-debug.log*
 .repo-state/
+ROADMAP.md
