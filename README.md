@@ -111,6 +111,8 @@ export const Tabs = createContractComponent(tabsContract)
 The validation logic, ARIA normalization, and class pipeline live in one place. Not in the React
 binding. Not in the Vue binding. In `@praxis-ui/core`.
 
+See the working Tabs implementation across all five adapters in [`examples/`](examples/).
+
 ---
 
 ## "Won't runtime validation be slow?"
@@ -145,11 +147,29 @@ useful; they catch different things.
 
 Maintaining parity across five frameworks is the real cost of this approach. The architecture
 reduces it: validation logic lives in `@praxis-ui/core` and is shared. A bug fix there fixes all
-five adapters simultaneously. The conformance suite runs 90+ behavioral contracts against every
-adapter on every commit.
+five adapters simultaneously. The conformance suite runs 1,900+ tests across all adapters on every
+commit, including behavioral contracts, SSR, hydration parity, accessibility, and compound component
+examples.
 
 That said — if a major framework makes a breaking API change, updating all five adapters takes real
 work. This is a genuine maintenance commitment, not a solved problem.
+
+---
+
+## "What does it look like in practice?"
+
+All five adapters have working examples in [`examples/`](examples/). Run any of them:
+
+```bash
+pnpm --filter @praxis-ui/example-react dev
+pnpm --filter @praxis-ui/example-vue dev
+pnpm --filter @praxis-ui/example-solid dev
+pnpm --filter @praxis-ui/example-preact dev
+pnpm --filter @praxis-ui/example-svelte dev
+```
+
+Each example includes Box (Tailwind layout pipeline), Button (variants + presets), and Tabs (full
+compound component with ARIA wiring and state). Same contract, five runtimes.
 
 ---
 
@@ -233,6 +253,9 @@ strips invalid or redundant attributes before they reach the DOM.
 Powered by CVA internally. Base classes, per-prop variants, compound rules, named presets, and
 tag-specific overrides. Variant keys are filtered from DOM props automatically.
 
+In development, passing an unknown preset name or an invalid variant value raises a diagnostic
+immediately — warn or throw, depending on `strict`. Silent in production.
+
 ### `asChild` slot rendering
 
 Merge resolved props and classes onto a child element instead of rendering a new DOM node —
@@ -299,7 +322,18 @@ pnpm install
 pnpm typecheck
 pnpm test
 pnpm build
-pnpm bench     # render pipeline and children matcher benchmarks
+pnpm bench          # render pipeline and children matcher benchmarks
+pnpm bench:render   # praxis-ui vs. vanilla React Tabs overhead benchmark
+```
+
+Run a specific example dev server:
+
+```bash
+pnpm --filter @praxis-ui/example-react dev   # React
+pnpm --filter @praxis-ui/example-vue dev     # Vue
+pnpm --filter @praxis-ui/example-solid dev   # Solid
+pnpm --filter @praxis-ui/example-preact dev  # Preact
+pnpm --filter @praxis-ui/example-svelte dev  # Svelte
 ```
 
 ---
