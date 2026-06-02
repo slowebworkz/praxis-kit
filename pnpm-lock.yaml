@@ -210,6 +210,28 @@ importers:
         specifier: 'catalog:'
         version: 4.1.7(@types/node@25.9.1)(@vitest/ui@4.1.7)(jsdom@29.1.1)(vite@8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0))
 
+  examples/lit:
+    dependencies:
+      '@praxis-ui/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@praxis-ui/lit':
+        specifier: workspace:*
+        version: link:../../packages/lit
+      '@praxis-ui/tailwind':
+        specifier: workspace:*
+        version: link:../../packages/tailwind
+    devDependencies:
+      jsdom:
+        specifier: 'catalog:'
+        version: 29.1.1
+      lit:
+        specifier: 'catalog:'
+        version: 3.3.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.7(@types/node@25.9.1)(@vitest/ui@4.1.7)(jsdom@29.1.1)(vite@8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0))
+
   examples/preact:
     dependencies:
       '@praxis-ui/core':

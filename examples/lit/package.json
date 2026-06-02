@@ -1,0 +1,23 @@
+{
+  "name": "@praxis-ui/example-lit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . --fix --config eslint.config.ts",
+    "lint:check": "eslint . --config eslint.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "@praxis-ui/core": "workspace:*",
+    "@praxis-ui/lit": "workspace:*",
+    "@praxis-ui/tailwind": "workspace:*"
+  },
+  "devDependencies": {
+    "jsdom": "catalog:",
+    "lit": "catalog:",
+    "vitest": "catalog:"
+  }
+}
