@@ -11,23 +11,20 @@ import type { FilterPredicate } from '@praxis-ui/adapter-utils'
 /**
  * Options accepted by createContractComponent in the Lit adapter.
  *
- * Extends FactoryOptions with Lit-specific fields:
- * - filterProps: additional prop keys to strip before reflecting to DOM attributes
+ * Extends FactoryOptions with one Lit-specific field:
+ * - filterProps: determines whether a prop should be omitted before it is
+ *   reflected as a DOM attribute. Variant keys and plugin-owned keys are
+ *   always omitted; this predicate extends that set.
  *
- * Note: asChild / slot composition in Lit uses Light DOM — the rendered element
- * is a standard HTMLElement with praxis-ui's prop pipeline applied. Shadow DOM
- * slot protocol is intentionally out of scope for this adapter.
+ * Note: this adapter targets Light DOM composition only. Shadow DOM slot
+ * protocol is intentionally out of scope.
  */
 export type LitFactoryOptions<
   TDefault extends ElementType = ElementType,
-  Props extends AnyRecord = EmptyRecord,
-  V extends Readonly<VariantMap> = Readonly<EmptyRecord>,
-  TPreset extends PresetMap<V> = Readonly<EmptyRecord>,
+  TProps extends AnyRecord = EmptyRecord,
+  TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
+  TPreset extends PresetMap<TVariants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
-> = FactoryOptions<TDefault, Props, V, TPreset, TPluginProps> & {
-  /**
-   * Additional predicate for stripping props before they are reflected as
-   * DOM attributes. Variant keys and plugin-owned keys are always stripped.
-   */
+> = FactoryOptions<TDefault, TProps, TVariants, TPreset, TPluginProps> & {
   readonly filterProps?: FilterPredicate
 }
