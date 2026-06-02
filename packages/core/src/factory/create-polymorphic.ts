@@ -22,7 +22,7 @@ import type {
   VariantMap,
   VariantsOf,
 } from '../types'
-import { resolveFactoryOptions, validateFactoryOptions } from '../options'
+import { resolveFactoryOptions, validateFactoryOptions, validateRenderProps } from '../options'
 import { assertPluginShape, guardPipeline } from './plugin-invariants'
 
 declare const process: { env: { NODE_ENV: string } }
@@ -83,6 +83,9 @@ function createRuntimeMethods<G extends PolymorphicGenerics>(
       className?: ClassName,
       variantKey?: Extract<keyof PresetOf<G>, string>,
     ) {
+      if (process.env.NODE_ENV !== 'production') {
+        validateRenderProps(resolved, props as AnyRecord, variantKey)
+      }
       return classPipeline(tag, props, className, variantKey)
     },
 
