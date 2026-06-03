@@ -20,6 +20,35 @@ import type { CompoundVariant, VariantSelection } from './types/variant-config'
 
 declare const process: { env: { NODE_ENV: string } }
 
+// Batched async-warn implementation — mirrors StrictBase.scheduleAsyncWarn.
+// All messages queued in one synchronous pass flush in a single microtask;
+// duplicates within the same tick are suppressed.
+const pendingAsyncWarns = new Set<string>()
+let asyncWarnScheduled = false
+
+function flushAsyncWarns(): void {
+  asyncWarnScheduled = false
+  const messages = [...pendingAsyncWarns]
+  pendingAsyncWarns.clear()
+  for (const msg of messages) {
+    console.warn(msg)
+  }
+}
+
+function pipelineWarn(strict: StrictMode, message: string): void {
+  if (!strict) return
+  if (strict === 'async-warn') {
+    if (pendingAsyncWarns.has(message)) return
+    pendingAsyncWarns.add(message)
+    if (!asyncWarnScheduled) {
+      asyncWarnScheduled = true
+      queueMicrotask(flushAsyncWarns)
+    }
+    return
+  }
+  console.warn(message)
+}
+
 const classifier = new ClassClassifier()
 const evaluator = new DependencyEvaluator(defaultDependencyRules)
 const builder = new ClassBuilder()
@@ -31,6 +60,7 @@ function normalizeVariantValue(value: VariantValue): string {
 
 function resolveLayout(props: LayoutProps & AnyRecord): LayoutMode {
   if (process.env.NODE_ENV !== 'production' && props.flex && props.grid) {
+    // Not gated on strict — this is a misconfiguration at the call site, not a variant contract violation.
     console.warn(
       '[createTailwindPipeline] Cannot use both "flex" and "grid" simultaneously; "flex" takes precedence.',
     )
@@ -46,7 +76,8 @@ function warnReservedLayoutLiterals(strict: StrictMode, tokens: ClassifiedToken[
   }
   if (reserved.length === 0) return
 
-  console.warn(
+  pipelineWarn(
+    strict,
     `[createTailwindPipeline] Reserved layout class(es) ${reserved
       .map((r) => `"${r}"`)
       .join(', ')} found in resolved classes. ` +
@@ -132,7 +163,8 @@ function warnDeadVariants<V extends VariantMap>(
     if (tokens.length === 0) continue
 
     if (tokens.every((t) => !evaluator.evaluate(t, state))) {
-      console.warn(
+      pipelineWarn(
+        strict,
         `[createTailwindPipeline] Variant "${dim}=${value}" contributes only classes stripped under ` +
           `layout mode "${state.mode}" ("${classStr}") — it produces nothing in this mode.`,
       )
@@ -168,4 +200,10 @@ export function createTailwindPipeline<V extends VariantMap = VariantMap>(
       return filtered.some((t) => t.kind === 'layout') ? built : cn(mode, built)
     },
   }
+}
+
+/** Clears pending async-warn messages. Exposed for test isolation only. */
+export function _resetPipelineWarns(): void {
+  pendingAsyncWarns.clear()
+  asyncWarnScheduled = false
 }
