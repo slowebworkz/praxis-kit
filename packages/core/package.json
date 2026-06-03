@@ -1,6 +1,6 @@
 {
   "name": "@praxis-ui/core",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "type": "module",
   "exports": {
     ".": {
@@ -36,13 +36,26 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@praxis-ui/contract": "workspace:*",
-    "@praxis-ui/primitive": "workspace:*",
-    "@praxis-ui/styling": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {
+    "@praxis-ui/contract": "workspace:*",
+    "@praxis-ui/primitive": "workspace:*",
+    "@praxis-ui/styling": "workspace:*",
     "tsup": "catalog:",
     "vitest": "catalog:"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+  },
+  "license": "MIT"
 }

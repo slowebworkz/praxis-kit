@@ -1,4 +1,15 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["src", "./vitest.config.ts", "./vitest.ssr.config.ts", "./tsup.config.ts"]
+  // map private adapter-utils to source so tsup's dts bundler inlines it (tsconfig.build.json extends this)
+  "compilerOptions": {
+    "paths": {
+      "@praxis-ui/adapter-utils": ["../../lib/adapter-utils/src/index.ts"]
+    }
+  },
+  "include": [
+    "src",
+    "./vitest.config.ts",
+    "./vitest.ssr.config.ts",
+    "./tsup.config.ts"
+  ]
 }

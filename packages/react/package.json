@@ -1,6 +1,6 @@
 {
   "name": "@praxis-ui/react",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "type": "module",
   "exports": {
     ".": {
@@ -28,7 +28,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@praxis-ui/adapter-utils": "workspace:*",
     "@praxis-ui/core": "workspace:*",
     "clsx": "catalog:",
     "type-fest": "catalog:"
@@ -37,6 +36,7 @@
     "react": ">=18"
   },
   "devDependencies": {
+    "@praxis-ui/adapter-utils": "workspace:*",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "jsdom": "catalog:",
@@ -44,5 +44,18 @@
     "react-dom": "catalog:",
     "tsup": "catalog:",
     "vitest": "catalog:"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/react#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+  },
+  "license": "MIT"
 }

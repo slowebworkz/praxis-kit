@@ -1,6 +1,6 @@
 {
   "name": "@praxis-ui/eslint-plugin",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "type": "module",
   "exports": {
     ".": {
@@ -35,5 +35,18 @@
     "tsup": "catalog:",
     "typescript-eslint": "catalog:",
     "vitest": "catalog:"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "directory": "packages/eslint-plugin"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/eslint-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+  },
+  "license": "MIT"
 }

@@ -1,6 +1,6 @@
 {
   "name": "@praxis-ui/solid",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "type": "module",
   "exports": {
     ".": {
@@ -24,7 +24,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@praxis-ui/adapter-utils": "workspace:*",
     "@praxis-ui/core": "workspace:*",
     "clsx": "catalog:",
     "type-fest": "catalog:"
@@ -33,11 +32,25 @@
     "solid-js": ">=1.6"
   },
   "devDependencies": {
+    "@praxis-ui/adapter-utils": "workspace:*",
     "@solidjs/testing-library": "catalog:",
     "jsdom": "catalog:",
     "solid-js": "catalog:",
     "tsup": "catalog:",
     "vite-plugin-solid": "catalog:",
     "vitest": "catalog:"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "directory": "packages/solid"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/solid#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+  },
+  "license": "MIT"
 }
