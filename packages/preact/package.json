@@ -1,6 +1,6 @@
 {
   "name": "@praxis-ui/preact",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "type": "module",
   "exports": {
     ".": {
@@ -24,7 +24,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@praxis-ui/adapter-utils": "workspace:*",
     "@praxis-ui/core": "workspace:*",
     "clsx": "catalog:",
     "type-fest": "catalog:"
@@ -33,10 +32,24 @@
     "preact": ">=10.11"
   },
   "devDependencies": {
+    "@praxis-ui/adapter-utils": "workspace:*",
     "jsdom": "catalog:",
     "preact": "catalog:",
     "preact-render-to-string": "catalog:",
     "tsup": "catalog:",
     "vitest": "catalog:"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "directory": "packages/preact"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/preact#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+  },
+  "license": "MIT"
 }

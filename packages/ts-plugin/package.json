@@ -1,6 +1,6 @@
 {
   "name": "@praxis-ui/ts-plugin",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "main": "dist/index.js",
   "exports": {
     ".": "./dist/index.js"
@@ -19,5 +19,18 @@
   "devDependencies": {
     "tsup": "catalog:",
     "typescript": "catalog:"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "directory": "packages/ts-plugin"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/ts-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+  },
+  "license": "MIT"
 }

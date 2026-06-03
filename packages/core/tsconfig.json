@@ -1,4 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
+  // map private lib re-exports to source so tsup's dts bundler inlines them (facade pattern)
+  "compilerOptions": {
+    "paths": {
+      "@praxis-ui/primitive": ["../../lib/primitive/src/index.ts"],
+      "@praxis-ui/contract": ["../../lib/contract/src/index.ts"],
+      "@praxis-ui/contract/types": ["../../lib/contract/src/types/index.ts"],
+      "@praxis-ui/styling": ["../../lib/styling/src/index.ts"]
+    }
+  },
   "include": ["src", "./vitest.config.ts", "./tsup.config.ts"]
 }

@@ -2,7 +2,10 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "allowArbitraryExtensions": true,
-    "paths": {}
+    // map private adapter-utils to source so tsup's dts bundler inlines the re-exported FilterPredicate
+    "paths": {
+      "@praxis-ui/adapter-utils": ["../../lib/adapter-utils/src/index.ts"]
+    }
   },
   "include": ["src"]
 }

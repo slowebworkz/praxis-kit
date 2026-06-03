@@ -1,6 +1,6 @@
 {
   "name": "@praxis-ui/codemod",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "type": "module",
   "bin": {
     "praxis-codemod": "./dist/index.js"
@@ -26,5 +26,18 @@
     "@types/node": "^25.9.1",
     "tsup": "catalog:",
     "typescript": "catalog:"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "directory": "packages/codemod"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/codemod#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+  },
+  "license": "MIT"
 }
