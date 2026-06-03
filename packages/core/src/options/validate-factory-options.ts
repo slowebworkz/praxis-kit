@@ -7,8 +7,9 @@ import type {
   VariantMap,
 } from '../types'
 
-// Mirrors the StrictBase semantics: silent when off, console.warn on 'warn',
-// throw on 'throw' / true. Used for construction-time misconfiguration checks.
+// Mirrors the StrictBase semantics: silent when off, console.warn on 'warn' /
+// 'async-warn' (construction-time warnings are one-shot, so no deferral needed),
+// throw on 'throw' / true.
 function report(strict: StrictMode, message: string): void {
   if (strict === false) return
   if (strict === true || strict === 'throw') throw new Error(message)

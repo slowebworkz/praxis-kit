@@ -9,13 +9,32 @@ type Options = {
   readonly displayName?: string
 }
 
-// Module-level dedupe cache — dev-only, so the memory cost is negligible.
-// Prevents identical warnings from flooding the console across repeated renders.
+// Dedupe caches — dev-only, negligible memory cost.
 const warned = new Set<string>()
+const pendingAsyncWarns = new Set<string>()
+let asyncWarnScheduled = false
+
+function flushAsyncWarns(): void {
+  asyncWarnScheduled = false
+  const messages = [...pendingAsyncWarns]
+  pendingAsyncWarns.clear()
+  for (const msg of messages) {
+    console.warn(msg)
+  }
+}
 
 function report(strict: StrictMode, message: string): void {
   if (!strict) return
   if (strict === true || strict === 'throw') throw new Error(message)
+  if (strict === 'async-warn') {
+    if (pendingAsyncWarns.has(message)) return
+    pendingAsyncWarns.add(message)
+    if (!asyncWarnScheduled) {
+      asyncWarnScheduled = true
+      queueMicrotask(flushAsyncWarns)
+    }
+    return
+  }
   if (warned.has(message)) return
   warned.add(message)
   console.warn(message)
@@ -58,7 +77,9 @@ export function validateRenderProps(
   }
 }
 
-/** Clears the dedupe cache. Exposed for test isolation only. */
+/** Clears dedupe caches. Exposed for test isolation only. */
 export function _resetWarned(): void {
   warned.clear()
+  pendingAsyncWarns.clear()
+  asyncWarnScheduled = false
 }

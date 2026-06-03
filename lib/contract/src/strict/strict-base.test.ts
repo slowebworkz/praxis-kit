@@ -1,6 +1,10 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, afterEach } from 'vitest'
 
-import { StrictBase } from './strict-base'
+import { StrictBase, _resetAsyncWarns } from './strict-base'
+
+afterEach(() => {
+  _resetAsyncWarns()
+})
 
 // ---------------------------------------------------------------------------
 // Concrete subclass — StrictBase is abstract
@@ -221,5 +225,71 @@ describe('StrictBase.invariant() — message forwarding', () => {
     expect(() => s.callInvariant(false, 'exact invariant message')).toThrow(
       'exact invariant message',
     )
+  })
+})
+
+// ---------------------------------------------------------------------------
+// async-warn
+// ---------------------------------------------------------------------------
+
+describe("StrictBase.warn() — 'async-warn' mode", () => {
+  it('does not call console.warn synchronously', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const s = new TestStrict('async-warn')
+    s.callWarn('deferred')
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('calls console.warn after microtask flush', async () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const s = new TestStrict('async-warn')
+    s.callWarn('deferred')
+    await Promise.resolve()
+    expect(spy).toHaveBeenCalledWith('deferred')
+    spy.mockRestore()
+  })
+
+  it('deduplicates identical messages within the same tick', async () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const s = new TestStrict('async-warn')
+    s.callWarn('dup')
+    s.callWarn('dup')
+    s.callWarn('dup')
+    await Promise.resolve()
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toHaveBeenCalledWith('dup')
+    spy.mockRestore()
+  })
+
+  it('flushes all unique messages in a single microtask', async () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const s = new TestStrict('async-warn')
+    s.callWarn('a')
+    s.callWarn('b')
+    s.callWarn('c')
+    await Promise.resolve()
+    expect(spy).toHaveBeenCalledTimes(3)
+    spy.mockRestore()
+  })
+
+  it('allows the same message to re-fire in a later tick', async () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const s = new TestStrict('async-warn')
+    s.callWarn('repeat')
+    await Promise.resolve()
+    s.callWarn('repeat')
+    await Promise.resolve()
+    expect(spy).toHaveBeenCalledTimes(2)
+    spy.mockRestore()
+  })
+
+  it('does not throw even when strict is async-warn', async () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const s = new TestStrict('async-warn')
+    expect(() => s.callViolate('violation')).not.toThrow()
+    await Promise.resolve()
+    expect(spy).toHaveBeenCalledWith('violation')
+    spy.mockRestore()
   })
 })
