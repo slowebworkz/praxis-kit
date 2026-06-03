@@ -16,3 +16,6 @@ export { ssrConformanceSuite } from './ssr'
 
 export type { HydrationConformanceAdapter } from './hydration'
 export { hydrationParitySuite } from './hydration'
+
+export { conformancePerformanceSuite } from './performance'
+export { conformanceIsolationSuite } from './isolation'

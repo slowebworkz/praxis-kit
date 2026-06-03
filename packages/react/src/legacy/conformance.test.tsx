@@ -1,8 +1,12 @@
 // @vitest-environment jsdom
 import { createElement, createRef, act } from 'react'
-import type { Root } from 'react-dom/client'
 import { createRoot } from 'react-dom/client'
-import { conformanceSuite, conformanceA11ySuite } from '@praxis-ui/adapter-utils/testing'
+import {
+  conformanceSuite,
+  conformanceA11ySuite,
+  conformancePerformanceSuite,
+  conformanceIsolationSuite,
+} from '@praxis-ui/adapter-utils/testing'
 import type {
   BareFactoryOptions,
   ChildSpec,
@@ -31,12 +35,14 @@ function normalizeClass<T extends Record<string, unknown>>(props: T): T {
 }
 
 let container: HTMLElement
-let root: Root
 
 const adapter: ConformanceAdapter<ReactConformanceComponent> = {
   createComponent: (options) =>
     createContractComponent(options as BareFactoryOptions) as ReactConformanceComponent,
   render: (component, props = {}, children = []) => {
+    const wrapper = document.createElement('div')
+    container.appendChild(wrapper)
+    const root = createRoot(wrapper)
     const doRender = (p: Record<string, unknown>, ch: ChildSpec[]) => {
       act(() => {
         root.render(
@@ -47,23 +53,22 @@ const adapter: ConformanceAdapter<ReactConformanceComponent> = {
     doRender(props, children)
     return {
       get element() {
-        return container.firstElementChild as HTMLElement
+        return wrapper.firstElementChild as HTMLElement
       },
       rerender(newProps = {}, newChildren = []) {
         doRender(newProps, newChildren)
       },
       unmount() {
         act(() => root.unmount())
+        wrapper.remove()
       },
     }
   },
   setup: () => {
     container = document.createElement('div')
     document.body.appendChild(container)
-    root = createRoot(container)
   },
   cleanup: () => {
-    root?.unmount()
     if (container?.parentNode) container.parentNode.removeChild(container)
   },
   createRef: () => createRef<HTMLElement>(),
@@ -71,3 +76,6 @@ const adapter: ConformanceAdapter<ReactConformanceComponent> = {
 
 conformanceSuite(adapter)
 conformanceA11ySuite(adapter)
+
+conformancePerformanceSuite(adapter)
+conformanceIsolationSuite(adapter)
