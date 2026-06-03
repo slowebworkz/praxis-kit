@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { h, createRef } from 'preact'
 import { render } from 'preact'
-import { conformanceSuite, conformanceA11ySuite } from '@praxis-ui/adapter-utils/testing'
+import {
+  conformanceSuite,
+  conformanceA11ySuite,
+  conformancePerformanceSuite,
+  conformanceIsolationSuite,
+} from '@praxis-ui/adapter-utils/testing'
 import type {
   BareFactoryOptions,
   ChildSpec,
@@ -35,19 +40,22 @@ const adapter: ConformanceAdapter<PreactConformanceComponent> = {
   createComponent: (options) =>
     createContractComponent(options as BareFactoryOptions) as PreactConformanceComponent,
   render: (component, props = {}, children = []) => {
+    const wrapper = document.createElement('div')
+    container.appendChild(wrapper)
     const doRender = (p: Record<string, unknown>, ch: ChildSpec[]) => {
-      render(h(component, normalizeClass(p) as UnknownProps, ...ch.map(toVNode)), container)
+      render(h(component, normalizeClass(p) as UnknownProps, ...ch.map(toVNode)), wrapper)
     }
     doRender(props, children)
     return {
       get element() {
-        return container.firstElementChild as HTMLElement
+        return wrapper.firstElementChild as HTMLElement
       },
       rerender(newProps = {}, newChildren = []) {
         doRender(newProps, newChildren)
       },
       unmount() {
-        render(null, container)
+        render(null, wrapper)
+        wrapper.remove()
       },
     }
   },
@@ -64,3 +72,6 @@ const adapter: ConformanceAdapter<PreactConformanceComponent> = {
 
 conformanceSuite(adapter)
 conformanceA11ySuite(adapter)
+
+conformancePerformanceSuite(adapter)
+conformanceIsolationSuite(adapter)
