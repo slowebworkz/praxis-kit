@@ -2,18 +2,14 @@ import type { AnyRecord, ElementType } from '@praxis-ui/core'
 import { applyFilter } from '@praxis-ui/adapter-utils'
 import type { LitContractComponent, LooseBundle, UnknownProps } from './types/index'
 
-type RegistryEntry = { bundle: LooseBundle; variantKeys: readonly string[] }
+type RegistryEntry = { bundle: LooseBundle }
 
 // LitContractComponent is a constructor (object) — WeakMap key works directly.
 const ssrRegistry = new WeakMap<LitContractComponent, RegistryEntry>()
 
 /** Called by createContractComponent to enable renderToString for a class. */
-export function registerForSsr(
-  cls: LitContractComponent,
-  bundle: LooseBundle,
-  variantKeys: readonly string[],
-): void {
-  ssrRegistry.set(cls, { bundle, variantKeys })
+export function registerForSsr(cls: LitContractComponent, bundle: LooseBundle): void {
+  ssrRegistry.set(cls, { bundle })
 }
 
 function escapeAttr(value: string): string {
