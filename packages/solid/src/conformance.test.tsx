@@ -2,7 +2,12 @@
 import { render as solidRender, cleanup } from '@solidjs/testing-library'
 import { Dynamic } from 'solid-js/web'
 import type { Component } from 'solid-js'
-import { conformanceSuite, conformanceA11ySuite } from '@praxis-ui/adapter-utils/testing'
+import {
+  conformanceSuite,
+  conformanceA11ySuite,
+  conformancePerformanceSuite,
+  conformanceIsolationSuite,
+} from '@praxis-ui/adapter-utils/testing'
 import type { AnyRecord } from '@praxis-ui/core'
 import type {
   BareFactoryOptions,
@@ -77,3 +82,6 @@ const adapter: ConformanceAdapter<SolidConformanceComponent> = {
 
 conformanceSuite(adapter)
 conformanceA11ySuite(adapter)
+
+conformancePerformanceSuite(adapter)
+conformanceIsolationSuite(adapter)

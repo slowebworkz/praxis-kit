@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { render, cleanup } from '@testing-library/svelte'
 import { createRawSnippet } from 'svelte'
-import { conformanceSuite, conformanceA11ySuite } from '@praxis-ui/adapter-utils/testing'
+import {
+  conformanceSuite,
+  conformanceA11ySuite,
+  conformancePerformanceSuite,
+  conformanceIsolationSuite,
+} from '@praxis-ui/adapter-utils/testing'
 import type {
   BareFactoryOptions,
   ChildSpec,
@@ -91,3 +96,6 @@ const adapter: ConformanceAdapter<SvelteComponent> = {
 
 conformanceSuite(adapter)
 conformanceA11ySuite(adapter)
+
+conformancePerformanceSuite(adapter)
+conformanceIsolationSuite(adapter)

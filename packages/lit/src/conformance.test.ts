@@ -15,7 +15,11 @@
 //
 //   3. asChild: disabled via capabilities.asChild: false (Light DOM, no JSX slot).
 
-import { conformanceSuite } from '@praxis-ui/adapter-utils/testing'
+import {
+  conformanceSuite,
+  conformancePerformanceSuite,
+  conformanceIsolationSuite,
+} from '@praxis-ui/adapter-utils/testing'
 import type {
   BareFactoryOptions,
   ChildSpec,
@@ -179,7 +183,7 @@ const adapter: ConformanceAdapter<LitConformanceComponent> = {
 
     return {
       get element() {
-        return container.firstElementChild as HTMLElement
+        return elHtml
       },
       rerender(newProps = {}, newChildren = []) {
         const prevStyle = (lastProps['style'] as AnyRecord | undefined) ?? {}
@@ -214,3 +218,6 @@ const adapter: ConformanceAdapter<LitConformanceComponent> = {
 }
 
 conformanceSuite(adapter)
+
+conformancePerformanceSuite(adapter)
+conformanceIsolationSuite(adapter)
