@@ -1,10 +1,4 @@
-export type {
-  UnknownProps,
-  VariantKey,
-  ResolvedProps,
-  FilterPredicate,
-  SolidElement,
-} from './primitives'
+export type { UnknownProps, ResolvedProps, FilterPredicate, SolidElement } from './primitives'
 export type { AsProp, PolymorphicPropsBase, KnownProps } from './props'
 export type {
   RuntimeOptions,

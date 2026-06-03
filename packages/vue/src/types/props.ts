@@ -1,5 +1,5 @@
 import type { ClassName, ElementType } from '@praxis-ui/core'
-import type { UnknownProps, VariantKey } from './primitives'
+import type { UnknownProps } from './primitives'
 
 export type AsProp<T extends ElementType = ElementType> = Readonly<{
   as?: T
@@ -13,7 +13,7 @@ export type AsChildProp = Readonly<{
 export type KnownProps = Readonly<
   {
     class?: ClassName
-    variantKey?: VariantKey
+    variantKey?: string
     children?: never
   } & AsProp &
     AsChildProp &

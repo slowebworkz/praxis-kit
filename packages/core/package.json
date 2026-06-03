@@ -42,6 +42,7 @@
   "devDependencies": {
     "@praxis-ui/contract": "workspace:*",
     "@praxis-ui/primitive": "workspace:*",
+    "@praxis-ui/shared": "workspace:*",
     "@praxis-ui/styling": "workspace:*",
     "tsup": "catalog:",
     "vitest": "catalog:"

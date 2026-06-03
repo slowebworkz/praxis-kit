@@ -1,5 +1,5 @@
 import type { ReadonlyDeep } from 'type-fest'
-import type { IntrinsicTag } from '@praxis-ui/primitive'
+import type { IntrinsicTag } from '@praxis-ui/shared/types'
 import type { AriaRole } from './aria-role'
 import type { IntrinsicProps } from './contract-primitives'
 
