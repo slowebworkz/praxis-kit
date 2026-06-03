@@ -272,3 +272,57 @@ describe('Tabs — children enforcement', () => {
     await expect((root as unknown as LitEl).updateComplete).rejects.toThrow()
   })
 })
+
+// ─── Selective update guard ───────────────────────────────────────────────────
+
+describe('selective update guard', () => {
+  it('runs the pipeline when a praxis-owned prop changes', async () => {
+    const el = await mount<HTMLElement & { direction?: string }>('praxis-box')
+    const before = el.className
+    el.setAttribute('direction', 'col')
+    await update(el, () => {})
+    expect(el.className).not.toBe(before)
+    expect(el.className).toContain('flex-col')
+  })
+
+  it('runs the pipeline on manual requestUpdate() — required for ARIA/role changes', async () => {
+    const el = await mount('praxis-nav', (e) => e.setAttribute('role', 'navigation'))
+    // role should have been stripped by the ARIA engine on the first pipeline run.
+    expect(el.getAttribute('role')).toBeNull()
+    // Re-apply the attribute and force a manual pipeline flush.
+    el.setAttribute('role', 'navigation')
+    await update(el, () => {})
+    expect(el.getAttribute('role')).toBeNull()
+  })
+
+  it('does not re-run the pipeline for a non-praxis reactive property on a subclass', async () => {
+    // Register a subclass with an extra reactive property that the praxis
+    // pipeline knows nothing about. A change to that property should not
+    // trigger _applyPraxis().
+    const _lit = await import('lit')
+    const BoxBase = customElements.get('praxis-box')! as typeof _lit.LitElement
+    class BoxWithExtra extends BoxBase {
+      static override get properties() {
+        return { ...super.properties, extra: { type: String } }
+      }
+      declare extra: string | undefined
+    }
+    const tag = 'praxis-box-with-extra'
+    if (!customElements.get(tag)) customElements.define(tag, BoxWithExtra)
+
+    const el = document.createElement(tag) as HTMLElement & {
+      extra: string | undefined
+      updateComplete: Promise<boolean>
+    }
+    document.body.appendChild(el)
+    await el.updateComplete
+
+    const classBefore = el.className
+
+    // Change the non-praxis property — should NOT re-run the class pipeline.
+    ;(el as unknown as { extra: string }).extra = 'foo'
+    await el.updateComplete
+
+    expect(el.className).toBe(classBefore)
+  })
+})
