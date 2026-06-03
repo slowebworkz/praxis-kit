@@ -8,7 +8,12 @@ import type {
   VariantMap,
   VariantsOf,
 } from '@praxis-ui/core'
-import { buildCoreRuntime, buildEngines, composeFilter } from '@praxis-ui/adapter-utils'
+import {
+  buildCoreRuntime,
+  buildEngines,
+  composeFilter,
+  resolveAdapterCommonOptions,
+} from '@praxis-ui/adapter-utils'
 import { SlotValidator } from './slot'
 import type { VueFactoryOptions } from './vue-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
@@ -17,11 +22,7 @@ import type { NormalizedOptions, UnknownProps } from './types'
 function normalizeOptions<G extends PolymorphicGenerics>(
   options: VueFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>,
 ): NormalizedOptions<G> {
-  return {
-    ...options,
-    name: options.name ?? 'PolymorphicComponent',
-    strict: options.enforcement?.strict ?? 'throw',
-  } as NormalizedOptions<G>
+  return { ...options, ...resolveAdapterCommonOptions(options) } as NormalizedOptions<G>
 }
 
 export type { BuiltRuntime }
