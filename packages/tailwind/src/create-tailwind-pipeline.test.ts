@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, afterEach } from 'vitest'
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
 
-import { createTailwindPipeline } from './create-tailwind-pipeline'
+import { createTailwindPipeline, _resetPipelineWarns } from './create-tailwind-pipeline'
 
 function resolve(
   plugin: ReturnType<typeof createTailwindPipeline>,
@@ -401,5 +401,73 @@ describe('createTailwindPipeline — baseClassName layout stripping', () => {
     expect(cls).toMatch(/\bitems-center\b/)
     expect(cls).toMatch(/\bgap-4\b/)
     expect(cls).toMatch(/\brounded\b/)
+  })
+})
+
+describe('createTailwindPipeline — async-warn mode', () => {
+  let warn: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    _resetPipelineWarns()
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    warn.mockRestore()
+  })
+
+  it('does not call console.warn synchronously for reserved layout literals', () => {
+    const pipeline = createTailwindPipeline({ baseClassName: 'flex' }, 'async-warn')
+    resolve(pipeline, '')
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('calls console.warn after microtask flush for reserved layout literals', async () => {
+    const pipeline = createTailwindPipeline({ baseClassName: 'flex' }, 'async-warn')
+    resolve(pipeline, '')
+    await Promise.resolve()
+    expect(warn).toHaveBeenCalledOnce()
+    expect(warn.mock.calls[0]![0]).toMatch(/reserved layout/i)
+  })
+
+  it('does not call console.warn synchronously for dead variants', () => {
+    const pipeline = createTailwindPipeline(
+      { variants: { cols: { '2': 'grid-cols-2' } } },
+      'async-warn',
+    )
+    pipeline.pipeline('div', { flex: true, cols: '2' }, '', undefined)
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('calls console.warn after microtask flush for dead variants', async () => {
+    const pipeline = createTailwindPipeline(
+      { variants: { cols: { '2': 'grid-cols-2' } } },
+      'async-warn',
+    )
+    pipeline.pipeline('div', { flex: true, cols: '2' }, '', undefined)
+    await Promise.resolve()
+    expect(warn).toHaveBeenCalledOnce()
+    expect(warn.mock.calls[0]![0]).toMatch(/produces nothing in this mode/i)
+  })
+
+  it('deduplicates identical messages within the same tick', async () => {
+    const pipeline = createTailwindPipeline({ baseClassName: 'flex' }, 'async-warn')
+    resolve(pipeline, '')
+    resolve(pipeline, '')
+    resolve(pipeline, '')
+    await Promise.resolve()
+    expect(warn).toHaveBeenCalledOnce()
+  })
+
+  it('batches reserved-literal and dead-variant warnings into one microtask flush', async () => {
+    // baseClassName 'flex' triggers reserved-literal; grid-only variant in flex mode triggers dead-variant
+    const pipeline = createTailwindPipeline(
+      { baseClassName: 'flex', variants: { cols: { '2': 'grid-cols-2' } } },
+      'async-warn',
+    )
+    pipeline.pipeline('div', { flex: true, cols: '2' }, '', undefined)
+    expect(warn).not.toHaveBeenCalled()
+    await Promise.resolve()
+    expect(warn).toHaveBeenCalledTimes(2)
   })
 })
