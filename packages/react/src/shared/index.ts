@@ -5,7 +5,6 @@ export type {
   ResolvedProps,
   SlotComponent,
   UnknownProps,
-  VariantKey,
 } from './types/primitives'
 export type { AsProp, AsChildProp, KnownProps, PolymorphicPropsBase } from './types/props'
 export type {

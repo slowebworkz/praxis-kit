@@ -1,0 +1,114 @@
+{
+  "name": "@praxis-ui/shared",
+  "version": "3.0.1",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
+    },
+    "./types/variants": {
+      "types": "./dist/types/variants.d.ts",
+      "import": "./dist/types/variants.js"
+    },
+    "./types/contracts": {
+      "types": "./dist/types/contracts.d.ts",
+      "import": "./dist/types/contracts.js"
+    },
+    "./types/validation": {
+      "types": "./dist/types/validation.d.ts",
+      "import": "./dist/types/validation.js"
+    },
+    "./types/config": {
+      "types": "./dist/types/config.d.ts",
+      "import": "./dist/types/config.js"
+    },
+    "./types/capabilities": {
+      "types": "./dist/types/capabilities.d.ts",
+      "import": "./dist/types/capabilities.js"
+    },
+    "./constants/primitive": {
+      "types": "./dist/constants/primitive.d.ts",
+      "import": "./dist/constants/primitive.js"
+    },
+    "./constants/aria": {
+      "types": "./dist/constants/aria.d.ts",
+      "import": "./dist/constants/aria.js"
+    },
+    "./guards/aria": {
+      "types": "./dist/guards/aria.d.ts",
+      "import": "./dist/guards/aria.js"
+    },
+    "./guards/capabilities": {
+      "types": "./dist/guards/capabilities.d.ts",
+      "import": "./dist/guards/capabilities.js"
+    },
+    "./guards/contract": {
+      "types": "./dist/guards/contract.d.ts",
+      "import": "./dist/guards/contract.js"
+    },
+    "./guards/foundational": {
+      "types": "./dist/guards/foundational.d.ts",
+      "import": "./dist/guards/foundational.js"
+    },
+    "./guards/primitive": {
+      "types": "./dist/guards/primitive.d.ts",
+      "import": "./dist/guards/primitive.js"
+    },
+    "./guards/variants": {
+      "types": "./dist/guards/variants.d.ts",
+      "import": "./dist/guards/variants.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "LICENSE"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint . --fix --config eslint.config.ts",
+    "lint:check": "eslint . --config eslint.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed",
+    "lint:pkg": "publint"
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "type-fest": "catalog:"
+  },
+  "devDependencies": {
+    "tsup": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "directory": "packages/shared"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/shared#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+  },
+  "license": "MIT",
+  "author": "K Huehn <slowebworkz@gmail.com>",
+  "description": "Shared types, errors, symbols, constants, and guards for Praxis UI packages",
+  "keywords": [
+    "praxis-ui",
+    "polymorphic",
+    "ui",
+    "components",
+    "accessibility",
+    "aria",
+    "typescript",
+    "framework-agnostic",
+    "contract",
+    "variants"
+  ]
+}

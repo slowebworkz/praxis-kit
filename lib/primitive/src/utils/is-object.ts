@@ -1,3 +1,1 @@
-export function isObject(value: unknown): value is object {
-  return value !== null && typeof value === 'object'
-}
+export { isObject } from '@praxis-ui/shared/guards/foundational'

@@ -2,7 +2,6 @@ import type { ComponentType, VNode } from 'preact'
 
 export type UnknownProps = Record<string, unknown>
 export type SlotComponent = ComponentType<UnknownProps>
-export type VariantKey = string
 export type ResolvedProps = Readonly<UnknownProps>
 export type { FilterPredicate } from '@praxis-ui/adapter-utils'
 

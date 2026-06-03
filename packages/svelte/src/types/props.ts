@@ -1,6 +1,6 @@
 import type { ClassName } from '@praxis-ui/core'
 import type { Simplify } from 'type-fest'
-import type { UnknownProps, VariantKey } from './primitives'
+import type { UnknownProps } from './primitives'
 
 // Svelte's <svelte:element> only accepts string tags, so `as` is string-only
 // unlike the React/Solid/Vue adapters which accept ElementType (including components).
@@ -12,7 +12,7 @@ export type PolymorphicPropsBase = Readonly<
     {
       children?: unknown
       class?: ClassName
-      variantKey?: VariantKey
+      variantKey?: string
     } & AsProp &
       AsChildProp
   >

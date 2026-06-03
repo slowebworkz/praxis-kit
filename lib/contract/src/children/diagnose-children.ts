@@ -2,22 +2,9 @@ import type { ChildRuleInput } from '../types'
 import { normalizeChildRule } from './normalize-child-rule'
 import { RuleMatcher } from './rules-matcher'
 import { getTypeName } from './get-type-name'
+import type { ChildViolation } from '@praxis-ui/shared/types'
 
-export type ChildViolationKind =
-  | 'cardinality-min'
-  | 'cardinality-max'
-  | 'position'
-  | 'unexpected'
-  | 'ambiguous'
-
-export type ChildViolation = {
-  kind: ChildViolationKind
-  message: string
-  /** Present for cardinality and position violations. */
-  ruleName?: string
-  /** Present for unexpected and ambiguous violations. */
-  childIndex?: number
-}
+export type { ChildViolation, ChildViolationKind } from '@praxis-ui/shared/types'
 
 export function diagnoseChildren(
   rules: readonly ChildRuleInput[],

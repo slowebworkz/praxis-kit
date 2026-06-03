@@ -1,6 +1,6 @@
 import type { CVACompounds, CVADefaults, CVAVariants } from './compound-variants'
 import type { ClassName, TagMap } from './primitives'
-import type { VariantMap, VariantSelection } from './variant'
+import type { VariantMap } from './variant'
 
 /** Always-applied base class, independent of tag or variant state. */
 interface BaseClassOptions {
@@ -36,8 +36,8 @@ export type StyleOptions<TVariants extends VariantMap = VariantMap> = BaseClassO
 
 /* ---------------- PRESET LAYER ---------------- */
 
-/** A partial variant selection used as a preset/recipe value. */
-export type PresetTarget<TVariants extends VariantMap = VariantMap> = VariantSelection<TVariants>
+export type { PresetTarget } from '@praxis-ui/shared/types'
+import type { PresetTarget } from '@praxis-ui/shared/types'
 
 /** Named preset bundles, each selecting a subset of variant states by key. */
 interface PresetOptions<TVariants extends VariantMap = VariantMap> {
