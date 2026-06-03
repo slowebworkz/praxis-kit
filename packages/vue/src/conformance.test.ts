@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { h } from 'vue'
 import { mount } from '@vue/test-utils'
-import { conformanceSuite, conformanceA11ySuite } from '@praxis-ui/adapter-utils/testing'
+import {
+  conformanceSuite,
+  conformanceA11ySuite,
+  conformancePerformanceSuite,
+  conformanceIsolationSuite,
+} from '@praxis-ui/adapter-utils/testing'
 import type {
   BareFactoryOptions,
   ChildSpec,
@@ -55,3 +60,6 @@ const adapter: ConformanceAdapter<ConformanceComponent> = {
 
 conformanceSuite(adapter)
 conformanceA11ySuite(adapter)
+
+conformancePerformanceSuite(adapter)
+conformanceIsolationSuite(adapter)
