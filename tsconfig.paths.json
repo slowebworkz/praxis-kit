@@ -23,7 +23,8 @@
       "@praxis-ui/svelte": ["./packages/svelte/src/index.ts"],
       "@praxis-ui/svelte/*": ["./packages/svelte/src/*"],
       "@praxis-ui/tailwind": ["./packages/tailwind/src/index.ts"],
-      "@praxis-ui/lit": ["./packages/lit/src/index.ts"]
+      "@praxis-ui/lit": ["./packages/lit/src/index.ts"],
+      "@praxis-ui/web": ["./packages/web/src/index.ts"]
     }
   }
 }
