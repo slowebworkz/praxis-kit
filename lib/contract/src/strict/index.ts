@@ -1,1 +1,1 @@
-export { StrictBase } from './strict-base'
+export { StrictBase, _resetAsyncWarns } from './strict-base'
