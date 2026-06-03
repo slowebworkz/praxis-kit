@@ -100,3 +100,21 @@ describe('validateFactoryOptions — edge cases', () => {
     expect(warn).not.toHaveBeenCalled()
   })
 })
+
+describe("validateFactoryOptions — strict: 'async-warn'", () => {
+  it('warns synchronously (construction-time warnings are one-shot, no deferral needed)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    validateFactoryOptions(
+      resolved({ ...SIZE, strict: 'async-warn', presetMap: { p: { intent: 'primary' } } }),
+    )
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('unknown variant "intent"'))
+  })
+
+  it('does not throw', () => {
+    expect(() =>
+      validateFactoryOptions(
+        resolved({ ...SIZE, strict: 'async-warn', presetMap: { p: { intent: 'primary' } } }),
+      ),
+    ).not.toThrow()
+  })
+})
