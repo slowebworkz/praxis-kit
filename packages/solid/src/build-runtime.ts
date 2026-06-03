@@ -8,7 +8,12 @@ import type {
   VariantMap,
   VariantsOf,
 } from '@praxis-ui/core'
-import { buildCoreRuntime, buildEngines, composeFilter } from '@praxis-ui/adapter-utils'
+import {
+  buildCoreRuntime,
+  buildEngines,
+  composeFilter,
+  resolveAdapterCommonOptions,
+} from '@praxis-ui/adapter-utils'
 import type { SolidFactoryOptions } from './solid-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
 import type { NormalizedOptions } from './types/normalized-options'
@@ -18,11 +23,7 @@ import { SlotValidator } from './slot'
 function normalizeOptions<G extends PolymorphicGenerics>(
   options: SolidFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>,
 ): NormalizedOptions<G> {
-  return {
-    ...options,
-    name: options.name ?? 'PolymorphicComponent',
-    strict: options.enforcement?.strict ?? 'throw',
-  } as NormalizedOptions<G>
+  return { ...options, ...resolveAdapterCommonOptions(options) } as NormalizedOptions<G>
 }
 
 export type { BuiltRuntime }
