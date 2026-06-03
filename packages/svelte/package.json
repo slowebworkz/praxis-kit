@@ -57,7 +57,7 @@
   "bugs": {
     "url": "https://github.com/slowebworkz/praxis-ui/issues"
   },
-  "license": "LicenseRef-PolyForm-Strict-1.0.0",
+  "license": "MIT",
   "author": "K Huehn <slowebworkz@gmail.com>",
   "description": "Praxis UI adapter for Svelte 5 — polymorphic components with ARIA contracts and variant composition",
   "keywords": [
