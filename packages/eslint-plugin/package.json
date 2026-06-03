@@ -50,5 +50,21 @@
     "url": "https://github.com/slowebworkz/praxis-ui/issues"
   },
   "license": "LicenseRef-PolyForm-Strict-1.0.0",
-  "author": "K Huehn <slowebworkz@gmail.com>"
+  "author": "K Huehn <slowebworkz@gmail.com>",
+  "description": "ESLint rules for enforcing Praxis UI structural patterns, ARIA contracts, and variant configuration",
+  "keywords": [
+    "praxis-ui",
+    "polymorphic",
+    "ui",
+    "components",
+    "accessibility",
+    "aria",
+    "typescript",
+    "framework-agnostic",
+    "contract",
+    "variants",
+    "eslint",
+    "eslint-plugin",
+    "linting"
+  ]
 }

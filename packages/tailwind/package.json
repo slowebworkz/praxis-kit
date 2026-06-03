@@ -44,5 +44,21 @@
   "files": [
     "dist",
     "LICENSE"
+  ],
+  "description": "Praxis UI Tailwind CSS integration — layout-aware class pipeline with variant composition",
+  "keywords": [
+    "praxis-ui",
+    "polymorphic",
+    "ui",
+    "components",
+    "accessibility",
+    "aria",
+    "typescript",
+    "framework-agnostic",
+    "contract",
+    "variants",
+    "tailwind",
+    "tailwindcss",
+    "css"
   ]
 }

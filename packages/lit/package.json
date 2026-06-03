@@ -51,5 +51,21 @@
     "url": "https://github.com/slowebworkz/praxis-ui/issues"
   },
   "license": "LicenseRef-PolyForm-Strict-1.0.0",
-  "author": "K Huehn <slowebworkz@gmail.com>"
+  "author": "K Huehn <slowebworkz@gmail.com>",
+  "description": "Praxis UI adapter for Lit — polymorphic custom elements with ARIA contracts and variant composition",
+  "keywords": [
+    "praxis-ui",
+    "polymorphic",
+    "ui",
+    "components",
+    "accessibility",
+    "aria",
+    "typescript",
+    "framework-agnostic",
+    "contract",
+    "variants",
+    "lit",
+    "web-components",
+    "custom-elements"
+  ]
 }
