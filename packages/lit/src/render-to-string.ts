@@ -2,13 +2,14 @@ import type { AnyRecord, ElementType } from '@praxis-ui/core'
 import { applyFilter } from '@praxis-ui/adapter-utils'
 import type { LitContractComponent, LooseBundle, UnknownProps } from './types/index'
 
-// Registry mapping component classes → their SSR bundle and variant keys.
-// WeakMap so registered classes can be garbage-collected normally.
-const ssrRegistry = new WeakMap<object, { bundle: LooseBundle; variantKeys: readonly string[] }>()
+type RegistryEntry = { bundle: LooseBundle; variantKeys: readonly string[] }
+
+// LitContractComponent is a constructor (object) — WeakMap key works directly.
+const ssrRegistry = new WeakMap<LitContractComponent, RegistryEntry>()
 
 /** Called by createContractComponent to enable renderToString for a class. */
 export function registerForSsr(
-  cls: object,
+  cls: LitContractComponent,
   bundle: LooseBundle,
   variantKeys: readonly string[],
 ): void {
@@ -37,12 +38,11 @@ function buildAttrString(attributes: AnyRecord): string {
 /**
  * Renders a praxis-ui Lit component to an HTML string without requiring a DOM.
  *
- * Unlike the DOM adapter, SSR uses the tag resolved from the `as` prop (or
- * `options.tag`) directly as the HTML element tag — tag polymorphism works
- * correctly in server-rendered output.
+ * Unlike the DOM adapter, SSR resolves the HTML tag directly from `options.tag`
+ * and the `as` prop — tag polymorphism works correctly in server-rendered output.
  *
- * The returned string is the opening+closing element. Pass `children` to
- * include inner HTML content.
+ * `innerHTML` is treated as a pre-sanitized HTML string and inserted verbatim.
+ * Callers are responsible for escaping any untrusted content before passing it.
  *
  * ```ts
  * // @vitest-environment node
@@ -53,17 +53,18 @@ function buildAttrString(attributes: AnyRecord): string {
 export function renderToString(
   component: LitContractComponent,
   props: UnknownProps = {},
-  children = '',
+  innerHTML = '',
 ): string {
-  const entry = ssrRegistry.get(component as unknown as object)
+  const entry = ssrRegistry.get(component)
   if (!entry) {
+    const name = (component as { name?: string }).name ?? 'AnonymousComponent'
     throw new Error(
-      '[renderToString] Component was not registered for SSR. ' +
+      `[renderToString] ${name} was not registered for SSR. ` +
         'Ensure it was created with createContractComponent from @praxis-ui/lit.',
     )
   }
 
-  const { bundle, variantKeys } = entry
+  const { bundle } = entry
   const { as, className, variantKey, class: classAttr, ...rest } = props
 
   const tag = bundle.runtime.resolveTag(as as ElementType | undefined)
@@ -76,12 +77,6 @@ export function renderToString(
     variantKey as string | undefined,
   )
 
-  // Collect variant key values for prop forwarding exclusion
-  const variantValues: AnyRecord = {}
-  for (const key of variantKeys) {
-    if (rest[key] != null) variantValues[key] = rest[key]
-  }
-
   const ariaResult = bundle.runtime.resolveAria(tag, mergedProps)
   const filtered = applyFilter(
     ariaResult.props,
@@ -89,8 +84,9 @@ export function renderToString(
     bundle.runtime.options.variantKeys,
   )
 
-  const attrs: AnyRecord = { class: resolvedClass || undefined, ...filtered }
+  // resolvedClass wins — spread filtered first so the pipeline output always takes precedence.
+  const attrs: AnyRecord = { ...filtered, class: resolvedClass || undefined }
   const attrStr = buildAttrString(attrs)
 
-  return `<${tag}${attrStr}>${children}</${tag}>`
+  return `<${tag}${attrStr}>${innerHTML}</${tag}>`
 }

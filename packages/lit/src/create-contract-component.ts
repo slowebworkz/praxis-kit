@@ -226,7 +226,7 @@ export function createContractComponent<
   }
 
   // Register for SSR before returning — renderToString looks up the bundle via WeakMap.
-  registerForSsr(PolymorphicLitElement, looseBundle, variantKeys)
+  registerForSsr(PolymorphicLitElement as unknown as LitContractComponent, looseBundle, variantKeys)
 
   // Variant key properties are installed by Lit's finalize() at runtime, not
   // statically declared — cast to the exported contract type here at the boundary.
