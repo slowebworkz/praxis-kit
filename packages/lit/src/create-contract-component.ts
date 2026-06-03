@@ -12,23 +12,38 @@ import type {
 
 function isLooseBundle(arg: unknown): arg is LooseBundle {
   if (typeof arg !== 'object' || arg === null) return false
-  const obj = arg as AnyRecord
 
-  const runtime = obj['runtime']
+  const { runtime, filterProps, childrenEvaluator } = arg as AnyRecord
+
   if (typeof runtime !== 'object' || runtime === null) return false
-  const rt = runtime as AnyRecord
-  if (typeof rt['resolveTag'] !== 'function') return false
-  if (typeof rt['resolveProps'] !== 'function') return false
-  if (typeof rt['resolveClasses'] !== 'function') return false
-  if (typeof rt['resolveAria'] !== 'function') return false
-  if (typeof rt['options'] !== 'object' || rt['options'] === null) return false
 
-  if (typeof obj['filterProps'] !== 'function') return false
+  const { resolveTag, resolveProps, resolveClasses, resolveAria, options } = runtime as AnyRecord
 
-  if (Object.hasOwn(obj, 'childrenEvaluator') && obj['childrenEvaluator'] !== undefined) {
-    const ce = obj['childrenEvaluator']
-    if (typeof ce !== 'object' || ce === null) return false
-    if (typeof (ce as AnyRecord)['evaluate'] !== 'function') return false
+  if (
+    typeof resolveTag !== 'function' ||
+    typeof resolveProps !== 'function' ||
+    typeof resolveClasses !== 'function' ||
+    typeof resolveAria !== 'function'
+  ) {
+    return false
+  }
+
+  if (typeof options !== 'object' || options === null) {
+    return false
+  }
+
+  if (typeof filterProps !== 'function') {
+    return false
+  }
+
+  if (childrenEvaluator !== undefined) {
+    if (
+      typeof childrenEvaluator !== 'object' ||
+      childrenEvaluator === null ||
+      typeof (childrenEvaluator as AnyRecord).evaluate !== 'function'
+    ) {
+      return false
+    }
   }
 
   return true
@@ -72,29 +87,39 @@ function resolveHostState(
 /**
  * Applies resolved state to the host element.
  *
- * In Lit Light DOM the custom element IS the DOM element — variant props
- * managed by Lit's property system remain as DOM attributes (expected Lit
- * behaviour). applyHostState sets/removes non-variant attributes from the
- * ARIA-filtered output. Attributes that the ARIA engine removed (e.g. a
- * redundant role="navigation" on a <nav>) are explicitly cleared so they
- * don't persist on the host from the original setAttribute call.
+ * `prevPipelineAttrs` tracks which attribute keys the pipeline set in the
+ * previous render. Any key present there but absent from the new state is
+ * explicitly removed, preventing stale pipeline-managed attributes from
+ * accumulating across renders.
+ *
+ * Variant keys are intentionally excluded — removing them triggers Lit's
+ * attributeChangedCallback which resets the reactive property to null and
+ * schedules another update, creating a feedback loop.
  */
 function applyHostState(
   host: LitElement,
   state: ReturnType<typeof resolveHostState>,
+  prevPipelineAttrs: Set<string>,
   incomingProps: UnknownProps,
 ): void {
   host.className = state.className
 
-  // Explicitly remove aria-* and role attributes that the ARIA engine stripped
-  // (e.g. redundant role="navigation" on a <nav>). Variant keys are excluded —
-  // removing them would trigger Lit's attribute observation and reset the property.
-  for (const key in incomingProps) {
-    if (!Object.hasOwn(incomingProps, key)) continue
-    if (!key.startsWith('aria-') && key !== 'role') continue
+  // Remove pipeline-managed attributes absent from the new state (e.g. a
+  // filterProps target that was set last render but is gone this render).
+  for (const key of prevPipelineAttrs) {
     if (!Object.hasOwn(state.attributes, key)) {
       host.removeAttribute(key)
     }
+  }
+  prevPipelineAttrs.clear()
+
+  // Remove aria-* and role attributes that the ARIA engine stripped this render
+  // (e.g. redundant role="navigation" on a <nav>). These are user-set, not
+  // pipeline-set, so they're not covered by _pipelineAttrs above.
+  for (const key in incomingProps) {
+    if (!Object.hasOwn(incomingProps, key)) continue
+    if (!key.startsWith('aria-') && key !== 'role') continue
+    if (!Object.hasOwn(state.attributes, key)) host.removeAttribute(key)
   }
 
   for (const key in state.attributes) {
@@ -104,8 +129,10 @@ function applyHostState(
       host.removeAttribute(key)
     } else if (value === true) {
       host.setAttribute(key, '')
+      prevPipelineAttrs.add(key)
     } else {
       host.setAttribute(key, String(value))
+      prevPipelineAttrs.add(key)
     }
   }
 }
@@ -169,6 +196,9 @@ export function createContractComponent<
     declare variantKey: string | undefined
     declare praxisClass: string | undefined
 
+    // Tracks keys set by the pipeline last render so stale attrs are removed.
+    private _pipelineAttrs = new Set<string>()
+
     static override get properties() {
       return staticProps
     }
@@ -179,10 +209,11 @@ export function createContractComponent<
     }
 
     // Run after every Lit update. Non-reactive attributes (aria-*, role, data-*)
-    // don't trigger Lit's property system so they can't be guarded by `changed`;
-    // always running ensures they're picked up from this.attributes on the next
-    // reactive property change that does trigger an update.
-    // TODO: add selective guard once the adapter is production-proven.
+    // don't trigger Lit's property system — always running ensures they're read
+    // from this.attributes on any update cycle (incl. manual requestUpdate()).
+    // A selective guard keyed on changed is deferred: it cannot distinguish a
+    // manual requestUpdate() (empty changed) from an unrelated reactive update,
+    // which would cause it to silently skip ARIA/role reconciliation.
     override updated(changed: Map<PropertyKey, unknown>) {
       super.updated(changed)
       this._applyPraxis()
@@ -210,7 +241,7 @@ export function createContractComponent<
         if (val != null) props[key] = val
       }
 
-      applyHostState(this, resolveHostState(looseBundle, props), props)
+      applyHostState(this, resolveHostState(looseBundle, props), this._pipelineAttrs, props)
     }
 
     override render() {
