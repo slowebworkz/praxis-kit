@@ -1,0 +1,22 @@
+{
+  "name": "@praxis-ui/example-web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . --fix --config eslint.config.ts",
+    "lint:check": "eslint . --config eslint.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "@praxis-ui/core": "workspace:*",
+    "@praxis-ui/tailwind": "workspace:*",
+    "@praxis-ui/web": "workspace:*"
+  },
+  "devDependencies": {
+    "jsdom": "catalog:",
+    "vitest": "catalog:"
+  }
+}

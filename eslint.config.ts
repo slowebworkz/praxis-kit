@@ -46,8 +46,8 @@ const config = [
             'lib/tree-shaking-tests/scenarios/preact-minimal/*.ts',
             'lib/tree-shaking-tests/scenarios/svelte-minimal/*.ts',
           ],
-          // ~32 files: 2 root *.ts + 1 scripts + 9 configs + 10 per-package eslint configs (incl. lit) + 2 lib vitest + 2 tsup (codemod/ts-plugin) + 6 examples/*/eslint.config.ts + 5 examples/*/vite.config.ts + 2 non-React adapter scenarios
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 50,
+          // ~34 files: 2 root *.ts + 1 scripts + 9 configs + 11 per-package eslint configs (incl. lit, web) + 2 lib vitest + 2 tsup (codemod/ts-plugin) + 7 examples/*/eslint.config.ts + 5 examples/*/vite.config.ts + 2 non-React adapter scenarios
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 60,
           defaultProject: './tsconfig.base.json',
         },
       },
