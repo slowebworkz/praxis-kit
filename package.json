@@ -3,7 +3,7 @@
   "private": true,
   "version": "3.0.1",
   "description": "Praxis UI — framework-neutral component infrastructure with enforced structural contracts, ARIA validation, and polymorphic rendering.",
-  "license": "MIT",
+  "license": "LicenseRef-PolyForm-Strict-1.0.0",
   "type": "module",
   "scripts": {
     "dev": "pnpm -r --parallel dev",
@@ -60,5 +60,6 @@
   "packageManager": "pnpm@11.0.4",
   "engines": {
     "node": ">=24"
-  }
+  },
+  "author": "K Huehn <slowebworkz@gmail.com>"
 }

@@ -6,7 +6,8 @@
     ".": "./dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup",
@@ -32,5 +33,6 @@
   "bugs": {
     "url": "https://github.com/slowebworkz/praxis-ui/issues"
   },
-  "license": "MIT"
+  "license": "LicenseRef-PolyForm-Strict-1.0.0",
+  "author": "K Huehn <slowebworkz@gmail.com>"
 }
