@@ -161,6 +161,12 @@ export function createContractComponent<
 
   const variantKeys = options.styling?.variants ? Object.keys(options.styling.variants) : []
 
+  // Set of reactive property keys owned by the praxis pipeline. Used in
+  // requestUpdate() to decide whether a given property change requires a
+  // pipeline re-run. Manual requestUpdate() calls (name === undefined) always
+  // set the dirty flag so ARIA/role reconciliation is never skipped.
+  const praxisProps = new Set<PropertyKey>(['as', 'variantKey', 'praxisClass', ...variantKeys])
+
   const staticProps: Record<string, { type: typeof String; attribute: string | boolean }> = {
     as: { type: String, attribute: 'as' },
     variantKey: { type: String, attribute: 'variant-key' },
@@ -188,6 +194,10 @@ export function createContractComponent<
 
     // Tracks keys set by the pipeline last render so stale attrs are removed.
     private _pipelineAttrs = new Set<string>()
+    // Starts true so the first update always runs the pipeline regardless of
+    // what triggered it. Cleared after _applyPraxis() and re-set only when a
+    // praxis-owned property changes or requestUpdate() is called manually.
+    private _praxisDirty = true
 
     static override get properties() {
       return staticProps
@@ -198,15 +208,24 @@ export function createContractComponent<
       return this
     }
 
-    // Run after every Lit update. Non-reactive attributes (aria-*, role, data-*)
-    // don't trigger Lit's property system — always running ensures they're read
-    // from this.attributes on any update cycle (incl. manual requestUpdate()).
-    // A selective guard keyed on changed is deferred: it cannot distinguish a
-    // manual requestUpdate() (empty changed) from an unrelated reactive update,
-    // which would cause it to silently skip ARIA/role reconciliation.
+    // Guard: only re-run the pipeline when a praxis-owned property changed or
+    // when requestUpdate() was called manually (name === undefined — covers
+    // both the initial connection and consumer-driven ARIA attribute updates).
+    // Updates triggered by non-praxis reactive properties on a subclass are
+    // skipped, avoiding redundant pipeline runs on unrelated state changes.
+    override requestUpdate(name?: PropertyKey, oldValue?: unknown): void {
+      if (name === undefined || praxisProps.has(name)) {
+        this._praxisDirty = true
+      }
+      super.requestUpdate(name, oldValue)
+    }
+
     override updated(changed: Map<PropertyKey, unknown>) {
       super.updated(changed)
-      this._applyPraxis()
+      if (this._praxisDirty) {
+        this._praxisDirty = false
+        this._applyPraxis()
+      }
     }
 
     // Single cast at the class boundary — Lit's finalize() installs the
