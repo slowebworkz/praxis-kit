@@ -59,5 +59,18 @@
     "url": "https://github.com/slowebworkz/praxis-ui/issues"
   },
   "license": "LicenseRef-PolyForm-Strict-1.0.0",
-  "author": "K Huehn <slowebworkz@gmail.com>"
+  "author": "K Huehn <slowebworkz@gmail.com>",
+  "description": "Framework-neutral UI primitive with polymorphic rendering, ARIA enforcement, and variant composition",
+  "keywords": [
+    "praxis-ui",
+    "polymorphic",
+    "ui",
+    "components",
+    "accessibility",
+    "aria",
+    "typescript",
+    "framework-agnostic",
+    "contract",
+    "variants"
+  ]
 }
