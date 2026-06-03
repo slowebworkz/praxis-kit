@@ -8,7 +8,12 @@ import type {
   VariantMap,
   VariantsOf,
 } from '@praxis-ui/core'
-import { buildCoreRuntime, buildEngines, composeFilter } from '@praxis-ui/adapter-utils'
+import {
+  buildCoreRuntime,
+  buildEngines,
+  composeFilter,
+  resolveAdapterCommonOptions,
+} from '@praxis-ui/adapter-utils'
 import type { ReactElement } from 'react'
 import type { ReactFactoryOptions } from './react-options'
 import { SlotValidator } from './slot'
@@ -23,8 +28,7 @@ function normalizeOptions<G extends PolymorphicGenerics>(
   return {
     ...options,
     slotComponent: options.slotComponent ?? defaultSlot,
-    name: options.name ?? 'PolymorphicComponent',
-    strict: options.enforcement?.strict ?? 'throw',
+    ...resolveAdapterCommonOptions(options),
   } as NormalizedOptions<G>
 }
 
