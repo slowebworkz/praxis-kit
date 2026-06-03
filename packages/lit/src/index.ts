@@ -1,2 +1,3 @@
 export { createContractComponent } from './create-contract-component'
-export type { LitFactoryOptions } from './types/index'
+export { renderToString } from './render-to-string'
+export type { LitFactoryOptions, LitContractComponent } from './types/index'

@@ -2,6 +2,7 @@ import { LitElement, html } from 'lit'
 import type { AnyRecord, ElementType, EmptyRecord, PresetMap, VariantMap } from '@praxis-ui/core'
 import { applyFilter } from '@praxis-ui/adapter-utils'
 import { buildRuntime } from './build-runtime'
+import { registerForSsr } from './render-to-string'
 import type {
   LitContractComponent,
   LooseBundle,
@@ -223,6 +224,9 @@ export function createContractComponent<
   if (options.name) {
     Object.defineProperty(PolymorphicLitElement, 'name', { value: options.name })
   }
+
+  // Register for SSR before returning — renderToString looks up the bundle via WeakMap.
+  registerForSsr(PolymorphicLitElement, looseBundle, variantKeys)
 
   // Variant key properties are installed by Lit's finalize() at runtime, not
   // statically declared — cast to the exported contract type here at the boundary.
