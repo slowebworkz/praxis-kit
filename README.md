@@ -1,343 +1,157 @@
-# praxis-ui
+# Praxis UI
 
-**Stop invalid component composition.**
+**Build components that enforce their own structure.**
 
-Write component rules once. Use them in React, Vue, Svelte, Solid, and Preact.
-
----
-
-## Who this is for
-
-Praxis UI is for teams creating a component library that works across different frameworks and lasts
-over time.
-
-If you're building a single button for a React app, you don't need this.
-
-If you're building Tabs, Dialogs, Accordions, and Menus that need to:
-
-- reject wrong structure before it hits the DOM
-- remove incorrect ARIA attributes automatically
-- work the same in React and Vue without repeating logic
-
-…this is for you.
-
----
-
-## The problems it solves
-
-### Problem 1 — Your Tabs component accepts wrong children
+Praxis UI is a framework-neutral component infrastructure framework that validates component
+composition, accessibility rules, and rendering contracts at runtime. Instead of allowing invalid UI
+structures to render and fail later, Praxis catches them immediately.
 
 ```tsx
-// This renders. Nothing breaks immediately.
-// But the user sees broken UI because TabsList is missing.
 <Tabs>
-  <TabsTrigger value="a">First</TabsTrigger>
-  <TabsTrigger value="b">Second</TabsTrigger>
+  <TabsTrigger />
 </Tabs>
 ```
 
-TypeScript won't catch this. The type is `ReactNode` — anything is valid. The bug reaches QA, or
-production.
-
-**With Praxis UI:**
+```text
+✖ TabsList required
+✖ TabsPanel required
+```
 
 ```tsx
-// This throws immediately at render time.
-// Error: [Tabs] TabsList is required (got 0). TabsPanel is required (got 0).
 <Tabs>
-  <TabsTrigger value="a">First</TabsTrigger>
+  <TabsList>
+    <TabsTrigger />
+  </TabsList>
+  <TabsPanel>Content</TabsPanel>
 </Tabs>
 ```
 
+```text
+✔ Valid structure
+```
+
 ---
 
-### Problem 2 — Invalid ARIA attributes reach the DOM
+## Why Praxis?
+
+Traditional component libraries validate props, types, and accessibility attributes. Praxis
+additionally validates:
+
+- required children and parent/child relationships
+- component composition contracts
+- accessibility policies
+- rendering capabilities
+
+…before broken UI reaches production.
+
+---
+
+## What Problems Does It Solve?
+
+### Structural Validation
 
 ```tsx
-// Redundant: <nav> already has an implicit role="navigation".
-// This renders role="navigation" into the HTML anyway.
-<nav role="navigation">…</nav>
-
-// Invalid override — permitted roles for <nav> don't include "region".
-// This also renders without complaint.
-<nav role="region">…</nav>
+<Dialog>
+  <DialogContent />
+</Dialog>
 ```
 
-Screen readers and audit tools flag these. They're subtle and they slip through code review.
-
-**With Praxis UI:**
-
-Both attributes are removed before the DOM is touched. In strict mode, a warning is emitted. No
-false positives — the engine knows which roles are implicit and which overrides are valid.
-
----
-
-### Problem 3 — You support React today but need Vue tomorrow
-
-You've built your design system. Now a project needs Vue. Your options are:
-
-- Copy every component and keep two codebases in sync
-- Pick a headless library that has its own Vue bindings (which may not match your React version)
-- Abstract at the design token level and rebuild rendering in each framework
-
-**With Praxis UI:**
-
-```ts
-// tabs-contract.ts — define the rules once
-export const tabsContract = {
-  tag: 'div',
-  enforcement: {
-    strict: 'throw',
-    children: [
-      { name: 'TabsList', match: isTabsList, cardinality: { min: 1, max: 1 } },
-      { name: 'TabsPanel', match: isTabsPanel, cardinality: { min: 1 } },
-    ],
-  },
-}
+```text
+✖ DialogTrigger missing
 ```
 
-```ts
-// React
-import { createContractComponent } from '@praxis-ui/react'
-export const Tabs = createContractComponent(tabsContract)
-```
-
-```ts
-// Vue — one import changes. Everything else is identical.
-import { createContractComponent } from '@praxis-ui/vue'
-export const Tabs = createContractComponent(tabsContract)
-```
-
-The validation logic, ARIA normalization, and class pipeline live in one place. Not in the React
-binding. Not in the Vue binding. In `@praxis-ui/core`.
-
-See the working Tabs implementation across all five adapters in [`examples/`](examples/).
-
----
-
-## "Won't runtime validation be slow?"
-
-**Structural validation is development-only.** It runs behind a
-`process.env.NODE_ENV !== 'production'` gate and is completely absent from production builds. Zero
-cost.
-
-**Class resolution is cached.** An LRU cache skips re-evaluation when the same variant props appear
-on re-render. The full render pipeline (tag resolution + prop merge + class resolution) runs in
-under a microsecond on warm cache. Run `pnpm bench` to see numbers on your machine.
-
----
-
-## "Why not TypeScript?"
-
-TypeScript catches type errors at compile time. Structural violations — wrong children, wrong
-nesting, missing required elements — happen at runtime and produce no TypeScript errors. Both are
-useful; they catch different things.
+### Accessibility Enforcement
 
 ```tsx
-// TypeScript accepts this. It's a valid ReactNode.
-// The bug is structural, not type-level.
-<Tabs>
-  <p>This is not a TabsList.</p>
-</Tabs>
+<nav role="navigation" />
 ```
 
----
-
-## "Will you keep up with five frameworks?"
-
-Maintaining parity across five frameworks is the real cost of this approach. The architecture
-reduces it: validation logic lives in `@praxis-ui/core` and is shared. A bug fix there fixes all
-five adapters simultaneously. The conformance suite runs 1,900+ tests across all adapters on every
-commit, including behavioral contracts, SSR, hydration parity, accessibility, and compound component
-examples.
-
-That said — if a major framework makes a breaking API change, updating all five adapters takes real
-work. This is a genuine maintenance commitment, not a solved problem.
-
----
-
-## "What does it look like in practice?"
-
-All five adapters have working examples in [`examples/`](examples/). Run any of them:
-
-```bash
-pnpm --filter @praxis-ui/example-react dev
-pnpm --filter @praxis-ui/example-vue dev
-pnpm --filter @praxis-ui/example-solid dev
-pnpm --filter @praxis-ui/example-preact dev
-pnpm --filter @praxis-ui/example-svelte dev
+```text
+✖ Redundant role — stripped before it reaches the DOM
 ```
 
-Each example includes Box (Tailwind layout pipeline), Button (variants + presets), and Tabs (full
-compound component with ARIA wiring and state). Same contract, five runtimes.
-
----
-
-## Installation
-
-```bash
-# React
-pnpm add @praxis-ui/react @praxis-ui/core
-
-# Vue 3
-pnpm add @praxis-ui/vue @praxis-ui/core
-
-# Solid
-pnpm add @praxis-ui/solid @praxis-ui/core
-
-# Preact
-pnpm add @praxis-ui/preact @praxis-ui/core
-
-# Svelte 5
-pnpm add @praxis-ui/svelte @praxis-ui/core
-```
-
----
-
-## Quick example
-
-A Button with variants, strict enforcement, and framework portability:
+### Polymorphic Rendering
 
 ```tsx
-import { createContractComponent } from '@praxis-ui/react'
-
-const Button = createContractComponent({
-  tag: 'button',
-  styling: {
-    base: 'btn',
-    variants: {
-      size:   { sm: 'btn--sm', md: 'btn--md', lg: 'btn--lg' },
-      intent: { primary: 'btn--primary', ghost: 'btn--ghost' },
-    },
-    defaults: { size: 'md', intent: 'primary' },
-  },
-  enforcement: { strict: 'warn' },
-})
-
-// <button class="btn btn--md btn--primary">Save</button>
-<Button>Save</Button>
-
-// <a class="btn btn--lg btn--ghost"> — renders as <a>, not <button>
-<Button as="a" href="/" size="lg" intent="ghost">Home</Button>
+<Button as="a" href="/pricing">
+  Pricing
+</Button>
 ```
 
-Variant props (`size`, `intent`) are filtered before reaching the DOM. `as` is resolved and
-stripped. `className` is handled. You write the contract; the runtime handles the rest.
-
----
-
-## Core features
-
-### Structural enforcement
-
-Declare which children are valid and how many are allowed. Evaluated on every render in development,
-stripped in production.
-
-```ts
-enforcement: {
-  strict: 'throw',   // or 'warn' to console.warn instead of throwing
-  children: [
-    { name: 'TabsList',  match: isTabsList,  cardinality: { min: 1, max: 1 } },
-    { name: 'TabsPanel', match: isTabsPanel, cardinality: { min: 1 } },
-  ],
-}
+```html
+<a href="/pricing">Pricing</a>
 ```
 
-### ARIA normalization
+### Framework-Neutral Core
 
-The built-in engine validates role assignments against each element's implicit landmark role and
-strips invalid or redundant attributes before they reach the DOM.
+Business logic lives outside framework adapters. One engine, five runtimes.
 
-### Class variants
-
-Powered by CVA internally. Base classes, per-prop variants, compound rules, named presets, and
-tag-specific overrides. Variant keys are filtered from DOM props automatically.
-
-In development, passing an unknown preset name or an invalid variant value raises a diagnostic
-immediately — warn or throw, depending on `strict`. Silent in production.
-
-### `asChild` slot rendering
-
-Merge resolved props and classes onto a child element instead of rendering a new DOM node —
-following the Radix Slot pattern, available in every framework.
-
-### HTML5 built-in contracts
-
-```ts
-import { htmlContracts } from '@praxis-ui/core'
-
-const List = createContractComponent({ tag: 'ul', enforcement: htmlContracts.ul })
-const Table = createContractComponent({ tag: 'table', enforcement: htmlContracts.table })
+```text
+@praxis-ui/core
+  ├─ @praxis-ui/react
+  ├─ @praxis-ui/svelte
+  ├─ @praxis-ui/vue
+  ├─ @praxis-ui/solid
+  ├─ @praxis-ui/preact
+  ├─ @praxis-ui/lit
+  └─ @praxis-ui/web
 ```
-
-Pre-defined rules for `ul`, `ol`, `table`, `figure`, `details`, `fieldset`, and more. The companion
-ESLint rule `@praxis-ui/no-invalid-html-nesting` catches the same violations statically.
 
 ---
 
 ## Packages
 
-| Package                                    | Description                                                 |
-| ------------------------------------------ | ----------------------------------------------------------- |
-| [`@praxis-ui/core`](packages/core)         | Validation engine, class pipeline, ARIA normalizer, factory |
-| [`@praxis-ui/react`](packages/react)       | React 19+ · `/legacy` sub-path for React 18                 |
-| [`@praxis-ui/vue`](packages/vue)           | Vue 3                                                       |
-| [`@praxis-ui/solid`](packages/solid)       | Solid · client and SSR                                      |
-| [`@praxis-ui/preact`](packages/preact)     | Preact                                                      |
-| [`@praxis-ui/svelte`](packages/svelte)     | Svelte 5                                                    |
-| [`@praxis-ui/tailwind`](packages/tailwind) | Layout-aware Tailwind class pipeline plugin                 |
+| Package                                              | Description                                                       |
+| ---------------------------------------------------- | ----------------------------------------------------------------- |
+| [`@praxis-ui/core`](packages/core)                   | Validation engine, class pipeline, ARIA normalizer, factory       |
+| [`@praxis-ui/react`](packages/react)                 | React 19+ · `/legacy` sub-path for React 18                       |
+| [`@praxis-ui/vue`](packages/vue)                     | Vue 3                                                             |
+| [`@praxis-ui/solid`](packages/solid)                 | Solid · client and SSR                                            |
+| [`@praxis-ui/preact`](packages/preact)               | Preact                                                            |
+| [`@praxis-ui/svelte`](packages/svelte)               | Svelte 5                                                          |
+| [`@praxis-ui/lit`](packages/lit)                     | Lit                                                               |
+| [`@praxis-ui/web`](packages/web)                     | Vanilla Custom Elements — no framework required                   |
+| [`@praxis-ui/tailwind`](packages/tailwind)           | Layout-aware Tailwind class pipeline plugin                       |
+| [`@praxis-ui/vite-plugin`](packages/vite-plugin)     | Vite plugins for static composition, SSR, and contract validation |
+| [`@praxis-ui/eslint-plugin`](packages/eslint-plugin) | ESLint rules for enforcing Praxis UI patterns                     |
+| [`@praxis-ui/ts-plugin`](packages/ts-plugin)         | TypeScript language service plugin with inline diagnostics        |
+| [`@praxis-ui/codemod`](packages/codemod)             | Codemods for migrations                                           |
 
 ---
 
-## vs. other tools
+## vs. Other Tools
 
-|                 | Ships components | Structural enforcement  | Single runtime across frameworks |
-| --------------- | ---------------- | ----------------------- | -------------------------------- |
-| **Radix UI**    | Yes              | No                      | No — React only                  |
-| **Headless UI** | Yes              | No                      | No — React + Vue separately      |
-| **Ark UI**      | Yes              | Partial (state machine) | No — bindings are independent    |
-| **CVA**         | No               | No                      | No — class strings only          |
-| **Praxis UI**   | No — rules only  | Yes — declarative       | Yes — one engine                 |
-
-CVA solves variant class strings. Praxis UI wraps that with enforcement, ARIA normalization, prop
-filtering, and framework portability. If you keep rebuilding those pieces on top of CVA, that gap is
-what this fills.
+|                | Headless Components | Structural Contracts | Runtime Composition Validation | Accessibility Policies | Framework-Neutral Core |
+| -------------- | ------------------- | -------------------- | ------------------------------ | ---------------------- | ---------------------- |
+| **Praxis UI**  | — rules only        | ✓                    | ✓                              | ✓                      | ✓                      |
+| **Radix UI**   | ✓                   | ✗                    | ✗                              | Partial                | ✗ — React only         |
+| **Ark UI**     | ✓                   | Partial              | ✗                              | Partial                | Partial                |
+| **React Aria** | ✓                   | ✗                    | ✗                              | ✓                      | ✗                      |
+| **CVA**        | ✗                   | ✗                    | ✗                              | ✗                      | ✗ — class strings only |
 
 ---
 
-## Further reading
+## Philosophy
 
-- [GETTING_STARTED.md](GETTING_STARTED.md) — step-by-step from a minimal component to enforcement
-  and slot rendering
-- [ARCHITECTURE.md](ARCHITECTURE.md) — runtime pipeline, caching, and data flow
-- [MIGRATING.md](MIGRATING.md) — from CVA, Radix Slot, or a full component library
-- [ADAPTER_AUTHORING.md](ADAPTER_AUTHORING.md) — writing a new framework adapter
+TypeScript can tell you that a prop exists. Praxis can tell you that a component hierarchy is valid.
 
----
-
-## Development
-
-```bash
-pnpm install
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm bench          # render pipeline and children matcher benchmarks
-pnpm bench:render   # praxis-ui vs. vanilla React Tabs overhead benchmark
+```tsx
+<Tabs>
+  <p>Hello</p>
+</Tabs>
 ```
 
-Run a specific example dev server:
+TypeScript: `✔ Compiles` — Praxis: `✖ Invalid Tabs structure`
 
-```bash
-pnpm --filter @praxis-ui/example-react dev   # React
-pnpm --filter @praxis-ui/example-vue dev     # Vue
-pnpm --filter @praxis-ui/example-solid dev   # Solid
-pnpm --filter @praxis-ui/example-preact dev  # Preact
-pnpm --filter @praxis-ui/example-svelte dev  # Svelte
-```
+---
+
+## Get Started
+
+See [GETTING_STARTED.md](GETTING_STARTED.md) for installation, a step-by-step walkthrough, and
+working examples across all adapters.
 
 ---
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE) for details.

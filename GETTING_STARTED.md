@@ -361,6 +361,67 @@ const Box = createContractComponent({
 
 ---
 
+---
+
+## Development
+
+```bash
+pnpm install
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm bench          # render pipeline and children matcher benchmarks
+pnpm bench:render   # praxis-ui vs. vanilla React Tabs overhead benchmark
+```
+
+Run a specific example dev server:
+
+```bash
+pnpm --filter @praxis-ui/example-react dev
+pnpm --filter @praxis-ui/example-vue dev
+pnpm --filter @praxis-ui/example-solid dev
+pnpm --filter @praxis-ui/example-preact dev
+pnpm --filter @praxis-ui/example-svelte dev
+```
+
+---
+
+## Common Questions
+
+### Won't runtime validation be slow?
+
+Structural validation is development-only. It runs behind a `process.env.NODE_ENV !== 'production'`
+gate and is completely absent from production builds. Zero cost.
+
+Class resolution is cached. An LRU cache skips re-evaluation when the same variant props appear on
+re-render. The full render pipeline (tag resolution + prop merge + class resolution) runs in under a
+microsecond on warm cache. Run `pnpm bench` to see numbers on your machine.
+
+### Why not TypeScript?
+
+TypeScript catches type errors at compile time. Structural violations — wrong children, wrong
+nesting, missing required elements — happen at runtime and produce no TypeScript errors.
+
+```tsx
+// TypeScript accepts this. It's a valid ReactNode.
+// The bug is structural, not type-level.
+<Tabs>
+  <p>This is not a TabsList.</p>
+</Tabs>
+```
+
+### Will you keep up with multiple frameworks?
+
+Validation logic lives in `@praxis-ui/core` and is shared across all adapters. A bug fix there fixes
+all adapters simultaneously. The conformance suite runs 1,900+ tests across all adapters on every
+commit, including behavioral contracts, SSR, hydration parity, accessibility, and compound component
+examples.
+
+That said — if a major framework makes a breaking API change, updating all adapters takes real work.
+This is a genuine maintenance commitment, not a solved problem.
+
+---
+
 ## What's next
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — internal runtime pipeline, data flow, execution phases, and
@@ -368,4 +429,3 @@ const Box = createContractComponent({
 - [ADAPTER_AUTHORING.md](ADAPTER_AUTHORING.md) — writing a new framework adapter against the core
   contract
 - [MIGRATING.md](MIGRATING.md) — step-by-step guides from CVA, Radix Slot, and Chakra UI
-- [README.md](README.md) — full `FactoryOptions` reference and positioning overview
