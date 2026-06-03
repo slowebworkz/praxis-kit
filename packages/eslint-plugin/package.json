@@ -1,6 +1,6 @@
 {
   "name": "@praxis-ui/eslint-plugin",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "type": "module",
   "exports": {
     ".": {
@@ -9,7 +9,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup",
@@ -35,5 +36,35 @@
     "tsup": "catalog:",
     "typescript-eslint": "catalog:",
     "vitest": "catalog:"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "directory": "packages/eslint-plugin"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/eslint-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+  },
+  "license": "LicenseRef-PolyForm-Strict-1.0.0",
+  "author": "K Huehn <slowebworkz@gmail.com>",
+  "description": "ESLint rules for enforcing Praxis UI structural patterns, ARIA contracts, and variant configuration",
+  "keywords": [
+    "praxis-ui",
+    "polymorphic",
+    "ui",
+    "components",
+    "accessibility",
+    "aria",
+    "typescript",
+    "framework-agnostic",
+    "contract",
+    "variants",
+    "eslint",
+    "eslint-plugin",
+    "linting"
+  ]
 }

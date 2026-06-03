@@ -1,6 +1,6 @@
 {
   "name": "@praxis-ui/vite-plugin",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "type": "module",
   "exports": {
     ".": {
@@ -9,7 +9,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup",
@@ -32,5 +33,35 @@
     "typescript": "catalog:",
     "vite": "^8.0.14",
     "vitest": "catalog:"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "directory": "packages/vite-plugin"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/vite-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+  },
+  "license": "LicenseRef-PolyForm-Strict-1.0.0",
+  "author": "K Huehn <slowebworkz@gmail.com>",
+  "description": "Vite plugins for Praxis UI — static composition, design tokens, SSR optimisation, and contract validation",
+  "keywords": [
+    "praxis-ui",
+    "polymorphic",
+    "ui",
+    "components",
+    "accessibility",
+    "aria",
+    "typescript",
+    "framework-agnostic",
+    "contract",
+    "variants",
+    "vite",
+    "vite-plugin",
+    "bundler"
+  ]
 }
