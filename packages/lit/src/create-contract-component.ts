@@ -10,40 +10,35 @@ import type {
   UnknownProps,
 } from './types/index'
 
+function isObject(value: unknown): value is Record<PropertyKey, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function hasFunction<T extends string>(
+  obj: Record<PropertyKey, unknown>,
+  key: T,
+): obj is Record<T, (...args: unknown[]) => unknown> {
+  return typeof obj[key] === 'function'
+}
+
 function isLooseBundle(arg: unknown): arg is LooseBundle {
-  if (typeof arg !== 'object' || arg === null) return false
+  if (!isObject(arg)) return false
 
-  const { runtime, filterProps, childrenEvaluator } = arg as AnyRecord
-
-  if (typeof runtime !== 'object' || runtime === null) return false
-
-  const { resolveTag, resolveProps, resolveClasses, resolveAria, options } = runtime as AnyRecord
-
+  const { runtime, filterProps, childrenEvaluator } = arg
+  if (!isObject(runtime)) return false
+  if (!isObject(runtime['options'])) return false
   if (
-    typeof resolveTag !== 'function' ||
-    typeof resolveProps !== 'function' ||
-    typeof resolveClasses !== 'function' ||
-    typeof resolveAria !== 'function'
-  ) {
+    !hasFunction(runtime, 'resolveTag') ||
+    !hasFunction(runtime, 'resolveProps') ||
+    !hasFunction(runtime, 'resolveClasses') ||
+    !hasFunction(runtime, 'resolveAria')
+  )
     return false
-  }
 
-  if (typeof options !== 'object' || options === null) {
-    return false
-  }
-
-  if (typeof filterProps !== 'function') {
-    return false
-  }
+  if (!hasFunction({ filterProps }, 'filterProps')) return false
 
   if (childrenEvaluator !== undefined) {
-    if (
-      typeof childrenEvaluator !== 'object' ||
-      childrenEvaluator === null ||
-      typeof (childrenEvaluator as AnyRecord).evaluate !== 'function'
-    ) {
-      return false
-    }
+    if (!isObject(childrenEvaluator) || !hasFunction(childrenEvaluator, 'evaluate')) return false
   }
 
   return true
