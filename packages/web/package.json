@@ -1,6 +1,6 @@
 {
   "name": "@praxis-ui/web",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "type": "module",
   "exports": {
     ".": {
@@ -9,7 +9,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup",
@@ -24,13 +25,43 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@praxis-ui/adapter-utils": "workspace:*",
     "@praxis-ui/core": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {
+    "@praxis-ui/adapter-utils": "workspace:*",
     "jsdom": "catalog:",
     "tsup": "catalog:",
     "vitest": "catalog:"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "directory": "packages/web"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/web#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+  },
+  "license": "LicenseRef-PolyForm-Strict-1.0.0",
+  "author": "K Huehn <slowebworkz@gmail.com>",
+  "description": "Praxis UI vanilla Custom Elements adapter — framework-free polymorphic components with ARIA contracts",
+  "keywords": [
+    "praxis-ui",
+    "polymorphic",
+    "ui",
+    "components",
+    "accessibility",
+    "aria",
+    "typescript",
+    "framework-agnostic",
+    "contract",
+    "variants",
+    "web-components",
+    "custom-elements",
+    "vanilla"
+  ]
 }

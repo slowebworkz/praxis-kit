@@ -1,12 +1,13 @@
 {
   "name": "@praxis-ui/ts-plugin",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "main": "dist/index.js",
   "exports": {
     ".": "./dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup",
@@ -19,5 +20,37 @@
   "devDependencies": {
     "tsup": "catalog:",
     "typescript": "catalog:"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "directory": "packages/ts-plugin"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/ts-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+  },
+  "license": "LicenseRef-PolyForm-Strict-1.0.0",
+  "author": "K Huehn <slowebworkz@gmail.com>",
+  "description": "TypeScript language service plugin providing inline Praxis UI diagnostics in your editor",
+  "keywords": [
+    "praxis-ui",
+    "polymorphic",
+    "ui",
+    "components",
+    "accessibility",
+    "aria",
+    "typescript",
+    "framework-agnostic",
+    "contract",
+    "variants",
+    "typescript",
+    "ts-plugin",
+    "language-service",
+    "diagnostics"
+  ],
+  "sideEffects": false
 }

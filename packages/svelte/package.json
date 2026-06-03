@@ -1,6 +1,6 @@
 {
   "name": "@praxis-ui/svelte",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "type": "module",
   "exports": {
     ".": {
@@ -13,7 +13,8 @@
   },
   "files": [
     "dist",
-    "src/Polymorphic.svelte"
+    "src/Polymorphic.svelte",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup",
@@ -28,7 +29,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@praxis-ui/adapter-utils": "workspace:*",
     "@praxis-ui/core": "workspace:*",
     "clsx": "catalog:",
     "type-fest": "catalog:"
@@ -37,11 +37,40 @@
     "svelte": ">=5"
   },
   "devDependencies": {
+    "@praxis-ui/adapter-utils": "workspace:*",
     "@sveltejs/vite-plugin-svelte": "catalog:",
     "@testing-library/svelte": "catalog:",
     "jsdom": "catalog:",
     "svelte": "catalog:",
     "tsup": "catalog:",
     "vitest": "catalog:"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "directory": "packages/svelte"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/svelte#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+  },
+  "license": "LicenseRef-PolyForm-Strict-1.0.0",
+  "author": "K Huehn <slowebworkz@gmail.com>",
+  "description": "Praxis UI adapter for Svelte 5 — polymorphic components with ARIA contracts and variant composition",
+  "keywords": [
+    "praxis-ui",
+    "polymorphic",
+    "ui",
+    "components",
+    "accessibility",
+    "aria",
+    "typescript",
+    "framework-agnostic",
+    "contract",
+    "variants",
+    "svelte"
+  ]
 }
