@@ -209,8 +209,15 @@ export function createContractComponent<
       this._applyPraxis()
     }
 
+    // Single cast at the class boundary — Lit's finalize() installs the
+    // reactive property getters/setters at runtime; this accessor exposes them
+    // under the typed shape so _applyPraxis never needs to cast inline.
+    private get _self(): InstanceProps {
+      return this as unknown as InstanceProps
+    }
+
     private _applyPraxis() {
-      const self = this as unknown as InstanceProps
+      const self = this._self
 
       // Start with all current DOM attributes so the ARIA engine sees role,
       // aria-*, and any other pass-through attributes.
