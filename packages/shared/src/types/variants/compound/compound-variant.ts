@@ -1,6 +1,8 @@
 import type { RequireAtLeastOne, Simplify } from 'type-fest'
 import type { EmptyRecord, NonEmptyArray } from '../../primitives'
-import type { DefaultVariants, VariantKey, VariantMap, VariantValue } from '..'
+import type { VariantKey } from '../variant-key'
+import type { VariantMap } from '../variant-map'
+import type { VariantValue } from '../variant-value'
 
 type RequireAtLeastOneIfNotEmpty<T> = keyof T extends never ? EmptyRecord : RequireAtLeastOne<T>
 
@@ -23,6 +25,3 @@ type CompoundVariantBase<V extends VariantMap> = keyof V extends never
 export type CompoundVariant<V extends VariantMap> = CompoundVariantBase<V> & {
   class: VariantValue
 }
-
-// re-export dependencies consumed by CVA* types in this folder
-export type { DefaultVariants }
