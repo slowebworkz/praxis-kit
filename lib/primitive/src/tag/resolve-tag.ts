@@ -1,10 +1,7 @@
 import type { ElementType } from '../types'
+import type { ResolveTagFn } from '@praxis-ui/shared/types'
 
-export type ResolveTagFn<TDefault extends ElementType> = <
-  T extends ElementType | undefined = undefined,
->(
-  as?: T,
-) => T extends ElementType ? T : TDefault
+export type { ResolveTagFn }
 
 export function resolveTag<TDefault, TAs>(defaultTag: TDefault, as?: TAs) {
   return as ?? defaultTag

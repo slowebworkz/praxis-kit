@@ -11,6 +11,10 @@
       "types": "./dist/types.d.ts",
       "import": "./dist/types.js"
     },
+    "./types/primitives": {
+      "types": "./dist/types/primitives.d.ts",
+      "import": "./dist/types/primitives.js"
+    },
     "./types/variants": {
       "types": "./dist/types/variants.d.ts",
       "import": "./dist/types/variants.js"

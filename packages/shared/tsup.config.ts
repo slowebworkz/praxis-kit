@@ -4,6 +4,7 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
     types: 'src/types/index.ts',
+    'types/primitives': 'src/types/primitives/index.ts',
     'types/variants': 'src/types/variants/index.ts',
     'types/contracts': 'src/types/contracts/index.ts',
     'types/validation': 'src/types/validation/index.ts',
