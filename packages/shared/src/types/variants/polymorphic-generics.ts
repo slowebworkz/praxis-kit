@@ -1,4 +1,6 @@
-import type { AnyRecord, ElementType, EmptyRecord } from '..'
+import type { AnyRecord } from '../primitives/any-record'
+import type { ElementType } from '../primitives/element-type'
+import type { EmptyRecord } from '../primitives/empty-record'
 import type { PresetMap } from './preset-map'
 import type { VariantMap } from './variant-map'
 
