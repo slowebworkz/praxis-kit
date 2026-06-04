@@ -1,20 +1,7 @@
-import type { IntrinsicTag } from '@praxis-ui/shared/types'
-import type { IntrinsicProps } from './contract-primitives'
-import type { AriaContext, AriaPhase, Severity } from './aria-rule'
+import type { IntrinsicTag, ValidationResult } from '@praxis-ui/shared/types'
+import type { AriaContext } from './aria-rule'
 
-export type ValidationViolation = {
-  message: string
-  tag: string
-  role: string | undefined
-  attribute: string | undefined
-  severity: Severity
-  phase: AriaPhase
-}
-
-export type ValidationResult = {
-  props: IntrinsicProps
-  violations: ReadonlyArray<ValidationViolation>
-}
+export type { ValidationResult, ValidationViolation } from '@praxis-ui/shared/types'
 
 export type NormalizationResult =
   | { normalized: false }

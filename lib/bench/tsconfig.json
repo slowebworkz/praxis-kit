@@ -6,6 +6,9 @@
       "@praxis-ui/shared": [
         "../../packages/shared/src"
       ],
+      "@praxis-ui/shared/types/primitives": [
+        "../../packages/shared/src/types/primitives/index.ts"
+      ],
       "@praxis-ui/shared/types": [
         "../../packages/shared/src/types/index.ts"
       ],

@@ -2,6 +2,7 @@
   "compilerOptions": {
     "paths": {
       "@praxis-ui/shared": ["./packages/shared/src"],
+      "@praxis-ui/shared/types/primitives": ["./packages/shared/src/types/primitives/index.ts"],
       "@praxis-ui/shared/types": ["./packages/shared/src/types/index.ts"],
       "@praxis-ui/shared/types/variants": ["./packages/shared/src/types/variants/index.ts"],
       "@praxis-ui/shared/types/contracts": ["./packages/shared/src/types/contracts/index.ts"],

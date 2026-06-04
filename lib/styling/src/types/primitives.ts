@@ -1,5 +1,3 @@
-import type { IntrinsicTag } from '@praxis-ui/shared/types'
-
 export type {
   AnyRecord,
   ClassName,
@@ -8,4 +6,4 @@ export type {
   VariantConditionValue,
 } from '@praxis-ui/shared/types'
 
-export type TagMap = Partial<Record<IntrinsicTag | (string & {}), string>>
+export type { TagMap } from '@praxis-ui/shared/types/primitives'

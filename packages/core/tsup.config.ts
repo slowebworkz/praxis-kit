@@ -12,6 +12,7 @@ export default defineConfig({
     '@praxis-ui/contract/types',
     '@praxis-ui/styling',
     '@praxis-ui/shared',
+    '@praxis-ui/shared/types/primitives',
     '@praxis-ui/shared/types',
   ],
 })
