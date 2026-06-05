@@ -2,15 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@praxis-ui/shared": [
-        "../../packages/shared/src"
-      ],
+      "@praxis-ui/shared": ["../../packages/shared/src"],
       "@praxis-ui/shared/types/primitives": [
         "../../packages/shared/src/types/primitives/index.ts"
       ],
-      "@praxis-ui/shared/types": [
-        "../../packages/shared/src/types/index.ts"
-      ],
+      "@praxis-ui/shared/types": ["../../packages/shared/src/types/index.ts"],
       "@praxis-ui/shared/types/variants": [
         "../../packages/shared/src/types/variants/index.ts"
       ],
@@ -50,48 +46,20 @@
       "@praxis-ui/shared/guards/variants": [
         "../../packages/shared/src/guards/variants/index.ts"
       ],
-      "@praxis-ui/shared/*": [
-        "../../packages/shared/src/*"
-      ],
-      "@praxis-ui/core": [
-        "../../packages/core/src"
-      ],
-      "@praxis-ui/core/primitive": [
-        "../../packages/core/src/primitive.ts"
-      ],
-      "@praxis-ui/core/contract": [
-        "../../packages/core/src/contract.ts"
-      ],
-      "@praxis-ui/core/styling": [
-        "../../packages/core/src/styling.ts"
-      ],
-      "@praxis-ui/core/*": [
-        "../../packages/core/src/*"
-      ],
-      "@praxis-ui/primitive": [
-        "../../lib/primitive/src"
-      ],
-      "@praxis-ui/primitive/*": [
-        "../../lib/primitive/src/*"
-      ],
-      "@praxis-ui/contract": [
-        "../../lib/contract/src"
-      ],
-      "@praxis-ui/contract/*": [
-        "../../lib/contract/src/*"
-      ],
-      "@praxis-ui/styling": [
-        "../../lib/styling/src"
-      ],
-      "@praxis-ui/styling/*": [
-        "../../lib/styling/src/*"
-      ],
-      "@praxis-ui/adapter-utils": [
-        "../../lib/adapter-utils/src"
-      ],
-      "@praxis-ui/adapter-utils/*": [
-        "../../lib/adapter-utils/src/*"
-      ]
+      "@praxis-ui/shared/*": ["../../packages/shared/src/*"],
+      "@praxis-ui/core": ["../../packages/core/src"],
+      "@praxis-ui/core/primitive": ["../../packages/core/src/primitive.ts"],
+      "@praxis-ui/core/contract": ["../../packages/core/src/contract.ts"],
+      "@praxis-ui/core/styling": ["../../packages/core/src/styling.ts"],
+      "@praxis-ui/core/*": ["../../packages/core/src/*"],
+      "@praxis-ui/primitive": ["../../lib/primitive/src"],
+      "@praxis-ui/primitive/*": ["../../lib/primitive/src/*"],
+      "@praxis-ui/contract": ["../../lib/contract/src"],
+      "@praxis-ui/contract/*": ["../../lib/contract/src/*"],
+      "@praxis-ui/styling": ["../../lib/styling/src"],
+      "@praxis-ui/styling/*": ["../../lib/styling/src/*"],
+      "@praxis-ui/adapter-utils": ["../../lib/adapter-utils/src"],
+      "@praxis-ui/adapter-utils/*": ["../../lib/adapter-utils/src/*"]
     }
   },
   "include": [
