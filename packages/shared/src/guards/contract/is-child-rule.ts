@@ -1,5 +1,7 @@
 import type { ChildRuleInput, NormalizedChildRule } from '../../types'
-import { isFunction, isRecord, isString } from '../foundational'
+import { isFunction } from '../foundational/is-function'
+import { isRecord } from '../foundational/is-record'
+import { isString } from '../foundational/is-string'
 import { isCardinality } from './is-cardinality'
 
 export function isChildRule(value: unknown): value is ChildRuleInput {
