@@ -18,6 +18,9 @@ catalogs:
     '@playwright/experimental-ct-react':
       specifier: ^1.60.0
       version: 1.60.0
+    '@playwright/experimental-ct-vue':
+      specifier: ^1.60.0
+      version: 1.60.0
     '@playwright/test':
       specifier: ^1.60.0
       version: 1.60.0
@@ -55,11 +58,14 @@ catalogs:
       specifier: ^4.0.0
       version: 4.7.0
     '@vitejs/plugin-vue':
-      specifier: ^5.0.0
-      version: 5.2.4
+      specifier: ^6.0.7
+      version: 6.0.7
     '@vitest/ui':
       specifier: ^4.1.7
       version: 4.1.7
+    '@vue/compiler-dom':
+      specifier: ^3.5.35
+      version: 3.5.35
     '@vue/server-renderer':
       specifier: ^3.5.35
       version: 3.5.35
@@ -385,7 +391,7 @@ importers:
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: 'catalog:'
-        version: 5.2.4(vite@8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0))(vue@3.5.35(typescript@6.0.3))
+        version: 6.0.7(vite@8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0))(vue@3.5.35(typescript@6.0.3))
       '@vue/test-utils':
         specifier: 'catalog:'
         version: 2.4.10(@vue/compiler-dom@3.5.35)(@vue/server-renderer@3.5.35(vue@3.5.35(typescript@6.0.3)))(vue@3.5.35(typescript@6.0.3))
@@ -948,9 +954,27 @@ importers:
         specifier: 'catalog:'
         version: 5.6.0
     devDependencies:
+      '@axe-core/playwright':
+        specifier: 'catalog:'
+        version: 4.11.3(playwright-core@1.60.0)
+      '@playwright/experimental-ct-vue':
+        specifier: 'catalog:'
+        version: 1.60.0(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)(vite@8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0))(vue@3.5.35(typescript@6.0.3))
+      '@playwright/test':
+        specifier: 'catalog:'
+        version: 1.60.0
       '@praxis-ui/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
+      '@praxis-ui/playwright':
+        specifier: workspace:*
+        version: link:../playwright
+      '@vitejs/plugin-vue':
+        specifier: 'catalog:'
+        version: 6.0.7(vite@8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0))(vue@3.5.35(typescript@6.0.3))
+      '@vue/compiler-dom':
+        specifier: 'catalog:'
+        version: 3.5.35
       '@vue/server-renderer':
         specifier: 'catalog:'
         version: 3.5.35(vue@3.5.35(typescript@6.0.3))
@@ -1897,6 +1921,11 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  '@playwright/experimental-ct-vue@1.60.0':
+    resolution: {integrity: sha512-tmNRdsRCI6133Jl/pHRYXz+ZmKwrJKnIg6sd5pDq69yF28zitLyoB0gh95p15uEh0BP5++FLAC2iSRs6l+KUNQ==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   '@playwright/test@1.60.0':
     resolution: {integrity: sha512-O71yZIbAh/PxDMNGns37GHBIfrVkEVyn+AXyIa5dOTfb4/xNvRWV+Vv/NMbNCtODB/pO7vLlF2OTmMVLhmr7Ag==}
     engines: {node: '>=18'}
@@ -2533,6 +2562,13 @@ packages:
     engines: {node: ^18.0.0 || >=20.0.0}
     peerDependencies:
       vite: ^5.0.0 || ^6.0.0
+      vue: ^3.2.25
+
+  '@vitejs/plugin-vue@6.0.7':
+    resolution: {integrity: sha512-km+p+XdSz9Sxm5rqUbqcSfZYaAniKxWBj1KURl+Jr7UaPvvX7BmaWMdP69I5rrFDeQGyxAG7NXdc57vz+snhWg==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    peerDependencies:
+      vite: ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
       vue: ^3.2.25
 
   '@vitest/expect@4.1.7':
@@ -5594,6 +5630,25 @@ snapshots:
       - vite
       - yaml
 
+  '@playwright/experimental-ct-vue@1.60.0(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)(vite@8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0))(vue@3.5.35(typescript@6.0.3))':
+    dependencies:
+      '@playwright/experimental-ct-core': 1.60.0(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)
+      '@vitejs/plugin-vue': 5.2.4(vite@8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0))(vue@3.5.35(typescript@6.0.3))
+    transitivePeerDependencies:
+      - '@types/node'
+      - jiti
+      - less
+      - lightningcss
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - terser
+      - tsx
+      - vite
+      - vue
+      - yaml
+
   '@playwright/test@1.60.0':
     dependencies:
       playwright: 1.60.0
@@ -6131,6 +6186,12 @@ snapshots:
       vite: 8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)
       vue: 3.5.35(typescript@6.0.3)
 
+  '@vitejs/plugin-vue@6.0.7(vite@8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0))(vue@3.5.35(typescript@6.0.3))':
+    dependencies:
+      '@rolldown/pluginutils': 1.0.1
+      vite: 8.0.14(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)
+      vue: 3.5.35(typescript@6.0.3)
+
   '@vitest/expect@4.1.7':
     dependencies:
       '@standard-schema/spec': 1.1.0
@@ -6193,7 +6254,7 @@ snapshots:
 
   '@vue/compiler-core@3.5.35':
     dependencies:
-      '@babel/parser': 7.29.3
+      '@babel/parser': 7.29.7
       '@vue/shared': 3.5.35
       entities: 7.0.1
       estree-walker: 2.0.2
