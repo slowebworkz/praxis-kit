@@ -1,6 +1,8 @@
 type AriaAttributeName = string
 type RoleSet = ReadonlySet<string>
 
+// WAI-ARIA 1.2 §6.6.6 — states and properties inherited by all roles.
+// aria-dropeffect and aria-grabbed are omitted (deprecated since ARIA 1.1).
 const GLOBAL_ARIA_ATTRIBUTES: ReadonlySet<AriaAttributeName> = new Set([
   'aria-atomic',
   'aria-busy',
@@ -9,32 +11,50 @@ const GLOBAL_ARIA_ATTRIBUTES: ReadonlySet<AriaAttributeName> = new Set([
   'aria-describedby',
   'aria-details',
   'aria-disabled',
-  'aria-dropeffect',
   'aria-errormessage',
   'aria-flowto',
-  'aria-grabbed',
   'aria-hidden',
   'aria-keyshortcuts',
   'aria-label',
   'aria-labelledby',
   'aria-live',
   'aria-owns',
-  'aria-posinset',
   'aria-relevant',
   'aria-roledescription',
-  'aria-setsize',
 ])
 
+// WAI-ARIA 1.2 — states and properties scoped to specific roles.
+// Attributes absent from this map (and not global) are accepted unconditionally
+// because unknown aria-* attributes may be valid per a future spec revision or
+// a custom role not yet covered here.
 const ROLE_RESTRICTED_ATTRIBUTES: ReadonlyMap<AriaAttributeName, RoleSet> = new Map([
+  [
+    'aria-activedescendant',
+    new Set([
+      'application',
+      'combobox',
+      'grid',
+      'group',
+      'listbox',
+      'menu',
+      'menubar',
+      'radiogroup',
+      'spinbutton',
+      'tablist',
+      'toolbar',
+      'textbox',
+      'tree',
+      'treegrid',
+    ]),
+  ],
+  ['aria-autocomplete', new Set(['combobox', 'searchbox', 'textbox'])],
   [
     'aria-checked',
     new Set(['checkbox', 'menuitemcheckbox', 'option', 'radio', 'switch', 'treeitem']),
   ],
-  ['aria-pressed', new Set(['button'])],
-  [
-    'aria-selected',
-    new Set(['columnheader', 'gridcell', 'option', 'row', 'rowheader', 'tab', 'treeitem']),
-  ],
+  ['aria-colcount', new Set(['grid', 'table', 'treegrid'])],
+  ['aria-colindex', new Set(['cell', 'columnheader', 'gridcell', 'row', 'rowheader'])],
+  ['aria-colspan', new Set(['cell', 'columnheader', 'gridcell', 'rowheader'])],
   [
     'aria-expanded',
     new Set([
@@ -66,25 +86,29 @@ const ROLE_RESTRICTED_ATTRIBUTES: ReadonlyMap<AriaAttributeName, RoleSet> = new 
     ]),
   ],
   ['aria-level', new Set(['heading', 'listitem', 'row', 'treeitem'])],
-  [
-    'aria-valuemin',
-    new Set(['meter', 'progressbar', 'scrollbar', 'separator', 'slider', 'spinbutton']),
-  ],
-  [
-    'aria-valuemax',
-    new Set(['meter', 'progressbar', 'scrollbar', 'separator', 'slider', 'spinbutton']),
-  ],
-  [
-    'aria-valuenow',
-    new Set(['meter', 'progressbar', 'scrollbar', 'separator', 'slider', 'spinbutton']),
-  ],
-  [
-    'aria-valuetext',
-    new Set(['meter', 'progressbar', 'scrollbar', 'separator', 'slider', 'spinbutton']),
-  ],
-  ['aria-sort', new Set(['columnheader', 'rowheader'])],
-  ['aria-multiselectable', new Set(['grid', 'listbox', 'tablist', 'tree', 'treegrid'])],
+  ['aria-modal', new Set(['alertdialog', 'dialog'])],
   ['aria-multiline', new Set(['textbox'])],
+  ['aria-multiselectable', new Set(['grid', 'listbox', 'tablist', 'tree', 'treegrid'])],
+  [
+    'aria-orientation',
+    new Set(['scrollbar', 'select', 'separator', 'slider', 'tablist', 'toolbar', 'tree']),
+  ],
+  ['aria-placeholder', new Set(['searchbox', 'textbox'])],
+  [
+    'aria-posinset',
+    new Set([
+      'article',
+      'listitem',
+      'menuitem',
+      'menuitemcheckbox',
+      'menuitemradio',
+      'option',
+      'radio',
+      'row',
+      'tab',
+    ]),
+  ],
+  ['aria-pressed', new Set(['button'])],
   [
     'aria-readonly',
     new Set([
@@ -113,9 +137,43 @@ const ROLE_RESTRICTED_ATTRIBUTES: ReadonlyMap<AriaAttributeName, RoleSet> = new 
       'treegrid',
     ]),
   ],
+  ['aria-rowcount', new Set(['grid', 'table', 'treegrid'])],
+  ['aria-rowindex', new Set(['cell', 'columnheader', 'gridcell', 'row', 'rowheader'])],
+  ['aria-rowspan', new Set(['cell', 'columnheader', 'gridcell', 'rowheader'])],
   [
-    'aria-orientation',
-    new Set(['scrollbar', 'select', 'separator', 'slider', 'tablist', 'toolbar', 'tree']),
+    'aria-selected',
+    new Set(['columnheader', 'gridcell', 'option', 'row', 'rowheader', 'tab', 'treeitem']),
+  ],
+  [
+    'aria-setsize',
+    new Set([
+      'article',
+      'listitem',
+      'menuitem',
+      'menuitemcheckbox',
+      'menuitemradio',
+      'option',
+      'radio',
+      'row',
+      'tab',
+    ]),
+  ],
+  ['aria-sort', new Set(['columnheader', 'rowheader'])],
+  [
+    'aria-valuemax',
+    new Set(['meter', 'progressbar', 'scrollbar', 'separator', 'slider', 'spinbutton']),
+  ],
+  [
+    'aria-valuemin',
+    new Set(['meter', 'progressbar', 'scrollbar', 'separator', 'slider', 'spinbutton']),
+  ],
+  [
+    'aria-valuenow',
+    new Set(['meter', 'progressbar', 'scrollbar', 'separator', 'slider', 'spinbutton']),
+  ],
+  [
+    'aria-valuetext',
+    new Set(['meter', 'progressbar', 'scrollbar', 'separator', 'slider', 'spinbutton']),
   ],
 ])
 
