@@ -1,5 +1,6 @@
 export type { AnyRecord } from './any-record'
 export type { AriaRole } from './aria-role'
+export type { KnownAriaRole } from './known-aria-role'
 export type { ClassName } from './class-name'
 export type { DefaultProps } from './default-props'
 export type { ElementType } from './element-type'

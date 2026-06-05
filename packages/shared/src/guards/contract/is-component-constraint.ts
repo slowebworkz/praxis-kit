@@ -1,11 +1,13 @@
 import type { WithChildRules } from '../../types'
-import { isArray, isRecord } from '../foundational'
+import { isArray } from '../foundational/is-array'
+import { isUndefined } from '../foundational/is-defined'
+import { isRecord } from '../foundational/is-record'
 
 export function isComponentConstraint(value: unknown): value is WithChildRules {
   if (!isRecord(value)) return false
   const enforcement = value['enforcement']
-  if (enforcement === undefined) return true
+  if (isUndefined(enforcement)) return true
   if (!isRecord(enforcement)) return false
   const children = enforcement['children']
-  return children === undefined || isArray(children)
+  return isUndefined(children) || isArray(children)
 }

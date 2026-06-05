@@ -1,5 +1,5 @@
 import type { PresetMap } from '../../types'
-import { isRecord } from '../foundational'
+import { isRecord } from '../foundational/is-record'
 import { isVariantSelection } from './is-variant-selection'
 
 export function isPresetMap(value: unknown): value is PresetMap {

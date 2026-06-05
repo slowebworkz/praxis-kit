@@ -23,6 +23,7 @@
     "lint:check": "eslint . --config eslint.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:pw": "playwright test -c playwright-ct.config.ts",
     "test:related": "vitest run --changed",
     "prepublishOnly": "pnpm build",
     "lint:pkg": "publint"
@@ -37,7 +38,11 @@
     "react": ">=18"
   },
   "devDependencies": {
+    "@axe-core/playwright": "catalog:",
+    "@playwright/experimental-ct-react": "catalog:",
     "@praxis-ui/adapter-utils": "workspace:*",
+    "@praxis-ui/playwright": "workspace:*",
+    "@vitejs/plugin-react": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "jsdom": "catalog:",

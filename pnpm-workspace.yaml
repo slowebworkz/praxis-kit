@@ -39,6 +39,11 @@ catalog:
   eslint-plugin-import-x: ^4.16.2
   eslint-plugin-unicorn: ^64.0.0
 
+  # Playwright
+  "@axe-core/playwright": ^4.11.3
+  "@playwright/experimental-ct-react": ^1.60.0
+  "@playwright/test": ^1.60.0
+
   # Tooling
   husky: ^9.1.7
 

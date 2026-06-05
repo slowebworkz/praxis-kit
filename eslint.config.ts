@@ -32,6 +32,9 @@ const config = [
             // codemod and ts-plugin have rootDir:src — tsup.config.ts can't be in their tsconfig include
             'packages/codemod/tsup.config.ts',
             'packages/ts-plugin/tsup.config.ts',
+            // Playwright CT config and mount entry live outside the react package tsconfig include
+            'packages/react/playwright-ct.config.ts',
+            'packages/react/playwright/index.tsx',
             // remaining tsup.config.ts files are included in each package's tsconfig — removed from here
             // lib/contract and lib/styling include vitest.config.ts in their tsconfig — listed explicitly
             'lib/adapter-utils/vitest.config.ts',
@@ -46,7 +49,7 @@ const config = [
             'lib/tree-shaking-tests/scenarios/preact-minimal/*.ts',
             'lib/tree-shaking-tests/scenarios/svelte-minimal/*.ts',
           ],
-          // ~34 files: 2 root *.ts + 1 scripts + 9 configs + 11 per-package eslint configs (incl. lit, web) + 2 lib vitest + 2 tsup (codemod/ts-plugin) + 7 examples/*/eslint.config.ts + 5 examples/*/vite.config.ts + 2 non-React adapter scenarios
+          // ~35 files: 2 root *.ts + 1 scripts + 9 configs + 11 per-package eslint configs (incl. lit, web) + 2 lib vitest + 3 tsup/pw configs + 7 examples/*/eslint.config.ts + 5 examples/*/vite.config.ts + 2 non-React adapter scenarios
           maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 60,
           defaultProject: './tsconfig.base.json',
         },
