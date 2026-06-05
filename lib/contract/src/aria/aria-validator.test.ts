@@ -163,9 +163,9 @@ describe('validate() — tags with no implicit role', () => {
     expect(v.validate('div', props).props).toEqual(props)
   })
 
-  it('returns props unchanged for span + any role', () => {
+  it('returns props unchanged for span + any non-live-region role', () => {
     const v = makeValidator('throw')
-    const props = { role: 'alert' as const }
+    const props = { role: 'dialog' as const }
     expect(v.validate('span', props).props).toEqual(props)
   })
 
@@ -849,6 +849,24 @@ describe('validate() — fix-plan cache', () => {
     spy.mockRestore()
   })
 
+  it('applies cached updates (injected aria-live) to current props on cache hit', () => {
+    const engine = makeValidator(false)
+    // First call: cache miss — aria-live should be injected
+    const r1 = engine.validate('div', { role: 'alert' })
+    expect(r1.props).toHaveProperty('aria-live', 'assertive')
+    // Second call: cache hit — injected aria-live must still appear in output
+    const r2 = engine.validate('div', { role: 'alert' })
+    expect(r2.props).toHaveProperty('aria-live', 'assertive')
+  })
+
+  it('replays aria-relevant normalisation on cache hit', () => {
+    const engine = makeValidator(false)
+    const r1 = engine.validate('div', { role: 'alert', 'aria-relevant': 'all additions' })
+    expect(r1.props).toHaveProperty('aria-relevant', 'all')
+    const r2 = engine.validate('div', { role: 'alert', 'aria-relevant': 'all additions' })
+    expect(r2.props).toHaveProperty('aria-relevant', 'all')
+  })
+
   it('evicts LRU entry when cache exceeds 100 entries', () => {
     const engine = makeValidator(false)
     // Spy on the static evaluate method — called once per cache miss, never on hits
@@ -868,5 +886,150 @@ describe('validate() — fix-plan cache', () => {
     engine.validate('nav', { 'aria-label': 'label-0' })
     expect(spy).toHaveBeenCalledTimes(102)
     spy.mockRestore()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — #checkMissingLiveRegion
+// ---------------------------------------------------------------------------
+
+describe('validate() — missing aria-live on live region roles', () => {
+  it('injects aria-live="assertive" for role="alert"', () => {
+    const { props } = makeValidator(false).validate('div', { role: 'alert' })
+    expect(props).toHaveProperty('aria-live', 'assertive')
+  })
+
+  it('injects aria-live="polite" for role="status"', () => {
+    const { props } = makeValidator(false).validate('div', { role: 'status' })
+    expect(props).toHaveProperty('aria-live', 'polite')
+  })
+
+  it('injects aria-live="polite" for role="log"', () => {
+    const { props } = makeValidator(false).validate('div', { role: 'log' })
+    expect(props).toHaveProperty('aria-live', 'polite')
+  })
+
+  it('injects aria-live="off" for role="timer"', () => {
+    const { props } = makeValidator(false).validate('div', { role: 'timer' })
+    expect(props).toHaveProperty('aria-live', 'off')
+  })
+
+  it('does not inject when aria-live is already present', () => {
+    const { props, violations } = makeValidator(false).validate('div', {
+      role: 'alert',
+      'aria-live': 'polite',
+    })
+    expect(props).toHaveProperty('aria-live', 'polite')
+    expect(violations.some((v) => v.message.includes('injected'))).toBe(false)
+  })
+
+  it('pushes a warning violation when injecting', () => {
+    const { violations } = makeValidator(false).validate('div', { role: 'alert' })
+    expect(violations.some((v) => v.message.includes('aria-live'))).toBe(true)
+    expect(violations.find((v) => v.message.includes('aria-live'))?.severity).toBe('warning')
+  })
+
+  it('does not fire for a non-live-region role', () => {
+    const { violations } = makeValidator(false).validate('div', { role: 'button' })
+    expect(violations.some((v) => v.message.includes('aria-live'))).toBe(false)
+  })
+
+  it('proceeds for a live-region role on a tag with no implicit role', () => {
+    const { props } = makeValidator(false).validate('span', { role: 'status' })
+    expect(props).toHaveProperty('aria-live', 'polite')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — #checkMissingAtomic
+// ---------------------------------------------------------------------------
+
+describe('validate() — missing aria-atomic advisory on live region roles', () => {
+  it('produces a warning when aria-atomic is absent on role="alert"', () => {
+    const { violations } = makeValidator(false).validate('div', { role: 'alert' })
+    expect(violations.some((v) => v.message.includes('aria-atomic'))).toBe(true)
+  })
+
+  it('does not fire when aria-atomic is already set', () => {
+    const { violations } = makeValidator(false).validate('div', {
+      role: 'alert',
+      'aria-atomic': 'true',
+    })
+    expect(violations.some((v) => v.message.includes('aria-atomic'))).toBe(false)
+  })
+
+  it('does not fire for non-live-region roles', () => {
+    const { violations } = makeValidator(false).validate('nav', { role: 'banner' })
+    expect(violations.some((v) => v.message.includes('aria-atomic'))).toBe(false)
+  })
+
+  it('is advisory only — does not inject aria-atomic into props', () => {
+    const { props } = makeValidator(false).validate('div', { role: 'status' })
+    expect(props).not.toHaveProperty('aria-atomic')
+  })
+
+  it('does not throw even when strict is "throw"', () => {
+    expect(() => makeValidator('throw').validate('div', { role: 'log' })).not.toThrow()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — #checkInvalidAriaRelevant
+// ---------------------------------------------------------------------------
+
+describe('validate() — aria-relevant validation and normalisation', () => {
+  it('removes aria-relevant entirely when an invalid token is present', () => {
+    const { props } = makeValidator(false).validate('div', {
+      role: 'alert',
+      'aria-relevant': 'additions bogus',
+    })
+    expect(props).not.toHaveProperty('aria-relevant')
+  })
+
+  it('pushes a violation listing the invalid token', () => {
+    const { violations } = makeValidator(false).validate('div', {
+      role: 'alert',
+      'aria-relevant': 'additions bogus',
+    })
+    const v = violations.find((v) => v.attribute === 'aria-relevant')
+    expect(v).toBeDefined()
+    expect(v?.message).toMatch(/bogus/)
+  })
+
+  it('normalises "all additions" to "all"', () => {
+    const { props } = makeValidator(false).validate('div', {
+      role: 'alert',
+      'aria-relevant': 'all additions',
+    })
+    expect(props).toHaveProperty('aria-relevant', 'all')
+  })
+
+  it('normalises "all additions text removals" to "all"', () => {
+    const { props } = makeValidator(false).validate('div', {
+      role: 'alert',
+      'aria-relevant': 'all additions text removals',
+    })
+    expect(props).toHaveProperty('aria-relevant', 'all')
+  })
+
+  it('does not fire for valid tokens without "all"', () => {
+    const { violations } = makeValidator(false).validate('div', {
+      role: 'alert',
+      'aria-relevant': 'additions text',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-relevant')).toBe(false)
+  })
+
+  it('does not fire when aria-relevant is absent', () => {
+    const { violations } = makeValidator(false).validate('div', { role: 'alert' })
+    expect(violations.some((v) => v.attribute === 'aria-relevant')).toBe(false)
+  })
+
+  it('accepts "all" alone as valid', () => {
+    const { violations } = makeValidator(false).validate('div', {
+      role: 'alert',
+      'aria-relevant': 'all',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-relevant')).toBe(false)
   })
 })
