@@ -24,8 +24,9 @@ catalog:
   "@typescript-eslint/rule-tester": 8.60.0
   "@typescript-eslint/utils": 8.60.0
   "@vitejs/plugin-react": ^4.0.0
-  "@vitejs/plugin-vue": ^5.0.0
+  "@vitejs/plugin-vue": ^6.0.7
   "@vitest/ui": ^4.1.7
+  "@vue/compiler-dom": ^3.5.35
   "@vue/server-renderer": ^3.5.35
   "@vue/test-utils": ^2.4.0
   class-variance-authority: ^0.7.1
@@ -42,6 +43,7 @@ catalog:
   # Playwright
   "@axe-core/playwright": ^4.11.3
   "@playwright/experimental-ct-react": ^1.60.0
+  "@playwright/experimental-ct-vue": ^1.60.0
   "@playwright/test": ^1.60.0
 
   # Tooling

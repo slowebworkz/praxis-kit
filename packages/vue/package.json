@@ -32,7 +32,13 @@
     "vue": ">=3.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "catalog:",
+    "@playwright/experimental-ct-vue": "catalog:",
+    "@playwright/test": "catalog:",
     "@praxis-ui/adapter-utils": "workspace:*",
+    "@praxis-ui/playwright": "workspace:*",
+    "@vitejs/plugin-vue": "catalog:",
+    "@vue/compiler-dom": "catalog:",
     "@vue/server-renderer": "catalog:",
     "@vue/test-utils": "catalog:",
     "jsdom": "catalog:",
