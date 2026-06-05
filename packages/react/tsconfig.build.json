@@ -3,12 +3,8 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "paths": {
-      "@praxis-ui/shared": [
-        "../../packages/shared/src"
-      ],
-      "@praxis-ui/shared/types": [
-        "../../packages/shared/src/types/index.ts"
-      ],
+      "@praxis-ui/shared": ["../../packages/shared/src"],
+      "@praxis-ui/shared/types": ["../../packages/shared/src/types/index.ts"],
       "@praxis-ui/shared/types/variants": [
         "../../packages/shared/src/types/variants/index.ts"
       ],
@@ -48,18 +44,10 @@
       "@praxis-ui/shared/guards/variants": [
         "../../packages/shared/src/guards/variants/index.ts"
       ],
-      "@praxis-ui/shared/*": [
-        "../../packages/shared/src/*"
-      ],
-      "@praxis-ui/react/shared": [
-        "./src/shared/index.ts"
-      ],
-      "@praxis-ui/react/shared/*": [
-        "./src/shared/*"
-      ]
+      "@praxis-ui/shared/*": ["../../packages/shared/src/*"],
+      "@praxis-ui/react/shared": ["./src/shared/index.ts"],
+      "@praxis-ui/react/shared/*": ["./src/shared/*"]
     }
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }
