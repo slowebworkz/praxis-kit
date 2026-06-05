@@ -10,12 +10,11 @@ import type {
 } from '@praxis-ui/core'
 import type { Simplify } from 'type-fest'
 import type { SlotValidator } from './slot-validator'
+import type { WithChildRules } from '@praxis-ui/shared/types'
 
 export type FilterPredicate = (key: string, variantKeys: ReadonlySet<string>) => boolean
 
-// Constrained to only the field we care about — avoids deep FactoryOptions generic analysis
-// (which exposes a VariantProps/exactOptionalPropertyTypes issue).
-export type WithChildRules = { enforcement?: { children?: readonly unknown[] } }
+export type { WithChildRules } from '@praxis-ui/shared/types'
 
 // Absent entirely when no rules given — callers narrow with `'childrenEvaluator' in bundle`.
 export type BuiltChildrenEvaluator<TOptions extends WithChildRules> = TOptions extends {

@@ -10,7 +10,7 @@ import type {
   VariantsOf,
   createPolymorphic,
 } from '@praxis-ui/core'
-import type { ResolvedProps, UnknownProps, VariantKey } from './primitives'
+import type { ResolvedProps, UnknownProps } from './primitives'
 
 export type RuntimeOptions = Readonly<
   Pick<ResolvedFactoryOptions, 'displayName' | 'strict' | 'variantKeys' | 'childRules'>
@@ -29,7 +29,7 @@ export type ClassResolver = Readonly<{
     tag: ElementType,
     props: ResolvedProps,
     className?: ClassName,
-    variantKey?: VariantKey,
+    variantKey?: string,
   ): string
 }>
 

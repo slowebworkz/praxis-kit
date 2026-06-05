@@ -15,6 +15,7 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
+    "@praxis-ui/shared": "workspace:*",
     "@praxis-ui/primitive": "workspace:*",
     "type-fest": "catalog:"
   },

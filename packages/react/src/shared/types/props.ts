@@ -1,7 +1,7 @@
 import type { ClassName, ElementType } from '@praxis-ui/core'
 import type { ReactElement } from 'react'
 import type { Simplify } from 'type-fest'
-import type { UnknownProps, VariantKey } from './primitives'
+import type { UnknownProps } from './primitives'
 
 /**
  * Props passed to the `render` callback — the component's resolved className,
@@ -28,7 +28,7 @@ export type PolymorphicPropsBase = Readonly<
     {
       children?: unknown
       className?: ClassName
-      variantKey?: VariantKey
+      variantKey?: string
     } & AsProp &
       AsChildProp
   >

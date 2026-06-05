@@ -1,8 +1,1 @@
-import type { AnyRecord, ClassName } from './primitives'
-
-export type ClassPipelineFn = (
-  tag: unknown,
-  props: AnyRecord,
-  className?: ClassName,
-  variantKey?: string,
-) => string
+export type { ClassPipelineFn } from '@praxis-ui/shared/types'

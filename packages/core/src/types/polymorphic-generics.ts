@@ -1,19 +1,6 @@
-import type { AnyRecord, ElementType, EmptyRecord } from './primitives'
-import type { VariantMap, PresetMap } from './variant'
+export type { PolymorphicGenerics, PresetOf, VariantsOf } from '@praxis-ui/shared/types'
 
-export interface PolymorphicGenerics<
-  TDefault extends ElementType = ElementType,
-  Props extends AnyRecord = AnyRecord,
-  Variants extends Readonly<VariantMap> = Readonly<VariantMap>,
-  TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
-> {
-  default: TDefault
-  props: Props
-  variants: Variants
-  preset: TPreset
-}
+import type { PolymorphicGenerics } from '@praxis-ui/shared/types'
 
 export type DefaultOf<T extends PolymorphicGenerics> = T['default']
 export type PropsOf<T extends PolymorphicGenerics> = T['props']
-export type VariantsOf<T extends PolymorphicGenerics> = T['variants']
-export type PresetOf<T extends PolymorphicGenerics> = T['preset']

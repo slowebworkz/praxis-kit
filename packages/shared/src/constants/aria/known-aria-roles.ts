@@ -1,0 +1,18 @@
+export const KNOWN_ARIA_ROLES = [
+  'alert',
+  'alertdialog',
+  'article',
+  'banner',
+  'button',
+  'complementary',
+  'contentinfo',
+  'dialog',
+  'form',
+  'main',
+  'navigation',
+  'region',
+  'search',
+  'tab',
+  'tablist',
+  'tabpanel',
+] as const

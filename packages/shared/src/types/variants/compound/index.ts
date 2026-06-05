@@ -1,0 +1,5 @@
+export type { CompoundVariant } from './compound-variant'
+export type { CVACompounds } from './cva-compounds'
+export type { CVAConfig } from './cva-config'
+export type { CVADefaults } from './cva-defaults'
+export type { CVAVariants } from './cva-variants'
