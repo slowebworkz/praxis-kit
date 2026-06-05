@@ -116,6 +116,8 @@ Business logic lives outside framework adapters. One engine, five runtimes.
 | [`@praxis-ui/eslint-plugin`](packages/eslint-plugin) | ESLint rules for enforcing Praxis UI patterns                     |
 | [`@praxis-ui/ts-plugin`](packages/ts-plugin)         | TypeScript language service plugin with inline diagnostics        |
 | [`@praxis-ui/codemod`](packages/codemod)             | Codemods for migrations                                           |
+| [`@praxis-ui/shared`](packages/shared)               | Shared types, guards, and constants (internal use)                |
+| [`@praxis-ui/playwright`](packages/playwright)       | Playwright CT helpers — ARIA snapshots, axe sweeps, keyboard      |
 
 ---
 
