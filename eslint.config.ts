@@ -35,6 +35,9 @@ const config = [
             // Playwright CT config and mount entry live outside the react package tsconfig include
             'packages/react/playwright-ct.config.ts',
             'packages/react/playwright/index.tsx',
+            'packages/vue/playwright-ct.config.ts',
+            'packages/vue/playwright/index.ts',
+            'playwright.workspace.ts',
             // remaining tsup.config.ts files are included in each package's tsconfig — removed from here
             // lib/contract and lib/styling include vitest.config.ts in their tsconfig — listed explicitly
             'lib/adapter-utils/vitest.config.ts',
