@@ -12,7 +12,7 @@ export type EvaluationContext =
   | {
       proceed: true
       tag: IntrinsicTag
-      implicitRole: string
-      effectiveRole: string
+      implicitRole: string | undefined
+      effectiveRole: string | undefined
       context: AriaContext
     }
