@@ -1,6 +1,6 @@
 import type { ClassName, ElementType } from '@praxis-ui/core'
 import type { Simplify } from 'type-fest'
-import type { UnknownProps, VariantKey } from './primitives'
+import type { UnknownProps } from './primitives'
 
 export type AsProp<T extends ElementType = ElementType> = Readonly<{
   as?: T
@@ -15,7 +15,7 @@ export type PolymorphicPropsBase = Readonly<
     {
       children?: unknown
       className?: ClassName
-      variantKey?: VariantKey
+      variantKey?: string
     } & AsProp &
       AsChildProp
   >

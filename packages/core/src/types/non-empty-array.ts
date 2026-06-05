@@ -1,1 +1,1 @@
-export type NonEmptyArray<T> = [T, ...T[]]
+export type { NonEmptyArray } from '@praxis-ui/shared/types'

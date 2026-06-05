@@ -1,4 +1,4 @@
-export type { UnknownProps, VariantKey, ResolvedProps, FilterPredicate } from './primitives'
+export type { UnknownProps, ResolvedProps, FilterPredicate } from './primitives'
 export type { AsProp, PolymorphicPropsBase, KnownProps } from './props'
 export type {
   RuntimeOptions,

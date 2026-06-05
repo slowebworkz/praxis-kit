@@ -7,8 +7,10 @@ export default defineConfig({
   test: {
     name: 'bench',
     include: ['src/**/*.bench.ts'],
+    exclude: ['src/pipeline.bench.ts', 'src/react-compiler.bench.ts'],
     benchmark: {
       include: ['src/**/*.bench.ts'],
+      exclude: ['src/pipeline.bench.ts', 'src/react-compiler.bench.ts'],
     },
   },
 })

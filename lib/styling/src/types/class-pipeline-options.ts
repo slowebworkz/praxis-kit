@@ -1,26 +1,20 @@
-import type { CVACompounds, CVADefaults, CVAVariants } from './compound-variants'
-import type { TagMap } from './primitives'
-import type { VariantMap, VariantSelection } from './variant'
+import type { VariantMap } from './variant'
+import type {
+  BaseClassOptions,
+  CVASystemOptions,
+  PresetOptions,
+  PresetTarget,
+  StyleOptions,
+  TagMapOptions,
+} from '@praxis-ui/shared/types'
 
-interface BaseClassOptions {
-  baseClassName?: string
-}
-
-interface TagMapOptions {
-  tagMap?: TagMap
-}
-
-export type CVASystemOptions<TVariants extends VariantMap = VariantMap> = CVAVariants<TVariants> &
-  CVADefaults<TVariants> &
-  CVACompounds<TVariants>
-
-export type StyleOptions<TVariants extends VariantMap = VariantMap> = BaseClassOptions &
-  CVASystemOptions<TVariants>
-
-export type PresetTarget<TVariants extends VariantMap = VariantMap> = VariantSelection<TVariants>
-
-interface PresetOptions<TVariants extends VariantMap = VariantMap> {
-  presetMap?: Record<string, PresetTarget<TVariants>>
+export type {
+  BaseClassOptions,
+  CVASystemOptions,
+  PresetOptions,
+  PresetTarget,
+  StyleOptions,
+  TagMapOptions,
 }
 
 interface PrecomputedClassesOptions {
@@ -28,7 +22,7 @@ interface PrecomputedClassesOptions {
   precomputedClasses?: Readonly<Record<string, string>>
 }
 
-type CompositionOptions<TVariants extends VariantMap = VariantMap> = TagMapOptions &
+export type CompositionOptions<TVariants extends VariantMap = VariantMap> = TagMapOptions &
   PresetOptions<TVariants> &
   PrecomputedClassesOptions
 

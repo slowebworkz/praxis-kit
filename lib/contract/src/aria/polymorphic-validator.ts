@@ -1,4 +1,4 @@
-import type { ElementType, IntrinsicTag } from '@praxis-ui/primitive'
+import type { ElementType, IntrinsicTag } from '@praxis-ui/shared/types'
 import { StrictBase } from '../strict'
 import type {
   AriaContext,
@@ -8,7 +8,6 @@ import type {
   EvaluationContext,
   FixKind,
   IntrinsicProps,
-  InvalidResult,
   NormalizationResult,
   PropsWithRole,
   StrictMode,
@@ -18,9 +17,7 @@ import type {
 import { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attribute-policy'
 import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
 
-export function isInvalid(result: AriaResult): result is InvalidResult {
-  return result.valid === false
-}
+export { isInvalid } from '@praxis-ui/shared/guards/aria'
 
 const VALID = [{ valid: true }] as const
 
