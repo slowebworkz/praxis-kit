@@ -1,5 +1,3 @@
-import type { IntrinsicTag } from '../../types'
-
 export const IMPLICIT_ROLE_RECORD = {
   article: 'article',
   aside: 'complementary',
@@ -23,7 +21,7 @@ export const IMPLICIT_ROLE_RECORD = {
   tr: 'row',
   td: 'cell',
   th: 'columnheader',
-} as const satisfies Partial<Record<IntrinsicTag, string>>
+} as const
 
 type Tag = keyof typeof IMPLICIT_ROLE_RECORD
 type ImplicitRole = (typeof IMPLICIT_ROLE_RECORD)[Tag]

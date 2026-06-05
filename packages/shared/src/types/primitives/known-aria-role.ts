@@ -1,3 +1,1 @@
-import type { KNOWN_ARIA_ROLES } from '../../constants/aria'
-
-export type KnownAriaRole = (typeof KNOWN_ARIA_ROLES)[number]
+export type { KnownAriaRole } from '../../constants/aria/known-aria-roles'

@@ -165,7 +165,7 @@ module.exports = {
 
   options: {
     doNotFollow: { path: 'node_modules' },
-    exclude: { path: '(\\.test\\.(ts|tsx)$|\\.bench\\.ts$|vitest\\.config|tsup\\.config|dist/)' },
+    exclude: { path: '(\\.test\\.(ts|tsx)$|\\.bench\\.ts$|vitest\\.config|tsup\\.config|dist/|playwright/\\.cache/)' },
     moduleSystems: ['es6'],
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.base.json' },
