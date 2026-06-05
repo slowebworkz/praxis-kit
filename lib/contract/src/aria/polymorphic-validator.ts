@@ -1,12 +1,13 @@
-import type { ElementType, IntrinsicTag } from '@praxis-ui/shared/types'
+import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-ui/shared/types'
+import { isNull, isNumber, isString } from '@praxis-ui/shared'
 import { StrictBase } from '../strict'
 import type {
   AriaContext,
   AriaFix,
+  AriaPlan,
   AriaResult,
   AriaRule,
   EvaluationContext,
-  FixKind,
   IntrinsicProps,
   NormalizationResult,
   PropsWithRole,
@@ -25,20 +26,12 @@ const VALID = [{ valid: true }] as const
 type AnyTag = ElementType | ((...args: unknown[]) => unknown)
 
 function isIntrinsicTag(tag: AnyTag): tag is IntrinsicTag {
-  return typeof tag === 'string'
+  return isString(tag)
 }
 
-function omitProp<T extends Readonly<Record<string, unknown>>, K extends keyof T>(
-  obj: T,
-  key: K,
-): Omit<T, K> {
+function omitProp<T extends Readonly<AnyRecord>, K extends keyof T>(obj: T, key: K): Omit<T, K> {
   const { [key]: _, ...rest } = obj
   return rest as Omit<T, K>
-}
-
-type AriaPlan = {
-  readonly removals: ReadonlySet<string>
-  readonly violations: readonly ValidationViolation[]
 }
 
 export class AriaPolicyEngine extends StrictBase {
@@ -77,7 +70,11 @@ export class AriaPolicyEngine extends StrictBase {
   static #deriveContext(tag: AnyTag, props: IntrinsicProps): EvaluationContext {
     if (!isIntrinsicTag(tag)) return { proceed: false, result: { props, violations: [] } }
     const implicitRole = getImplicitRole(tag)
-    if (!implicitRole) return { proceed: false, result: { props, violations: [] } }
+    // Also proceed for explicit live-region roles on tags with no implicit role (e.g. <div role="alert">).
+    const hasExplicitLiveRole =
+      !implicitRole && AriaPolicyEngine.#LIVE_REGION_ROLES.has(props.role ?? '')
+    if (!implicitRole && !hasExplicitLiveRole)
+      return { proceed: false, result: { props, violations: [] } }
 
     const normalized = AriaPolicyEngine.#normalizeEmptyRole(tag, props)
     if (normalized.normalized) return { proceed: false, result: normalized.result }
@@ -95,9 +92,9 @@ export class AriaPolicyEngine extends StrictBase {
   static #runRules(
     rules: readonly AriaRule[],
     context: AriaContext,
-  ): { violations: ValidationViolation[]; fixes: Map<FixKind, AriaFix> } {
+  ): { violations: ValidationViolation[]; fixes: AriaFix[] } {
     const violations: ValidationViolation[] = []
-    const fixes = new Map<FixKind, AriaFix>()
+    const fixes: AriaFix[] = []
 
     for (const rule of rules) {
       for (const result of rule(context)) {
@@ -110,7 +107,7 @@ export class AriaPolicyEngine extends StrictBase {
             severity: result.severity,
             phase: 'evaluate',
           })
-          if (result.fixable) fixes.set(result.fix.kind, result.fix)
+          if (result.fixable) fixes.push(result.fix)
         }
       }
     }
@@ -164,14 +161,20 @@ export class AriaPolicyEngine extends StrictBase {
   // Cache key covers only the aria-relevant subset of props (tag + role + aria-* attrs).
   // Non-aria props (className, onClick, etc.) do not affect ARIA decisions and are excluded
   // so cache hits survive re-renders that only change non-aria props.
+  // Note: #extraRules are NOT included in the key — each engine instance has its own Map,
+  // so two engines with different rules never share cache entries. If caching ever becomes
+  // static/shared, rule identity would need to be folded into the key.
   static #createPlanKey(tag: AnyTag, props: IntrinsicProps): string | null {
-    if (typeof tag !== 'string') return null
+    if (!isIntrinsicTag(tag)) return null
     const parts: string[] = [tag]
     if (typeof props.role === 'string') parts.push(`role:${props.role}`)
     const ariaEntries: string[] = []
     for (const k in props) {
-      if (Object.hasOwn(props, k) && k.startsWith('aria-'))
-        ariaEntries.push(`${k}:${String(props[k])}`)
+      if (!Object.hasOwn(props, k) || !k.startsWith('aria-')) continue
+      const v = props[k as keyof typeof props]
+      // Skip non-primitive values — String([object Object]) would produce colliding keys.
+      if (!isString(v) && !isNumber(v) && typeof v !== 'boolean') continue
+      ariaEntries.push(`${k}:${String(v)}`)
     }
     if (ariaEntries.length > 0) parts.push(...ariaEntries.sort())
     return parts.join('|')
@@ -180,27 +183,41 @@ export class AriaPolicyEngine extends StrictBase {
   static #computePlan(
     inputProps: IntrinsicProps,
     resultProps: IntrinsicProps,
-  ): ReadonlySet<string> {
+  ): { removals: ReadonlySet<string>; updates: Readonly<AnyRecord> } {
     const removals = new Set<string>()
+    const updates: AnyRecord = {}
     for (const key in inputProps) {
       if (Object.hasOwn(inputProps, key) && !(key in (resultProps as object))) removals.add(key)
     }
-    return removals
+    for (const key in resultProps) {
+      if (!Object.hasOwn(resultProps, key)) continue
+      const resultVal = (resultProps as AnyRecord)[key]
+      // Capture both new keys (additions) and changed values (modifications).
+      if ((inputProps as AnyRecord)[key] !== resultVal) updates[key] = resultVal
+    }
+    return { removals, updates }
   }
 
-  static #applyPlan<T extends IntrinsicProps>(props: T, removals: ReadonlySet<string>): T {
-    if (removals.size === 0) return props
-    const next: Record<string, unknown> = {}
+  static #applyPlan<T extends IntrinsicProps>(
+    props: T,
+    removals: ReadonlySet<string>,
+    updates: Readonly<AnyRecord>,
+  ): T {
+    const hasRemovals = removals.size > 0
+    const hasUpdates = Object.keys(updates).length > 0
+    if (!hasRemovals && !hasUpdates) return props
+    const next: AnyRecord = {}
     for (const k in props) {
       if (Object.hasOwn(props, k) && !removals.has(k)) next[k] = props[k]
     }
+    Object.assign(next, updates)
     return next as unknown as T
   }
 
   validate(tag: AnyTag, props: IntrinsicProps): ValidationResult {
     const key = AriaPolicyEngine.#createPlanKey(tag, props)
 
-    if (key !== null) {
+    if (!isNull(key)) {
       const cached = this.#planCache.get(key)
       if (cached !== undefined) {
         // Promote to MRU: delete + re-add moves key to Map insertion-order tail.
@@ -208,7 +225,7 @@ export class AriaPolicyEngine extends StrictBase {
         this.#planCache.set(key, cached)
         if (cached.violations.length > 0) this.report(cached.violations as ValidationViolation[])
         return {
-          props: AriaPolicyEngine.#applyPlan(props, cached.removals),
+          props: AriaPolicyEngine.#applyPlan(props, cached.removals, cached.updates),
           violations: cached.violations as ValidationViolation[],
         }
       }
@@ -220,11 +237,12 @@ export class AriaPolicyEngine extends StrictBase {
 
     if (result.violations.length > 0) this.report(result.violations)
 
-    if (key !== null) {
-      const plan: AriaPlan = {
-        removals: AriaPolicyEngine.#computePlan(props, result.props as IntrinsicProps),
-        violations: result.violations,
-      }
+    if (!isNull(key)) {
+      const { removals, updates } = AriaPolicyEngine.#computePlan(
+        props,
+        result.props as IntrinsicProps,
+      )
+      const plan: AriaPlan = { removals, updates, violations: result.violations }
       this.#planCache.set(key, plan)
       if (this.#planCache.size > AriaPolicyEngine.#MAX_CACHE) {
         const lru = this.#planCache.keys().next().value
@@ -236,19 +254,17 @@ export class AriaPolicyEngine extends StrictBase {
   }
 
   static #hasRole(props: IntrinsicProps): props is PropsWithRole {
-    return typeof props.role === 'string' && props.role.length > 0
+    return isString(props.role) && props.role.length > 0
   }
 
   static #applyFixes<T extends IntrinsicProps>(
     tag: IntrinsicTag,
     implicitRole: AriaContext['implicitRole'],
     props: T,
-    fixes: Map<FixKind, AriaFix>,
+    fixes: AriaFix[],
   ): T {
-    if (fixes.size === 0) return props
-    const sorted = [...fixes.values()].sort(
-      (a, b) => (a.priority ?? Infinity) - (b.priority ?? Infinity),
-    )
+    if (fixes.length === 0) return props
+    const sorted = [...fixes].sort((a, b) => (a.priority ?? Infinity) - (b.priority ?? Infinity))
     let next: IntrinsicProps = props
     for (const { apply } of sorted) {
       const effectiveRole = next.role ?? implicitRole
@@ -287,6 +303,9 @@ export class AriaPolicyEngine extends StrictBase {
     AriaPolicyEngine.#checkRedundantRole,
     AriaPolicyEngine.#checkStandaloneRegion,
     AriaPolicyEngine.#checkInvalidAriaAttributes,
+    AriaPolicyEngine.#checkMissingLiveRegion,
+    AriaPolicyEngine.#checkMissingAtomic,
+    AriaPolicyEngine.#checkInvalidAriaRelevant,
   ] as const satisfies readonly AriaRule[]
 
   static #checkInvalidRoleOverride({
@@ -367,5 +386,104 @@ export class AriaPolicyEngine extends StrictBase {
     }
 
     return results
+  }
+
+  // WAI-ARIA live region roles and their implied aria-live politeness values.
+  static readonly #LIVE_REGION_ROLES: ReadonlyMap<string, string> = new Map([
+    ['alert', 'assertive'],
+    ['status', 'polite'],
+    ['log', 'polite'],
+    ['timer', 'off'],
+  ])
+
+  static #checkMissingLiveRegion({ effectiveRole, props }: AriaContext): readonly AriaResult[] {
+    if (!effectiveRole) return VALID
+    const impliedLive = AriaPolicyEngine.#LIVE_REGION_ROLES.get(effectiveRole)
+    if (!impliedLive) return VALID
+    if ('aria-live' in props) return VALID
+
+    const injectLive: AriaFix = {
+      kind: `injectLive:${effectiveRole}`,
+      apply: (ctx) => ({
+        applied: true,
+        next: { ...ctx.props, 'aria-live': impliedLive },
+        previous: ctx.props,
+      }),
+    }
+
+    return [
+      {
+        valid: false,
+        fixable: true,
+        severity: 'warning',
+        fix: injectLive,
+        message: `role="${effectiveRole}" implies aria-live="${impliedLive}" but it is missing. It has been injected.`,
+      },
+    ]
+  }
+
+  static #checkMissingAtomic({ effectiveRole, props }: AriaContext): readonly AriaResult[] {
+    if (!effectiveRole || !AriaPolicyEngine.#LIVE_REGION_ROLES.has(effectiveRole)) return VALID
+    if ('aria-atomic' in props) return VALID
+
+    return [
+      {
+        valid: false,
+        fixable: false,
+        severity: 'warning',
+        message: `role="${effectiveRole}" is a live region. Consider setting aria-atomic="true" if the full region should be announced as a unit, or aria-atomic="false" if only changed nodes should be read.`,
+      },
+    ]
+  }
+
+  static readonly #VALID_RELEVANT_TOKENS = new Set(['additions', 'removals', 'text', 'all'])
+
+  // Custom fix rules passed via `options.rules` must be pure functions of (tag, props) — the cache
+  // replays stored fixes against new prop objects, so fixes that close over external state will
+  // produce inconsistent results on cache hits.
+  static readonly #normalizeRelevantAllFix: AriaFix = {
+    kind: 'normalizeRelevantAll',
+    apply: ({ props: p }) => ({
+      applied: true,
+      next: { ...p, 'aria-relevant': 'all' },
+      previous: p,
+    }),
+  }
+
+  static #checkInvalidAriaRelevant({ props }: AriaContext): readonly AriaResult[] {
+    const relevant = props['aria-relevant']
+    if (relevant === undefined) return VALID
+    if (typeof relevant !== 'string') return VALID
+
+    const tokens = relevant.trim().split(/\s+/)
+    const invalid = tokens.filter((t) => !AriaPolicyEngine.#VALID_RELEVANT_TOKENS.has(t))
+    if (invalid.length > 0) {
+      return [
+        {
+          valid: false,
+          fixable: true,
+          severity: 'warning',
+          attribute: 'aria-relevant',
+          message: `aria-relevant contains invalid token(s): ${invalid.map((t) => `"${t}"`).join(', ')}. Valid tokens are: additions, removals, text, all.`,
+          fix: AriaPolicyEngine.#makeRemoveAttributeFix('aria-relevant'),
+        },
+      ]
+    }
+
+    // "all" supersedes the other tokens — "all additions text" is redundant, normalize to "all".
+    if (tokens.includes('all') && tokens.length > 1) {
+      return [
+        {
+          valid: false,
+          fixable: true,
+          severity: 'warning',
+          attribute: 'aria-relevant',
+          message: `aria-relevant includes "all" alongside other tokens. "all" supersedes additions, removals, and text — use aria-relevant="all" alone.`,
+          fix: AriaPolicyEngine.#normalizeRelevantAllFix,
+        },
+      ]
+    }
+
+    return VALID
   }
 }

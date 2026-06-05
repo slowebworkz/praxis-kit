@@ -33,3 +33,4 @@ export type {
   MatchMatrix,
   NormalizedChildRule,
 } from './child-rule'
+export type { AriaPlan } from './aria-plan'
