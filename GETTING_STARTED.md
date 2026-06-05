@@ -24,6 +24,12 @@ pnpm add @praxis-ui/preact @praxis-ui/core
 
 # Svelte 5
 pnpm add @praxis-ui/svelte @praxis-ui/core
+
+# Lit
+pnpm add @praxis-ui/lit @praxis-ui/core
+
+# Vanilla Custom Elements (no framework)
+pnpm add @praxis-ui/web @praxis-ui/core
 ```
 
 The rest of this guide uses the React adapter. The API is identical across frameworks; only the
