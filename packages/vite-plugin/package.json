@@ -31,7 +31,7 @@
     "@praxis-ui/core": "workspace:*",
     "tsup": "catalog:",
     "typescript": "catalog:",
-    "vite": "^8.0.14",
+    "vite": "^8.0.16",
     "vitest": "catalog:"
   },
   "publishConfig": {
