@@ -1,11 +1,13 @@
 import type { Capabilities } from '../../types'
-import { isFunction, isRecord } from '../foundational'
+import { isDefined } from '../foundational/is-defined'
+import { isFunction } from '../foundational/is-function'
+import { isRecord } from '../foundational/is-record'
 
 export function isCapability(value: unknown): value is Capabilities {
   if (!isRecord(value)) return false
   const { createClassPipeline, AriaEngine } = value
-  if (createClassPipeline !== undefined && !isFunction(createClassPipeline)) return false
-  if (AriaEngine !== undefined && !isFunction(AriaEngine)) return false
+  if (isDefined(createClassPipeline) && !isFunction(createClassPipeline)) return false
+  if (isDefined(AriaEngine) && !isFunction(AriaEngine)) return false
   return true
 }
 
