@@ -19,13 +19,13 @@ catalog:
   "@testing-library/preact": ^3.2.0
   "@testing-library/svelte": ^5.0.0
   "@types/node": ^25.9.1
-  "@types/react": ^19.2.15
+  "@types/react": ^19.2.16
   "@types/react-dom": ^19.0.0
   "@typescript-eslint/rule-tester": 8.60.0
   "@typescript-eslint/utils": 8.60.0
-  "@vitejs/plugin-react": ^4.0.0
+  "@vitejs/plugin-react": ^6.0.2
   "@vitejs/plugin-vue": ^6.0.7
-  "@vitest/ui": ^4.1.7
+  "@vitest/ui": ^4.1.8
   "@vue/compiler-dom": ^3.5.35
   "@vue/server-renderer": ^3.5.35
   "@vue/test-utils": ^2.4.0
@@ -57,8 +57,8 @@ catalog:
   prettier: ^3.3.3
 
   # React
-  react: ^19.0.0
-  react-dom: ^19.0.0
+  react: ^19.2.7
+  react-dom: ^19.2.7
 
   # Lit
   lit: ^3.0.0
