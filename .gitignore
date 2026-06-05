@@ -9,5 +9,7 @@ lib/**/*.js.map
 .env.local
 coverage/
 pnpm-debug.log*
+**/.playwright/
+**/playwright/.cache/
 .repo-state/
 ROADMAP.md
