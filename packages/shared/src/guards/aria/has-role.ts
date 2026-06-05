@@ -1,7 +1,4 @@
-import type { AnyRecord } from '../../types'
-
-type IntrinsicProps = AnyRecord & { role?: string }
-type PropsWithRole = Readonly<IntrinsicProps & { role: string }>
+import type { IntrinsicProps, PropsWithRole } from '../../types'
 
 export function hasRole(props: IntrinsicProps): props is PropsWithRole {
   return typeof props.role === 'string'
