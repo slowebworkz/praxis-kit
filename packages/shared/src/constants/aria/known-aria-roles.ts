@@ -85,3 +85,5 @@ export const KNOWN_ARIA_ROLES = [
   'treegrid',
   'treeitem',
 ] as const
+
+export const KNOWN_ARIA_ROLES_SET: ReadonlySet<string> = new Set(KNOWN_ARIA_ROLES)
