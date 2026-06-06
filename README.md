@@ -32,6 +32,38 @@ structures to render and fail later, Praxis catches them immediately.
 
 ---
 
+## Installation
+
+Pick the adapter for your framework:
+
+```bash
+# React
+npm install @praxis-ui/react @praxis-ui/core
+
+# Vue 3
+npm install @praxis-ui/vue @praxis-ui/core
+
+# Svelte 5
+npm install @praxis-ui/svelte @praxis-ui/core
+
+# Solid
+npm install @praxis-ui/solid @praxis-ui/core
+
+# Preact
+npm install @praxis-ui/preact @praxis-ui/core
+```
+
+Optional add-ons:
+
+```bash
+npm install @praxis-ui/tailwind    # Tailwind class pipeline
+npm install @praxis-ui/vite-plugin # Static analysis and SSR
+npm install @praxis-ui/eslint-plugin --save-dev
+npm install @praxis-ui/ts-plugin --save-dev
+```
+
+---
+
 ## Why Praxis?
 
 Traditional component libraries validate props, types, and accessibility attributes. Praxis
@@ -116,7 +148,6 @@ Business logic lives outside framework adapters. One engine, five runtimes.
 | [`@praxis-ui/eslint-plugin`](packages/eslint-plugin) | ESLint rules for enforcing Praxis UI patterns                     |
 | [`@praxis-ui/ts-plugin`](packages/ts-plugin)         | TypeScript language service plugin with inline diagnostics        |
 | [`@praxis-ui/codemod`](packages/codemod)             | Codemods for migrations                                           |
-| [`@praxis-ui/shared`](packages/shared)               | Shared types, guards, and constants (internal use)                |
 | [`@praxis-ui/playwright`](packages/playwright)       | Playwright CT helpers — ARIA snapshots, axe sweeps, keyboard      |
 
 ---
