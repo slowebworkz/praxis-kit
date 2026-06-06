@@ -78,5 +78,8 @@
     "contract",
     "variants",
     "react"
-  ]
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }

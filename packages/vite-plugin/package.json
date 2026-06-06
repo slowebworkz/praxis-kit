@@ -63,5 +63,8 @@
     "vite",
     "vite-plugin",
     "bundler"
-  ]
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }

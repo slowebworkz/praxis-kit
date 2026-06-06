@@ -67,5 +67,8 @@
     "contract",
     "variants",
     "preact"
-  ]
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }

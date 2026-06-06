@@ -67,5 +67,8 @@
     "lit",
     "web-components",
     "custom-elements"
-  ]
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }

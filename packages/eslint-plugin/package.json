@@ -66,5 +66,8 @@
     "eslint",
     "eslint-plugin",
     "linting"
-  ]
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }
