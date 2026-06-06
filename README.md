@@ -178,10 +178,18 @@ TypeScript: `✔ Compiles` — Praxis: `✖ Invalid Tabs structure`
 
 ---
 
-## Get Started
+## Learn Praxis in 10 Minutes
 
-See [GETTING_STARTED.md](GETTING_STARTED.md) for installation, a step-by-step walkthrough, and
-working examples across all adapters.
+The [Getting Started guide](GETTING_STARTED.md) walks from a minimal component:
+
+```ts
+const Box = createContractComponent({ tag: 'div' })
+```
+
+to variants, compound variants, polymorphic rendering, accessibility validation, structural
+contracts, slot rendering, and presets.
+
+**[→ Start here](GETTING_STARTED.md)**
 
 ---
 
