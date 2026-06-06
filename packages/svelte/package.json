@@ -72,5 +72,8 @@
     "contract",
     "variants",
     "svelte"
-  ]
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }

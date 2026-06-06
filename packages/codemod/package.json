@@ -58,5 +58,8 @@
     "migration",
     "cli"
   ],
-  "sideEffects": false
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  }
 }

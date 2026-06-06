@@ -52,5 +52,8 @@
     "language-service",
     "diagnostics"
   ],
-  "sideEffects": false
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  }
 }

@@ -69,5 +69,8 @@
     "variants",
     "solid-js",
     "solidjs"
-  ]
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }
