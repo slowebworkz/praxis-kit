@@ -91,9 +91,6 @@
     "tsup": "catalog:",
     "vitest": "catalog:"
   },
-  "publishConfig": {
-    "access": "public"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/slowebworkz/praxis-ui.git",
@@ -117,5 +114,9 @@
     "framework-agnostic",
     "contract",
     "variants"
-  ]
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "private": true
 }
