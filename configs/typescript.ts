@@ -1,4 +1,3 @@
-import { resolve } from 'node:path'
 import tseslint from 'typescript-eslint'
 import type { ESLintConfig } from './types'
 
@@ -15,7 +14,7 @@ const config = [
     files: FILES,
     languageOptions: {
       parserOptions: {
-        tsconfigRootDir: resolve(import.meta.dirname, '..'),
+        tsconfigRootDir: new URL('..', import.meta.url).pathname,
       },
     },
   },
@@ -53,7 +52,6 @@ const config = [
       parserOptions: {
         projectService: {
           allowDefaultProject: ['eslint.config.ts'],
-          defaultProject: 'tsconfig.eslint.json',
         },
       },
     },
