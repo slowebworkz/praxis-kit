@@ -53,6 +53,7 @@ const config = [
       parserOptions: {
         projectService: {
           allowDefaultProject: ['eslint.config.ts'],
+          defaultProject: 'tsconfig.eslint.json',
         },
       },
     },
