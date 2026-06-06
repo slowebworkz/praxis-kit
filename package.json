@@ -53,6 +53,7 @@
     "prettier": "catalog:",
     "publint": "^0.3.21",
     "ts-morph": "catalog:",
+    "type-fest": "catalog:",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",
     "vitest": "catalog:"
