@@ -6,7 +6,7 @@ const FILES = ['**/*.{js,mjs,cjs,ts,mts,cts,tsx}']
 
 const config = [
   {
-    ignores: ['**/dist/**', '**/node_modules/**'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/playwright/.cache/**', '**/.playwright/**'],
   },
   {
     ...js.configs.recommended,
