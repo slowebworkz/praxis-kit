@@ -33,7 +33,7 @@
   "bugs": {
     "url": "https://github.com/slowebworkz/praxis-ui/issues"
   },
-  "license": "MIT",
+  "license": "CC-BY-NC-4.0",
   "author": "K Huehn <slowebworkz@gmail.com>",
   "description": "TypeScript language service plugin providing inline Praxis UI diagnostics in your editor",
   "keywords": [
