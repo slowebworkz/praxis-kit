@@ -1,7 +1,6 @@
 {
   "files": [],
   "references": [
-    { "path": "./tsconfig.eslint.json" },
     { "path": "./lib/primitive" },
     { "path": "./lib/contract" },
     { "path": "./lib/styling" },

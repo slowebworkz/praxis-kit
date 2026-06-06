@@ -6,8 +6,9 @@ import architecture from './configs/architecture'
 import imports from './configs/imports'
 import unicorn from './configs/unicorn'
 import praxisPlugin from './packages/eslint-plugin/src/index'
+import type { ValueOf } from 'type-fest'
 
-type EslintPlugin = NonNullable<Linter.Config['plugins']>[string]
+type EslintPlugin = ValueOf<NonNullable<Linter.Config['plugins']>>
 
 const TS_FILES = ['**/*.{ts,mts,cts,tsx}']
 
@@ -22,7 +23,7 @@ const config = [
     files: TS_FILES,
     languageOptions: {
       parserOptions: {
-        tsconfigRootDir: import.meta.dirname,
+        tsconfigRootDir: new URL('.', import.meta.url).pathname,
         projectService: {
           allowDefaultProject: [
             '*.ts',

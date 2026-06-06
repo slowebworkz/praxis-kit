@@ -10,7 +10,13 @@ allowBuilds:
 catalog:
   # Core
   "@ast-grep/cli": ^0.43.0
+
+  # Playwright
+  "@axe-core/playwright": ^4.11.3
   "@eslint/js": ^10.0.0
+  "@playwright/experimental-ct-react": ^1.60.0
+  "@playwright/experimental-ct-vue": ^1.60.0
+  "@playwright/test": ^1.60.0
 
   # Preact
   "@preact/preset-vite": ^2.0.0
@@ -40,18 +46,15 @@ catalog:
   eslint-plugin-import-x: ^4.16.2
   eslint-plugin-unicorn: ^64.0.0
 
-  # Playwright
-  "@axe-core/playwright": ^4.11.3
-  "@playwright/experimental-ct-react": ^1.60.0
-  "@playwright/experimental-ct-vue": ^1.60.0
-  "@playwright/test": ^1.60.0
-
   # Tooling
   husky: ^9.1.7
 
   jiti: ^2.7.0
   jscpd: ^4.2.4
   jsdom: ^29.0.0
+
+  # Lit
+  lit: ^3.0.0
   preact: ^10.25.0
   preact-render-to-string: ^6.5.0
   prettier: ^3.3.3
@@ -59,9 +62,6 @@ catalog:
   # React
   react: ^19.2.7
   react-dom: ^19.2.7
-
-  # Lit
-  lit: ^3.0.0
 
   # Solid
   solid-js: ^1.9.0
@@ -72,7 +72,7 @@ catalog:
   # Architecture tooling
   ts-morph: ^28.0.0
   tsup: ^8.5.1
-  type-fest: ^5.4.4
+  type-fest: ^5.6.0
   typescript: ^6.0.3
   typescript-eslint: 8.60.0
   vite: ^8.0.16
