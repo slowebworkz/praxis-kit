@@ -63,5 +63,8 @@
     "web-components",
     "custom-elements",
     "vanilla"
-  ]
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }

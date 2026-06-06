@@ -60,5 +60,8 @@
     "tailwind",
     "tailwindcss",
     "css"
-  ]
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }

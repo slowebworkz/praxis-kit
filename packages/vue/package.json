@@ -73,5 +73,8 @@
     "contract",
     "variants",
     "vue"
-  ]
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }
