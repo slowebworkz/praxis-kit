@@ -1,5 +1,5 @@
-import { SlotValidator as BaseSlotValidator } from '@praxis-ui/adapter-utils'
-import type { StrictMode } from '@praxis-ui/core'
+import { SlotValidator as BaseSlotValidator } from '@praxis-kit/adapter-utils'
+import type { StrictMode } from '@praxis-kit/core'
 
 export class SlotValidator extends BaseSlotValidator {
   constructor(name: string, strict: StrictMode) {

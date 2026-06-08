@@ -1,5 +1,5 @@
-import { AriaPolicyEngine } from '@praxis-ui/contract'
-import { createClassPipeline } from '@praxis-ui/styling'
+import { AriaPolicyEngine } from '@praxis-kit/contract'
+import { createClassPipeline } from '@praxis-kit/styling'
 import { createPolymorphic as _createPolymorphic } from './create-polymorphic'
 import type {
   AnyRecord,

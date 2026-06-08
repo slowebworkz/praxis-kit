@@ -1,1 +1,1 @@
-export { createClassPipeline } from '@praxis-ui/styling'
+export { createClassPipeline } from '@praxis-kit/styling'

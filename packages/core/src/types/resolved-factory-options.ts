@@ -1,1 +1,1 @@
-export type { ResolvedFactoryOptions } from '@praxis-ui/shared/types'
+export type { ResolvedFactoryOptions } from '@praxis-kit/shared/types'

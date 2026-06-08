@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import { render } from 'svelte/server'
-import { ssrConformanceSuite } from '@praxis-ui/adapter-utils/testing'
-import type { BareFactoryOptions, ConformanceComponent } from '@praxis-ui/adapter-utils/testing'
+import { ssrConformanceSuite } from '@praxis-kit/adapter-utils/testing'
+import type { BareFactoryOptions, ConformanceComponent } from '@praxis-kit/adapter-utils/testing'
 import Polymorphic from './Polymorphic.svelte'
 import { createContractComponent } from './create-contract-component'
 import type { AnyBuiltRuntime } from './types/built-runtime'

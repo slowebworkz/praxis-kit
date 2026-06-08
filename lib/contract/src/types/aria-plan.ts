@@ -1,4 +1,4 @@
-import type { AnyRecord, ValidationViolation } from '@praxis-ui/shared'
+import type { AnyRecord, ValidationViolation } from '@praxis-kit/shared'
 
 export type AriaPlan = {
   readonly removals: ReadonlySet<string>

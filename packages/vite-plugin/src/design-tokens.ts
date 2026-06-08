@@ -200,7 +200,7 @@ export type DesignTokensOptions = {
  *
  * @example
  * // vite.config.ts
- * import { designTokensPlugin } from '@praxis-ui/vite-plugin'
+ * import { designTokensPlugin } from '@praxis-kit/vite-plugin'
  * export default { plugins: [designTokensPlugin({ outFile: 'praxis-tokens.json' })] }
  *
  * @example
@@ -213,7 +213,7 @@ export function designTokensPlugin(options?: DesignTokensOptions): Plugin {
   const accumulated = new Map<string, ComponentTokens>()
 
   return {
-    name: 'praxis-ui:design-tokens',
+    name: 'praxis-kit:design-tokens',
 
     transform(code, id) {
       const ext = id.split('.').pop() ?? ''

@@ -5,17 +5,17 @@ import type {
   PolymorphicGenerics,
   PresetMap,
   VariantMap,
-} from '@praxis-ui/core'
+} from '@praxis-kit/core'
 import type { ReactElement, Ref } from 'react'
 import { Slot } from './slot'
 import { normalizeChildren } from './normalize-children'
-import { applyDisplayName, buildRuntime, render } from '@praxis-ui/react/shared'
+import { applyDisplayName, buildRuntime, render } from '@praxis-kit/react/shared'
 import type {
   UnknownProps,
   KnownProps,
   PolymorphicComponent,
   ReactFactoryOptions,
-} from '@praxis-ui/react/shared'
+} from '@praxis-kit/react/shared'
 
 export function createContractComponent<
   TDefault extends ElementType,

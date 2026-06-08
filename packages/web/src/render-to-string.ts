@@ -1,5 +1,5 @@
-import type { AnyRecord, ElementType } from '@praxis-ui/core'
-import { applyFilter } from '@praxis-ui/adapter-utils'
+import type { AnyRecord, ElementType } from '@praxis-kit/core'
+import { applyFilter } from '@praxis-kit/adapter-utils'
 import type { LooseBundle, UnknownProps, WebContractComponent } from './types/index'
 
 type RegistryEntry = { bundle: LooseBundle }
@@ -31,7 +31,7 @@ function buildAttrString(attributes: AnyRecord): string {
 }
 
 /**
- * Renders a praxis-ui web component to an HTML string without requiring a DOM.
+ * Renders a praxis-kit web component to an HTML string without requiring a DOM.
  *
  * Tag polymorphism works correctly in SSR — `options.tag` and the `as` prop
  * are resolved directly to the HTML element tag.
@@ -49,7 +49,7 @@ export function renderToString(
     const name = (component as { name?: string }).name ?? 'AnonymousComponent'
     throw new Error(
       `[renderToString] ${name} was not registered for SSR. ` +
-        'Ensure it was created with createContractComponent from @praxis-ui/web.',
+        'Ensure it was created with createContractComponent from @praxis-kit/web.',
     )
   }
 

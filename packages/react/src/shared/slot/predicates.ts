@@ -1,5 +1,5 @@
 import { EVENT_HANDLER_RE } from './constants'
-import { isFunction, isRecord } from '@praxis-ui/shared/guards/foundational'
+import { isFunction, isRecord } from '@praxis-kit/shared/guards/foundational'
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
 import { Slottable } from './Slottable'

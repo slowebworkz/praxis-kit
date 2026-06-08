@@ -19,12 +19,12 @@ const config = [
           patterns: [
             {
               group: [
-                '@praxis-ui/react',
-                '@praxis-ui/preact',
-                '@praxis-ui/solid',
-                '@praxis-ui/svelte',
-                '@praxis-ui/example-react',
-                '@praxis-ui/example-vue',
+                '@praxis-kit/react',
+                '@praxis-kit/preact',
+                '@praxis-kit/solid',
+                '@praxis-kit/svelte',
+                '@praxis-kit/example-react',
+                '@praxis-kit/example-vue',
               ],
               message: 'vue adapter must not import from other adapters',
             },

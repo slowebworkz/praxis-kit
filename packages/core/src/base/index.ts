@@ -1,1 +1,1 @@
-export { StrictBase } from '@praxis-ui/contract'
+export { StrictBase } from '@praxis-kit/contract'

@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    name: '@praxis-ui/lit/ssr',
+    name: '@praxis-kit/lit/ssr',
     include: ['src/ssr.test.ts'],
     environment: 'node',
   },

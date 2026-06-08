@@ -6,13 +6,13 @@ import {
   conformanceA11ySuite,
   conformancePerformanceSuite,
   conformanceIsolationSuite,
-} from '@praxis-ui/adapter-utils/testing'
+} from '@praxis-kit/adapter-utils/testing'
 import type {
   BareFactoryOptions,
   ChildSpec,
   ConformanceAdapter,
   ConformanceComponent,
-} from '@praxis-ui/adapter-utils/testing'
+} from '@praxis-kit/adapter-utils/testing'
 import Polymorphic from './Polymorphic.svelte'
 import { createContractComponent } from './create-contract-component'
 import type { AnyBuiltRuntime } from './types/built-runtime'

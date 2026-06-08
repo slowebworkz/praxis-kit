@@ -1,7 +1,7 @@
 /**
- * Tabs — compound component for Lit built on praxis-ui.
+ * Tabs — compound component for Lit built on praxis-kit.
  *
- * praxis-ui owns the contract layer (class pipeline, children enforcement,
+ * praxis-kit owns the contract layer (class pipeline, children enforcement,
  * ARIA). Tab selection state is managed via a CustomEvent protocol between
  * the root and trigger elements — no shadow DOM, no framework context.
  *
@@ -15,7 +15,7 @@
  *     <example-tabs-content value="b">Panel B</example-tabs-content>
  *   </example-tabs-root>
  */
-import { createContractComponent } from '@praxis-ui/lit'
+import { createContractComponent } from '@praxis-kit/lit'
 
 // ── Trigger ───────────────────────────────────────────────────────────────────
 

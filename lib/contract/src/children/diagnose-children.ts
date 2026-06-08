@@ -2,9 +2,9 @@ import type { ChildRuleInput } from '../types'
 import { normalizeChildRule } from './normalize-child-rule'
 import { RuleMatcher } from './rules-matcher'
 import { getTypeName } from './get-type-name'
-import type { ChildViolation } from '@praxis-ui/shared/types'
+import type { ChildViolation } from '@praxis-kit/shared/types'
 
-export type { ChildViolation, ChildViolationKind } from '@praxis-ui/shared/types'
+export type { ChildViolation, ChildViolationKind } from '@praxis-kit/shared/types'
 
 export function diagnoseChildren(
   rules: readonly ChildRuleInput[],

@@ -47,7 +47,7 @@ for (const name in exp) {
   const { values, types } = exp[name]!
   const total = values + types
   lines.push(
-    `    ${name.replace('@praxis-ui/', '').padEnd(20)}  ${String(total).padStart(4)}  (${values}v + ${types}t)`,
+    `    ${name.replace('@praxis-kit/', '').padEnd(20)}  ${String(total).padStart(4)}  (${values}v + ${types}t)`,
   )
 }
 

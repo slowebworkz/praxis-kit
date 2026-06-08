@@ -1,4 +1,4 @@
-import type { Severity } from '@praxis-ui/core'
+import type { Severity } from '@praxis-kit/core'
 
 /** Options accepted by contractPlugin() and analyze(). */
 export type PluginOptions = {

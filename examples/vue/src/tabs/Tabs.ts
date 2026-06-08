@@ -1,7 +1,7 @@
 /**
- * Tabs — compound, stateful component for Vue built on praxis-ui.
+ * Tabs — compound, stateful component for Vue built on praxis-kit.
  *
- * praxis-ui owns the contract layer (tag resolution, ARIA, classes, structural
+ * praxis-kit owns the contract layer (tag resolution, ARIA, classes, structural
  * enforcement). Vue's provide/inject owns active-tab state and show/hide logic.
  *
  *   <Tabs.Root default-value="profile">
@@ -16,7 +16,7 @@
  */
 import { defineComponent, ref, computed, h } from 'vue'
 import type { Component } from 'vue'
-import { createContractComponent } from '@praxis-ui/vue'
+import { createContractComponent } from '@praxis-kit/vue'
 
 // createContractComponent returns a PolymorphicComponent (Volar new() pattern),
 // which TypeScript won't accept directly in h(). Casting via Component — the

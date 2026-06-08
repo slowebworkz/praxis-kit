@@ -18,14 +18,14 @@ const config = [
           patterns: [
             {
               group: [
-                '@praxis-ui/react',
-                '@praxis-ui/vue',
-                '@praxis-ui/preact',
-                '@praxis-ui/solid',
-                '@praxis-ui/svelte',
-                '@praxis-ui/tailwind',
-                '@praxis-ui/example-react',
-                '@praxis-ui/example-vue',
+                '@praxis-kit/react',
+                '@praxis-kit/vue',
+                '@praxis-kit/preact',
+                '@praxis-kit/solid',
+                '@praxis-kit/svelte',
+                '@praxis-kit/tailwind',
+                '@praxis-kit/example-react',
+                '@praxis-kit/example-vue',
               ],
 
               message: 'core must not import from framework adapters',

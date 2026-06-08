@@ -2,11 +2,11 @@ import { bench, describe } from 'vitest'
 import { createElement, cloneElement, Fragment } from 'react'
 import type { ReactElement } from 'react'
 
-import type { AnyRecord } from '@praxis-ui/core'
-import { mergeProps } from '@praxis-ui/react/shared/slot/mergeProps'
-import { applySlot } from '@praxis-ui/react/shared/slot/applySlot'
-import { Slottable } from '@praxis-ui/react/shared/slot/Slottable'
-import { cloneSlotChild } from '@praxis-ui/react/current/slot/cloneSlotChild'
+import type { AnyRecord } from '@praxis-kit/core'
+import { mergeProps } from '@praxis-kit/react/shared/slot/mergeProps'
+import { applySlot } from '@praxis-kit/react/shared/slot/applySlot'
+import { Slottable } from '@praxis-kit/react/shared/slot/Slottable'
+import { cloneSlotChild } from '@praxis-kit/react/current/slot/cloneSlotChild'
 
 type AnyFn = (...args: unknown[]) => void
 

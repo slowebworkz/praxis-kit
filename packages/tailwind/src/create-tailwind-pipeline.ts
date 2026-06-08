@@ -1,4 +1,4 @@
-import { cn, createClassPipeline } from '@praxis-ui/core'
+import { cn, createClassPipeline } from '@praxis-kit/core'
 import type {
   AnyRecord,
   ClassPipelineOptions,
@@ -6,7 +6,7 @@ import type {
   StrictMode,
   VariantMap,
   VariantValue,
-} from '@praxis-ui/core'
+} from '@praxis-kit/core'
 
 import { ClassBuilder } from './class-builder'
 import { ClassClassifier } from './class-classifier'

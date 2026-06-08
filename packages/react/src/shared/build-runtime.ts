@@ -7,13 +7,13 @@ import type {
   PropsOf,
   VariantMap,
   VariantsOf,
-} from '@praxis-ui/core'
+} from '@praxis-kit/core'
 import {
   buildCoreRuntime,
   buildEngines,
   composeFilter,
   resolveAdapterCommonOptions,
-} from '@praxis-ui/adapter-utils'
+} from '@praxis-kit/adapter-utils'
 import type { ReactElement } from 'react'
 import type { ReactFactoryOptions } from './react-options'
 import { SlotValidator } from './slot'

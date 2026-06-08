@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-ui/example-vue",
+  "name": "@praxis-kit/example-vue",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,9 +12,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@praxis-ui/core": "workspace:*",
-    "@praxis-ui/tailwind": "workspace:*",
-    "@praxis-ui/vue": "workspace:*"
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/tailwind": "workspace:*",
+    "@praxis-kit/vue": "workspace:*"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "catalog:",

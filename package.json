@@ -1,5 +1,5 @@
 {
-  "name": "praxis-ui",
+  "name": "praxis-kit",
   "private": true,
   "version": "3.0.1",
   "description": "Praxis UI — framework-neutral component infrastructure with enforced structural contracts, ARIA validation, and polymorphic rendering.",
@@ -12,8 +12,8 @@
     "test": "pnpm -r --if-present test",
     "test:ci": "pnpm -r --if-present test",
     "test:related": "pnpm -r --if-present test:related",
-    "bench": "pnpm --filter @praxis-ui/bench bench",
-    "bench:render": "pnpm --filter @praxis-ui/bench bench:render",
+    "bench": "pnpm --filter @praxis-kit/bench bench",
+    "bench:render": "pnpm --filter @praxis-kit/bench bench:render",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "lint:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' | xargs eslint --fix",
@@ -27,13 +27,13 @@
     "analyze:deps": "depcruise --config .dependency-cruiser.cjs lib packages",
     "analyze:duplicates": "jscpd --config .jscpd.json",
     "analyze:patterns": "sh scripts/ast-grep.sh scan --config .ast-grep/sgconfig.yml",
-    "analyze": "pnpm --filter @praxis-ui/bundle-analysis analyze",
-    "size": "pnpm --filter @praxis-ui/bundle-analysis size",
+    "analyze": "pnpm --filter @praxis-kit/bundle-analysis analyze",
+    "size": "pnpm --filter @praxis-kit/bundle-analysis size",
     "lint:pkg": "pnpm -r --if-present lint:pkg",
-    "metrics": "pnpm --filter @praxis-ui/metrics metrics",
-    "metrics:collect": "pnpm --filter @praxis-ui/metrics collect",
-    "metrics:report": "pnpm --filter @praxis-ui/metrics report",
-    "metrics:assert": "pnpm --filter @praxis-ui/metrics assert"
+    "metrics": "pnpm --filter @praxis-kit/metrics metrics",
+    "metrics:collect": "pnpm --filter @praxis-kit/metrics collect",
+    "metrics:report": "pnpm --filter @praxis-kit/metrics report",
+    "metrics:assert": "pnpm --filter @praxis-kit/metrics assert"
   },
   "devDependencies": {
     "@ast-grep/cli": "catalog:",

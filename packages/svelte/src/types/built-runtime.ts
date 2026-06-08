@@ -1,9 +1,9 @@
-import type { ChildrenEvaluator, PolymorphicGenerics } from '@praxis-ui/core'
+import type { ChildrenEvaluator, PolymorphicGenerics } from '@praxis-kit/core'
 import type {
   BuiltChildrenEvaluator,
   SlotValidator,
   WithChildRules,
-} from '@praxis-ui/adapter-utils'
+} from '@praxis-kit/adapter-utils'
 import type { FilterPredicate } from './primitives'
 import type { Runtime, TypedRuntime } from './runtime'
 

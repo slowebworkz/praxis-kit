@@ -1,4 +1,4 @@
-# praxis-ui documentation
+# praxis-kit documentation
 
 Framework-neutral UI infrastructure with enforceable structural and accessibility contracts.
 
@@ -17,22 +17,22 @@ Framework-neutral UI infrastructure with enforceable structural and accessibilit
 ## Layer overview
 
 ```
-@praxis-ui/primitive   — tag resolution, prop merge
-@praxis-ui/styling     — variant resolver, class pipeline
-@praxis-ui/contract    — ARIA engine, children validator, strict mode
-@praxis-ui/core        — re-export facade (primitive + styling + contract)
+@praxis-kit/primitive   — tag resolution, prop merge
+@praxis-kit/styling     — variant resolver, class pipeline
+@praxis-kit/contract    — ARIA engine, children validator, strict mode
+@praxis-kit/core        — re-export facade (primitive + styling + contract)
 
-@praxis-ui/react       — React 18/19 adapter
-@praxis-ui/vue         — Vue 3 adapter
-@praxis-ui/preact      — Preact adapter
-@praxis-ui/solid       — SolidJS adapter
-@praxis-ui/svelte      — Svelte 5 adapter
+@praxis-kit/react       — React 18/19 adapter
+@praxis-kit/vue         — Vue 3 adapter
+@praxis-kit/preact      — Preact adapter
+@praxis-kit/solid       — SolidJS adapter
+@praxis-kit/svelte      — Svelte 5 adapter
 ```
 
 ## Quick start
 
 ```ts
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractComponent } from '@praxis-kit/react'
 
 const Button = createContractComponent({
   tag: 'button',
@@ -50,5 +50,5 @@ const Button = createContractComponent({
 })
 ```
 
-Replace `@praxis-ui/react` with the adapter for your framework — the factory API is identical across
-all adapters.
+Replace `@praxis-kit/react` with the adapter for your framework — the factory API is identical
+across all adapters.

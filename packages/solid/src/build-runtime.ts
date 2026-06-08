@@ -7,13 +7,13 @@ import type {
   PropsOf,
   VariantMap,
   VariantsOf,
-} from '@praxis-ui/core'
+} from '@praxis-kit/core'
 import {
   buildCoreRuntime,
   buildEngines,
   composeFilter,
   resolveAdapterCommonOptions,
-} from '@praxis-ui/adapter-utils'
+} from '@praxis-kit/adapter-utils'
 import type { SolidFactoryOptions } from './solid-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
 import type { NormalizedOptions } from './types/normalized-options'

@@ -2,7 +2,7 @@ import { isValidElement } from 'preact'
 import type { VNode } from 'preact'
 import type { AnyVNode } from '../types'
 import { EVENT_HANDLER_RE } from './constants'
-import { isFunction, isRecord } from '@praxis-ui/shared/guards/foundational'
+import { isFunction, isRecord } from '@praxis-kit/shared/guards/foundational'
 import { Slottable } from './Slottable'
 import type { SlottableProps } from './Slottable'
 

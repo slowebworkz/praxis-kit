@@ -33,7 +33,7 @@ export { composeStatically } from './static-compose'
  *
  * @example
  * // vite.config.ts
- * import { contractPlugin } from '@praxis-ui/vite-plugin'
+ * import { contractPlugin } from '@praxis-kit/vite-plugin'
  * export default { plugins: [contractPlugin()] }
  */
 export function contractPlugin(options?: PluginOptions): Plugin {
@@ -42,7 +42,7 @@ export function contractPlugin(options?: PluginOptions): Plugin {
   const severity = options?.severity ?? 'warning'
 
   return {
-    name: 'praxis-ui:contract',
+    name: 'praxis-kit:contract',
 
     async transform(code, id) {
       const ext = id.split('.').pop() ?? ''
@@ -119,13 +119,13 @@ export function contractPlugin(options?: PluginOptions): Plugin {
  *
  * @example
  * // vite.config.ts
- * import { compoundPrunePlugin, contractPlugin } from '@praxis-ui/vite-plugin'
+ * import { compoundPrunePlugin, contractPlugin } from '@praxis-kit/vite-plugin'
  * export default { plugins: [compoundPrunePlugin(), contractPlugin()] }
  */
 export function compoundPrunePlugin(options?: Pick<PluginOptions, 'calleeNames'>): Plugin {
   const calleeNames = new Set(options?.calleeNames ?? DEFAULT_CALLEE_NAMES)
   return {
-    name: 'praxis-ui:compound-prune',
+    name: 'praxis-kit:compound-prune',
     transform(code, id) {
       const ext = id.split('.').pop() ?? ''
       if (!ALL_EXTS.has(ext)) return null
@@ -156,13 +156,13 @@ export function compoundPrunePlugin(options?: Pick<PluginOptions, 'calleeNames'>
  *
  * @example
  * // vite.config.ts
- * import { compoundPrunePlugin, classExtractPlugin, contractPlugin } from '@praxis-ui/vite-plugin'
+ * import { compoundPrunePlugin, classExtractPlugin, contractPlugin } from '@praxis-kit/vite-plugin'
  * export default { plugins: [compoundPrunePlugin(), classExtractPlugin(), contractPlugin()] }
  */
 export function classExtractPlugin(options?: Pick<PluginOptions, 'calleeNames'>): Plugin {
   const calleeNames = new Set(options?.calleeNames ?? DEFAULT_CALLEE_NAMES)
   return {
-    name: 'praxis-ui:class-extract',
+    name: 'praxis-kit:class-extract',
     transform(code, id) {
       const ext = id.split('.').pop() ?? ''
       if (!ALL_EXTS.has(ext)) return null
@@ -188,12 +188,12 @@ export function classExtractPlugin(options?: Pick<PluginOptions, 'calleeNames'>)
  *
  * @example
  * // vite.config.ts
- * import { slotTransformPlugin, contractPlugin } from '@praxis-ui/vite-plugin'
+ * import { slotTransformPlugin, contractPlugin } from '@praxis-kit/vite-plugin'
  * export default { plugins: [slotTransformPlugin(), contractPlugin()] }
  */
 export function slotTransformPlugin(): Plugin {
   return {
-    name: 'praxis-ui:slot-transform',
+    name: 'praxis-kit:slot-transform',
     transform(code, id) {
       const ext = id.split('.').pop() ?? ''
       if (!JSX_EXTS.has(ext)) return null
@@ -224,13 +224,13 @@ export function slotTransformPlugin(): Plugin {
  *
  * @example
  * // vite.config.ts
- * import { classExtractPlugin, staticCompositionPlugin } from '@praxis-ui/vite-plugin'
+ * import { classExtractPlugin, staticCompositionPlugin } from '@praxis-kit/vite-plugin'
  * export default { plugins: [classExtractPlugin(), staticCompositionPlugin()] }
  */
 export function staticCompositionPlugin(options?: Pick<PluginOptions, 'calleeNames'>): Plugin {
   const calleeNames = new Set(options?.calleeNames ?? DEFAULT_CALLEE_NAMES)
   return {
-    name: 'praxis-ui:static-compose',
+    name: 'praxis-kit:static-compose',
     transform(code, id) {
       const ext = id.split('.').pop() ?? ''
       if (!JSX_EXTS.has(ext)) return null
@@ -258,7 +258,7 @@ export function staticCompositionPlugin(options?: Pick<PluginOptions, 'calleeNam
  *
  * @example
  * // vite.config.ts
- * import { ssrOptimizePlugin, contractPlugin } from '@praxis-ui/vite-plugin'
+ * import { ssrOptimizePlugin, contractPlugin } from '@praxis-kit/vite-plugin'
  * export default { plugins: [ssrOptimizePlugin(), contractPlugin()] }
  */
 export function ssrOptimizePlugin(options?: Pick<PluginOptions, 'calleeNames'>): Plugin[] {

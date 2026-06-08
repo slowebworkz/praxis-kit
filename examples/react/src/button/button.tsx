@@ -1,4 +1,4 @@
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractComponent } from '@praxis-kit/react'
 
 // Non-variant props the component owns. These are merged into the resolved
 // prop set and must also be stripped from the DOM via filterProps.

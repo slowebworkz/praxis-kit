@@ -3,6 +3,6 @@
  * same core runtime, different renderer. Compare against react-minimal and
  * vue-minimal to isolate per-framework overhead.
  */
-import { createContractComponent } from '@praxis-ui/solid'
+import { createContractComponent } from '@praxis-kit/solid'
 
 export const Box = createContractComponent({ tag: 'div', name: 'Box' })

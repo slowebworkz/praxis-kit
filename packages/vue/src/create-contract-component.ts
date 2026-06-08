@@ -6,7 +6,7 @@ import type {
   PolymorphicGenerics,
   PresetMap,
   VariantMap,
-} from '@praxis-ui/core'
+} from '@praxis-kit/core'
 import { applyDisplayName } from './apply-display-name'
 import { buildRuntime } from './build-runtime'
 import { render, resolveRenderState } from './render'

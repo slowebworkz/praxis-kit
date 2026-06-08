@@ -1,4 +1,4 @@
-# praxis-ui — Architecture
+# praxis-kit — Architecture
 
 ---
 
@@ -31,11 +31,11 @@ enforces these rules via `dependency-cruiser`.
 
 ---
 
-## `@praxis-ui/core`
+## `@praxis-kit/core`
 
 ### What it is
 
-`@praxis-ui/core` is a framework-agnostic TypeScript library that resolves **polymorphic component
+`@praxis-kit/core` is a framework-agnostic TypeScript library that resolves **polymorphic component
 behavior**: which HTML element or component to render (`as` prop), how to merge default and consumer
 props, and how to compose class strings from variants, presets, and layout state.
 
@@ -53,7 +53,7 @@ A framework adapter is optional:
 | ------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | Tag resolution      | `resolveTag(defaultTag, as)`                                           | Narrows `ElementType` to the framework's element union            |
 | Prop merging        | `resolveProps(props)`                                                  | Event handler merging, framework-specific prop normalisation      |
-| Class composition   | `resolveClasses(...)`                                                  | CSS-methodology post-processing (e.g. `@praxis-ui/tailwind`)      |
+| Class composition   | `resolveClasses(...)`                                                  | CSS-methodology post-processing (e.g. `@praxis-kit/tailwind`)     |
 | Children validation | `ChildrenEvaluator.evaluate(unknown[])`                                | Flattens framework children before calling                        |
 | ARIA validation     | `AriaPolicyEngine` wired into `resolveAria` / `createResolverPipeline` | Strips invalid `aria-*` attrs; reports violations via strict mode |
 | Rendering           | —                                                                      | Creates and renders the resolved element                          |
@@ -206,7 +206,7 @@ CVA fn
 ```
 
 CSS-methodology-specific post-processing (such as Tailwind layout-aware class filtering) is handled
-by `@praxis-ui/tailwind`, which wraps `createClassPipeline` and applies it after the base pipeline
+by `@praxis-kit/tailwind`, which wraps `createClassPipeline` and applies it after the base pipeline
 runs.
 
 ---
@@ -330,7 +330,7 @@ impossible to ever satisfy.
 
 #### HTML5 built-in contracts (`htmlContracts`)
 
-`@praxis-ui/core` exports `htmlContracts`, a keyed map of ready-made `EnforcementOptions` objects
+`@praxis-kit/core` exports `htmlContracts`, a keyed map of ready-made `EnforcementOptions` objects
 for HTML elements whose content model restricts direct children. The contracts are authored against
 the public `ChildRuleInput` API — no internal types are used.
 
@@ -353,7 +353,7 @@ discarded before the evaluator runs — no special handling is needed in the pre
 
 **Complementary static layer:**
 
-The `no-invalid-html-nesting` ESLint rule in `@praxis-ui/eslint-plugin` checks the same allowlists
+The `no-invalid-html-nesting` ESLint rule in `@praxis-kit/eslint-plugin` checks the same allowlists
 at author time (JSX AST analysis, no runtime required). The two layers are independent — the ESLint
 rule runs on raw JSX; the runtime contract runs on the rendered element tree.
 
@@ -538,10 +538,10 @@ from production behavior. Safe to call inside render functions during developmen
 
 Sub-entrypoints for targeted inspection:
 
-| API                     | Package                   | Returns                                                                                    |
-| ----------------------- | ------------------------- | ------------------------------------------------------------------------------------------ |
-| `diagnoseClassPipeline` | `@praxis-ui/core/styling` | `ClassDiagnosis` — compound traces, tag-map bypass status, effective variants              |
-| `diagnoseChildren`      | `@praxis-ui/contract`     | `ChildViolation[]` — all cardinality, position, unexpected, and ambiguous child violations |
+| API                     | Package                    | Returns                                                                                    |
+| ----------------------- | -------------------------- | ------------------------------------------------------------------------------------------ |
+| `diagnoseClassPipeline` | `@praxis-kit/core/styling` | `ClassDiagnosis` — compound traces, tag-map bypass status, effective variants              |
+| `diagnoseChildren`      | `@praxis-kit/contract`     | `ChildViolation[]` — all cardinality, position, unexpected, and ambiguous child violations |
 
 See [§Debugging](#debugging) for usage examples.
 
@@ -566,18 +566,18 @@ This is the contract that must stabilize before broader third-party plugin APIs 
 
 ---
 
-## `@praxis-ui/react`
+## `@praxis-kit/react`
 
-`@praxis-ui/react` is the React adapter for core. It wraps `createPolymorphic` with React-specific
+`@praxis-kit/react` is the React adapter for core. It wraps `createPolymorphic` with React-specific
 rendering, ref handling, and a Slot/Slottable protocol that implements `asChild`.
 
 The package exports two entry points that share a common `shared/` implementation layer but differ
 in how they handle refs:
 
-| Entry point               | Target    | Ref strategy           |
-| ------------------------- | --------- | ---------------------- |
-| `@praxis-ui/react`        | React 19+ | `ref` as a plain prop  |
-| `@praxis-ui/react/legacy` | React 18  | `ref` via `forwardRef` |
+| Entry point                | Target    | Ref strategy           |
+| -------------------------- | --------- | ---------------------- |
+| `@praxis-kit/react`        | React 19+ | `ref` as a plain prop  |
+| `@praxis-kit/react/legacy` | React 18  | `ref` via `forwardRef` |
 
 ---
 
@@ -877,7 +877,7 @@ is one of three things:
 variant props (defaults → preset → caller). Use `diagnoseClassPipeline` to trace each compound:
 
 ```ts
-import { diagnoseClassPipeline } from '@praxis-ui/core/styling'
+import { diagnoseClassPipeline } from '@praxis-kit/core/styling'
 
 const trace = diagnoseClassPipeline(
   options, // same ClassPipelineOptions passed to createContractComponent
@@ -933,7 +933,7 @@ createContractComponent({
 Or call the engine directly to inspect violations without enforcement side-effects:
 
 ```ts
-import { AriaPolicyEngine } from '@praxis-ui/core/contract'
+import { AriaPolicyEngine } from '@praxis-kit/core/contract'
 
 const result = AriaPolicyEngine.evaluate('nav', { role: 'navigation' })
 result.violations
