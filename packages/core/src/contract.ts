@@ -2,7 +2,7 @@
 // Includes everything from the primitive entry.
 export * from './primitive'
 export * from './html'
-export { StrictBase } from '@praxis-ui/contract'
+export { StrictBase } from '@praxis-kit/contract'
 export {
   AriaPolicyEngine,
   ChildrenEvaluator,
@@ -15,7 +15,7 @@ export {
   KNOWN_ARIA_ROLES,
   isKnownAriaRole,
   hasRole,
-} from '@praxis-ui/contract'
+} from '@praxis-kit/contract'
 export { createContractedPolymorphic } from './factory/create-polymorphic-contracted'
 export { createResolverPipeline } from './resolver'
 export type {

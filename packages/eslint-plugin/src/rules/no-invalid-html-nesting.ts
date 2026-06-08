@@ -2,7 +2,7 @@ import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
 import type { TSESTree } from '@typescript-eslint/utils'
 import { HTML_ALLOWED_CHILDREN } from '../utils/html-nesting'
 
-const createRule = RuleCreator((name) => `https://praxis-ui.dev/eslint-rules/${name}`)
+const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)
 
 export type Options = []
 

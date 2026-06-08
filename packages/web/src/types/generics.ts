@@ -1,4 +1,4 @@
-import type { ElementType, PolymorphicGenerics, PresetMap, VariantMap } from '@praxis-ui/core'
+import type { ElementType, PolymorphicGenerics, PresetMap, VariantMap } from '@praxis-kit/core'
 
 export type RuntimeG<
   TDefault extends ElementType,

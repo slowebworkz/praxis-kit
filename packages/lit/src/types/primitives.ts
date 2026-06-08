@@ -1,4 +1,4 @@
-import type { AnyRecord, EmptyRecord, PolymorphicGenerics, VariantMap } from '@praxis-ui/core'
+import type { AnyRecord, EmptyRecord, PolymorphicGenerics, VariantMap } from '@praxis-kit/core'
 import type { LitElement } from 'lit'
 
 export type PolymorphicElement<G extends PolymorphicGenerics> = HTMLElement &

@@ -14,47 +14,47 @@
     "status": "WARNINGS",
     "violations": 0,
     "exports": {
-      "@praxis-ui/codemod": {
+      "@praxis-kit/codemod": {
         "values": 0,
         "types": 0
       },
-      "@praxis-ui/core": {
+      "@praxis-kit/core": {
         "values": 35,
         "types": 69
       },
-      "@praxis-ui/eslint-plugin": {
+      "@praxis-kit/eslint-plugin": {
         "values": 10,
         "types": 0
       },
-      "@praxis-ui/preact": {
+      "@praxis-kit/preact": {
         "values": 2,
         "types": 5
       },
-      "@praxis-ui/react": {
+      "@praxis-kit/react": {
         "values": 6,
         "types": 0
       },
-      "@praxis-ui/solid": {
+      "@praxis-kit/solid": {
         "values": 1,
         "types": 4
       },
-      "@praxis-ui/svelte": {
+      "@praxis-kit/svelte": {
         "values": 1,
         "types": 5
       },
-      "@praxis-ui/tailwind": {
+      "@praxis-kit/tailwind": {
         "values": 6,
         "types": 10
       },
-      "@praxis-ui/ts-plugin": {
+      "@praxis-kit/ts-plugin": {
         "values": 0,
         "types": 0
       },
-      "@praxis-ui/vite-plugin": {
+      "@praxis-kit/vite-plugin": {
         "values": 15,
         "types": 7
       },
-      "@praxis-ui/vue": {
+      "@praxis-kit/vue": {
         "values": 2,
         "types": 5
       }

@@ -44,7 +44,7 @@ State via `createContext` / `useState`. Tests via `createRoot` + `act`.
 
 State via `provide` / `inject` (Vue's equivalent of React Context). Tests via `@vue/test-utils`.
 
-The `toComponent()` helper bridges praxis-ui's `PolymorphicComponent` type (Volar new() pattern) to
+The `toComponent()` helper bridges praxis-kit's `PolymorphicComponent` type (Volar new() pattern) to
 Vue's `Component` type accepted by `h()`.
 
 ### Preact (`examples/preact`)
@@ -78,9 +78,9 @@ roles from the DOM, meaning the Tabs component had no ARIA semantics at runtime 
 source code. The fix added all three roles and consolidated the role list to a single source of
 truth.
 
-## Benchmark: praxis-ui vs vanilla React
+## Benchmark: praxis-kit vs vanilla React
 
-`lib/bench/src/tabs.bench.ts` compares the praxis-ui Tabs against an equivalent hand-rolled React
+`lib/bench/src/tabs.bench.ts` compares the praxis-kit Tabs against an equivalent hand-rolled React
 Tabs with the same DOM structure and ARIA wiring.
 
 Run via:
@@ -92,7 +92,7 @@ pnpm bench:render
 
 Findings (jsdom, warm LRU cache):
 
-| Scenario               | praxis-ui    | vanilla      | ratio        |
+| Scenario               | praxis-kit   | vanilla      | ratio        |
 | ---------------------- | ------------ | ------------ | ------------ |
 | Initial mount          | ~1,540 ops/s | ~3,100 ops/s | ~2× slower   |
 | Re-render (tab switch) | ~1,220 ops/s | ~1,500 ops/s | ~1.2× slower |

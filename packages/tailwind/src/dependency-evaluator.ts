@@ -1,4 +1,4 @@
-import { assertNever } from '@praxis-ui/core'
+import { assertNever } from '@praxis-kit/core'
 import type { ClassifiedToken } from './types/classified-token'
 import type { DependencyRules } from './dependency-rules'
 import type { LayoutState } from './layout-state'

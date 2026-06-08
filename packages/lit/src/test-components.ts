@@ -1,7 +1,7 @@
 // Shared test component definitions.
 // Each component is registered once per test run in beforeAll.
 
-import type { EmptyRecord } from '@praxis-ui/core'
+import type { EmptyRecord } from '@praxis-kit/core'
 import { createContractComponent } from './create-contract-component'
 
 // ─── Box ─────────────────────────────────────────────────────────────────────

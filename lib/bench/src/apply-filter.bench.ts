@@ -34,7 +34,7 @@
 // Run via `pnpm bench` (vitest.bench.config.ts).
 
 import { bench, describe } from 'vitest'
-import { applyFilter, composeFilter } from '@praxis-ui/adapter-utils'
+import { applyFilter, composeFilter } from '@praxis-kit/adapter-utils'
 
 const variantKeys = new Set(['size', 'intent', 'tone'])
 const ownedKeys = new Set(['flex', 'grid', 'direction', 'gap', 'align', 'justify'])

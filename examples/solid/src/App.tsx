@@ -43,7 +43,7 @@ export function App() {
       }}
     >
       <h1 style={{ 'font-size': '1.25rem', 'font-weight': 700, 'margin-bottom': '2rem' }}>
-        praxis-ui · Solid examples
+        praxis-kit · Solid examples
       </h1>
 
       <Section title="Box — Tailwind layout pipeline">

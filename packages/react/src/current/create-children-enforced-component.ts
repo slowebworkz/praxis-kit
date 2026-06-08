@@ -5,20 +5,20 @@ import type {
   PolymorphicGenerics,
   PresetMap,
   VariantMap,
-} from '@praxis-ui/core'
-import { createPolymorphic } from '@praxis-ui/core/primitive'
-import { buildEngines, composeFilter } from '@praxis-ui/adapter-utils'
+} from '@praxis-kit/core'
+import { createPolymorphic } from '@praxis-kit/core/primitive'
+import { buildEngines, composeFilter } from '@praxis-kit/adapter-utils'
 import type { Ref, ReactElement } from 'react'
 import { Slot } from './slot'
 import { normalizeChildren } from './normalize-children'
-import { applyDisplayName, render } from '@praxis-ui/react/shared'
-import { SlotValidator } from '@praxis-ui/react/shared'
+import { applyDisplayName, render } from '@praxis-kit/react/shared'
+import { SlotValidator } from '@praxis-kit/react/shared'
 import type {
   UnknownProps,
   KnownProps,
   PolymorphicComponent,
   ReactFactoryOptions,
-} from '@praxis-ui/react/shared'
+} from '@praxis-kit/react/shared'
 
 // Children-only enforcement factory: ChildrenEvaluator, no AriaPolicyEngine, no class pipeline.
 // Tree-shakes lib/styling/src and lib/contract/src/aria for consumers that only need structural contracts.

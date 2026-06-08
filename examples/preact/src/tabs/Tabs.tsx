@@ -1,13 +1,13 @@
 /**
- * Tabs — compound, stateful component for Preact built on praxis-ui.
+ * Tabs — compound, stateful component for Preact built on praxis-kit.
  *
  * Mirrors the React Tabs example. Preact's createContext/useContext (from
- * preact/compat) owns active-tab state; praxis-ui owns the contract layer.
+ * preact/compat) owns active-tab state; praxis-kit owns the contract layer.
  */
 import { h } from 'preact'
 import type { ComponentChildren } from 'preact'
 import { useState } from 'preact/hooks'
-import { createContractComponent } from '@praxis-ui/preact'
+import { createContractComponent } from '@praxis-kit/preact'
 import { TabsContext, useTabs } from './context'
 import { isType, tabId, panelId } from './utils'
 

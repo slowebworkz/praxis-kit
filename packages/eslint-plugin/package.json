@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-ui/eslint-plugin",
+  "name": "@praxis-kit/eslint-plugin",
   "version": "3.0.1",
   "type": "module",
   "exports": {
@@ -42,18 +42,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "url": "git+https://github.com/slowebworkz/praxis-kit.git",
     "directory": "packages/eslint-plugin"
   },
-  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/eslint-plugin#readme",
+  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/packages/eslint-plugin#readme",
   "bugs": {
-    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+    "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
   "license": "CC-BY-NC-4.0",
   "author": "K Huehn <slowebworkz@gmail.com>",
   "description": "ESLint rules for enforcing Praxis UI structural patterns, ARIA contracts, and variant configuration",
   "keywords": [
-    "praxis-ui",
+    "praxis-kit",
     "polymorphic",
     "ui",
     "components",

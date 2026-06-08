@@ -1,5 +1,5 @@
 import type { MatchMatrix, NormalizedChildRule } from '../types'
-import { isObject } from '@praxis-ui/primitive'
+import { isObject } from '@praxis-kit/primitive'
 
 /** Reads child.type without assuming a framework — works for React elements and Vue vnodes. */
 function getChildType(child: unknown): unknown | undefined {

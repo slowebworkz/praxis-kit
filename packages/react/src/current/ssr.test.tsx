@@ -3,9 +3,9 @@ import { describe, it, expect } from 'vitest'
 import { createElement } from 'react'
 import type { ComponentType, ReactNode } from 'react'
 import { renderToString } from 'react-dom/server'
-import { ssrConformanceSuite } from '@praxis-ui/adapter-utils/testing'
-import type { BareFactoryOptions } from '@praxis-ui/adapter-utils/testing'
-import type { UnknownProps } from '@praxis-ui/react/shared'
+import { ssrConformanceSuite } from '@praxis-kit/adapter-utils/testing'
+import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
+import type { UnknownProps } from '@praxis-kit/react/shared'
 import { createContractComponent } from './create-contract-component'
 
 function ssr(comp: unknown, props?: UnknownProps, ...children: ReactNode[]) {

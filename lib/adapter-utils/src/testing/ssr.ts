@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { AnyRecord } from '@praxis-ui/core'
+import type { AnyRecord } from '@praxis-kit/core'
 import type { ConformanceComponent, ConformanceFactoryOptions } from './types'
 
 /**

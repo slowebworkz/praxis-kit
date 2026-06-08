@@ -1,5 +1,5 @@
-import type { ChildRuleInput, StrictMode } from '@praxis-ui/core'
-import { ChildrenEvaluator } from '@praxis-ui/core'
+import type { ChildRuleInput, StrictMode } from '@praxis-kit/core'
+import { ChildrenEvaluator } from '@praxis-kit/core'
 
 export type RuntimeEngines = {
   childrenEvaluator?: ChildrenEvaluator

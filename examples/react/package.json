@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-ui/example-react",
+  "name": "@praxis-kit/example-react",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,9 +12,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@praxis-ui/core": "workspace:*",
-    "@praxis-ui/react": "workspace:*",
-    "@praxis-ui/tailwind": "workspace:*"
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/react": "workspace:*",
+    "@praxis-kit/tailwind": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "catalog:",

@@ -1,5 +1,5 @@
-import type { ChildrenEvaluator, PolymorphicGenerics } from '@praxis-ui/core'
-import type { FilterPredicate } from '@praxis-ui/adapter-utils'
+import type { ChildrenEvaluator, PolymorphicGenerics } from '@praxis-kit/core'
+import type { FilterPredicate } from '@praxis-kit/adapter-utils'
 import type { LooseRuntime, Runtime } from './runtime'
 
 export type BuiltRuntime<G extends PolymorphicGenerics> = {

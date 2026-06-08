@@ -2,48 +2,48 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@praxis-ui/shared": ["../../packages/shared/src"],
-      "@praxis-ui/shared/types": ["../../packages/shared/src/types/index.ts"],
-      "@praxis-ui/shared/types/variants": [
+      "@praxis-kit/shared": ["../../packages/shared/src"],
+      "@praxis-kit/shared/types": ["../../packages/shared/src/types/index.ts"],
+      "@praxis-kit/shared/types/variants": [
         "../../packages/shared/src/types/variants/index.ts"
       ],
-      "@praxis-ui/shared/types/contracts": [
+      "@praxis-kit/shared/types/contracts": [
         "../../packages/shared/src/types/contracts/index.ts"
       ],
-      "@praxis-ui/shared/types/validation": [
+      "@praxis-kit/shared/types/validation": [
         "../../packages/shared/src/types/validation/index.ts"
       ],
-      "@praxis-ui/shared/types/config": [
+      "@praxis-kit/shared/types/config": [
         "../../packages/shared/src/types/config/index.ts"
       ],
-      "@praxis-ui/shared/types/capabilities": [
+      "@praxis-kit/shared/types/capabilities": [
         "../../packages/shared/src/types/capabilities/index.ts"
       ],
-      "@praxis-ui/shared/constants/primitive": [
+      "@praxis-kit/shared/constants/primitive": [
         "../../packages/shared/src/constants/primitive/index.ts"
       ],
-      "@praxis-ui/shared/constants/aria": [
+      "@praxis-kit/shared/constants/aria": [
         "../../packages/shared/src/constants/aria/index.ts"
       ],
-      "@praxis-ui/shared/guards/aria": [
+      "@praxis-kit/shared/guards/aria": [
         "../../packages/shared/src/guards/aria/index.ts"
       ],
-      "@praxis-ui/shared/guards/capabilities": [
+      "@praxis-kit/shared/guards/capabilities": [
         "../../packages/shared/src/guards/capabilities/index.ts"
       ],
-      "@praxis-ui/shared/guards/contract": [
+      "@praxis-kit/shared/guards/contract": [
         "../../packages/shared/src/guards/contract/index.ts"
       ],
-      "@praxis-ui/shared/guards/foundational": [
+      "@praxis-kit/shared/guards/foundational": [
         "../../packages/shared/src/guards/foundational/index.ts"
       ],
-      "@praxis-ui/shared/guards/primitive": [
+      "@praxis-kit/shared/guards/primitive": [
         "../../packages/shared/src/guards/primitive/index.ts"
       ],
-      "@praxis-ui/shared/guards/variants": [
+      "@praxis-kit/shared/guards/variants": [
         "../../packages/shared/src/guards/variants/index.ts"
       ],
-      "@praxis-ui/shared/*": ["../../packages/shared/src/*"]
+      "@praxis-kit/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": ["src"]

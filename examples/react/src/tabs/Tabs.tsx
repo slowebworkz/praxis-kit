@@ -1,8 +1,8 @@
 /**
- * Tabs — a compound, stateful component built on praxis-ui.
+ * Tabs — a compound, stateful component built on praxis-kit.
  *
  * Demonstrates the intended division of labor:
- *   - praxis-ui owns the *contract* layer — tag resolution, ARIA roles, class
+ *   - praxis-kit owns the *contract* layer — tag resolution, ARIA roles, class
  *     pipeline, and structural enforcement (which children are valid, how many).
  *   - a thin React-context layer owns *state/behavior* — the active tab and the
  *     show/hide of panels — which praxis deliberately does not handle.
@@ -25,7 +25,7 @@
 import { useId, useState } from 'react'
 import type { ReactElement } from 'react'
 
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractComponent } from '@praxis-kit/react'
 
 import { TabsContext, useTabs } from './context'
 import type { RootProps, TriggerProps, ContentProps } from './types'

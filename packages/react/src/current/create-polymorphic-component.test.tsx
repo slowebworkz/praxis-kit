@@ -7,7 +7,7 @@ import type {
   PolymorphicComponent,
   RenderCallbackProps,
   UnknownProps,
-} from '@praxis-ui/react/shared'
+} from '@praxis-kit/react/shared'
 import { createPolymorphicComponent } from './create-polymorphic-component'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

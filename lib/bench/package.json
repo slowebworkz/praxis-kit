@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-ui/bench",
+  "name": "@praxis-kit/bench",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,8 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@praxis-ui/core": "workspace:*",
-    "@praxis-ui/react": "workspace:*"
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/react": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "catalog:",

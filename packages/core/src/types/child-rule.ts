@@ -5,7 +5,7 @@ export type {
   ChildRuleMatch,
   ChildRulePosition,
   NormalizedChildRule,
-} from '@praxis-ui/shared/types'
+} from '@praxis-kit/shared/types'
 
 /** Internal matching layer — not part of the public API surface. */
 export type MatchMatrix = Readonly<{

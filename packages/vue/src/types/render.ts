@@ -1,4 +1,4 @@
-import type { ChildrenEvaluator, ElementType } from '@praxis-ui/core'
+import type { ChildrenEvaluator, ElementType } from '@praxis-kit/core'
 import type { Slots } from 'vue'
 import type { SlotValidator } from '../slot'
 import type { FilterPredicate, ResolvedProps, UnknownProps } from './primitives'

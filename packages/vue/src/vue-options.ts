@@ -5,7 +5,7 @@ import type {
   FactoryOptions,
   PresetMap,
   VariantMap,
-} from '@praxis-ui/core'
+} from '@praxis-kit/core'
 import type { UnknownProps } from './types/primitives'
 
 // No `slotComponent` field: React delegates asChild rendering to an intermediate Slot component;

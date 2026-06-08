@@ -5,8 +5,8 @@ import type {
   PresetOf,
   PropsOf,
   VariantsOf,
-} from '@praxis-ui/core'
-import { createPolymorphic } from '@praxis-ui/core'
+} from '@praxis-kit/core'
+import { createPolymorphic } from '@praxis-kit/core'
 
 const EMPTY_SET: ReadonlySet<string> = new Set()
 

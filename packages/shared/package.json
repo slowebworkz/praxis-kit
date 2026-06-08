@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-ui/shared",
+  "name": "@praxis-kit/shared",
   "version": "3.0.1",
   "type": "module",
   "exports": {
@@ -93,18 +93,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "url": "git+https://github.com/slowebworkz/praxis-kit.git",
     "directory": "packages/shared"
   },
-  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/shared#readme",
+  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/packages/shared#readme",
   "bugs": {
-    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+    "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
   "license": "CC-BY-NC-4.0",
   "author": "K Huehn <slowebworkz@gmail.com>",
   "description": "Shared types, errors, symbols, constants, and guards for Praxis UI packages",
   "keywords": [
-    "praxis-ui",
+    "praxis-kit",
     "polymorphic",
     "ui",
     "components",

@@ -19,12 +19,12 @@ const config = [
           patterns: [
             {
               group: [
-                '@praxis-ui/react',
-                '@praxis-ui/preact',
-                '@praxis-ui/solid',
-                '@praxis-ui/svelte',
-                '@praxis-ui/vue',
-                '@praxis-ui/lit',
+                '@praxis-kit/react',
+                '@praxis-kit/preact',
+                '@praxis-kit/solid',
+                '@praxis-kit/svelte',
+                '@praxis-kit/vue',
+                '@praxis-kit/lit',
               ],
               message: 'web adapter must not import from other adapters',
             },

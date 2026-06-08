@@ -10,7 +10,7 @@ import type {
   PropsOf,
   VariantProps,
   VariantsOf,
-} from '@praxis-ui/core'
+} from '@praxis-kit/core'
 import type { RenderCallbackProps } from './props'
 import type { UnknownProps } from './primitives'
 

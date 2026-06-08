@@ -1,5 +1,5 @@
 import { bench, describe } from 'vitest'
-import { AriaPolicyEngine } from '@praxis-ui/core'
+import { AriaPolicyEngine } from '@praxis-kit/core'
 
 // strict: false suppresses console.warn so violation paths don't flood bench output.
 // The evaluate() static method is used where strict overhead should be excluded entirely.

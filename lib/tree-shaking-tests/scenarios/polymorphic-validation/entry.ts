@@ -4,7 +4,7 @@
  */
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
-import { createChildrenEnforcedComponent } from '@praxis-ui/react'
+import { createChildrenEnforcedComponent } from '@praxis-kit/react'
 
 const Item = createChildrenEnforcedComponent({ tag: 'li', name: 'Item' })
 

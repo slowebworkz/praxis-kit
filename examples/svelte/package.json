@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-ui/example-svelte",
+  "name": "@praxis-kit/example-svelte",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,9 +12,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@praxis-ui/core": "workspace:*",
-    "@praxis-ui/svelte": "workspace:*",
-    "@praxis-ui/tailwind": "workspace:*"
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/svelte": "workspace:*",
+    "@praxis-kit/tailwind": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "catalog:",

@@ -14,9 +14,9 @@ import { describe, it } from 'vitest'
 import { createRef } from 'react'
 import type { MouseEvent } from 'react'
 import { createContractComponent } from './create-contract-component'
-import { Slottable } from '@praxis-ui/react/shared'
-import type { EmptyRecord, PolymorphicGenerics } from '@praxis-ui/core'
-import type { PolymorphicProps } from '@praxis-ui/react/shared'
+import { Slottable } from '@praxis-kit/react/shared'
+import type { EmptyRecord, PolymorphicGenerics } from '@praxis-kit/core'
+import type { PolymorphicProps } from '@praxis-kit/react/shared'
 
 const Button = createContractComponent<'button', EmptyRecord, EmptyRecord>({ name: 'Button' })
 const Anchor = createContractComponent<'a', EmptyRecord, EmptyRecord>({ name: 'Anchor' })

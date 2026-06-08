@@ -67,19 +67,19 @@ const config = [
 
   // Register plugin globally so disable-directive validation can always find it.
   {
-    plugins: { '@praxis-ui': praxisPlugin as unknown as EslintPlugin },
+    plugins: { '@praxis-kit': praxisPlugin as unknown as EslintPlugin },
   },
 
   // Self-validate: run the plugin's own rules on all workspace source.
   {
     files: ['packages/*/src/**/*.{ts,tsx}', 'examples/*/src/**/*.{ts,tsx}'],
     rules: {
-      '@praxis-ui/no-dead-compound': 'error',
-      '@praxis-ui/no-enforcement-without-strict': 'error',
-      '@praxis-ui/no-invalid-default': 'error',
-      '@praxis-ui/no-redundant-role': 'warn',
-      '@praxis-ui/valid-cardinality': 'error',
-      '@praxis-ui/valid-children-config': 'error',
+      '@praxis-kit/no-dead-compound': 'error',
+      '@praxis-kit/no-enforcement-without-strict': 'error',
+      '@praxis-kit/no-invalid-default': 'error',
+      '@praxis-kit/no-redundant-role': 'warn',
+      '@praxis-kit/valid-cardinality': 'error',
+      '@praxis-kit/valid-children-config': 'error',
     },
   },
 ] satisfies ESLintConfig

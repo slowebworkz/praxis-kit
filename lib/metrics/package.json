@@ -1,9 +1,9 @@
 {
-  "name": "@praxis-ui/metrics",
+  "name": "@praxis-kit/metrics",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Metrics collection, snapshotting, and reporting for the praxis-ui monorepo",
+  "description": "Metrics collection, snapshotting, and reporting for the praxis-kit monorepo",
   "scripts": {
     "collect": "node --experimental-strip-types scripts/collect.ts",
     "report": "node --experimental-strip-types scripts/report.ts",

@@ -7,7 +7,7 @@ import type {
   PolymorphicComponent,
   RenderCallbackProps,
   UnknownProps,
-} from '@praxis-ui/react/shared'
+} from '@praxis-kit/react/shared'
 import { createContractComponent } from './create-contract-component'
 
 // Cast to bypass the PolymorphicComponent union in createElement overloads.

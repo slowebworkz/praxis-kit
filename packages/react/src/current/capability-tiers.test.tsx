@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createElement, isValidElement, act } from 'react'
 import type { ComponentType, ReactElement } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { UnknownProps } from '@praxis-ui/react/shared'
+import type { UnknownProps } from '@praxis-kit/react/shared'
 import { createContractComponent } from './create-contract-component'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -252,7 +252,7 @@ describe('Tier 3 — ARIA enforcement', () => {
 describe('Tier 4 — children enforcement', () => {
   const child = (key: string) => createElement('span', { key })
   const Guarded =
-    // eslint-disable-next-line @praxis-ui/no-enforcement-without-strict -- intentionally tests the adapter default (React defaults to 'throw')
+    // eslint-disable-next-line @praxis-kit/no-enforcement-without-strict -- intentionally tests the adapter default (React defaults to 'throw')
     createContractComponent({
       tag: 'div',
       styling: { base: 'group' },
@@ -307,7 +307,7 @@ describe('Tier 4 — children enforcement', () => {
 
 describe('Tier 5 — all capabilities combined', () => {
   const Full =
-    // eslint-disable-next-line @praxis-ui/no-enforcement-without-strict -- intentionally tests the adapter default (React defaults to 'throw')
+    // eslint-disable-next-line @praxis-kit/no-enforcement-without-strict -- intentionally tests the adapter default (React defaults to 'throw')
     createContractComponent({
       tag: 'nav',
       name: 'FullNav',

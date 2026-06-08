@@ -1,5 +1,5 @@
 // Plugin-internal types for dead-variant detection.
-// VariantValue and VariantMap are used directly from @praxis-ui/core.
+// VariantValue and VariantMap are used directly from @praxis-kit/core.
 
 // The active variant value chosen per dimension for a render.
 export type VariantSelection = Record<string, string>

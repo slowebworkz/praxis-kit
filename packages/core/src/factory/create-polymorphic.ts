@@ -1,4 +1,4 @@
-import { makeResolveTag, mergeProps } from '@praxis-ui/primitive'
+import { makeResolveTag, mergeProps } from '@praxis-kit/primitive'
 import type {
   AnyRecord,
   AriaRule,

@@ -1,4 +1,4 @@
-import type { OwnedPropKeys } from '@praxis-ui/core'
+import type { OwnedPropKeys } from '@praxis-kit/core'
 
 // Single source of truth for the layout display dimensions. `LayoutKey`
 // (types/layout.ts) derives its type from this array, and the owned-keys set

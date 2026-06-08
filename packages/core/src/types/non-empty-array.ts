@@ -1,1 +1,1 @@
-export type { NonEmptyArray } from '@praxis-ui/shared/types'
+export type { NonEmptyArray } from '@praxis-kit/shared/types'

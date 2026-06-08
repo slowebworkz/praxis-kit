@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
-import { ssrConformanceSuite } from '@praxis-ui/adapter-utils/testing'
-import type { BareFactoryOptions } from '@praxis-ui/adapter-utils/testing'
+import { ssrConformanceSuite } from '@praxis-kit/adapter-utils/testing'
+import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
 import { createContractComponent } from './create-contract-component'
 import { renderToString } from './render-to-string'
 

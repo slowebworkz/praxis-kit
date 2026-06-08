@@ -1,4 +1,4 @@
-import { createContractComponent } from '@praxis-ui/lit'
+import { createContractComponent } from '@praxis-kit/lit'
 
 type ButtonProps = { loading?: boolean; type?: string }
 
