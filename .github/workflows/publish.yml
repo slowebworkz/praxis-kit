@@ -1,0 +1,37 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.0.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm --filter "./packages/*" --filter "./lib/*" build
+
+      - name: Publish
+        run: |
+          for pkg in packages/react packages/vue packages/solid packages/svelte packages/preact packages/lit packages/web packages/tailwind packages/eslint-plugin packages/ts-plugin packages/vite-plugin; do
+            (cd $pkg && npm publish --access public --no-git-checks)
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
