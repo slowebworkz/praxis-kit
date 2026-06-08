@@ -12,6 +12,10 @@
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
+  "files": [
+    "src",
+    "LICENSE"
+  ],
   "sideEffects": false,
   "peerDependencies": {
     "@playwright/test": ">=1.60.0"
@@ -23,7 +27,7 @@
     "typescript": "catalog:"
   },
   "author": "K Huehn <slowebworkz@gmail.com>",
-  "license": "CC-BY-NC-4.0",
+  "license": "MIT",
   "engines": {
     "node": ">=18"
   }

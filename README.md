@@ -1,8 +1,8 @@
-# Praxis UI
+# Praxis Kit
 
 **Build components that enforce their own structure.**
 
-Praxis UI is a framework-neutral component infrastructure framework that validates component
+Praxis Kit is a framework-neutral component infrastructure framework that validates component
 composition, accessibility rules, and rendering contracts at runtime. Instead of allowing invalid UI
 structures to render and fail later, Praxis catches them immediately.
 
@@ -145,7 +145,7 @@ Business logic lives outside framework adapters. One engine, five runtimes.
 | [`@praxis-kit/web`](packages/web)                     | Vanilla Custom Elements — no framework required                   |
 | [`@praxis-kit/tailwind`](packages/tailwind)           | Layout-aware Tailwind class pipeline plugin                       |
 | [`@praxis-kit/vite-plugin`](packages/vite-plugin)     | Vite plugins for static composition, SSR, and contract validation |
-| [`@praxis-kit/eslint-plugin`](packages/eslint-plugin) | ESLint rules for enforcing Praxis UI patterns                     |
+| [`@praxis-kit/eslint-plugin`](packages/eslint-plugin) | ESLint rules for enforcing Praxis Kit patterns                    |
 | [`@praxis-kit/ts-plugin`](packages/ts-plugin)         | TypeScript language service plugin with inline diagnostics        |
 | [`@praxis-kit/codemod`](packages/codemod)             | Codemods for migrations                                           |
 | [`@praxis-kit/playwright`](packages/playwright)       | Playwright CT helpers — ARIA snapshots, axe sweeps, keyboard      |
@@ -156,7 +156,7 @@ Business logic lives outside framework adapters. One engine, five runtimes.
 
 |                | Headless Components | Structural Contracts | Runtime Composition Validation | Accessibility Policies | Framework-Neutral Core |
 | -------------- | ------------------- | -------------------- | ------------------------------ | ---------------------- | ---------------------- |
-| **Praxis UI**  | — rules only        | ✓                    | ✓                              | ✓                      | ✓                      |
+| **Praxis Kit** | — rules only        | ✓                    | ✓                              | ✓                      | ✓                      |
 | **Radix UI**   | ✓                   | ✗                    | ✗                              | Partial                | ✗ — React only         |
 | **Ark UI**     | ✓                   | Partial              | ✗                              | Partial                | Partial                |
 | **React Aria** | ✓                   | ✗                    | ✗                              | ✓                      | ✗                      |

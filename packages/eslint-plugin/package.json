@@ -49,9 +49,9 @@
   "bugs": {
     "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
-  "license": "CC-BY-NC-4.0",
+  "license": "MIT",
   "author": "K Huehn <slowebworkz@gmail.com>",
-  "description": "ESLint rules for enforcing Praxis UI structural patterns, ARIA contracts, and variant configuration",
+  "description": "ESLint rules for enforcing Praxis Kit structural patterns, ARIA contracts, and variant configuration",
   "keywords": [
     "praxis-kit",
     "polymorphic",

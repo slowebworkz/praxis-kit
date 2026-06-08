@@ -39,13 +39,13 @@
   "bugs": {
     "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
-  "license": "CC-BY-NC-4.0",
+  "license": "MIT",
   "author": "K Huehn <slowebworkz@gmail.com>",
   "files": [
     "dist",
     "LICENSE"
   ],
-  "description": "Praxis UI Tailwind CSS integration — layout-aware class pipeline with variant composition",
+  "description": "Praxis Kit Tailwind CSS integration — layout-aware class pipeline with variant composition",
   "keywords": [
     "praxis-kit",
     "polymorphic",

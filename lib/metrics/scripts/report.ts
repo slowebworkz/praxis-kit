@@ -18,7 +18,7 @@ const hr = '─'.repeat(W)
 const generated = new Date(snap.generated).toLocaleString()
 
 const lines: string[] = []
-lines.push(`\nPraxis UI — Metrics Dashboard  (${generated})`)
+lines.push(`\nPraxis Kit — Metrics Dashboard  (${generated})`)
 
 // ── Bundles ───────────────────────────────────────────────────────────────────
 // collect.ts writes bundles gzip-descending; JSON.parse preserves insertion
