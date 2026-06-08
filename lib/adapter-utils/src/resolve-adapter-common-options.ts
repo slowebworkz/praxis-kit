@@ -1,4 +1,4 @@
-import type { StrictMode } from '@praxis-ui/core'
+import type { StrictMode } from '@praxis-kit/core'
 
 type OptionsShape = Readonly<{
   name?: string

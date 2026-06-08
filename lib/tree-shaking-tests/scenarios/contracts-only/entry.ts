@@ -5,8 +5,8 @@
  */
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
-import { createContractedComponent } from '@praxis-ui/react'
-import type { AriaRule } from '@praxis-ui/core/contract'
+import { createContractedComponent } from '@praxis-kit/react'
+import type { AriaRule } from '@praxis-kit/core/contract'
 
 const requireAriaLabel: AriaRule = ({ props }) =>
   'aria-label' in props || 'aria-labelledby' in props

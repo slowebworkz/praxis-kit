@@ -1,1 +1,1 @@
-export type { StrictMode } from '@praxis-ui/shared/types'
+export type { StrictMode } from '@praxis-kit/shared/types'

@@ -1,6 +1,6 @@
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractComponent } from '@praxis-kit/react'
 import { Button } from '../button/button'
 
 export const ButtonGroup = createContractComponent({

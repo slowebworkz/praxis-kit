@@ -10,7 +10,7 @@ import {
 
 const plugin = {
   meta: {
-    name: '@praxis-ui/eslint-plugin',
+    name: '@praxis-kit/eslint-plugin',
     version: '1.0.0',
   },
   rules: {
@@ -27,16 +27,16 @@ const plugin = {
 
 // Recommended config — all rules at their default severity.
 const recommended = {
-  name: '@praxis-ui/recommended',
-  plugins: { '@praxis-ui': plugin },
+  name: '@praxis-kit/recommended',
+  plugins: { '@praxis-kit': plugin },
   rules: {
-    '@praxis-ui/no-dead-compound': 'error',
-    '@praxis-ui/no-enforcement-without-strict': 'error',
-    '@praxis-ui/no-invalid-default': 'error',
-    '@praxis-ui/no-invalid-html-nesting': 'error',
-    '@praxis-ui/no-redundant-role': 'warn',
-    '@praxis-ui/valid-cardinality': 'error',
-    '@praxis-ui/valid-children-config': 'error',
+    '@praxis-kit/no-dead-compound': 'error',
+    '@praxis-kit/no-enforcement-without-strict': 'error',
+    '@praxis-kit/no-invalid-default': 'error',
+    '@praxis-kit/no-invalid-html-nesting': 'error',
+    '@praxis-kit/no-redundant-role': 'warn',
+    '@praxis-kit/valid-cardinality': 'error',
+    '@praxis-kit/valid-children-config': 'error',
   },
 } as const
 

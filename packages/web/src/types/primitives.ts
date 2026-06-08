@@ -1,4 +1,4 @@
-import type { EmptyRecord, StrictMode, VariantMap } from '@praxis-ui/core'
+import type { EmptyRecord, StrictMode, VariantMap } from '@praxis-kit/core'
 
 export type UnknownProps = Record<string, unknown>
 

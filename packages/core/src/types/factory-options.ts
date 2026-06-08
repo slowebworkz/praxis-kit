@@ -1,1 +1,1 @@
-export type { EnforcementOptions, FactoryOptions, StylingOptions } from '@praxis-ui/shared/types'
+export type { EnforcementOptions, FactoryOptions, StylingOptions } from '@praxis-kit/shared/types'

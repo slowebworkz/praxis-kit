@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createElement, act } from 'react'
 import type { ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { AnyRecord } from '@praxis-ui/core'
+import type { AnyRecord } from '@praxis-kit/core'
 import { Button } from '../button/button'
 import { ButtonGroup } from './button-group'
 

@@ -1,5 +1,5 @@
-import type { IntrinsicTag } from '@praxis-ui/shared/types'
-import { isStandaloneTag, isStrongImplicitRole } from '@praxis-ui/shared/guards/aria'
+import type { IntrinsicTag } from '@praxis-kit/shared/types'
+import { isStandaloneTag, isStrongImplicitRole } from '@praxis-kit/shared/guards/aria'
 
 export { isStandaloneTag, isStrongImplicitRole }
 

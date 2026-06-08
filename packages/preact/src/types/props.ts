@@ -1,4 +1,4 @@
-import type { ClassName, ElementType } from '@praxis-ui/core'
+import type { ClassName, ElementType } from '@praxis-kit/core'
 import type { Simplify } from 'type-fest'
 import type { UnknownProps } from './primitives'
 

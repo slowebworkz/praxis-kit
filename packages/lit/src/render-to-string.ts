@@ -1,5 +1,5 @@
-import type { AnyRecord, ElementType } from '@praxis-ui/core'
-import { applyFilter } from '@praxis-ui/adapter-utils'
+import type { AnyRecord, ElementType } from '@praxis-kit/core'
+import { applyFilter } from '@praxis-kit/adapter-utils'
 import type { LitContractComponent, LooseBundle, UnknownProps } from './types/index'
 
 type RegistryEntry = { bundle: LooseBundle }
@@ -32,7 +32,7 @@ function buildAttrString(attributes: AnyRecord): string {
 }
 
 /**
- * Renders a praxis-ui Lit component to an HTML string without requiring a DOM.
+ * Renders a praxis-kit Lit component to an HTML string without requiring a DOM.
  *
  * Unlike the DOM adapter, SSR resolves the HTML tag directly from `options.tag`
  * and the `as` prop — tag polymorphism works correctly in server-rendered output.
@@ -56,7 +56,7 @@ export function renderToString(
     const name = (component as { name?: string }).name ?? 'AnonymousComponent'
     throw new Error(
       `[renderToString] ${name} was not registered for SSR. ` +
-        'Ensure it was created with createContractComponent from @praxis-ui/lit.',
+        'Ensure it was created with createContractComponent from @praxis-kit/lit.',
     )
   }
 

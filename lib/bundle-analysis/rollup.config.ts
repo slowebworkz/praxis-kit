@@ -19,23 +19,23 @@ const workspaceAlias = () =>
   alias({
     entries: [
       {
-        find: '@praxis-ui/adapter-utils',
+        find: '@praxis-kit/adapter-utils',
         replacement: join(root, 'lib/adapter-utils/src/index.ts'),
       },
     ],
   })
 
-// The React adapter's source imports its own internal subpath @praxis-ui/react/shared
+// The React adapter's source imports its own internal subpath @praxis-kit/react/shared
 // (a tsconfig-only path, not a published export), so it must be resolved to source here.
 const reactAlias = () =>
   alias({
     entries: [
       {
-        find: /^@praxis-ui\/react\/shared(\/.*)?$/,
+        find: /^@praxis-kit\/react\/shared(\/.*)?$/,
         replacement: join(root, 'packages/react/src/shared$1'),
       },
       {
-        find: /^@praxis-ui\/react\/current(\/.*)?$/,
+        find: /^@praxis-kit\/react\/current(\/.*)?$/,
         replacement: join(root, 'packages/react/src/current$1'),
       },
     ],

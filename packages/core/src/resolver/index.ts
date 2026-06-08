@@ -1,2 +1,2 @@
-export { resolveTag, makeResolveTag } from '@praxis-ui/primitive'
+export { resolveTag, makeResolveTag } from '@praxis-kit/primitive'
 export { createResolverPipeline } from './resolver'

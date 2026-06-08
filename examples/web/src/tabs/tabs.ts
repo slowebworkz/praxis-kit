@@ -1,7 +1,7 @@
 /**
- * Tabs — compound component for the web adapter built on praxis-ui.
+ * Tabs — compound component for the web adapter built on praxis-kit.
  *
- * praxis-ui owns the contract layer (class pipeline, children enforcement,
+ * praxis-kit owns the contract layer (class pipeline, children enforcement,
  * ARIA). Selection state lives on the root as `data-value`; descendants derive
  * their state via closest('example-tabs-root').
  *
@@ -18,8 +18,8 @@
  *     <example-tabs-content value="b">Panel B</example-tabs-content>
  *   </example-tabs-root>
  */
-import { createContractComponent } from '@praxis-ui/web'
-import type { StrictMode } from '@praxis-ui/core'
+import { createContractComponent } from '@praxis-kit/web'
+import type { StrictMode } from '@praxis-kit/core'
 
 // Typed base for subclassing praxis components. TypeScript doesn't include CE
 // lifecycle methods on HTMLElement, so we declare them here and cast the praxis

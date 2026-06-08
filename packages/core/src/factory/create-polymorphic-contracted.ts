@@ -1,4 +1,4 @@
-import { AriaPolicyEngine } from '@praxis-ui/contract'
+import { AriaPolicyEngine } from '@praxis-kit/contract'
 import { createPolymorphic as _createPolymorphic } from './create-polymorphic'
 import type {
   AnyRecord,

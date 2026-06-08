@@ -6,4 +6,4 @@ export type {
   VariantProps,
   VariantSelection,
   VariantValue,
-} from '@praxis-ui/shared/types'
+} from '@praxis-kit/shared/types'

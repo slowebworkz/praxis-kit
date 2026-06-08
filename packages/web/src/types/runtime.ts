@@ -5,7 +5,7 @@ import type {
   PolymorphicRuntime,
   VariantMap,
   VariantSelection,
-} from '@praxis-ui/core'
+} from '@praxis-kit/core'
 
 export type Runtime<G extends PolymorphicGenerics> = PolymorphicRuntime<
   G['default'],

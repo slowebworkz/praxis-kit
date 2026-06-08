@@ -1,5 +1,5 @@
-import { mergeProps, resolveTag } from '@praxis-ui/primitive'
-import { AriaPolicyEngine } from '@praxis-ui/contract'
+import { mergeProps, resolveTag } from '@praxis-kit/primitive'
+import { AriaPolicyEngine } from '@praxis-kit/contract'
 import type {
   AnyRecord,
   ClassPipelineFn,

@@ -12,9 +12,9 @@
  *
  * Gap classes are kept in both modes and stripped only when no layout mode is active.
  */
-import { createContractComponent } from '@praxis-ui/vue'
-import type { EmptyRecord } from '@praxis-ui/core'
-import { createTailwindPipeline } from '@praxis-ui/tailwind'
+import { createContractComponent } from '@praxis-kit/vue'
+import type { EmptyRecord } from '@praxis-kit/core'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
 
 const variants = {
   direction: {

@@ -1,4 +1,4 @@
-import type { Severity } from '@praxis-ui/core'
+import type { Severity } from '@praxis-kit/core'
 
 /** A diagnostic produced by the static analysis pass. */
 export type Diagnostic = {
@@ -9,7 +9,7 @@ export type Diagnostic = {
   col: number
   /**
    * Uses the same Severity vocabulary as ValidationViolation in
-   * @praxis-ui/contract — 'error' | 'warning'. The plugin wrapper maps
+   * @praxis-kit/contract — 'error' | 'warning'. The plugin wrapper maps
    * 'warning' → this.warn() and 'error' → this.error() for Rollup/Vite.
    */
   severity: Severity

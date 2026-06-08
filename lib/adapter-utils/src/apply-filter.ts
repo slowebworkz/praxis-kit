@@ -1,5 +1,5 @@
 import type { FilterPredicate } from './types'
-import type { AnyRecord } from '@praxis-ui/core'
+import type { AnyRecord } from '@praxis-kit/core'
 
 export function applyFilter(
   props: Readonly<AnyRecord>,

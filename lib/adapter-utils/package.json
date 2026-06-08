@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-ui/adapter-utils",
+  "name": "@praxis-kit/adapter-utils",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -16,8 +16,8 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@praxis-ui/shared": "workspace:*",
-    "@praxis-ui/core": "workspace:*",
+    "@praxis-kit/shared": "workspace:*",
+    "@praxis-kit/core": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {

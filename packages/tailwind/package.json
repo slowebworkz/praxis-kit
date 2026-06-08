@@ -1,6 +1,6 @@
 {
-  "name": "@praxis-ui/tailwind",
-  "version": "3.0.1",
+  "name": "@praxis-kit/tailwind",
+  "version": "3.0.2",
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -20,34 +20,34 @@
     "lint:pkg": "publint"
   },
   "dependencies": {
-    "@praxis-ui/core": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {
     "tsup": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@praxis-kit/core": "workspace:*"
   },
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "url": "git+https://github.com/slowebworkz/praxis-kit.git",
     "directory": "packages/tailwind"
   },
-  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/tailwind#readme",
+  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/packages/tailwind#readme",
   "bugs": {
-    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+    "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
-  "license": "CC-BY-NC-4.0",
+  "license": "MIT",
   "author": "K Huehn <slowebworkz@gmail.com>",
   "files": [
     "dist",
     "LICENSE"
   ],
-  "description": "Praxis UI Tailwind CSS integration — layout-aware class pipeline with variant composition",
+  "description": "Praxis Kit Tailwind CSS integration — layout-aware class pipeline with variant composition",
   "keywords": [
-    "praxis-ui",
+    "praxis-kit",
     "polymorphic",
     "ui",
     "components",

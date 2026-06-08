@@ -7,4 +7,4 @@ export type {
   PresetTarget,
   StyleOptions,
   TagMapOptions,
-} from '@praxis-ui/shared/types'
+} from '@praxis-kit/shared/types'

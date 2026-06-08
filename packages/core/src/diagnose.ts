@@ -1,7 +1,7 @@
-import { AriaPolicyEngine, diagnoseChildren } from '@praxis-ui/contract'
-import type { ChildViolation, ValidationViolation } from '@praxis-ui/contract'
-import { diagnoseClassPipeline } from '@praxis-ui/styling'
-import type { ClassDiagnosis } from '@praxis-ui/styling'
+import { AriaPolicyEngine, diagnoseChildren } from '@praxis-kit/contract'
+import type { ChildViolation, ValidationViolation } from '@praxis-kit/contract'
+import { diagnoseClassPipeline } from '@praxis-kit/styling'
+import type { ClassDiagnosis } from '@praxis-kit/styling'
 import type { AnyRecord, ElementType, IntrinsicProps, ResolvedFactoryOptions } from './types'
 
 export type ComponentDiagnosis = {

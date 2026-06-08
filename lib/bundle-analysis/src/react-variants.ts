@@ -3,7 +3,7 @@
  * AriaPolicyEngine or ChildrenEvaluator. Comparing with react-minimal shows
  * the cost of the variant/class subsystem in isolation.
  */
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractComponent } from '@praxis-kit/react'
 
 const variants = {
   intent: {

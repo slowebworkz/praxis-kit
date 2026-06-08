@@ -7,17 +7,17 @@ const SOURCE_FILES = ['src/**/*.{ts,tsx}']
 
 const config = [
   {
-    plugins: { '@praxis-ui': praxisPlugin as unknown as EslintPlugin },
+    plugins: { '@praxis-kit': praxisPlugin as unknown as EslintPlugin },
   },
   {
     files: SOURCE_FILES,
     rules: {
-      '@praxis-ui/no-dead-compound': 'error',
-      '@praxis-ui/no-enforcement-without-strict': 'error',
-      '@praxis-ui/no-invalid-default': 'error',
-      '@praxis-ui/no-redundant-role': 'warn',
-      '@praxis-ui/valid-cardinality': 'error',
-      '@praxis-ui/valid-children-config': 'error',
+      '@praxis-kit/no-dead-compound': 'error',
+      '@praxis-kit/no-enforcement-without-strict': 'error',
+      '@praxis-kit/no-invalid-default': 'error',
+      '@praxis-kit/no-redundant-role': 'warn',
+      '@praxis-kit/valid-cardinality': 'error',
+      '@praxis-kit/valid-children-config': 'error',
     },
   },
 ] satisfies Linter.Config[]

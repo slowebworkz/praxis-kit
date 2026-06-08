@@ -2,8 +2,8 @@
  * Claim: a component with ARIA enforcement retains AriaPolicyEngine.
  * No Tailwind pipeline, no other framework adapter should appear.
  */
-import { createAriaEnforcedComponent } from '@praxis-ui/react'
-import type { AriaRule } from '@praxis-ui/core/contract'
+import { createAriaEnforcedComponent } from '@praxis-kit/react'
+import type { AriaRule } from '@praxis-kit/core/contract'
 
 const requireAriaLabel: AriaRule = ({ props }) =>
   'aria-label' in props || 'aria-labelledby' in props

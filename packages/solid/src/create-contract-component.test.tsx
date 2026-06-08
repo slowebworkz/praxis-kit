@@ -214,7 +214,7 @@ describe('createContractComponent (Solid adapter)', () => {
 
   it('enforcement.children throws when child rules are violated', () => {
     const Comp =
-      // eslint-disable-next-line @praxis-ui/no-enforcement-without-strict -- intentionally tests the adapter default (Solid defaults to 'throw')
+      // eslint-disable-next-line @praxis-kit/no-enforcement-without-strict -- intentionally tests the adapter default (Solid defaults to 'throw')
       createContractComponent({
         tag: 'div',
         enforcement: {

@@ -1,11 +1,11 @@
 /**
- * Tabs — compound, stateful component for SolidJS built on praxis-ui.
+ * Tabs — compound, stateful component for SolidJS built on praxis-kit.
  *
  * Solid's createSignal owns the active-tab state; createContext/useContext
- * propagates it down the tree. praxis-ui owns the contract layer.
+ * propagates it down the tree. praxis-kit owns the contract layer.
  */
 import { createSignal, Show, type JSX, type Component } from 'solid-js'
-import { createContractComponent } from '@praxis-ui/solid'
+import { createContractComponent } from '@praxis-kit/solid'
 import { TabsContext, useTabs } from './context'
 import { tabId, panelId } from './utils'
 

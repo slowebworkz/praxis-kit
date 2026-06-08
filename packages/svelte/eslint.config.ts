@@ -19,12 +19,12 @@ const config = [
           patterns: [
             {
               group: [
-                '@praxis-ui/react',
-                '@praxis-ui/vue',
-                '@praxis-ui/preact',
-                '@praxis-ui/solid',
-                '@praxis-ui/example-react',
-                '@praxis-ui/example-vue',
+                '@praxis-kit/react',
+                '@praxis-kit/vue',
+                '@praxis-kit/preact',
+                '@praxis-kit/solid',
+                '@praxis-kit/example-react',
+                '@praxis-kit/example-vue',
               ],
               message: 'svelte adapter must not import from other adapters',
             },

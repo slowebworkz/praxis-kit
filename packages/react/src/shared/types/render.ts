@@ -1,4 +1,4 @@
-import type { ChildrenEvaluator, ElementType } from '@praxis-ui/core'
+import type { ChildrenEvaluator, ElementType } from '@praxis-kit/core'
 import type { ReactElement, Ref } from 'react'
 import type { SlotValidator } from '../slot/slot-validator'
 import type { FilterPredicate, NormalizeChildren, ResolvedProps, SlotComponent } from './primitives'

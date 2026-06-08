@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-ui/contract",
+  "name": "@praxis-kit/contract",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -15,8 +15,8 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@praxis-ui/shared": "workspace:*",
-    "@praxis-ui/primitive": "workspace:*",
+    "@praxis-kit/shared": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {

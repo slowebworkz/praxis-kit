@@ -1,6 +1,6 @@
 # Adapter Authoring Guide
 
-This guide explains how to write a new framework adapter against the `@praxis-ui/core` runtime
+This guide explains how to write a new framework adapter against the `@praxis-kit/core` runtime
 contract. Five adapters currently exist — React, Vue, Preact, Solid, and Svelte — and each follows
 the same boundary. Core required no changes for any of them.
 
@@ -11,7 +11,7 @@ the same boundary. Core required no changes for any of them.
 An adapter connects the framework-agnostic core runtime to a specific framework's rendering model.
 Its responsibilities are:
 
-1. **Build the runtime** — call `buildRuntime` from `@praxis-ui/adapter-utils` with the user's
+1. **Build the runtime** — call `buildRuntime` from `@praxis-kit/adapter-utils` with the user's
    factory options. It wires `createPolymorphic`, slot validation, child evaluation, and prop
    filtering into a `BuiltRuntime` bundle held in the component's closure.
 2. **Resolve the tag** — call `runtime.resolveTag(as)` to get the concrete element type for this
@@ -62,7 +62,7 @@ packages/<framework>/
   eslint.config.ts
 ```
 
-Add `@praxis-ui/adapter-utils` as a dependency in `package.json`. It provides `buildCoreRuntime`,
+Add `@praxis-kit/adapter-utils` as a dependency in `package.json`. It provides `buildCoreRuntime`,
 `buildEngines`, `composeFilter`, and `SlotValidator` — the shared logic used by every adapter.
 
 ---
@@ -73,8 +73,8 @@ This file is nearly identical across all adapters. Copy from an existing one and
 of `FrameworkFactoryOptions`.
 
 ```ts
-import { buildCoreRuntime, buildEngines, composeFilter } from '@praxis-ui/adapter-utils'
-import { SlotValidator } from '@praxis-ui/adapter-utils'
+import { buildCoreRuntime, buildEngines, composeFilter } from '@praxis-kit/adapter-utils'
+import { SlotValidator } from '@praxis-kit/adapter-utils'
 import type { FrameworkFactoryOptions } from './framework-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
 import type { NormalizedOptions } from './types/normalized-options'
@@ -108,7 +108,7 @@ untouched. Core instantiates the ARIA engine only when `enforcement` is declared
 `buildCoreRuntime` calls `createPolymorphic` and extracts the plugin's owned keys. `buildEngines`
 creates a `ChildrenEvaluator` only when `enforcement.children` is present. `composeFilter` merges
 plugin owned keys with the user-supplied `filterProps` predicate. All three are imported from
-`@praxis-ui/adapter-utils`.
+`@praxis-kit/adapter-utils`.
 
 ---
 
@@ -220,7 +220,7 @@ Extend `FactoryOptions` from core with framework-specific additions. All current
 one field:
 
 ```ts
-import type { FactoryOptions } from '@praxis-ui/core'
+import type { FactoryOptions } from '@praxis-kit/core'
 
 export type FrameworkFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps> =
   FactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps> & {
@@ -269,7 +269,7 @@ export default [
         {
           patterns: [
             {
-              group: ['@praxis-ui/react', '@praxis-ui/vue' /* ... all other adapters */],
+              group: ['@praxis-kit/react', '@praxis-kit/vue' /* ... all other adapters */],
               message: '<framework> adapter must not import from other adapters',
             },
           ],
@@ -280,15 +280,15 @@ export default [
 ]
 ```
 
-Also add `@praxis-ui/<framework>` to every other adapter's restriction list, add
+Also add `@praxis-kit/<framework>` to every other adapter's restriction list, add
 `{ type: '<framework>', pattern: 'packages/<framework>/**/*' }` to `boundaries/elements` in
 `configs/architecture.ts`, and add a cross-adapter rule to `.dependency-cruiser.cjs`.
 
 Finally, add `packages/<framework>/src/**` to the `files:` list in both
 `.ast-grep/rules/adapter-raw-primitive-import.yml` and
 `.ast-grep/rules/adapter-raw-contract-import.yml`. These rules warn when adapters import directly
-from `@praxis-ui/primitive` or `@praxis-ui/contract` instead of going through the `@praxis-ui/core`
-sub-entries.
+from `@praxis-kit/primitive` or `@praxis-kit/contract` instead of going through the
+`@praxis-kit/core` sub-entries.
 
 ---
 
@@ -301,8 +301,8 @@ sub-entries.
 | Default prop merging      | `runtime.resolveProps`                                      |
 | ARIA role normalization   | `runtime.resolveAria(tag, props)` — no-op when not enforced |
 | Child structure contracts | `ChildrenEvaluator` via `buildEngines` from adapter-utils   |
-| Prop filter composition   | `composeFilter` from `@praxis-ui/adapter-utils`             |
-| Core runtime wiring       | `buildCoreRuntime` from `@praxis-ui/adapter-utils`          |
+| Prop filter composition   | `composeFilter` from `@praxis-kit/adapter-utils`            |
+| Core runtime wiring       | `buildCoreRuntime` from `@praxis-kit/adapter-utils`         |
 | Strict mode behaviour     | `StrictBase` (via `AriaPolicyEngine` / `ChildrenEvaluator`) |
 
 ---
@@ -324,7 +324,7 @@ sub-entries.
 
 These properties have held across all five adapters and can be relied upon when writing a new one:
 
-- **Core is immutable across adapters.** No adapter has required a change to `@praxis-ui/core`. If
+- **Core is immutable across adapters.** No adapter has required a change to `@praxis-kit/core`. If
   you need to modify core for your adapter, the contract boundary is in the wrong place.
 - **`filterProps` is the only adapter-level extension.** No other per-framework field has been
   needed.

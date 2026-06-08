@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-ui/example-preact",
+  "name": "@praxis-kit/example-preact",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,9 +12,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@praxis-ui/core": "workspace:*",
-    "@praxis-ui/preact": "workspace:*",
-    "@praxis-ui/tailwind": "workspace:*"
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/preact": "workspace:*",
+    "@praxis-kit/tailwind": "workspace:*"
   },
   "devDependencies": {
     "@preact/preset-vite": "catalog:",

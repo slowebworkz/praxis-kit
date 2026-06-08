@@ -61,7 +61,7 @@ export function Button<T extends ElementType = 'button'>({
 ### After
 
 ```tsx
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractComponent } from '@praxis-kit/react'
 
 export const Button = createContractComponent({
   tag: 'button',
@@ -109,8 +109,8 @@ The `PolymorphicProps` type replaces the manual `ButtonProps<T>` construction. E
 object so its type is available, then wrap it in `PolymorphicGenerics`:
 
 ```ts
-import type { PolymorphicGenerics } from '@praxis-ui/core'
-import type { PolymorphicProps, ElementType } from '@praxis-ui/react'
+import type { PolymorphicGenerics } from '@praxis-kit/core'
+import type { PolymorphicProps, ElementType } from '@praxis-kit/react'
 
 const variants = {
   size: { sm: 'btn--sm', md: 'btn--md', lg: 'btn--lg' },
@@ -191,7 +191,7 @@ export function Button({
 ### After
 
 ```tsx
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractComponent } from '@praxis-kit/react'
 
 export const Button = createContractComponent({
   tag: 'button',
@@ -221,7 +221,7 @@ export const Button = createContractComponent({
 When the slot child needs to wrap inner content, use `Slottable`:
 
 ```tsx
-import { createContractComponent, Slottable } from '@praxis-ui/react'
+import { createContractComponent, Slottable } from '@praxis-kit/react'
 
 const Button = createContractComponent({ tag: 'button', /* ... */ })
 
@@ -247,8 +247,8 @@ as Radix's `Slottable`.
 
 ### What you gain over the Radix Slot pattern
 
-- **Variant composition** — Slot handles prop merging; the praxis-ui class pipeline composes variant
-  dimensions, base classes, tag-specific overrides, and presets in one pass.
+- **Variant composition** — Slot handles prop merging; the praxis-kit class pipeline composes
+  variant dimensions, base classes, tag-specific overrides, and presets in one pass.
 - **ARIA enforcement** — Radix Slot forwards whatever props you give it; this library validates and
   normalizes roles on the resolved element type.
 - **Structural contracts** — Slot merges onto exactly one child. It does not validate what that
@@ -260,7 +260,7 @@ as Radix's `Slottable`.
 
 If your app uses Radix UI component primitives (Dialog, Tooltip, Select, etc.) alongside your own
 design-system components, the two coexist cleanly. Radix Slot governs Radix's own `asChild`
-behavior. `@praxis-ui/react` governs the `asChild` behavior of your components. There is no
+behavior. `@praxis-kit/react` governs the `asChild` behavior of your components. There is no
 conflict.
 
 ---
@@ -287,7 +287,7 @@ import { Button, ButtonGroup, Box } from '@chakra-ui/react'
 ### After — your own components with your own rules
 
 ```tsx
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractComponent } from '@praxis-kit/react'
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
 import { Button } from './button'
@@ -346,7 +346,7 @@ export const ButtonGroup = createContractComponent({
 Chakra's `Box` is a polymorphic wrapper that applies design-token props. The equivalent:
 
 ```tsx
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractComponent } from '@praxis-kit/react'
 
 export const Box = createContractComponent({ tag: 'div' })
 
@@ -362,7 +362,7 @@ export const Box = createContractComponent({ tag: 'div' })
 </Box>
 ```
 
-For Tailwind-specific layout prop filtering, the `@praxis-ui/tailwind` plugin integrates with
+For Tailwind-specific layout prop filtering, the `@praxis-kit/tailwind` plugin integrates with
 `styling.plugin` and strips `flex` / `grid` layout tokens to the appropriate contexts.
 
 ### What changed
@@ -383,7 +383,7 @@ No need to replace everything at once. A reasonable order:
 3. Composite components last (`ButtonGroup`, `Form`) — structural contracts require defining your
    own child rules, which take time to get right.
 
-Chakra components and `@praxis-ui` components can coexist in the same render tree during the
+Chakra components and `@praxis-kit` components can coexist in the same render tree during the
 migration. There is no global state conflict.
 
 ### What you gain over the Chakra pattern
@@ -394,5 +394,5 @@ migration. There is no global state conflict.
   Writing a Vue 3 version of your `Button` is adding an adapter call, not rewriting the logic.
 - **ARIA normalization** — roles on your components are validated against the resolved element type.
   A `<ButtonGroup as="nav">` will not silently pass invalid ARIA through to the DOM.
-- **No design token coupling** — `@praxis-ui` applies whatever class strings you provide. It has no
+- **No design token coupling** — `@praxis-kit` applies whatever class strings you provide. It has no
   opinion on your design tokens, CSS variables, or utility class library.

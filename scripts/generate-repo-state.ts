@@ -1,7 +1,7 @@
 /**
  * generate-repo-state.ts
  *
- * Generates architecture manifests for the praxis-ui monorepo into .repo-state/.
+ * Generates architecture manifests for the praxis-kit monorepo into .repo-state/.
  * Run: node --experimental-strip-types scripts/generate-repo-state.ts
  *
  * Outputs:
@@ -379,13 +379,13 @@ function buildRuntimeGraph() {
 function buildAdaptersMap(packages: PackageMeta[]) {
   const ADAPTER_SPECS = [
     {
-      pkg: '@praxis-ui/react',
+      pkg: '@praxis-kit/react',
       framework: 'react',
       optionsType: 'ReactFactoryOptions',
       frameworkSpecificOptions: ['slotComponent', 'filterProps'],
     },
     {
-      pkg: '@praxis-ui/vue',
+      pkg: '@praxis-kit/vue',
       framework: 'vue',
       optionsType: 'VueFactoryOptions',
       frameworkSpecificOptions: ['filterProps'],

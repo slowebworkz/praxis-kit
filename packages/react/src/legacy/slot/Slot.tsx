@@ -1,6 +1,6 @@
 import { forwardRef } from 'react'
 import type { ReactElement, ReactNode, Ref } from 'react'
-import { SLOT_NAME, applySlot } from '@praxis-ui/react/shared'
+import { SLOT_NAME, applySlot } from '@praxis-kit/react/shared'
 import { cloneSlotChild } from './cloneSlotChild'
 
 type SlotProps = { [key: string]: unknown }

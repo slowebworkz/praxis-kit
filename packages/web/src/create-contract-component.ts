@@ -1,5 +1,5 @@
-import type { AnyRecord, ElementType, EmptyRecord, PresetMap, VariantMap } from '@praxis-ui/core'
-import { applyFilter } from '@praxis-ui/adapter-utils'
+import type { AnyRecord, ElementType, EmptyRecord, PresetMap, VariantMap } from '@praxis-kit/core'
+import { applyFilter } from '@praxis-kit/adapter-utils'
 import { buildRuntime } from './build-runtime'
 import { registerForSsr } from './render-to-string'
 import type {
@@ -113,7 +113,7 @@ function applyHostState(
 }
 
 /**
- * Creates a plain `HTMLElement` subclass with praxis-ui contracts applied.
+ * Creates a plain `HTMLElement` subclass with praxis-kit contracts applied.
  *
  * No framework dependency. Register with `customElements.define()`:
  *

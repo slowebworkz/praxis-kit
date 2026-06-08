@@ -1,5 +1,5 @@
 import type { MatchMatrix, NormalizedChildRule, StrictMode } from '../types'
-import { assertNever } from '@praxis-ui/primitive'
+import { assertNever } from '@praxis-kit/primitive'
 import { StrictBase } from '../strict'
 
 export class RuleValidator extends StrictBase {

@@ -1,5 +1,5 @@
-import { StrictBase } from '@praxis-ui/core'
-import type { StrictMode } from '@praxis-ui/core'
+import { StrictBase } from '@praxis-kit/core'
+import type { StrictMode } from '@praxis-kit/core'
 
 export class SlotValidator extends StrictBase {
   readonly #name: string

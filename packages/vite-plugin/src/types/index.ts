@@ -6,4 +6,4 @@ export type { Diagnostic, FileDiagnostic } from './diagnostics'
 
 export type { PluginOptions } from './plugin-options'
 
-export type { Cardinality, ChildRulePosition, Severity } from '@praxis-ui/core'
+export type { Cardinality, ChildRulePosition, Severity } from '@praxis-kit/core'

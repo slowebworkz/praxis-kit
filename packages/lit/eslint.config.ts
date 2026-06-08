@@ -19,11 +19,11 @@ const config = [
           patterns: [
             {
               group: [
-                '@praxis-ui/react',
-                '@praxis-ui/preact',
-                '@praxis-ui/solid',
-                '@praxis-ui/svelte',
-                '@praxis-ui/vue',
+                '@praxis-kit/react',
+                '@praxis-kit/preact',
+                '@praxis-kit/solid',
+                '@praxis-kit/svelte',
+                '@praxis-kit/vue',
               ],
               message: 'lit adapter must not import from other adapters',
             },

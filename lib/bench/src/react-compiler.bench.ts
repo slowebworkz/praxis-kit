@@ -31,8 +31,8 @@ import { createElement, memo } from 'react'
 import type { ComponentType, ReactElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
-import { createContractComponent } from '@praxis-ui/react'
-import type { AnyRecord } from '@praxis-ui/core'
+import { createContractComponent } from '@praxis-kit/react'
+import type { AnyRecord } from '@praxis-kit/core'
 
 // ─── Module-level runtimes ────────────────────────────────────────────────────
 

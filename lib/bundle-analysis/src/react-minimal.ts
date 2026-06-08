@@ -3,6 +3,6 @@
  * render primitive. No AriaPolicyEngine, no ChildrenEvaluator, no class
  * pipeline should appear in this bundle slice.
  */
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractComponent } from '@praxis-kit/react'
 
 export const Box = createContractComponent({ tag: 'div', name: 'Box' })

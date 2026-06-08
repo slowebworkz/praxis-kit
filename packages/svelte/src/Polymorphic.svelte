@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { isKnownAriaRole } from '@praxis-ui/core'
-  import type { ElementType, IntrinsicProps } from '@praxis-ui/core'
-  import { applyFilter } from '@praxis-ui/adapter-utils'
+  import { isKnownAriaRole } from '@praxis-kit/core'
+  import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
+  import { applyFilter } from '@praxis-kit/adapter-utils'
   import type { Snippet } from 'svelte'
   import type { AnyBuiltRuntime } from './types/built-runtime'
   import type { UnknownProps } from './types/primitives'

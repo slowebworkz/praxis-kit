@@ -9,7 +9,7 @@ import type {
   ResolvedFactoryOptions,
   VariantsOf,
   createPolymorphic,
-} from '@praxis-ui/core'
+} from '@praxis-kit/core'
 import type { ResolvedProps, UnknownProps } from './primitives'
 
 export type RuntimeOptions = Readonly<

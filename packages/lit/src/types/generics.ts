@@ -1,4 +1,4 @@
-import type { ElementType, PolymorphicGenerics, PresetMap, VariantMap } from '@praxis-ui/core'
+import type { ElementType, PolymorphicGenerics, PresetMap, VariantMap } from '@praxis-kit/core'
 
 // Module-level generic alias — avoids repeating the full PolymorphicGenerics
 // expression across normalizeOptions and buildRuntime.

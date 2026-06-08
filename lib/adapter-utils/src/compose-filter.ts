@@ -1,4 +1,4 @@
-import type { OwnedPropKeys } from '@praxis-ui/core'
+import type { OwnedPropKeys } from '@praxis-kit/core'
 import type { FilterPredicate } from './types'
 
 export function composeFilter(

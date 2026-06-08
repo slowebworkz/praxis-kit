@@ -1,7 +1,7 @@
 /**
  * Box — Tailwind layout component.
  *
- * Requires `@praxis-ui/tailwind`. The `plugin: createTailwindPipeline`
+ * Requires `@praxis-kit/tailwind`. The `plugin: createTailwindPipeline`
  * field activates the Tailwind layout pipeline, which contributes two boolean
  * props (`flex` and `grid`) to every component that uses it. These props are
  * internal to the pipeline — they never reach the DOM — and act as layout-mode
@@ -19,9 +19,9 @@
  * surface by `createContractComponent`. No explicit `LayoutProps` import is
  * needed at the definition site.
  */
-import { createContractComponent } from '@praxis-ui/react'
-import type { EmptyRecord } from '@praxis-ui/core'
-import { createTailwindPipeline } from '@praxis-ui/tailwind'
+import { createContractComponent } from '@praxis-kit/react'
+import type { EmptyRecord } from '@praxis-kit/core'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
 
 const variants = {
   direction: {

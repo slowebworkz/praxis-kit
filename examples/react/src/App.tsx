@@ -25,7 +25,7 @@ export function App() {
       style={{ fontFamily: 'sans-serif', maxWidth: 640, margin: '2rem auto', padding: '0 1rem' }}
     >
       <h1 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '2rem' }}>
-        praxis-ui · React examples
+        praxis-kit · React examples
       </h1>
 
       <Section title="Box — Tailwind layout pipeline">

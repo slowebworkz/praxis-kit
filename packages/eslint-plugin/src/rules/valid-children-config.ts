@@ -10,7 +10,7 @@ import {
   isFactoryCall,
 } from '../utils/ast'
 
-const createRule = RuleCreator((name) => `https://praxis-ui.dev/eslint-rules/${name}`)
+const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)
 
 export type Options = [{ calleeNames?: string[] }]
 

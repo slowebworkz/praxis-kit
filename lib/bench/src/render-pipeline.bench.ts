@@ -3,9 +3,9 @@
 // pressure, React reconciliation, or JSX transform overhead — those require
 // a render-level bench (pipeline.bench.ts, not yet implemented).
 import { bench, describe } from 'vitest'
-import { createPolymorphic } from '@praxis-ui/core'
+import { createPolymorphic } from '@praxis-kit/core'
 import { cva } from 'class-variance-authority'
-import type { AnyRecord } from '@praxis-ui/core'
+import type { AnyRecord } from '@praxis-kit/core'
 
 // Runtimes are created once at module load so factory cost is excluded.
 const noVariantRuntime = createPolymorphic({
@@ -144,7 +144,7 @@ const LARGE_HIT: AnyRecord = { size: 'xs', intent: 'primary', tone: 'solid' }
 // ─── resolveTag isolation ──────────────────────────────────────────────────────
 // resolveTag is `as || defaultTag` — expected to be near-zero in all cases.
 // These groups confirm it's not a cost center and show the full differentiation
-// story: praxis-ui adds ARIA validation and class composition on top of
+// story: praxis-kit adds ARIA validation and class composition on top of
 // what CVA provides; resolveTag itself is the same trivial cost in both.
 
 const FnComponent = () => null

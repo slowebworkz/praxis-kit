@@ -1,10 +1,10 @@
-import type { ElementType, PresetMap, VariantMap } from '@praxis-ui/core'
+import type { ElementType, PresetMap, VariantMap } from '@praxis-kit/core'
 import {
   buildCoreRuntime,
   buildEngines,
   composeFilter,
   resolveAdapterCommonOptions,
-} from '@praxis-ui/adapter-utils'
+} from '@praxis-kit/adapter-utils'
 import type { BuiltRuntime, NormalizedOptions, RuntimeG } from './types/index'
 import type { LitFactoryOptions } from './types/index'
 

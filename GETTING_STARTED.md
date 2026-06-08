@@ -7,29 +7,29 @@ step produces something you can render before the next layer of complexity is in
 
 ## Installation
 
-Pick the adapter for your framework. Every adapter depends on `@praxis-ui/core` — add both:
+Pick the adapter for your framework. Every adapter depends on `@praxis-kit/core` — add both:
 
 ```bash
 # React
-pnpm add @praxis-ui/react @praxis-ui/core
+pnpm add @praxis-kit/react @praxis-kit/core
 
 # Vue 3
-pnpm add @praxis-ui/vue @praxis-ui/core
+pnpm add @praxis-kit/vue @praxis-kit/core
 
 # Solid
-pnpm add @praxis-ui/solid @praxis-ui/core
+pnpm add @praxis-kit/solid @praxis-kit/core
 
 # Preact
-pnpm add @praxis-ui/preact @praxis-ui/core
+pnpm add @praxis-kit/preact @praxis-kit/core
 
 # Svelte 5
-pnpm add @praxis-ui/svelte @praxis-ui/core
+pnpm add @praxis-kit/svelte @praxis-kit/core
 
 # Lit
-pnpm add @praxis-ui/lit @praxis-ui/core
+pnpm add @praxis-kit/lit @praxis-kit/core
 
 # Vanilla Custom Elements (no framework)
-pnpm add @praxis-ui/web @praxis-ui/core
+pnpm add @praxis-kit/web @praxis-kit/core
 ```
 
 The rest of this guide uses the React adapter. The API is identical across frameworks; only the
@@ -42,7 +42,7 @@ import path changes.
 The minimum required option is `tag`: the HTML element to render.
 
 ```ts
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractComponent } from '@praxis-kit/react'
 
 const Box = createContractComponent({ tag: 'div' })
 ```
@@ -201,7 +201,7 @@ Two strictness levels:
 
 ```tsx
 import { isValidElement } from 'react'
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractComponent } from '@praxis-kit/react'
 import { CardHeader, CardBody } from './card-parts'
 
 const Card = createContractComponent({
@@ -241,11 +241,11 @@ const Card = createContractComponent({
 Use `strict: 'warn'` while developing and switch to `strict: 'throw'` for production contracts. Omit
 `enforcement` entirely to skip all validation — zero runtime cost.
 
-For standard HTML elements, `htmlContracts` from `@praxis-ui/core` provides ready-made rules so you
+For standard HTML elements, `htmlContracts` from `@praxis-kit/core` provides ready-made rules so you
 don't need to write `match` predicates by hand:
 
 ```ts
-import { htmlContracts } from '@praxis-ui/core'
+import { htmlContracts } from '@praxis-kit/core'
 
 const List = createContractComponent({
   tag: 'ul',
@@ -286,7 +286,7 @@ Use `Slottable` when the slot child wraps additional content that should receive
 children:
 
 ```tsx
-import { Slottable } from '@praxis-ui/react'
+import { Slottable } from '@praxis-kit/react'
 ;<Button asChild>
   <a href="/dashboard">
     <span aria-hidden>→</span>
@@ -329,22 +329,22 @@ Import from the `/legacy` sub-path. The API is identical — the adapter wraps i
 React 18 compatibility.
 
 ```ts
-import { createContractComponent } from '@praxis-ui/react/legacy'
+import { createContractComponent } from '@praxis-kit/react/legacy'
 ```
 
 ---
 
 ## Tailwind layout-aware classes
 
-`@praxis-ui/tailwind` provides a class pipeline plugin that filters layout utilities based on the
+`@praxis-kit/tailwind` provides a class pipeline plugin that filters layout utilities based on the
 active layout mode. Install separately:
 
 ```bash
-pnpm add @praxis-ui/tailwind
+pnpm add @praxis-kit/tailwind
 ```
 
 ```ts
-import { createTailwindPipeline } from '@praxis-ui/tailwind'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
 
 const Box = createContractComponent({
   tag: 'div',
@@ -377,17 +377,17 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm bench          # render pipeline and children matcher benchmarks
-pnpm bench:render   # praxis-ui vs. vanilla React Tabs overhead benchmark
+pnpm bench:render   # praxis-kit vs. vanilla React Tabs overhead benchmark
 ```
 
 Run a specific example dev server:
 
 ```bash
-pnpm --filter @praxis-ui/example-react dev
-pnpm --filter @praxis-ui/example-vue dev
-pnpm --filter @praxis-ui/example-solid dev
-pnpm --filter @praxis-ui/example-preact dev
-pnpm --filter @praxis-ui/example-svelte dev
+pnpm --filter @praxis-kit/example-react dev
+pnpm --filter @praxis-kit/example-vue dev
+pnpm --filter @praxis-kit/example-solid dev
+pnpm --filter @praxis-kit/example-preact dev
+pnpm --filter @praxis-kit/example-svelte dev
 ```
 
 ---
@@ -418,10 +418,10 @@ nesting, missing required elements — happen at runtime and produce no TypeScri
 
 ### Will you keep up with multiple frameworks?
 
-Validation logic lives in `@praxis-ui/core` and is shared across all adapters. A bug fix there fixes
-all adapters simultaneously. The conformance suite runs 1,900+ tests across all adapters on every
-commit, including behavioral contracts, SSR, hydration parity, accessibility, and compound component
-examples.
+Validation logic lives in `@praxis-kit/core` and is shared across all adapters. A bug fix there
+fixes all adapters simultaneously. The conformance suite runs 1,900+ tests across all adapters on
+every commit, including behavioral contracts, SSR, hydration parity, accessibility, and compound
+component examples.
 
 That said — if a major framework makes a breaking API change, updating all adapters takes real work.
 This is a genuine maintenance commitment, not a solved problem.

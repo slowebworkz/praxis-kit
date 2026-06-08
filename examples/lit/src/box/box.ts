@@ -1,5 +1,5 @@
-import { createContractComponent } from '@praxis-ui/lit'
-import type { EmptyRecord } from '@praxis-ui/core'
+import { createContractComponent } from '@praxis-kit/lit'
+import type { EmptyRecord } from '@praxis-kit/core'
 
 const variants = {
   direction: {

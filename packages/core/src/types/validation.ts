@@ -1,8 +1,8 @@
 import type { IntrinsicTag } from './primitives'
 import type { AriaContext } from './aria-rule'
-import type { ValidationResult } from '@praxis-ui/shared/types'
+import type { ValidationResult } from '@praxis-kit/shared/types'
 
-export type { ValidationResult, ValidationViolation } from '@praxis-ui/shared/types'
+export type { ValidationResult, ValidationViolation } from '@praxis-kit/shared/types'
 
 export type NormalizationResult =
   | { normalized: false }

@@ -40,7 +40,7 @@ in production.
 
 ### ARIA rules
 
-`@praxis-ui/contract` runs an ARIA policy engine on every render. It:
+`@praxis-kit/contract` runs an ARIA policy engine on every render. It:
 
 - Strips `role` attributes that would conflict with an element's implicit ARIA role
 - Removes ARIA attributes not valid for the resolved role
@@ -94,7 +94,7 @@ This section applies **only to components using `createTailwindPipeline`** (i.e.
 
 ### How the layout pipeline works
 
-The `@praxis-ui/tailwind` plugin activates a layout mode based on the `flex` and `grid` props:
+The `@praxis-kit/tailwind` plugin activates a layout mode based on the `flex` and `grid` props:
 
 | Props passed    | Layout mode | What happens                              |
 | --------------- | ----------- | ----------------------------------------- |
@@ -191,10 +191,10 @@ filterProps: (key, variantKeys) => variantKeys.has(key) || key === 'loading'
 
 ## Compound components and context
 
-praxis-ui does not own state or context — that is the framework's job. The Tabs example demonstrates
-the intended division:
+praxis-kit does not own state or context — that is the framework's job. The Tabs example
+demonstrates the intended division:
 
-- **praxis-ui** owns: tag resolution, class pipeline, ARIA roles, children enforcement
+- **praxis-kit** owns: tag resolution, class pipeline, ARIA roles, children enforcement
 - **Framework context** owns: active tab state, show/hide logic
 
 This separation means the contract layer is framework-agnostic and the state layer is idiomatic to

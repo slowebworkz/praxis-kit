@@ -19,12 +19,12 @@ const config = [
           patterns: [
             {
               group: [
-                '@praxis-ui/react',
-                '@praxis-ui/vue',
-                '@praxis-ui/solid',
-                '@praxis-ui/svelte',
-                '@praxis-ui/preact',
-                '@praxis-ui/core',
+                '@praxis-kit/react',
+                '@praxis-kit/vue',
+                '@praxis-kit/solid',
+                '@praxis-kit/svelte',
+                '@praxis-kit/preact',
+                '@praxis-kit/core',
               ],
               message: 'eslint-plugin must not import from framework packages',
             },
