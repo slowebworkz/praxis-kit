@@ -1,6 +1,6 @@
 {
   "name": "@praxis-kit/tailwind",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -20,12 +20,12 @@
     "lint:pkg": "publint"
   },
   "dependencies": {
-    "@praxis-kit/core": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {
     "tsup": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@praxis-kit/core": "workspace:*"
   },
   "publishConfig": {
     "access": "public"

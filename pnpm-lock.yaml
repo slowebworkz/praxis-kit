@@ -702,9 +702,6 @@ importers:
 
   packages/lit:
     dependencies:
-      '@praxis-kit/core':
-        specifier: workspace:*
-        version: link:../core
       type-fest:
         specifier: 'catalog:'
         version: 5.6.0
@@ -712,6 +709,9 @@ importers:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../core
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1
@@ -742,9 +742,6 @@ importers:
 
   packages/preact:
     dependencies:
-      '@praxis-kit/core':
-        specifier: workspace:*
-        version: link:../core
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
@@ -755,6 +752,9 @@ importers:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../core
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1
@@ -773,9 +773,6 @@ importers:
 
   packages/react:
     dependencies:
-      '@praxis-kit/core':
-        specifier: workspace:*
-        version: link:../core
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
@@ -792,6 +789,9 @@ importers:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../core
       '@praxis-kit/playwright':
         specifier: workspace:*
         version: link:../playwright
@@ -835,9 +835,6 @@ importers:
 
   packages/solid:
     dependencies:
-      '@praxis-kit/core':
-        specifier: workspace:*
-        version: link:../core
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
@@ -848,6 +845,9 @@ importers:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../core
       '@solidjs/testing-library':
         specifier: 'catalog:'
         version: 0.8.10(solid-js@1.9.13)
@@ -869,9 +869,6 @@ importers:
 
   packages/svelte:
     dependencies:
-      '@praxis-kit/core':
-        specifier: workspace:*
-        version: link:../core
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
@@ -882,6 +879,9 @@ importers:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../core
       '@sveltejs/vite-plugin-svelte':
         specifier: 'catalog:'
         version: 7.1.2(svelte@5.56.2(@typescript-eslint/types@8.60.0))(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0))
@@ -903,13 +903,13 @@ importers:
 
   packages/tailwind:
     dependencies:
-      '@praxis-kit/core':
-        specifier: workspace:*
-        version: link:../core
       type-fest:
         specifier: 'catalog:'
         version: 5.6.0
     devDependencies:
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../core
       tsup:
         specifier: 'catalog:'
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
@@ -947,9 +947,6 @@ importers:
 
   packages/vue:
     dependencies:
-      '@praxis-kit/core':
-        specifier: workspace:*
-        version: link:../core
       type-fest:
         specifier: 'catalog:'
         version: 5.6.0
@@ -966,6 +963,9 @@ importers:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../core
       '@praxis-kit/playwright':
         specifier: workspace:*
         version: link:../playwright
@@ -996,9 +996,6 @@ importers:
 
   packages/web:
     dependencies:
-      '@praxis-kit/core':
-        specifier: workspace:*
-        version: link:../core
       type-fest:
         specifier: 'catalog:'
         version: 5.6.0
@@ -1006,6 +1003,9 @@ importers:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../core
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1

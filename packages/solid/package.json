@@ -1,6 +1,6 @@
 {
   "name": "@praxis-kit/solid",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "type": "module",
   "exports": {
     ".": {
@@ -25,7 +25,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@praxis-kit/core": "workspace:*",
     "clsx": "catalog:",
     "type-fest": "catalog:"
   },
@@ -39,7 +38,8 @@
     "solid-js": "catalog:",
     "tsup": "catalog:",
     "vite-plugin-solid": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@praxis-kit/core": "workspace:*"
   },
   "publishConfig": {
     "access": "public"
