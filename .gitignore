@@ -1,5 +1,4 @@
 node_modules/
-dist/
 *.tsbuildinfo
 lib/**/*.d.ts
 lib/**/*.d.ts.map
