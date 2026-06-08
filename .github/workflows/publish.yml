@@ -31,7 +31,7 @@ jobs:
       - name: Publish
         run: |
           for pkg in packages/react packages/vue packages/solid packages/svelte packages/preact packages/lit packages/web packages/tailwind packages/eslint-plugin packages/ts-plugin packages/vite-plugin; do
-            (cd $pkg && npm publish --access public --no-git-checks)
+            (cd $pkg && pnpm publish --access public --no-git-checks)
           done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
