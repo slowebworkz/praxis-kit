@@ -46,9 +46,9 @@
   "bugs": {
     "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
-  "license": "CC-BY-NC-4.0",
+  "license": "MIT",
   "author": "K Huehn <slowebworkz@gmail.com>",
-  "description": "Vite plugins for Praxis UI — static composition, design tokens, SSR optimisation, and contract validation",
+  "description": "Vite plugins for Praxis Kit — static composition, design tokens, SSR optimisation, and contract validation",
   "keywords": [
     "praxis-kit",
     "polymorphic",

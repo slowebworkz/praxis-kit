@@ -53,9 +53,9 @@
   "bugs": {
     "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
-  "license": "CC-BY-NC-4.0",
+  "license": "MIT",
   "author": "K Huehn <slowebworkz@gmail.com>",
-  "description": "Praxis UI adapter for SolidJS — polymorphic components with ARIA contracts and variant composition",
+  "description": "Praxis Kit adapter for SolidJS — polymorphic components with ARIA contracts and variant composition",
   "keywords": [
     "praxis-kit",
     "polymorphic",

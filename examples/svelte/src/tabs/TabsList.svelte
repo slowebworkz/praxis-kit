@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Polymorphic from '@praxis-ui/svelte/Polymorphic.svelte'
+  import Polymorphic from '@praxis-kit/svelte/Polymorphic.svelte'
   import { listBundle } from './bundles'
   import type { Snippet } from 'svelte'
 

@@ -46,9 +46,9 @@
   "bugs": {
     "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
-  "license": "CC-BY-NC-4.0",
+  "license": "MIT",
   "author": "K Huehn <slowebworkz@gmail.com>",
-  "description": "Praxis UI vanilla Custom Elements adapter — framework-free polymorphic components with ARIA contracts",
+  "description": "Praxis Kit vanilla Custom Elements adapter — framework-free polymorphic components with ARIA contracts",
   "keywords": [
     "praxis-kit",
     "polymorphic",
