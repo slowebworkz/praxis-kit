@@ -1,6 +1,6 @@
 {
   "name": "@praxis-kit/vue",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "type": "module",
   "exports": {
     ".": {
@@ -25,7 +25,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@praxis-kit/core": "workspace:*",
     "type-fest": "catalog:"
   },
   "peerDependencies": {
@@ -44,7 +43,8 @@
     "jsdom": "catalog:",
     "tsup": "catalog:",
     "vitest": "catalog:",
-    "vue": "catalog:"
+    "vue": "catalog:",
+    "@praxis-kit/core": "workspace:*"
   },
   "publishConfig": {
     "access": "public"

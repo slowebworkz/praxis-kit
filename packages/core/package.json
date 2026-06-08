@@ -76,5 +76,6 @@
   ],
   "engines": {
     "node": ">=18"
-  }
+  },
+  "private": true
 }

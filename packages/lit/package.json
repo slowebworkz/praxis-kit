@@ -1,6 +1,6 @@
 {
   "name": "@praxis-kit/lit",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "type": "module",
   "exports": {
     ".": {
@@ -25,7 +25,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@praxis-kit/core": "workspace:*",
     "type-fest": "catalog:"
   },
   "peerDependencies": {
@@ -36,7 +35,8 @@
     "jsdom": "catalog:",
     "lit": "catalog:",
     "tsup": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@praxis-kit/core": "workspace:*"
   },
   "publishConfig": {
     "access": "public"
