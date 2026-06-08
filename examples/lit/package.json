@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-ui/example-lit",
+  "name": "@praxis-kit/example-lit",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,9 +11,9 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@praxis-ui/core": "workspace:*",
-    "@praxis-ui/lit": "workspace:*",
-    "@praxis-ui/tailwind": "workspace:*"
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/lit": "workspace:*",
+    "@praxis-kit/tailwind": "workspace:*"
   },
   "devDependencies": {
     "jsdom": "catalog:",

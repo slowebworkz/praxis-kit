@@ -7,12 +7,12 @@ export default defineConfig({
   clean: true,
   // lib/ packages are private; inline them (js + dts) so published core has no unresolvable deps
   noExternal: [
-    '@praxis-ui/primitive',
-    '@praxis-ui/contract',
-    '@praxis-ui/contract/types',
-    '@praxis-ui/styling',
-    '@praxis-ui/shared',
-    '@praxis-ui/shared/types/primitives',
-    '@praxis-ui/shared/types',
+    '@praxis-kit/primitive',
+    '@praxis-kit/contract',
+    '@praxis-kit/contract/types',
+    '@praxis-kit/styling',
+    '@praxis-kit/shared',
+    '@praxis-kit/shared/types/primitives',
+    '@praxis-kit/shared/types',
   ],
 })

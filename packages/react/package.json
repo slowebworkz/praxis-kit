@@ -1,6 +1,6 @@
 {
-  "name": "@praxis-ui/react",
-  "version": "3.0.1",
+  "name": "@praxis-kit/react",
+  "version": "3.0.2",
   "type": "module",
   "exports": {
     ".": {
@@ -30,7 +30,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@praxis-ui/core": "workspace:*",
     "clsx": "catalog:",
     "type-fest": "catalog:"
   },
@@ -40,8 +39,8 @@
   "devDependencies": {
     "@axe-core/playwright": "catalog:",
     "@playwright/experimental-ct-react": "catalog:",
-    "@praxis-ui/adapter-utils": "workspace:*",
-    "@praxis-ui/playwright": "workspace:*",
+    "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/playwright": "workspace:*",
     "@vitejs/plugin-react": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
@@ -49,25 +48,26 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "tsup": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@praxis-kit/core": "workspace:*"
   },
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "url": "git+https://github.com/slowebworkz/praxis-kit.git",
     "directory": "packages/react"
   },
-  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/react#readme",
+  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/packages/react#readme",
   "bugs": {
-    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+    "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
-  "license": "CC-BY-NC-4.0",
+  "license": "MIT",
   "author": "K Huehn <slowebworkz@gmail.com>",
-  "description": "Praxis UI adapter for React 18 and 19 — polymorphic components with ARIA contracts and variant composition",
+  "description": "Praxis Kit adapter for React 18 and 19 — polymorphic components with ARIA contracts and variant composition",
   "keywords": [
-    "praxis-ui",
+    "praxis-kit",
     "polymorphic",
     "ui",
     "components",

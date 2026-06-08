@@ -11,12 +11,12 @@ function panic(message: string): never {
 export function assertPluginShape(result: unknown): asserts result is ClassPlugin {
   if (result === null || typeof result !== 'object')
     panic(
-      `[praxis-ui] Plugin factory must return an object with a 'pipeline' function. Got: ${result === null ? 'null' : typeof result}.`,
+      `[praxis-kit] Plugin factory must return an object with a 'pipeline' function. Got: ${result === null ? 'null' : typeof result}.`,
     )
   const plugin = result as AnyRecord
   if (typeof plugin.pipeline !== 'function')
     panic(
-      `[praxis-ui] Plugin factory return value is missing a 'pipeline' function. Got pipeline: ${typeof plugin.pipeline}.`,
+      `[praxis-kit] Plugin factory return value is missing a 'pipeline' function. Got pipeline: ${typeof plugin.pipeline}.`,
     )
 }
 
@@ -25,7 +25,7 @@ export function guardPipeline(pipeline: ClassPipelineFn): ClassPipelineFn {
   return function guardedPipeline(tag, props, className, variantKey) {
     const result = pipeline(tag, props, className, variantKey)
     if (typeof result !== 'string')
-      panic(`[praxis-ui] Plugin pipeline must return a string. Got: ${typeof result}.`)
+      panic(`[praxis-kit] Plugin pipeline must return a string. Got: ${typeof result}.`)
     return result
   }
 }

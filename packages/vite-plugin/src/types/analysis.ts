@@ -1,4 +1,4 @@
-import type { Cardinality, ChildRulePosition } from '@praxis-ui/core'
+import type { Cardinality, ChildRulePosition } from '@praxis-kit/core'
 
 /**
  * One enforcement.children rule whose cardinality is statically extractable

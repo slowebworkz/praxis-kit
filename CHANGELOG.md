@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-### Preset / default variant validation (`@praxis-ui/core`)
+### Preset / default variant validation (`@praxis-kit/core`)
 
 `createContractComponent` now validates the variant surface at construction time: a
 `styling.presets` selection or `styling.defaults` entry that references a variant key — or a value
@@ -26,7 +26,7 @@ Dev-only (tree-shaken from production builds) and a no-op when `strict` is `fals
 components are unaffected. Render-time checks — unknown `variantKey`, undefined variant value at the
 call site — are a planned follow-up (they require `strict` threaded into the class resolver).
 
-### BREAKING — `@praxis-ui/tailwind` layout pipeline: `none` is now a real mode
+### BREAKING — `@praxis-kit/tailwind` layout pipeline: `none` is now a real mode
 
 When **neither** the `flex` nor `grid` prop is set, the layout pipeline previously returned the raw
 class string **unchanged** (passthrough). It now resolves to an explicit `'none'` mode and **strips
@@ -64,15 +64,15 @@ not name custom classes after Tailwind grid/flex prefixes if they must survive a
 Migration: if you relied on layout utilities rendering without a `flex`/`grid` prop, add the
 matching prop (`<Box flex …>` / `<Box grid …>`).
 
-### HTML5 structural contracts (`@praxis-ui/core`)
+### HTML5 structural contracts (`@praxis-kit/core`)
 
-`htmlContracts` is a new export from `@praxis-ui/core` providing ready-made `EnforcementOptions`
+`htmlContracts` is a new export from `@praxis-kit/core` providing ready-made `EnforcementOptions`
 objects for HTML elements with restricted content models. Pass directly to `createContractComponent`
 instead of writing `match` predicates by hand:
 
 ```ts
-import { htmlContracts } from '@praxis-ui/core'
-import { createContractComponent } from '@praxis-ui/react'
+import { htmlContracts } from '@praxis-kit/core'
+import { createContractComponent } from '@praxis-kit/react'
 
 const List = createContractComponent({ tag: 'ul', enforcement: htmlContracts.ul })
 ```
@@ -105,7 +105,7 @@ The `match` predicates duck-type on the child's `type` property — compatible w
 Vue VNodes. Adapters filter children to valid elements before the evaluator runs, so text nodes and
 falsy conditional values are never flagged.
 
-### `no-invalid-html-nesting` rule (`@praxis-ui/eslint-plugin`)
+### `no-invalid-html-nesting` rule (`@praxis-kit/eslint-plugin`)
 
 New lint rule (error in recommended config) that statically checks JSX for direct children that
 violate the HTML5 content model of their parent. Covers `ul`/`ol`, `table`/`thead`/`tbody`/`tfoot`/
@@ -129,30 +129,30 @@ only flags statically-known intrinsic HTML tags.
 
 #### Package scope rename
 
-All packages moved from `@polymorphic-ui/*` to `@praxis-ui/*`. Update every import and
-`package.json` dependency entry. The `@praxis-ui/codemod` CLI automates the factory rename below;
+All packages moved from `@polymorphic-ui/*` to `@praxis-kit/*`. Update every import and
+`package.json` dependency entry. The `@praxis-kit/codemod` CLI automates the factory rename below;
 the package scope rename requires a find-and-replace across your project.
 
 #### Factory rename: `createPolymorphicComponent` → `createContractComponent`
 
 ```bash
 # Automated migration
-npx @praxis-ui/codemod --from createPolymorphicComponent --to createContractComponent --files "src/**/*.ts"
-npx @praxis-ui/codemod --from createPolymorphicComponent --to createContractComponent --files "src/**/*.tsx"
+npx @praxis-kit/codemod --from createPolymorphicComponent --to createContractComponent --files "src/**/*.ts"
+npx @praxis-kit/codemod --from createPolymorphicComponent --to createContractComponent --files "src/**/*.tsx"
 ```
 
 The codemod handles renames in all positions (call sites, type annotations, re-exports).
 
 ### New packages
 
-| Package                    | Role                                                                     |
-| -------------------------- | ------------------------------------------------------------------------ |
-| `@praxis-ui/eslint-plugin` | Six lint rules enforcing contract API correctness                        |
-| `@praxis-ui/ts-plugin`     | TypeScript language service plugin — inline editor diagnostics           |
-| `@praxis-ui/codemod`       | CLI for factory rename migrations                                        |
-| `@praxis-ui/vite-plugin`   | Build-time optimization and enforcement pipeline (expanded from v1 stub) |
+| Package                     | Role                                                                     |
+| --------------------------- | ------------------------------------------------------------------------ |
+| `@praxis-kit/eslint-plugin` | Six lint rules enforcing contract API correctness                        |
+| `@praxis-kit/ts-plugin`     | TypeScript language service plugin — inline editor diagnostics           |
+| `@praxis-kit/codemod`       | CLI for factory rename migrations                                        |
+| `@praxis-kit/vite-plugin`   | Build-time optimization and enforcement pipeline (expanded from v1 stub) |
 
-### ESLint rules (`@praxis-ui/eslint-plugin`)
+### ESLint rules (`@praxis-kit/eslint-plugin`)
 
 | Rule                            | Severity | Description                                                                              |
 | ------------------------------- | -------- | ---------------------------------------------------------------------------------------- |
@@ -163,7 +163,7 @@ The codemod handles renames in all positions (call sites, type annotations, re-e
 | `no-invalid-default`            | error    | Validates `styling.defaults` entries against `styling.variants`                          |
 | `valid-children-config`         | error    | Cross-rule consistency: duplicate `first`/`last` positions, `only` + other min conflicts |
 
-### TypeScript plugin (`@praxis-ui/ts-plugin`)
+### TypeScript plugin (`@praxis-kit/ts-plugin`)
 
 Editor-integrated diagnostics via the TypeScript language service (tsserver / VS Code). No `tsc` run
 required — violations surface inline as you type.
@@ -177,13 +177,13 @@ Configure in `tsconfig.json`:
 {
   "compilerOptions": {
     "plugins": [
-      { "name": "@praxis-ui/ts-plugin", "config": { "calleeNames": ["createContractComponent"] } }
+      { "name": "@praxis-kit/ts-plugin", "config": { "calleeNames": ["createContractComponent"] } }
     ]
   }
 }
 ```
 
-### Vite plugin expansion (`@praxis-ui/vite-plugin`)
+### Vite plugin expansion (`@praxis-kit/vite-plugin`)
 
 All plugins are pure transforms — no side effects, no Vite internals, tree-shakeable.
 
@@ -234,9 +234,9 @@ combination.
 
 #### Svelte `asChild` via parameterized Snippet
 
-`asChild` implemented in `@praxis-ui/svelte` using `Snippet<[Props]>` — callers pass a typed snippet
-and the adapter calls it with merged slot props. Mutual exclusion of `as` + `asChild` enforced via
-`SlotValidator`.
+`asChild` implemented in `@praxis-kit/svelte` using `Snippet<[Props]>` — callers pass a typed
+snippet and the adapter calls it with merged slot props. Mutual exclusion of `as` + `asChild`
+enforced via `SlotValidator`.
 
 ### Analysis tooling
 
@@ -249,13 +249,13 @@ Three workspace-level commands, all CI-gated after the test step:
 
 ### Unified debug surface
 
-`diagnose(options, tag, props, children?, className?, variantKey?)` in `@praxis-ui/core` returns a
+`diagnose(options, tag, props, children?, className?, variantKey?)` in `@praxis-kit/core` returns a
 single `ComponentDiagnosis` covering class pipeline, ARIA violations, and children violations —
 without side effects or `strict` mode interference.
 
 ### Migration
 
-See [MIGRATING.md](./MIGRATING.md) for upgrade paths. The `@praxis-ui/codemod` CLI handles the
+See [MIGRATING.md](./MIGRATING.md) for upgrade paths. The `@praxis-kit/codemod` CLI handles the
 factory rename; the package scope rename requires a global find-and-replace.
 
 ---
@@ -272,11 +272,11 @@ backward-compatible for common usage; the internal structure is wholly new.
 
 The monolithic `packages/core` is now backed by three private library packages:
 
-| Package                | Role                                                     |
-| ---------------------- | -------------------------------------------------------- |
-| `@praxis-ui/primitive` | Tag resolution, prop merging, base types                 |
-| `@praxis-ui/contract`  | ARIA policy engine, children evaluator, strict-mode base |
-| `@praxis-ui/styling`   | CVA wrapper, class pipeline, variant resolver            |
+| Package                 | Role                                                     |
+| ----------------------- | -------------------------------------------------------- |
+| `@praxis-kit/primitive` | Tag resolution, prop merging, base types                 |
+| `@praxis-kit/contract`  | ARIA policy engine, children evaluator, strict-mode base |
+| `@praxis-kit/styling`   | CVA wrapper, class pipeline, variant resolver            |
 
 These packages are private (`lib/`). `packages/core` is still the single import point for consumers;
 the lib/ split is an implementation boundary, not a new surface.
@@ -322,14 +322,14 @@ detail. Intended for debugging, not production rendering.
 
 #### Framework adapter coverage
 
-| Adapter               | Strategy                                                          |
-| --------------------- | ----------------------------------------------------------------- |
-| `@praxis-ui/react`    | React 19 (`current/`) + React 18 (`legacy/`) ref split            |
-| `@praxis-ui/vue`      | `defineComponent`, `h()`, `cloneVNode` slot protocol              |
-| `@praxis-ui/tailwind` | Layout-aware class pipeline plugin                                |
-| `@praxis-ui/preact`   | `forwardRef` from `preact/compat`                                 |
-| `@praxis-ui/solid`    | Client + SSR (separate vitest configs)                            |
-| `@praxis-ui/svelte`   | Returns a `BuiltRuntime` bundle; renders via `Polymorphic.svelte` |
+| Adapter                | Strategy                                                          |
+| ---------------------- | ----------------------------------------------------------------- |
+| `@praxis-kit/react`    | React 19 (`current/`) + React 18 (`legacy/`) ref split            |
+| `@praxis-kit/vue`      | `defineComponent`, `h()`, `cloneVNode` slot protocol              |
+| `@praxis-kit/tailwind` | Layout-aware class pipeline plugin                                |
+| `@praxis-kit/preact`   | `forwardRef` from `preact/compat`                                 |
+| `@praxis-kit/solid`    | Client + SSR (separate vitest configs)                            |
+| `@praxis-kit/svelte`   | Returns a `BuiltRuntime` bundle; renders via `Polymorphic.svelte` |
 
 ### Upgrading from v0
 

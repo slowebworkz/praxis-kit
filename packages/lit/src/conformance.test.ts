@@ -19,16 +19,16 @@ import {
   conformanceSuite,
   conformancePerformanceSuite,
   conformanceIsolationSuite,
-} from '@praxis-ui/adapter-utils/testing'
+} from '@praxis-kit/adapter-utils/testing'
 import type {
   BareFactoryOptions,
   ChildSpec,
   ConformanceAdapter,
   ConformanceFactoryOptions,
-} from '@praxis-ui/adapter-utils/testing'
+} from '@praxis-kit/adapter-utils/testing'
 import { createContractComponent } from './create-contract-component'
 import type { LitConformanceComponent, LitConformanceEl } from './types/index'
-import type { AnyRecord } from '@praxis-ui/core'
+import type { AnyRecord } from '@praxis-kit/core'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

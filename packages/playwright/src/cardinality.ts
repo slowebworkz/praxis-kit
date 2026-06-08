@@ -3,7 +3,7 @@ import type { ConsoleMessage as PWConsoleMessage, Page } from '@playwright/test'
 // Playwright uses 'warn' (matching browser console API), not 'warning'.
 const WARN_TYPES = new Set(['warn', 'warning'])
 
-const CONTRACT_WARNING_PATTERN = /\b(praxis-ui|children-evaluator|aria-policy-engine)\b/i
+const CONTRACT_WARNING_PATTERN = /\b(praxis-kit|children-evaluator|aria-policy-engine)\b/i
 
 export type ConsoleMessage = { type: string; text: string }
 
@@ -86,7 +86,7 @@ export function expectCardinalityWarning(
 }
 
 /**
- * Assert that no praxis-ui contract warnings were emitted.
+ * Assert that no praxis-kit contract warnings were emitted.
  */
 export function expectNoContractWarnings(messages: ConsoleMessage[]): void {
   const praxisWarnings = messages.filter(
@@ -94,6 +94,6 @@ export function expectNoContractWarnings(messages: ConsoleMessage[]): void {
   )
   if (praxisWarnings.length > 0) {
     const texts = praxisWarnings.map((m) => `  [${m.type}] ${m.text}`).join('\n')
-    throw new Error(`expectNoContractWarnings: unexpected praxis-ui warnings:\n${texts}`)
+    throw new Error(`expectNoContractWarnings: unexpected praxis-kit warnings:\n${texts}`)
   }
 }

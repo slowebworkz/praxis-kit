@@ -1,6 +1,6 @@
 {
-  "name": "@praxis-ui/preact",
-  "version": "3.0.1",
+  "name": "@praxis-kit/preact",
+  "version": "3.0.2",
   "type": "module",
   "exports": {
     ".": {
@@ -25,7 +25,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@praxis-ui/core": "workspace:*",
     "clsx": "catalog:",
     "type-fest": "catalog:"
   },
@@ -33,30 +32,31 @@
     "preact": ">=10.11"
   },
   "devDependencies": {
-    "@praxis-ui/adapter-utils": "workspace:*",
+    "@praxis-kit/adapter-utils": "workspace:*",
     "jsdom": "catalog:",
     "preact": "catalog:",
     "preact-render-to-string": "catalog:",
     "tsup": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@praxis-kit/core": "workspace:*"
   },
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "url": "git+https://github.com/slowebworkz/praxis-kit.git",
     "directory": "packages/preact"
   },
-  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/preact#readme",
+  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/packages/preact#readme",
   "bugs": {
-    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+    "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
-  "license": "CC-BY-NC-4.0",
+  "license": "MIT",
   "author": "K Huehn <slowebworkz@gmail.com>",
-  "description": "Praxis UI adapter for Preact — polymorphic components with ARIA contracts and variant composition",
+  "description": "Praxis Kit adapter for Preact — polymorphic components with ARIA contracts and variant composition",
   "keywords": [
-    "praxis-ui",
+    "praxis-kit",
     "polymorphic",
     "ui",
     "components",

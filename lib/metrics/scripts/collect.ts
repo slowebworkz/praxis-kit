@@ -6,7 +6,7 @@
  *   Architecture — .repo-state/dependency-graph.json + exports.json
  *   Complexity   — ts-morph walk of lib/ and packages/core source files
  *
- * Run: pnpm --filter @praxis-ui/metrics collect
+ * Run: pnpm --filter @praxis-kit/metrics collect
  */
 import { readFile, writeFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'

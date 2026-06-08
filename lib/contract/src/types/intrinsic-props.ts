@@ -1,3 +1,3 @@
-export type { IntrinsicProps, PropsWithRole } from '@praxis-ui/shared/types/primitives'
+export type { IntrinsicProps, PropsWithRole } from '@praxis-kit/shared/types/primitives'
 
-export { hasRole } from '@praxis-ui/shared/guards/aria'
+export { hasRole } from '@praxis-kit/shared/guards/aria'

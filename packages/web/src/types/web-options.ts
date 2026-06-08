@@ -5,8 +5,8 @@ import type {
   FactoryOptions,
   PresetMap,
   VariantMap,
-} from '@praxis-ui/core'
-import type { FilterPredicate } from '@praxis-ui/adapter-utils'
+} from '@praxis-kit/core'
+import type { FilterPredicate } from '@praxis-kit/adapter-utils'
 
 /**
  * Options accepted by createContractComponent in the web adapter.

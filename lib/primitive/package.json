@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-ui/primitive",
+  "name": "@praxis-kit/primitive",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@praxis-ui/shared": "workspace:*",
+    "@praxis-kit/shared": "workspace:*",
     "clsx": "catalog:"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
-import { createContractComponent } from '@praxis-ui/react'
-import type { EmptyRecord } from '@praxis-ui/core'
+import { createContractComponent } from '@praxis-kit/react'
+import type { EmptyRecord } from '@praxis-kit/core'
 
 export const Landmark = createContractComponent<'nav', EmptyRecord, EmptyRecord>({
   tag: 'nav',

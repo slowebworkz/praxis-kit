@@ -1,5 +1,5 @@
-import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-ui/shared/types'
-import { isNull, isNumber, isString } from '@praxis-ui/shared'
+import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-kit/shared/types'
+import { isNull, isNumber, isString } from '@praxis-kit/shared'
 import { StrictBase } from '../strict'
 import type {
   AriaContext,
@@ -18,7 +18,7 @@ import type {
 import { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attribute-policy'
 import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
 
-export { isInvalid } from '@praxis-ui/shared/guards/aria'
+export { isInvalid } from '@praxis-kit/shared/guards/aria'
 
 const VALID = [{ valid: true }] as const
 

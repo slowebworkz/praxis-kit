@@ -5,7 +5,7 @@
  */
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractComponent } from '@praxis-kit/react'
 
 const ButtonChild = createContractComponent({ tag: 'button', name: 'ButtonChild' })
 

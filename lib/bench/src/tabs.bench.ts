@@ -1,9 +1,9 @@
-// Tabs overhead benchmark — praxis-ui vs vanilla React
+// Tabs overhead benchmark — praxis-kit vs vanilla React
 //
-// Core question: what does the praxis-ui contract layer cost at render time
+// Core question: what does the praxis-kit contract layer cost at render time
 // compared to a hand-rolled React Tabs component with equivalent ARIA wiring?
 //
-// The vanilla baseline deliberately matches the praxis-ui surface:
+// The vanilla baseline deliberately matches the praxis-kit surface:
 //   - Same DOM output structure (tablist, tab, tabpanel roles)
 //   - Same ARIA attributes (aria-selected, aria-controls, aria-labelledby)
 //   - Same data-state tracking
@@ -26,7 +26,7 @@ import { createElement, useState, useId, createContext, useContext } from 'react
 import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
-import { createContractComponent } from '@praxis-ui/react'
+import { createContractComponent } from '@praxis-kit/react'
 
 // ─── Praxis-ui Tabs ───────────────────────────────────────────────────────────
 // Mirrors examples/react/src/tabs — factories are module-level singletons.
@@ -120,7 +120,7 @@ function makePraxisTabs() {
 }
 
 // ─── Vanilla React Tabs ───────────────────────────────────────────────────────
-// Equivalent DOM output and ARIA wiring, no praxis-ui involved.
+// Equivalent DOM output and ARIA wiring, no praxis-kit involved.
 
 const VanillaCtx = createContext<TabsCtx | null>(null)
 const useVanilla = () => useContext(VanillaCtx)!
@@ -196,7 +196,7 @@ function withRoot(fn: (root: ReturnType<typeof createRoot>, container: HTMLEleme
 // ─── Benchmarks ──────────────────────────────────────────────────────────────
 
 describe('Tabs — initial render (mount)', () => {
-  bench('praxis-ui Tabs', () => {
+  bench('praxis-kit Tabs', () => {
     withRoot((root) => {
       flushSync(() => root.render(makePraxisTabs()))
     })
@@ -210,7 +210,7 @@ describe('Tabs — initial render (mount)', () => {
 })
 
 describe('Tabs — re-render on tab switch', () => {
-  bench('praxis-ui Tabs', () => {
+  bench('praxis-kit Tabs', () => {
     withRoot((root, container) => {
       flushSync(() => root.render(makePraxisTabs()))
       const triggers = container.querySelectorAll('[role="tab"]')
@@ -228,10 +228,10 @@ describe('Tabs — re-render on tab switch', () => {
 })
 
 describe('Tabs — controlled re-render (value prop update)', () => {
-  bench('praxis-ui Tabs', () => {
+  bench('praxis-kit Tabs', () => {
     withRoot((root) => {
       flushSync(() => root.render(makePraxisTabs()))
-      // Re-render with same tree — exercises reconciler + praxis-ui resolve path
+      // Re-render with same tree — exercises reconciler + praxis-kit resolve path
       flushSync(() => root.render(makePraxisTabs()))
     })
   })

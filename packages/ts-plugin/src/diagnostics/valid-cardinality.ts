@@ -51,7 +51,7 @@ export function checkValidCardinality(
           category: ts.DiagnosticCategory.Error,
           code: NEGATIVE_MIN_CODE,
           messageText: `cardinality.min must be >= 0 (got ${min}).`,
-          source: '@praxis-ui/ts-plugin',
+          source: '@praxis-kit/ts-plugin',
         })
       }
 
@@ -63,7 +63,7 @@ export function checkValidCardinality(
           category: ts.DiagnosticCategory.Error,
           code: NEGATIVE_MAX_CODE,
           messageText: `cardinality.max must be >= 0 (got ${max}).`,
-          source: '@praxis-ui/ts-plugin',
+          source: '@praxis-kit/ts-plugin',
         })
       }
 
@@ -75,7 +75,7 @@ export function checkValidCardinality(
           category: ts.DiagnosticCategory.Warning,
           code: ZERO_MAX_CODE,
           messageText: `cardinality.max of 0 means no children of this type are allowed. Use 0 intentionally or remove the rule.`,
-          source: '@praxis-ui/ts-plugin',
+          source: '@praxis-kit/ts-plugin',
         })
       }
 
@@ -87,7 +87,7 @@ export function checkValidCardinality(
           category: ts.DiagnosticCategory.Error,
           code: MAX_LESS_THAN_MIN_CODE,
           messageText: `cardinality.max (${max}) must be >= cardinality.min (${min}). This rule can never be satisfied.`,
-          source: '@praxis-ui/ts-plugin',
+          source: '@praxis-kit/ts-plugin',
         })
       }
     }

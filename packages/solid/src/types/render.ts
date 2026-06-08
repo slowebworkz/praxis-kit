@@ -1,11 +1,11 @@
-import type { ChildrenEvaluator } from '@praxis-ui/core'
+import type { ChildrenEvaluator } from '@praxis-kit/core'
 import type { FilterPredicate, ResolvedProps } from './primitives'
 import type { KnownProps } from './props'
 import type { Runtime } from './runtime'
 import type { SlotValidator } from '../slot'
 
 export type ResolvedRenderState = Readonly<{
-  tag: import('@praxis-ui/core').ElementType
+  tag: import('@praxis-kit/core').ElementType
   children?: unknown
   class: string
   props: ResolvedProps

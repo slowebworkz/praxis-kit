@@ -12,4 +12,4 @@ export type {
   RemoveAttributeFixKind,
   Severity,
   ValidResult,
-} from '@praxis-ui/shared/types'
+} from '@praxis-kit/shared/types'

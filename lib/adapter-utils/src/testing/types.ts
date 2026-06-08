@@ -1,4 +1,4 @@
-import type { AnyRecord, FactoryOptions, VariantMap, StrictMode } from '@praxis-ui/core'
+import type { AnyRecord, FactoryOptions, VariantMap, StrictMode } from '@praxis-kit/core'
 
 /**
  * A maximally-wide FactoryOptions shape used as the bridge cast in adapter

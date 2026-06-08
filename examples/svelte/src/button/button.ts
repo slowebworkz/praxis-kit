@@ -1,4 +1,4 @@
-import { createContractComponent } from '@praxis-ui/svelte'
+import { createContractComponent } from '@praxis-kit/svelte'
 
 export const buttonBundle = createContractComponent({
   tag: 'button' as const,

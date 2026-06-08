@@ -1,6 +1,6 @@
 import { LitElement, html } from 'lit'
-import type { AnyRecord, ElementType, EmptyRecord, PresetMap, VariantMap } from '@praxis-ui/core'
-import { applyFilter } from '@praxis-ui/adapter-utils'
+import type { AnyRecord, ElementType, EmptyRecord, PresetMap, VariantMap } from '@praxis-kit/core'
+import { applyFilter } from '@praxis-kit/adapter-utils'
 import { buildRuntime } from './build-runtime'
 import { registerForSsr } from './render-to-string'
 import type {
@@ -128,7 +128,7 @@ function applyHostState(
 }
 
 /**
- * Creates a Lit custom element class with praxis-ui contracts applied.
+ * Creates a Lit custom element class with praxis-kit contracts applied.
  *
  * Returns a LitElement subclass. Register it with customElements.define():
  *

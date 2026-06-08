@@ -1,4 +1,4 @@
-import type { EmptyRecord } from '@praxis-ui/core'
+import type { EmptyRecord } from '@praxis-kit/core'
 import { createContractComponent } from './create-contract-component'
 
 // ─── Box ─────────────────────────────────────────────────────────────────────

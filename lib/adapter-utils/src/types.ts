@@ -7,14 +7,14 @@ import type {
   PropsOf,
   VariantsOf,
   createPolymorphic,
-} from '@praxis-ui/core'
+} from '@praxis-kit/core'
 import type { Simplify } from 'type-fest'
 import type { SlotValidator } from './slot-validator'
-import type { WithChildRules } from '@praxis-ui/shared/types'
+import type { WithChildRules } from '@praxis-kit/shared/types'
 
 export type FilterPredicate = (key: string, variantKeys: ReadonlySet<string>) => boolean
 
-export type { WithChildRules } from '@praxis-ui/shared/types'
+export type { WithChildRules } from '@praxis-kit/shared/types'
 
 // Absent entirely when no rules given — callers narrow with `'childrenEvaluator' in bundle`.
 export type BuiltChildrenEvaluator<TOptions extends WithChildRules> = TOptions extends {

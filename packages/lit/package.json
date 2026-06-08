@@ -1,6 +1,6 @@
 {
-  "name": "@praxis-ui/lit",
-  "version": "3.0.1",
+  "name": "@praxis-kit/lit",
+  "version": "3.0.2",
   "type": "module",
   "exports": {
     ".": {
@@ -25,36 +25,36 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@praxis-ui/core": "workspace:*",
     "type-fest": "catalog:"
   },
   "peerDependencies": {
     "lit": ">=3.0"
   },
   "devDependencies": {
-    "@praxis-ui/adapter-utils": "workspace:*",
+    "@praxis-kit/adapter-utils": "workspace:*",
     "jsdom": "catalog:",
     "lit": "catalog:",
     "tsup": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@praxis-kit/core": "workspace:*"
   },
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/slowebworkz/praxis-ui.git",
+    "url": "git+https://github.com/slowebworkz/praxis-kit.git",
     "directory": "packages/lit"
   },
-  "homepage": "https://github.com/slowebworkz/praxis-ui/tree/main/packages/lit#readme",
+  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/packages/lit#readme",
   "bugs": {
-    "url": "https://github.com/slowebworkz/praxis-ui/issues"
+    "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
-  "license": "CC-BY-NC-4.0",
+  "license": "MIT",
   "author": "K Huehn <slowebworkz@gmail.com>",
-  "description": "Praxis UI adapter for Lit — polymorphic custom elements with ARIA contracts and variant composition",
+  "description": "Praxis Kit adapter for Lit — polymorphic custom elements with ARIA contracts and variant composition",
   "keywords": [
-    "praxis-ui",
+    "praxis-kit",
     "polymorphic",
     "ui",
     "components",

@@ -1,6 +1,6 @@
-import { createContractComponent } from '@praxis-ui/preact'
-import type { EmptyRecord } from '@praxis-ui/core'
-import { createTailwindPipeline } from '@praxis-ui/tailwind'
+import { createContractComponent } from '@praxis-kit/preact'
+import type { EmptyRecord } from '@praxis-kit/core'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
 
 const variants = {
   direction: {

@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-ui/styling",
+  "name": "@praxis-kit/styling",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,8 +14,8 @@
     "test:related": "vitest related --run"
   },
   "dependencies": {
-    "@praxis-ui/shared": "workspace:*",
-    "@praxis-ui/primitive": "workspace:*",
+    "@praxis-kit/shared": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "type-fest": "catalog:"

@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-ui/example-solid",
+  "name": "@praxis-kit/example-solid",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,9 +12,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@praxis-ui/core": "workspace:*",
-    "@praxis-ui/solid": "workspace:*",
-    "@praxis-ui/tailwind": "workspace:*"
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/solid": "workspace:*",
+    "@praxis-kit/tailwind": "workspace:*"
   },
   "devDependencies": {
     "@solidjs/testing-library": "catalog:",

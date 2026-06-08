@@ -10,7 +10,7 @@
 
 <div style="font-family: sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem">
   <h1 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 2rem">
-    praxis-ui · Svelte examples
+    praxis-kit · Svelte examples
   </h1>
 
   <section style="margin-bottom: 2rem">

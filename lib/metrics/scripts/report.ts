@@ -18,7 +18,7 @@ const hr = '─'.repeat(W)
 const generated = new Date(snap.generated).toLocaleString()
 
 const lines: string[] = []
-lines.push(`\nPraxis UI — Metrics Dashboard  (${generated})`)
+lines.push(`\nPraxis Kit — Metrics Dashboard  (${generated})`)
 
 // ── Bundles ───────────────────────────────────────────────────────────────────
 // collect.ts writes bundles gzip-descending; JSON.parse preserves insertion
@@ -47,7 +47,7 @@ for (const name in exp) {
   const { values, types } = exp[name]!
   const total = values + types
   lines.push(
-    `    ${name.replace('@praxis-ui/', '').padEnd(20)}  ${String(total).padStart(4)}  (${values}v + ${types}t)`,
+    `    ${name.replace('@praxis-kit/', '').padEnd(20)}  ${String(total).padStart(4)}  (${values}v + ${types}t)`,
   )
 }
 

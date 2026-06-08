@@ -1,10 +1,10 @@
-# @praxis-ui/core
+# @praxis-kit/core
 
 This is where the enforcement lives. Tag resolution, prop merging, variant class generation,
 children structure validation, ARIA policy enforcement — all of it framework-neutral, no React or
 DOM dependency.
 
-Framework adapters like `@praxis-ui/react` add a rendering layer on top. This package doesn't touch
+Framework adapters like `@praxis-kit/react` add a rendering layer on top. This package doesn't touch
 rendering.
 
 ---
@@ -42,7 +42,7 @@ These hold across every render, regardless of which adapter is calling in:
 ## Entry point
 
 ```ts
-import { createPolymorphic } from '@praxis-ui/core'
+import { createPolymorphic } from '@praxis-kit/core'
 
 const runtime = createPolymorphic({
   defaultTag: 'button',
@@ -443,6 +443,6 @@ Tests don't interfere with each other. Hot module replacement works without stal
 ### Why is this a runtime package, not a framework utility?
 
 The same `FactoryOptions` definition drives React, Vue, Preact, Svelte, and Solid. If enforcement
-lived in `@praxis-ui/react`, every framework adapter would need its own copy — or they'd share a
+lived in `@praxis-kit/react`, every framework adapter would need its own copy — or they'd share a
 peer dependency with no clear ownership. Keeping it here means the contract is written once and the
 behavior is identical everywhere.

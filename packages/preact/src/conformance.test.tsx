@@ -6,12 +6,12 @@ import {
   conformanceA11ySuite,
   conformancePerformanceSuite,
   conformanceIsolationSuite,
-} from '@praxis-ui/adapter-utils/testing'
+} from '@praxis-kit/adapter-utils/testing'
 import type {
   BareFactoryOptions,
   ChildSpec,
   ConformanceAdapter,
-} from '@praxis-ui/adapter-utils/testing'
+} from '@praxis-kit/adapter-utils/testing'
 import type { ComponentType, VNode } from 'preact'
 import type { UnknownProps } from './types'
 import { createContractComponent } from './create-contract-component'

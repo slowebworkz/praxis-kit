@@ -1,4 +1,4 @@
-import type { ClassName, ElementType } from '@praxis-ui/core'
+import type { ClassName, ElementType } from '@praxis-kit/core'
 import type { UnknownProps } from './primitives'
 
 export type AsProp<T extends ElementType = ElementType> = Readonly<{

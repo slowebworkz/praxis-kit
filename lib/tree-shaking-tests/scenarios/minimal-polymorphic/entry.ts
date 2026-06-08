@@ -3,6 +3,6 @@
  * retains only the render primitive and React adapter. The ARIA engine,
  * children evaluator, and class pipeline must all be absent from this bundle.
  */
-import { createPolymorphicComponent } from '@praxis-ui/react'
+import { createPolymorphicComponent } from '@praxis-kit/react'
 
 export const Box = createPolymorphicComponent({ tag: 'div', name: 'Box' })

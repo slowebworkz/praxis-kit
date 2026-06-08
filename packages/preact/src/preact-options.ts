@@ -5,7 +5,7 @@ import type {
   FactoryOptions,
   PresetMap,
   VariantMap,
-} from '@praxis-ui/core'
+} from '@praxis-kit/core'
 import type { SlotComponent, UnknownProps } from './types/primitives'
 
 export type PreactFactoryOptions<

@@ -21,28 +21,28 @@ const distDir = join(pkg, '../dist')
 
 // Workspace source aliases — resolve published packages to their TypeScript source.
 const workspaceAlias: Record<string, string> = {
-  '@praxis-ui/react': join(root, 'packages/react/src/index.ts'),
-  '@praxis-ui/preact': join(root, 'packages/preact/src/index.ts'),
-  '@praxis-ui/vue': join(root, 'packages/vue/src/index.ts'),
-  '@praxis-ui/solid': join(root, 'packages/solid/src/index.ts'),
-  '@praxis-ui/svelte': join(root, 'packages/svelte/src/index.ts'),
-  '@praxis-ui/tailwind': join(root, 'packages/tailwind/src/index.ts'),
-  '@praxis-ui/core': join(root, 'packages/core/src/index.ts'),
-  '@praxis-ui/core/primitive': join(root, 'packages/core/src/primitive.ts'),
-  '@praxis-ui/core/contract': join(root, 'packages/core/src/contract.ts'),
-  '@praxis-ui/core/styling': join(root, 'packages/core/src/styling.ts'),
-  '@praxis-ui/primitive': join(root, 'lib/primitive/src/index.ts'),
-  '@praxis-ui/styling': join(root, 'lib/styling/src/index.ts'),
-  '@praxis-ui/contract': join(root, 'lib/contract/src/index.ts'),
-  '@praxis-ui/contract/types': join(root, 'lib/contract/src/types/index.ts'),
-  '@praxis-ui/adapter-utils': join(root, 'lib/adapter-utils/src/index.ts'),
+  '@praxis-kit/react': join(root, 'packages/react/src/index.ts'),
+  '@praxis-kit/preact': join(root, 'packages/preact/src/index.ts'),
+  '@praxis-kit/vue': join(root, 'packages/vue/src/index.ts'),
+  '@praxis-kit/solid': join(root, 'packages/solid/src/index.ts'),
+  '@praxis-kit/svelte': join(root, 'packages/svelte/src/index.ts'),
+  '@praxis-kit/tailwind': join(root, 'packages/tailwind/src/index.ts'),
+  '@praxis-kit/core': join(root, 'packages/core/src/index.ts'),
+  '@praxis-kit/core/primitive': join(root, 'packages/core/src/primitive.ts'),
+  '@praxis-kit/core/contract': join(root, 'packages/core/src/contract.ts'),
+  '@praxis-kit/core/styling': join(root, 'packages/core/src/styling.ts'),
+  '@praxis-kit/primitive': join(root, 'lib/primitive/src/index.ts'),
+  '@praxis-kit/styling': join(root, 'lib/styling/src/index.ts'),
+  '@praxis-kit/contract': join(root, 'lib/contract/src/index.ts'),
+  '@praxis-kit/contract/types': join(root, 'lib/contract/src/types/index.ts'),
+  '@praxis-kit/adapter-utils': join(root, 'lib/adapter-utils/src/index.ts'),
 }
 
-// The React adapter's source imports its own internal subpath @praxis-ui/react/shared,
+// The React adapter's source imports its own internal subpath @praxis-kit/react/shared,
 // which is a tsconfig-only path (not a published export), so esbuild can't resolve it
 // against the package's exports map. This plugin maps it to the adapter's source.
 function reactInternalAliasPlugin(): Plugin {
-  const re = /^@praxis-ui\/react\/(shared|current|legacy)(\/.*)?$/
+  const re = /^@praxis-kit\/react\/(shared|current|legacy)(\/.*)?$/
   return {
     name: 'react-internal-alias',
     setup(b) {

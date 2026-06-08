@@ -1,6 +1,6 @@
 import { bench, describe } from 'vitest'
-import { ChildrenEvaluator, diagnoseChildren } from '@praxis-ui/core'
-import { isObject } from '@praxis-ui/primitive'
+import { ChildrenEvaluator, diagnoseChildren } from '@praxis-kit/core'
+import { isObject } from '@praxis-kit/primitive'
 
 // strict:'warn' — evaluate() runs the full match cycle. Unbounded-cardinality rules
 // ensure passing-path children never trigger console.warn.
