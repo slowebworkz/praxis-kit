@@ -1,4 +1,4 @@
 export { assertNever } from './assert-never'
 export { cn } from './cn'
-export { isObject } from '@praxis-kit/shared'
+export { isObject } from './is-object'
 export { mergeProps } from './merge-props'

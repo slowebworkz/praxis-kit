@@ -1,4 +1,4 @@
-import type { AnyRecord } from '@praxis-kit/shared'
+import type { AnyRecord } from '../types'
 
 export function mergeDefaults<T extends AnyRecord, P extends AnyRecord>(
   defaults: Partial<T> | undefined,
