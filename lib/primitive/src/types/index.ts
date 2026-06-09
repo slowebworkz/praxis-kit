@@ -5,4 +5,4 @@ export type {
   ElementType,
   EmptyRecord,
   IntrinsicTag,
-} from './primitives'
+} from '@praxis-kit/shared'
