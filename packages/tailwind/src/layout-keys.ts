@@ -1,9 +1,26 @@
-import type { OwnedPropKeys } from '@praxis-kit/core'
-
-// Single source of truth for the layout display dimensions. `LayoutKey`
-// (types/layout.ts) derives its type from this array, and the owned-keys set
-// the adapter strips from the DOM derives its value from it — add a dimension
-// here and both follow.
-export const layoutKeys = ['flex', 'grid'] as const
-
-export const LAYOUT_OWNED_KEYS: OwnedPropKeys = new Set(layoutKeys)
+// Single source of truth for all reserved display prop names. `LayoutKey`
+// (types/layout.ts) derives its type from this array. To add a new display
+// value: add the entry here and its family in constants.ts LAYOUT_FAMILY_MAP.
+// Prop names match CSS class names exactly — no separate display-class map is needed.
+export const layoutKeys = [
+  'flex',
+  'inline-flex',
+  'grid',
+  'inline-grid',
+  'block',
+  'inline-block',
+  'inline',
+  'hidden',
+  'contents',
+  'flow-root',
+  'list-item',
+  'table',
+  'table-caption',
+  'table-cell',
+  'table-column',
+  'table-column-group',
+  'table-footer-group',
+  'table-header-group',
+  'table-row-group',
+  'table-row',
+] as const

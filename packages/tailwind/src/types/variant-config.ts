@@ -7,4 +7,4 @@ export type VariantSelection = Record<string, string>
 // A compound-variant rule, loosely typed: only the keys matter for compound
 // dimension detection — the class value and condition types are intentionally
 // `unknown` to avoid coupling to core's parameterized CompoundVariant<V>.
-export type CompoundVariant = { class?: unknown; [key: string]: unknown }
+export type CompoundVariant = { class?: unknown } & Record<string, unknown>

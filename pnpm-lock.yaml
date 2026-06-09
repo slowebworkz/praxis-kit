@@ -822,6 +822,9 @@ importers:
 
   packages/shared:
     dependencies:
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
       type-fest:
         specifier: 'catalog:'
         version: 5.6.0
@@ -903,6 +906,9 @@ importers:
 
   packages/tailwind:
     dependencies:
+      '@praxis-kit/shared':
+        specifier: workspace:*
+        version: link:../shared
       type-fest:
         specifier: 'catalog:'
         version: 5.6.0

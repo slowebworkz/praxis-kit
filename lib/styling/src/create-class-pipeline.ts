@@ -1,5 +1,5 @@
 import type { ClassPipelineFn, ClassPipelineOptions, VariantMap } from './types'
-import { cn } from './utils'
+import { cn } from '@praxis-kit/primitive'
 import { cva } from './cva'
 import { StaticClassResolver } from './static-class-resolver'
 import { VariantClassResolver } from './variant-class-resolver'

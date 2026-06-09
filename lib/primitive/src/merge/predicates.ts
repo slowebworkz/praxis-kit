@@ -5,16 +5,11 @@ export function isFunction(value: unknown): value is (...args: unknown[]) => unk
   return typeof value === 'function'
 }
 
-function isNull(value: unknown): value is null {
-  return value === null
-}
-
-type AnyRecord = Record<string, unknown>
-
-export function isPlainObject(value: unknown): value is AnyRecord {
+export function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (!isObject(value)) return false
   const proto = Object.getPrototypeOf(value)
-  return proto === Object.prototype || isNull(proto)
+  // null-prototype objects (Object.create(null)) are also plain objects.
+  return proto === Object.prototype || proto === null
 }
 
 export function isEventKey(key: string): boolean {

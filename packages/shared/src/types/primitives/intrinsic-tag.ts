@@ -1,1 +1,1 @@
-export type IntrinsicTag = keyof HTMLElementTagNameMap
+export type { IntrinsicTag } from '@praxis-kit/primitive'
