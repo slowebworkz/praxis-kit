@@ -1,6 +1,6 @@
 import { cva as cvaBase } from 'class-variance-authority'
 import type { AnyRecord, CVAConfig, VariantMap } from './types'
-import { cn } from './utils'
+import { cn } from '@praxis-kit/primitive'
 
 export function cva<V extends VariantMap>(
   base: string,

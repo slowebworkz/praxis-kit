@@ -13,12 +13,14 @@ import { ClassClassifier } from './class-classifier'
 import { defaultDependencyRules } from './dependency-rules'
 import { DependencyEvaluator } from './dependency-evaluator'
 import { LayoutState } from './layout-state'
-import { LAYOUT_OWNED_KEYS } from './layout-keys'
+import { layoutKeys } from './layout-keys'
+import { COMPOUND_META_KEYS, EMPTY_SET, LAYOUT_OWNED_KEYS } from './constants'
 import type { ClassifiedToken } from './types/classified-token'
-import type { LayoutMode, LayoutProps } from './types/layout'
-import type { CompoundVariant, VariantSelection } from './types/variant-config'
+import type { LayoutKey, LayoutMode, LayoutProps, CompoundVariant, VariantSelection } from './types'
+import { isString } from '@praxis-kit/shared'
 
 declare const process: { env: { NODE_ENV: string } }
+const DEV = process.env.NODE_ENV !== 'production'
 
 // Batched async-warn implementation — mirrors StrictBase.scheduleAsyncWarn.
 // All messages queued in one synchronous pass flush in a single microtask;
@@ -54,18 +56,22 @@ const evaluator = new DependencyEvaluator(defaultDependencyRules)
 const builder = new ClassBuilder()
 
 function normalizeVariantValue(value: VariantValue): string {
-  if (typeof value === 'string') return value
+  if (isString(value)) return value
   return value.join(' ')
 }
 
 function resolveLayout(props: LayoutProps & AnyRecord): LayoutMode {
-  if (process.env.NODE_ENV !== 'production' && props.flex && props.grid) {
-    // Not gated on strict — this is a misconfiguration at the call site, not a variant contract violation.
+  const active: LayoutKey[] = []
+  for (const key of layoutKeys) {
+    if (props[key]) active.push(key)
+  }
+  if (DEV && active.length > 1) {
+    // Not gated on strict — multiple display props is a misconfiguration, not a variant contract violation.
     console.warn(
-      '[createTailwindPipeline] Cannot use both "flex" and "grid" simultaneously; "flex" takes precedence.',
+      `[createTailwindPipeline] Multiple display props set (${active.join(', ')}); "${active[0]}" takes precedence.`,
     )
   }
-  return props.flex ? 'flex' : props.grid ? 'grid' : 'none'
+  return active[0] ?? 'none'
 }
 
 function warnReservedLayoutLiterals(strict: StrictMode, tokens: ClassifiedToken[]): void {
@@ -78,14 +84,12 @@ function warnReservedLayoutLiterals(strict: StrictMode, tokens: ClassifiedToken[
 
   pipelineWarn(
     strict,
-    `[createTailwindPipeline] Reserved layout class(es) ${reserved
+    `[createTailwindPipeline] Reserved display class(es) ${reserved
       .map((r) => `"${r}"`)
       .join(', ')} found in resolved classes. ` +
-      'The display mode is controlled by the "flex"/"grid" props, not by class strings.',
+      'The display mode is controlled by the display props (flex, inline-flex, grid, block, hidden, etc.), not by class strings.',
   )
 }
-
-const EMPTY_SET: ReadonlySet<string> = new Set()
 
 function getVariantConfig<V extends VariantMap>(
   options: ClassPipelineOptions<V>,
@@ -108,7 +112,7 @@ function compoundDimensions(compounds: readonly CompoundVariant[]): ReadonlySet<
   const dims = new Set<string>()
   for (const compound of compounds) {
     for (const key in compound) {
-      if (key !== 'class') dims.add(key)
+      if (!COMPOUND_META_KEYS.has(key)) dims.add(key)
     }
   }
   return dims
@@ -172,6 +176,39 @@ function warnDeadVariants<V extends VariantMap>(
   }
 }
 
+/**
+ * Layout-aware class pipeline for Tailwind CSS utility class strings.
+ *
+ * This is a `ClassPluginFactory` — the runtime calls it with the component's
+ * resolved pipeline options and strict mode. Do NOT call it yourself; pass the
+ * function reference as `styling.plugin` and let the runtime invoke it.
+ *
+ * @example
+ * ```ts
+ * // CORRECT — pass the reference; the runtime calls it
+ * createContractComponent({
+ *   tag: 'div',
+ *   styling: {
+ *     base: 'items-center',
+ *     plugin: createTailwindPipeline,
+ *   },
+ * })
+ *
+ * // WRONG — calling it manually produces a ClassPlugin where a ClassPluginFactory is expected
+ * createContractComponent({
+ *   tag: 'div',
+ *   styling: {
+ *     plugin: createTailwindPipeline({ base: 'items-center' }, false),
+ *   },
+ * })
+ * ```
+ *
+ * With the plugin active, pass any display prop (`flex`, `inline-flex`, `grid`,
+ * `inline-grid`, `block`, `hidden`, etc.) as a boolean to control the display
+ * mode. The pipeline injects the display class and strips conflicting utilities:
+ * flex-family modes strip `grid-*`; grid-family modes strip `flex-*`; all other
+ * display values (and no prop) strip both `flex-*` and `grid-*`.
+ */
 export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   options: ClassPipelineOptions<V>,
   strict: StrictMode,
@@ -188,7 +225,7 @@ export function createTailwindPipeline<V extends VariantMap = VariantMap>(
       const tokens = classifyTokens(raw)
       const state = new LayoutState(mode)
 
-      if (process.env.NODE_ENV !== 'production') {
+      if (DEV) {
         warnReservedLayoutLiterals(strict, tokens)
         warnDeadVariants(strict, options, compoundDims, props, variantKey, state)
       }
@@ -197,7 +234,7 @@ export function createTailwindPipeline<V extends VariantMap = VariantMap>(
       const built = builder.build(filtered)
 
       if (mode === 'none') return built
-      return filtered.some((t) => t.kind === 'layout') ? built : cn(mode, built)
+      return filtered.some((t) => t.kind === 'layout' && t.value === mode) ? built : cn(mode, built)
     },
   }
 }

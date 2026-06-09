@@ -1,5 +1,5 @@
 import { assertNever } from '@praxis-kit/core'
-import type { ClassifiedToken } from './types/classified-token'
+import type { ClassifiedToken } from './types'
 import type { DependencyRules } from './dependency-rules'
 import type { LayoutState } from './layout-state'
 
@@ -13,13 +13,13 @@ export class DependencyEvaluator {
       }
 
       case 'conditional': {
-        return token.requires === state.mode
+        return token.requires === state.family
       }
 
       case 'utility': {
         for (const layout of Object.keys(this.rules) as (keyof DependencyRules)[]) {
           if (this.rules[layout].some((r) => r.test(token.base))) {
-            return state.mode === layout
+            return state.family === layout
           }
         }
 
@@ -27,11 +27,11 @@ export class DependencyEvaluator {
       }
 
       case 'gap': {
-        return state.mode !== 'none'
+        return state.family !== 'none'
       }
 
       default:
-        return assertNever(token)
+        throw assertNever(token)
     }
   }
 }

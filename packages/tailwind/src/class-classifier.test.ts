@@ -9,16 +9,56 @@ describe('ClassClassifier — layout tokens', () => {
     expect(c.classify('flex')).toEqual({ kind: 'layout', value: 'flex', raw: 'flex' })
   })
 
-  it('classifies "inline-flex" as layout flex', () => {
-    expect(c.classify('inline-flex')).toEqual({ kind: 'layout', value: 'flex', raw: 'inline-flex' })
+  it('classifies "inline-flex" as layout inline-flex', () => {
+    expect(c.classify('inline-flex')).toEqual({
+      kind: 'layout',
+      value: 'inline-flex',
+      raw: 'inline-flex',
+    })
   })
 
   it('classifies "grid" as layout grid', () => {
     expect(c.classify('grid')).toEqual({ kind: 'layout', value: 'grid', raw: 'grid' })
   })
 
-  it('classifies "inline-grid" as layout grid', () => {
-    expect(c.classify('inline-grid')).toEqual({ kind: 'layout', value: 'grid', raw: 'inline-grid' })
+  it('classifies "inline-grid" as layout inline-grid', () => {
+    expect(c.classify('inline-grid')).toEqual({
+      kind: 'layout',
+      value: 'inline-grid',
+      raw: 'inline-grid',
+    })
+  })
+
+  it('classifies "block" as layout block', () => {
+    expect(c.classify('block')).toEqual({ kind: 'layout', value: 'block', raw: 'block' })
+  })
+
+  it('classifies "inline-block" as layout inline-block', () => {
+    expect(c.classify('inline-block')).toEqual({
+      kind: 'layout',
+      value: 'inline-block',
+      raw: 'inline-block',
+    })
+  })
+
+  it('classifies "inline" as layout inline', () => {
+    expect(c.classify('inline')).toEqual({ kind: 'layout', value: 'inline', raw: 'inline' })
+  })
+
+  it('classifies "hidden" as layout hidden', () => {
+    expect(c.classify('hidden')).toEqual({ kind: 'layout', value: 'hidden', raw: 'hidden' })
+  })
+
+  it('classifies "contents" as layout contents', () => {
+    expect(c.classify('contents')).toEqual({ kind: 'layout', value: 'contents', raw: 'contents' })
+  })
+
+  it('classifies "flow-root" as layout flow-root', () => {
+    expect(c.classify('flow-root')).toEqual({
+      kind: 'layout',
+      value: 'flow-root',
+      raw: 'flow-root',
+    })
   })
 
   it('classifies "hover:flex" as layout flex (prefix stripped)', () => {
@@ -29,10 +69,10 @@ describe('ClassClassifier — layout tokens', () => {
     expect(c.classify('sm:grid')).toEqual({ kind: 'layout', value: 'grid', raw: 'sm:grid' })
   })
 
-  it('classifies "sm:hover:inline-flex" as layout flex (stacked prefixes)', () => {
+  it('classifies "sm:hover:inline-flex" as layout inline-flex (stacked prefixes)', () => {
     expect(c.classify('sm:hover:inline-flex')).toEqual({
       kind: 'layout',
-      value: 'flex',
+      value: 'inline-flex',
       raw: 'sm:hover:inline-flex',
     })
   })
@@ -53,6 +93,10 @@ describe('ClassClassifier — gap tokens', () => {
 
   it('classifies "hover:gap-4" as gap (prefix stripped)', () => {
     expect(c.classify('hover:gap-4')).toEqual({ kind: 'gap', raw: 'hover:gap-4' })
+  })
+
+  it('does not classify "gapfoo" as gap (no hyphen separator)', () => {
+    expect(c.classify('gapfoo')).toEqual({ kind: 'utility', base: 'gapfoo', raw: 'gapfoo' })
   })
 })
 
@@ -136,6 +180,9 @@ describe('ClassClassifier — raw preservation', () => {
       'flex',
       'inline-flex',
       'grid',
+      'inline-grid',
+      'block',
+      'hidden',
       'gap-4',
       'hover:flex-col',
       '[&.flex]:items-start',

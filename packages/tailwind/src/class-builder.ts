@@ -21,7 +21,7 @@ export class ClassBuilder {
         }
 
         default:
-          return assertNever(token)
+          throw assertNever(token)
       }
     }
 

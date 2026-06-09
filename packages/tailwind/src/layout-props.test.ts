@@ -21,12 +21,37 @@ describe('LayoutProps — valid usages', () => {
     void _props
   })
 
+  it('accepts inline-flex: true alone', () => {
+    const _props: LayoutProps = { 'inline-flex': true }
+    void _props
+  })
+
   it('accepts grid: true alone', () => {
     const _props: LayoutProps = { grid: true }
     void _props
   })
 
-  it('accepts an empty object (no layout mode)', () => {
+  it('accepts inline-grid: true alone', () => {
+    const _props: LayoutProps = { 'inline-grid': true }
+    void _props
+  })
+
+  it('accepts block: true alone', () => {
+    const _props: LayoutProps = { block: true }
+    void _props
+  })
+
+  it('accepts hidden: true alone', () => {
+    const _props: LayoutProps = { hidden: true }
+    void _props
+  })
+
+  it('accepts contents: true alone', () => {
+    const _props: LayoutProps = { contents: true }
+    void _props
+  })
+
+  it('accepts an empty object (no display mode)', () => {
     const _props: LayoutProps = {}
     void _props
   })
@@ -41,6 +66,18 @@ describe('LayoutProps — rejected usages', () => {
     void _props
   })
 
+  it('rejects flex: true and block: true simultaneously', () => {
+    // @ts-expect-error — all display props are mutually exclusive
+    const _props: LayoutProps = { flex: true, block: true }
+    void _props
+  })
+
+  it('rejects block: true and hidden: true simultaneously', () => {
+    // @ts-expect-error — all display props are mutually exclusive
+    const _props: LayoutProps = { block: true, hidden: true }
+    void _props
+  })
+
   it('rejects flex: false (only true or absent is valid)', () => {
     // @ts-expect-error — false is not assignable to the LayoutProps union
     const _props: LayoutProps = { flex: false }
@@ -50,6 +87,12 @@ describe('LayoutProps — rejected usages', () => {
   it('rejects grid: false (only true or absent is valid)', () => {
     // @ts-expect-error — false is not assignable to the LayoutProps union
     const _props: LayoutProps = { grid: false }
+    void _props
+  })
+
+  it('rejects block: false (only true or absent is valid)', () => {
+    // @ts-expect-error — false is not assignable to the LayoutProps union
+    const _props: LayoutProps = { block: false }
     void _props
   })
 })

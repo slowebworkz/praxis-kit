@@ -1,6 +1,6 @@
-import type { LayoutKey } from './types/layout'
+import type { LayoutFamily } from './types/layout'
 
-export type DependencyRules = Record<LayoutKey, readonly RegExp[]>
+export type DependencyRules = Record<Exclude<LayoutFamily, 'none'>, readonly RegExp[]>
 
 // Stripping is RESEMBLANCE-based, by design. A class is stripped under a
 // conflicting layout mode because its name matches one of these prefixes, NOT
