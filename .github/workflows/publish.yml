@@ -33,6 +33,21 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Check for unresolved catalog specifiers
+        run: |
+          failed=0
+          for pkg in packages/react packages/vue packages/solid packages/svelte packages/preact packages/lit packages/web packages/tailwind packages/eslint-plugin packages/ts-plugin packages/vite-plugin; do
+            tarball=$(cd "$pkg" && pnpm pack --dry-run 2>/dev/null | grep '\.tgz$' | awk '{print $1}')
+            tmpdir=$(mktemp -d)
+            (cd "$pkg" && pnpm pack --pack-destination "$tmpdir" 2>/dev/null)
+            if tar -xzf "$tmpdir"/*.tgz -C "$tmpdir" && grep -r '"catalog:' "$tmpdir/package/package.json" 2>/dev/null; then
+              echo "ERROR: $pkg published package.json contains unresolved catalog: specifiers"
+              failed=1
+            fi
+            rm -rf "$tmpdir"
+          done
+          exit $failed
+
       - name: Publish
         run: |
           for pkg in packages/react packages/vue packages/solid packages/svelte packages/preact packages/lit packages/web packages/tailwind packages/eslint-plugin packages/ts-plugin packages/vite-plugin; do
