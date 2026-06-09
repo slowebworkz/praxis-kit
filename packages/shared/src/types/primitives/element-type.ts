@@ -1,3 +1,1 @@
-import type { IntrinsicTag } from './intrinsic-tag'
-
-export type ElementType = IntrinsicTag | (string & {})
+export type { ElementType } from '@praxis-kit/primitive'
