@@ -1,6 +1,6 @@
 {
   "name": "@praxis-kit/ts-plugin",
-  "version": "3.0.4",
+  "version": "3.2.0",
   "main": "dist/index.js",
   "exports": {
     ".": "./dist/index.js"
