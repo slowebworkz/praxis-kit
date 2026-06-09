@@ -2,8 +2,9 @@
 
 Tailwind CSS integration for praxis-kit — layout-aware class pipeline with variant composition.
 
-Wraps the core class pipeline with a layout-aware resolver that handles `flex`/`grid` boolean props,
-strips conflicting layout utilities, and ensures a deterministic class order.
+Wraps the core class pipeline with a display-aware resolver that manages all CSS display values as
+reserved boolean props, strips conflicting layout utilities, and ensures a deterministic class
+order.
 
 ---
 
@@ -29,7 +30,7 @@ import { createTailwindPipeline } from '@praxis-kit/tailwind'
 const Button = createContractComponent({
   tag: 'button',
   styling: {
-    base: 'inline-flex items-center rounded',
+    base: 'items-center rounded',
     variants: {
       size: { sm: 'px-2 py-1 text-sm', lg: 'px-4 py-2 text-base' },
     },
@@ -42,19 +43,33 @@ const Button = createContractComponent({
 const Button = createContractComponent({
   tag: 'button',
   styling: {
-    plugin: createTailwindPipeline({ base: 'inline-flex' }, false), // ❌
+    plugin: createTailwindPipeline({ base: 'items-center' }, false), // ❌
   },
 })
 ```
 
-With the plugin active, pass `flex` or `grid` as boolean props to control the display mode. The
-pipeline injects the display class automatically and strips conflicting layout utilities (e.g.
-`grid-*` classes are removed in flex mode):
+With the plugin active, pass any display prop as a boolean to control the display mode. All CSS
+display values are reserved — the pipeline injects the display class automatically and strips
+conflicting utilities based on the active family:
+
+| Prop                                                                                         | CSS class injected   | Strips                                                   |
+| -------------------------------------------------------------------------------------------- | -------------------- | -------------------------------------------------------- |
+| `flex`                                                                                       | `flex`               | `grid-*`, `col-*`, `row-*`, `auto-cols-*`, `auto-rows-*` |
+| `inline-flex`                                                                                | `inline-flex`        | same as `flex`                                           |
+| `grid`                                                                                       | `grid`               | `flex-*`, `grow`, `shrink`, `basis-*`                    |
+| `inline-grid`                                                                                | `inline-grid`        | same as `grid`                                           |
+| `block`, `inline-block`, `inline`, `hidden`, `contents`, `flow-root`, `list-item`, `table-*` | (matching CSS class) | both flex-family and grid-family utilities               |
+| _(no prop)_                                                                                  | nothing              | both flex-family and grid-family utilities               |
 
 ```tsx
-<Button flex>Click me</Button>  // renders with class="flex inline-flex items-center ..."
-<Button grid>Click me</Button>  // renders with class="grid inline-flex items-center ..."
+<Button flex>Click me</Button>          // injects "flex", strips grid-*
+<Button inline-flex>Click me</Button>   // injects "inline-flex", strips grid-*
+<Button grid>Click me</Button>          // injects "grid", strips flex-*
+<Button block>Click me</Button>         // injects "block", strips flex-* and grid-*
 ```
+
+Do not pass display classes as literal strings in `base`, `variants`, or `className` — the pipeline
+will warn (when `strict` is enabled) and strip them in favour of the prop-controlled value.
 
 ---
 
@@ -67,4 +82,4 @@ pipeline injects the display class automatically and strips conflicting layout u
 | `ClassClassifier`        | Parses a class token into one of: `layout`, `conditional`, `gap`, or `utility`                |
 | `DependencyEvaluator`    | Decides whether a token survives the active layout mode using configurable regex rules        |
 | `defaultDependencyRules` | Built-in rules: strips `flex-*`/`grow`/`shrink`/`basis-*` in grid mode and vice versa         |
-| `LayoutState`            | Tracks the active layout mode (`flex`, `grid`, or `none`) for a single pipeline invocation    |
+| `LayoutState`            | Tracks the active display mode and its filtering family for a single pipeline invocation      |

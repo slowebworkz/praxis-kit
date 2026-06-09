@@ -1,16 +1,10 @@
-import type { ClassifiedToken, ClassToken } from './types/classified-token'
-
-const LAYOUTS = {
-  flex: 'flex',
-  'inline-flex': 'flex',
-  grid: 'grid',
-  'inline-grid': 'grid',
-} as const
+import { LAYOUT_OWNED_KEYS } from './constants'
+import type { ClassifiedToken, ClassToken, LayoutFamily, LayoutKey } from './types'
 
 const CONDITIONALS = {
   '[&.flex': 'flex',
   '[&.grid': 'grid',
-} as const
+} as const satisfies Readonly<Record<string, Exclude<LayoutFamily, 'none'>>>
 
 export class ClassClassifier {
   static #getBaseUtility(token: string): string {
@@ -32,27 +26,25 @@ export class ClassClassifier {
   classify(token: ClassToken): ClassifiedToken {
     const base = ClassClassifier.#getBaseUtility(token)
 
-    const layout = LAYOUTS[base as keyof typeof LAYOUTS]
-
-    if (layout) {
+    if (LAYOUT_OWNED_KEYS.has(base)) {
       return {
         kind: 'layout',
-        value: layout,
+        value: base as LayoutKey,
         raw: token,
       }
     }
 
-    for (const prefix in CONDITIONALS) {
+    for (const [prefix, requires] of Object.entries(CONDITIONALS)) {
       if (token.startsWith(prefix)) {
         return {
           kind: 'conditional',
-          requires: CONDITIONALS[prefix as keyof typeof CONDITIONALS],
+          requires,
           raw: token,
         }
       }
     }
 
-    return base.startsWith('gap')
+    return base === 'gap' || base.startsWith('gap-')
       ? {
           kind: 'gap',
           raw: token,
