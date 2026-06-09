@@ -1,6 +1,6 @@
 import type { AnyRecord, ClassPipelineOptions, VariantConditionValue, VariantMap } from './types'
 import { cva } from './cva'
-import { cn } from './utils'
+import { cn } from '@praxis-kit/primitive'
 
 export type CompoundTrace = {
   conditions: Record<string, VariantConditionValue>

@@ -1,4 +1,4 @@
-import type { AnyRecord } from '../types'
+import type { AnyRecord } from '@praxis-kit/shared'
 import { isEventKey, isFunction } from './predicates'
 import { policyHandlers } from './policies'
 import type { PropMergePolicy } from './policies'

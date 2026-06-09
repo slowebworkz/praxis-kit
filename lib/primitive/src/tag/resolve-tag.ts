@@ -1,4 +1,4 @@
-import type { ElementType } from '../types'
+import type { ElementType } from '@praxis-kit/shared'
 
 export type ResolveTagFn<TDefault extends ElementType> = <
   T extends ElementType | undefined = undefined,
