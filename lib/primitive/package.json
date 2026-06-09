@@ -14,7 +14,6 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@praxis-kit/shared": "workspace:*",
     "clsx": "catalog:"
   },
   "devDependencies": {

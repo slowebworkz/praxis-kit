@@ -562,9 +562,6 @@ importers:
 
   lib/primitive:
     dependencies:
-      '@praxis-kit/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
