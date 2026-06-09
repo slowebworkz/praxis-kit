@@ -2,8 +2,8 @@
 
 Tailwind CSS integration for praxis-kit — layout-aware class pipeline with variant composition.
 
-Wraps the core class pipeline with a Tailwind-specific resolver that understands layout props (`p`,
-`m`, `w`, `h`, etc.) and generates the correct utility classes based on variant context and tag.
+Wraps the core class pipeline with a layout-aware resolver that handles `flex`/`grid` boolean props,
+strips conflicting layout utilities, and ensures a deterministic class order.
 
 ---
 
@@ -17,12 +17,15 @@ pnpm add @praxis-kit/tailwind
 
 ## Usage
 
-Pass `createTailwindPipeline` as the `styling.plugin` in any framework adapter factory:
+`styling.plugin` expects a `ClassPluginFactory` — a function the runtime calls internally with the
+component's resolved pipeline options and strict mode. Pass `createTailwindPipeline` as a **function
+reference**. Do not call it yourself.
 
 ```ts
 import { createContractComponent } from '@praxis-kit/react'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
 
+// CORRECT — pass the reference; the runtime calls it
 const Button = createContractComponent({
   tag: 'button',
   styling: {
@@ -34,27 +37,34 @@ const Button = createContractComponent({
     plugin: createTailwindPipeline,
   },
 })
+
+// WRONG — calling it manually produces a ClassPlugin where a ClassPluginFactory is expected
+const Button = createContractComponent({
+  tag: 'button',
+  styling: {
+    plugin: createTailwindPipeline({ base: 'inline-flex' }, false), // ❌
+  },
+})
 ```
 
-With the plugin active, layout props are stripped before the element renders and converted to
-Tailwind classes automatically:
+With the plugin active, pass `flex` or `grid` as boolean props to control the display mode. The
+pipeline injects the display class automatically and strips conflicting layout utilities (e.g.
+`grid-*` classes are removed in flex mode):
 
 ```tsx
-// p, m, w, h, etc. become utility classes — not DOM attributes
-<Button p={4} w="full">
-  Click me
-</Button>
+<Button flex>Click me</Button>  // renders with class="flex inline-flex items-center ..."
+<Button grid>Click me</Button>  // renders with class="grid inline-flex items-center ..."
 ```
 
 ---
 
 ## Exports
 
-| Export                   | Description                                                              |
-| ------------------------ | ------------------------------------------------------------------------ |
-| `createTailwindPipeline` | Plugin factory — pass as `styling.plugin`                                |
-| `ClassBuilder`           | Builds the final class string from static + variant + layout sources     |
-| `ClassClassifier`        | Classifies an incoming class string into static vs. layout-owned buckets |
-| `DependencyEvaluator`    | Evaluates layout prop dependencies and resolves conflicts                |
-| `defaultDependencyRules` | Default ruleset governing layout prop relationships                      |
-| `LayoutState`            | Accumulates layout props during a render and emits their class string    |
+| Export                   | Description                                                                                   |
+| ------------------------ | --------------------------------------------------------------------------------------------- |
+| `createTailwindPipeline` | `ClassPluginFactory` — pass as `styling.plugin` reference; the runtime calls it               |
+| `ClassBuilder`           | Assembles the final class string from classified tokens; sorts layout tokens before utilities |
+| `ClassClassifier`        | Parses a class token into one of: `layout`, `conditional`, `gap`, or `utility`                |
+| `DependencyEvaluator`    | Decides whether a token survives the active layout mode using configurable regex rules        |
+| `defaultDependencyRules` | Built-in rules: strips `flex-*`/`grow`/`shrink`/`basis-*` in grid mode and vice versa         |
+| `LayoutState`            | Tracks the active layout mode (`flex`, `grid`, or `none`) for a single pipeline invocation    |
