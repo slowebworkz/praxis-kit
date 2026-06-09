@@ -172,6 +172,38 @@ function warnDeadVariants<V extends VariantMap>(
   }
 }
 
+/**
+ * Layout-aware class pipeline for Tailwind CSS utility class strings.
+ *
+ * This is a `ClassPluginFactory` — the runtime calls it with the component's
+ * resolved pipeline options and strict mode. Do NOT call it yourself; pass the
+ * function reference as `styling.plugin` and let the runtime invoke it.
+ *
+ * @example
+ * ```ts
+ * // CORRECT — pass the reference; the runtime calls it
+ * createContractComponent({
+ *   tag: 'div',
+ *   styling: {
+ *     base: 'items-center',
+ *     plugin: createTailwindPipeline,
+ *   },
+ * })
+ *
+ * // WRONG — calling it manually produces a ClassPlugin where a ClassPluginFactory is expected
+ * createContractComponent({
+ *   tag: 'div',
+ *   styling: {
+ *     plugin: createTailwindPipeline({ base: 'items-center' }, false),
+ *   },
+ * })
+ * ```
+ *
+ * With the plugin active, pass `flex` or `grid` as boolean props to control
+ * the display mode. The pipeline injects the display class and strips
+ * conflicting layout utilities (e.g. `grid-*` classes are removed in flex
+ * mode).
+ */
 export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   options: ClassPipelineOptions<V>,
   strict: StrictMode,
