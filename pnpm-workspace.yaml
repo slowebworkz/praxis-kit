@@ -2,6 +2,10 @@ packages:
   - "packages/*"
   - "lib/*"
   - "examples/*"
+peerDependencyRules:
+  allowedVersions:
+    "@vitejs/plugin-react>vite": "8"
+    "@vitejs/plugin-vue>vite": "8"
 allowBuilds:
   "@ast-grep/cli": true
   esbuild: true
