@@ -8,6 +8,7 @@ export function isFunction(value: unknown): value is (...args: unknown[]) => unk
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (!isObject(value)) return false
   const proto = Object.getPrototypeOf(value)
+  // null-prototype objects (Object.create(null)) are also plain objects.
   return proto === Object.prototype || proto === null
 }
 
