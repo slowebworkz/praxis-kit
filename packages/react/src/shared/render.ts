@@ -2,6 +2,7 @@ import { createElement } from 'react'
 import { jsx } from 'react/jsx-runtime'
 import type { ReactElement, Ref } from 'react'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
+import { enforceAllowedAs } from '@praxis-kit/core'
 import { isKnownAriaRole } from '@praxis-kit/core/primitive'
 import { applyFilter } from '@praxis-kit/adapter-utils'
 import type { SlotValidator } from './slot'
@@ -56,6 +57,14 @@ function resolveRenderState(
   // render is stripped here so it never reaches the DOM as an HTML attribute.
   const { as, asChild, render: _render, children, className, variantKey, ...rest } = props
   const tag = runtime.resolveTag(as)
+  if (runtime.options.allowedAs !== undefined && as !== undefined) {
+    enforceAllowedAs(
+      tag,
+      runtime.options.allowedAs,
+      runtime.options.strict,
+      runtime.options.displayName,
+    )
+  }
   const mergedProps = runtime.resolveProps(rest)
   const resolvedClass = runtime.resolveClasses(tag, mergedProps, className, variantKey)
   const filteredProps = applyFilter(mergedProps, filterProps, runtime.options.variantKeys)

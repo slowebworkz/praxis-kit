@@ -24,5 +24,6 @@ export type ResolvedFactoryOptions<
   readonly variantKeys: ReadonlySet<string>
   readonly childRules?: readonly ChildRuleInput[]
   readonly ariaRules?: readonly AriaRule[]
+  readonly allowedAs?: readonly ElementType[]
   readonly precomputedClasses?: Readonly<Record<string, string>>
 }

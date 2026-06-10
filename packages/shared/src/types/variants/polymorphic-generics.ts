@@ -9,12 +9,15 @@ export interface PolymorphicGenerics<
   Props extends AnyRecord = AnyRecord,
   Variants extends Readonly<VariantMap> = Readonly<VariantMap>,
   TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
+  TAllowed extends ElementType = ElementType,
 > {
   default: TDefault
   props: Props
   variants: Variants
   preset: TPreset
+  allowed: TAllowed
 }
 
 export type VariantsOf<T extends PolymorphicGenerics> = T['variants']
 export type PresetOf<T extends PolymorphicGenerics> = T['preset']
+export type AllowedOf<T extends PolymorphicGenerics> = T['allowed']

@@ -168,6 +168,41 @@ describe('asChild — static type contract', () => {
 
 // ─── Slottable — type contract ────────────────────────────────────────────────
 
+// ─── allowedAs: type-level enforcement ───────────────────────────────────────
+
+const ContentBlock = createContractComponent({
+  tag: 'article' as const,
+  enforcement: {
+    allowedAs: ['article', 'section'] as const,
+  },
+})
+
+describe('allowedAs — type-level enforcement', () => {
+  it('accepts a tag in the allowed set', () => {
+    const _el = <ContentBlock as="section" />
+    void _el
+  })
+
+  it('accepts the default tag', () => {
+    const _el = <ContentBlock />
+    void _el
+  })
+
+  it('rejects a tag outside the allowed set', () => {
+    // @ts-expect-error — "div" is not in allowedAs: ['article', 'section']
+    const _el = <ContentBlock as="div" />
+    void _el
+  })
+
+  it('rejects a valid HTML tag that is not in the allowed set', () => {
+    // @ts-expect-error — "a" is not in allowedAs: ['article', 'section']
+    const _el = <ContentBlock as="a" />
+    void _el
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 describe('Slottable — type contract', () => {
   it('can be composed as a sibling in asChild children', () => {
     const _el = (
