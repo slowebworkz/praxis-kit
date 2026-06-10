@@ -1,6 +1,7 @@
 import type { Simplify } from 'type-fest'
 import type { JSX, ReactElement, ReactNode, Ref } from 'react'
 import type {
+  AllowedOf,
   ClassName,
   DefaultOf,
   ElementType,
@@ -55,7 +56,9 @@ type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = Stri
   PropsOf<G>
 > &
   StripIndexSignature<VariantProps<VariantsOf<G>>> & {
-    as?: TAs
+    // TAs & AllowedOf<G>: when allowedAs is set, restricts the as prop to the allowed union.
+    // When no allowedAs, AllowedOf<G> = ElementType and TAs & ElementType = TAs (no change).
+    as?: TAs & AllowedOf<G>
     // Accept explicit `undefined` so exactOptionalPropertyTypes doesn't flag spreads
     // from wrapper components whose optional props arrive as `T | undefined` via Omit.
     className?: ClassName | undefined
