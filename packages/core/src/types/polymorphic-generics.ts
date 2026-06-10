@@ -1,4 +1,4 @@
-export type { PolymorphicGenerics, PresetOf, VariantsOf } from '@praxis-kit/shared/types'
+export type { AllowedOf, PolymorphicGenerics, PresetOf, VariantsOf } from '@praxis-kit/shared/types'
 
 import type { PolymorphicGenerics } from '@praxis-kit/shared/types'
 

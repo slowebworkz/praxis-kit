@@ -35,6 +35,7 @@ export type {
 export type { EnforcementOptions, FactoryOptions, StylingOptions } from './factory-options'
 export type { NonEmptyArray } from './non-empty-array'
 export type {
+  AllowedOf,
   DefaultOf,
   PolymorphicGenerics,
   PresetOf,

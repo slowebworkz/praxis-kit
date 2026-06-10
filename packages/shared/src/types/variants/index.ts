@@ -1,6 +1,6 @@
 export type * from './compound'
 export type { DefaultVariants, VariantProps } from './variant-props'
-export type { PolymorphicGenerics, PresetOf, VariantsOf } from './polymorphic-generics'
+export type { AllowedOf, PolymorphicGenerics, PresetOf, VariantsOf } from './polymorphic-generics'
 export type { PresetMap } from './preset-map'
 export type { PresetTarget } from './preset-target'
 export type { StringToBoolean } from './string-to-boolean'

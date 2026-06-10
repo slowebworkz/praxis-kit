@@ -12,6 +12,8 @@ export type ResolverOptions = {
   defaultTag: ElementType
   defaultProps?: AnyRecord
   strict?: StrictMode
+  allowedAs?: readonly ElementType[]
+  displayName?: string
 }
 
 /**
