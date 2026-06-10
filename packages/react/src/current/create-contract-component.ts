@@ -23,7 +23,8 @@ export function createContractComponent<
   Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
->(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps>) {
+  TAllowed extends ElementType = ElementType,
+>(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps, TAllowed>) {
   const bundle = buildRuntime(
     options as ReactFactoryOptions<TDefault, Props, Variants, TPreset>,
     Slot,
@@ -36,6 +37,6 @@ export function createContractComponent<
 
   applyDisplayName(Component, options.name)
   return Component as unknown as PolymorphicComponent<
-    PolymorphicGenerics<TDefault, Props & TPluginProps, Variants, TPreset>
+    PolymorphicGenerics<TDefault, Props & TPluginProps, Variants, TPreset, TAllowed>
   >
 }

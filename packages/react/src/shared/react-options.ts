@@ -18,7 +18,8 @@ export type ReactFactoryOptions<
   Variants extends Readonly<VariantMap>,
   TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
-> = FactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps> & {
+  TAllowed extends CoreElementType = CoreElementType,
+> = FactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps, TAllowed> & {
   /** Component used to render the asChild slot. Defaults to the built-in Slot. */
   slotComponent?: SlotComponent
   /**

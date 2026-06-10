@@ -9,10 +9,11 @@ export type FactoryOptions<
   V extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends PresetMap<V> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
+  TAllowed extends ElementType = ElementType,
 > = {
   readonly tag?: TDefault
   readonly name?: string
   readonly defaults?: Partial<NoInfer<Props>>
   readonly styling?: StylingOptions<V, TPreset, TPluginProps>
-  readonly enforcement?: EnforcementOptions
+  readonly enforcement?: EnforcementOptions<TAllowed>
 }

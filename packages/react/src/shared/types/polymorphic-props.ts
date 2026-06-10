@@ -1,6 +1,7 @@
-import type { Simplify } from 'type-fest'
+import type { NonEmptyTuple, Simplify } from 'type-fest'
 import type { JSX, ReactElement, ReactNode, Ref } from 'react'
 import type {
+  AllowedOf,
   ClassName,
   DefaultOf,
   ElementType,
@@ -36,101 +37,106 @@ type StripIndexSignature<T> = {
   [K in keyof T as string extends K ? never : K]: T[K]
 }
 
-/**
- * @internal
- * Control props owned by the polymorphic system. Separated so they can be
- * stripped from the intrinsic props via Omit before intersecting, which is
- * what lets TypeScript infer TAs from the `as` prop value.
- *
- * `asChild` and `children` are excluded — they are typed separately in the
- * discriminated union below so the slot and non-slot branches can enforce
- * different child constraints.
- *
- * `StripIndexSignature` is applied to `PropsOf<G>` and `VariantProps` so that
- * when TypeScript falls back to the constraint bound for an unresolved generic
- * (`Record<string, unknown>` or `Readonly<VariantMap>`), the resulting index
- * signature does not propagate into `keyof ControlProps` and collapse the Omit.
- */
-type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = StripIndexSignature<
-  PropsOf<G>
-> &
-  StripIndexSignature<VariantProps<VariantsOf<G>>> & {
-    as?: TAs
-    // Accept explicit `undefined` so exactOptionalPropertyTypes doesn't flag spreads
-    // from wrapper components whose optional props arrive as `T | undefined` via Omit.
-    className?: ClassName | undefined
-    variantKey?: keyof PresetOf<G>
-    ref?: Ref<ElementRef<TAs>>
-  }
+type ComponentProps<G extends PolymorphicGenerics> = StripIndexSignature<PropsOf<G>>
+type ComponentVariants<G extends PolymorphicGenerics> = StripIndexSignature<
+  VariantProps<VariantsOf<G>>
+>
+type OwnedProps<G extends PolymorphicGenerics> = ComponentProps<G> & ComponentVariants<G>
 
 /**
  * @internal
- * Intrinsic HTML attributes merged with control props, with `children` removed
- * so each branch of the discriminated union can type it independently.
+ * Polymorphic machinery props. Separated from `OwnedProps` so the two concerns
+ * are distinct: user-defined props vs. the tag/ref/class system.
+ *
+ * `asChild` and `children` are excluded — typed separately in the discriminated
+ * union below so each render mode can enforce different child constraints.
  */
-type SharedProps<G extends PolymorphicGenerics, TAs extends ElementType> = Omit<
+type PolymorphicControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = {
+  // TAs & AllowedOf<G>: when allowedAs is set, restricts the as prop to the allowed union.
+  // When no allowedAs, AllowedOf<G> = ElementType and TAs & ElementType = TAs (no change).
+  as?: TAs & AllowedOf<G>
+  // Accept explicit `undefined` so exactOptionalPropertyTypes doesn't flag spreads
+  // from wrapper components whose optional props arrive as `T | undefined` via Omit.
+  className?: ClassName | undefined
+  variantKey?: keyof PresetOf<G>
+  ref?: Ref<ElementRef<TAs>>
+}
+
+/** @internal Full set of props owned by the component — used as the Omit key in IntrinsicPropsWithoutOwned. */
+type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = OwnedProps<G> &
+  PolymorphicControlProps<G, TAs>
+
+type IntrinsicPropsWithoutOwned<G extends PolymorphicGenerics, TAs extends ElementType> = Omit<
   IntrinsicJSXProps<TAs>,
   keyof ControlProps<G, TAs> | 'children'
-> &
-  ControlProps<G, TAs>
-
-/**
- * Props for the normal (non-slot) render path. `asChild` is absent or `false`;
- * `children` accepts any `ReactNode`.
- *
- * HTML attributes are inferred from `TAs`, merged with component-defined `Props`
- * and `Variants`. Control props win on key conflicts. `Omit + intersection` is used
- * instead of `Merge` so TypeScript can infer `TAs` from the `as` prop value.
- */
-export type PolymorphicProps<
-  G extends PolymorphicGenerics,
-  TAs extends ElementType = DefaultOf<G>,
-> = Simplify<SharedProps<G, TAs> & { asChild?: false; children?: ReactNode | undefined }>
-
-/**
- * Props for the slot render path (`asChild: true`). One or more `ReactElement`
- * children are required. Multiple children are permitted for the Slottable
- * sibling pattern where one child is a `<Slottable>` wrapper.
- *
- * `as` is forbidden — combining `as` with `asChild` is a runtime invariant
- * violation, so it is rejected at the type level too.
- */
-export type PolymorphicWithAsChild<
-  G extends PolymorphicGenerics,
-  TAs extends ElementType = DefaultOf<G>,
-> = Simplify<
-  SharedProps<G, TAs> & {
-    asChild: true
-    as?: never
-    children: ReactElement | ReactElement[]
-  }
 >
 
+// children is excluded here so each render-mode discriminant can enforce its own child constraint.
+type SharedProps<
+  G extends PolymorphicGenerics,
+  TAs extends ElementType,
+> = IntrinsicPropsWithoutOwned<G, TAs> & ControlProps<G, TAs>
+
+/** Discriminant for the normal render path: `asChild` absent or false, any children. */
+type NormalRenderMode = {
+  asChild?: false
+  children?: ReactNode | undefined
+}
+
 /**
- * Props for the render-prop path. The `render` callback receives all resolved
- * props (className, ref, filtered component props) and returns the target element.
- * Spread the callback argument onto the element you want to receive the resolved
- * styles and attributes.
+ * Discriminant for the slot render path. One or more `ReactElement` children required.
+ * `as` is forbidden — combining `as` with `asChild` is a runtime invariant violation.
+ */
+type SlotRenderMode = {
+  asChild: true
+  as?: never
+  children: ReactElement | NonEmptyTuple<ReactElement>
+}
+
+/**
+ * Discriminant for the render-prop path. The callback receives all resolved props
+ * (className, ref, filtered component props) and returns the target element.
  *
- * This is the output form for the compile-time `asChild` transform: keeps the
- * same rendering flexibility as `asChild` without the `cloneElement` cost at
- * runtime. Unlike `asChild`, the render callback does not auto-merge conflicting
- * event handlers — spread position determines precedence.
+ * This is the output form for the compile-time `asChild` transform: keeps the same
+ * rendering flexibility as `asChild` without the `cloneElement` cost at runtime.
+ * Unlike `asChild`, the render callback does not auto-merge conflicting event
+ * handlers — spread position determines precedence.
  *
  * ```tsx
  * <Button render={(p) => <a href="/home" {...p} />} size="lg" />
  * ```
  */
+type CallbackRenderMode = {
+  render: (props: RenderCallbackProps) => ReactElement
+  asChild?: never
+  children?: never
+}
+
+/**
+ * Props for the normal render path. HTML attributes are inferred from `TAs`.
+ *
+ * `Omit + intersection` (not `Merge`) is used so TypeScript can infer `TAs` from
+ * the `as` prop value; control props win on key conflicts.
+ */
+export type PolymorphicProps<
+  G extends PolymorphicGenerics,
+  TAs extends ElementType = DefaultOf<G>,
+> = Simplify<SharedProps<G, TAs> & NormalRenderMode>
+
+/**
+ * Props for the slot render path (`asChild: true`). One or more `ReactElement`
+ * children are required. Multiple children are permitted for the Slottable
+ * sibling pattern where one child is a `<Slottable>` wrapper.
+ */
+export type PolymorphicWithAsChild<
+  G extends PolymorphicGenerics,
+  TAs extends ElementType = DefaultOf<G>,
+> = Simplify<SharedProps<G, TAs> & SlotRenderMode>
+
 export type PolymorphicWithRender<
   G extends PolymorphicGenerics,
   TAs extends ElementType = DefaultOf<G>,
-> = Simplify<
-  Omit<SharedProps<G, TAs>, 'children'> & {
-    render: (props: RenderCallbackProps) => ReactElement
-    asChild?: never
-    children?: never
-  }
->
+> = Simplify<SharedProps<G, TAs> & CallbackRenderMode>
 
 /**
  * A polymorphic component that infers HTML attributes and ref type from the `as` prop.
