@@ -65,11 +65,14 @@
 
   const tag = $derived(bundle.runtime.resolveTag(asProp as ElementType | undefined))
   const mergedProps = $derived(bundle.runtime.resolveProps(rest as UnknownProps))
+  const normalizedProps = $derived(
+    bundle.runtime.options.normalizeFn ? bundle.runtime.options.normalizeFn(mergedProps) : mergedProps,
+  )
   const resolvedClass = $derived(
-    bundle.runtime.resolveClasses(tag, mergedProps, cls as string | undefined, variantKey),
+    bundle.runtime.resolveClasses(tag, normalizedProps, cls as string | undefined, variantKey),
   )
   const filteredProps = $derived(
-    applyFilter(mergedProps, bundle.filterProps, bundle.runtime.options.variantKeys),
+    applyFilter(normalizedProps, bundle.filterProps, bundle.runtime.options.variantKeys),
   )
   const domProps = $derived(buildDomProps(filteredProps, resolvedClass, tag))
 
