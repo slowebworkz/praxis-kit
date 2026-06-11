@@ -1,6 +1,6 @@
 {
   "aria-only": {
-    "gzip": 6403
+    "gzip": 6725
   },
   "contracts-only": {
     "gzip": 7838
@@ -9,7 +9,7 @@
     "gzip": 8937
   },
   "minimal-polymorphic": {
-    "gzip": 3611
+    "gzip": 3809
   },
   "polymorphic-validation": {
     "gzip": 5107
