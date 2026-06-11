@@ -17,6 +17,7 @@ export default defineConfig({
     'guards/contract': 'src/guards/contract/index.ts',
     'guards/foundational': 'src/guards/foundational/index.ts',
     'guards/primitive': 'src/guards/primitive/index.ts',
+    'guards/children': 'src/guards/children/index.ts',
     'guards/variants': 'src/guards/variants/index.ts',
   },
   format: ['esm'],
