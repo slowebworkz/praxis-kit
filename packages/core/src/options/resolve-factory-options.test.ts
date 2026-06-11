@@ -86,6 +86,21 @@ describe('resolveFactoryOptions() — provided options', () => {
 })
 
 // ---------------------------------------------------------------------------
+// normalize
+// ---------------------------------------------------------------------------
+
+describe('resolveFactoryOptions() — normalize', () => {
+  it('omits normalizeFn when normalize is not provided', () => {
+    expect(resolveFactoryOptions({})).not.toHaveProperty('normalizeFn')
+  })
+
+  it('maps normalize to normalizeFn', () => {
+    const normalize = (p: Record<string, unknown>) => p
+    expect(resolveFactoryOptions({ normalize }).normalizeFn).toBe(normalize)
+  })
+})
+
+// ---------------------------------------------------------------------------
 // Result is frozen
 // ---------------------------------------------------------------------------
 

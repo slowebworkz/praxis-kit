@@ -286,6 +286,42 @@ describe('render', () => {
     warnSpy.mockRestore()
   })
 
+  it('normalizeFn is called with merged props and its output reaches the DOM', () => {
+    const normalize = vi.fn((p: Record<string, unknown>) => ({ ...p, 'data-normalized': 'yes' }))
+    const el = render({
+      runtime: makeRuntime({
+        options: {
+          variantKeys: new Set(),
+          displayName: 'Test',
+          strict: false,
+          normalizeFn: normalize,
+        },
+      }),
+      props: { 'data-input': 'x' },
+      ref: null,
+      slotComponent,
+      normalizeChildren: noopNormalize,
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
+    })
+    expect(normalize).toHaveBeenCalledOnce()
+    expect((el.props as Record<string, unknown>)['data-normalized']).toBe('yes')
+  })
+
+  it('normalizeFn is not called when absent', () => {
+    expect(() =>
+      render({
+        runtime: makeRuntime(),
+        props: {},
+        ref: null,
+        slotComponent,
+        normalizeChildren: noopNormalize,
+        filterProps: noopFilter,
+        slotValidator: defaultValidator,
+      }),
+    ).not.toThrow()
+  })
+
   it('control props (as, asChild, className, variantKey, children) are not forwarded to the DOM', () => {
     const el = render({
       runtime: makeRuntime(),
