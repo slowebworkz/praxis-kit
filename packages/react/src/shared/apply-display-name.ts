@@ -1,3 +1,9 @@
+import { COMPONENT_ID } from '@praxis-kit/shared/guards/children'
+
 export function applyDisplayName(component: object, name: string | undefined): void {
-  Object.assign(component, { displayName: name ?? 'PolymorphicComponent' })
+  const displayName = name ?? 'PolymorphicComponent'
+  Object.assign(component, {
+    displayName,
+    [COMPONENT_ID]: Symbol.for(`praxis.component.${displayName}`),
+  })
 }

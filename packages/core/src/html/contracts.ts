@@ -1,19 +1,5 @@
 import type { ChildRuleInput, EnforcementOptions } from '../types'
-
-// ─── Match helpers ────────────────────────────────────────────────────────────
-
-// Duck-types on the `type` property, which is present on React elements, Preact
-// elements, and Vue VNodes. Text/null children are filtered out by adapters before
-// the evaluator runs, so no transparent-node guard is needed here.
-function isTag(...tags: string[]): (child: unknown) => child is { type: string } {
-  const set = new Set(tags)
-  return (child: unknown): child is { type: string } =>
-    child !== null &&
-    typeof child === 'object' &&
-    'type' in (child as object) &&
-    typeof (child as { type: unknown }).type === 'string' &&
-    set.has((child as { type: string }).type)
-}
+import { isTag } from '@praxis-kit/shared/guards/children'
 
 // Matches any element whose tag is NOT in the blocked set, plus component children
 // (whose `type` is a function/class rather than a string). Used as the open-content

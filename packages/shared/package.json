@@ -63,6 +63,10 @@
       "types": "./dist/guards/primitive.d.ts",
       "import": "./dist/guards/primitive.js"
     },
+    "./guards/children": {
+      "types": "./dist/guards/children.d.ts",
+      "import": "./dist/guards/children.js"
+    },
     "./guards/variants": {
       "types": "./dist/guards/variants.d.ts",
       "import": "./dist/guards/variants.js"
