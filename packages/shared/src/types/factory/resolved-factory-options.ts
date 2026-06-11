@@ -23,7 +23,7 @@ export type ResolvedFactoryOptions<
   readonly displayName?: string
   readonly strict: StrictMode
   readonly variantKeys: ReadonlySet<string>
-  readonly normalizeFn?: NormalizeFn
+  readonly normalizeFn?: NormalizeFn<Props>
   readonly childRules?: readonly ChildRuleInput[]
   readonly ariaRules?: readonly AriaRule[]
   readonly allowedAs?: readonly ElementType[]
