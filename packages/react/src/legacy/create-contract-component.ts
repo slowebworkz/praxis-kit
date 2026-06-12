@@ -10,6 +10,7 @@ import { forwardRef } from 'react'
 import type { ReactElement } from 'react'
 import { Slot } from './slot'
 import { normalizeChildren } from './normalize-children'
+import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/shared/guards/children'
 import { applyDisplayName, buildRuntime, render } from '@praxis-kit/react/shared'
 import type {
   UnknownProps,
@@ -39,6 +40,9 @@ export function createContractComponent<
   )
 
   applyDisplayName(Component, options.name)
+  if (typeof bundle.runtime.options.defaultTag === 'string') {
+    Object.assign(Component, { [COMPONENT_DEFAULT_TAG]: bundle.runtime.options.defaultTag })
+  }
   return Component as unknown as PolymorphicComponent<
     PolymorphicGenerics<TDefault, Props & TPluginProps, Variants, TPreset, TAllowed>
   >
