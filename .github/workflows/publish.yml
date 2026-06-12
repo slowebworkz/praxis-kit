@@ -61,5 +61,12 @@ jobs:
       - name: Publish
         run: |
           for pkg in packages/react packages/tailwind packages/eslint-plugin packages/ts-plugin; do
-            (cd "$pkg" && pnpm publish --access public --no-git-checks --tag ${{ steps.dist_tag.outputs.tag }})
+            name=$(node -p "require('./$pkg/package.json').name")
+            version=$(node -p "require('./$pkg/package.json').version")
+            if npm view "$name@$version" version &>/dev/null; then
+              echo "Skipping $name@$version — already published"
+            else
+              (cd "$pkg" && pnpm publish --access public --no-git-checks --tag ${{ steps.dist_tag.outputs.tag }})
+              sleep 5
+            fi
           done
