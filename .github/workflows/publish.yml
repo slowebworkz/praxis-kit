@@ -50,7 +50,7 @@ jobs:
           for pkg in packages/react packages/tailwind packages/eslint-plugin packages/ts-plugin; do
             tmpdir=$(mktemp -d)
             (cd "$pkg" && pnpm pack --pack-destination "$tmpdir" 2>/dev/null)
-            if tar -xzf "$tmpdir"/*.tgz -C "$tmpdir" && grep -r '"catalog:' "$tmpdir/package/package.json" 2>/dev/null; then
+            if tar -xzf "$tmpdir"/*.tgz -C "$tmpdir" && grep -rF '"catalog:' "$tmpdir/package/package.json" 2>/dev/null; then
               echo "ERROR: $pkg published package.json contains unresolved catalog: specifiers"
               failed=1
             fi
