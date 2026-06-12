@@ -25,7 +25,8 @@
   "devDependencies": {
     "tsup": "catalog:",
     "vitest": "catalog:",
-    "@praxis-kit/core": "workspace:*"
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/shared": "workspace:*"
   },
   "publishConfig": {
     "access": "public"
