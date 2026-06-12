@@ -1,6 +1,7 @@
 import type { AnyRecord, ClassName, ElementType, EmptyRecord, TagMap } from '../primitives'
 import type { StrictMode } from '../config'
 import type { AriaRule } from '../aria-rule'
+import type { NormalizeFn } from './factory-options'
 import type { ChildRuleInput } from '../contracts'
 import type { CompoundVariant } from '../variants/compound'
 import type { PresetMap, VariantMap, VariantProps } from '../variants'
@@ -22,6 +23,7 @@ export type ResolvedFactoryOptions<
   readonly displayName?: string
   readonly strict: StrictMode
   readonly variantKeys: ReadonlySet<string>
+  readonly normalizeFn?: NormalizeFn<Props>
   readonly childRules?: readonly ChildRuleInput[]
   readonly ariaRules?: readonly AriaRule[]
   readonly allowedAs?: readonly ElementType[]

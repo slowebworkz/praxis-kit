@@ -94,16 +94,19 @@ export function render<TProps extends KnownProps>({
 
   const tag = createMemo(() => resolveTag(runtime, known.as))
   const mergedProps = createMemo(() => runtime.resolveProps(rest as UnknownProps))
+  const normalizedProps = createMemo(() =>
+    runtime.options.normalizeFn ? runtime.options.normalizeFn(mergedProps()) : mergedProps(),
+  )
   const resolvedClass = createMemo(() =>
     runtime.resolveClasses(
       tag(),
-      mergedProps(),
+      normalizedProps(),
       known.class as string | undefined,
       known.variantKey as string | undefined,
     ),
   )
   const filteredProps = createMemo(() =>
-    applyFilter(mergedProps(), filterProps, runtime.options.variantKeys),
+    applyFilter(normalizedProps(), filterProps, runtime.options.variantKeys),
   )
 
   // createEffect so validation re-runs reactively when known.children changes.
