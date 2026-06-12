@@ -910,6 +910,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../core
+      '@praxis-kit/shared':
+        specifier: workspace:*
+        version: link:../shared
       tsup:
         specifier: 'catalog:'
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
