@@ -8,7 +8,7 @@ import type { FilterPredicate, Runtime } from './types'
 
 function makeRuntime(overrides?: Partial<Runtime>): Runtime {
   return {
-    options: { variantKeys: new Set(), displayName: 'Test', strict: 'throw' },
+    options: { defaultTag: 'div', variantKeys: new Set(), displayName: 'Test', strict: 'throw' },
     resolveTag: (as) => as ?? 'div',
     resolveProps: (props) => props,
     resolveClasses: (_tag, _props, className) => className ?? '',
@@ -276,7 +276,7 @@ describe('render — asChild', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const vnode = render({
       runtime: makeRuntime({
-        options: { variantKeys: new Set(), displayName: 'Box', strict: 'warn' },
+        options: { defaultTag: 'div', variantKeys: new Set(), displayName: 'Box', strict: 'warn' },
       }),
       attrs: { asChild: true },
       slots: slotsWith(h('span'), h('div')),
@@ -408,7 +408,7 @@ describe('render — discarded children warning', () => {
 
     render({
       runtime: makeRuntime({
-        options: { variantKeys: new Set(), displayName: 'Test', strict: 'warn' },
+        options: { defaultTag: 'div', variantKeys: new Set(), displayName: 'Test', strict: 'warn' },
       }),
       attrs: { asChild: true },
       slots: mixedSlots,
@@ -429,7 +429,7 @@ describe('render — discarded children warning', () => {
 
     render({
       runtime: makeRuntime({
-        options: { variantKeys: new Set(), displayName: 'Test', strict: false },
+        options: { defaultTag: 'div', variantKeys: new Set(), displayName: 'Test', strict: false },
       }),
       attrs: { asChild: true },
       slots: mixedSlots,
@@ -449,7 +449,7 @@ describe('render — discarded children warning', () => {
 
     render({
       runtime: makeRuntime({
-        options: { variantKeys: new Set(), displayName: 'Test', strict: 'warn' },
+        options: { defaultTag: 'div', variantKeys: new Set(), displayName: 'Test', strict: 'warn' },
       }),
       attrs: {},
       slots: mixedSlots,
