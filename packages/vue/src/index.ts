@@ -1,4 +1,5 @@
 export { createContractComponent } from './create-contract-component'
+export { defineContractComponent } from '@praxis-kit/adapter-utils'
 export type { VueFactoryOptions } from './vue-options'
 export { Slottable } from './slot'
 export type { SlottableProps } from './slot'
