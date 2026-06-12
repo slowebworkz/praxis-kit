@@ -8,7 +8,7 @@ import type { FilterPredicate, Runtime } from './types'
 
 function makeRuntime(overrides?: Partial<Runtime>): Runtime {
   return {
-    options: { variantKeys: new Set(), displayName: 'Test', strict: 'throw' },
+    options: { defaultTag: 'div', variantKeys: new Set(), displayName: 'Test', strict: 'throw' },
     resolveTag: (as) => as ?? 'div',
     resolveProps: (props) => props,
     resolveClasses: (_tag, _props, className) => className ?? '',
@@ -254,7 +254,7 @@ describe('render', () => {
     const child = createElement('button')
     render({
       runtime: makeRuntime({
-        options: { variantKeys: new Set(), displayName: 'Test', strict: 'warn' },
+        options: { defaultTag: 'div', variantKeys: new Set(), displayName: 'Test', strict: 'warn' },
       }),
       props: { asChild: true, children: [child, 'click me'] },
       ref: null,
@@ -273,7 +273,7 @@ describe('render', () => {
     const child = createElement('button')
     render({
       runtime: makeRuntime({
-        options: { variantKeys: new Set(), displayName: 'Test', strict: false },
+        options: { defaultTag: 'div', variantKeys: new Set(), displayName: 'Test', strict: false },
       }),
       props: { asChild: true, children: [child, 'click me'] },
       ref: null,
@@ -291,6 +291,7 @@ describe('render', () => {
     const el = render({
       runtime: makeRuntime({
         options: {
+          defaultTag: 'div',
           variantKeys: new Set(),
           displayName: 'Test',
           strict: false,
