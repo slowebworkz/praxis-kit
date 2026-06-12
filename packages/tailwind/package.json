@@ -1,6 +1,6 @@
 {
   "name": "@praxis-kit/tailwind",
-  "version": "0.7.0-beta.1",
+  "version": "0.7.0-beta.2",
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -20,7 +20,6 @@
     "lint:pkg": "publint"
   },
   "dependencies": {
-    "@praxis-kit/shared": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {

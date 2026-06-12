@@ -5,5 +5,5 @@ export default defineConfig({
   format: ['esm'],
   dts: true,
   clean: true,
-  noExternal: ['@praxis-kit/core'],
+  noExternal: ['@praxis-kit/core', '@praxis-kit/shared'],
 })
