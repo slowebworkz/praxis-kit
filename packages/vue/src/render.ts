@@ -37,13 +37,16 @@ export function resolveRenderState(
   const { as, asChild, class: className, variantKey, ...rest } = attrs as KnownProps
   const tag = runtime.resolveTag(as as ElementType | undefined)
   const mergedProps = runtime.resolveProps(rest as UnknownProps)
+  const normalizedProps = runtime.options.normalizeFn
+    ? runtime.options.normalizeFn(mergedProps)
+    : mergedProps
   const resolvedClass = runtime.resolveClasses(
     tag,
-    mergedProps,
+    normalizedProps,
     typeof className === 'string' ? className : undefined,
     typeof variantKey === 'string' ? variantKey : undefined,
   )
-  const filteredProps = applyFilter(mergedProps, filterProps, runtime.options.variantKeys)
+  const filteredProps = applyFilter(normalizedProps, filterProps, runtime.options.variantKeys)
   return {
     tag,
     directives: buildDirectives(as as ElementType | undefined, asChild as boolean | undefined),

@@ -44,6 +44,9 @@ export function resolveFactoryOptions<
     ...(styling?.variants !== undefined && { variants: styling.variants }),
     ...(styling?.defaults !== undefined && { defaultVariants: styling.defaults }),
     ...(styling?.compounds !== undefined && { compoundVariants: styling.compounds }),
+    ...(options.normalize !== undefined && {
+      normalizeFn: options.normalize,
+    }),
     ...(enforcement?.aria !== undefined && { ariaRules: enforcement.aria }),
     ...(enforcement?.children !== undefined && { childRules: enforcement.children }),
     ...(enforcement?.allowedAs !== undefined && { allowedAs: enforcement.allowedAs }),
