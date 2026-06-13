@@ -1,5 +1,5 @@
 export { createContractComponent } from './create-contract-component'
-export { defineContractComponent } from '@praxis-kit/adapter-utils'
+export { defineContractComponent } from './define-contract-component'
 export { Slottable } from './slot'
 export type { PreactFactoryOptions } from './preact-options'
 export type {
