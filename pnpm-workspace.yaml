@@ -37,7 +37,7 @@ catalog:
   "@vitejs/plugin-vue": ^6.0.7
   "@vitest/ui": ^4.1.8
   "@vue/compiler-dom": ^3.5.35
-  "@vue/server-renderer": ^3.5.35
+  "@vue/server-renderer": ^3.5.38
   "@vue/test-utils": ^2.4.0
   class-variance-authority: ^0.7.1
 
