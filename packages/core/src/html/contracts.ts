@@ -1,4 +1,4 @@
-import type { ChildRuleInput, EnforcementOptions } from '../types'
+import type { AriaContext, AriaFix, AriaResult, ChildRuleInput, EnforcementOptions } from '../types'
 import { isTag } from '@praxis-kit/shared/guards/children'
 
 // Matches any element whose tag is NOT in the blocked set, plus component children
@@ -238,6 +238,50 @@ export const buttonContract: EnforcementOptions = {
   ],
 }
 
+// ─── Landmark role contract ───────────────────────────────────────────────────
+
+// article, aside, footer, header, main, nav all have unconditional landmark roles.
+// section and form are excluded: their landmark role is conditional on having an
+// accessible name, so enforcement here would fire incorrectly on unlabelled usage.
+const LANDMARK_TAGS = new Set(['article', 'aside', 'footer', 'header', 'main', 'nav'])
+
+const removeLandmarkRoleOverride: AriaFix = {
+  kind: 'removeRole',
+  apply: ({ props }) => {
+    if (!('role' in props)) return { applied: false, next: props }
+    const { role: _r, ...rest } = props
+    return { applied: true, next: rest, previous: props }
+  },
+}
+
+function landmarkRoleRule({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] {
+  if (!LANDMARK_TAGS.has(tag) || !implicitRole) return []
+  const role = props.role
+  // role === implicitRole is already caught by the built-in #checkRedundantRole (warns, removes).
+  if (!role || role === implicitRole) return []
+  return [
+    {
+      valid: false,
+      fixable: true,
+      severity: 'error',
+      fix: removeLandmarkRoleOverride,
+      message: `<${tag}> has a fixed landmark role="${implicitRole}". role="${role}" overrides it and confuses assistive technology. The override has been removed.`,
+    },
+  ]
+}
+
+/**
+ * Elements with an unconditional landmark role (`<article>`, `<aside>`, `<footer>`,
+ * `<header>`, `<main>`, `<nav>`).
+ *
+ * - `role="<implicit>"` → warning: redundant, removed (built-in engine behaviour).
+ * - `role="<anything else>"` → error: overrides the fixed landmark, removed.
+ */
+export const landmarkContract: EnforcementOptions = {
+  strict: 'warn',
+  aria: [landmarkRoleRule],
+}
+
 // ─── Convenience map ──────────────────────────────────────────────────────────
 
 /**
@@ -254,6 +298,12 @@ export const buttonContract: EnforcementOptions = {
  * ```
  */
 export const htmlContracts: Record<string, EnforcementOptions> = {
+  article: landmarkContract,
+  aside: landmarkContract,
+  footer: landmarkContract,
+  header: landmarkContract,
+  main: landmarkContract,
+  nav: landmarkContract,
   ul: listContract,
   ol: listContract,
   menu: menuContract,
