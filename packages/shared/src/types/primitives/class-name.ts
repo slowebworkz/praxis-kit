@@ -1,1 +1,1 @@
-export type ClassName = string
+export type ClassName = string | string[]

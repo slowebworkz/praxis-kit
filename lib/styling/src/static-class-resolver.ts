@@ -3,13 +3,18 @@ export class StaticClassResolver {
   readonly #cache = new Map<string, string>()
   readonly #resolveTag: (tag: string) => string
 
-  constructor(baseClass: string, tagMap?: Record<string, string | undefined>) {
-    this.#baseClass = baseClass
+  constructor(
+    baseClass: string | string[],
+    tagMap?: Record<string, string | string[] | undefined>,
+  ) {
+    this.#baseClass = Array.isArray(baseClass) ? baseClass.join(' ') : baseClass
 
     this.#resolveTag = tagMap
       ? (tag) => {
           const extra = tagMap[tag]
-          return extra ? `${this.#baseClass} ${extra}` : this.#baseClass
+          if (!extra) return this.#baseClass
+          const extraStr = Array.isArray(extra) ? extra.join(' ') : extra
+          return `${this.#baseClass} ${extraStr}`
         }
       : () => this.#baseClass
   }
