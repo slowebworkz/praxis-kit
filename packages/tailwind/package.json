@@ -1,6 +1,6 @@
 {
   "name": "@praxis-kit/tailwind",
-  "version": "0.8.0-beta.1",
+  "version": "0.8.0-beta.3",
   "type": "module",
   "sideEffects": false,
   "exports": {
