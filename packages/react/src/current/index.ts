@@ -1,4 +1,5 @@
 export * from './create-aria-enforced-component'
+export { defineContractComponent } from './define-contract-component'
 export * from './create-children-enforced-component'
 export * from './create-contract-component'
 export * from './create-contracted-component'
