@@ -217,7 +217,9 @@ describe('createPolymorphic — plugin contract', () => {
     expect(() =>
       createPolymorphic({
         styling: {
-          plugin: () => ({ pipeline: (_tag, _props, _cls) => _cls ?? '' }),
+          plugin: () => ({
+            pipeline: (_tag, _props, _cls) => (Array.isArray(_cls) ? _cls.join(' ') : (_cls ?? '')),
+          }),
         },
       }),
     ).not.toThrow()

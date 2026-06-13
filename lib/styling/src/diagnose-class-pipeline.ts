@@ -33,11 +33,13 @@ export function diagnoseClassPipeline<TVariants extends VariantMap>(
   className?: string,
   variantKey?: string,
 ): ClassDiagnosis {
-  const base = options.baseClassName ?? ''
+  const rawBase = options.baseClassName ?? ''
+  const base = Array.isArray(rawBase) ? rawBase.join(' ') : rawBase
 
   const tagMapBypassed = variantKey !== undefined
-  const tagMapClass =
+  const rawTagMapClass =
     typeof tag === 'string' && options.tagMap ? (options.tagMap[tag] ?? null) : null
+  const tagMapClass = Array.isArray(rawTagMapClass) ? rawTagMapClass.join(' ') : rawTagMapClass
 
   const presetMap = (options.presetMap as Record<string, AnyRecord> | undefined) ?? {}
   const presetValues: AnyRecord | null =
