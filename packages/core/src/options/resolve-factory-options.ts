@@ -8,13 +8,13 @@ import type {
   VariantMap,
 } from '../types'
 
-const EMPTY_VARIANT_KEYS = new Set<string>()
+const EMPTY_VARIANT_KEYS: ReadonlySet<string> = new Set()
 
-function whenDefined<K extends string, T>(
-  value: T | undefined,
+function whenDefined<K extends PropertyKey, V>(
   key: K,
-): Record<K, T> | EmptyRecord {
-  return value === undefined ? {} : ({ [key]: value } as Record<K, T>)
+  value: V | undefined,
+): Record<K, V> | EmptyRecord {
+  return value === undefined ? {} : ({ [key]: value } as Record<K, V>)
 }
 
 export function resolveFactoryOptions<
@@ -30,28 +30,23 @@ export function resolveFactoryOptions<
   const variantKeys: ReadonlySet<string> =
     styling?.variants === undefined ? EMPTY_VARIANT_KEYS : new Set(Object.keys(styling.variants))
 
-  // Conditional spreads rather than `key: value | undefined` satisfy exactOptionalPropertyTypes:
-  // { key: undefined } and {} are distinct shapes under that flag.
+  // whenDefined spreads satisfy exactOptionalPropertyTypes: { key: undefined } and {} are distinct.
   return Object.freeze({
     defaultTag: (options.tag ?? 'div') as TDefault,
     strict: enforcement?.strict ?? false,
     variantKeys,
-    ...whenDefined(options.name, 'displayName'),
-    ...(options.defaults !== undefined && { defaultProps: options.defaults }),
-    ...(styling?.base !== undefined && { baseClassName: styling.base }),
-    ...(styling?.tags !== undefined && { tagMap: styling.tags }),
-    ...(styling?.presets !== undefined && { presetMap: styling.presets }),
-    ...(styling?.variants !== undefined && { variants: styling.variants }),
-    ...(styling?.defaults !== undefined && { defaultVariants: styling.defaults }),
-    ...(styling?.compounds !== undefined && { compoundVariants: styling.compounds }),
-    ...(options.normalize !== undefined && {
-      normalizeFn: options.normalize,
-    }),
-    ...(enforcement?.aria !== undefined && { ariaRules: enforcement.aria }),
-    ...(enforcement?.children !== undefined && { childRules: enforcement.children }),
-    ...(enforcement?.allowedAs !== undefined && { allowedAs: enforcement.allowedAs }),
-    ...(styling?.precomputedClasses !== undefined && {
-      precomputedClasses: styling.precomputedClasses,
-    }),
+    ...whenDefined('displayName', options.name),
+    ...whenDefined('defaultProps', options.defaults),
+    ...whenDefined('baseClassName', styling?.base),
+    ...whenDefined('tagMap', styling?.tags),
+    ...whenDefined('presetMap', styling?.presets),
+    ...whenDefined('variants', styling?.variants),
+    ...whenDefined('defaultVariants', styling?.defaults),
+    ...whenDefined('compoundVariants', styling?.compounds),
+    ...whenDefined('normalizeFn', options.normalize),
+    ...whenDefined('ariaRules', enforcement?.aria),
+    ...whenDefined('childRules', enforcement?.children),
+    ...whenDefined('allowedAs', enforcement?.allowedAs),
+    ...whenDefined('precomputedClasses', styling?.precomputedClasses),
   })
 }
