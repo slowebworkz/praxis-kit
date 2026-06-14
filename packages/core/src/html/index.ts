@@ -1,3 +1,4 @@
+export type { HtmlContractMap } from './contracts'
 export {
   listContract,
   tableContract,
@@ -11,5 +12,6 @@ export {
   figureContract,
   detailsContract,
   fieldsetContract,
+  textOnlyContract,
   htmlContracts,
 } from './contracts'

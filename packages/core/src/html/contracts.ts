@@ -1,13 +1,13 @@
 import type { AriaContext, AriaFix, AriaResult, ChildRuleInput, EnforcementOptions } from '../types'
-import { isString, isTag } from '@praxis-kit/shared/guards'
+import { isNumber, isString, isTag } from '@praxis-kit/shared/guards'
 import { isObject } from '@praxis-kit/primitive'
 
 // Matches any element whose tag is NOT in the blocked set, plus component children
 // (whose `type` is a function/class rather than a string). Used as the open-content
 // catch-all alongside a constrained singleton child (e.g. figcaption, summary, legend).
-function isOpenContent(...blockedTags: string[]): (child: unknown) => child is object {
+function isOpenContent(...blockedTags: string[]): (child: unknown) => child is { type: unknown } {
   const set = new Set(blockedTags)
-  return (child: unknown): child is object =>
+  return (child: unknown): child is { type: unknown } =>
     isObject(child) &&
     'type' in child &&
     (!isString((child as { type: unknown }).type) || !set.has((child as { type: string }).type))
@@ -59,6 +59,10 @@ const VOID_TAGS = [
   'track',
   'wbr',
 ] as const
+
+// Raw text (<script>, <style>) and escapable raw text (<textarea>, <title>) per HTML5,
+// plus <option> whose content model is character data only.
+const TEXT_ONLY_TAGS = ['option', 'script', 'style', 'textarea', 'title'] as const
 
 // section and form are excluded: their landmark role is conditional on having an
 // accessible name, so enforcement here would fire incorrectly on unlabelled usage.
@@ -204,6 +208,17 @@ export const htmlContract = contract([
  */
 export const voidContract = contract([])
 
+/**
+ * Raw text (`<script>`, `<style>`), escapable raw text (`<textarea>`, `<title>`), and
+ * `<option>` — only text nodes (strings or numbers) are permitted as children.
+ */
+export const textOnlyContract = contract([
+  {
+    name: 'text',
+    match: (child: unknown): child is string | number => isString(child) || isNumber(child),
+  },
+])
+
 // ─── Landmark role contract ───────────────────────────────────────────────────
 
 const LANDMARK_TAG_SET = new Set<string>(LANDMARK_TAGS)
@@ -246,15 +261,18 @@ export const landmarkContract = ariaContract([landmarkRoleRule])
 
 const CONTRACT_GROUPS = [
   [VOID_TAGS, voidContract],
+  [TEXT_ONLY_TAGS, textOnlyContract],
   [LANDMARK_TAGS, landmarkContract],
   [['ul', 'ol', 'menu'], listContract],
   [['audio', 'video'], mediaContract],
   [['thead', 'tbody', 'tfoot'], tableBodyContract],
 ] as const
 
+export type HtmlContractMap = Record<string, EnforcementOptions>
+
 function contractMap(
   groups: readonly (readonly [readonly string[], EnforcementOptions])[],
-): Record<string, EnforcementOptions> {
+): HtmlContractMap {
   return Object.fromEntries(
     groups.flatMap(([tags, enforcement]) => tags.map((tag) => [tag, enforcement])),
   )
@@ -273,7 +291,7 @@ function contractMap(
  * enforcement: { ...htmlContracts.ul, strict: 'throw' }
  * ```
  */
-export const htmlContracts: Record<string, EnforcementOptions> = {
+export const htmlContracts: HtmlContractMap = {
   ...contractMap(CONTRACT_GROUPS),
 
   table: tableContract,
