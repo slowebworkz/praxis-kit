@@ -1,9 +1,7 @@
-import type { AnyRecord } from '../types/primitives'
-import type { StrictMode } from '../types/strict-mode'
-import type { VariantMap } from '../types/variant'
+import type { AnyRecord, StrictMode, VariantMap } from '../types'
 
 type Options = {
-  readonly presetMap?: Readonly<Record<string, unknown>>
+  readonly presetMap?: Readonly<AnyRecord>
   readonly variants?: Readonly<VariantMap>
   readonly strict: StrictMode
   readonly displayName?: string
@@ -25,8 +23,9 @@ function flushAsyncWarns(): void {
 
 function report(strict: StrictMode, message: string): void {
   if (!strict) return
-  if (strict === true || strict === 'throw') throw new Error(message)
-  if (strict === 'async-warn') {
+  const mode = strict === true ? 'throw' : strict
+  if (mode === 'throw') throw new Error(message)
+  if (mode === 'async-warn') {
     if (pendingAsyncWarns.has(message)) return
     pendingAsyncWarns.add(message)
     if (!asyncWarnScheduled) {
