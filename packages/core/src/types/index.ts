@@ -1,3 +1,4 @@
+export type { AriaEngine } from './aria-engine'
 export type {
   AriaContext,
   AriaFix,
@@ -6,13 +7,14 @@ export type {
   AriaResult,
   AriaRule,
   FixKind,
-  RemoveAttributeFixKind,
   InvalidResult,
   InvalidWithFix,
   InvalidWithoutFix,
+  RemoveAttributeFixKind,
   Severity,
   ValidResult,
 } from './aria-rule'
+export type { Capabilities } from './capabilities'
 export type {
   Cardinality,
   CardinalityInput,
