@@ -941,6 +941,76 @@ importers:
         specifier: 'catalog:'
         version: 4.1.8(@types/node@25.9.1)(@vitest/ui@4.1.8)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
+  packages/kit:
+    dependencies:
+      clsx:
+        specifier: 'catalog:'
+        version: 2.1.1
+      eslint:
+        specifier: '>=9'
+        version: 10.4.1(jiti@2.7.0)
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.6.0
+    devDependencies:
+      '@praxis-kit/adapter-utils':
+        specifier: workspace:*
+        version: link:../../lib/adapter-utils
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../core
+      '@praxis-kit/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@sveltejs/vite-plugin-svelte':
+        specifier: 'catalog:'
+        version: 7.1.2(svelte@5.56.3(@typescript-eslint/types@8.60.0))(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.1
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.3(@types/react@19.2.17)
+      '@typescript-eslint/utils':
+        specifier: 'catalog:'
+        version: 8.60.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)
+      lit:
+        specifier: 'catalog:'
+        version: 3.3.3
+      preact:
+        specifier: 'catalog:'
+        version: 10.29.2
+      react:
+        specifier: 'catalog:'
+        version: 19.2.7
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.7(react@19.2.7)
+      solid-js:
+        specifier: 'catalog:'
+        version: 1.9.13
+      svelte:
+        specifier: 'catalog:'
+        version: 5.56.3(@typescript-eslint/types@8.60.0)
+      ts-morph:
+        specifier: 'catalog:'
+        version: 28.0.0
+      tsup:
+        specifier: 'catalog:'
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vite:
+        specifier: 'catalog:'
+        version: 8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0)
+      vue:
+        specifier: 'catalog:'
+        version: 3.5.35(typescript@6.0.3)
+
   packages/playwright:
     devDependencies:
       '@axe-core/playwright':
