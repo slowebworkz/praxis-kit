@@ -27,7 +27,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: pnpm --filter "./packages/*" --filter "./lib/*" build
+        run: pnpm --filter praxis-kit build
 
       - name: Configure npm auth
         run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
@@ -37,7 +37,7 @@ jobs:
       - name: Resolve dist-tag
         id: dist_tag
         run: |
-          version=$(node -p "require('./adapters/react/package.json').version")
+          version=$(node -p "require('./packages/kit/package.json').version")
           if echo "$version" | grep -qE '-(alpha|beta|rc)'; then
             echo "tag=beta" >> "$GITHUB_OUTPUT"
           else
@@ -46,27 +46,21 @@ jobs:
 
       - name: Check for unresolved catalog specifiers
         run: |
-          failed=0
-          for pkg in adapters/react adapters/preact adapters/solid adapters/svelte adapters/vue adapters/lit adapters/web packages/tailwind packages/eslint-plugin packages/ts-plugin packages/vite-plugin packages/codemod; do
-            tmpdir=$(mktemp -d)
-            (cd "$pkg" && pnpm pack --pack-destination "$tmpdir" 2>/dev/null)
-            if tar -xzf "$tmpdir"/*.tgz -C "$tmpdir" && grep -rF "\"catalog:" "$tmpdir/package/package.json" 2>/dev/null; then
-              echo "ERROR: $pkg published package.json contains unresolved catalog: specifiers"
-              failed=1
-            fi
+          tmpdir=$(mktemp -d)
+          (cd packages/kit && pnpm pack --pack-destination "$tmpdir" 2>/dev/null)
+          if tar -xzf "$tmpdir"/*.tgz -C "$tmpdir" && grep -rF "\"catalog:" "$tmpdir/package/package.json" 2>/dev/null; then
+            echo "ERROR: packages/kit published package.json contains unresolved catalog: specifiers"
             rm -rf "$tmpdir"
-          done
-          exit $failed
+            exit 1
+          fi
+          rm -rf "$tmpdir"
 
       - name: Publish
         run: |
-          for pkg in adapters/react adapters/preact adapters/solid adapters/svelte adapters/vue adapters/lit adapters/web packages/tailwind packages/eslint-plugin packages/ts-plugin packages/vite-plugin packages/codemod; do
-            name=$(node -p "require('./$pkg/package.json').name")
-            version=$(node -p "require('./$pkg/package.json').version")
-            if npm view "$name@$version" version &>/dev/null; then
-              echo "Skipping $name@$version — already published"
-            else
-              (cd "$pkg" && pnpm publish --access public --no-git-checks --tag ${{ steps.dist_tag.outputs.tag }})
-              sleep 5
-            fi
-          done
+          name=$(node -p "require('./packages/kit/package.json').name")
+          version=$(node -p "require('./packages/kit/package.json').version")
+          if npm view "$name@$version" version &>/dev/null; then
+            echo "Skipping $name@$version — already published"
+          else
+            (cd packages/kit && pnpm publish --access public --no-git-checks --tag ${{ steps.dist_tag.outputs.tag }})
+          fi
