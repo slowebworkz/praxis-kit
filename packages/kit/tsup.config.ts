@@ -2,6 +2,14 @@ import { defineConfig } from 'tsup'
 
 const adapterNoExternal = ['@praxis-kit/adapter-utils', '@praxis-kit/core']
 
+// @praxis-kit/shared is only linked under packages/kit/node_modules, not under
+// adapters/*/node_modules. esbuild resolves from the source file's directory, so
+// it can't find shared via normal module resolution. Aliases (resolved from CWD =
+// packages/kit/) redirect it to source so esbuild can bundle it correctly.
+const sharedAlias = {
+  '@praxis-kit/shared': '../../packages/shared/src',
+}
+
 export default [
   // React — current (index) + legacy entry
   defineConfig({
@@ -13,6 +21,14 @@ export default [
     dts: true,
     tsconfig: 'tsconfig.build-react.json',
     noExternal: adapterNoExternal,
+    esbuildOptions(options) {
+      options.alias = {
+        ...options.alias,
+        ...sharedAlias,
+        // react/shared is a self-reference within the react adapter source tree
+        '@praxis-kit/react/shared': '../../adapters/react/src/shared',
+      }
+    },
   }),
 
   // Preact
@@ -20,8 +36,11 @@ export default [
     entry: { 'preact/index': '../../adapters/preact/src/index.ts' },
     format: ['esm'],
     dts: true,
-    tsconfig: '../../adapters/preact/tsconfig.build.json',
+    tsconfig: 'tsconfig.build-preact.json',
     noExternal: adapterNoExternal,
+    esbuildOptions(options) {
+      options.alias = { ...options.alias, ...sharedAlias }
+    },
   }),
 
   // Solid — custom JSX transform required
@@ -29,11 +48,12 @@ export default [
     entry: { 'solid/index': '../../adapters/solid/src/index.ts' },
     format: ['esm'],
     dts: true,
-    tsconfig: '../../adapters/solid/tsconfig.build.json',
+    tsconfig: 'tsconfig.build-solid.json',
     noExternal: adapterNoExternal,
     esbuildOptions(options) {
       options.jsx = 'automatic'
       options.jsxImportSource = 'solid-js'
+      options.alias = { ...options.alias, ...sharedAlias }
     },
   }),
 
@@ -45,6 +65,9 @@ export default [
     tsconfig: 'tsconfig.build-svelte.json',
     noExternal: adapterNoExternal,
     external: ['svelte', 'svelte/*'],
+    esbuildOptions(options) {
+      options.alias = { ...options.alias, ...sharedAlias }
+    },
   }),
 
   // Vue
@@ -52,8 +75,11 @@ export default [
     entry: { 'vue/index': '../../adapters/vue/src/index.ts' },
     format: ['esm'],
     dts: true,
-    tsconfig: '../../adapters/vue/tsconfig.build.json',
+    tsconfig: 'tsconfig.build-vue.json',
     noExternal: adapterNoExternal,
+    esbuildOptions(options) {
+      options.alias = { ...options.alias, ...sharedAlias }
+    },
   }),
 
   // Lit
@@ -61,8 +87,11 @@ export default [
     entry: { 'lit/index': '../../adapters/lit/src/index.ts' },
     format: ['esm'],
     dts: true,
-    tsconfig: '../../adapters/lit/tsconfig.build.json',
+    tsconfig: 'tsconfig.build-lit.json',
     noExternal: adapterNoExternal,
+    esbuildOptions(options) {
+      options.alias = { ...options.alias, ...sharedAlias }
+    },
   }),
 
   // Web (vanilla custom elements)
@@ -70,8 +99,11 @@ export default [
     entry: { 'web/index': '../../adapters/web/src/index.ts' },
     format: ['esm'],
     dts: true,
-    tsconfig: '../../adapters/web/tsconfig.build.json',
+    tsconfig: 'tsconfig.build-web.json',
     noExternal: adapterNoExternal,
+    esbuildOptions(options) {
+      options.alias = { ...options.alias, ...sharedAlias }
+    },
   }),
 
   // Tailwind

@@ -4,8 +4,12 @@
     "jsx": "react-jsx",
     "jsxImportSource": "preact",
     "paths": {
-      "@praxis-kit/shared": ["../../packages/shared/src"],
-      "@praxis-kit/shared/types": ["../../packages/shared/src/types/index.ts"],
+      "@praxis-kit/shared": [
+        "../../packages/shared/src"
+      ],
+      "@praxis-kit/shared/types": [
+        "../../packages/shared/src/types/index.ts"
+      ],
       "@praxis-kit/shared/types/variants": [
         "../../packages/shared/src/types/variants/index.ts"
       ],
@@ -27,6 +31,9 @@
       "@praxis-kit/shared/constants/aria": [
         "../../packages/shared/src/constants/aria/index.ts"
       ],
+      "@praxis-kit/shared/guards": [
+        "../../packages/shared/src/guards"
+      ],
       "@praxis-kit/shared/guards/aria": [
         "../../packages/shared/src/guards/aria/index.ts"
       ],
@@ -45,8 +52,12 @@
       "@praxis-kit/shared/guards/variants": [
         "../../packages/shared/src/guards/variants/index.ts"
       ],
-      "@praxis-kit/shared/*": ["../../packages/shared/src/*"]
+      "@praxis-kit/shared/*": [
+        "../../packages/shared/src/*"
+      ]
     }
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

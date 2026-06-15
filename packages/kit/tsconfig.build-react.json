@@ -1,66 +1,6 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "./tsconfig.build-base.json",
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "paths": {
-      "@praxis-kit/react/shared": ["../../adapters/react/src/shared/index.ts"],
-      "@praxis-kit/react/shared/*": ["../../adapters/react/src/shared/*"],
-      "@praxis-kit/shared": ["../../packages/shared/src"],
-      "@praxis-kit/shared/types": ["../../packages/shared/src/types/index.ts"],
-      "@praxis-kit/shared/types/variants": [
-        "../../packages/shared/src/types/variants/index.ts"
-      ],
-      "@praxis-kit/shared/types/contracts": [
-        "../../packages/shared/src/types/contracts/index.ts"
-      ],
-      "@praxis-kit/shared/types/validation": [
-        "../../packages/shared/src/types/validation/index.ts"
-      ],
-      "@praxis-kit/shared/types/config": [
-        "../../packages/shared/src/types/config/index.ts"
-      ],
-      "@praxis-kit/shared/types/capabilities": [
-        "../../packages/shared/src/types/capabilities/index.ts"
-      ],
-      "@praxis-kit/shared/constants/primitive": [
-        "../../packages/shared/src/constants/primitive/index.ts"
-      ],
-      "@praxis-kit/shared/constants/aria": [
-        "../../packages/shared/src/constants/aria/index.ts"
-      ],
-      "@praxis-kit/shared/guards/aria": [
-        "../../packages/shared/src/guards/aria/index.ts"
-      ],
-      "@praxis-kit/shared/guards/capabilities": [
-        "../../packages/shared/src/guards/capabilities/index.ts"
-      ],
-      "@praxis-kit/shared/guards/children": [
-        "../../packages/shared/src/guards/children/index.ts"
-      ],
-      "@praxis-kit/shared/guards/contract": [
-        "../../packages/shared/src/guards/contract/index.ts"
-      ],
-      "@praxis-kit/shared/guards/foundational": [
-        "../../packages/shared/src/guards/foundational/index.ts"
-      ],
-      "@praxis-kit/shared/guards/primitive": [
-        "../../packages/shared/src/guards/primitive/index.ts"
-      ],
-      "@praxis-kit/shared/guards/variants": [
-        "../../packages/shared/src/guards/variants/index.ts"
-      ],
-      "@praxis-kit/shared/*": ["../../packages/shared/src/*"],
-      "@praxis-kit/core": ["../../packages/core/src"],
-      "@praxis-kit/core/primitive": ["../../packages/core/src/primitive.ts"],
-      "@praxis-kit/core/contract": ["../../packages/core/src/contract.ts"],
-      "@praxis-kit/core/styling": ["../../packages/core/src/styling.ts"],
-      "@praxis-kit/core/*": ["../../packages/core/src/*"],
-      "@praxis-kit/contract": ["../../lib/contract/src"],
-      "@praxis-kit/contract/*": ["../../lib/contract/src/*"],
-      "@praxis-kit/styling": ["../../lib/styling/src"],
-      "@praxis-kit/styling/*": ["../../lib/styling/src/*"],
-      "@praxis-kit/adapter-utils": ["../../lib/adapter-utils/src"],
-      "@praxis-kit/adapter-utils/*": ["../../lib/adapter-utils/src/*"]
-    }
+    "jsx": "react-jsx"
   }
 }

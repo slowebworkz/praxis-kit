@@ -3,11 +3,15 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "paths": {
-      "@praxis-kit/shared": ["../../packages/shared/src"],
+      "@praxis-kit/shared": [
+        "../../packages/shared/src"
+      ],
       "@praxis-kit/shared/types/primitives": [
         "../../packages/shared/src/types/primitives/index.ts"
       ],
-      "@praxis-kit/shared/types": ["../../packages/shared/src/types/index.ts"],
+      "@praxis-kit/shared/types": [
+        "../../packages/shared/src/types/index.ts"
+      ],
       "@praxis-kit/shared/types/variants": [
         "../../packages/shared/src/types/variants/index.ts"
       ],
@@ -29,6 +33,9 @@
       "@praxis-kit/shared/constants/aria": [
         "../../packages/shared/src/constants/aria/index.ts"
       ],
+      "@praxis-kit/shared/guards": [
+        "../../packages/shared/src/guards"
+      ],
       "@praxis-kit/shared/guards/aria": [
         "../../packages/shared/src/guards/aria/index.ts"
       ],
@@ -47,19 +54,45 @@
       "@praxis-kit/shared/guards/variants": [
         "../../packages/shared/src/guards/variants/index.ts"
       ],
-      "@praxis-kit/shared/*": ["../../packages/shared/src/*"],
-      "@praxis-kit/core": ["../../packages/core/src/index.ts"],
-      "@praxis-kit/core/primitive": ["../../packages/core/src/primitive.ts"],
-      "@praxis-kit/core/contract": ["../../packages/core/src/contract.ts"],
-      "@praxis-kit/core/styling": ["../../packages/core/src/styling.ts"],
-      "@praxis-kit/react": ["../../adapters/react/src/index.ts"],
-      "@praxis-kit/primitive": ["../primitive/src"],
-      "@praxis-kit/contract": ["../contract/src"],
-      "@praxis-kit/styling": ["../styling/src"],
-      "@praxis-kit/adapter-utils": ["../adapter-utils/src"],
-      "@praxis-kit/react/shared": ["../../adapters/react/src/shared"],
-      "@praxis-kit/react/shared/*": ["../../adapters/react/src/shared/*"],
-      "@praxis-kit/react/current/*": ["../../adapters/react/src/current/*"]
+      "@praxis-kit/shared/*": [
+        "../../packages/shared/src/*"
+      ],
+      "@praxis-kit/core": [
+        "../../packages/core/src/index.ts"
+      ],
+      "@praxis-kit/core/primitive": [
+        "../../packages/core/src/primitive.ts"
+      ],
+      "@praxis-kit/core/contract": [
+        "../../packages/core/src/contract.ts"
+      ],
+      "@praxis-kit/core/styling": [
+        "../../packages/core/src/styling.ts"
+      ],
+      "@praxis-kit/react": [
+        "../../adapters/react/src/index.ts"
+      ],
+      "@praxis-kit/primitive": [
+        "../primitive/src"
+      ],
+      "@praxis-kit/contract": [
+        "../contract/src"
+      ],
+      "@praxis-kit/styling": [
+        "../styling/src"
+      ],
+      "@praxis-kit/adapter-utils": [
+        "../adapter-utils/src"
+      ],
+      "@praxis-kit/react/shared": [
+        "../../adapters/react/src/shared"
+      ],
+      "@praxis-kit/react/shared/*": [
+        "../../adapters/react/src/shared/*"
+      ],
+      "@praxis-kit/react/current/*": [
+        "../../adapters/react/src/current/*"
+      ]
     }
   },
   "include": [

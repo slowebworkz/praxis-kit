@@ -27,11 +27,15 @@
       "@praxis-kit/shared/constants/aria": [
         "./packages/shared/src/constants/aria/index.ts"
       ],
+      "@praxis-kit/shared/guards": ["./packages/shared/src/guards"],
       "@praxis-kit/shared/guards/aria": [
         "./packages/shared/src/guards/aria/index.ts"
       ],
       "@praxis-kit/shared/guards/capabilities": [
         "./packages/shared/src/guards/capabilities/index.ts"
+      ],
+      "@praxis-kit/shared/guards/children": [
+        "./packages/shared/src/guards/children/index.ts"
       ],
       "@praxis-kit/shared/guards/contract": [
         "./packages/shared/src/guards/contract/index.ts"
