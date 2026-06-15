@@ -1,7 +1,8 @@
 import { makeResolveTag, mergeProps } from '@praxis-kit/primitive'
 import type {
   AnyRecord,
-  AriaRule,
+  AriaEngine,
+  Capabilities,
   ClassName,
   ClassPipelineFn,
   ClassPipelineOptions,
@@ -26,21 +27,6 @@ import { resolveFactoryOptions, validateFactoryOptions, validateRenderProps } fr
 import { assertPluginShape, guardPipeline } from './plugin-invariants'
 
 declare const process: { env: { NODE_ENV: string } }
-
-// Structural interface — matches AriaPolicyEngine.validate without importing the class.
-type AriaEngine = {
-  validate: (tag: ElementType, props: IntrinsicProps) => { props: IntrinsicProps }
-}
-
-export type Capabilities = {
-  readonly createClassPipeline?: <TVariants extends VariantMap>(
-    opts: ClassPipelineOptions<TVariants>,
-  ) => ClassPipelineFn
-  readonly AriaEngine?: new (
-    strict?: StrictMode,
-    options?: { rules?: readonly AriaRule[] },
-  ) => AriaEngine
-}
 
 // Noop pipeline used when no capabilities are injected (primitive-only path).
 const NOOP_CLASS_PIPELINE: ClassPipelineFn = (_tag, _props, className) =>

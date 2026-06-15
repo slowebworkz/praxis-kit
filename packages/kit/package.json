@@ -89,15 +89,33 @@
     "vite": ">=5"
   },
   "peerDependenciesMeta": {
-    "react": { "optional": true },
-    "preact": { "optional": true },
-    "solid-js": { "optional": true },
-    "svelte": { "optional": true },
-    "vue": { "optional": true },
-    "lit": { "optional": true },
-    "eslint": { "optional": true },
-    "typescript": { "optional": true },
-    "vite": { "optional": true }
+    "react": {
+      "optional": true
+    },
+    "preact": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    },
+    "lit": {
+      "optional": true
+    },
+    "eslint": {
+      "optional": true
+    },
+    "typescript": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@praxis-kit/adapter-utils": "workspace:*",

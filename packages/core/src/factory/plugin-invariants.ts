@@ -8,6 +8,12 @@ function panic(message: string): never {
   throw new Error(message)
 }
 
+function describe(value: unknown): string {
+  if (value === null) return 'null'
+  if (Array.isArray(value)) return 'array'
+  return typeof value
+}
+
 export function assertPluginShape(result: unknown): asserts result is ClassPlugin {
   if (result === null || typeof result !== 'object')
     panic(
@@ -25,7 +31,7 @@ export function guardPipeline(pipeline: ClassPipelineFn): ClassPipelineFn {
   return function guardedPipeline(tag, props, className, variantKey) {
     const result = pipeline(tag, props, className, variantKey)
     if (typeof result !== 'string')
-      panic(`[praxis-kit] Plugin pipeline must return a string. Got: ${typeof result}.`)
+      panic(`[praxis-kit] Plugin pipeline must return a string. Got: ${describe(result)}.`)
     return result
   }
 }
