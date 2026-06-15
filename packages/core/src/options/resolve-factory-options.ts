@@ -3,12 +3,29 @@ import type {
   ElementType,
   EmptyRecord,
   FactoryOptions,
+  IntrinsicProps,
+  NormalizeFn,
   PresetMap,
+  PropNormalizer,
   ResolvedFactoryOptions,
   VariantMap,
 } from '../types'
 
 const EMPTY_VARIANT_KEYS: ReadonlySet<string> = new Set()
+
+function composeNormalizers<Props extends AnyRecord>(
+  normalizers: readonly PropNormalizer[] | undefined,
+  fn: NormalizeFn<Props> | undefined,
+): NormalizeFn<Props> | undefined {
+  if (!normalizers?.length) return fn
+  return ((props) => {
+    const patched = normalizers.reduce(
+      (acc, normalizer) => ({ ...acc, ...normalizer(acc) }),
+      props as AnyRecord,
+    ) as Props & IntrinsicProps
+    return fn ? fn(patched as Readonly<Props & IntrinsicProps>) : patched
+  }) as NormalizeFn<Props>
+}
 
 function whenDefined<K extends PropertyKey, V>(
   key: K,
@@ -26,6 +43,7 @@ export function resolveFactoryOptions<
   options: FactoryOptions<TDefault, Props, V, TPreset> = {},
 ): Readonly<ResolvedFactoryOptions<TDefault, Props, V, TPreset>> {
   const { styling, enforcement } = options
+  const composedNormalizeFn = composeNormalizers(enforcement?.props, options.normalize)
 
   const variantKeys: ReadonlySet<string> =
     styling?.variants === undefined ? EMPTY_VARIANT_KEYS : new Set(Object.keys(styling.variants))
@@ -43,7 +61,7 @@ export function resolveFactoryOptions<
     ...whenDefined('variants', styling?.variants),
     ...whenDefined('defaultVariants', styling?.defaults),
     ...whenDefined('compoundVariants', styling?.compounds),
-    ...whenDefined('normalizeFn', options.normalize),
+    ...whenDefined('normalizeFn', composedNormalizeFn),
     ...whenDefined('ariaRules', enforcement?.aria),
     ...whenDefined('childRules', enforcement?.children),
     ...whenDefined('allowedAs', enforcement?.allowedAs),

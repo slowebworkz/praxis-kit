@@ -3,12 +3,14 @@ import type { PresetMap, VariantMap } from '../variants'
 import type { EnforcementOptions } from './enforcement-options'
 import type { StylingOptions } from './styling-options'
 
-// Method signature extraction preserves TypeScript's bivariant method treatment,
-// making NormalizeFn<Props> assignable to NormalizeFn<AnyRecord> across adapter
-// boundaries while keeping props fully typed for consumers.
+// method-signature form gives bivariant assignability so NormalizeFn<Props> flows across adapter boundaries
 export type NormalizeFn<Props extends AnyRecord = AnyRecord> = {
   normalize(props: Readonly<Props & IntrinsicProps>): Props & IntrinsicProps
 }['normalize']
+
+export type PropNormalizer = (
+  props: Readonly<AnyRecord & IntrinsicProps>,
+) => Partial<AnyRecord & IntrinsicProps>
 
 export type FactoryOptions<
   TDefault extends ElementType = ElementType,
