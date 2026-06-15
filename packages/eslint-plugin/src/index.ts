@@ -1,3 +1,4 @@
+import type { ESLint } from 'eslint'
 import {
   noDeadCompound,
   noEnforcementWithoutStrict,
@@ -21,9 +22,9 @@ const plugin = {
     'no-redundant-role': noRedundantRole,
     'valid-cardinality': validCardinality,
     'valid-children-config': validChildrenConfig,
-  },
+  } as unknown as ESLint.Plugin['rules'],
   configs: {},
-} as const
+} satisfies ESLint.Plugin
 
 // Recommended config — all rules at their default severity.
 const recommended = {

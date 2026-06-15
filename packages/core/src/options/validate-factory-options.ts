@@ -12,7 +12,8 @@ import type {
 // throw on 'throw' / true.
 function report(strict: StrictMode, message: string): void {
   if (strict === false) return
-  if (strict === true || strict === 'throw') throw new Error(message)
+  const mode = strict === true ? 'throw' : strict
+  if (mode === 'throw') throw new Error(message)
   console.warn(message)
 }
 
@@ -52,13 +53,16 @@ export function validateFactoryOptions<
       // that doesn't pick a dimension is a missing reference, not a dead one.
       // Only present values are checked against the declared variant states.
       if (value === undefined || value === null) continue
-      const states = variants?.[dim]
-      if (!states) {
+      if (!variants || !Object.hasOwn(variants, dim)) {
         report(strict, `${name}: ${label} references unknown variant "${dim}".`)
         continue
       }
+      const states = variants[dim]!
+      // CVA keys are always strings, so booleans coerce: `true` → `'true'`.
+      // This matches render-time behaviour and means `disabled: true` correctly
+      // validates against `disabled: { true: '...', false: '...' }`.
       const stateKey = String(value)
-      if (!(stateKey in states)) {
+      if (!Object.hasOwn(states, stateKey)) {
         report(
           strict,
           `${name}: ${label} sets "${dim}" to unknown value "${stateKey}" ` +

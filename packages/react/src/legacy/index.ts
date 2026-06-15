@@ -16,3 +16,4 @@ export type {
 } from '@praxis-kit/react/shared'
 export type { ReactFactoryOptions } from '@praxis-kit/react/shared'
 export { mergeRefs } from '@praxis-kit/react/shared'
+export { disabledProps, invalidProps } from '@praxis-kit/core'

@@ -11,7 +11,8 @@ function makeRuntime(overrides?: Partial<Runtime>): Runtime {
     options: { defaultTag: 'div', variantKeys: new Set(), displayName: 'Test', strict: 'throw' },
     resolveTag: (as) => as ?? 'div',
     resolveProps: (props) => props,
-    resolveClasses: (_tag, _props, className) => className ?? '',
+    resolveClasses: (_tag, _props, className) =>
+      Array.isArray(className) ? className.join(' ') : (className ?? ''),
     resolveAria: (_tag, props) => ({ props }),
     ...overrides,
   }

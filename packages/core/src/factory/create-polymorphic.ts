@@ -43,7 +43,8 @@ export type Capabilities = {
 }
 
 // Noop pipeline used when no capabilities are injected (primitive-only path).
-const NOOP_CLASS_PIPELINE: ClassPipelineFn = (_tag, _props, className) => className ?? ''
+const NOOP_CLASS_PIPELINE: ClassPipelineFn = (_tag, _props, className) =>
+  Array.isArray(className) ? className.join(' ') : (className ?? '')
 
 function resolveClassPipeline<TVariants extends VariantMap>(
   options: { styling?: { plugin?: ClassPluginFactory } },

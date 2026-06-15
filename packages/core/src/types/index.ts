@@ -36,6 +36,7 @@ export type {
   EnforcementOptions,
   FactoryOptions,
   NormalizeFn,
+  PropNormalizer,
   StylingOptions,
 } from './factory-options'
 export type { NonEmptyArray } from './non-empty-array'
