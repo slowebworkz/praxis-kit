@@ -58,14 +58,14 @@
       "@praxis-kit/contract": ["../../lib/contract/src/index.ts"],
       "@praxis-kit/styling": ["../../lib/styling/src/index.ts"],
       "@praxis-kit/adapter-utils": ["../../lib/adapter-utils/src/index.ts"],
-      "@praxis-kit/react": ["../../packages/react/src/index.ts"],
-      "@praxis-kit/vue": ["../../packages/vue/src/index.ts"],
-      "@praxis-kit/solid": ["../../packages/solid/src/index.ts"],
-      "@praxis-kit/preact": ["../../packages/preact/src/index.ts"],
-      "@praxis-kit/svelte": ["../../packages/svelte/src/index.ts"],
+      "@praxis-kit/react": ["../../adapters/react/src/index.ts"],
+      "@praxis-kit/vue": ["../../adapters/vue/src/index.ts"],
+      "@praxis-kit/solid": ["../../adapters/solid/src/index.ts"],
+      "@praxis-kit/preact": ["../../adapters/preact/src/index.ts"],
+      "@praxis-kit/svelte": ["../../adapters/svelte/src/index.ts"],
       "@praxis-kit/tailwind": ["../../packages/tailwind/src/index.ts"],
-      "@praxis-kit/react/shared": ["../../packages/react/src/shared"],
-      "@praxis-kit/react/shared/*": ["../../packages/react/src/shared/*"]
+      "@praxis-kit/react/shared": ["../../adapters/react/src/shared"],
+      "@praxis-kit/react/shared/*": ["../../adapters/react/src/shared/*"]
     }
   },
   "include": ["scripts/**/*", "scenarios/**/*"],

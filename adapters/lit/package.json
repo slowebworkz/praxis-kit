@@ -1,15 +1,11 @@
 {
-  "name": "@praxis-kit/react",
+  "name": "@praxis-kit/lit",
   "version": "0.8.0-beta.4",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./legacy": {
-      "types": "./dist/legacy/index.d.ts",
-      "import": "./dist/legacy/index.js"
     }
   },
   "files": [
@@ -22,31 +18,22 @@
     "lint": "eslint . --fix --config eslint.config.ts",
     "lint:check": "eslint . --config eslint.config.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:pw": "playwright test -c playwright-ct.config.ts",
-    "test:related": "vitest run --changed",
+    "test": "vitest run && vitest run --config vitest.ssr.config.ts",
+    "test:related": "vitest run --changed && vitest run --changed --config vitest.ssr.config.ts",
     "prepublishOnly": "pnpm build",
     "lint:pkg": "publint"
   },
   "sideEffects": false,
   "dependencies": {
-    "clsx": "catalog:",
     "type-fest": "catalog:"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "lit": ">=3.0"
   },
   "devDependencies": {
-    "@axe-core/playwright": "catalog:",
-    "@playwright/experimental-ct-react": "catalog:",
     "@praxis-kit/adapter-utils": "workspace:*",
-    "@praxis-kit/playwright": "workspace:*",
-    "@vitejs/plugin-react": "catalog:",
-    "@types/react": "catalog:",
-    "@types/react-dom": "catalog:",
     "jsdom": "catalog:",
-    "react": "catalog:",
-    "react-dom": "catalog:",
+    "lit": "catalog:",
     "tsup": "catalog:",
     "vitest": "catalog:",
     "@praxis-kit/core": "workspace:*"
@@ -57,15 +44,15 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/slowebworkz/praxis-kit.git",
-    "directory": "packages/react"
+    "directory": "adapters/lit"
   },
-  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/packages/react#readme",
+  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/adapters/lit#readme",
   "bugs": {
     "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
   "license": "MIT",
   "author": "K Huehn <slowebworkz@gmail.com>",
-  "description": "Praxis Kit adapter for React 18 and 19 — polymorphic components with ARIA contracts and variant composition",
+  "description": "Praxis Kit adapter for Lit — polymorphic custom elements with ARIA contracts and variant composition",
   "keywords": [
     "praxis-kit",
     "polymorphic",
@@ -77,7 +64,9 @@
     "framework-agnostic",
     "contract",
     "variants",
-    "react"
+    "lit",
+    "web-components",
+    "custom-elements"
   ],
   "engines": {
     "node": ">=18"

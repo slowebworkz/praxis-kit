@@ -37,7 +37,7 @@ jobs:
       - name: Resolve dist-tag
         id: dist_tag
         run: |
-          version=$(node -p "require('./packages/react/package.json').version")
+          version=$(node -p "require('./adapters/react/package.json').version")
           if echo "$version" | grep -qE '-(alpha|beta|rc)'; then
             echo "tag=beta" >> "$GITHUB_OUTPUT"
           else
@@ -47,7 +47,7 @@ jobs:
       - name: Check for unresolved catalog specifiers
         run: |
           failed=0
-          for pkg in packages/react packages/tailwind packages/eslint-plugin packages/ts-plugin packages/vite-plugin packages/codemod; do
+          for pkg in adapters/react adapters/preact adapters/solid adapters/svelte adapters/vue adapters/lit adapters/web packages/tailwind packages/eslint-plugin packages/ts-plugin packages/vite-plugin packages/codemod; do
             tmpdir=$(mktemp -d)
             (cd "$pkg" && pnpm pack --pack-destination "$tmpdir" 2>/dev/null)
             if tar -xzf "$tmpdir"/*.tgz -C "$tmpdir" && grep -rF "\"catalog:" "$tmpdir/package/package.json" 2>/dev/null; then
@@ -60,7 +60,7 @@ jobs:
 
       - name: Publish
         run: |
-          for pkg in packages/react packages/tailwind packages/eslint-plugin packages/ts-plugin packages/vite-plugin packages/codemod; do
+          for pkg in adapters/react adapters/preact adapters/solid adapters/svelte adapters/vue adapters/lit adapters/web packages/tailwind packages/eslint-plugin packages/ts-plugin packages/vite-plugin packages/codemod; do
             name=$(node -p "require('./$pkg/package.json').name")
             version=$(node -p "require('./$pkg/package.json').version")
             if npm view "$name@$version" version &>/dev/null; then

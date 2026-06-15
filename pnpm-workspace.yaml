@@ -1,6 +1,7 @@
 packages:
   - "packages/*"
   - "lib/*"
+  - "adapters/*"
   - "examples/*"
 peerDependencyRules:
   allowedVersions:
