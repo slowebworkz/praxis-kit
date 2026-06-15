@@ -99,6 +99,30 @@ describe('validateFactoryOptions — edge cases', () => {
     validateFactoryOptions(resolved({ ...SIZE }))
     expect(warn).not.toHaveBeenCalled()
   })
+
+  it('reports prototype-inherited keys as unknown variants', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    validateFactoryOptions(resolved({ ...SIZE, presetMap: { p: { toString: 'sm' } } }))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('unknown variant "toString"'))
+  })
+
+  it('accepts a boolean value when the matching string key is declared', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    validateFactoryOptions(
+      resolved({
+        variants: { disabled: { true: 'opacity-50', false: '' } },
+        defaultVariants: { disabled: true },
+      }),
+    )
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('skips null and undefined values in selections without reporting', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    validateFactoryOptions(resolved({ ...SIZE, defaultVariants: { size: null } }))
+    validateFactoryOptions(resolved({ ...SIZE, defaultVariants: { size: undefined } }))
+    expect(warn).not.toHaveBeenCalled()
+  })
 })
 
 describe("validateFactoryOptions — strict: 'async-warn'", () => {

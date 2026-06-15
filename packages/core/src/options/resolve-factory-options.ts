@@ -3,18 +3,35 @@ import type {
   ElementType,
   EmptyRecord,
   FactoryOptions,
+  IntrinsicProps,
+  NormalizeFn,
   PresetMap,
+  PropNormalizer,
   ResolvedFactoryOptions,
   VariantMap,
 } from '../types'
 
-const EMPTY_VARIANT_KEYS = new Set<string>()
+const EMPTY_VARIANT_KEYS: ReadonlySet<string> = new Set()
 
-function whenDefined<K extends string, T>(
-  value: T | undefined,
+function composeNormalizers<Props extends AnyRecord>(
+  normalizers: readonly PropNormalizer[] | undefined,
+  fn: NormalizeFn<Props> | undefined,
+): NormalizeFn<Props> | undefined {
+  if (!normalizers?.length) return fn
+  return ((props) => {
+    const patched = normalizers.reduce(
+      (acc, normalizer) => ({ ...acc, ...normalizer(acc) }),
+      props as AnyRecord,
+    ) as Props & IntrinsicProps
+    return fn ? fn(patched as Readonly<Props & IntrinsicProps>) : patched
+  }) as NormalizeFn<Props>
+}
+
+function whenDefined<K extends PropertyKey, V>(
   key: K,
-): Record<K, T> | EmptyRecord {
-  return value === undefined ? {} : ({ [key]: value } as Record<K, T>)
+  value: V | undefined,
+): Record<K, V> | EmptyRecord {
+  return value === undefined ? {} : ({ [key]: value } as Record<K, V>)
 }
 
 export function resolveFactoryOptions<
@@ -26,32 +43,28 @@ export function resolveFactoryOptions<
   options: FactoryOptions<TDefault, Props, V, TPreset> = {},
 ): Readonly<ResolvedFactoryOptions<TDefault, Props, V, TPreset>> {
   const { styling, enforcement } = options
+  const composedNormalizeFn = composeNormalizers(enforcement?.props, options.normalize)
 
   const variantKeys: ReadonlySet<string> =
     styling?.variants === undefined ? EMPTY_VARIANT_KEYS : new Set(Object.keys(styling.variants))
 
-  // Conditional spreads rather than `key: value | undefined` satisfy exactOptionalPropertyTypes:
-  // { key: undefined } and {} are distinct shapes under that flag.
+  // whenDefined spreads satisfy exactOptionalPropertyTypes: { key: undefined } and {} are distinct.
   return Object.freeze({
     defaultTag: (options.tag ?? 'div') as TDefault,
     strict: enforcement?.strict ?? false,
     variantKeys,
-    ...whenDefined(options.name, 'displayName'),
-    ...(options.defaults !== undefined && { defaultProps: options.defaults }),
-    ...(styling?.base !== undefined && { baseClassName: styling.base }),
-    ...(styling?.tags !== undefined && { tagMap: styling.tags }),
-    ...(styling?.presets !== undefined && { presetMap: styling.presets }),
-    ...(styling?.variants !== undefined && { variants: styling.variants }),
-    ...(styling?.defaults !== undefined && { defaultVariants: styling.defaults }),
-    ...(styling?.compounds !== undefined && { compoundVariants: styling.compounds }),
-    ...(options.normalize !== undefined && {
-      normalizeFn: options.normalize,
-    }),
-    ...(enforcement?.aria !== undefined && { ariaRules: enforcement.aria }),
-    ...(enforcement?.children !== undefined && { childRules: enforcement.children }),
-    ...(enforcement?.allowedAs !== undefined && { allowedAs: enforcement.allowedAs }),
-    ...(styling?.precomputedClasses !== undefined && {
-      precomputedClasses: styling.precomputedClasses,
-    }),
+    ...whenDefined('displayName', options.name),
+    ...whenDefined('defaultProps', options.defaults),
+    ...whenDefined('baseClassName', styling?.base),
+    ...whenDefined('tagMap', styling?.tags),
+    ...whenDefined('presetMap', styling?.presets),
+    ...whenDefined('variants', styling?.variants),
+    ...whenDefined('defaultVariants', styling?.defaults),
+    ...whenDefined('compoundVariants', styling?.compounds),
+    ...whenDefined('normalizeFn', composedNormalizeFn),
+    ...whenDefined('ariaRules', enforcement?.aria),
+    ...whenDefined('childRules', enforcement?.children),
+    ...whenDefined('allowedAs', enforcement?.allowedAs),
+    ...whenDefined('precomputedClasses', styling?.precomputedClasses),
   })
 }
