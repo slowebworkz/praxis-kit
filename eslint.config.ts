@@ -30,15 +30,17 @@ const config = [
             'scripts/*.ts',
             'configs/*.ts',
             'packages/*/eslint.config.ts',
+            'adapters/*/eslint.config.ts',
             // codemod and ts-plugin have rootDir:src — tsup.config.ts can't be in their tsconfig include
             'packages/codemod/tsup.config.ts',
             'packages/ts-plugin/tsup.config.ts',
             // Playwright CT config and mount entry live outside the react package tsconfig include
-            'packages/react/playwright-ct.config.ts',
-            'packages/react/playwright/index.tsx',
-            'packages/vue/playwright-ct.config.ts',
-            'packages/vue/playwright/index.ts',
+            'adapters/react/playwright-ct.config.ts',
+            'adapters/react/playwright/index.tsx',
+            'adapters/vue/playwright-ct.config.ts',
+            'adapters/vue/playwright/index.ts',
             'playwright.workspace.ts',
+            'vitest.workspace.ts',
             // remaining tsup.config.ts files are included in each package's tsconfig — removed from here
             // lib/contract and lib/styling include vitest.config.ts in their tsconfig — listed explicitly
             'lib/adapter-utils/vitest.config.ts',
@@ -53,8 +55,8 @@ const config = [
             'lib/tree-shaking-tests/scenarios/preact-minimal/*.ts',
             'lib/tree-shaking-tests/scenarios/svelte-minimal/*.ts',
           ],
-          // ~35 files: 2 root *.ts + 1 scripts + 9 configs + 11 per-package eslint configs (incl. lit, web) + 2 lib vitest + 3 tsup/pw configs + 7 examples/*/eslint.config.ts + 5 examples/*/vite.config.ts + 2 non-React adapter scenarios
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 60,
+          // ~45 files: 2 root *.ts + 1 scripts + 9 configs + 11 pkg eslint configs + 7 adapter eslint configs + 2 lib vitest + 3 tsup/pw configs + 7 examples/*/eslint.config.ts + 5 examples/*/vite.config.ts + 2 non-React adapter scenarios + 2 workspace files
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 70,
           defaultProject: './tsconfig.base.json',
         },
       },
@@ -72,7 +74,11 @@ const config = [
 
   // Self-validate: run the plugin's own rules on all workspace source.
   {
-    files: ['packages/*/src/**/*.{ts,tsx}', 'examples/*/src/**/*.{ts,tsx}'],
+    files: [
+      'packages/*/src/**/*.{ts,tsx}',
+      'adapters/*/src/**/*.{ts,tsx}',
+      'examples/*/src/**/*.{ts,tsx}',
+    ],
     rules: {
       '@praxis-kit/no-dead-compound': 'error',
       '@praxis-kit/no-enforcement-without-strict': 'error',

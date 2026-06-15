@@ -21,11 +21,11 @@ const distDir = join(pkg, '../dist')
 
 // Workspace source aliases — resolve published packages to their TypeScript source.
 const workspaceAlias: Record<string, string> = {
-  '@praxis-kit/react': join(root, 'packages/react/src/index.ts'),
-  '@praxis-kit/preact': join(root, 'packages/preact/src/index.ts'),
-  '@praxis-kit/vue': join(root, 'packages/vue/src/index.ts'),
-  '@praxis-kit/solid': join(root, 'packages/solid/src/index.ts'),
-  '@praxis-kit/svelte': join(root, 'packages/svelte/src/index.ts'),
+  '@praxis-kit/react': join(root, 'adapters/react/src/index.ts'),
+  '@praxis-kit/preact': join(root, 'adapters/preact/src/index.ts'),
+  '@praxis-kit/vue': join(root, 'adapters/vue/src/index.ts'),
+  '@praxis-kit/solid': join(root, 'adapters/solid/src/index.ts'),
+  '@praxis-kit/svelte': join(root, 'adapters/svelte/src/index.ts'),
   '@praxis-kit/tailwind': join(root, 'packages/tailwind/src/index.ts'),
   '@praxis-kit/core': join(root, 'packages/core/src/index.ts'),
   '@praxis-kit/core/primitive': join(root, 'packages/core/src/primitive.ts'),
@@ -50,7 +50,7 @@ function reactInternalAliasPlugin(): Plugin {
         const m = re.exec(args.path)
         if (!m) return
         const [, dir, rest = ''] = m
-        const resolved = join(root, 'packages/react/src', dir + rest)
+        const resolved = join(root, 'adapters/react/src', dir + rest)
         // Bare alias (no subpath) resolves to the directory's index file.
         return { path: rest ? resolved : resolved + '/index.ts' }
       })

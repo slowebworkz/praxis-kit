@@ -52,14 +52,14 @@
       "@praxis-kit/core/primitive": ["../../packages/core/src/primitive.ts"],
       "@praxis-kit/core/contract": ["../../packages/core/src/contract.ts"],
       "@praxis-kit/core/styling": ["../../packages/core/src/styling.ts"],
-      "@praxis-kit/react": ["../../packages/react/src/index.ts"],
+      "@praxis-kit/react": ["../../adapters/react/src/index.ts"],
       "@praxis-kit/primitive": ["../primitive/src"],
       "@praxis-kit/contract": ["../contract/src"],
       "@praxis-kit/styling": ["../styling/src"],
       "@praxis-kit/adapter-utils": ["../adapter-utils/src"],
-      "@praxis-kit/react/shared": ["../../packages/react/src/shared"],
-      "@praxis-kit/react/shared/*": ["../../packages/react/src/shared/*"],
-      "@praxis-kit/react/current/*": ["../../packages/react/src/current/*"]
+      "@praxis-kit/react/shared": ["../../adapters/react/src/shared"],
+      "@praxis-kit/react/shared/*": ["../../adapters/react/src/shared/*"],
+      "@praxis-kit/react/current/*": ["../../adapters/react/src/current/*"]
     }
   },
   "include": [

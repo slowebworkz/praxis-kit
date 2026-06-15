@@ -9,7 +9,7 @@ export default defineConfig({
       // packages/solid/dist uses esbuild's `jsx: automatic` which generates
       // `import { jsx } from 'solid-js/jsx-runtime'` — an export that doesn't
       // exist. Point Vite at the source so vite-plugin-solid handles JSX correctly.
-      '@praxis-kit/solid': join(import.meta.dirname, '../../packages/solid/src/index.ts'),
+      '@praxis-kit/solid': join(import.meta.dirname, '../../adapters/solid/src/index.ts'),
     },
   },
 })

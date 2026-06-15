@@ -40,9 +40,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/slowebworkz/praxis-kit.git",
-    "directory": "packages/web"
+    "directory": "adapters/web"
   },
-  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/packages/web#readme",
+  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/adapters/web#readme",
   "bugs": {
     "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
