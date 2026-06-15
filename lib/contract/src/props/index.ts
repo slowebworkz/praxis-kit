@@ -1,2 +1,2 @@
-export { getDisabledProps } from './get-disabled-props'
-export { getInvalidProps } from './get-invalid-props'
+export { disabledProps } from './get-disabled-props'
+export { invalidProps } from './get-invalid-props'

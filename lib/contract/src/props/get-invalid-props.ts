@@ -1,17 +1,14 @@
-// syncs invalid state across ARIA and CSS-hook data attr
-interface InvalidProps {
-  invalid?: boolean
-  'aria-invalid'?: boolean | 'true' | 'false'
-  'data-invalid'?: string
-}
+import type { PropNormalizer } from '@praxis-kit/shared/types'
 
-export function getInvalidProps({
+export const invalidProps: PropNormalizer = ({
   invalid,
   'aria-invalid': ariaInvalid,
   'data-invalid': dataInvalid,
-}: InvalidProps) {
+}) => {
+  if (!invalid) return {}
+
   return {
-    'aria-invalid': ariaInvalid ?? (invalid ? 'true' : undefined),
-    'data-invalid': dataInvalid ?? (invalid ? '' : undefined),
-  } as const
+    ...(ariaInvalid === undefined && { 'aria-invalid': 'true' }),
+    ...(dataInvalid === undefined && { 'data-invalid': '' }),
+  }
 }

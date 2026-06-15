@@ -1,8 +1,14 @@
-// syncs disabled state across native attr, ARIA, and CSS-hook data attr
-export function getDisabledProps(disabled?: boolean) {
+import type { PropNormalizer } from '@praxis-kit/shared/types'
+
+export const disabledProps: PropNormalizer = ({
+  disabled,
+  'aria-disabled': ariaDisabled,
+  'data-disabled': dataDisabled,
+}) => {
+  if (!disabled) return {}
+
   return {
-    disabled,
-    'aria-disabled': disabled ? 'true' : undefined,
-    'data-disabled': disabled ? '' : undefined,
-  } as const
+    ...(ariaDisabled === undefined && { 'aria-disabled': 'true' }),
+    ...(dataDisabled === undefined && { 'data-disabled': '' }),
+  }
 }

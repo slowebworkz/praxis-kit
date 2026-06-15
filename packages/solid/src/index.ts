@@ -1,5 +1,5 @@
 export { createContractComponent } from './create-contract-component'
 export { defineContractComponent } from './define-contract-component'
-export { getDisabledProps } from '@praxis-kit/core'
+export { disabledProps, invalidProps } from '@praxis-kit/core'
 export type { SolidFactoryOptions } from './solid-options'
 export type { PolymorphicProps, PolymorphicComponent, ElementRef } from './types'
