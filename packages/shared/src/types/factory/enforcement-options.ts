@@ -2,7 +2,7 @@ import type { ElementType } from '../primitives'
 import type { StrictMode } from '../config'
 import type { AriaRule } from '../aria-rule'
 import type { ChildRuleInput } from '../contracts'
-import type { PropNormalizer } from './factory-options'
+import type { PropNormalizer } from './prop-normalizer'
 
 export type EnforcementOptions<TAllowed extends ElementType = ElementType> = {
   readonly strict?: StrictMode
