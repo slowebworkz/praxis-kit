@@ -14,6 +14,7 @@ export default defineWorkspace([
   './adapters/solid/vitest.ssr.config.ts',
   './adapters/svelte/vitest.config.ts',
   './adapters/svelte/vitest.ssr.config.ts',
+  './packages/codemod/vitest.config.ts',
   './packages/vite-plugin/vitest.config.ts',
   './examples/react/vitest.config.ts',
   './examples/vue/vitest.config.ts',

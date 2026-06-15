@@ -61,7 +61,7 @@ export function Button<T extends ElementType = 'button'>({
 ### After
 
 ```tsx
-import { createContractComponent } from '@praxis-kit/react'
+import { createContractComponent } from 'praxis-kit/react'
 
 export const Button = createContractComponent({
   tag: 'button',
@@ -109,8 +109,8 @@ The `PolymorphicProps` type replaces the manual `ButtonProps<T>` construction. E
 object so its type is available, then wrap it in `PolymorphicGenerics`:
 
 ```ts
-import type { PolymorphicGenerics } from '@praxis-kit/core'
-import type { PolymorphicProps, ElementType } from '@praxis-kit/react'
+import type { PolymorphicGenerics } from 'praxis-kit/core'
+import type { PolymorphicProps, ElementType } from 'praxis-kit/react'
 
 const variants = {
   size: { sm: 'btn--sm', md: 'btn--md', lg: 'btn--lg' },
@@ -191,7 +191,7 @@ export function Button({
 ### After
 
 ```tsx
-import { createContractComponent } from '@praxis-kit/react'
+import { createContractComponent } from 'praxis-kit/react'
 
 export const Button = createContractComponent({
   tag: 'button',
@@ -221,7 +221,7 @@ export const Button = createContractComponent({
 When the slot child needs to wrap inner content, use `Slottable`:
 
 ```tsx
-import { createContractComponent, Slottable } from '@praxis-kit/react'
+import { createContractComponent, Slottable } from 'praxis-kit/react'
 
 const Button = createContractComponent({ tag: 'button', /* ... */ })
 
@@ -260,7 +260,7 @@ as Radix's `Slottable`.
 
 If your app uses Radix UI component primitives (Dialog, Tooltip, Select, etc.) alongside your own
 design-system components, the two coexist cleanly. Radix Slot governs Radix's own `asChild`
-behavior. `@praxis-kit/react` governs the `asChild` behavior of your components. There is no
+behavior. `praxis-kit/react` governs the `asChild` behavior of your components. There is no
 conflict.
 
 ---
@@ -287,7 +287,7 @@ import { Button, ButtonGroup, Box } from '@chakra-ui/react'
 ### After — your own components with your own rules
 
 ```tsx
-import { createContractComponent } from '@praxis-kit/react'
+import { createContractComponent } from 'praxis-kit/react'
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
 import { Button } from './button'
@@ -346,7 +346,7 @@ export const ButtonGroup = createContractComponent({
 Chakra's `Box` is a polymorphic wrapper that applies design-token props. The equivalent:
 
 ```tsx
-import { createContractComponent } from '@praxis-kit/react'
+import { createContractComponent } from 'praxis-kit/react'
 
 export const Box = createContractComponent({ tag: 'div' })
 
@@ -362,7 +362,7 @@ export const Box = createContractComponent({ tag: 'div' })
 </Box>
 ```
 
-For Tailwind-specific layout prop filtering, the `@praxis-kit/tailwind` plugin integrates with
+For Tailwind-specific layout prop filtering, the `praxis-kit/tailwind` plugin integrates with
 `styling.plugin` and strips `flex` / `grid` layout tokens to the appropriate contexts.
 
 ### What changed
