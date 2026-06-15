@@ -2,15 +2,14 @@ import type { AnyRecord, ElementType, EmptyRecord, IntrinsicProps } from '../pri
 import type { PresetMap, VariantMap } from '../variants'
 import type { EnforcementOptions } from './enforcement-options'
 import type { StylingOptions } from './styling-options'
+import type { PropNormalizer } from './prop-normalizer'
+
+export type { PropNormalizer }
 
 // method-signature form gives bivariant assignability so NormalizeFn<Props> flows across adapter boundaries
 export type NormalizeFn<Props extends AnyRecord = AnyRecord> = {
   normalize(props: Readonly<Props & IntrinsicProps>): Props & IntrinsicProps
 }['normalize']
-
-export type PropNormalizer = (
-  props: Readonly<AnyRecord & IntrinsicProps>,
-) => Partial<AnyRecord & IntrinsicProps>
 
 export type FactoryOptions<
   TDefault extends ElementType = ElementType,
