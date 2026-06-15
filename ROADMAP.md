@@ -104,9 +104,9 @@ Single-entry-point distribution package. Consumers install `praxis-kit` and impo
 - [x] Move `packages/{react,preact,solid,svelte,vue,lit,web}` → `adapters/{react,preact,solid,svelte,vue,lit,web}`
 - [x] Add `adapters/*` to `pnpm-workspace.yaml`
 - [x] Update `CLAUDE.md` repo overview (three workspace roots: `packages/`, `lib/`, `adapters/`)
-- [ ] Create `packages/kit/` — `package.json` (name: `praxis-kit`), `tsup.config.ts`, `tsconfig.json`
-- [ ] Wire kit build: array of tsup configs pointing at sources in `adapters/` and `packages/`
-- [ ] Verify all sub-entries build and typecheck (`pnpm --filter praxis-kit build && typecheck`)
+- [x] Create `packages/kit/` — `package.json` (name: `praxis-kit`), `tsup.config.ts`, `tsconfig.json`
+- [x] Wire kit build: array of tsup configs pointing at sources in `adapters/` and `packages/`
+- [x] Verify all sub-entries build cleanly (`pnpm --filter praxis-kit build` — all 13 entries produce JS + DTS)
 - [ ] Add codemod migration: `@praxis-kit/{react,preact,...}` → `praxis-kit/{react,preact,...}`
 - [ ] Update `publish.yml` to publish `packages/kit` only
 - [ ] Publish `praxis-kit` to npm
