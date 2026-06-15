@@ -97,7 +97,7 @@ Full four-layer pattern: `normalizeOptions` → `buildCoreRuntime` → `buildEng
 
 ## Remaining Work
 
-### Next — `praxis-kit` distribution package (`feat/kit-package-distribution`)
+### Next — `praxis-kit` distribution package (PR #136 — `feat/kit-package-distribution`)
 
 Single-entry-point distribution package. Consumers install `praxis-kit` and import any adapter or tool via sub-entry — no separate npm packages to install. Reduces publish pipeline to one package.
 
@@ -107,10 +107,12 @@ Single-entry-point distribution package. Consumers install `praxis-kit` and impo
 - [x] Create `packages/kit/` — `package.json` (name: `praxis-kit`), `tsup.config.ts`, `tsconfig.json`
 - [x] Wire kit build: array of tsup configs pointing at sources in `adapters/` and `packages/`
 - [x] Verify all sub-entries build cleanly (`pnpm --filter praxis-kit build` — all 13 entries produce JS + DTS)
-- [ ] Add codemod migration: `@praxis-kit/{react,preact,...}` → `praxis-kit/{react,preact,...}`
-- [ ] Update `publish.yml` to publish `packages/kit` only
-- [ ] Publish `praxis-kit` to npm
-- [ ] `npm deprecate` individual adapter packages on npm
+- [x] Add codemod migration: `@praxis-kit/{react,preact,...}` → `praxis-kit/{react,preact,...}` (combined `migrate` command; 22-test suite)
+- [x] Update `publish.yml` to publish `packages/kit` only
+- [x] Update `README.md` and `MIGRATING.md` to show `praxis-kit/*` import paths
+- [ ] **Merge PR #136**
+- [ ] Publish `praxis-kit` to npm (`pnpm --filter praxis-kit publish --tag beta`)
+- [ ] `npm deprecate @praxis-kit/react "Moved to praxis-kit/react. Run: pnpm dlx @praxis-kit/codemod migrate"` (repeat for each adapter/tool package)
 
 ### Deferred (still pending)
 
