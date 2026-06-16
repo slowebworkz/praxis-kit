@@ -54,7 +54,7 @@ const config = [
           allowDefaultProject: [
             '*.ts',
             'scripts/*.ts',
-            'configs/!(*.d).ts',
+            'configs/*.ts',
             'packages/*/eslint.config.ts',
             'adapters/*/eslint.config.ts',
             // codemod and ts-plugin have rootDir:src — tsup.config.ts and vitest.config.ts can't be in their tsconfig include
