@@ -7,7 +7,7 @@ import { createRoot } from 'react-dom/client'
 import { act } from 'react'
 import { hydrationParitySuite } from '@praxis-kit/adapter-utils/testing'
 import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
-import type { UnknownProps } from '@praxis-kit/react/shared'
+import type { UnknownProps } from '../shared'
 import { createContractComponent } from './create-contract-component'
 
 type AnyComp = ComponentType<UnknownProps>

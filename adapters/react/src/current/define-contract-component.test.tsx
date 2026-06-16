@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, it } from 'vitest'
 import type { EmptyRecord, PolymorphicGenerics } from '@praxis-kit/core'
-import type { PolymorphicComponent } from '@praxis-kit/react/shared'
+import type { PolymorphicComponent } from '../shared'
 import { createContractComponent } from './create-contract-component'
 import { defineContractComponent } from '@praxis-kit/adapter-utils'
 

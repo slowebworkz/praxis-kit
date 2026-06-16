@@ -4,10 +4,10 @@
  */
 import { Fragment } from 'react'
 import type { ReactElement, Ref } from 'react'
-import type { UnknownProps } from '@praxis-kit/react/shared'
-import { mergeProps } from '@praxis-kit/react/shared'
+import type { UnknownProps } from '../../shared'
+import { mergeProps } from '../../shared'
 import { getChildRef, composeRefs } from './composeRefs'
-import { cloneWithProps } from '@praxis-kit/react/shared'
+import { cloneWithProps } from '../../shared'
 
 type CloneInput = {
   child: ReactElement

@@ -17,13 +17,13 @@
 import { defineComponent, ref, computed, h } from 'vue'
 import type { Component } from 'vue'
 import { createContractComponent } from '@praxis-kit/vue'
+import { provideTabsContext, useTabs } from './context'
+import { isType, tabId, panelId } from './utils'
 
 // createContractComponent returns a PolymorphicComponent (Volar new() pattern),
 // which TypeScript won't accept directly in h(). Casting via Component — the
 // type h() actually accepts — is more honest than `as never`.
 const toComponent = (c: unknown): Component => c as Component
-import { provideTabsContext, useTabs } from './context'
-import { isType, tabId, panelId } from './utils'
 
 // ── Trigger ───────────────────────────────────────────────────────────────────
 
