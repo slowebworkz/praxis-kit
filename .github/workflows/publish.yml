@@ -57,6 +57,7 @@ jobs:
 
       - name: Publish
         run: |
+          cp README.md packages/kit/README.md
           name=$(node -p "require('./packages/kit/package.json').name")
           version=$(node -p "require('./packages/kit/package.json').version")
           if npm view "$name@$version" version &>/dev/null; then
