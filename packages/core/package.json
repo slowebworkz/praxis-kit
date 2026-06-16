@@ -47,9 +47,6 @@
     "tsup": "catalog:",
     "vitest": "catalog:"
   },
-  "publishConfig": {
-    "access": "public"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/slowebworkz/praxis-kit.git",

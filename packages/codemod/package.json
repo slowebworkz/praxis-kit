@@ -1,6 +1,7 @@
 {
   "name": "@praxis-kit/codemod",
   "version": "0.8.0-beta.4",
+  "private": true,
   "type": "module",
   "bin": {
     "praxis-codemod": "./dist/index.js"
@@ -30,9 +31,6 @@
     "tsup": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "repository": {
     "type": "git",

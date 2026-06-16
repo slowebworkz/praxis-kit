@@ -1,6 +1,7 @@
 {
   "name": "@praxis-kit/eslint-plugin",
   "version": "0.8.0-beta.4",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
@@ -20,7 +21,6 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:related": "vitest run --changed",
-    "prepublishOnly": "pnpm build",
     "lint:pkg": "publint"
   },
   "sideEffects": false,
@@ -36,9 +36,6 @@
     "tsup": "catalog:",
     "typescript-eslint": "catalog:",
     "vitest": "catalog:"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "repository": {
     "type": "git",

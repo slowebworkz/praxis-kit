@@ -16,6 +16,14 @@
 
 ## Recently Shipped
 
+### Simplification audit — `"private": true` + orphaned publish metadata (`simplification-audit` branch)
+
+Added `"private": true` to 12 packages that are never published individually (7 adapters + `codemod`, `eslint-plugin`, `tailwind`, `ts-plugin`, `vite-plugin`). Removed `"publishConfig": { "access": "public" }` from those 12 plus `packages/core` (which was already private). Removed orphaned `"prepublishOnly": "pnpm build"` from `eslint-plugin` and `vite-plugin`. `packages/kit` (`praxis-kit`) retains its publish metadata — it is the only published package.
+
+Net reduction: ~65 lines across 13 package.json files.
+
+---
+
 ### Simplification audit — no-op per-package eslint configs (`simplification-audit` branch)
 
 5 `eslint.config.ts` files that added no rules deleted: `examples/{lit,react,vue,web}` and `packages/kit`. All were `[...praxisPlugin, ...base, ...ts]` or `[...base, ...ts]` with nothing added.
