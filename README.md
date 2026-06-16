@@ -145,7 +145,7 @@ praxis-kit
 | `praxis-kit/vite-plugin` | Vite plugins for static composition, SSR, and contract validation |
 | `praxis-kit/eslint`      | ESLint rules for enforcing Praxis Kit patterns                    |
 | `praxis-kit/ts-plugin`   | TypeScript language service plugin with inline diagnostics        |
-| `praxis-kit/codemod`     | Codemods for migrations (also available as `@praxis-kit/codemod`) |
+| `praxis-kit/codemod`     | Codemods for migrations                                           |
 | `praxis-kit/playwright`  | Playwright CT helpers — ARIA snapshots, axe sweeps, keyboard      |
 
 ---
