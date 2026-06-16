@@ -4,6 +4,6 @@ import { defineWorkspace } from '@playwright/test'
 // playwright-core version incompatible with the 1.60.x types we use elsewhere.
 // Svelte CT will be added here once the upstream package catches up.
 export default defineWorkspace([
-  'packages/react/playwright-ct.config.ts',
-  'packages/vue/playwright-ct.config.ts',
+  'adapters/react/playwright-ct.config.ts',
+  'adapters/vue/playwright-ct.config.ts',
 ])

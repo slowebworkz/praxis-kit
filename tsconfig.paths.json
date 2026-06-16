@@ -27,11 +27,15 @@
       "@praxis-kit/shared/constants/aria": [
         "./packages/shared/src/constants/aria/index.ts"
       ],
+      "@praxis-kit/shared/guards": ["./packages/shared/src/guards"],
       "@praxis-kit/shared/guards/aria": [
         "./packages/shared/src/guards/aria/index.ts"
       ],
       "@praxis-kit/shared/guards/capabilities": [
         "./packages/shared/src/guards/capabilities/index.ts"
+      ],
+      "@praxis-kit/shared/guards/children": [
+        "./packages/shared/src/guards/children/index.ts"
       ],
       "@praxis-kit/shared/guards/contract": [
         "./packages/shared/src/guards/contract/index.ts"
@@ -59,17 +63,17 @@
       "@praxis-kit/styling/*": ["./lib/styling/src/*"],
       "@praxis-kit/adapter-utils": ["./lib/adapter-utils/src"],
       "@praxis-kit/adapter-utils/*": ["./lib/adapter-utils/src/*"],
-      "@praxis-kit/react": ["./packages/react/src/index.ts"],
-      "@praxis-kit/react/shared": ["./packages/react/src/shared/index.ts"],
-      "@praxis-kit/react/shared/*": ["./packages/react/src/shared/*"],
-      "@praxis-kit/vue": ["./packages/vue/src/index.ts"],
-      "@praxis-kit/preact": ["./packages/preact/src/index.ts"],
-      "@praxis-kit/solid": ["./packages/solid/src/index.ts"],
-      "@praxis-kit/svelte": ["./packages/svelte/src/index.ts"],
-      "@praxis-kit/svelte/*": ["./packages/svelte/src/*"],
+      "@praxis-kit/react": ["./adapters/react/src/index.ts"],
+      "@praxis-kit/react/shared": ["./adapters/react/src/shared/index.ts"],
+      "@praxis-kit/react/shared/*": ["./adapters/react/src/shared/*"],
+      "@praxis-kit/vue": ["./adapters/vue/src/index.ts"],
+      "@praxis-kit/preact": ["./adapters/preact/src/index.ts"],
+      "@praxis-kit/solid": ["./adapters/solid/src/index.ts"],
+      "@praxis-kit/svelte": ["./adapters/svelte/src/index.ts"],
+      "@praxis-kit/svelte/*": ["./adapters/svelte/src/*"],
       "@praxis-kit/tailwind": ["./packages/tailwind/src/index.ts"],
-      "@praxis-kit/lit": ["./packages/lit/src/index.ts"],
-      "@praxis-kit/web": ["./packages/web/src/index.ts"]
+      "@praxis-kit/lit": ["./adapters/lit/src/index.ts"],
+      "@praxis-kit/web": ["./adapters/web/src/index.ts"]
     }
   }
 }

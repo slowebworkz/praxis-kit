@@ -1,10 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "allowArbitraryExtensions": true,
     "paths": {
-      "@praxis-kit/shared": ["../../packages/shared/src"],
-      "@praxis-kit/shared/types": ["../../packages/shared/src/types/index.ts"],
+      "@praxis-kit/shared": [
+        "../../packages/shared/src"
+      ],
+      "@praxis-kit/shared/types": [
+        "../../packages/shared/src/types/index.ts"
+      ],
       "@praxis-kit/shared/types/variants": [
         "../../packages/shared/src/types/variants/index.ts"
       ],
@@ -26,6 +29,9 @@
       "@praxis-kit/shared/constants/aria": [
         "../../packages/shared/src/constants/aria/index.ts"
       ],
+      "@praxis-kit/shared/guards": [
+        "../../packages/shared/src/guards"
+      ],
       "@praxis-kit/shared/guards/aria": [
         "../../packages/shared/src/guards/aria/index.ts"
       ],
@@ -44,21 +50,12 @@
       "@praxis-kit/shared/guards/variants": [
         "../../packages/shared/src/guards/variants/index.ts"
       ],
-      "@praxis-kit/shared/*": ["../../packages/shared/src/*"],
-      "@praxis-kit/core": ["../../packages/core/src"],
-      "@praxis-kit/core/primitive": ["../../packages/core/src/primitive.ts"],
-      "@praxis-kit/core/contract": ["../../packages/core/src/contract.ts"],
-      "@praxis-kit/core/styling": ["../../packages/core/src/styling.ts"],
-      "@praxis-kit/core/*": ["../../packages/core/src/*"],
-      "@praxis-kit/primitive": ["../../lib/primitive/src"],
-      "@praxis-kit/primitive/*": ["../../lib/primitive/src/*"],
-      "@praxis-kit/contract": ["../../lib/contract/src"],
-      "@praxis-kit/contract/*": ["../../lib/contract/src/*"],
-      "@praxis-kit/styling": ["../../lib/styling/src"],
-      "@praxis-kit/styling/*": ["../../lib/styling/src/*"],
-      "@praxis-kit/adapter-utils": ["../../lib/adapter-utils/src"],
-      "@praxis-kit/adapter-utils/*": ["../../lib/adapter-utils/src/*"]
+      "@praxis-kit/shared/*": [
+        "../../packages/shared/src/*"
+      ]
     }
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

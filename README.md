@@ -34,33 +34,32 @@ structures to render and fail later, Praxis catches them immediately.
 
 ## Installation
 
-Pick the adapter for your framework:
+All adapters and tooling are bundled in the single `praxis-kit` package:
 
 ```bash
-# React
-npm install @praxis-kit/react @praxis-kit/core
-
-# Vue 3
-npm install @praxis-kit/vue @praxis-kit/core
-
-# Svelte 5
-npm install @praxis-kit/svelte @praxis-kit/core
-
-# Solid
-npm install @praxis-kit/solid @praxis-kit/core
-
-# Preact
-npm install @praxis-kit/preact @praxis-kit/core
+npm install praxis-kit
 ```
 
-Optional add-ons:
+Then import from the sub-entry for your framework:
 
-```bash
-npm install @praxis-kit/tailwind    # Tailwind class pipeline
-npm install @praxis-kit/vite-plugin # Static analysis and SSR
-npm install @praxis-kit/eslint-plugin --save-dev
-npm install @praxis-kit/ts-plugin --save-dev
+```ts
+import { createContractComponent } from 'praxis-kit/react' // React 19+
+import { createContractComponent } from 'praxis-kit/vue'
+import { createContractComponent } from 'praxis-kit/svelte'
+import { createContractComponent } from 'praxis-kit/solid'
+import { createContractComponent } from 'praxis-kit/preact'
 ```
+
+Optional tooling sub-entries:
+
+```ts
+import plugin from 'praxis-kit/eslint' // ESLint rules
+import plugin from 'praxis-kit/vite-plugin' // Vite static analysis
+import plugin from 'praxis-kit/tailwind' // Tailwind class pipeline
+```
+
+> **Migrating from `@praxis-kit/*`?** Run `pnpm dlx @praxis-kit/codemod migrate` to rewrite import
+> paths and the factory rename automatically.
 
 ---
 
@@ -119,36 +118,35 @@ additionally validates:
 Business logic lives outside framework adapters. One engine, five runtimes.
 
 ```text
-@praxis-kit/core
-  ├─ @praxis-kit/react
-  ├─ @praxis-kit/svelte
-  ├─ @praxis-kit/vue
-  ├─ @praxis-kit/solid
-  ├─ @praxis-kit/preact
-  ├─ @praxis-kit/lit
-  └─ @praxis-kit/web
+praxis-kit
+  ├─ praxis-kit/react
+  ├─ praxis-kit/svelte
+  ├─ praxis-kit/vue
+  ├─ praxis-kit/solid
+  ├─ praxis-kit/preact
+  ├─ praxis-kit/lit
+  └─ praxis-kit/web
 ```
 
 ---
 
 ## Packages
 
-| Package                                               | Description                                                       |
-| ----------------------------------------------------- | ----------------------------------------------------------------- |
-| [`@praxis-kit/core`](packages/core)                   | Validation engine, class pipeline, ARIA normalizer, factory       |
-| [`@praxis-kit/react`](packages/react)                 | React 19+ · `/legacy` sub-path for React 18                       |
-| [`@praxis-kit/vue`](packages/vue)                     | Vue 3                                                             |
-| [`@praxis-kit/solid`](packages/solid)                 | Solid · client and SSR                                            |
-| [`@praxis-kit/preact`](packages/preact)               | Preact                                                            |
-| [`@praxis-kit/svelte`](packages/svelte)               | Svelte 5                                                          |
-| [`@praxis-kit/lit`](packages/lit)                     | Lit                                                               |
-| [`@praxis-kit/web`](packages/web)                     | Vanilla Custom Elements — no framework required                   |
-| [`@praxis-kit/tailwind`](packages/tailwind)           | Layout-aware Tailwind class pipeline plugin                       |
-| [`@praxis-kit/vite-plugin`](packages/vite-plugin)     | Vite plugins for static composition, SSR, and contract validation |
-| [`@praxis-kit/eslint-plugin`](packages/eslint-plugin) | ESLint rules for enforcing Praxis Kit patterns                    |
-| [`@praxis-kit/ts-plugin`](packages/ts-plugin)         | TypeScript language service plugin with inline diagnostics        |
-| [`@praxis-kit/codemod`](packages/codemod)             | Codemods for migrations                                           |
-| [`@praxis-kit/playwright`](packages/playwright)       | Playwright CT helpers — ARIA snapshots, axe sweeps, keyboard      |
+| Sub-entry                | Description                                                       |
+| ------------------------ | ----------------------------------------------------------------- |
+| `praxis-kit/react`       | React 19+ · `praxis-kit/react/legacy` for React 18                |
+| `praxis-kit/vue`         | Vue 3                                                             |
+| `praxis-kit/solid`       | Solid · client and SSR                                            |
+| `praxis-kit/preact`      | Preact                                                            |
+| `praxis-kit/svelte`      | Svelte 5                                                          |
+| `praxis-kit/lit`         | Lit                                                               |
+| `praxis-kit/web`         | Vanilla Custom Elements — no framework required                   |
+| `praxis-kit/tailwind`    | Layout-aware Tailwind class pipeline plugin                       |
+| `praxis-kit/vite-plugin` | Vite plugins for static composition, SSR, and contract validation |
+| `praxis-kit/eslint`      | ESLint rules for enforcing Praxis Kit patterns                    |
+| `praxis-kit/ts-plugin`   | TypeScript language service plugin with inline diagnostics        |
+| `praxis-kit/codemod`     | Codemods for migrations (also available as `@praxis-kit/codemod`) |
+| `praxis-kit/playwright`  | Playwright CT helpers — ARIA snapshots, axe sweeps, keyboard      |
 
 ---
 

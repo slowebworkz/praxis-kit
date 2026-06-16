@@ -1,7 +1,11 @@
 packages:
   - "packages/*"
   - "lib/*"
+  - "adapters/*"
   - "examples/*"
+overrides:
+  esbuild: ">=0.25.0"
+
 peerDependencyRules:
   allowedVersions:
     "@vitejs/plugin-react>vite": "8"

@@ -1,19 +1,15 @@
 {
-  "name": "@praxis-kit/svelte",
+  "name": "@praxis-kit/solid",
   "version": "0.8.0-beta.4",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./Polymorphic.svelte": {
-      "svelte": "./src/Polymorphic.svelte"
     }
   },
   "files": [
     "dist",
-    "src/Polymorphic.svelte",
     "LICENSE"
   ],
   "scripts": {
@@ -33,15 +29,15 @@
     "type-fest": "catalog:"
   },
   "peerDependencies": {
-    "svelte": ">=5"
+    "solid-js": ">=1.6"
   },
   "devDependencies": {
     "@praxis-kit/adapter-utils": "workspace:*",
-    "@sveltejs/vite-plugin-svelte": "catalog:",
-    "@testing-library/svelte": "catalog:",
+    "@solidjs/testing-library": "catalog:",
     "jsdom": "catalog:",
-    "svelte": "catalog:",
+    "solid-js": "catalog:",
     "tsup": "catalog:",
+    "vite-plugin-solid": "catalog:",
     "vitest": "catalog:",
     "@praxis-kit/core": "workspace:*"
   },
@@ -51,15 +47,15 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/slowebworkz/praxis-kit.git",
-    "directory": "packages/svelte"
+    "directory": "adapters/solid"
   },
-  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/packages/svelte#readme",
+  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/adapters/solid#readme",
   "bugs": {
     "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
   "license": "MIT",
   "author": "K Huehn <slowebworkz@gmail.com>",
-  "description": "Praxis Kit adapter for Svelte 5 — polymorphic components with ARIA contracts and variant composition",
+  "description": "Praxis Kit adapter for SolidJS — polymorphic components with ARIA contracts and variant composition",
   "keywords": [
     "praxis-kit",
     "polymorphic",
@@ -71,7 +67,8 @@
     "framework-agnostic",
     "contract",
     "variants",
-    "svelte"
+    "solid-js",
+    "solidjs"
   ],
   "engines": {
     "node": ">=18"
