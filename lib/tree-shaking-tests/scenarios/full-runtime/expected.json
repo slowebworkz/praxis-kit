@@ -4,12 +4,12 @@
     "lib/styling/src",
     "lib/contract/src/aria",
     "lib/contract/src/children",
-    "packages/react/src"
+    "adapters/react/src"
   ],
   "mustExclude": [
-    "packages/vue/src",
-    "packages/solid/src",
-    "packages/preact/src",
+    "adapters/vue/src",
+    "adapters/solid/src",
+    "adapters/preact/src",
     "packages/tailwind/src"
   ]
 }
