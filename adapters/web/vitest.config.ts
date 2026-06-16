@@ -1,12 +1,7 @@
-import { defineConfig } from 'vitest/config'
+import { defineJsdomConfig } from '../../configs/vitest.base'
 
-export default defineConfig({
-  test: {
-    name: '@praxis-kit/web',
-    include: ['src/**/*.test.ts'],
-    environment: 'jsdom',
-    // forks mode isolates jsdom workers in subprocesses, preventing
-    // HTMLElement circular references from overflowing vitest's IPC serializer.
-    pool: 'forks',
-  },
+export default defineJsdomConfig('@praxis-kit/web', {
+  // forks mode isolates jsdom workers in subprocesses, preventing
+  // HTMLElement circular references from overflowing vitest's IPC serializer.
+  pool: 'forks',
 })
