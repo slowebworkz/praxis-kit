@@ -13,15 +13,11 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
     "lint": "eslint . --fix --config eslint.config.ts",
     "lint:check": "eslint . --config eslint.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:related": "vitest run --changed",
-    "prepublishOnly": "pnpm build",
-    "lint:pkg": "publint"
+    "test:related": "vitest run --changed"
   },
   "sideEffects": false,
   "dependencies": {
@@ -36,7 +32,6 @@
     "jsdom": "catalog:",
     "preact": "catalog:",
     "preact-render-to-string": "catalog:",
-    "tsup": "catalog:",
     "vitest": "catalog:",
     "@praxis-kit/core": "workspace:*"
   },

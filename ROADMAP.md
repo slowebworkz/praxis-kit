@@ -16,6 +16,19 @@
 
 ## Recently Shipped
 
+### Simplification audit — adapter build config removal (`simplification-audit` branch)
+
+Since PR #136, only `packages/kit` is published; individual adapter tsup builds produce artifacts that never reach npm.
+
+- Deleted all 7 `adapters/*/tsup.config.ts` files and all 7 `adapters/*/tsconfig.build.json` files (the build tsconfigs were only consumed by tsup)
+- Also stripped the duplicate `"paths"` block from `adapters/lit/tsconfig.json` and `adapters/web/tsconfig.json`, which were missed in the tsconfig paths pass above (same fix: inherited from root via `tsconfig.base.json → tsconfig.paths.json`)
+- Removed `"build"`, `"dev"`, `"prepublishOnly"`, and `"lint:pkg"` scripts from all 7 adapter `package.json` files; removed `tsup` from each adapter's `devDependencies`
+- Removed `./tsup.config.ts` from the `"include"` arrays in all 7 adapter `tsconfig.json` files
+
+Net reduction: ~56 tsup config lines + ~400 tsconfig.build lines + ~140 package.json lines.
+
+---
+
 ### Simplification audit — tsconfig paths consolidation (`simplification-audit` branch)
 
 Eliminated the three-way path map duplication across `tsconfig.paths.json` (root), `configs/tsconfig.shared.paths.json`, and the inline `"paths"` blocks in 5 adapter `tsconfig.build.json` files.

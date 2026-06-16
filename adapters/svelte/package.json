@@ -17,15 +17,11 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
     "lint": "eslint . --fix --config eslint.config.ts",
     "lint:check": "eslint . --config eslint.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config vitest.config.ts && vitest run --config vitest.ssr.config.ts",
-    "test:related": "vitest run --changed --config vitest.config.ts && vitest run --changed --config vitest.ssr.config.ts",
-    "prepublishOnly": "pnpm build",
-    "lint:pkg": "publint"
+    "test:related": "vitest run --changed --config vitest.config.ts && vitest run --changed --config vitest.ssr.config.ts"
   },
   "sideEffects": false,
   "dependencies": {
@@ -41,7 +37,6 @@
     "@testing-library/svelte": "catalog:",
     "jsdom": "catalog:",
     "svelte": "catalog:",
-    "tsup": "catalog:",
     "vitest": "catalog:",
     "@praxis-kit/core": "workspace:*"
   },
