@@ -628,54 +628,18 @@ The three blockers are fundamental, not implementation details:
 
 ---
 
-## Appendix — Simplification Audit (2026-06-16)
+## Appendix — Simplification Audit (2026-06-16) ✅ Complete
 
-Full-codebase review conducted after merging PR #136. Findings ordered by impact.
+Full-codebase review conducted after merging PR #136. All six items shipped on the `simplification-audit` branch.
 
----
+| # | Finding | Priority | Status |
+|---|---------|----------|--------|
+| 0 | Slot merge triple duplication + dead `mergeDefaults` | — | ✅ Shipped |
+| 1 | tsconfig paths triple duplication | HIGH | ✅ Shipped |
+| 2 | Per-adapter `tsup.config.ts` dead code | HIGH | ✅ Shipped |
+| 3 | `packages/kit` tsconfig over-specialization | HIGH | ✅ Shipped |
+| 4 | Vitest config duplication | MEDIUM | ✅ Shipped |
+| 5 | No-op per-package `eslint.config.ts` files | MEDIUM | ✅ Shipped |
+| 6 | `"private": true` missing + orphaned publish metadata | LOW | ✅ Shipped |
 
-### 1. tsconfig paths — triple duplication (HIGH)
-
-`tsconfig.paths.json` (root), `configs/tsconfig.shared.paths.json`, and the inline `"paths"` blocks in all 7 adapter `tsconfig.build.json` files all define the same 43-entry path map. The root and shared-paths files differ only in `./` vs. `../../` prefixes; the adapter files copy the entire block verbatim.
-
-**Proposed fix:** Delete `configs/tsconfig.shared.paths.json`. Have `packages/kit/tsconfig.build-base.json` extend `../../tsconfig.paths.json` directly. Remove the `"paths"` section from all 7 adapter `tsconfig.build.json` files — they already inherit paths from root via the extends chain. Net reduction: ~1,600 lines.
-
----
-
-### 2. Individual adapter `tsup.config.ts` files — dead code (HIGH)
-
-All 7 adapters (`adapters/react`, `adapters/preact`, etc.) have a `tsup.config.ts` and a `package.json` `"build": "tsup"` script. Since PR #136, the only package published is `praxis-kit`. The kit's `tsup.config.ts` builds every adapter from TypeScript source directly. The per-adapter builds produce dist artifacts that never reach npm.
-
-**Proposed fix:** Delete all 7 adapter `tsup.config.ts` files. Remove or no-op the `"build"` and `"prepublishOnly"` scripts in each adapter's `package.json`. Net reduction: ~56 lines of dead config.
-
----
-
-### 3. `packages/kit` tsconfig over-specialization (HIGH)
-
-`packages/kit/` has 10 `tsconfig.build-*.json` files. Four of them (`-vue.json`, `-lit.json`, `-web.json`, `-svelte.json`) are `{ "extends": "./tsconfig.build-base.json" }` with nothing else. The JSX settings in `-react.json`, `-preact.json`, `-solid.json` duplicate what `esbuildOptions()` already sets inline in `tsup.config.ts`.
-
-**Proposed fix:** Delete the four empty variants outright. Evaluate whether the JSX-bearing tsconfigs are actually read by tsup's DTS pipeline or whether `esbuildOptions` is sufficient — if the latter, delete those too. Keep only `tsconfig.build-base.json` (and `-codemod.json` / `-ts-plugin.json` which use legitimately different module settings). Net reduction: 4–8 files.
-
----
-
-### 4. Vitest config duplication (MEDIUM)
-
-24 `vitest.config.ts` + 6 `vitest.ssr.config.ts` files exist across the monorepo. Roughly 60% differ only in the `name` field and environment/plugin settings. Five distinct shapes account for all of them: bare (no plugins), jsdom, solid plugin, svelte plugin, web (forks pool).
-
-**Proposed fix:** Create `configs/vitest.base.ts` and 2–3 framework-specific variants. Per-package configs import the relevant base and add only what's unique. Net reduction: ~200 lines.
-
----
-
-### 5. Per-package `eslint.config.ts` boilerplate (MEDIUM)
-
-~8 packages have an `eslint.config.ts` that is just `export default [...base, ...ts]` with nothing added. These exist to satisfy `allowDefaultProject`, but that problem is now solved in `configs/typescript.ts` — the files add no rules.
-
-**Proposed fix:** Delete the no-op per-package configs. Update `allowDefaultProject` in `configs/typescript.ts` to match the broader glob `packages/*/src/**` if needed. Net reduction: ~8 files, ~30 lines.
-
----
-
-### 6. `"private": true` missing from non-kit packages (LOW)
-
-All adapter and tool packages (`packages/shared`, `packages/core`, `packages/tailwind`, etc.) have `"publishConfig": { "access": "public" }` in their `package.json` but are never published. Their versions are frozen at `0.8.0-beta.4` while `praxis-kit` is at `1.0.0`. This misleads tooling and future maintainers into thinking individual packages are publishable.
-
-**Proposed fix:** Add `"private": true` to every `package.json` except `packages/kit`. Remove orphaned `"publishConfig"` fields and `"prepublishOnly"` scripts from those files.
+See the "Recently Shipped" entries above for detail on each item. Total net reduction: ~1,900 lines across ~90 files.
