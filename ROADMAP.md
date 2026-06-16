@@ -16,6 +16,16 @@
 
 ## Recently Shipped
 
+### Simplification audit — kit tsconfig over-specialization (`simplification-audit` branch)
+
+Three of the ten `packages/kit/tsconfig.build-*.json` files were `{ "extends": "./tsconfig.build-base.json" }` with nothing added (`-vue.json`, `-lit.json`, `-web.json`). Deleted all three; updated the corresponding tsup entries to reference `tsconfig.build-base.json` directly.
+
+The four JSX-bearing variants (`-react.json`, `-preact.json`, `-solid.json`) and svelte (`allowArbitraryExtensions: true`) are retained — these settings are read by tsup's DTS pipeline (tsc/rollup-plugin-dts), not just esbuild, so they can't be collapsed into `esbuildOptions`. `tsconfig.build-codemod.json` and `tsconfig.build-ts-plugin.json` remain for their legitimately different module settings.
+
+Net reduction: 3 files.
+
+---
+
 ### Simplification audit — adapter build config removal (`simplification-audit` branch)
 
 Since PR #136, only `packages/kit` is published; individual adapter tsup builds produce artifacts that never reach npm.
