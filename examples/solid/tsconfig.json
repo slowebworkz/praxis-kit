@@ -1,8 +1,4 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "jsx": "preserve",
-    "jsxImportSource": "solid-js"
-  },
+  "extends": "../../configs/tsconfig.solid.json",
   "include": ["src", "./vitest.config.ts"]
 }
