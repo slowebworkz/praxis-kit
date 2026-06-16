@@ -1,7 +1,4 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "allowArbitraryExtensions": true
-  },
+  "extends": "../../configs/tsconfig.svelte.json",
   "include": ["src", "./vitest.config.ts"]
 }

@@ -32,8 +32,7 @@
     "lint:check": "eslint . --config eslint.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:related": "vitest run --changed",
-    "lint:pkg": "publint"
+    "test:related": "vitest run --changed"
   },
   "sideEffects": false,
   "dependencies": {
@@ -46,9 +45,6 @@
     "@praxis-kit/styling": "workspace:*",
     "tsup": "catalog:",
     "vitest": "catalog:"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "repository": {
     "type": "git",

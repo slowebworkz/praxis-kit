@@ -1,6 +1,6 @@
 import type { AriaContext, AriaFix, AriaResult, ChildRuleInput, EnforcementOptions } from '../types'
-import { isNumber, isString, isTag } from '@praxis-kit/shared/guards'
-import { isObject } from '@praxis-kit/primitive'
+import { isTag } from '@praxis-kit/shared/guards/children'
+import { isNumber, isObject, isString } from '@praxis-kit/primitive'
 
 // Matches any element whose tag is NOT in the blocked set, plus component children
 // (whose `type` is a function/class rather than a string). Used as the open-content

@@ -10,13 +10,8 @@ import type { ReactElement, Ref } from 'react'
 import { Slot } from './slot'
 import { normalizeChildren } from './normalize-children'
 import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/shared/guards/children'
-import { applyDisplayName, buildRuntime, render } from '@praxis-kit/react/shared'
-import type {
-  UnknownProps,
-  KnownProps,
-  PolymorphicComponent,
-  ReactFactoryOptions,
-} from '@praxis-kit/react/shared'
+import { applyDisplayName, buildRuntime, render } from '../shared'
+import type { UnknownProps, KnownProps, PolymorphicComponent, ReactFactoryOptions } from '../shared'
 
 export function createContractComponent<
   TDefault extends ElementType,

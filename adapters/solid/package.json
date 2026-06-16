@@ -1,6 +1,7 @@
 {
   "name": "@praxis-kit/solid",
   "version": "0.8.0-beta.4",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
@@ -13,15 +14,11 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
     "lint": "eslint . --fix --config eslint.config.ts",
     "lint:check": "eslint . --config eslint.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config vitest.config.ts && vitest run --config vitest.ssr.config.ts",
-    "test:related": "vitest run --changed --config vitest.config.ts && vitest run --changed --config vitest.ssr.config.ts",
-    "prepublishOnly": "pnpm build",
-    "lint:pkg": "publint"
+    "test:related": "vitest run --changed --config vitest.config.ts && vitest run --changed --config vitest.ssr.config.ts"
   },
   "sideEffects": false,
   "dependencies": {
@@ -36,13 +33,9 @@
     "@solidjs/testing-library": "catalog:",
     "jsdom": "catalog:",
     "solid-js": "catalog:",
-    "tsup": "catalog:",
     "vite-plugin-solid": "catalog:",
     "vitest": "catalog:",
     "@praxis-kit/core": "workspace:*"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "repository": {
     "type": "git",

@@ -72,8 +72,6 @@ const config = [
             // lib/contract and lib/styling include vitest.config.ts in their tsconfig — listed explicitly
             'lib/adapter-utils/vitest.config.ts',
             'lib/primitive/vitest.config.ts',
-            'lib/*/eslint.config.ts',
-            'examples/*/eslint.config.ts',
             'examples/*/vite.config.ts',
             // framework-specific scenarios are excluded from the tree-shaking-tests tsconfig
             // (jsxImportSource:react conflicts with Solid/Vue/Preact/Svelte JSX/return types)
@@ -82,7 +80,7 @@ const config = [
             'lib/tree-shaking-tests/scenarios/preact-minimal/*.ts',
             'lib/tree-shaking-tests/scenarios/svelte-minimal/*.ts',
           ],
-          // ~45 files: 2 root *.ts + 1 scripts + 9 configs + 11 pkg eslint configs + 7 adapter eslint configs + 2 lib vitest + 4 tsup/vitest/pw configs + 7 examples/*/eslint.config.ts + 5 examples/*/vite.config.ts + 2 non-React adapter scenarios + 2 workspace files
+          // ~38 files: 2 root *.ts + 1 scripts + 9 configs + 4 pkg eslint configs + 7 adapter eslint configs + 2 lib vitest + 4 tsup/vitest/pw configs + 5 examples/*/vite.config.ts + 2 non-React adapter scenarios + 2 workspace files
           maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 75,
           defaultProject: './tsconfig.base.json',
         },

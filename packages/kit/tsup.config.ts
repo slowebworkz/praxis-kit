@@ -75,7 +75,7 @@ export default [
     entry: { 'vue/index': '../../adapters/vue/src/index.ts' },
     format: ['esm'],
     dts: true,
-    tsconfig: 'tsconfig.build-vue.json',
+    tsconfig: 'tsconfig.build-base.json',
     noExternal: adapterNoExternal,
     esbuildOptions(options) {
       options.alias = { ...options.alias, ...sharedAlias }
@@ -87,7 +87,7 @@ export default [
     entry: { 'lit/index': '../../adapters/lit/src/index.ts' },
     format: ['esm'],
     dts: true,
-    tsconfig: 'tsconfig.build-lit.json',
+    tsconfig: 'tsconfig.build-base.json',
     noExternal: adapterNoExternal,
     esbuildOptions(options) {
       options.alias = { ...options.alias, ...sharedAlias }
@@ -99,7 +99,7 @@ export default [
     entry: { 'web/index': '../../adapters/web/src/index.ts' },
     format: ['esm'],
     dts: true,
-    tsconfig: 'tsconfig.build-web.json',
+    tsconfig: 'tsconfig.build-base.json',
     noExternal: adapterNoExternal,
     esbuildOptions(options) {
       options.alias = { ...options.alias, ...sharedAlias }

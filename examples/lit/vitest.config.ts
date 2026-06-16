@@ -1,9 +1,3 @@
-import { defineConfig } from 'vitest/config'
+import { defineJsdomConfig } from '../../configs/vitest.base'
 
-export default defineConfig({
-  test: {
-    name: 'example-lit',
-    include: ['src/**/*.test.ts'],
-    environment: 'jsdom',
-  },
-})
+export default defineJsdomConfig('example-lit')

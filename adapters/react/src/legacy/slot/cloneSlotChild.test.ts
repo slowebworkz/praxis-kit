@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createElement, Fragment } from 'react'
-import type { UnknownProps } from '@praxis-kit/react/shared'
+import type { UnknownProps } from '../../shared'
 import { cloneSlotChild } from './cloneSlotChild'
 
 const div = (props: UnknownProps = {}) => createElement('div', props)

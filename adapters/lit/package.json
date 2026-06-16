@@ -1,6 +1,7 @@
 {
   "name": "@praxis-kit/lit",
   "version": "0.8.0-beta.4",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
@@ -13,15 +14,11 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
     "lint": "eslint . --fix --config eslint.config.ts",
     "lint:check": "eslint . --config eslint.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run && vitest run --config vitest.ssr.config.ts",
-    "test:related": "vitest run --changed && vitest run --changed --config vitest.ssr.config.ts",
-    "prepublishOnly": "pnpm build",
-    "lint:pkg": "publint"
+    "test:related": "vitest run --changed && vitest run --changed --config vitest.ssr.config.ts"
   },
   "sideEffects": false,
   "dependencies": {
@@ -34,12 +31,8 @@
     "@praxis-kit/adapter-utils": "workspace:*",
     "jsdom": "catalog:",
     "lit": "catalog:",
-    "tsup": "catalog:",
     "vitest": "catalog:",
     "@praxis-kit/core": "workspace:*"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "repository": {
     "type": "git",

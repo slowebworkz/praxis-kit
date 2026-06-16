@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createElement, Fragment, createRef, act } from 'react'
 import type { ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { UnknownProps } from '@praxis-kit/react/shared'
+import type { UnknownProps } from '../shared'
 import { createContractComponent } from './create-contract-component'
 
 function box(comp: ReturnType<typeof createContractComponent>) {

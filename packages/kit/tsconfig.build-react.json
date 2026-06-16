@@ -1,6 +1,3 @@
 {
-  "extends": "./tsconfig.build-base.json",
-  "compilerOptions": {
-    "jsx": "react-jsx"
-  }
+  "extends": ["../../configs/tsconfig.react.json", "../../configs/tsconfig.shared.paths.json"]
 }

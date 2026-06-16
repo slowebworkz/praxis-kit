@@ -1,12 +1,3 @@
-import { defineConfig } from 'vitest/config'
+import { defineLibConfig } from '../../configs/vitest.base'
 
-export default defineConfig({
-  resolve: {
-    tsconfigPaths: true,
-  },
-  test: {
-    name: 'shared',
-    include: ['src/**/*.test.ts'],
-    passWithNoTests: true,
-  },
-})
+export default defineLibConfig('shared', { passWithNoTests: true })

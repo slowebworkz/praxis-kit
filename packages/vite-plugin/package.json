@@ -1,6 +1,7 @@
 {
   "name": "@praxis-kit/vite-plugin",
   "version": "0.8.0-beta.4",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
@@ -17,8 +18,7 @@
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:related": "vitest run --changed",
-    "prepublishOnly": "pnpm build"
+    "test:related": "vitest run --changed"
   },
   "sideEffects": false,
   "peerDependencies": {
@@ -33,9 +33,6 @@
     "typescript": "catalog:",
     "vite": "^8.0.16",
     "vitest": "catalog:"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "repository": {
     "type": "git",

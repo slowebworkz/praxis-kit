@@ -246,12 +246,9 @@ importers:
       lit:
         specifier: 'catalog:'
         version: 3.3.3
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
       vitest:
         specifier: 'catalog:'
-        version: 4.1.8(@types/node@25.9.1)(@vitest/ui@4.1.8)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.27.7)(jiti@2.7.0))
+        version: 4.1.8(@types/node@25.9.1)(@vitest/ui@4.1.8)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
   adapters/preact:
     dependencies:
@@ -277,9 +274,6 @@ importers:
       preact-render-to-string:
         specifier: 'catalog:'
         version: 6.7.0(preact@10.29.2)
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
       vitest:
         specifier: 'catalog:'
         version: 4.1.8(@types/node@25.9.1)(@vitest/ui@4.1.8)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
@@ -326,9 +320,6 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.2.7(react@19.2.7)
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
       vitest:
         specifier: 'catalog:'
         version: 4.1.8(@types/node@25.9.1)(@vitest/ui@4.1.8)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
@@ -357,9 +348,6 @@ importers:
       solid-js:
         specifier: 'catalog:'
         version: 1.9.13
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
       vite-plugin-solid:
         specifier: 'catalog:'
         version: 2.11.12(solid-js@1.9.13)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
@@ -394,9 +382,6 @@ importers:
       svelte:
         specifier: 'catalog:'
         version: 5.56.3(@typescript-eslint/types@8.60.0)
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
       vitest:
         specifier: 'catalog:'
         version: 4.1.8(@types/node@25.9.1)(@vitest/ui@4.1.8)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
@@ -440,9 +425,6 @@ importers:
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
       vitest:
         specifier: 'catalog:'
         version: 4.1.8(@types/node@25.9.1)(@vitest/ui@4.1.8)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
@@ -465,9 +447,6 @@ importers:
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
       vitest:
         specifier: 'catalog:'
         version: 4.1.8(@types/node@25.9.1)(@vitest/ui@4.1.8)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
@@ -682,6 +661,9 @@ importers:
       '@praxis-kit/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      clsx:
+        specifier: 'catalog:'
+        version: 2.1.1
       type-fest:
         specifier: 'catalog:'
         version: 5.6.0
@@ -694,7 +676,7 @@ importers:
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
       vitest:
         specifier: 'catalog:'
-        version: 4.1.8(@types/node@25.9.1)(@vitest/ui@4.1.8)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+        version: 4.1.8(@types/node@25.9.1)(@vitest/ui@4.1.8)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.27.7)(jiti@2.7.0))
 
   lib/bench:
     dependencies:
