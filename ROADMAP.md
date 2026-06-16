@@ -16,6 +16,18 @@
 
 ## Recently Shipped
 
+### Simplification audit — tsconfig paths consolidation (`simplification-audit` branch)
+
+Eliminated the three-way path map duplication across `tsconfig.paths.json` (root), `configs/tsconfig.shared.paths.json`, and the inline `"paths"` blocks in 5 adapter `tsconfig.build.json` files.
+
+- Deleted `configs/tsconfig.shared.paths.json` — paths were `../../`-prefixed copies of the root file; TypeScript resolves inherited paths relative to the file that defines them, so the root `./`-prefixed paths resolve correctly everywhere via the `extends` chain
+- Removed the `"paths"` block from `adapters/{react,preact,vue,solid,svelte}/tsconfig.build.json` — each now extends `../../tsconfig.base.json` directly and inherits root paths; only framework-specific settings (`jsx`, `jsxImportSource`, `allowArbitraryExtensions`) remain
+- Changed `packages/kit/tsconfig.build-base.json` from `"extends": ["../../tsconfig.base.json", "../../configs/tsconfig.shared.paths.json"]` to `"extends": "../../tsconfig.base.json"` — the second extend was overriding the already-correct inherited paths with a duplicate
+
+Net reduction: ~1,600 lines.
+
+---
+
 ### Simplification audit — slot merge consolidation + dead code removal (`simplification-audit` branch)
 
 - **Triple duplication eliminated** — `adapters/react/src/shared/slot/mergeProps.ts` and `adapters/preact/src/slot/mergeProps.ts` were word-for-word identical; same for their `policies.ts` pairs. Canonical implementation moved to `lib/adapter-utils/src/slot/` (`merge-slot-props.ts`, `policies.ts`, `index.ts`). Both adapter files are now thin named re-exports. `clsx` added to `adapter-utils` deps; all exports wired through `adapter-utils/src/index.ts`.
