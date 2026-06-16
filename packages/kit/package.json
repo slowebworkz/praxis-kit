@@ -146,7 +146,7 @@
     "url": "git+https://github.com/slowebworkz/praxis-kit.git",
     "directory": "packages/kit"
   },
-  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/packages/kit#readme",
+  "homepage": "https://github.com/slowebworkz/praxis-kit#readme",
   "bugs": {
     "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
