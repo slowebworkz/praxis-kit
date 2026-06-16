@@ -18,6 +18,7 @@
   "dependencies": {
     "@praxis-kit/shared": "workspace:*",
     "@praxis-kit/core": "workspace:*",
+    "clsx": "catalog:",
     "type-fest": "catalog:"
   },
   "devDependencies": {

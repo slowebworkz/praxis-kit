@@ -16,6 +16,14 @@
 
 ## Recently Shipped
 
+### Simplification audit — slot merge consolidation + dead code removal (`simplification-audit` branch)
+
+- **Triple duplication eliminated** — `adapters/react/src/shared/slot/mergeProps.ts` and `adapters/preact/src/slot/mergeProps.ts` were word-for-word identical; same for their `policies.ts` pairs. Canonical implementation moved to `lib/adapter-utils/src/slot/` (`merge-slot-props.ts`, `policies.ts`, `index.ts`). Both adapter files are now thin named re-exports. `clsx` added to `adapter-utils` deps; all exports wired through `adapter-utils/src/index.ts`.
+- **Dead code removed** — `lib/primitive/src/merge/merge-defaults.ts` (`mergeDefaults`) duplicated `lib/primitive/src/utils/merge-props.ts` (`mergeProps`) and was never imported outside its own barrel. File deleted; `merge/index.ts` updated.
+- **Latent rename bug fixed** — `mergeProps` in `lib/primitive/src/utils/merge-props.ts` had been accidentally renamed to `MergedProps` (PascalCase) in a staged but uncommitted change, silently breaking the `utils/index.ts` re-export. Corrected; `Simplify<...>` return type improvement from that change retained.
+
+---
+
 ### #136 — `praxis-kit` single-package distribution
 
 Single-entry-point umbrella package. Consumers install `praxis-kit` and import any adapter or tool via sub-entry — no separate per-framework npm packages needed. Reduces the publish pipeline to one package.
