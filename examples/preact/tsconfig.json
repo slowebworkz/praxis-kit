@@ -1,8 +1,4 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "jsxImportSource": "preact"
-  },
+  "extends": "../../configs/tsconfig.preact.json",
   "include": ["src", "./vitest.config.ts"]
 }
