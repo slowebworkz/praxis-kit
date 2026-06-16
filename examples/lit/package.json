@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "eslint . --fix --config eslint.config.ts",
-    "lint:check": "eslint . --config eslint.config.ts",
+    "lint": "eslint . --fix",
+    "lint:check": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:related": "vitest run --changed"
