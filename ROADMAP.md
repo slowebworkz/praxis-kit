@@ -16,6 +16,17 @@
 
 ## Recently Shipped
 
+### #136 — `praxis-kit` single-package distribution
+
+Single-entry-point umbrella package. Consumers install `praxis-kit` and import any adapter or tool via sub-entry — no separate per-framework npm packages needed. Reduces the publish pipeline to one package.
+
+- Moved `packages/{react,preact,solid,svelte,vue,lit,web}` → `adapters/` workspace
+- Created `packages/kit/` (`praxis-kit`) with 13 sub-entries: `react`, `react/legacy`, `preact`, `solid`, `svelte`, `vue`, `lit`, `web`, `tailwind`, `eslint`, `ts-plugin`, `vite-plugin`, `codemod`
+- tsup array config: per-framework tsconfig for JSX transforms (react-jsx, solid, preact/compat, svelte), esbuild aliases for `@praxis-kit/shared` (only linked under `packages/kit/node_modules`), DTS via `rollup-plugin-dts` with consolidated paths in `configs/tsconfig.shared.paths.json`
+- Added `migrate-paths` codemod command: rewrites `@praxis-kit/{react,preact,...}` → `praxis-kit/{react,preact,...}` across a consumer codebase; 22-test suite
+- Updated `publish.yml` to publish `packages/kit` only; updated `README.md` and `MIGRATING.md`
+- Consolidated `allowDefaultProject` into `configs/typescript.ts` (was duplicated); added `**/*.d.ts` to global ESLint ignores; updated tree-shaking `expected.json` path fragments from `packages/*/src` → `adapters/*/src`
+
 ### #110 — `aria-live`, `aria-atomic`, `aria-relevant` enforcement
 
 Three new rules added to `AriaPolicyEngine` in `lib/contract`:
@@ -97,20 +108,10 @@ Full four-layer pattern: `normalizeOptions` → `buildCoreRuntime` → `buildEng
 
 ## Remaining Work
 
-### Next — `praxis-kit` distribution package (PR #136 — `feat/kit-package-distribution`)
+### Next — Publish `praxis-kit` to npm
 
-Single-entry-point distribution package. Consumers install `praxis-kit` and import any adapter or tool via sub-entry — no separate npm packages to install. Reduces publish pipeline to one package.
+PR #136 (`feat/kit-package-distribution`) merged. `praxis-kit` is on `main`. Remaining steps before consumers can adopt it:
 
-- [x] Move `packages/{react,preact,solid,svelte,vue,lit,web}` → `adapters/{react,preact,solid,svelte,vue,lit,web}`
-- [x] Add `adapters/*` to `pnpm-workspace.yaml`
-- [x] Update `CLAUDE.md` repo overview (three workspace roots: `packages/`, `lib/`, `adapters/`)
-- [x] Create `packages/kit/` — `package.json` (name: `praxis-kit`), `tsup.config.ts`, `tsconfig.json`
-- [x] Wire kit build: array of tsup configs pointing at sources in `adapters/` and `packages/`
-- [x] Verify all sub-entries build cleanly (`pnpm --filter praxis-kit build` — all 13 entries produce JS + DTS)
-- [x] Add codemod migration: `@praxis-kit/{react,preact,...}` → `praxis-kit/{react,preact,...}` (combined `migrate` command; 22-test suite)
-- [x] Update `publish.yml` to publish `packages/kit` only
-- [x] Update `README.md` and `MIGRATING.md` to show `praxis-kit/*` import paths
-- [ ] **Merge PR #136**
 - [ ] Publish `praxis-kit` to npm (`pnpm --filter praxis-kit publish --tag beta`)
 - [ ] `npm deprecate @praxis-kit/react "Moved to praxis-kit/react. Run: pnpm dlx @praxis-kit/codemod migrate"` (repeat for each adapter/tool package)
 
