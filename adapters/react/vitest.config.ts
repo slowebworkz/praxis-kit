@@ -1,13 +1,6 @@
-import { defineConfig } from 'vitest/config'
+import { defineJsdomConfig } from '../../configs/vitest.base'
 
-export default defineConfig({
-  resolve: {
-    tsconfigPaths: true,
-  },
-  test: {
-    name: 'react',
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
-    environment: 'jsdom',
-    setupFiles: ['src/test-setup.ts'],
-  },
+export default defineJsdomConfig('react', {
+  include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+  setupFiles: ['src/test-setup.ts'],
 })

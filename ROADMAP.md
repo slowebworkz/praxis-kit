@@ -16,6 +16,21 @@
 
 ## Recently Shipped
 
+### Simplification audit — vitest config duplication (`simplification-audit` branch)
+
+14 identical `defineConfig({ resolve: { tsconfigPaths: true }, test: { name, include, ... } })` blocks collapsed into two factory functions in `configs/vitest.base.ts`:
+
+- `defineLibConfig(name, overrides?)` — bare TS-only config with `tsconfigPaths`; used by all `lib/` packages and non-jsdom `packages/`
+- `defineJsdomConfig(name, overrides?)` — adds `environment: 'jsdom'`; used by framework adapters and examples
+
+Converted packages: `lib/{primitive,contract,styling,adapter-utils}`, `packages/{core,tailwind,shared}`, `adapters/{vue,preact,react}`, `examples/{vue,preact,react,web}`. Configs that use non-standard environments (solid, svelte, lit, web SSR forks, bench) left as-is.
+
+`InlineConfig` from `vitest/node` used for the overrides parameter type — `vitest/config` does not export its own `UserConfig` shape with the `test` key accessible.
+
+Net reduction: ~90 lines across 14 files.
+
+---
+
 ### Simplification audit — kit tsconfig over-specialization (`simplification-audit` branch)
 
 Three of the ten `packages/kit/tsconfig.build-*.json` files were `{ "extends": "./tsconfig.build-base.json" }` with nothing added (`-vue.json`, `-lit.json`, `-web.json`). Deleted all three; updated the corresponding tsup entries to reference `tsconfig.build-base.json` directly.

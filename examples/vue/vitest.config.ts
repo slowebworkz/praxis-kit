@@ -1,12 +1,3 @@
-import { defineConfig } from 'vitest/config'
+import { defineJsdomConfig } from '../../configs/vitest.base'
 
-export default defineConfig({
-  resolve: {
-    tsconfigPaths: true,
-  },
-  test: {
-    name: 'example-vue',
-    include: ['src/**/*.test.ts'],
-    environment: 'jsdom',
-  },
-})
+export default defineJsdomConfig('example-vue')
