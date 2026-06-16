@@ -16,6 +16,19 @@
 
 ## Recently Shipped
 
+### Simplification audit — no-op per-package eslint configs (`simplification-audit` branch)
+
+5 `eslint.config.ts` files that added no rules deleted: `examples/{lit,react,vue,web}` and `packages/kit`. All were `[...praxisPlugin, ...base, ...ts]` or `[...base, ...ts]` with nothing added.
+
+- Deleted the 5 config files
+- Updated `lint`/`lint:check` scripts in those packages to `eslint . --fix` / `eslint .` (no `--config` flag — ESLint flat config auto-discovers the root config via directory traversal)
+- Also fixed the same broken `--config eslint.config.ts` reference in `examples/{preact,solid,svelte}`, which already had no local config and thus broken per-package lint scripts
+- Removed `lib/*/eslint.config.ts` and `examples/*/eslint.config.ts` from `allowDefaultProject` in `configs/typescript.ts` (no files match those globs anymore)
+
+Net reduction: 5 files, ~45 lines.
+
+---
+
 ### Simplification audit — vitest config duplication (`simplification-audit` branch)
 
 14 identical `defineConfig({ resolve: { tsconfigPaths: true }, test: { name, include, ... } })` blocks collapsed into two factory functions in `configs/vitest.base.ts`:

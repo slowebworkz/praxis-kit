@@ -66,8 +66,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "lint": "eslint . --fix --config eslint.config.ts",
-    "lint:check": "eslint . --config eslint.config.ts",
+    "lint": "eslint . --fix",
+    "lint:check": "eslint .",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "pnpm build",
     "lint:pkg": "publint"
