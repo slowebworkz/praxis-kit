@@ -76,25 +76,25 @@ describe('Landmark — ARIA auto-fix', () => {
 
 describe('Landmark — ARIA warnings', () => {
   it('warns when aria-checked is passed', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     mount(createElement(box(Landmark), { 'aria-checked': true }))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('"aria-checked" is not valid'))
   })
 
   it('warns on redundant role="navigation"', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     mount(createElement(box(Landmark), { role: 'navigation' }))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('already has implicit role'))
   })
 
   it('warns on role="region" override of a strong implicit role', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     mount(createElement(box(Landmark), { role: 'region' }))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('should not override'))
   })
 
   it('does not warn for valid ARIA usage', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     mount(createElement(box(Landmark), { 'aria-label': 'Primary navigation' }))
     expect(warn).not.toHaveBeenCalled()
   })
