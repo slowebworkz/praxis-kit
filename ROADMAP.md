@@ -16,6 +16,20 @@
 
 ## Recently Shipped
 
+### tsconfig deduplication — second pass (`simplification-audit` branch)
+
+Follow-up audit found the same inline-paths pattern in files not covered by the first pass, plus framework-option duplication between adapter and example tsconfigs.
+
+- **Bug fix** — `packages/eslint-plugin/tsconfig.build.json` still referenced the deleted `configs/tsconfig.shared.paths.json`; changed to extend `../../tsconfig.base.json` directly
+- **Two missing root paths added** — `@praxis-kit/contract/types` and `@praxis-kit/react/current/*` were absent from `tsconfig.paths.json`, forcing `packages/core` and `lib/bench` to carry full inline path maps just to include those two entries
+- **Inline paths blocks removed** from `lib/adapter-utils/tsconfig.build.json`, `lib/bench/tsconfig.json`, `lib/bundle-analysis/tsconfig.json`, `lib/tree-shaking-tests/tsconfig.json`, `packages/core/tsconfig.json` — all now inherit from root via the extends chain
+- **Framework tsconfigs created** — `configs/tsconfig.{react,preact,solid,svelte}.json` each define just the compiler options for that JSX transform. `adapters/*`, `examples/*`, and `packages/kit/tsconfig.build-{react,preact,solid,svelte}.json` all extend these instead of repeating inline options
+- **Minor cleanup** — removed empty `compilerOptions: {}` from `lib/primitive/tsconfig.json`; deleted unreferenced `tsconfig.node.json`
+
+Net reduction: ~460 lines across 25 files.
+
+---
+
 ### Simplification audit — `"private": true` + orphaned publish metadata (`simplification-audit` branch)
 
 Added `"private": true` to 12 packages that are never published individually (7 adapters + `codemod`, `eslint-plugin`, `tailwind`, `ts-plugin`, `vite-plugin`). Removed `"publishConfig": { "access": "public" }` from those 12 plus `packages/core` (which was already private). Removed orphaned `"prepublishOnly": "pnpm build"` from `eslint-plugin` and `vite-plugin`. `packages/kit` (`praxis-kit`) retains its publish metadata — it is the only published package.
