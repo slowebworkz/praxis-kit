@@ -1,6 +1,7 @@
 {
   "name": "@praxis-kit/vue",
   "version": "0.8.0-beta.4",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
@@ -40,9 +41,6 @@
     "vitest": "catalog:",
     "vue": "catalog:",
     "@praxis-kit/core": "workspace:*"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "repository": {
     "type": "git",
