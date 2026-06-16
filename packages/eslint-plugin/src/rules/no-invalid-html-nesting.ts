@@ -1,8 +1,17 @@
 import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
 import type { TSESTree } from '@typescript-eslint/utils'
-import { HTML_ALLOWED_CHILDREN } from '../utils/html-nesting'
+import { HTML_CONTENT_MODELS, TAG_CATEGORIES } from '../utils/html-nesting'
 
 const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)
+
+const ALLOWED_TEXT: Record<string, string> = Object.fromEntries(
+  Object.entries(HTML_CONTENT_MODELS).map(([tag, model]) => [
+    tag,
+    model.kind === 'specific'
+      ? [...model.allowed].join(', ')
+      : [...model.allowed].map((c) => `${c} content`).join(', '),
+  ]),
+)
 
 export type Options = []
 
@@ -10,11 +19,14 @@ export type MessageIds = 'invalidChild'
 
 function getIntrinsicTag(name: TSESTree.JSXTagNameExpression): string | undefined {
   if (name.type !== 'JSXIdentifier') return undefined
-  const text = name.name
-  // Intrinsic HTML elements start with a lowercase letter.
-  return text.length > 0 && text[0] === text[0]!.toLowerCase() && text[0] !== text[0]!.toUpperCase()
-    ? text
-    : undefined
+  return /^[a-z]/.test(name.name) ? name.name : undefined
+}
+
+function isAllowed(childTag: string, model: (typeof HTML_CONTENT_MODELS)[string]): boolean {
+  if (model.kind === 'specific') return model.allowed.has(childTag)
+  const cats = TAG_CATEGORIES[childTag]
+  if (!cats) return true // unknown child tag — don't flag
+  return [...model.allowed].some((c) => cats.has(c))
 }
 
 export const noInvalidHtmlNesting = createRule<Options, MessageIds>({
@@ -27,8 +39,7 @@ export const noInvalidHtmlNesting = createRule<Options, MessageIds>({
     },
     messages: {
       invalidChild:
-        '<{{ child }}> is not a valid direct child of <{{ parent }}>. ' +
-        'Allowed children: {{ allowed }}.',
+        '<{{ child }}> is not a valid direct child of <{{ parent }}>. ' + 'Allowed: {{ allowed }}.',
     },
     schema: [],
   },
@@ -39,8 +50,8 @@ export const noInvalidHtmlNesting = createRule<Options, MessageIds>({
         const parentTag = getIntrinsicTag(node.openingElement.name)
         if (!parentTag) return
 
-        const allowed = HTML_ALLOWED_CHILDREN[parentTag]
-        if (!allowed) return
+        const model = HTML_CONTENT_MODELS[parentTag]
+        if (!model) return
 
         for (const child of node.children) {
           // JSXText, JSXExpressionContainer, JSXSpreadChild, JSXFragment — skip.
@@ -49,7 +60,7 @@ export const noInvalidHtmlNesting = createRule<Options, MessageIds>({
 
           const childTag = getIntrinsicTag(child.openingElement.name)
           if (childTag === undefined) continue
-          if (allowed.has(childTag)) continue
+          if (isAllowed(childTag, model)) continue
 
           context.report({
             node: child,
@@ -57,7 +68,7 @@ export const noInvalidHtmlNesting = createRule<Options, MessageIds>({
             data: {
               child: childTag,
               parent: parentTag,
-              allowed: [...allowed].join(', '),
+              allowed: ALLOWED_TEXT[parentTag] ?? '',
             },
           })
         }

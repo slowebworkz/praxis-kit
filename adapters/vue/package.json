@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-kit/preact",
+  "name": "@praxis-kit/vue",
   "version": "0.8.0-beta.4",
   "type": "module",
   "exports": {
@@ -25,19 +25,25 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "clsx": "catalog:",
     "type-fest": "catalog:"
   },
   "peerDependencies": {
-    "preact": ">=10.11"
+    "vue": ">=3.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "catalog:",
+    "@playwright/experimental-ct-vue": "catalog:",
+    "@playwright/test": "catalog:",
     "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/playwright": "workspace:*",
+    "@vitejs/plugin-vue": "catalog:",
+    "@vue/compiler-dom": "catalog:",
+    "@vue/server-renderer": "catalog:",
+    "@vue/test-utils": "catalog:",
     "jsdom": "catalog:",
-    "preact": "catalog:",
-    "preact-render-to-string": "catalog:",
     "tsup": "catalog:",
     "vitest": "catalog:",
+    "vue": "catalog:",
     "@praxis-kit/core": "workspace:*"
   },
   "publishConfig": {
@@ -46,15 +52,15 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/slowebworkz/praxis-kit.git",
-    "directory": "packages/preact"
+    "directory": "adapters/vue"
   },
-  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/packages/preact#readme",
+  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/adapters/vue#readme",
   "bugs": {
     "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
   "license": "MIT",
   "author": "K Huehn <slowebworkz@gmail.com>",
-  "description": "Praxis Kit adapter for Preact — polymorphic components with ARIA contracts and variant composition",
+  "description": "Praxis Kit adapter for Vue 3 — polymorphic components with ARIA contracts and variant composition",
   "keywords": [
     "praxis-kit",
     "polymorphic",
@@ -66,7 +72,7 @@
     "framework-agnostic",
     "contract",
     "variants",
-    "preact"
+    "vue"
   ],
   "engines": {
     "node": ">=18"

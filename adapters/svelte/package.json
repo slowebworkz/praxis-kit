@@ -1,15 +1,19 @@
 {
-  "name": "@praxis-kit/lit",
+  "name": "@praxis-kit/svelte",
   "version": "0.8.0-beta.4",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./Polymorphic.svelte": {
+      "svelte": "./src/Polymorphic.svelte"
     }
   },
   "files": [
     "dist",
+    "src/Polymorphic.svelte",
     "LICENSE"
   ],
   "scripts": {
@@ -18,22 +22,25 @@
     "lint": "eslint . --fix --config eslint.config.ts",
     "lint:check": "eslint . --config eslint.config.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run && vitest run --config vitest.ssr.config.ts",
-    "test:related": "vitest run --changed && vitest run --changed --config vitest.ssr.config.ts",
+    "test": "vitest run --config vitest.config.ts && vitest run --config vitest.ssr.config.ts",
+    "test:related": "vitest run --changed --config vitest.config.ts && vitest run --changed --config vitest.ssr.config.ts",
     "prepublishOnly": "pnpm build",
     "lint:pkg": "publint"
   },
   "sideEffects": false,
   "dependencies": {
+    "clsx": "catalog:",
     "type-fest": "catalog:"
   },
   "peerDependencies": {
-    "lit": ">=3.0"
+    "svelte": ">=5"
   },
   "devDependencies": {
     "@praxis-kit/adapter-utils": "workspace:*",
+    "@sveltejs/vite-plugin-svelte": "catalog:",
+    "@testing-library/svelte": "catalog:",
     "jsdom": "catalog:",
-    "lit": "catalog:",
+    "svelte": "catalog:",
     "tsup": "catalog:",
     "vitest": "catalog:",
     "@praxis-kit/core": "workspace:*"
@@ -44,15 +51,15 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/slowebworkz/praxis-kit.git",
-    "directory": "packages/lit"
+    "directory": "adapters/svelte"
   },
-  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/packages/lit#readme",
+  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/adapters/svelte#readme",
   "bugs": {
     "url": "https://github.com/slowebworkz/praxis-kit/issues"
   },
   "license": "MIT",
   "author": "K Huehn <slowebworkz@gmail.com>",
-  "description": "Praxis Kit adapter for Lit — polymorphic custom elements with ARIA contracts and variant composition",
+  "description": "Praxis Kit adapter for Svelte 5 — polymorphic components with ARIA contracts and variant composition",
   "keywords": [
     "praxis-kit",
     "polymorphic",
@@ -64,9 +71,7 @@
     "framework-agnostic",
     "contract",
     "variants",
-    "lit",
-    "web-components",
-    "custom-elements"
+    "svelte"
   ],
   "engines": {
     "node": ">=18"

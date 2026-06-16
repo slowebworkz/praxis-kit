@@ -7,4 +7,4 @@ message: |
 rule:
   pattern: "forwardRef($$$)"
 files:
-  - packages/react/src/current/**
+  - adapters/react/src/current/**
