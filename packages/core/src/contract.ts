@@ -2,6 +2,7 @@
 // Includes everything from the primitive entry.
 export * from './primitive'
 export * from './html'
+export * from './state'
 export { StrictBase } from '@praxis-kit/contract'
 export { disabledProps, invalidProps } from '@praxis-kit/contract'
 export {
