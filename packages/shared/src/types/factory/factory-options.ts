@@ -11,6 +11,14 @@ export type NormalizeFn<Props extends AnyRecord = AnyRecord> = {
   normalize(props: Readonly<Props & IntrinsicProps>): Props & IntrinsicProps
 }['normalize']
 
+export type AnyFactoryOptions = FactoryOptions<
+  ElementType,
+  AnyRecord,
+  VariantMap,
+  PresetMap<VariantMap>,
+  AnyRecord
+>
+
 export type FactoryOptions<
   TDefault extends ElementType = ElementType,
   Props extends AnyRecord = EmptyRecord,

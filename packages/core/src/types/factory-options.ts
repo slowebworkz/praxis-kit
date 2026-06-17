@@ -1,4 +1,5 @@
 export type {
+  AnyFactoryOptions,
   EnforcementOptions,
   FactoryOptions,
   NormalizeFn,
