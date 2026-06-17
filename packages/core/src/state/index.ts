@@ -8,3 +8,4 @@ export {
   readonlyContract,
   selectedContract,
 } from './contracts'
+export { mergeContracts } from './merge-contracts'
