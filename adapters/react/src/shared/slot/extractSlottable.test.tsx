@@ -2,9 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { createElement, Fragment } from 'react'
 import { Slottable } from './Slottable'
 import { extractSlottable } from './extractSlottable'
-
-const div = (props = {}) => createElement('div', props)
-const span = (props = {}) => createElement('span', props)
+import { div, span } from '../test-utils'
 
 describe('extractSlottable', () => {
   describe('when no Slottable is present', () => {

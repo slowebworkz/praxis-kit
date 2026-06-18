@@ -5,9 +5,7 @@ import type { UnknownProps } from '../types'
 import type { CloneSlotChildFn } from './types'
 import { applySlot } from './applySlot'
 import { Slottable } from './Slottable'
-
-const div = (props: UnknownProps = {}) => createElement('div', props)
-const span = (props: UnknownProps = {}) => createElement('span', props)
+import { div, span } from '../test-utils'
 
 const identity: CloneSlotChildFn = ({ child }) => child
 

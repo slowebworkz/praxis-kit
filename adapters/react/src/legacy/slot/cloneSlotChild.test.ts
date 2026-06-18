@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createElement, Fragment } from 'react'
 import type { UnknownProps } from '../../shared'
 import { cloneSlotChild } from './cloneSlotChild'
-
-const div = (props: UnknownProps = {}) => createElement('div', props)
+import { div } from '../../shared/test-utils'
 
 describe('cloneSlotChild — React 18 (legacy)', () => {
   it('merges slotProps into child props', () => {
