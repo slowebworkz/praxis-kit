@@ -22,6 +22,7 @@ export type RuntimeOptions = Readonly<
     | 'childRules'
     | 'allowedAs'
     | 'normalizeFn'
+    | 'htmlPropNormalizersFn'
   >
 >
 

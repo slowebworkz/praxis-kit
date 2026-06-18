@@ -65,9 +65,15 @@
 
   const tag = $derived(bundle.runtime.resolveTag(asProp as ElementType | undefined))
   const mergedProps = $derived(bundle.runtime.resolveProps(rest as UnknownProps))
-  const normalizedProps = $derived(
-    bundle.runtime.options.normalizeFn ? bundle.runtime.options.normalizeFn(mergedProps) : mergedProps,
-  )
+  const normalizedProps = $derived.by(() => {
+    const base = bundle.runtime.options.normalizeFn
+      ? bundle.runtime.options.normalizeFn(mergedProps)
+      : mergedProps
+    const htmlNormalizers = bundle.runtime.options.htmlPropNormalizersFn?.(tag)
+    return htmlNormalizers?.length
+      ? htmlNormalizers.reduce((acc, fn) => ({ ...acc, ...fn(acc) }), base)
+      : base
+  })
   const resolvedClass = $derived(
     bundle.runtime.resolveClasses(tag, normalizedProps, cls as string | undefined, variantKey),
   )

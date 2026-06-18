@@ -2,6 +2,7 @@ import type { AnyRecord, ClassName, ElementType, EmptyRecord, TagMap } from '../
 import type { StrictMode } from '../config'
 import type { AriaRule } from '../aria-rule'
 import type { NormalizeFn } from './factory-options'
+import type { PropNormalizer } from './prop-normalizer'
 import type { ChildRuleInput } from '../contracts'
 import type { CompoundVariant } from '../variants/compound'
 import type { PresetMap, VariantMap, VariantProps } from '../variants'
@@ -24,6 +25,7 @@ export type ResolvedFactoryOptions<
   readonly strict: StrictMode
   readonly variantKeys: ReadonlySet<string>
   readonly normalizeFn?: NormalizeFn<Props>
+  readonly htmlPropNormalizersFn?: (tag: unknown) => readonly PropNormalizer[] | undefined
   readonly childRules?: readonly ChildRuleInput[]
   readonly ariaRules?: readonly AriaRule[]
   readonly allowedAs?: readonly ElementType[]
