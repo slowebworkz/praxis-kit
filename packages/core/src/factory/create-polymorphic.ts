@@ -107,7 +107,14 @@ export function createPolymorphic<
   capabilities?: Capabilities,
 ): PolymorphicRuntime<TDefault, Props, Variants, Extract<keyof TPreset, string>, TPreset> {
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
-  const resolved = resolveFactoryOptions(options)
+  const baseResolved = resolveFactoryOptions(options)
+  const resolved =
+    capabilities?.htmlPropNormalizersFn !== undefined
+      ? Object.freeze({
+          ...baseResolved,
+          htmlPropNormalizersFn: capabilities.htmlPropNormalizersFn,
+        })
+      : baseResolved
   // Construction-time contract check — dev-only (tree-shaken from production) and
   // further gated on `strict` inside.
   if (process.env.NODE_ENV !== 'production') validateFactoryOptions(resolved)
@@ -118,11 +125,14 @@ export function createPolymorphic<
     capabilities,
   )
 
+  const allAriaRules = [
+    ...new Set([...(capabilities?.htmlAriaRules ?? []), ...(resolved.ariaRules ?? [])]),
+  ]
   const engine =
     options.enforcement !== undefined && capabilities?.AriaEngine
       ? new capabilities.AriaEngine(
           resolved.strict,
-          resolved.ariaRules?.length ? { rules: resolved.ariaRules } : undefined,
+          allAriaRules.length ? { rules: allAriaRules } : undefined,
         )
       : null
 

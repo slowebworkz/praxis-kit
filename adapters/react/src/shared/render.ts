@@ -2,7 +2,7 @@ import { createElement } from 'react'
 import { jsx } from 'react/jsx-runtime'
 import type { ReactElement, Ref } from 'react'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
-import { enforceAllowedAs } from '@praxis-kit/core'
+import { enforceAllowedAs, getHtmlChildrenEvaluator } from '@praxis-kit/core'
 import { isKnownAriaRole } from '@praxis-kit/core/primitive'
 import { applyFilter } from '@praxis-kit/adapter-utils'
 import type { SlotValidator } from './slot'
@@ -66,9 +66,13 @@ function resolveRenderState(
     )
   }
   const mergedProps = runtime.resolveProps(rest)
-  const normalizedProps = runtime.options.normalizeFn
+  const baseProps = runtime.options.normalizeFn
     ? runtime.options.normalizeFn(mergedProps)
     : mergedProps
+  const htmlNormalizers = runtime.options.htmlPropNormalizersFn?.(tag)
+  const normalizedProps = htmlNormalizers?.length
+    ? htmlNormalizers.reduce((acc, fn) => ({ ...acc, ...fn(acc) }), baseProps)
+    : baseProps
   const resolvedClass = runtime.resolveClasses(tag, normalizedProps, className, variantKey)
   const filteredProps = applyFilter(normalizedProps, filterProps, runtime.options.variantKeys)
   return buildRenderState(tag, buildDirectives(as, asChild), filteredProps, resolvedClass, children)
@@ -201,7 +205,10 @@ export function render<TProps extends KnownProps>({
   let cached: ReactElement[] | undefined
   const once = (): ReactElement[] => (cached ??= normalizeChildren(state.children))
 
-  if (process.env.NODE_ENV !== 'production') childrenEvaluator?.evaluate(once())
+  if (process.env.NODE_ENV !== 'production') {
+    childrenEvaluator?.evaluate(once())
+    getHtmlChildrenEvaluator(state.tag)?.evaluate(once())
+  }
 
   // Render-prop path — caller receives resolved props directly; no Slot, no cloneElement.
   if (typeof props.render === 'function') {
