@@ -1,36 +1,16 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach } from 'vitest'
-import { createElement } from 'react'
+import { createElement, act } from 'react'
 import type { ComponentType, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createRoot } from 'react-dom/client'
-import { act } from 'react'
 import { hydrationParitySuite } from '@praxis-kit/adapter-utils/testing'
 import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
+import { parseAttributes, normalizeAttrs } from '@praxis-kit/shared/tests'
 import type { UnknownProps } from '../shared'
 import { createContractComponent } from './create-contract-component'
 
 type AnyComp = ComponentType<UnknownProps>
-
-function parseAttributes(html: string): Record<string, string> {
-  const container = document.createElement('div')
-  container.innerHTML = html
-  const el = container.firstElementChild
-  if (!el) return {}
-  const attrs: Record<string, string> = {}
-  for (const { name, value } of el.attributes) {
-    attrs[name] = value
-  }
-  return attrs
-}
-
-function normalizeAttrs(attrs: Record<string, string>): Record<string, string> {
-  const out: Record<string, string> = {}
-  for (const [k, v] of Object.entries(attrs)) {
-    out[k] = k === 'class' ? v.split(' ').sort().join(' ') : v
-  }
-  return out
-}
 
 function ssr(comp: unknown, props?: UnknownProps, ...children: ReactNode[]) {
   return renderToStaticMarkup(createElement(comp as AnyComp, props ?? {}, ...children))

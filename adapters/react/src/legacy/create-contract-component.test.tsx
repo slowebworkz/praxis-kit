@@ -1,36 +1,10 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { createElement, Fragment, createRef, act } from 'react'
-import type { ComponentType } from 'react'
-import { createRoot } from 'react-dom/client'
-import type { UnknownProps } from '../shared'
+import { describe, it, expect } from 'vitest'
+import { createElement, Fragment, createRef } from 'react'
+import { box, useReactDom } from '../shared/test-utils'
 import { createContractComponent } from './create-contract-component'
 
-function box(comp: ReturnType<typeof createContractComponent>) {
-  return comp as ComponentType<UnknownProps>
-}
-
-let container: HTMLElement
-let root: ReturnType<typeof createRoot>
-
-function mount(element: ReturnType<typeof createElement>) {
-  act(() => {
-    root.render(element)
-  })
-}
-
-beforeEach(() => {
-  container = document.createElement('div')
-  document.body.appendChild(container)
-  root = createRoot(container)
-})
-
-afterEach(() => {
-  act(() => {
-    root.unmount()
-  })
-  document.body.removeChild(container)
-})
+const dom = useReactDom()
 
 describe('createContractComponent (legacy / React 18)', () => {
   it('sets displayName', () => {
@@ -40,39 +14,41 @@ describe('createContractComponent (legacy / React 18)', () => {
 
   it('renders the default tag (div)', () => {
     const Box = createContractComponent({})
-    mount(createElement(box(Box), null))
-    expect(container.querySelector('div')).toBeTruthy()
+    dom.mount(createElement(box(Box), null))
+    expect(dom.container.querySelector('div')).toBeTruthy()
   })
 
   it('renders a different tag via the as prop', () => {
     const Box = createContractComponent({})
-    mount(createElement(box(Box), { as: 'section' }))
-    expect(container.querySelector('section')).toBeTruthy()
+    dom.mount(createElement(box(Box), { as: 'section' }))
+    expect(dom.container.querySelector('section')).toBeTruthy()
   })
 
   it('forwards a ref to the DOM element via forwardRef', () => {
     const Box = createContractComponent({})
     const ref = createRef<HTMLDivElement>()
-    mount(createElement(box(Box), { ref }))
-    expect(ref.current).toBe(container.querySelector('div'))
+    dom.mount(createElement(box(Box), { ref }))
+    expect(ref.current).toBe(dom.container.querySelector('div'))
   })
 
   it('renders children', () => {
     const Box = createContractComponent({})
-    mount(createElement(box(Box), null, createElement('span', { id: 'child' })))
-    expect(container.querySelector('span#child')).toBeTruthy()
+    dom.mount(createElement(box(Box), null, createElement('span', { id: 'child' })))
+    expect(dom.container.querySelector('span#child')).toBeTruthy()
   })
 
   it('asChild renders the child element type', () => {
     const Box = createContractComponent({})
-    mount(createElement(box(Box), { asChild: true }, createElement('button', { type: 'button' })))
-    expect(container.querySelector('button')).toBeTruthy()
+    dom.mount(
+      createElement(box(Box), { asChild: true }, createElement('button', { type: 'button' })),
+    )
+    expect(dom.container.querySelector('button')).toBeTruthy()
   })
 
   it('asChild merges className onto the child element', () => {
     const Box = createContractComponent({ styling: { base: 'legacy-cls' } })
-    mount(createElement(box(Box), { asChild: true }, createElement('button')))
-    expect(container.querySelector('button')!.className).toContain('legacy-cls')
+    dom.mount(createElement(box(Box), { asChild: true }, createElement('button')))
+    expect(dom.container.querySelector('button')!.className).toContain('legacy-cls')
   })
 
   // In React 19, Children.toArray no longer flattens Fragments — both legacy and
@@ -81,20 +57,20 @@ describe('createContractComponent (legacy / React 18)', () => {
   it('fragment with multiple children does not throw in React 19 (no flattening)', () => {
     const Box = createContractComponent({})
     const fragment = createElement(Fragment, null, createElement('span'), createElement('div'))
-    expect(() => mount(createElement(box(Box), { asChild: true }, fragment))).not.toThrow()
+    expect(() => dom.mount(createElement(box(Box), { asChild: true }, fragment))).not.toThrow()
   })
 
   it('nested asChild: both components compose their classes onto the inner element', () => {
     const BoxA = createContractComponent({ styling: { base: 'class-a' } })
     const BoxB = createContractComponent({ styling: { base: 'class-b' } })
-    mount(
+    dom.mount(
       createElement(
         box(BoxA),
         { asChild: true },
         createElement(box(BoxB), { asChild: true }, createElement('button')),
       ),
     )
-    const el = container.querySelector('button')!
+    const el = dom.container.querySelector('button')!
     expect(el.className).toContain('class-a')
     expect(el.className).toContain('class-b')
   })
@@ -103,22 +79,22 @@ describe('createContractComponent (legacy / React 18)', () => {
     const BoxA = createContractComponent({})
     const BoxB = createContractComponent({})
     const ref = createRef<HTMLButtonElement>()
-    mount(
+    dom.mount(
       createElement(
         box(BoxA),
         { asChild: true, ref },
         createElement(box(BoxB), { asChild: true }, createElement('button')),
       ),
     )
-    expect(ref.current).toBe(container.querySelector('button'))
+    expect(ref.current).toBe(dom.container.querySelector('button'))
   })
 
   it('applies filterProps', () => {
     const Box = createContractComponent({
       filterProps: (key: string) => key === 'size',
     })
-    mount(createElement(box(Box), { size: 'lg', 'data-keep': 'yes' } as never))
-    const el = container.querySelector('div')!
+    dom.mount(createElement(box(Box), { size: 'lg', 'data-keep': 'yes' } as never))
+    const el = dom.container.querySelector('div')!
     expect(el.getAttribute('size')).toBeNull()
     expect(el.getAttribute('data-keep')).toBe('yes')
   })
