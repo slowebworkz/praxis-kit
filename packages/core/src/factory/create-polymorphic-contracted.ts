@@ -9,9 +9,15 @@ import type {
   PresetMap,
   VariantMap,
 } from '../types'
+import { HTML_ARIA_RULES } from '../html/aria-rules'
+import { getHtmlPropNormalizers } from '../html/prop-normalizers'
 
 // ARIA engine only — no class pipeline. Tree-shakes lib/styling/src for enforcement-only consumers.
-const CONTRACTED_CAPABILITIES = { AriaEngine: AriaPolicyEngine }
+const CONTRACTED_CAPABILITIES = {
+  AriaEngine: AriaPolicyEngine,
+  htmlAriaRules: HTML_ARIA_RULES,
+  htmlPropNormalizersFn: getHtmlPropNormalizers,
+}
 
 export function createContractedPolymorphic<
   TDefault extends ElementType,

@@ -59,9 +59,13 @@ function resolveHostState(
   const { as, className, variantKey, ...rest } = props
   const tag = bundle.runtime.resolveTag(as as ElementType | undefined)
   const mergedProps = bundle.runtime.resolveProps(rest)
-  const normalizedProps = bundle.runtime.options.normalizeFn
+  const baseProps = bundle.runtime.options.normalizeFn
     ? bundle.runtime.options.normalizeFn(mergedProps)
     : mergedProps
+  const htmlNormalizers = bundle.runtime.options.htmlPropNormalizersFn?.(tag)
+  const normalizedProps = htmlNormalizers?.length
+    ? htmlNormalizers.reduce((acc, fn) => ({ ...acc, ...fn(acc) }), baseProps)
+    : baseProps
   const resolvedClass = bundle.runtime.resolveClasses(
     tag,
     normalizedProps,

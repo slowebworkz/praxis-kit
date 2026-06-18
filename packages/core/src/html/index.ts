@@ -1,4 +1,7 @@
 export type { HtmlContractMap } from './contracts'
+export { getHtmlChildrenEvaluator } from './evaluators'
+export { getHtmlPropNormalizers } from './prop-normalizers'
+export { HTML_ARIA_RULES } from './aria-rules'
 export {
   listContract,
   tableContract,
