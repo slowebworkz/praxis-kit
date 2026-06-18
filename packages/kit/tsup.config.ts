@@ -148,4 +148,16 @@ export default [
     tsconfig: 'tsconfig.build-codemod.json',
     banner: { js: '#!/usr/bin/env node' },
   }),
+
+  // Contract — framework-agnostic prop normalizers, state contracts, PropNormalizer type
+  defineConfig({
+    entry: { 'contract/index': './contract.ts' },
+    format: ['esm'],
+    dts: true,
+    tsconfig: 'tsconfig.build-base.json',
+    noExternal: adapterNoExternal,
+    esbuildOptions(options) {
+      options.alias = { ...options.alias, ...sharedAlias }
+    },
+  }),
 ]

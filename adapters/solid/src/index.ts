@@ -1,6 +1,5 @@
 export { createContractComponent } from './create-contract-component'
 export { defineContractComponent } from './define-contract-component'
-export { disabledProps, invalidProps } from '@praxis-kit/core'
 export type {
   AnyFactoryOptions,
   ElementType,
