@@ -1,7 +1,7 @@
 import type { AnyRecord, ClassName, EmptyRecord, TagMap } from '../primitives'
 import type { ClassPluginFactory } from '../class'
 import type { CompoundVariant } from '../variants/compound'
-import type { PresetMap, VariantMap, VariantProps } from '../variants'
+import type { DefaultVariants, PresetMap, VariantMap } from '../variants'
 
 export type StylingOptions<
   V extends Readonly<VariantMap> = Readonly<EmptyRecord>,
@@ -10,7 +10,7 @@ export type StylingOptions<
 > = {
   readonly base?: ClassName
   readonly variants?: V
-  readonly defaults?: Partial<VariantProps<V>>
+  readonly defaults?: Partial<DefaultVariants<V>>
   readonly compounds?: readonly CompoundVariant<V>[]
   readonly presets?: TPreset
   readonly tags?: Readonly<TagMap>
