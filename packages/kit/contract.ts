@@ -8,7 +8,7 @@ export {
   readonlyProps,
   selectedProps,
 } from '@praxis-kit/core'
-export type { PropNormalizer } from '@praxis-kit/core'
+export type { AnyFactoryOptions, PropNormalizer } from '@praxis-kit/core'
 export {
   activeContract,
   disabledContract,
