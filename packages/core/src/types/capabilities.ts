@@ -2,6 +2,7 @@ import type { AriaEngine } from './aria-engine'
 import type { AriaRule } from './aria-rule'
 import type { ClassPipelineFn } from './class-pipeline'
 import type { ClassPipelineOptions } from './class-pipeline-options'
+import type { PropNormalizer } from './factory-options'
 import type { StrictMode } from './strict-mode'
 import type { VariantMap } from './variant'
 
@@ -17,4 +18,6 @@ type AriaEngineConstructor = new (
 export type Capabilities = {
   readonly createClassPipeline?: CreateClassPipeline
   readonly AriaEngine?: AriaEngineConstructor
+  readonly htmlAriaRules?: readonly AriaRule[]
+  readonly htmlPropNormalizersFn?: (tag: unknown) => readonly PropNormalizer[] | undefined
 }

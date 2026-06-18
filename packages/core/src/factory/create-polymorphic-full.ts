@@ -10,8 +10,15 @@ import type {
   PresetMap,
   VariantMap,
 } from '../types'
+import { HTML_ARIA_RULES } from '../html/aria-rules'
+import { getHtmlPropNormalizers } from '../html/prop-normalizers'
 
-const FULL_CAPABILITIES = { createClassPipeline, AriaEngine: AriaPolicyEngine }
+const FULL_CAPABILITIES = {
+  createClassPipeline,
+  AriaEngine: AriaPolicyEngine,
+  htmlAriaRules: HTML_ARIA_RULES,
+  htmlPropNormalizersFn: getHtmlPropNormalizers,
+}
 
 export function createPolymorphic<
   TDefault extends ElementType,

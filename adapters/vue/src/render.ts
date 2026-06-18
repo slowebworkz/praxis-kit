@@ -37,9 +37,13 @@ export function resolveRenderState(
   const { as, asChild, class: className, variantKey, ...rest } = attrs as KnownProps
   const tag = runtime.resolveTag(as as ElementType | undefined)
   const mergedProps = runtime.resolveProps(rest as UnknownProps)
-  const normalizedProps = runtime.options.normalizeFn
+  const baseProps = runtime.options.normalizeFn
     ? runtime.options.normalizeFn(mergedProps)
     : mergedProps
+  const htmlNormalizers = runtime.options.htmlPropNormalizersFn?.(tag)
+  const normalizedProps = htmlNormalizers?.length
+    ? htmlNormalizers.reduce((acc, fn) => ({ ...acc, ...fn(acc) }), baseProps)
+    : baseProps
   const resolvedClass = runtime.resolveClasses(
     tag,
     normalizedProps,

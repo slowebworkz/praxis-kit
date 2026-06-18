@@ -56,9 +56,13 @@ function resolveRenderState(
   const { as, asChild, children, className, variantKey, ...rest } = props
   const tag = runtime.resolveTag(as)
   const mergedProps = runtime.resolveProps(rest)
-  const normalizedProps = runtime.options.normalizeFn
+  const baseProps = runtime.options.normalizeFn
     ? runtime.options.normalizeFn(mergedProps)
     : mergedProps
+  const htmlNormalizers = runtime.options.htmlPropNormalizersFn?.(tag)
+  const normalizedProps = htmlNormalizers?.length
+    ? htmlNormalizers.reduce((acc, fn) => ({ ...acc, ...fn(acc) }), baseProps)
+    : baseProps
   const resolvedClass = runtime.resolveClasses(tag, normalizedProps, className, variantKey)
   const filteredProps = applyFilter(normalizedProps, filterProps, runtime.options.variantKeys)
   return buildRenderState(tag, buildDirectives(as, asChild), filteredProps, resolvedClass, children)

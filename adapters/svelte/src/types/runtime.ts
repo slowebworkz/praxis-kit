@@ -15,7 +15,12 @@ import type { ResolvedProps, UnknownProps } from './primitives'
 export type RuntimeOptions = Readonly<
   Pick<
     ResolvedFactoryOptions,
-    'displayName' | 'strict' | 'variantKeys' | 'childRules' | 'normalizeFn'
+    | 'displayName'
+    | 'strict'
+    | 'variantKeys'
+    | 'childRules'
+    | 'normalizeFn'
+    | 'htmlPropNormalizersFn'
   >
 >
 
