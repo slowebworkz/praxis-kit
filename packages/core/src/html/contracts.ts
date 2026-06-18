@@ -1,6 +1,7 @@
-import type { AriaContext, AriaFix, AriaResult, ChildRuleInput, EnforcementOptions } from '../types'
+import type { ChildRuleInput, EnforcementOptions } from '../types'
 import { isTag } from '@praxis-kit/shared/guards/children'
 import { isNumber, isObject, isString } from '@praxis-kit/primitive'
+import { landmarkRoleRule } from './aria-rules'
 
 // Matches any element whose tag is NOT in the blocked set, plus component children
 // (whose `type` is a function/class rather than a string). Used as the open-content
@@ -220,33 +221,6 @@ export const textOnlyContract = contract([
 ])
 
 // ─── Landmark role contract ───────────────────────────────────────────────────
-
-const LANDMARK_TAG_SET = new Set<string>(LANDMARK_TAGS)
-
-const removeLandmarkRoleOverride: AriaFix = {
-  kind: 'removeRole',
-  apply: ({ props }) => {
-    if (!('role' in props)) return { applied: false, next: props }
-    const { role: _r, ...rest } = props
-    return { applied: true, next: rest, previous: props }
-  },
-}
-
-function landmarkRoleRule({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] {
-  if (!LANDMARK_TAG_SET.has(tag) || !implicitRole) return []
-  const role = props.role
-  // role === implicitRole is already caught by the built-in #checkRedundantRole (warns, removes).
-  if (!role || role === implicitRole) return []
-  return [
-    {
-      valid: false,
-      fixable: true,
-      severity: 'error',
-      fix: removeLandmarkRoleOverride,
-      message: `<${tag}> has a fixed landmark role="${implicitRole}". role="${role}" overrides it and confuses assistive technology. The override has been removed.`,
-    },
-  ]
-}
 
 /**
  * Elements with an unconditional landmark role (`<article>`, `<aside>`, `<footer>`,

@@ -35,6 +35,7 @@ export type {
   CVAVariants,
 } from './compound-variants'
 export type {
+  AnyFactoryOptions,
   EnforcementOptions,
   FactoryOptions,
   NormalizeFn,

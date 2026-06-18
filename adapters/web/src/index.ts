@@ -1,4 +1,5 @@
 export { createContractComponent } from './create-contract-component'
 export { defineContractComponent } from './define-contract-component'
 export { renderToString } from './render-to-string'
+export type { AnyFactoryOptions } from '@praxis-kit/core'
 export type { WebFactoryOptions, WebContractComponent } from './types/index'

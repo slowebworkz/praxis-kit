@@ -17,5 +17,10 @@ export type {
 } from '../shared'
 export type { ReactFactoryOptions } from '../shared'
 export { mergeRefs } from '../shared'
-export { disabledProps, invalidProps } from '@praxis-kit/core'
-export type { ElementType, EmptyRecord, PolymorphicGenerics } from '@praxis-kit/core'
+export type {
+  AnyFactoryOptions,
+  ElementType,
+  EmptyRecord,
+  FactoryOptions,
+  PolymorphicGenerics,
+} from '@praxis-kit/core'

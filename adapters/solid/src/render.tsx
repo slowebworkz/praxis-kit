@@ -94,9 +94,15 @@ export function render<TProps extends KnownProps>({
 
   const tag = createMemo(() => resolveTag(runtime, known.as))
   const mergedProps = createMemo(() => runtime.resolveProps(rest as UnknownProps))
-  const normalizedProps = createMemo(() =>
-    runtime.options.normalizeFn ? runtime.options.normalizeFn(mergedProps()) : mergedProps(),
-  )
+  const normalizedProps = createMemo(() => {
+    const base = runtime.options.normalizeFn
+      ? runtime.options.normalizeFn(mergedProps())
+      : mergedProps()
+    const htmlNormalizers = runtime.options.htmlPropNormalizersFn?.(tag())
+    return htmlNormalizers?.length
+      ? htmlNormalizers.reduce((acc, fn) => ({ ...acc, ...fn(acc) }), base)
+      : base
+  })
   const resolvedClass = createMemo(() =>
     runtime.resolveClasses(
       tag(),

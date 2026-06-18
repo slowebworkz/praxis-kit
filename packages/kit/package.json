@@ -54,6 +54,10 @@
     "./codemod": {
       "types": "./dist/codemod/index.d.ts",
       "import": "./dist/codemod/index.js"
+    },
+    "./contract": {
+      "types": "./dist/contract/index.d.ts",
+      "import": "./dist/contract/index.js"
     }
   },
   "bin": {
