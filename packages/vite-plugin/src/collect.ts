@@ -8,6 +8,7 @@ import {
   isFactoryCall,
   walk,
 } from './ast'
+import type { ImportBinding } from './imports'
 import type { Cardinality, ChildRulePosition, ComponentConstraint, StaticBound } from './types'
 
 /**
@@ -147,9 +148,9 @@ export function collectConstraints(
 export function collectFileDeclarations(
   source: ts.SourceFile,
   calleeNames: ReadonlySet<string>,
-): { constraints: ComponentConstraint[]; importSpecifiers: Map<string, string> } {
+): { constraints: ComponentConstraint[]; importSpecifiers: Map<string, ImportBinding> } {
   const constraints: ComponentConstraint[] = []
-  const importSpecifiers = new Map<string, string>()
+  const importSpecifiers = new Map<string, ImportBinding>()
 
   walk(source, (node) => {
     if (ts.isVariableStatement(node)) {
@@ -159,7 +160,12 @@ export function collectFileDeclarations(
       if (!ts.isStringLiteral(spec)) return
       const namedBindings = node.importClause?.namedBindings
       if (!namedBindings || !ts.isNamedImports(namedBindings)) return
-      for (const el of namedBindings.elements) importSpecifiers.set(el.name.text, spec.text)
+      const specifier = spec.text
+      for (const el of namedBindings.elements) {
+        const localName = el.name.text
+        const importedName = el.propertyName?.text ?? localName
+        importSpecifiers.set(localName, { importedName, specifier })
+      }
     }
   })
 
