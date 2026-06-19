@@ -32,6 +32,7 @@ export function extractImportSpecifiers(source: ts.SourceFile): Map<string, Impo
     if (!namedBindings || !ts.isNamedImports(namedBindings)) return
 
     for (const element of namedBindings.elements) {
+      if (element.isTypeOnly) continue
       const localName = element.name.text
       // propertyName is present only when aliased: `import { Foo as Bar }` → propertyName = Foo
       const importedName = element.propertyName?.text ?? localName
