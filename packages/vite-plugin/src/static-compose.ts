@@ -1,9 +1,9 @@
 /**
  * Compile-time static composition transform.
  *
- * For same-file factory calls that have `precomputedClasses` injected (by
- * classExtractPlugin), replaces static JSX usage sites with direct element
- * creation — bypassing the runtime render pipeline entirely.
+ * For factory calls that have `precomputedClasses` injected (by classExtractPlugin),
+ * replaces static JSX usage sites with direct element creation — bypassing the
+ * runtime render pipeline entirely.
  *
  * Example:
  *   // Source (same file defines Button and uses it)
@@ -15,8 +15,8 @@
  *   <button className="btn btn-lg">Click</button>  // inlined!
  *
  * **Eligibility conditions** — a usage site is inlined only when:
- *   1. The component is defined in the same file via a factory call with
- *      `precomputedClasses` (classExtractPlugin must run first in the chain)
+ *   1. The component is defined in the same file or imported from a file already
+ *      transformed by this plugin, with `precomputedClasses` injected
  *   2. No `as`, `asChild`, `render`, or spread attributes at the usage site
  *   3. All variant props are static string literals
  *   4. `className` is absent or a static string literal
@@ -28,8 +28,11 @@
  * path. Dead-code elimination at the bundler level can remove it when no
  * runtime path remains.
  *
- * **Deferred:** cross-file inlining (component defined in one module, used in
- * another) requires Vite module-graph traversal and is not yet implemented.
+ * **Cross-file known limitations:**
+ * - Barrel re-exports are not resolved (import from index.ts re-exporting ./Button)
+ * - Aliased imports are not matched (`export { Btn as Button }` won't be found)
+ * - Dev-mode ordering: definition file may not yet be transformed when consumer runs
+ * All three degrade gracefully to the runtime path — no error, no broken output.
  */
 import ts from 'typescript'
 import { asObject, firstObjectArg, getProperty, isFactoryCall, walk } from './ast'
@@ -37,7 +40,7 @@ import { buildCacheKey } from './class-extract'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type StaticComponent = {
+export type StaticComponent = {
   readonly defaultTag: string
   readonly variantKeys: ReadonlySet<string>
   readonly precomputedClasses: Readonly<Record<string, string>>
@@ -255,15 +258,24 @@ function createStaticCompositionTransformer(
 /**
  * Applies the static composition transform to the given source file.
  *
+ * `importedComponents` contains cross-file metadata resolved by the plugin
+ * registry — components defined in other files that were already transformed.
+ * When empty (dev mode ordering race or barrel re-export), same-file components
+ * still inline normally; cross-file sites fall through to the runtime path.
+ *
  * Returns null when:
- * - No eligible factory calls are found in the file
+ * - No eligible factory calls or imported components are present
  * - No eligible usage sites are found after analysis
  */
 export function composeStatically(
   source: ts.SourceFile,
   calleeNames: ReadonlySet<string>,
+  importedComponents: ReadonlyMap<string, StaticComponent> = new Map(),
 ): string | null {
-  const components = extractStaticComponents(source, calleeNames)
+  const sameFile = extractStaticComponents(source, calleeNames)
+  // Same-file definitions take precedence over imported ones (local shadowing).
+  const components =
+    importedComponents.size > 0 ? new Map([...importedComponents, ...sameFile]) : sameFile
   if (components.size === 0) return null
 
   // Fast path: skip transform if none of the component names appear as JSX tags.
