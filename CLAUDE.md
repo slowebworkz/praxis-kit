@@ -217,20 +217,6 @@ from optional fields:
 
 ---
 
-## Deferred work (explicitly out of scope — not forgotten)
-
-These items are architecturally decided but not yet implemented. Do not attempt them as part of
-routine tasks; they require deliberate scoping.
-
-### Dynamic children analysis in `contractPlugin`
-
-`contractPlugin` validates cardinality for statically-analyzable JSX usage sites (literal arrays,
-known JSX children). Usage sites where children are computed dynamically (mapped arrays, conditional
-renders, spread children) are skipped silently. Adding dynamic analysis requires a broader data-flow
-pass and is deferred.
-
----
-
 ## Planned renames (not yet shipped)
 
 These renames are directionally decided but not released. Use the current names in all code until
