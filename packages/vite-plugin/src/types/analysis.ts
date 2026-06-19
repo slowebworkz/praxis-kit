@@ -32,14 +32,30 @@ export type ComponentConstraint = {
 }
 
 /**
+ * A statically-analyzable child count range. For fully static children
+ * (no JSX expressions) min === max === exact count. For partially-dynamic
+ * patterns (conditionals, &&, array literals) the range bounds the possible
+ * count. `undefined` means the count is unknowable (e.g. `.map()` calls,
+ * variable references, spread children).
+ */
+export type ChildCount = {
+  readonly min: number
+  readonly max: number
+}
+
+/**
  * A JSX usage site collected for deferred cross-file cardinality validation.
  * Stored during `transform` and validated in `buildEnd` once the full
  * constraint registry is populated.
  */
 export type PendingUsage = {
   tagName: string
-  /** Number of static children; undefined when children contain JSX expressions. */
-  count: number | undefined
+  /**
+   * Statically-analyzable child count range. `undefined` when the count is
+   * completely unknowable (e.g. `.map()`, variable reference, spread children).
+   * A range where `min === max` represents an exact static count.
+   */
+  count: ChildCount | undefined
   /** 1-based line number. */
   line: number
   /** 1-based column number. */
