@@ -12,14 +12,16 @@ import { ConstraintRegistry } from './registry'
 describe('extractImportSpecifiers', () => {
   it('extracts a named import', () => {
     const source = parseSource('test.tsx', `import { Button } from './button'`)
-    expect(extractImportSpecifiers(source).get('Button')).toBe('./button')
+    const binding = extractImportSpecifiers(source).get('Button')
+    expect(binding?.specifier).toBe('./button')
+    expect(binding?.importedName).toBe('Button')
   })
 
   it('extracts multiple names from one declaration', () => {
     const source = parseSource('test.tsx', `import { Button, Icon } from './ui'`)
     const imports = extractImportSpecifiers(source)
-    expect(imports.get('Button')).toBe('./ui')
-    expect(imports.get('Icon')).toBe('./ui')
+    expect(imports.get('Button')?.specifier).toBe('./ui')
+    expect(imports.get('Icon')?.specifier).toBe('./ui')
   })
 
   it('extracts names across multiple import declarations', () => {
@@ -28,14 +30,16 @@ describe('extractImportSpecifiers', () => {
       `import { Button } from './button'\nimport { Tabs } from './tabs'`,
     )
     const imports = extractImportSpecifiers(source)
-    expect(imports.get('Button')).toBe('./button')
-    expect(imports.get('Tabs')).toBe('./tabs')
+    expect(imports.get('Button')?.specifier).toBe('./button')
+    expect(imports.get('Tabs')?.specifier).toBe('./tabs')
   })
 
-  it('uses the local alias name for aliased imports', () => {
+  it('uses the local alias name as the map key; importedName records the original', () => {
     const source = parseSource('test.tsx', `import { Button as Btn } from './button'`)
     const imports = extractImportSpecifiers(source)
-    expect(imports.get('Btn')).toBe('./button')
+    const binding = imports.get('Btn')
+    expect(binding?.specifier).toBe('./button')
+    expect(binding?.importedName).toBe('Button')
     expect(imports.has('Button')).toBe(false)
   })
 
@@ -189,7 +193,7 @@ describe('ConstraintRegistry.diagnostics', () => {
     // Simulate import resolution: './button' → '/abs/button.tsx'
     const importSpecifiers = extractImportSpecifiers(appFile)
     const resolvedImports = new Map<string, string>()
-    for (const [name, specifier] of importSpecifiers) {
+    for (const [name, { specifier }] of importSpecifiers) {
       resolvedImports.set(name, specifier.replace('./', '/abs/') + '.tsx')
     }
     registry.registerImports('/abs/app.tsx', resolvedImports)
