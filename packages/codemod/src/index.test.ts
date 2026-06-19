@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { Project } from 'ts-morph'
-import { resolveReplacement, renameInProject, migratePathsInProject } from './index.js'
+import { resolveReplacement } from './transforms/resolve-replacement.js'
+import { renameInProject } from './transforms/rename.js'
+import { migratePathsInProject } from './transforms/migrate-paths.js'
 
 function makeProject(files: Record<string, string>): Project {
   const project = new Project({ useInMemoryFileSystem: true, skipAddingFilesFromTsConfig: true })
@@ -16,8 +18,8 @@ function text(project: Project, path: string): string {
 
 const opts = { isDryRun: false, isVerbose: false }
 const renameOpts = {
-  fromName: 'createPolymorphicComponent',
-  toName: 'createContractComponent',
+  from: 'createPolymorphicComponent',
+  to: 'createContractComponent',
   ...opts,
 }
 
