@@ -31,9 +31,9 @@ describe('diagnoseClassPipeline', () => {
     expect(d.final).toBe('link')
   })
 
-  it('bypasses tag-map when variantKey is active but still reports what the class would have been', () => {
+  it('bypasses tag-map when recipe is active but still reports what the class would have been', () => {
     const d = diagnoseClassPipeline(
-      { baseClassName: 'link', tagMap: { a: 'link--anchor' }, presetMap: { ghost: {} } },
+      { baseClassName: 'link', tagMap: { a: 'link--anchor' }, recipeMap: { ghost: {} } },
       'a',
       {},
       undefined,
@@ -55,33 +55,33 @@ describe('diagnoseClassPipeline', () => {
       {
         baseClassName: 'btn',
         variants: { size: { sm: 'btn--sm', lg: 'btn--lg' } },
-        presetMap: { compact: { size: 'sm' } },
+        recipeMap: { compact: { size: 'sm' } },
       },
       'button',
       {},
       undefined,
       'compact',
     )
-    expect(d.presetKey).toBe('compact')
+    expect(d.recipeKey).toBe('compact')
     expect(d.presetValues).toEqual({ size: 'sm' })
     expect(d.effectiveVariants['size']).toBe('sm')
   })
 
-  it('reports null presetValues when key not found in presetMap', () => {
+  it('reports null presetValues when key not found in recipeMap', () => {
     const d = diagnoseClassPipeline(
-      { baseClassName: 'btn', presetMap: { ghost: {} } },
+      { baseClassName: 'btn', recipeMap: { ghost: {} } },
       'button',
       {},
       undefined,
       'missing',
     )
-    expect(d.presetKey).toBe('missing')
+    expect(d.recipeKey).toBe('missing')
     expect(d.presetValues).toBeNull()
   })
 
-  it('reports undefined presetKey when no variantKey', () => {
+  it('reports undefined recipeKey when no recipe', () => {
     const d = diagnoseClassPipeline({ baseClassName: 'btn' }, 'button', {})
-    expect(d.presetKey).toBeUndefined()
+    expect(d.recipeKey).toBeUndefined()
     expect(d.presetValues).toBeNull()
   })
 

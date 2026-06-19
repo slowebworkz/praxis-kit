@@ -230,12 +230,12 @@ describe('render', () => {
     expect((el.props as { className: string }).className).toBe('slot-class')
   })
 
-  it('variantKey is forwarded to resolveClasses', () => {
+  it('recipe is forwarded to resolveClasses', () => {
     const resolveClasses = vi.fn(() => 'variant-class')
     const runtime = makeRuntime({ resolveClasses })
     render({
       runtime,
-      props: { variantKey: 'primary' },
+      props: { recipe: 'primary' },
       ref: null,
       slotComponent,
       normalizeChildren: noopNormalize,
@@ -324,10 +324,10 @@ describe('render', () => {
     ).not.toThrow()
   })
 
-  it('control props (as, asChild, className, variantKey, children) are not forwarded to the DOM', () => {
+  it('control props (as, asChild, className, recipe, children) are not forwarded to the DOM', () => {
     const el = render({
       runtime: makeRuntime(),
-      props: { as: 'span', className: 'x', variantKey: 'k', children: 'text' },
+      props: { as: 'span', className: 'x', recipe: 'k', children: 'text' },
       ref: null,
       slotComponent,
       normalizeChildren: noopNormalize,
@@ -337,6 +337,6 @@ describe('render', () => {
     const props = el.props as Record<string, unknown>
     expect(props['as']).toBeUndefined()
     expect(props['asChild']).toBeUndefined()
-    expect(props['variantKey']).toBeUndefined()
+    expect(props['recipe']).toBeUndefined()
   })
 })

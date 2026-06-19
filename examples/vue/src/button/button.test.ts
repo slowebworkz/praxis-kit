@@ -56,24 +56,24 @@ describe('Button — variant props', () => {
   })
 })
 
-// ─── Preset (variantKey) ──────────────────────────────────────────────────────
+// ─── Preset (recipe) ──────────────────────────────────────────────────────
 
-describe('Button — preset via variantKey', () => {
+describe('Button — preset via recipe', () => {
   it('cta preset applies primary intent and lg size', () => {
-    const wrapper = mount(wrap(Button), { props: { variantKey: 'cta' } as never })
+    const wrapper = mount(wrap(Button), { props: { recipe: 'cta' } as never })
     expect(button(wrapper).className).toContain('bg-blue-600')
     expect(button(wrapper).className).toContain('px-6')
   })
 
   it('subtle preset applies ghost intent and sm size', () => {
-    const wrapper = mount(wrap(Button), { props: { variantKey: 'subtle' } as never })
+    const wrapper = mount(wrap(Button), { props: { recipe: 'subtle' } as never })
     expect(button(wrapper).className).toContain('bg-transparent')
     expect(button(wrapper).className).toContain('px-2')
   })
 
   it('explicit props override the active preset', () => {
     const wrapper = mount(wrap(Button), {
-      props: { variantKey: 'cta', intent: 'ghost' } as never,
+      props: { recipe: 'cta', intent: 'ghost' } as never,
     })
     expect(button(wrapper).className).toContain('bg-transparent')
     expect(button(wrapper).className).not.toContain('bg-blue-600')
@@ -98,9 +98,9 @@ describe('Button — filterProps', () => {
     expect(button(wrapper).hasAttribute('loading')).toBe(false)
   })
 
-  it('does not set variantKey as a DOM attribute', () => {
-    const wrapper = mount(wrap(Button), { props: { variantKey: 'cta' } as never })
-    expect(button(wrapper).hasAttribute('variantKey')).toBe(false)
+  it('does not set recipe as a DOM attribute', () => {
+    const wrapper = mount(wrap(Button), { props: { recipe: 'cta' } as never })
+    expect(button(wrapper).hasAttribute('recipe')).toBe(false)
   })
 
   it('forwards standard HTML attributes to the DOM', () => {

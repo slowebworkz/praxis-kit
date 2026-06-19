@@ -7,7 +7,7 @@ const variants = {
   intent: { primary: 'bg-blue-500', ghost: 'bg-transparent' },
 } as const
 
-const presetMap = { cta: { intent: 'primary' }, subtle: { intent: 'ghost' } }
+const recipeMap = { cta: { intent: 'primary' }, subtle: { intent: 'ghost' } }
 
 let warn: MockInstance
 
@@ -22,37 +22,37 @@ afterEach(() => {
 
 describe('validateRenderProps — strict: false', () => {
   it('is completely silent regardless of violations', () => {
-    validateRenderProps({ strict: false, variants, presetMap }, { size: 'enormous' }, 'nonexistent')
+    validateRenderProps({ strict: false, variants, recipeMap }, { size: 'enormous' }, 'nonexistent')
     expect(warn).not.toHaveBeenCalled()
   })
 })
 
-describe('validateRenderProps — unknown presetKey', () => {
-  it('warns when presetKey names no defined preset (strict: warn)', () => {
-    validateRenderProps({ strict: 'warn', variants, presetMap }, {}, 'unknown')
+describe('validateRenderProps — unknown recipeKey', () => {
+  it('warns when recipeKey names no defined preset (strict: warn)', () => {
+    validateRenderProps({ strict: 'warn', variants, recipeMap }, {}, 'unknown')
     expect(warn).toHaveBeenCalledOnce()
-    expect(warn.mock.calls[0]![0]).toMatch(/unknown presetKey "unknown"/i)
+    expect(warn.mock.calls[0]![0]).toMatch(/unknown recipeKey "unknown"/i)
   })
 
-  it('throws when presetKey names no defined preset (strict: throw)', () => {
+  it('throws when recipeKey names no defined preset (strict: throw)', () => {
     expect(() =>
-      validateRenderProps({ strict: 'throw', variants, presetMap }, {}, 'unknown'),
-    ).toThrow(/unknown presetKey "unknown"/i)
+      validateRenderProps({ strict: 'throw', variants, recipeMap }, {}, 'unknown'),
+    ).toThrow(/unknown recipeKey "unknown"/i)
   })
 
-  it('is silent when presetKey is undefined', () => {
-    validateRenderProps({ strict: 'warn', variants, presetMap }, {}, undefined)
+  it('is silent when recipeKey is undefined', () => {
+    validateRenderProps({ strict: 'warn', variants, recipeMap }, {}, undefined)
     expect(warn).not.toHaveBeenCalled()
   })
 
-  it('is silent when presetKey matches a defined preset', () => {
-    validateRenderProps({ strict: 'warn', variants, presetMap }, {}, 'cta')
+  it('is silent when recipeKey matches a defined preset', () => {
+    validateRenderProps({ strict: 'warn', variants, recipeMap }, {}, 'cta')
     expect(warn).not.toHaveBeenCalled()
   })
 
   it('includes component name in the message when displayName is set', () => {
     validateRenderProps(
-      { strict: 'warn', variants, presetMap, displayName: 'Button' },
+      { strict: 'warn', variants, recipeMap, displayName: 'Button' },
       {},
       'unknown',
     )
@@ -60,15 +60,15 @@ describe('validateRenderProps — unknown presetKey', () => {
   })
 
   it('does not repeat the same warning on subsequent renders', () => {
-    validateRenderProps({ strict: 'warn', variants, presetMap }, {}, 'unknown')
-    validateRenderProps({ strict: 'warn', variants, presetMap }, {}, 'unknown')
-    validateRenderProps({ strict: 'warn', variants, presetMap }, {}, 'unknown')
+    validateRenderProps({ strict: 'warn', variants, recipeMap }, {}, 'unknown')
+    validateRenderProps({ strict: 'warn', variants, recipeMap }, {}, 'unknown')
+    validateRenderProps({ strict: 'warn', variants, recipeMap }, {}, 'unknown')
     expect(warn).toHaveBeenCalledOnce()
   })
 
   it('does not treat inherited properties as valid presets', () => {
     const inherited = Object.create({ inheritedPreset: {} }) as Record<string, unknown>
-    validateRenderProps({ strict: 'warn', variants, presetMap: inherited }, {}, 'inheritedPreset')
+    validateRenderProps({ strict: 'warn', variants, recipeMap: inherited }, {}, 'inheritedPreset')
     expect(warn).toHaveBeenCalledOnce()
   })
 })
@@ -122,7 +122,7 @@ describe('validateRenderProps — invalid variant value', () => {
 
 describe('validateRenderProps — multiple violations', () => {
   it('reports both preset and variant violations in the same call', () => {
-    validateRenderProps({ strict: 'warn', variants, presetMap }, { size: 'enormous' }, 'unknown')
+    validateRenderProps({ strict: 'warn', variants, recipeMap }, { size: 'enormous' }, 'unknown')
     expect(warn).toHaveBeenCalledTimes(2)
   })
 
@@ -138,28 +138,28 @@ describe('validateRenderProps — multiple violations', () => {
   it('throws on preset violation before reaching variant violations (strict: throw)', () => {
     expect(() =>
       validateRenderProps(
-        { strict: 'throw', variants, presetMap },
+        { strict: 'throw', variants, recipeMap },
         { size: 'enormous' },
         'unknown',
       ),
-    ).toThrow(/unknown presetKey "unknown"/i)
+    ).toThrow(/unknown recipeKey "unknown"/i)
   })
 })
 
 describe('validateRenderProps — dedup scope', () => {
   it('distinct components with the same message both warn (no cross-component dedup)', () => {
     validateRenderProps(
-      { strict: 'warn', variants, presetMap, displayName: 'Button' },
+      { strict: 'warn', variants, recipeMap, displayName: 'Button' },
       {},
       'unknown',
     )
-    validateRenderProps({ strict: 'warn', variants, presetMap, displayName: 'Card' }, {}, 'unknown')
+    validateRenderProps({ strict: 'warn', variants, recipeMap, displayName: 'Card' }, {}, 'unknown')
     expect(warn).toHaveBeenCalledTimes(2)
   })
 
   it('different preset names each produce their own warning', () => {
-    validateRenderProps({ strict: 'warn', variants, presetMap }, {}, 'unknown1')
-    validateRenderProps({ strict: 'warn', variants, presetMap }, {}, 'unknown2')
+    validateRenderProps({ strict: 'warn', variants, recipeMap }, {}, 'unknown1')
+    validateRenderProps({ strict: 'warn', variants, recipeMap }, {}, 'unknown2')
     expect(warn).toHaveBeenCalledTimes(2)
   })
 })
@@ -177,37 +177,37 @@ describe('validateRenderProps — runtime type bypass', () => {
 // This is intentional — the contract is specifically microtask semantics.
 describe("validateRenderProps — strict: 'async-warn'", () => {
   it('does not call console.warn synchronously', () => {
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown')
     expect(warn).not.toHaveBeenCalled()
   })
 
   it('calls console.warn after microtask flush', async () => {
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown')
     await Promise.resolve()
     expect(warn).toHaveBeenCalledOnce()
-    expect(warn.mock.calls[0]![0]).toMatch(/unknown presetKey "unknown"/i)
+    expect(warn.mock.calls[0]![0]).toMatch(/unknown recipeKey "unknown"/i)
   })
 
   it('deduplicates identical messages within the same tick', async () => {
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown')
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown')
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown')
     await Promise.resolve()
     expect(warn).toHaveBeenCalledOnce()
   })
 
   // Dedup is per-tick: after the microtask flushes, the same message can fire again.
   it('allows the same message to re-fire in a later tick', async () => {
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown')
     await Promise.resolve()
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown')
     await Promise.resolve()
     expect(warn).toHaveBeenCalledTimes(2)
   })
 
   it('batches multiple distinct violations into one microtask flush with correct messages', async () => {
     validateRenderProps(
-      { strict: 'async-warn', variants, presetMap },
+      { strict: 'async-warn', variants, recipeMap },
       { size: 'enormous' },
       'unknown',
     )
@@ -215,31 +215,31 @@ describe("validateRenderProps — strict: 'async-warn'", () => {
     await Promise.resolve()
     expect(warn).toHaveBeenCalledTimes(2)
     const messages = warn.mock.calls.map((c) => c[0] as string)
-    expect(messages.some((m) => /unknown presetKey "unknown"/i.test(m))).toBe(true)
+    expect(messages.some((m) => /unknown recipeKey "unknown"/i.test(m))).toBe(true)
     expect(messages.some((m) => /size=enormous/i.test(m))).toBe(true)
   })
 
   it('batches three distinct messages without collapsing them', async () => {
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown1')
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown2')
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown3')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown1')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown2')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown3')
     await Promise.resolve()
     expect(warn).toHaveBeenCalledTimes(3)
   })
 
   it('deduplicates repeated messages while preserving distinct ones', async () => {
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown1')
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown1')
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown2')
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown2')
-    validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown3')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown1')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown1')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown2')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown2')
+    validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown3')
     await Promise.resolve()
     expect(warn).toHaveBeenCalledTimes(3)
   })
 
   it('does not throw', () => {
     expect(() =>
-      validateRenderProps({ strict: 'async-warn', variants, presetMap }, {}, 'unknown'),
+      validateRenderProps({ strict: 'async-warn', variants, recipeMap }, {}, 'unknown'),
     ).not.toThrow()
   })
 })

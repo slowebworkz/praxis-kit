@@ -7,6 +7,6 @@ import type { VariantSelection } from './variant-selection'
  * Presets are named bundles of variant props that callers activate by key,
  * avoiding the need to repeat variant combinations at each call site.
  */
-export type PresetMap<V extends VariantMap = VariantMap> = Readonly<
+export type RecipeMap<V extends VariantMap = VariantMap> = Readonly<
   Record<string, VariantSelection<V>>
 >

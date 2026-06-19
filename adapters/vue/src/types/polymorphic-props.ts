@@ -5,7 +5,7 @@ import type {
   DefaultOf,
   ElementType,
   PolymorphicGenerics,
-  PresetOf,
+  RecipeOf,
   PropsOf,
   VariantProps,
   VariantsOf,
@@ -16,7 +16,7 @@ type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = Prop
   VariantProps<VariantsOf<G>> & {
     as?: TAs
     class?: ClassName
-    variantKey?: keyof PresetOf<G>
+    recipe?: keyof RecipeOf<G>
   }
 
 /**

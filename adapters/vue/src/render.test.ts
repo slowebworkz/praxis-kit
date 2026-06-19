@@ -83,12 +83,12 @@ describe('render — class resolution', () => {
     )
   })
 
-  it('passes variantKey through to resolveClasses', () => {
+  it('passes recipe through to resolveClasses', () => {
     const resolveClasses = vi.fn(() => '')
     const runtime = makeRuntime({ resolveClasses })
     render({
       runtime,
-      attrs: { variantKey: 'primary' },
+      attrs: { recipe: 'primary' },
       slots: emptySlots,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
@@ -126,17 +126,17 @@ describe('render — prop forwarding', () => {
     expect(vnode?.props?.['data-keep']).toBe('yes')
   })
 
-  it('does not forward control attrs (as, asChild, variantKey) to the DOM element', () => {
+  it('does not forward control attrs (as, asChild, recipe) to the DOM element', () => {
     const vnode = render({
       runtime: makeRuntime(),
-      attrs: { as: 'span', variantKey: 'k' },
+      attrs: { as: 'span', recipe: 'k' },
       slots: emptySlots,
       filterProps: noopFilter,
       slotValidator: defaultValidator,
     })
     expect(vnode?.props?.['as']).toBeUndefined()
     expect(vnode?.props?.['asChild']).toBeUndefined()
-    expect(vnode?.props?.['variantKey']).toBeUndefined()
+    expect(vnode?.props?.['recipe']).toBeUndefined()
   })
 
   it('does not include className on the output (Vue uses class)', () => {

@@ -319,7 +319,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       expect(element.className).not.toContain('btn-primary-lg')
     })
 
-    it('activates a preset via variantKey', () => {
+    it('activates a preset via recipe', () => {
       const Box = adapter.createComponent({
         styling: {
           variants: {
@@ -329,7 +329,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           presets: { cta: { intent: 'primary', size: 'lg' } },
         },
       })
-      const { element } = adapter.render(Box, { variantKey: 'cta' })
+      const { element } = adapter.render(Box, { recipe: 'cta' })
       expect(element.className).toContain('bg-blue')
       expect(element.className).toContain('text-lg')
     })

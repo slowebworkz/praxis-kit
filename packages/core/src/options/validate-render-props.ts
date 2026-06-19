@@ -1,7 +1,7 @@
 import type { AnyRecord, StrictMode, VariantMap } from '../types'
 
 type Options = {
-  readonly presetMap?: Readonly<AnyRecord>
+  readonly recipeMap?: Readonly<AnyRecord>
   readonly variants?: Readonly<VariantMap>
   readonly strict: StrictMode
   readonly displayName?: string
@@ -46,16 +46,16 @@ function label(name?: string): string {
 export function validateRenderProps(
   options: Options,
   props: AnyRecord,
-  presetKey: string | undefined,
+  recipeKey: string | undefined,
 ): void {
-  const { strict, presetMap, variants, displayName } = options
+  const { strict, recipeMap, variants, displayName } = options
   if (!strict) return
 
   const tag = label(displayName)
 
-  // Unknown presetKey — names no defined preset.
-  if (presetKey !== undefined && (!presetMap || !Object.hasOwn(presetMap, presetKey))) {
-    report(strict, `${tag} Unknown presetKey "${presetKey}" — no preset with that name exists.`)
+  // Unknown recipeKey — names no defined preset.
+  if (recipeKey !== undefined && (!recipeMap || !Object.hasOwn(recipeMap, recipeKey))) {
+    report(strict, `${tag} Unknown recipeKey "${recipeKey}" — no preset with that name exists.`)
   }
 
   // Undefined variant value — prop key is a known variant dimension but the value

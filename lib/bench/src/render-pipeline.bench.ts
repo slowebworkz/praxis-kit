@@ -35,7 +35,7 @@ const cvaFn = cva('btn', {
   compoundVariants: [{ size: 'lg', intent: 'ghost', class: 'btn--lg-ghost' }],
 })
 
-// VariantClassResolver uses an LRU cache keyed on (variantKey, sorted prop entries).
+// VariantClassResolver uses an LRU cache keyed on (recipe, sorted prop entries).
 // Same-props calls hit the cache after the first render.
 const WARM_PROPS: AnyRecord = { size: 'lg', intent: 'ghost' }
 

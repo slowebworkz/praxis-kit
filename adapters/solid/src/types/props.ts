@@ -12,7 +12,7 @@ export type PolymorphicPropsBase = Readonly<
       asChild?: boolean
       children?: unknown
       class?: ClassName
-      variantKey?: string
+      recipe?: string
       ref?: unknown
     } & AsProp
   >

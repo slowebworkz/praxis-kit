@@ -11,7 +11,7 @@ export type UnknownProps = Record<string, unknown>
 export type WebContractComponent<TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>> = {
   new (): HTMLElement & {
     as: string | undefined
-    variantKey: string | undefined
+    recipe: string | undefined
     praxisClass: string | undefined
     /** Re-runs the pipeline — call after setting non-reactive attributes (aria-*, role, data-*). */
     update(): void

@@ -1,7 +1,7 @@
 import type {
   DefaultOf,
   PolymorphicGenerics,
-  PresetOf,
+  RecipeOf,
   PropsOf,
   StrictMode,
   VariantsOf,
@@ -13,7 +13,7 @@ export type NormalizedOptions<G extends PolymorphicGenerics> = PreactFactoryOpti
   DefaultOf<G>,
   PropsOf<G>,
   VariantsOf<G>,
-  PresetOf<G>
+  RecipeOf<G>
 > & {
   readonly slotComponent: SlotComponent
   readonly name: string

@@ -78,24 +78,24 @@ describe('Button — variant props', () => {
   })
 })
 
-// ─── Preset (variantKey) ──────────────────────────────────────────────────────
+// ─── Preset (recipe) ──────────────────────────────────────────────────────
 
-describe('Button — preset via variantKey', () => {
+describe('Button — preset via recipe', () => {
   it('cta preset applies primary intent and lg size', () => {
-    mount(createElement(box(Button), { variantKey: 'cta' }))
+    mount(createElement(box(Button), { recipe: 'cta' }))
     expect(button().className).toContain('bg-blue-600')
     expect(button().className).toContain('px-6')
   })
 
   it('subtle preset applies ghost intent and sm size', () => {
-    mount(createElement(box(Button), { variantKey: 'subtle' }))
+    mount(createElement(box(Button), { recipe: 'subtle' }))
     expect(button().className).toContain('bg-transparent')
     expect(button().className).toContain('px-2')
   })
 
   it('explicit props override the active preset', () => {
     // cta is primary/lg — overriding intent to ghost at call site
-    mount(createElement(box(Button), { variantKey: 'cta', intent: 'ghost' }))
+    mount(createElement(box(Button), { recipe: 'cta', intent: 'ghost' }))
     expect(button().className).toContain('bg-transparent')
     expect(button().className).not.toContain('bg-blue-600')
   })
@@ -119,9 +119,9 @@ describe('Button — filterProps', () => {
     expect(button().hasAttribute('loading')).toBe(false)
   })
 
-  it('does not set variantKey as a DOM attribute', () => {
-    mount(createElement(box(Button), { variantKey: 'cta' }))
-    expect(button().hasAttribute('variantKey')).toBe(false)
+  it('does not set recipe as a DOM attribute', () => {
+    mount(createElement(box(Button), { recipe: 'cta' }))
+    expect(button().hasAttribute('recipe')).toBe(false)
   })
 
   it('forwards standard HTML attributes to the DOM', () => {

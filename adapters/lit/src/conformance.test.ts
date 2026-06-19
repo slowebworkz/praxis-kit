@@ -79,7 +79,7 @@ function applyProps(
       el.setAttribute('praxis-class', value as string)
       continue
     }
-    if (key === 'variantKey') {
+    if (key === 'recipe') {
       el.setAttribute('variant-key', value as string)
       continue
     }
@@ -122,7 +122,7 @@ function clearStaleProps(
       continue
     }
     const attr =
-      key === 'variantKey'
+      key === 'recipe'
         ? 'variant-key'
         : key === 'className' || key === 'class'
           ? 'praxis-class'

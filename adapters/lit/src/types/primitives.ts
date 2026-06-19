@@ -18,7 +18,7 @@ export type UnknownProps = AnyRecord
 export type LitContractComponent<TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>> = {
   new (): LitElement & {
     as: string | undefined
-    variantKey: string | undefined
+    recipe: string | undefined
     praxisClass: string | undefined
   } & { [K in Extract<keyof TVariants, string>]?: string | null }
 }

@@ -2,8 +2,8 @@ import type {
   DefaultOf,
   ElementType,
   PolymorphicGenerics,
-  PresetMap,
-  PresetOf,
+  RecipeMap,
+  RecipeOf,
   PropsOf,
   VariantMap,
   VariantsOf,
@@ -22,7 +22,7 @@ import type { NormalizedOptions } from './types/normalized-options'
 import type { SlotComponent, UnknownProps } from './types'
 
 function normalizeOptions<G extends PolymorphicGenerics>(
-  options: PreactFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>,
+  options: PreactFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, RecipeOf<G>>,
 ): NormalizedOptions<G> {
   return {
     ...options,
@@ -37,7 +37,7 @@ export function buildRuntime<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
-  TPreset extends PresetMap<Variants>,
+  TPreset extends RecipeMap<Variants>,
   TOptions extends WithChildRules,
 >(
   options: PreactFactoryOptions<TDefault, Props, Variants, TPreset> & TOptions,

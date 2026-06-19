@@ -4,7 +4,7 @@ import type {
   ElementType,
   EmptyRecord,
   PolymorphicGenerics,
-  PresetMap,
+  RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
 import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/shared/guards/children'
@@ -18,7 +18,7 @@ export function createContractComponent<
   TDefault extends ElementType,
   Props extends UnknownProps = EmptyRecord,
   Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
-  TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
+  TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
 >(options: VueFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps>) {
   const bundle = buildRuntime(options as VueFactoryOptions<TDefault, Props, Variants, TPreset>)

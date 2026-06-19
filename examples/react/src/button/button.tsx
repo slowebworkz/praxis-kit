@@ -40,8 +40,8 @@ export const Button = createContractComponent<'button', ButtonProps, ButtonVaria
       intent: 'secondary',
       size: 'md',
     },
-    // Named variant bundles — activated at render time via the variantKey prop.
-    // TypeScript narrows variantKey to 'cta' | 'subtle' on this component.
+    // Named variant bundles — activated at render time via the recipe prop.
+    // TypeScript narrows recipe to 'cta' | 'subtle' on this component.
     presets: {
       cta: { intent: 'primary', size: 'lg' },
       subtle: { intent: 'ghost', size: 'sm' },
