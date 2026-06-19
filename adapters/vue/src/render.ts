@@ -34,7 +34,7 @@ export function resolveRenderState(
   attrs: Readonly<UnknownProps>,
   filterProps: FilterPredicate,
 ): ResolvedRenderState {
-  const { as, asChild, class: className, variantKey, ...rest } = attrs as KnownProps
+  const { as, asChild, class: className, recipe, ...rest } = attrs as KnownProps
   const tag = runtime.resolveTag(as as ElementType | undefined)
   const mergedProps = runtime.resolveProps(rest as UnknownProps)
   const baseProps = runtime.options.normalizeFn
@@ -48,7 +48,7 @@ export function resolveRenderState(
     tag,
     normalizedProps,
     typeof className === 'string' ? className : undefined,
-    typeof variantKey === 'string' ? variantKey : undefined,
+    typeof recipe === 'string' ? recipe : undefined,
   )
   const filteredProps = applyFilter(normalizedProps, filterProps, runtime.options.variantKeys)
   return {

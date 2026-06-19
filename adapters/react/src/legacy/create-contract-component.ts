@@ -3,7 +3,7 @@ import type {
   ElementType,
   EmptyRecord,
   PolymorphicGenerics,
-  PresetMap,
+  RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
 import { forwardRef } from 'react'
@@ -18,7 +18,7 @@ export function createContractComponent<
   TDefault extends ElementType,
   Props extends UnknownProps = EmptyRecord,
   Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
-  TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
+  TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
   TAllowed extends ElementType = ElementType,
 >(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps, TAllowed>) {

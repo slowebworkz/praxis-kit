@@ -6,7 +6,7 @@ import type {
   EmptyRecord,
   FactoryOptions,
   PolymorphicRuntime,
-  PresetMap,
+  RecipeMap,
   VariantMap,
 } from '../types'
 import { HTML_ARIA_RULES } from '../html/aria-rules'
@@ -23,7 +23,7 @@ export function createContractedPolymorphic<
   TDefault extends ElementType,
   Props extends AnyRecord,
   Variants extends Readonly<VariantMap>,
-  TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
+  TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
 >(
   options: FactoryOptions<TDefault, Props, Variants, TPreset> = {},
 ): PolymorphicRuntime<TDefault, Props, Variants, Extract<keyof TPreset, string>, TPreset> {

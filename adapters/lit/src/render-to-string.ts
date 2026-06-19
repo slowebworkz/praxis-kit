@@ -61,7 +61,7 @@ export function renderToString(
   }
 
   const { bundle } = entry
-  const { as, className, variantKey, class: classAttr, ...rest } = props
+  const { as, className, recipe, class: classAttr, ...rest } = props
 
   const tag = bundle.runtime.resolveTag(as as ElementType | undefined)
   const mergedProps = bundle.runtime.resolveProps(rest)
@@ -70,7 +70,7 @@ export function renderToString(
     mergedProps,
     // Accept both React-style className and HTML-native class
     (className as string | undefined) ?? (classAttr as string | undefined),
-    variantKey as string | undefined,
+    recipe as string | undefined,
   )
 
   const ariaResult = bundle.runtime.resolveAria(tag, mergedProps)

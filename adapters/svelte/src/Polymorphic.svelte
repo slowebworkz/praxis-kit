@@ -13,12 +13,12 @@
     as?: string
     asChild?: boolean
     class?: string
-    variantKey?: string
+    recipe?: string
     children?: Snippet | Snippet<[UnknownProps]>
     [key: string]: unknown
   }
 
-  let { bundle, as: asProp, asChild, class: cls, variantKey, children, ...rest }: Props = $props()
+  let { bundle, as: asProp, asChild, class: cls, recipe, children, ...rest }: Props = $props()
 
   // Svelte 5 event delegation requires lowercase handler names (onclick, onfocus…).
   // Normalize React-style camelCase handlers so spreads on <svelte:element> work.
@@ -75,7 +75,7 @@
       : base
   })
   const resolvedClass = $derived(
-    bundle.runtime.resolveClasses(tag, normalizedProps, cls as string | undefined, variantKey),
+    bundle.runtime.resolveClasses(tag, normalizedProps, cls as string | undefined, recipe),
   )
   const filteredProps = $derived(
     applyFilter(normalizedProps, bundle.filterProps, bundle.runtime.options.variantKeys),

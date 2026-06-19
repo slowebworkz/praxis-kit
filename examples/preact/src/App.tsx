@@ -53,8 +53,8 @@ export function App() {
           <ButtonC intent="primary">Primary</ButtonC>
           <ButtonC intent="secondary">Secondary</ButtonC>
           <ButtonC intent="ghost">Ghost</ButtonC>
-          <ButtonC variantKey="cta">CTA preset</ButtonC>
-          <ButtonC variantKey="subtle">Subtle preset</ButtonC>
+          <ButtonC recipe="cta">CTA preset</ButtonC>
+          <ButtonC recipe="subtle">Subtle preset</ButtonC>
         </div>
       </Section>
 

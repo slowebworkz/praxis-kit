@@ -12,7 +12,7 @@ import type { SlotValidator } from './slot/slot-validator'
 declare const process: { env: { NODE_ENV: string } }
 
 // Keys consumed by the adapter — split from pass-through DOM props.
-const SPLIT_KEYS = ['as', 'asChild', 'children', 'class', 'variantKey', 'ref'] as const
+const SPLIT_KEYS = ['as', 'asChild', 'children', 'class', 'recipe', 'ref'] as const
 
 function toChildArray(children: unknown): unknown[] {
   if (children === undefined || children === null) return []
@@ -108,7 +108,7 @@ export function render<TProps extends KnownProps>({
       tag(),
       normalizedProps(),
       known.class as string | undefined,
-      known.variantKey as string | undefined,
+      known.recipe as string | undefined,
     ),
   )
   const filteredProps = createMemo(() =>

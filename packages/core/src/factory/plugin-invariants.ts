@@ -28,8 +28,8 @@ export function assertPluginShape(result: unknown): asserts result is ClassPlugi
 
 export function guardPipeline(pipeline: ClassPipelineFn): ClassPipelineFn {
   if (process.env.NODE_ENV === 'production') return pipeline
-  return function guardedPipeline(tag, props, className, variantKey) {
-    const result = pipeline(tag, props, className, variantKey)
+  return function guardedPipeline(tag, props, className, recipe) {
+    const result = pipeline(tag, props, className, recipe)
     if (typeof result !== 'string')
       panic(`[praxis-kit] Plugin pipeline must return a string. Got: ${describe(result)}.`)
     return result

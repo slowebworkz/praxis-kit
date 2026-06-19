@@ -4,26 +4,26 @@ type CvaFn = (props: AnyRecord) => string
 
 export class VariantClassResolver {
   readonly #cvaFn: CvaFn | null
-  readonly #presetMap: Readonly<Record<string, AnyRecord>>
+  readonly #recipeMap: Readonly<Record<string, AnyRecord>>
   readonly #variantKeys: ReadonlySet<string> | null
   readonly #precomputedClasses: Readonly<Record<string, string>> | null
   readonly #cache = new Map<string, string>()
 
   constructor(
     cvaFn: CvaFn | null,
-    presetMap?: Record<string, AnyRecord>,
+    recipeMap?: Record<string, AnyRecord>,
     variantKeys?: ReadonlySet<string>,
     precomputedClasses?: Readonly<Record<string, string>>,
   ) {
     this.#cvaFn = cvaFn ?? null
-    this.#presetMap = Object.freeze(presetMap ?? {})
+    this.#recipeMap = Object.freeze(recipeMap ?? {})
     this.#variantKeys = variantKeys ?? null
     this.#precomputedClasses = precomputedClasses ?? null
   }
 
-  resolve({ props, variantKey }: { props: AnyRecord; variantKey: string | undefined }): string {
-    // '__none__' distinguishes "no variantKey" from an empty-string key in the cache.
-    const normalizedKey = variantKey ?? '__none__'
+  resolve({ props, recipe }: { props: AnyRecord; recipe: string | undefined }): string {
+    // '__none__' distinguishes "no recipe" from an empty-string key in the cache.
+    const normalizedKey = recipe ?? '__none__'
     const cacheKey = this.#createCacheKey(props, normalizedKey)
 
     // Precomputed map covers all statically-known combinations; injected by classExtractPlugin.
@@ -40,7 +40,7 @@ export class VariantClassResolver {
       return cached
     }
 
-    const result = this.#compute(props, variantKey)
+    const result = this.#compute(props, recipe)
     this.#cache.set(cacheKey, result)
 
     if (this.#cache.size > 1000) {
@@ -51,11 +51,11 @@ export class VariantClassResolver {
     return result
   }
 
-  #compute(props: AnyRecord, variantKey?: string): string {
+  #compute(props: AnyRecord, recipe?: string): string {
     if (!this.#cvaFn) return ''
     // No active preset — pass props directly; avoids a spread allocation.
-    if (!variantKey) return this.#cvaFn(props)
-    const preset = this.#presetMap[variantKey]
+    if (!recipe) return this.#cvaFn(props)
+    const preset = this.#recipeMap[recipe]
     if (!preset) return this.#cvaFn(props)
     return this.#cvaFn({ ...preset, ...props })
   }
@@ -64,15 +64,15 @@ export class VariantClassResolver {
   // props (className, id, etc.) produce identical CVA output and must not fragment the cache.
   // Iterating #variantKeys directly (fixed Set insertion order) avoids Object.keys + filter + sort.
   // String is built incrementally to avoid a parts[] array allocation on every render.
-  #createCacheKey(props: AnyRecord, variantKey: string): string {
+  #createCacheKey(props: AnyRecord, recipe: string): string {
     if (this.#variantKeys !== null) {
-      let key = variantKey
+      let key = recipe
       for (const k of this.#variantKeys) {
         if (k in props) key += `|${k}:${VariantClassResolver.#serializeValue(props[k])}`
       }
       return key
     }
-    let key = variantKey
+    let key = recipe
     for (const k of Object.keys(props).sort()) {
       key += `|${k}:${VariantClassResolver.#serializeValue(props[k])}`
     }

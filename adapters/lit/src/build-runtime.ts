@@ -1,4 +1,4 @@
-import type { ElementType, PresetMap, VariantMap } from '@praxis-kit/core'
+import type { ElementType, RecipeMap, VariantMap } from '@praxis-kit/core'
 import {
   buildCoreRuntime,
   buildEngines,
@@ -12,7 +12,7 @@ function normalizeOptions<
   TDefault extends ElementType,
   Props extends Record<string, unknown>,
   Variants extends Readonly<VariantMap>,
-  TPreset extends PresetMap<Variants>,
+  TPreset extends RecipeMap<Variants>,
 >(
   options: LitFactoryOptions<TDefault, Props, Variants, TPreset>,
 ): NormalizedOptions<RuntimeG<TDefault, Props, Variants, TPreset>> {
@@ -26,7 +26,7 @@ export function buildRuntime<
   TDefault extends ElementType,
   Props extends Record<string, unknown>,
   Variants extends Readonly<VariantMap>,
-  TPreset extends PresetMap<Variants>,
+  TPreset extends RecipeMap<Variants>,
 >(
   options: LitFactoryOptions<TDefault, Props, Variants, TPreset>,
 ): BuiltRuntime<RuntimeG<TDefault, Props, Variants, TPreset>> {

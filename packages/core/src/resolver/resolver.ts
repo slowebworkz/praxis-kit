@@ -46,7 +46,7 @@ export function createResolverPipeline<
     }
     const merged = mergeProps(resolved.defaultProps, input.props) as Props
     const { props } = engine.validate(tag, merged as IntrinsicProps)
-    const className = classPipeline(tag, props as Props, input.className, input.variantKey)
+    const className = classPipeline(tag, props as Props, input.className, input.recipe)
 
     return {
       tag,

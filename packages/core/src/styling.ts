@@ -16,7 +16,7 @@ export type {
   CVAVariants,
   DefaultVariants,
   NonEmptyArray,
-  PresetMap,
+  RecipeMap,
   VariantMap,
   VariantProps,
   VariantSelection,

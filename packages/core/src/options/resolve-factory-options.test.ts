@@ -31,8 +31,8 @@ describe('resolveFactoryOptions() — defaults', () => {
     expect(resolveFactoryOptions({})).not.toHaveProperty('variants')
   })
 
-  it('omits presetMap when not provided', () => {
-    expect(resolveFactoryOptions({})).not.toHaveProperty('presetMap')
+  it('omits recipeMap when not provided', () => {
+    expect(resolveFactoryOptions({})).not.toHaveProperty('recipeMap')
   })
 
   it('works with no argument (empty default)', () => {
@@ -79,9 +79,9 @@ describe('resolveFactoryOptions() — provided options', () => {
     expect(resolveFactoryOptions({ styling: { defaults } }).defaultVariants).toEqual(defaults)
   })
 
-  it('includes presetMap when provided', () => {
+  it('includes recipeMap when provided', () => {
     const presets = { primary: { size: 'lg' } }
-    expect(resolveFactoryOptions({ styling: { presets } }).presetMap).toEqual(presets)
+    expect(resolveFactoryOptions({ styling: { presets } }).recipeMap).toEqual(presets)
   })
 })
 

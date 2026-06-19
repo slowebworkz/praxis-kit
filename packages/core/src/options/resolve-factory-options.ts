@@ -5,7 +5,7 @@ import type {
   FactoryOptions,
   IntrinsicProps,
   NormalizeFn,
-  PresetMap,
+  RecipeMap,
   PropNormalizer,
   ResolvedFactoryOptions,
   VariantMap,
@@ -38,7 +38,7 @@ export function resolveFactoryOptions<
   TDefault extends ElementType,
   Props extends AnyRecord,
   V extends Readonly<VariantMap>,
-  TPreset extends PresetMap<V>,
+  TPreset extends RecipeMap<V>,
 >(
   options: FactoryOptions<TDefault, Props, V, TPreset> = {},
 ): Readonly<ResolvedFactoryOptions<TDefault, Props, V, TPreset>> {
@@ -57,7 +57,7 @@ export function resolveFactoryOptions<
     ...whenDefined('defaultProps', options.defaults),
     ...whenDefined('baseClassName', styling?.base),
     ...whenDefined('tagMap', styling?.tags),
-    ...whenDefined('presetMap', styling?.presets),
+    ...whenDefined('recipeMap', styling?.presets),
     ...whenDefined('variants', styling?.variants),
     ...whenDefined('defaultVariants', styling?.defaults),
     ...whenDefined('compoundVariants', styling?.compounds),

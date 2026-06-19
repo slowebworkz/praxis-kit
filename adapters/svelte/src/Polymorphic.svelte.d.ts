@@ -6,7 +6,7 @@ interface PolymorphicProps {
   as?: string
   asChild?: boolean
   class?: string
-  variantKey?: string
+  recipe?: string
   children?: Snippet | Snippet<[Record<string, unknown>]>
   [key: string]: unknown
 }
