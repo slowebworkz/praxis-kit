@@ -1,4 +1,5 @@
-export { COMPONENT_DEFAULT_TAG, COMPONENT_ID } from './component-id'
+export { COMPONENT_DEFAULT_TAG, COMPONENT_ID, createComponentId } from './component-id'
 export type { WithComponentId } from './component-id'
-export { isComponent } from './is-component'
-export { isTag } from './is-tag'
+export { isComponent, getComponentId, hasComponentId } from './is-component'
+export type { ComponentChild } from './is-component'
+export { isTag, getTag } from './is-tag'

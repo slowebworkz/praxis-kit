@@ -1,15 +1,39 @@
 import { isObject } from '@praxis-kit/primitive'
 import { isString } from '../foundational/is-string'
-import { COMPONENT_ID } from './component-id'
+import { COMPONENT_ID, createComponentId } from './component-id'
+import type { RestrictedPropertyKey } from '../../types'
 
-type ComponentChild = { type: { [COMPONENT_ID]?: symbol } }
+// After hasComponentId() / isComponent() succeeds the symbol is guaranteed present.
+export type ComponentChild = {
+  type: {
+    [COMPONENT_ID]: symbol
+  }
+}
 
-function getComponentId(child: unknown): symbol | undefined {
+function isComponentId(value: unknown): value is RestrictedPropertyKey {
+  return isString(value) || typeof value === 'symbol'
+}
+
+export function getComponentId(child: unknown): symbol | undefined {
   if (!isObject(child) || !('type' in child)) return undefined
-  const t = (child as { type: unknown }).type
-  if (!isObject(t) || !(COMPONENT_ID in t)) return undefined
-  const id = (t as Record<typeof COMPONENT_ID, unknown>)[COMPONENT_ID]
+  const type = (child as { type: unknown }).type
+  if (typeof type !== 'function' && !isObject(type)) return undefined
+  const id = (type as Record<PropertyKey, unknown>)[COMPONENT_ID]
   return typeof id === 'symbol' ? id : undefined
+}
+
+export function hasComponentId(child: unknown): child is ComponentChild {
+  return getComponentId(child) !== undefined
+}
+
+function createPredicate(
+  ids: readonly RestrictedPropertyKey[],
+): (child: unknown) => child is ComponentChild {
+  const set = new Set(ids.map((id) => (isString(id) ? createComponentId(id) : id)))
+  return (child): child is ComponentChild => {
+    const id = getComponentId(child)
+    return id !== undefined && set.has(id)
+  }
 }
 
 /**
@@ -22,13 +46,24 @@ function getComponentId(child: unknown): symbol | undefined {
  *
  * HOC wrappers (memo, forwardRef, etc.) must explicitly propagate the ID:
  *   Wrapped[COMPONENT_ID] = Original[COMPONENT_ID]
+ *
+ * Two call forms are supported:
+ *   isComponent('Image')(child)        — curried, composable with Array#filter
+ *   isComponent(child, 'Image')        — direct, reads naturally in if-blocks
  */
 export function isComponent(
-  ...ids: ReadonlyArray<string | symbol>
-): (child: unknown) => child is ComponentChild {
-  const set = new Set(ids.map((id) => (isString(id) ? Symbol.for(`praxis.component.${id}`) : id)))
-  return (child): child is ComponentChild => {
-    const id = getComponentId(child)
-    return id !== undefined && set.has(id)
+  id: RestrictedPropertyKey,
+  ...ids: readonly RestrictedPropertyKey[]
+): (child: unknown) => child is ComponentChild
+export function isComponent(
+  child: unknown,
+  id: RestrictedPropertyKey,
+  ...ids: readonly RestrictedPropertyKey[]
+): child is ComponentChild
+export function isComponent(...args: readonly unknown[]) {
+  if (isComponentId(args[0])) {
+    return createPredicate(args as RestrictedPropertyKey[])
   }
+  const [child, ...ids] = args
+  return createPredicate(ids as RestrictedPropertyKey[])(child)
 }
