@@ -69,7 +69,7 @@ describe('collectJsxUsages', () => {
     const usages = collectJsxUsages(source)
     expect(usages).toHaveLength(1)
     expect(usages[0]!.tagName).toBe('Button')
-    expect(usages[0]!.count).toBe(1)
+    expect(usages[0]!.count).toEqual({ min: 1, max: 1 })
   })
 
   it('ignores lowercase HTML elements', () => {
@@ -80,7 +80,7 @@ describe('collectJsxUsages', () => {
     expect(collectJsxUsages(source)).toHaveLength(0)
   })
 
-  it('records undefined count when children contain a JSX expression', () => {
+  it('records undefined count when children are unknowable (e.g. variable reference)', () => {
     const source = parseSource(
       'test.tsx',
       `function App({ child }) { return <Button>{child}</Button> }`,
@@ -89,11 +89,11 @@ describe('collectJsxUsages', () => {
     expect(usages[0]!.count).toBeUndefined()
   })
 
-  it('records count 0 for self-closing elements', () => {
+  it('records count { min: 0, max: 0 } for self-closing elements', () => {
     const source = parseSource('test.tsx', `function App() { return <Button /> }`)
     const usages = collectJsxUsages(source)
     expect(usages[0]!.tagName).toBe('Button')
-    expect(usages[0]!.count).toBe(0)
+    expect(usages[0]!.count).toEqual({ min: 0, max: 0 })
   })
 
   it('records line and column positions (1-based)', () => {
@@ -290,7 +290,12 @@ describe('ConstraintRegistry.diagnostics', () => {
     const registry = new ConstraintRegistry()
     // No constraints registered for button.tsx
     registry.registerImports('/abs/app.tsx', new Map([['Button', '/abs/button.tsx']]))
-    registry.addPendingUsage('/abs/app.tsx', { tagName: 'Button', count: 0, line: 1, col: 1 })
+    registry.addPendingUsage('/abs/app.tsx', {
+      tagName: 'Button',
+      count: { min: 0, max: 0 },
+      line: 1,
+      col: 1,
+    })
     expect(registry.diagnostics('warning')).toHaveLength(0)
   })
 })

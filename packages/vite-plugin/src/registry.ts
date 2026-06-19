@@ -60,7 +60,8 @@ export class ConstraintRegistry {
         if (!constraint) continue
 
         const { totalMin, totalMax, name } = constraint
-        if (usage.count >= totalMin && usage.count <= totalMax) continue
+        // Only fire when the count range is certainly outside the required bounds.
+        if (usage.count.max >= totalMin && usage.count.min <= totalMax) continue
 
         const rangeText =
           totalMax === Infinity
@@ -69,10 +70,14 @@ export class ConstraintRegistry {
               ? `exactly ${totalMin}`
               : `${totalMin}–${totalMax}`
         const childWord = totalMax === 1 && totalMin === 1 ? 'child' : 'children'
+        const receivedText =
+          usage.count.min === usage.count.max
+            ? `${usage.count.min}`
+            : `${usage.count.min}–${usage.count.max}`
 
         result.push({
           fileId,
-          message: `<${name}> expects ${rangeText} ${childWord} but received ${usage.count}.`,
+          message: `<${name}> expects ${rangeText} ${childWord} but received ${receivedText}.`,
           line: usage.line,
           col: usage.col,
           severity,

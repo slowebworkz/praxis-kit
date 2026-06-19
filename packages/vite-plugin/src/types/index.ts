@@ -1,6 +1,6 @@
 // types/index.ts
 
-export type { StaticBound, ComponentConstraint, PendingUsage } from './analysis'
+export type { ChildCount, StaticBound, ComponentConstraint, PendingUsage } from './analysis'
 
 export type { Diagnostic, FileDiagnostic } from './diagnostics'
 
