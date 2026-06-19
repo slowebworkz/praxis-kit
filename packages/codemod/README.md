@@ -20,11 +20,12 @@ pnpm dlx @praxis-kit/codemod --help
 
 ## Migrations
 
-### v3 → v4: single-package distribution
+### `@praxis-kit/*` → `praxis-kit` (v1.0.0)
 
-In v4, all adapters and tooling ship as sub-entries of the `praxis-kit` package instead of
-individual scoped packages. Run the `migrate` command to convert both import paths and the renamed
-factory function in one pass:
+In v1, all adapters and tooling moved from individual scoped packages (`@praxis-kit/react`, etc.) to
+sub-entries of a single `praxis-kit` package. The factory function was also renamed from
+`createPolymorphicComponent` to `createContractComponent`. Run the `migrate` command to handle both
+in one pass:
 
 ```bash
 pnpm dlx @praxis-kit/codemod migrate
@@ -66,14 +67,53 @@ Use a tsconfig for richer symbol resolution:
 pnpm dlx @praxis-kit/codemod migrate --tsconfig tsconfig.json
 ```
 
+### `presets` → `recipes`, `variantKey` → `recipe` (v3.0.0)
+
+In v3, two public API names were renamed to align with Chakra UI, Stitches, and Tailwind Labs
+conventions. These are object property renames and require a manual find-and-replace — the codemod
+does not yet automate them.
+
+| Before            | After             |
+| ----------------- | ----------------- |
+| `styling.presets` | `styling.recipes` |
+| `variantKey` prop | `recipe` prop     |
+
+**Factory options:**
+
+```ts
+// Before
+createContractComponent({
+  styling: {
+    presets: { cta: { intent: 'primary', size: 'lg' } },
+  },
+})
+
+// After
+createContractComponent({
+  styling: {
+    recipes: { cta: { intent: 'primary', size: 'lg' } },
+  },
+})
+```
+
+**JSX usage:**
+
+```tsx
+// Before
+<Button variantKey="cta" />
+
+// After
+<Button recipe="cta" />
+```
+
 ---
 
 ## Commands
 
 ### `migrate` (recommended)
 
-Runs path rewriting and factory rename in a single pass. This is the entry point for v3 → v4
-upgrades.
+Runs path rewriting and factory rename in a single pass. This is the entry point for upgrading from
+`@praxis-kit/*` scoped packages to `praxis-kit`.
 
 ```bash
 praxis-codemod migrate [options]
@@ -133,3 +173,5 @@ praxis-codemod migrate-paths
   not renamed. Migrate these manually.
 - **Dynamic re-exports** — `export * from '@praxis-kit/react'` has its path rewritten but the
   re-exported names are not individually renamed (no specifier list to walk).
+- **Property renames** — object key renames (`presets` → `recipes`, `variantKey` → `recipe`) are not
+  supported. Migrate these manually using your editor's find-and-replace.
