@@ -8,6 +8,7 @@ import {
   isFactoryCall,
   walk,
 } from './ast'
+import type { ImportBinding } from './imports'
 import type { Cardinality, ChildRulePosition, ComponentConstraint, StaticBound } from './types'
 
 /**
@@ -108,11 +109,13 @@ function processVariableStatement(
     // has a default tag or ARIA rules — needed for the ARIA as-override check.
     if (rules.length === 0 && !hasAriaRules && !defaultTag) continue
 
-    const totalMin = rules.reduce((s, r) => s + cardinalityMin(r.cardinality), 0)
-    const totalMax = rules.reduce(
-      (s, r) => (s === Infinity ? Infinity : s + cardinalityMax(r.cardinality)),
-      0,
-    )
+    let totalMin = 0
+    let totalMax = 0
+    for (const rule of rules) {
+      totalMin += cardinalityMin(rule.cardinality)
+      const max = cardinalityMax(rule.cardinality)
+      totalMax = totalMax === Infinity || max === Infinity ? Infinity : totalMax + max
+    }
 
     const componentName = ts.isIdentifier(decl.name) ? decl.name.text : undefined
     if (!componentName) continue
@@ -147,9 +150,9 @@ export function collectConstraints(
 export function collectFileDeclarations(
   source: ts.SourceFile,
   calleeNames: ReadonlySet<string>,
-): { constraints: ComponentConstraint[]; importSpecifiers: Map<string, string> } {
+): { constraints: ComponentConstraint[]; importSpecifiers: Map<string, ImportBinding> } {
   const constraints: ComponentConstraint[] = []
-  const importSpecifiers = new Map<string, string>()
+  const importSpecifiers = new Map<string, ImportBinding>()
 
   walk(source, (node) => {
     if (ts.isVariableStatement(node)) {
@@ -159,7 +162,13 @@ export function collectFileDeclarations(
       if (!ts.isStringLiteral(spec)) return
       const namedBindings = node.importClause?.namedBindings
       if (!namedBindings || !ts.isNamedImports(namedBindings)) return
-      for (const el of namedBindings.elements) importSpecifiers.set(el.name.text, spec.text)
+      const specifier = spec.text
+      for (const el of namedBindings.elements) {
+        if (el.isTypeOnly) continue
+        const localName = el.name.text
+        const importedName = el.propertyName?.text ?? localName
+        importSpecifiers.set(localName, { importedName, specifier })
+      }
     }
   })
 
