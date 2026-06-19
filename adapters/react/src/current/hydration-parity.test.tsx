@@ -1,36 +1,16 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach } from 'vitest'
-import { createElement } from 'react'
+import { createElement, act } from 'react'
 import type { ComponentType, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createRoot } from 'react-dom/client'
-import { act } from 'react'
 import { hydrationParitySuite } from '@praxis-kit/adapter-utils/testing'
 import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
+import { parseAttributes, parseNormalizedAttributes } from '@praxis-kit/shared/tests'
 import type { UnknownProps } from '../shared'
 import { createContractComponent } from './create-contract-component'
 
 type AnyComp = ComponentType<UnknownProps>
-
-function parseAttributes(html: string): Record<string, string> {
-  const container = document.createElement('div')
-  container.innerHTML = html
-  const el = container.firstElementChild
-  if (!el) return {}
-  const attrs: Record<string, string> = {}
-  for (const { name, value } of el.attributes) {
-    attrs[name] = value
-  }
-  return attrs
-}
-
-function normalizeAttrs(attrs: Record<string, string>): Record<string, string> {
-  const out: Record<string, string> = {}
-  for (const [k, v] of Object.entries(attrs)) {
-    out[k] = k === 'class' ? v.split(' ').sort().join(' ') : v
-  }
-  return out
-}
 
 function ssr(comp: unknown, props?: UnknownProps, ...children: ReactNode[]) {
   return renderToStaticMarkup(createElement(comp as AnyComp, props ?? {}, ...children))
@@ -63,8 +43,8 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
       enforcement: { strict: false },
     })
 
-    const serverAttrs = normalizeAttrs(parseAttributes(ssr(Box)))
-    const clientAttrs = normalizeAttrs(parseAttributes(await renderClient(Box)))
+    const serverAttrs = parseNormalizedAttributes(ssr(Box))
+    const clientAttrs = parseNormalizedAttributes(await renderClient(Box))
 
     expect(serverAttrs).toEqual(clientAttrs)
   })
@@ -80,8 +60,8 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
       enforcement: { strict: false },
     })
 
-    const serverAttrs = normalizeAttrs(parseAttributes(ssr(Box)))
-    const clientAttrs = normalizeAttrs(parseAttributes(await renderClient(Box)))
+    const serverAttrs = parseNormalizedAttributes(ssr(Box))
+    const clientAttrs = parseNormalizedAttributes(await renderClient(Box))
 
     expect(serverAttrs).toEqual(clientAttrs)
   })
@@ -119,9 +99,7 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
 
     expect(serverHtml).toContain('<section')
     expect(clientHtml).toContain('<section')
-    expect(normalizeAttrs(parseAttributes(serverHtml))).toEqual(
-      normalizeAttrs(parseAttributes(clientHtml)),
-    )
+    expect(parseNormalizedAttributes(serverHtml)).toEqual(parseNormalizedAttributes(clientHtml))
   })
 
   it('compound variant class matches between server and client', async () => {
@@ -140,8 +118,8 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
     })
     const props = { size: 'lg', intent: 'ghost' } as UnknownProps
 
-    const serverAttrs = normalizeAttrs(parseAttributes(ssr(Button, props)))
-    const clientAttrs = normalizeAttrs(parseAttributes(await renderClient(Button, props)))
+    const serverAttrs = parseNormalizedAttributes(ssr(Button, props))
+    const clientAttrs = parseNormalizedAttributes(await renderClient(Button, props))
 
     expect(serverAttrs).toEqual(clientAttrs)
     expect(serverAttrs['class']).toContain('btn-lg-ghost')

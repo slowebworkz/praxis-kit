@@ -70,7 +70,8 @@
     "./guards/variants": {
       "types": "./dist/guards/variants.d.ts",
       "import": "./dist/guards/variants.js"
-    }
+    },
+    "./tests": "./src/tests/index.ts"
   },
   "types": "./dist/index.d.ts",
   "files": [
