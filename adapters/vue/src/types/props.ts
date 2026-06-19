@@ -13,7 +13,7 @@ export type AsChildProp = Readonly<{
 export type KnownProps = Readonly<
   {
     class?: ClassName
-    variantKey?: string
+    recipe?: string
     children?: never
   } & AsProp &
     AsChildProp &

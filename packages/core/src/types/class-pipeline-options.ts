@@ -3,8 +3,8 @@ export type {
   ClassPipelineOptions,
   CompositionOptions,
   CVASystemOptions,
-  PresetOptions,
-  PresetTarget,
+  RecipeOptions,
+  RecipeTarget,
   StyleOptions,
   TagMapOptions,
 } from '@praxis-kit/shared/types'

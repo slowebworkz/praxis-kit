@@ -15,8 +15,8 @@ import type {
   IntrinsicProps,
   PolymorphicGenerics,
   PolymorphicRuntime,
-  PresetMap,
-  PresetOf,
+  RecipeMap,
+  RecipeOf,
   PropsOf,
   ResolvedFactoryOptions,
   StrictMode,
@@ -53,7 +53,7 @@ function resolveClassPipeline<TVariants extends VariantMap>(
 }
 
 function createRuntimeMethods<G extends PolymorphicGenerics>(
-  resolved: ResolvedFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>,
+  resolved: ResolvedFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, RecipeOf<G>>,
   classPipeline: ClassPipelineFn,
   engine: AriaEngine | null,
 ) {
@@ -68,12 +68,12 @@ function createRuntimeMethods<G extends PolymorphicGenerics>(
       tag: ElementType,
       props: PropsOf<G>,
       className?: ClassName,
-      variantKey?: Extract<keyof PresetOf<G>, string>,
+      recipe?: Extract<keyof RecipeOf<G>, string>,
     ) {
       if (process.env.NODE_ENV !== 'production') {
-        validateRenderProps(resolved, props as AnyRecord, variantKey)
+        validateRenderProps(resolved, props as AnyRecord, recipe)
       }
-      return classPipeline(tag, props, className, variantKey)
+      return classPipeline(tag, props, className, recipe)
     },
 
     resolveAria<P extends IntrinsicProps>(tag: ElementType, props: P) {
@@ -89,7 +89,7 @@ function createRuntimeObject<
   TPlugin extends ClassPlugin | undefined,
 >(
   methods: ReturnType<typeof createRuntimeMethods<G>>,
-  resolved: ResolvedFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>,
+  resolved: ResolvedFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, RecipeOf<G>>,
   pluginResult?: TPlugin,
 ) {
   return pluginResult
@@ -101,7 +101,7 @@ export function createPolymorphic<
   TDefault extends ElementType,
   Props extends AnyRecord,
   Variants extends Readonly<VariantMap>,
-  TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
+  TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
 >(
   options: FactoryOptions<TDefault, Props, Variants, TPreset> = {},
   capabilities?: Capabilities,

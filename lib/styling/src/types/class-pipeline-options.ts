@@ -2,8 +2,8 @@ import type { VariantMap } from './variant'
 import type {
   BaseClassOptions,
   CVASystemOptions,
-  PresetOptions,
-  PresetTarget,
+  RecipeOptions,
+  RecipeTarget,
   StyleOptions,
   TagMapOptions,
 } from '@praxis-kit/shared/types'
@@ -11,8 +11,8 @@ import type {
 export type {
   BaseClassOptions,
   CVASystemOptions,
-  PresetOptions,
-  PresetTarget,
+  RecipeOptions,
+  RecipeTarget,
   StyleOptions,
   TagMapOptions,
 }
@@ -23,7 +23,7 @@ interface PrecomputedClassesOptions {
 }
 
 export type CompositionOptions<TVariants extends VariantMap = VariantMap> = TagMapOptions &
-  PresetOptions<TVariants> &
+  RecipeOptions<TVariants> &
   PrecomputedClassesOptions
 
 export type ClassPipelineOptions<TVariants extends VariantMap = VariantMap> =

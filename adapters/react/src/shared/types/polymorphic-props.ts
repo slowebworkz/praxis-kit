@@ -7,7 +7,7 @@ import type {
   ElementType,
   IntrinsicTag,
   PolymorphicGenerics,
-  PresetOf,
+  RecipeOf,
   PropsOf,
   VariantProps,
   VariantsOf,
@@ -58,7 +58,7 @@ type PolymorphicControlProps<G extends PolymorphicGenerics, TAs extends ElementT
   // Accept explicit `undefined` so exactOptionalPropertyTypes doesn't flag spreads
   // from wrapper components whose optional props arrive as `T | undefined` via Omit.
   className?: ClassName | undefined
-  variantKey?: keyof PresetOf<G>
+  recipe?: keyof RecipeOf<G>
   ref?: Ref<ElementRef<TAs>>
 }
 

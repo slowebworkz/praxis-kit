@@ -27,12 +27,12 @@ const intentFn = cva('', {
 describe('VariantClassResolver — no CVA fn', () => {
   it('returns empty string when cvaFn is null', () => {
     const r = new VariantClassResolver(null)
-    expect(r.resolve({ props: {}, variantKey: undefined })).toBe('')
+    expect(r.resolve({ props: {}, recipe: undefined })).toBe('')
   })
 
   it('returns empty string with preset when cvaFn is null', () => {
     const r = new VariantClassResolver(null, { primary: { size: 'lg' } })
-    expect(r.resolve({ props: {}, variantKey: 'primary' })).toBe('')
+    expect(r.resolve({ props: {}, recipe: 'primary' })).toBe('')
   })
 })
 
@@ -43,46 +43,46 @@ describe('VariantClassResolver — no CVA fn', () => {
 describe('VariantClassResolver — variant props', () => {
   it('applies defaultVariants when no props provided', () => {
     const r = new VariantClassResolver(sizeFn)
-    expect(r.resolve({ props: {}, variantKey: undefined })).toContain('text-sm')
+    expect(r.resolve({ props: {}, recipe: undefined })).toContain('text-sm')
   })
 
   it('applies explicit variant prop', () => {
     const r = new VariantClassResolver(sizeFn)
-    expect(r.resolve({ props: { size: 'lg' }, variantKey: undefined })).toContain('text-lg')
+    expect(r.resolve({ props: { size: 'lg' }, recipe: undefined })).toContain('text-lg')
   })
 
   it('applies multiple variant props', () => {
     const r = new VariantClassResolver(intentFn)
-    const result = r.resolve({ props: { size: 'lg', intent: 'danger' }, variantKey: undefined })
+    const result = r.resolve({ props: { size: 'lg', intent: 'danger' }, recipe: undefined })
     expect(result).toContain('text-lg')
     expect(result).toContain('text-red-500')
   })
 })
 
 // ---------------------------------------------------------------------------
-// presetMap
+// recipeMap
 // ---------------------------------------------------------------------------
 
-describe('VariantClassResolver — presetMap', () => {
+describe('VariantClassResolver — recipeMap', () => {
   it('merges preset props into variant resolution', () => {
     const r = new VariantClassResolver(sizeFn, { large: { size: 'lg' } })
-    expect(r.resolve({ props: {}, variantKey: 'large' })).toContain('text-lg')
+    expect(r.resolve({ props: {}, recipe: 'large' })).toContain('text-lg')
   })
 
   it('explicit props override preset', () => {
     const r = new VariantClassResolver(sizeFn, { large: { size: 'lg' } })
-    expect(r.resolve({ props: { size: 'sm' }, variantKey: 'large' })).toContain('text-sm')
-    expect(r.resolve({ props: { size: 'sm' }, variantKey: 'large' })).not.toContain('text-lg')
+    expect(r.resolve({ props: { size: 'sm' }, recipe: 'large' })).toContain('text-sm')
+    expect(r.resolve({ props: { size: 'sm' }, recipe: 'large' })).not.toContain('text-lg')
   })
 
   it('falls back to defaultVariants when preset key is missing', () => {
     const r = new VariantClassResolver(sizeFn, {})
-    expect(r.resolve({ props: {}, variantKey: 'nonexistent' })).toContain('text-sm')
+    expect(r.resolve({ props: {}, recipe: 'nonexistent' })).toContain('text-sm')
   })
 
-  it('unknown variantKey does not throw', () => {
+  it('unknown recipe does not throw', () => {
     const r = new VariantClassResolver(sizeFn, { primary: { size: 'sm' } })
-    expect(() => r.resolve({ props: {}, variantKey: 'unknown' })).not.toThrow()
+    expect(() => r.resolve({ props: {}, recipe: 'unknown' })).not.toThrow()
   })
 })
 
@@ -93,15 +93,15 @@ describe('VariantClassResolver — presetMap', () => {
 describe('VariantClassResolver — caching', () => {
   it('returns same string on repeated identical calls', () => {
     const r = new VariantClassResolver(sizeFn)
-    const first = r.resolve({ props: { size: 'lg' }, variantKey: undefined })
-    const second = r.resolve({ props: { size: 'lg' }, variantKey: undefined })
+    const first = r.resolve({ props: { size: 'lg' }, recipe: undefined })
+    const second = r.resolve({ props: { size: 'lg' }, recipe: undefined })
     expect(first).toBe(second)
   })
 
   it('different props produce different results', () => {
     const r = new VariantClassResolver(sizeFn)
-    const sm = r.resolve({ props: { size: 'sm' }, variantKey: undefined })
-    const lg = r.resolve({ props: { size: 'lg' }, variantKey: undefined })
+    const sm = r.resolve({ props: { size: 'sm' }, recipe: undefined })
+    const lg = r.resolve({ props: { size: 'lg' }, recipe: undefined })
     expect(sm).not.toBe(lg)
   })
 
@@ -110,8 +110,8 @@ describe('VariantClassResolver — caching', () => {
       small: { size: 'sm' },
       large: { size: 'lg' },
     })
-    const sm = r.resolve({ props: {}, variantKey: 'small' })
-    const lg = r.resolve({ props: {}, variantKey: 'large' })
+    const sm = r.resolve({ props: {}, recipe: 'small' })
+    const lg = r.resolve({ props: {}, recipe: 'large' })
     expect(sm).not.toBe(lg)
   })
 })
@@ -126,14 +126,14 @@ describe('VariantClassResolver — LRU eviction', () => {
     const r = new VariantClassResolver(fn)
 
     // prime k=0 (oldest), then push 1000 more unique entries to force eviction
-    r.resolve({ props: { k: 0 }, variantKey: undefined })
+    r.resolve({ props: { k: 0 }, recipe: undefined })
     for (let i = 1; i <= 1000; i++) {
-      r.resolve({ props: { k: i }, variantKey: undefined })
+      r.resolve({ props: { k: i }, recipe: undefined })
     }
 
     // k=0 should be evicted — resolving it must recompute
     const before = fn.mock.calls.length
-    r.resolve({ props: { k: 0 }, variantKey: undefined })
+    r.resolve({ props: { k: 0 }, recipe: undefined })
     expect(fn.mock.calls.length).toBe(before + 1)
   })
 
@@ -143,17 +143,17 @@ describe('VariantClassResolver — LRU eviction', () => {
 
     // fill to exactly 1000: k=0 is oldest, k=999 is newest
     for (let i = 0; i <= 999; i++) {
-      r.resolve({ props: { k: i }, variantKey: undefined })
+      r.resolve({ props: { k: i }, recipe: undefined })
     }
     // refresh k=0 → moves to most-recently-used; k=1 becomes oldest
-    r.resolve({ props: { k: 0 }, variantKey: undefined })
+    r.resolve({ props: { k: 0 }, recipe: undefined })
     // add k=1000 → triggers eviction; k=1 (now oldest) is dropped
-    r.resolve({ props: { k: 1000 }, variantKey: undefined })
+    r.resolve({ props: { k: 1000 }, recipe: undefined })
 
     const before = fn.mock.calls.length
-    r.resolve({ props: { k: 0 }, variantKey: undefined }) // still cached — no new call
+    r.resolve({ props: { k: 0 }, recipe: undefined }) // still cached — no new call
     expect(fn.mock.calls.length).toBe(before)
-    r.resolve({ props: { k: 1 }, variantKey: undefined }) // evicted — recomputed
+    r.resolve({ props: { k: 1 }, recipe: undefined }) // evicted — recomputed
     expect(fn.mock.calls.length).toBe(before + 1)
   })
 })

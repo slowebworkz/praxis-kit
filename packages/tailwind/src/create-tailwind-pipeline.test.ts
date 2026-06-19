@@ -445,10 +445,10 @@ describe('createTailwindPipeline — dead-variant detection (Case B)', () => {
     expect(deadVariantWarned(warn)).toBe(false)
   })
 
-  it('detects a dead variant activated via preset (variantKey)', () => {
+  it('detects a dead variant activated via preset (recipe)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const pipeline = createTailwindPipeline(
-      { variants: { cols: { '2': 'grid-cols-2' } }, presetMap: { grid2: { cols: '2' } } },
+      { variants: { cols: { '2': 'grid-cols-2' } }, recipeMap: { grid2: { cols: '2' } } },
       'warn',
     )
     pipeline.pipeline('div', { flex: true }, '', 'grid2')

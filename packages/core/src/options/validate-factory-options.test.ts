@@ -24,25 +24,25 @@ const SIZE = { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } }
 describe('validateFactoryOptions — preset selections', () => {
   it('warns when a preset references an unknown variant key', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    validateFactoryOptions(resolved({ ...SIZE, presetMap: { p: { intent: 'primary' } } }))
+    validateFactoryOptions(resolved({ ...SIZE, recipeMap: { p: { intent: 'primary' } } }))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('unknown variant "intent"'))
   })
 
   it('warns when a preset references an unknown value of a known variant', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    validateFactoryOptions(resolved({ ...SIZE, presetMap: { p: { size: 'xl' } } }))
+    validateFactoryOptions(resolved({ ...SIZE, recipeMap: { p: { size: 'xl' } } }))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('unknown value "xl"'))
   })
 
   it('does not warn for a valid preset selection', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    validateFactoryOptions(resolved({ ...SIZE, presetMap: { p: { size: 'lg' } } }))
+    validateFactoryOptions(resolved({ ...SIZE, recipeMap: { p: { size: 'lg' } } }))
     expect(warn).not.toHaveBeenCalled()
   })
 
   it('names the offending preset in the message', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    validateFactoryOptions(resolved({ ...SIZE, presetMap: { compact: { size: 'xl' } } }))
+    validateFactoryOptions(resolved({ ...SIZE, recipeMap: { compact: { size: 'xl' } } }))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('preset "compact"'))
   })
 })
@@ -65,14 +65,14 @@ describe('validateFactoryOptions — strict gating', () => {
   it('throws under strict: "throw"', () => {
     expect(() =>
       validateFactoryOptions(
-        resolved({ ...SIZE, strict: 'throw', presetMap: { p: { size: 'xl' } } }),
+        resolved({ ...SIZE, strict: 'throw', recipeMap: { p: { size: 'xl' } } }),
       ),
     ).toThrow(/unknown value "xl"/)
   })
 
   it('throws under strict: true', () => {
     expect(() =>
-      validateFactoryOptions(resolved({ ...SIZE, strict: true, presetMap: { p: { bad: 'x' } } })),
+      validateFactoryOptions(resolved({ ...SIZE, strict: true, recipeMap: { p: { bad: 'x' } } })),
     ).toThrow(/unknown variant "bad"/)
   })
 
@@ -80,7 +80,7 @@ describe('validateFactoryOptions — strict gating', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     expect(() =>
       validateFactoryOptions(
-        resolved({ ...SIZE, strict: false, presetMap: { p: { size: 'xl' } } }),
+        resolved({ ...SIZE, strict: false, recipeMap: { p: { size: 'xl' } } }),
       ),
     ).not.toThrow()
     expect(warn).not.toHaveBeenCalled()
@@ -90,7 +90,7 @@ describe('validateFactoryOptions — strict gating', () => {
 describe('validateFactoryOptions — edge cases', () => {
   it('reports unknown variant when no variants are declared at all', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    validateFactoryOptions(resolved({ presetMap: { p: { size: 'sm' } } }))
+    validateFactoryOptions(resolved({ recipeMap: { p: { size: 'sm' } } }))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('unknown variant "size"'))
   })
 
@@ -102,7 +102,7 @@ describe('validateFactoryOptions — edge cases', () => {
 
   it('reports prototype-inherited keys as unknown variants', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    validateFactoryOptions(resolved({ ...SIZE, presetMap: { p: { toString: 'sm' } } }))
+    validateFactoryOptions(resolved({ ...SIZE, recipeMap: { p: { toString: 'sm' } } }))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('unknown variant "toString"'))
   })
 
@@ -129,7 +129,7 @@ describe("validateFactoryOptions — strict: 'async-warn'", () => {
   it('warns synchronously (construction-time warnings are one-shot, no deferral needed)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     validateFactoryOptions(
-      resolved({ ...SIZE, strict: 'async-warn', presetMap: { p: { intent: 'primary' } } }),
+      resolved({ ...SIZE, strict: 'async-warn', recipeMap: { p: { intent: 'primary' } } }),
     )
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('unknown variant "intent"'))
   })
@@ -137,7 +137,7 @@ describe("validateFactoryOptions — strict: 'async-warn'", () => {
   it('does not throw', () => {
     expect(() =>
       validateFactoryOptions(
-        resolved({ ...SIZE, strict: 'async-warn', presetMap: { p: { intent: 'primary' } } }),
+        resolved({ ...SIZE, strict: 'async-warn', recipeMap: { p: { intent: 'primary' } } }),
       ),
     ).not.toThrow()
   })

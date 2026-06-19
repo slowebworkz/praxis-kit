@@ -47,7 +47,7 @@ export type {
   AllowedOf,
   DefaultOf,
   PolymorphicGenerics,
-  PresetOf,
+  RecipeOf,
   PropsOf,
   VariantsOf,
 } from './polymorphic-generics'
@@ -75,7 +75,7 @@ export type {
 } from './validation'
 export type {
   DefaultVariants,
-  PresetMap,
+  RecipeMap,
   VariantMap,
   VariantProps,
   VariantSelection,

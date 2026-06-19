@@ -7,7 +7,7 @@ import type {
   ElementType,
   IntrinsicTag,
   PolymorphicGenerics,
-  PresetOf,
+  RecipeOf,
   PropsOf,
   VariantProps,
   VariantsOf,
@@ -28,7 +28,7 @@ type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = Omit
   OmitIndexSignature<VariantProps<VariantsOf<G>>> & {
     as?: TAs
     className?: ClassName | undefined
-    variantKey?: keyof PresetOf<G>
+    recipe?: keyof RecipeOf<G>
     ref?: Ref<ElementRef<TAs>>
   }
 

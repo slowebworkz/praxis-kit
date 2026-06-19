@@ -175,7 +175,7 @@ describe('createContractComponent — variants', () => {
     expect(wrapper.element.getAttribute('intent')).toBeNull()
   })
 
-  it('activates a preset via variantKey', () => {
+  it('activates a preset via recipe', () => {
     const Box = createContractComponent({
       styling: {
         variants: {
@@ -187,7 +187,7 @@ describe('createContractComponent — variants', () => {
         } as never,
       },
     })
-    const wrapper = mount(box(Box), { props: { variantKey: 'cta' } as never })
+    const wrapper = mount(box(Box), { props: { recipe: 'cta' } as never })
     expect(wrapper.element.className).toContain('bg-blue-500')
     expect(wrapper.element.className).toContain('text-lg')
   })

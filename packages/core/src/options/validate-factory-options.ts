@@ -1,7 +1,7 @@
 import type {
   AnyRecord,
   ElementType,
-  PresetMap,
+  RecipeMap,
   ResolvedFactoryOptions,
   StrictMode,
   VariantMap,
@@ -27,14 +27,14 @@ function report(strict: StrictMode, message: string): void {
  * (`strict: 'warn'`) or throw (`strict: 'throw'`/`true`); a no-op when `false`.
  *
  * Runs once per factory (not per render). Render-time checks — unknown
- * `variantKey`, undefined variant value at the call site — are a separate
+ * `recipe`, undefined variant value at the call site — are a separate
  * follow-up (they require `strict` threaded into the class resolver).
  */
 export function validateFactoryOptions<
   TDefault extends ElementType,
   Props extends AnyRecord,
   V extends Readonly<VariantMap>,
-  TPreset extends PresetMap<V>,
+  TPreset extends RecipeMap<V>,
 >(resolved: ResolvedFactoryOptions<TDefault, Props, V, TPreset>): void {
   const { strict } = resolved
   if (strict === false) return
@@ -72,10 +72,10 @@ export function validateFactoryOptions<
     }
   }
 
-  const { presetMap } = resolved
-  if (presetMap) {
-    for (const presetKey in presetMap) {
-      checkSelection(`preset "${presetKey}"`, presetMap[presetKey]!)
+  const { recipeMap } = resolved
+  if (recipeMap) {
+    for (const recipeKey in recipeMap) {
+      checkSelection(`preset "${recipeKey}"`, recipeMap[recipeKey]!)
     }
   }
 

@@ -1,7 +1,7 @@
 import type {
   DefaultOf,
   PolymorphicGenerics,
-  PresetOf,
+  RecipeOf,
   PropsOf,
   StrictMode,
   VariantsOf,
@@ -12,7 +12,7 @@ export type NormalizedOptions<G extends PolymorphicGenerics> = WebFactoryOptions
   DefaultOf<G>,
   PropsOf<G>,
   VariantsOf<G>,
-  PresetOf<G>
+  RecipeOf<G>
 > & {
   readonly name: string
   readonly strict: Exclude<StrictMode, undefined>

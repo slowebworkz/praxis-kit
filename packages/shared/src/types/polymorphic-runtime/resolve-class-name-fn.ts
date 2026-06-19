@@ -5,5 +5,5 @@ export type ResolveClassNameFn<Props extends AnyRecord, TSlot extends string = n
   tag: ElementType,
   props: Props,
   className?: ClassName,
-  variantKey?: TSlot,
+  recipe?: TSlot,
 ) => string

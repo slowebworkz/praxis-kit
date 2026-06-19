@@ -13,7 +13,7 @@ export type ClassDiagnosis = {
   base: string
   tagMapClass: string | null
   tagMapBypassed: boolean
-  presetKey: string | undefined
+  recipeKey: string | undefined
   presetValues: AnyRecord | null
   effectiveVariants: AnyRecord
   compounds: CompoundTrace[]
@@ -31,19 +31,18 @@ export function diagnoseClassPipeline<TVariants extends VariantMap>(
   tag: unknown,
   props: AnyRecord,
   className?: string,
-  variantKey?: string,
+  recipe?: string,
 ): ClassDiagnosis {
   const rawBase = options.baseClassName ?? ''
   const base = Array.isArray(rawBase) ? rawBase.join(' ') : rawBase
 
-  const tagMapBypassed = variantKey !== undefined
+  const tagMapBypassed = recipe !== undefined
   const rawTagMapClass =
     typeof tag === 'string' && options.tagMap ? (options.tagMap[tag] ?? null) : null
   const tagMapClass = Array.isArray(rawTagMapClass) ? rawTagMapClass.join(' ') : rawTagMapClass
 
-  const presetMap = (options.presetMap as Record<string, AnyRecord> | undefined) ?? {}
-  const presetValues: AnyRecord | null =
-    variantKey !== undefined ? (presetMap[variantKey] ?? null) : null
+  const recipeMap = (options.recipeMap as Record<string, AnyRecord> | undefined) ?? {}
+  const presetValues: AnyRecord | null = recipe !== undefined ? (recipeMap[recipe] ?? null) : null
 
   const defaults = (options.defaultVariants as AnyRecord | undefined) ?? {}
   const preset = presetValues ?? {}
@@ -84,7 +83,7 @@ export function diagnoseClassPipeline<TVariants extends VariantMap>(
     base,
     tagMapClass,
     tagMapBypassed,
-    presetKey: variantKey,
+    recipeKey: recipe,
     presetValues,
     effectiveVariants,
     compounds,

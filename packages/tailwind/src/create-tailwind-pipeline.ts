@@ -128,9 +128,9 @@ function resolveActiveSelection<V extends VariantMap>(
   options: ClassPipelineOptions<V>,
   variants: VariantMap,
   props: AnyRecord,
-  variantKey: string | undefined,
+  recipe: string | undefined,
 ): VariantSelection {
-  const preset = variantKey ? options.presetMap?.[variantKey] : undefined
+  const preset = recipe ? options.recipeMap?.[recipe] : undefined
   const defaults = getDefaultVariants(options)
 
   const selection: VariantSelection = {}
@@ -146,14 +146,14 @@ function warnDeadVariants<V extends VariantMap>(
   options: ClassPipelineOptions<V>,
   compoundDims: ReadonlySet<string>,
   props: AnyRecord,
-  variantKey: string | undefined,
+  recipe: string | undefined,
   state: LayoutState,
 ): void {
   if (!strict) return
   const variants = getVariantConfig(options)
   if (!variants) return
 
-  const selection = resolveActiveSelection(options, variants, props, variantKey)
+  const selection = resolveActiveSelection(options, variants, props, recipe)
   for (const dim in selection) {
     if (compoundDims.has(dim)) continue
 
@@ -219,15 +219,15 @@ export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   return {
     ownedKeys: LAYOUT_OWNED_KEYS,
 
-    pipeline(tag, props, className, variantKey) {
+    pipeline(tag, props, className, recipe) {
       const mode = resolveLayout(props)
-      const raw = pipeline(tag, props, className, variantKey)
+      const raw = pipeline(tag, props, className, recipe)
       const tokens = classifyTokens(raw)
       const state = new LayoutState(mode)
 
       if (DEV) {
         warnReservedLayoutLiterals(strict, tokens)
-        warnDeadVariants(strict, options, compoundDims, props, variantKey, state)
+        warnDeadVariants(strict, options, compoundDims, props, recipe, state)
       }
 
       const filtered = tokens.filter((token) => evaluator.evaluate(token, state))
