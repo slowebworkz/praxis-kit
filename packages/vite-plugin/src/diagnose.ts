@@ -1,6 +1,6 @@
 import ts from 'typescript'
 import { walk } from './ast'
-import type { ComponentConstraint, Diagnostic, PendingUsage, Severity } from './types'
+import type { ChildCount, ComponentConstraint, Diagnostic, PendingUsage, Severity } from './types'
 
 /**
  * Single-pass variant of diagnoseUsages + diagnoseAriaTagOverrides + collectJsxUsages.
@@ -22,17 +22,17 @@ export function analyzeJsxSites(
   walk(source, (node) => {
     let tagName: string | undefined
     let attributes: ts.JsxAttributes | undefined
-    let count: number | undefined
+    let count: ChildCount | undefined
 
     if (ts.isJsxElement(node)) {
       const opening = node.openingElement
       tagName = ts.isIdentifier(opening.tagName) ? opening.tagName.text : undefined
       attributes = opening.attributes
-      count = countStaticChildren(node)
+      count = countJsxChildren(node.children)
     } else if (ts.isJsxSelfClosingElement(node)) {
       tagName = ts.isIdentifier(node.tagName) ? node.tagName.text : undefined
       attributes = node.attributes
-      count = 0
+      count = ZERO
     }
 
     if (!tagName) return
@@ -41,10 +41,10 @@ export function analyzeJsxSites(
     let pos: ts.LineAndCharacter | undefined
     const getPos = () => (pos ??= source.getLineAndCharacterOfPosition(node.getStart(source)))
 
-    // 1. Cardinality diagnostics
+    // 1. Cardinality diagnostics — fire only when the count range is certainly outside bounds.
     if (count !== undefined) {
       const c = byName.get(tagName)
-      if (c && (count < c.totalMin || count > c.totalMax)) {
+      if (c && (count.max < c.totalMin || count.min > c.totalMax)) {
         const { line, character } = getPos()
         const { totalMin, totalMax, name } = c
         const rangeText =
@@ -53,8 +53,9 @@ export function analyzeJsxSites(
             : totalMin === totalMax
               ? `exactly ${totalMin}`
               : `${totalMin}–${totalMax}`
+        const receivedText = count.min === count.max ? `${count.min}` : `${count.min}–${count.max}`
         diagnostics.push({
-          message: `<${name}> expects ${rangeText} ${totalMax === 1 && totalMin === 1 ? 'child' : 'children'} but received ${count}.`,
+          message: `<${name}> expects ${rangeText} ${totalMax === 1 && totalMin === 1 ? 'child' : 'children'} but received ${receivedText}.`,
           line: line + 1,
           col: character + 1,
           severity,
@@ -103,33 +104,111 @@ export function analyzeJsxSites(
   return { diagnostics, usages }
 }
 
+// ─── Child count analysis ─────────────────────────────────────────────────────
+
+const ZERO: ChildCount = { min: 0, max: 0 }
+const ONE: ChildCount = { min: 1, max: 1 }
+
 /**
- * Returns the count of meaningful JSX children — JSX elements and non-whitespace
- * text — in a JSX element's children array. JSX expressions (`{...}`) make the
- * count unknowable and signal that the site is not statically analyzable.
+ * Analyzes an expression to determine how many JSX children it renders.
  *
- * Returns undefined when any child is a JsxExpression (dynamic content).
+ * Returns a `ChildCount` range when the count is statically determinable —
+ * including partially-dynamic patterns like conditionals and array literals.
+ * Returns `undefined` for unknowable cases (`.map()`, variable references,
+ * spread elements).
+ *
+ * Handles:
+ * - `null`, `false`, `undefined`, empty `{}` → 0
+ * - `cond && <El />` → [0, 1]
+ * - `cond || <El />` / `cond ?? <El />` → [min(sides), max(sides)]
+ * - `cond ? <A /> : <B />` → [min(branches), max(branches)]
+ * - `[<A />, <B />]` (no spreads) → exact array count
+ * - JSX element / fragment → 1 / fragment child count
+ * - Parenthesized expressions → delegate to inner
  */
-function countStaticChildren(node: ts.JsxElement): number | undefined {
-  let count = 0
-  for (const child of node.children) {
-    if (ts.isJsxExpression(child)) return undefined
-    if (ts.isJsxText(child)) {
-      if (child.text.trim().length > 0) count++
-    } else {
-      // JsxElement, JsxSelfClosingElement, JsxFragment
-      count++
+function countExpression(node: ts.Expression): ChildCount | undefined {
+  if (node.kind === ts.SyntaxKind.NullKeyword) return ZERO
+  if (node.kind === ts.SyntaxKind.FalseKeyword) return ZERO
+  if (ts.isIdentifier(node) && node.text === 'undefined') return ZERO
+
+  if (ts.isParenthesizedExpression(node)) return countExpression(node.expression)
+
+  if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) return ONE
+
+  // Fragments flatten — their children count, not the fragment wrapper itself.
+  if (ts.isJsxFragment(node)) return countJsxChildren(node.children)
+
+  if (ts.isArrayLiteralExpression(node)) {
+    let min = 0
+    let max = 0
+    for (const el of node.elements) {
+      if (ts.isSpreadElement(el)) return undefined
+      const c = countExpression(el)
+      if (!c) return undefined
+      min += c.min
+      max += c.max
+    }
+    return { min, max }
+  }
+
+  if (ts.isBinaryExpression(node)) {
+    const op = node.operatorToken.kind
+    if (op === ts.SyntaxKind.AmpersandAmpersandToken) {
+      const right = countExpression(node.right)
+      if (!right) return undefined
+      return { min: 0, max: right.max }
+    }
+    if (op === ts.SyntaxKind.BarBarToken || op === ts.SyntaxKind.QuestionQuestionToken) {
+      const left = countExpression(node.left)
+      const right = countExpression(node.right)
+      if (!left || !right) return undefined
+      return { min: Math.min(left.min, right.min), max: Math.max(left.max, right.max) }
     }
   }
-  return count
+
+  if (ts.isConditionalExpression(node)) {
+    const whenTrue = countExpression(node.whenTrue)
+    const whenFalse = countExpression(node.whenFalse)
+    if (!whenTrue || !whenFalse) return undefined
+    return {
+      min: Math.min(whenTrue.min, whenFalse.min),
+      max: Math.max(whenTrue.max, whenFalse.max),
+    }
+  }
+
+  return undefined
+}
+
+/**
+ * Counts the meaningful children of a JSX element's child list.
+ * Whitespace-only `JsxText` nodes are ignored. Fragments are flattened.
+ * Returns `undefined` if any child contribution is unknowable.
+ */
+function countJsxChildren(children: ts.NodeArray<ts.JsxChild>): ChildCount | undefined {
+  let min = 0
+  let max = 0
+  for (const child of children) {
+    let c: ChildCount | undefined
+    if (ts.isJsxExpression(child)) {
+      c = child.expression === undefined ? ZERO : countExpression(child.expression)
+    } else if (ts.isJsxText(child)) {
+      c = child.text.trim().length > 0 ? ONE : ZERO
+    } else if (ts.isJsxFragment(child)) {
+      c = countJsxChildren(child.children)
+    } else {
+      c = ONE // JsxElement, JsxSelfClosingElement
+    }
+    if (!c) return undefined
+    min += c.min
+    max += c.max
+  }
+  return { min, max }
 }
 
 /**
  * Given a SourceFile and the set of component constraints collected from the
- * same file, walks all JSX usages and emits a Diagnostic for each site where:
- * - The JSX element's tag matches a known constrained component name
- * - All children are statically known (no JSX expressions)
- * - The child count is outside the [totalMin, totalMax] range
+ * same file, walks all JSX usages and emits a Diagnostic for each site where
+ * the child count range is certainly outside the [totalMin, totalMax] bounds.
  */
 export function diagnoseUsages(
   source: ts.SourceFile,
@@ -142,17 +221,16 @@ export function diagnoseUsages(
   const diagnostics: Diagnostic[] = []
 
   walk(source, (node) => {
-    // Handle both <Foo>...</Foo> (JsxElement) and <Foo /> (JsxSelfClosingElement).
     let tagName: string | undefined
-    let count: number | undefined
+    let count: ChildCount | undefined
 
     if (ts.isJsxElement(node)) {
       const openTag = node.openingElement
       tagName = ts.isIdentifier(openTag.tagName) ? openTag.tagName.text : undefined
-      count = countStaticChildren(node)
+      count = countJsxChildren(node.children)
     } else if (ts.isJsxSelfClosingElement(node)) {
       tagName = ts.isIdentifier(node.tagName) ? node.tagName.text : undefined
-      count = 0 // self-closing always has zero children
+      count = ZERO
     }
 
     if (!tagName) return
@@ -160,11 +238,11 @@ export function diagnoseUsages(
     const constraint = byName.get(tagName)
     if (!constraint) return
 
-    if (count === undefined) return // dynamic children — skip
+    if (count === undefined) return // unknowable (e.g. .map(), variable reference)
 
     const { totalMin, totalMax, name } = constraint
 
-    if (count < totalMin || count > totalMax) {
+    if (count.max < totalMin || count.min > totalMax) {
       const { line, character } = source.getLineAndCharacterOfPosition(node.getStart(source))
       const rangeText =
         totalMax === Infinity
@@ -172,8 +250,9 @@ export function diagnoseUsages(
           : totalMin === totalMax
             ? `exactly ${totalMin}`
             : `${totalMin}–${totalMax}`
+      const receivedText = count.min === count.max ? `${count.min}` : `${count.min}–${count.max}`
       diagnostics.push({
-        message: `<${name}> expects ${rangeText} ${totalMax === 1 && totalMin === 1 ? 'child' : 'children'} but received ${count}.`,
+        message: `<${name}> expects ${rangeText} ${totalMax === 1 && totalMin === 1 ? 'child' : 'children'} but received ${receivedText}.`,
         line: line + 1,
         col: character + 1,
         severity,
@@ -267,15 +346,15 @@ export function collectJsxUsages(source: ts.SourceFile): PendingUsage[] {
 
   walk(source, (node) => {
     let tagName: string | undefined
-    let count: number | undefined
+    let count: ChildCount | undefined
 
     if (ts.isJsxElement(node)) {
       const openTag = node.openingElement
       tagName = ts.isIdentifier(openTag.tagName) ? openTag.tagName.text : undefined
-      count = countStaticChildren(node)
+      count = countJsxChildren(node.children)
     } else if (ts.isJsxSelfClosingElement(node)) {
       tagName = ts.isIdentifier(node.tagName) ? node.tagName.text : undefined
-      count = 0
+      count = ZERO
     }
 
     if (!tagName || !/^[A-Z]/.test(tagName)) return
