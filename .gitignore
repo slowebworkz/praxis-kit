@@ -13,3 +13,5 @@ pnpm-debug.log*
 **/.playwright/
 **/playwright/.cache/
 .repo-state/
+!.vscode/ROADMAP.md
+!.vscode/CLAUDE.md
