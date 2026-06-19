@@ -18,6 +18,9 @@ pnpm-lock.yaml
 package-lock.json
 yarn.lock
 
+# CLI help text — columnar alignment must be preserved
+packages/codemod/src/cli/usage.md
+
 # Dot folders
 .git/
 .claude/
