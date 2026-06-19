@@ -7,17 +7,20 @@ import { ALL_EXTS, DEFAULT_CALLEE_NAMES, JSX_EXTS } from './constants'
 import { analyzeJsxSites } from './diagnose'
 import { ConstraintRegistry } from './registry'
 import { transformAsChild } from './slot-transform'
-import { composeStatically } from './static-compose'
+import { composeStatically, extractStaticComponents } from './static-compose'
+import type { StaticComponent } from './static-compose'
+import { extractImportSpecifiers } from './imports'
 import type { PluginOptions } from './types'
 
 export type { PluginOptions, Diagnostic, ComponentConstraint, StaticBound } from './types'
 export type { ComponentTokens, DesignTokenManifest, DesignTokensOptions } from './design-tokens'
+export type { StaticComponent } from './static-compose'
 export { analyze } from './analyze'
 export { transformAsChild } from './slot-transform'
 export { pruneDeadCompounds } from './compound-prune'
 export { buildPrecomputedClasses, injectPrecomputedClasses } from './class-extract'
 export { collectFileTokens, buildManifest, designTokensPlugin } from './design-tokens'
-export { composeStatically } from './static-compose'
+export { composeStatically, extractStaticComponents } from './static-compose'
 
 /**
  * Vite plugin that performs static enforcement.children cardinality checks at
@@ -204,23 +207,24 @@ export function slotTransformPlugin(): Plugin {
 }
 
 /**
- * Vite plugin that replaces same-file polymorphic component usage sites with
- * direct element creation at build time, eliminating the runtime render
- * pipeline for statically-analyzable usages.
+ * Vite plugin that replaces polymorphic component usage sites with direct
+ * element creation at build time, eliminating the runtime render pipeline for
+ * statically-analyzable usages.
  *
  * **Requires classExtractPlugin to run first** so that `precomputedClasses` is
  * present in the factory call before this plugin reads it. Place after
  * `classExtractPlugin` in the plugins array.
  *
  * A usage site is inlined when:
- * - The component is defined in the same file with `precomputedClasses` injected
+ * - The component is defined in the same file or imported from a file already
+ *   transformed by this plugin, with `precomputedClasses` injected
  * - No `as`, `asChild`, `render`, or spread attributes at the site
  * - All variant props are static string literals
  * - `className` is absent or a static string literal
  * - The factory config has no `defaults` or `enforcement`
  *
- * Sites that do not meet all conditions fall through to the normal runtime path
- * unchanged.
+ * Cross-file inlining degrades gracefully when the definition file has not yet
+ * been transformed (dev mode ordering, barrel re-exports, aliased imports).
  *
  * @example
  * // vite.config.ts
@@ -229,12 +233,39 @@ export function slotTransformPlugin(): Plugin {
  */
 export function staticCompositionPlugin(options?: Pick<PluginOptions, 'calleeNames'>): Plugin {
   const calleeNames = new Set(options?.calleeNames ?? DEFAULT_CALLEE_NAMES)
+  // fileId → Map<componentName, StaticComponent> — populated as files are transformed.
+  const registry = new Map<string, Map<string, StaticComponent>>()
+
   return {
     name: 'praxis-kit:static-compose',
-    transform(code, id) {
+
+    buildStart() {
+      registry.clear()
+    },
+
+    async transform(code, id) {
       const ext = id.split('.').pop() ?? ''
       if (!JSX_EXTS.has(ext)) return null
-      const result = composeStatically(parseSource(id, code), calleeNames)
+
+      const source = parseSource(id, code)
+
+      // Register this file's factory definitions so consumers can look them up.
+      const sameFile = extractStaticComponents(source, calleeNames)
+      if (sameFile.size > 0) registry.set(id, sameFile)
+
+      // Resolve named imports to their source file IDs and look up the registry.
+      const importedComponents = new Map<string, StaticComponent>()
+      const importSpecifiers = extractImportSpecifiers(source)
+      for (const [localName, specifier] of importSpecifiers) {
+        const resolved = await this.resolve(specifier, id)
+        if (!resolved) continue
+        const entry = registry.get(resolved.id)
+        if (!entry) continue
+        const component = entry.get(localName)
+        if (component) importedComponents.set(localName, component)
+      }
+
+      const result = composeStatically(source, calleeNames, importedComponents)
       return result !== null ? { code: result } : null
     },
   }

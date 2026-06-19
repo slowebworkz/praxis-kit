@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { parseSource } from './ast'
 import { composeStatically, extractStaticComponents } from './static-compose'
+import type { StaticComponent } from './static-compose'
 
 const CALLEE_NAMES = new Set(['createContractComponent', 'createPolymorphicComponent'])
 
@@ -299,5 +300,91 @@ describe('composeStatically — nested usage', () => {
     expect(result).toContain('className="btn btn-sm"')
     expect(result).toContain('className="btn btn-lg"')
     expect(result).not.toContain('<Button')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Cross-file composition — importedComponents registry
+// ---------------------------------------------------------------------------
+
+const BUTTON_IMPORTED: StaticComponent = {
+  defaultTag: 'button',
+  variantKeys: new Set(['size']),
+  precomputedClasses: {
+    '__none__:': 'btn',
+    '__none__:size:s:sm': 'btn btn-sm',
+    '__none__:size:s:lg': 'btn btn-lg',
+  },
+}
+
+function composeWithImports(
+  code: string,
+  importedComponents: ReadonlyMap<string, StaticComponent>,
+): string | null {
+  return composeStatically(parseSource('consumer.tsx', code), CALLEE_NAMES, importedComponents)
+}
+
+describe('composeStatically — cross-file (importedComponents)', () => {
+  it('inlines a component from the registry (definition in another file)', () => {
+    const registry = new Map([['Button', BUTTON_IMPORTED]])
+    const result = composeWithImports(
+      `function App() { return <Button size="lg">Click</Button> }`,
+      registry,
+    )
+    expect(result).not.toBeNull()
+    expect(result).toContain('className="btn btn-lg"')
+    expect(result).not.toContain('<Button')
+  })
+
+  it('inlines default variant (no variant props) for an imported component', () => {
+    const registry = new Map([['Button', BUTTON_IMPORTED]])
+    const result = composeWithImports(`function App() { return <Button>Click</Button> }`, registry)
+    expect(result).not.toBeNull()
+    expect(result).toContain('className="btn"')
+    expect(result).not.toContain('<Button')
+  })
+
+  it('returns null when registry is empty and no same-file definitions exist', () => {
+    const result = composeWithImports(
+      `function App() { return <Button size="lg">Click</Button> }`,
+      new Map(),
+    )
+    // No components known — nothing to inline
+    expect(result).toBeNull()
+  })
+
+  it('same-file definition takes precedence over imported component with same name', () => {
+    const registry = new Map<string, StaticComponent>([
+      [
+        'Button',
+        {
+          defaultTag: 'span',
+          variantKeys: new Set(),
+          precomputedClasses: { '__none__:': 'imported-class' },
+        },
+      ],
+    ])
+    const result = composeWithImports(
+      `
+        ${BUTTON_WITH_PRECOMPUTED}
+        function App() { return <Button size="sm">x</Button> }
+      `,
+      registry,
+    )
+    // Same-file Button wins — uses 'btn btn-sm', not 'imported-class'
+    expect(result).not.toBeNull()
+    expect(result).toContain('className="btn btn-sm"')
+    expect(result).not.toContain('imported-class')
+  })
+
+  it('does not inline imported component when asChild is present', () => {
+    const registry = new Map([['Button', BUTTON_IMPORTED]])
+    const result = composeWithImports(
+      `function App() { return <Button asChild size="lg"><a>x</a></Button> }`,
+      registry,
+    )
+    if (result !== null) {
+      expect(result).toContain('Button')
+    }
   })
 })
