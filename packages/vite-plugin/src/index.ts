@@ -15,6 +15,7 @@ import type { PluginOptions } from './types'
 export type { PluginOptions, Diagnostic, ComponentConstraint, StaticBound } from './types'
 export type { ComponentTokens, DesignTokenManifest, DesignTokensOptions } from './design-tokens'
 export type { StaticComponent } from './static-compose'
+export type { ImportBinding } from './imports'
 export { analyze } from './analyze'
 export { transformAsChild } from './slot-transform'
 export { pruneDeadCompounds } from './compound-prune'
@@ -80,10 +81,10 @@ export function contractPlugin(options?: PluginOptions): Plugin {
 
       if (importedTagsInUse.size > 0) {
         const resolvedImports = new Map<string, string>()
-        for (const [name, specifier] of importSpecifiers) {
-          if (!importedTagsInUse.has(name)) continue
+        for (const [localName, { specifier }] of importSpecifiers) {
+          if (!importedTagsInUse.has(localName)) continue
           const resolved = await this.resolve(specifier, id)
-          if (resolved) resolvedImports.set(name, resolved.id)
+          if (resolved) resolvedImports.set(localName, resolved.id)
         }
         registry.registerImports(id, resolvedImports)
 
@@ -256,12 +257,13 @@ export function staticCompositionPlugin(options?: Pick<PluginOptions, 'calleeNam
       // Resolve named imports to their source file IDs and look up the registry.
       const importedComponents = new Map<string, StaticComponent>()
       const importSpecifiers = extractImportSpecifiers(source)
-      for (const [localName, specifier] of importSpecifiers) {
+      for (const [localName, { importedName, specifier }] of importSpecifiers) {
         const resolved = await this.resolve(specifier, id)
         if (!resolved) continue
         const entry = registry.get(resolved.id)
         if (!entry) continue
-        const component = entry.get(localName)
+        // Use importedName for registry lookup so `import { Button as MyBtn }` resolves correctly.
+        const component = entry.get(importedName)
         if (component) importedComponents.set(localName, component)
       }
 
