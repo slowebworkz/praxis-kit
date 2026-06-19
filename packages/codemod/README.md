@@ -67,7 +67,7 @@ Use a tsconfig for richer symbol resolution:
 pnpm dlx @praxis-kit/codemod migrate --tsconfig tsconfig.json
 ```
 
-### `presets` → `recipes`, `variantKey` → `recipe` (v3.0.0)
+### `presets` → `recipes`, `variantKey` → `recipe` (v3.1.0)
 
 In v3, two public API names were renamed to align with Chakra UI, Stitches, and Tailwind Labs
 conventions. These are object property renames and require a manual find-and-replace — the codemod
