@@ -55,7 +55,7 @@ function resolveRenderState(
   filterProps: FilterPredicate,
 ): ResolvedRenderState {
   // render is stripped here so it never reaches the DOM as an HTML attribute.
-  const { as, asChild, render: _render, children, className, variantKey, ...rest } = props
+  const { as, asChild, render: _render, children, className, recipe, ...rest } = props
   const tag = runtime.resolveTag(as)
   if (runtime.options.allowedAs !== undefined && as !== undefined) {
     enforceAllowedAs(
@@ -73,7 +73,7 @@ function resolveRenderState(
   const normalizedProps = htmlNormalizers?.length
     ? htmlNormalizers.reduce((acc, fn) => ({ ...acc, ...fn(acc) }), baseProps)
     : baseProps
-  const resolvedClass = runtime.resolveClasses(tag, normalizedProps, className, variantKey)
+  const resolvedClass = runtime.resolveClasses(tag, normalizedProps, className, recipe)
   const filteredProps = applyFilter(normalizedProps, filterProps, runtime.options.variantKeys)
   return buildRenderState(tag, buildDirectives(as, asChild), filteredProps, resolvedClass, children)
 }

@@ -1,6 +1,6 @@
 export type {
   DefaultVariants,
-  PresetMap,
+  RecipeMap,
   VariantKey,
   VariantMap,
   VariantProps,

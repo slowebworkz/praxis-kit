@@ -39,7 +39,7 @@ describe('Button — variants', () => {
   })
 
   it('cta preset applies primary + lg', () => {
-    const { container } = render(h(C(Button), { variantKey: 'cta' }))
+    const { container } = render(h(C(Button), { recipe: 'cta' }))
     const cls = container.querySelector('button')!.className
     expect(cls).toContain('bg-blue-600')
     expect(cls).toContain('px-6')

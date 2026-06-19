@@ -2,8 +2,8 @@ import type {
   DefaultOf,
   ElementType,
   PolymorphicGenerics,
-  PresetMap,
-  PresetOf,
+  RecipeMap,
+  RecipeOf,
   PropsOf,
   VariantMap,
   VariantsOf,
@@ -21,7 +21,7 @@ import type { UnknownProps } from './types'
 import { SlotValidator } from './slot'
 
 function normalizeOptions<G extends PolymorphicGenerics>(
-  options: SolidFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>,
+  options: SolidFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, RecipeOf<G>>,
 ): NormalizedOptions<G> {
   return { ...options, ...resolveAdapterCommonOptions(options) } as NormalizedOptions<G>
 }
@@ -32,7 +32,7 @@ export function buildRuntime<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
-  TPreset extends PresetMap<Variants>,
+  TPreset extends RecipeMap<Variants>,
   TOptions extends WithChildRules,
 >(
   options: SolidFactoryOptions<TDefault, Props, Variants, TPreset> & TOptions,

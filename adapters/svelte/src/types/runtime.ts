@@ -4,7 +4,7 @@ import type {
   ElementType,
   IntrinsicProps,
   PolymorphicGenerics,
-  PresetOf,
+  RecipeOf,
   PropsOf,
   ResolvedFactoryOptions,
   VariantsOf,
@@ -37,7 +37,7 @@ export type ClassResolver = Readonly<{
     tag: ElementType,
     props: ResolvedProps,
     className?: ClassName,
-    variantKey?: string,
+    recipe?: string,
   ): string
 }>
 
@@ -55,5 +55,5 @@ export type Runtime = Readonly<
 >
 
 export type TypedRuntime<G extends PolymorphicGenerics> = ReturnType<
-  typeof createPolymorphic<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>
+  typeof createPolymorphic<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, RecipeOf<G>>
 >

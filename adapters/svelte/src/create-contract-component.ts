@@ -3,7 +3,7 @@ import type {
   ElementType,
   EmptyRecord,
   PolymorphicGenerics,
-  PresetMap,
+  RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
 import { buildRuntime } from './build-runtime'
@@ -19,7 +19,7 @@ export function createContractComponent<
   TDefault extends ElementType,
   Props extends UnknownProps = EmptyRecord,
   Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
-  TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
+  TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
   TOptions extends WithChildRules = SvelteFactoryOptions<
     TDefault,

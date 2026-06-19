@@ -25,7 +25,7 @@ describe('Box — rendering', () => {
   })
 
   it('applies row preset with flex mode', () => {
-    const { container } = render(h(C(Box), { variantKey: 'row', flex: true }))
+    const { container } = render(h(C(Box), { recipe: 'row', flex: true }))
     const cls = container.querySelector('div')!.className
     expect(cls).toContain('flex-row')
     expect(cls).toContain('items-center')

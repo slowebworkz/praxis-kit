@@ -20,7 +20,7 @@ export class StaticClassResolver {
   }
 
   resolve(tag: unknown, skipTagMap = false): string {
-    // When a preset (variantKey) is active it owns the visual treatment; tag-map overrides
+    // When a preset (recipe) is active it owns the visual treatment; tag-map overrides
     // would conflict with preset intent, so they are bypassed.
     if (typeof tag !== 'string' || skipTagMap) return this.#baseClass
 

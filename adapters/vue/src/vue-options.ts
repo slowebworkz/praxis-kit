@@ -3,7 +3,7 @@ import type {
   ElementType,
   EmptyRecord,
   FactoryOptions,
-  PresetMap,
+  RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
 import type { UnknownProps } from './types/primitives'
@@ -14,7 +14,7 @@ export type VueFactoryOptions<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
-  TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
+  TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
 > = FactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps> & {
   /**

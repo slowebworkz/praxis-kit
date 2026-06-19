@@ -108,11 +108,11 @@ describe('Box — layout-mode filtering', () => {
   })
 })
 
-// ─── Presets via variantKey ───────────────────────────────────────────────────
+// ─── Presets via recipe ───────────────────────────────────────────────────
 
-describe('Box — presets via variantKey', () => {
+describe('Box — presets via recipe', () => {
   it('row preset with flex applies row direction, center align, and md gap', () => {
-    mount(createElement(box(Box), { variantKey: 'row', flex: true }))
+    mount(createElement(box(Box), { recipe: 'row', flex: true }))
     const cls = div().className
     expect(cls).toContain('flex')
     expect(cls).toContain('flex-row')
@@ -121,7 +121,7 @@ describe('Box — presets via variantKey', () => {
   })
 
   it('stack preset with flex applies col direction and sm gap', () => {
-    mount(createElement(box(Box), { variantKey: 'stack', flex: true }))
+    mount(createElement(box(Box), { recipe: 'stack', flex: true }))
     const cls = div().className
     expect(cls).toContain('flex')
     expect(cls).toContain('flex-col')
@@ -137,7 +137,7 @@ describe('Box — presets via variantKey', () => {
   })
 
   it('explicit prop overrides active preset', () => {
-    mount(createElement(box(Box), { variantKey: 'row', flex: true, align: 'start' }))
+    mount(createElement(box(Box), { recipe: 'row', flex: true, align: 'start' }))
     const cls = div().className
     expect(cls).toContain('items-start')
     expect(cls).not.toContain('items-center')

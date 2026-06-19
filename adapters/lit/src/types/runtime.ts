@@ -16,7 +16,7 @@ export type Runtime<G extends PolymorphicGenerics> = PolymorphicRuntime<
 >
 
 // Erases the slot/preset type parameters so applyToHost can forward a plain
-// string variantKey without knowing the specific preset key union.
+// string recipe without knowing the specific preset key union.
 export type LooseRuntime = PolymorphicRuntime<
   ElementType,
   AnyRecord,

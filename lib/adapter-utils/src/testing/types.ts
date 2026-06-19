@@ -4,7 +4,7 @@ import type { AnyRecord, FactoryOptions, VariantMap, StrictMode } from '@praxis-
  * A maximally-wide FactoryOptions shape used as the bridge cast in adapter
  * conformance tests. ConformanceFactoryOptions uses simplified field types
  * (e.g. `defaults?: Record<string, string>`) that don't satisfy FactoryOptions'
- * constrained generics (`Partial<VariantProps<V>>`, `TPreset extends PresetMap<V>`).
+ * constrained generics (`Partial<VariantProps<V>>`, `TPreset extends RecipeMap<V>`).
  * Casting through this alias makes the intent explicit rather than using
  * `Parameters<typeof createContractComponent>[0]`.
  */

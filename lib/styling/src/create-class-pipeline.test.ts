@@ -40,7 +40,7 @@ describe('class pipeline — tagMap', () => {
     expect(result).not.toContain('sec')
   })
 
-  it('skips tagMap when a variantKey is provided', () => {
+  it('skips tagMap when a recipe is provided', () => {
     const pipeline = createClassPipeline({ baseClassName: 'base', tagMap: { section: 'sec' } })
     const result = pipeline('section', {}, '', 'primary')
     expect(result).not.toContain('sec')
@@ -65,11 +65,11 @@ describe('class pipeline — variants', () => {
   })
 })
 
-describe('class pipeline — presetMap', () => {
+describe('class pipeline — recipeMap', () => {
   const pipeline = createClassPipeline({
     baseClassName: 'base',
     tagMap: { div: 'tag-class' },
-    presetMap: { primary: { size: 'lg' } },
+    recipeMap: { primary: { size: 'lg' } },
     variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
     defaultVariants: { size: 'sm' },
   })

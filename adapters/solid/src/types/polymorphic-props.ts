@@ -6,7 +6,7 @@ import type {
   ElementType,
   IntrinsicTag,
   PolymorphicGenerics,
-  PresetOf,
+  RecipeOf,
   PropsOf,
   VariantProps,
   VariantsOf,
@@ -27,7 +27,7 @@ type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = Omit
   OmitIndexSignature<VariantProps<VariantsOf<G>>> & {
     as?: TAs
     class?: ClassName | undefined
-    variantKey?: keyof PresetOf<G>
+    recipe?: keyof RecipeOf<G>
     ref?: (el: ElementRef<TAs>) => void
   }
 
@@ -48,7 +48,7 @@ type AsChildProps<G extends PolymorphicGenerics> = Partial<OmitIndexSignature<Pr
     asChild: true
     children: SlotRenderFn
     class?: ClassName | undefined
-    variantKey?: keyof PresetOf<G>
+    recipe?: keyof RecipeOf<G>
     ref?: unknown
   }
 

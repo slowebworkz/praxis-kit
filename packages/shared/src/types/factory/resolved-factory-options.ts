@@ -5,19 +5,19 @@ import type { NormalizeFn } from './factory-options'
 import type { PropNormalizer } from './prop-normalizer'
 import type { ChildRuleInput } from '../contracts'
 import type { CompoundVariant } from '../variants/compound'
-import type { DefaultVariants, PresetMap, VariantMap } from '../variants'
+import type { DefaultVariants, RecipeMap, VariantMap } from '../variants'
 
 export type ResolvedFactoryOptions<
   TDefault extends ElementType = ElementType,
   Props extends AnyRecord = EmptyRecord,
   V extends Readonly<VariantMap> = Readonly<EmptyRecord>,
-  TPreset extends PresetMap<V> = Readonly<EmptyRecord>,
+  TPreset extends RecipeMap<V> = Readonly<EmptyRecord>,
 > = {
   readonly defaultTag: TDefault
   readonly baseClassName?: ClassName
   readonly defaultProps?: Partial<Props>
   readonly tagMap?: Readonly<TagMap>
-  readonly presetMap?: TPreset
+  readonly recipeMap?: TPreset
   readonly variants?: V
   readonly defaultVariants?: Partial<DefaultVariants<V>>
   readonly compoundVariants?: readonly CompoundVariant<V>[]

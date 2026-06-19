@@ -3,7 +3,7 @@ import type {
   ElementType,
   EmptyRecord,
   PolymorphicGenerics,
-  PresetMap,
+  RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
 import { createPolymorphic } from '@praxis-kit/core/primitive'
@@ -22,7 +22,7 @@ export function createChildrenEnforcedComponent<
   TDefault extends ElementType,
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
-  TPreset extends PresetMap<Variants> = Readonly<EmptyRecord>,
+  TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
 >(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps>) {
   const name = options.name ?? 'PolymorphicComponent'

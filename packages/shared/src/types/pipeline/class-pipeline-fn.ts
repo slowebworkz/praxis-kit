@@ -5,5 +5,5 @@ export type ClassPipelineFn = (
   tag: unknown,
   props: AnyRecord,
   className?: ClassName,
-  variantKey?: string,
+  recipe?: string,
 ) => string

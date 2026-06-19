@@ -92,7 +92,7 @@ export function getPropertyKey(prop: Property): string | undefined {
   return undefined
 }
 
-// Builds { variantKey → Set<allowedValue> } from a styling.variants ObjectExpression.
+// Builds { recipe → Set<allowedValue> } from a styling.variants ObjectExpression.
 // Returns undefined when the node isn't a static object literal and can't be analyzed.
 export function extractVariantMap(
   variantsNode: NullableNode,

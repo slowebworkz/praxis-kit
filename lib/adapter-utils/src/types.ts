@@ -3,7 +3,7 @@ import type {
   DefaultOf,
   EmptyRecord,
   PolymorphicGenerics,
-  PresetOf,
+  RecipeOf,
   PropsOf,
   VariantsOf,
   createPolymorphic,
@@ -26,7 +26,7 @@ export type BuiltChildrenEvaluator<TOptions extends WithChildRules> = TOptions e
 // Identical to the per-adapter TypedRuntime definitions — lifted here so adapters
 // and new adapter authors can reference the canonical definition.
 export type TypedRuntime<G extends PolymorphicGenerics> = ReturnType<
-  typeof createPolymorphic<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, PresetOf<G>>
+  typeof createPolymorphic<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, RecipeOf<G>>
 >
 
 // The common fields every adapter's BuiltRuntime must include. Framework-specific

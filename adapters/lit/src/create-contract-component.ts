@@ -1,5 +1,5 @@
 import { LitElement, html } from 'lit'
-import type { AnyRecord, ElementType, EmptyRecord, PresetMap, VariantMap } from '@praxis-kit/core'
+import type { AnyRecord, ElementType, EmptyRecord, RecipeMap, VariantMap } from '@praxis-kit/core'
 import { applyFilter } from '@praxis-kit/adapter-utils'
 import { buildRuntime } from './build-runtime'
 import { registerForSsr } from './render-to-string'
@@ -56,7 +56,7 @@ function resolveHostState(
   bundle: LooseBundle,
   props: UnknownProps,
 ): { className: string; attributes: AnyRecord } {
-  const { as, className, variantKey, ...rest } = props
+  const { as, className, recipe, ...rest } = props
   const tag = bundle.runtime.resolveTag(as as ElementType | undefined)
   const mergedProps = bundle.runtime.resolveProps(rest)
   const baseProps = bundle.runtime.options.normalizeFn
@@ -70,7 +70,7 @@ function resolveHostState(
     tag,
     normalizedProps,
     className as string | undefined,
-    variantKey as string | undefined,
+    recipe as string | undefined,
   )
   const ariaResult = bundle.runtime.resolveAria(tag, normalizedProps)
   const attributes = applyFilter(
@@ -158,7 +158,7 @@ export function createContractComponent<
   TDefault extends ElementType,
   TProps extends UnknownProps = EmptyRecord,
   TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
-  TPreset extends PresetMap<TVariants> = Readonly<EmptyRecord>,
+  TPreset extends RecipeMap<TVariants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
 >(
   options: LitFactoryOptions<TDefault, TProps, TVariants, TPreset, TPluginProps>,
@@ -172,11 +172,11 @@ export function createContractComponent<
   // requestUpdate() to decide whether a given property change requires a
   // pipeline re-run. Manual requestUpdate() calls (name === undefined) always
   // set the dirty flag so ARIA/role reconciliation is never skipped.
-  const praxisProps = new Set<PropertyKey>(['as', 'variantKey', 'praxisClass', ...variantKeys])
+  const praxisProps = new Set<PropertyKey>(['as', 'recipe', 'praxisClass', ...variantKeys])
 
   const staticProps: Record<string, { type: typeof String; attribute: string | boolean }> = {
     as: { type: String, attribute: 'as' },
-    variantKey: { type: String, attribute: 'variant-key' },
+    recipe: { type: String, attribute: 'variant-key' },
     // External className input — separate from the pipeline-output `class`
     // attribute so _applyPraxis can read it without a circular class→pipeline→class loop.
     praxisClass: { type: String, attribute: 'praxis-class' },
@@ -190,13 +190,13 @@ export function createContractComponent<
   // at runtime. The variant key index covers dynamic variant properties.
   type InstanceProps = {
     as: string | undefined
-    variantKey: string | undefined
+    recipe: string | undefined
     praxisClass: string | undefined
   } & { [K in Extract<keyof TVariants, string>]?: string | null }
 
   class PolymorphicLitElement extends LitElement {
     declare as: string | undefined
-    declare variantKey: string | undefined
+    declare recipe: string | undefined
     declare praxisClass: string | undefined
 
     // Tracks keys set by the pipeline last render so stale attrs are removed.
@@ -255,7 +255,7 @@ export function createContractComponent<
       // Overlay Lit-managed properties for variant keys — these may differ
       // from raw attribute strings if Lit has type-coerced them.
       props['as'] = self.as
-      props['variantKey'] = self.variantKey
+      props['recipe'] = self.recipe
       props['className'] = self.praxisClass
       for (const key of variantKeys) {
         // Lit sets removed attributes to null; treat null the same as undefined

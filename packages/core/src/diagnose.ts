@@ -16,9 +16,9 @@ export function diagnose(
   props: AnyRecord,
   children?: unknown[],
   className?: string,
-  variantKey?: string,
+  recipe?: string,
 ): ComponentDiagnosis {
-  const classes = diagnoseClassPipeline(options, tag, props, className, variantKey)
+  const classes = diagnoseClassPipeline(options, tag, props, className, recipe)
 
   let aria: ReadonlyArray<ValidationViolation>
   if (options.ariaRules?.length) {

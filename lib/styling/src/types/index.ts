@@ -2,7 +2,7 @@ export type { ClassPipelineFn } from './class-pipeline'
 export type {
   ClassPipelineOptions,
   CVASystemOptions,
-  PresetTarget,
+  RecipeTarget,
   StyleOptions,
 } from './class-pipeline-options'
 export type { ClassPlugin, ClassPluginFactory, OwnedPropKeys } from './class-plugin'
@@ -23,7 +23,7 @@ export type {
 } from './primitives'
 export type {
   DefaultVariants,
-  PresetMap,
+  RecipeMap,
   VariantKey,
   VariantMap,
   VariantProps,

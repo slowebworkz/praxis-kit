@@ -1,4 +1,4 @@
-import type { AnyRecord, ElementType, EmptyRecord, PresetMap, VariantMap } from '@praxis-kit/core'
+import type { AnyRecord, ElementType, EmptyRecord, RecipeMap, VariantMap } from '@praxis-kit/core'
 import { applyFilter } from '@praxis-kit/adapter-utils'
 import { buildRuntime } from './build-runtime'
 import { registerForSsr } from './render-to-string'
@@ -49,7 +49,7 @@ function resolveHostState(
   bundle: LooseBundle,
   props: UnknownProps,
 ): { className: string; attributes: AnyRecord } {
-  const { as, className, variantKey, ...rest } = props
+  const { as, className, recipe, ...rest } = props
   const tag = bundle.runtime.resolveTag(as as ElementType | undefined)
   const mergedProps = bundle.runtime.resolveProps(rest)
   const baseProps = bundle.runtime.options.normalizeFn
@@ -63,7 +63,7 @@ function resolveHostState(
     tag,
     normalizedProps,
     className as string | undefined,
-    variantKey as string | undefined,
+    recipe as string | undefined,
   )
   const ariaResult = bundle.runtime.resolveAria(tag, normalizedProps)
   const attributes = applyFilter(
@@ -150,7 +150,7 @@ export function createContractComponent<
   TDefault extends ElementType,
   TProps extends UnknownProps = EmptyRecord,
   TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
-  TPreset extends PresetMap<TVariants> = Readonly<EmptyRecord>,
+  TPreset extends RecipeMap<TVariants> = Readonly<EmptyRecord>,
   TPluginProps extends AnyRecord = EmptyRecord,
 >(
   options: WebFactoryOptions<TDefault, TProps, TVariants, TPreset, TPluginProps>,
@@ -167,7 +167,7 @@ export function createContractComponent<
 
   type InstanceProps = {
     as: string | undefined
-    variantKey: string | undefined
+    recipe: string | undefined
     praxisClass: string | undefined
   } & { [K in Extract<keyof TVariants, string>]?: string | null }
 
@@ -232,7 +232,7 @@ export function createContractComponent<
       // Overlay the typed view of praxis-owned attributes; attribute values are
       // always strings, but consumers may set them via property too.
       props['as'] = self.as ?? this.getAttribute('as') ?? undefined
-      props['variantKey'] = self.variantKey ?? this.getAttribute('variant-key') ?? undefined
+      props['recipe'] = self.recipe ?? this.getAttribute('variant-key') ?? undefined
       props['className'] = self.praxisClass ?? this.getAttribute('praxis-class') ?? undefined
 
       for (const key of variantKeys) {
