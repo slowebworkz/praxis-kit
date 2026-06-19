@@ -6,5 +6,4 @@ export default defineConfig({
   dts: true,
   clean: true,
   banner: { js: '#!/usr/bin/env node' },
-  loader: { '.md': 'text' },
 })
