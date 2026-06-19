@@ -222,13 +222,6 @@ from optional fields:
 These items are architecturally decided but not yet implemented. Do not attempt them as part of
 routine tasks; they require deliberate scoping.
 
-### Cross-file static composition in `staticCompositionPlugin`
-
-`staticCompositionPlugin` (in `@praxis-kit/vite-plugin`) currently rewrites same-file usage sites
-only. Cross-file composition — where a factory is defined in one module and used in another —
-requires traversing the Vite module graph and is deferred. The deferral boundary is documented in
-the plugin source.
-
 ### Dynamic children analysis in `contractPlugin`
 
 `contractPlugin` validates cardinality for statically-analyzable JSX usage sites (literal arrays,
