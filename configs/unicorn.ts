@@ -8,9 +8,6 @@ const config = [
     files: FILES,
     plugins: { unicorn },
     rules: {
-      // Prefer for...of over .forEach — cleaner stack traces, easier to break/return.
-      'unicorn/no-array-for-each': 'error',
-
       // Prefer includes() over indexOf() !== -1.
       'unicorn/prefer-includes': 'error',
 
