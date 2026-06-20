@@ -8,3 +8,10 @@ export type ClassPluginFactory<TProps extends AnyRecord = EmptyRecord> = <V exte
   options: ClassPipelineOptions<V>,
   strict: StrictMode,
 ) => ClassPlugin<TProps>
+
+export type ExtractPluginProps<TPlugin extends ClassPluginFactory<AnyRecord> | undefined> =
+  TPlugin extends ClassPluginFactory<infer T>
+    ? string extends keyof T
+      ? EmptyRecord
+      : T
+    : EmptyRecord

@@ -33,7 +33,7 @@ const NOOP_CLASS_PIPELINE: ClassPipelineFn = (_tag, _props, className) =>
   Array.isArray(className) ? className.join(' ') : (className ?? '')
 
 function resolveClassPipeline<TVariants extends VariantMap>(
-  options: { styling?: { plugin?: ClassPluginFactory } },
+  options: { styling?: { plugin?: ClassPluginFactory<AnyRecord> | undefined } },
   resolved: ClassPipelineOptions<TVariants>,
   strict: StrictMode,
   capabilities?: Capabilities,
@@ -103,7 +103,13 @@ export function createPolymorphic<
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
 >(
-  options: FactoryOptions<TDefault, Props, Variants, TPreset> = {},
+  options: FactoryOptions<
+    TDefault,
+    Props,
+    Variants,
+    TPreset,
+    ClassPluginFactory<AnyRecord> | undefined
+  > = {},
   capabilities?: Capabilities,
 ): PolymorphicRuntime<TDefault, Props, Variants, Extract<keyof TPreset, string>, TPreset> {
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
