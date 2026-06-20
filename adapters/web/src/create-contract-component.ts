@@ -1,4 +1,11 @@
-import type { AnyRecord, ElementType, EmptyRecord, RecipeMap, VariantMap } from '@praxis-kit/core'
+import type {
+  AnyRecord,
+  ClassPluginFactory,
+  ElementType,
+  EmptyRecord,
+  RecipeMap,
+  VariantMap,
+} from '@praxis-kit/core'
 import { applyFilter } from '@praxis-kit/adapter-utils'
 import { buildRuntime } from './build-runtime'
 import { registerForSsr } from './render-to-string'
@@ -151,9 +158,11 @@ export function createContractComponent<
   TProps extends UnknownProps = EmptyRecord,
   TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<TVariants> = Readonly<EmptyRecord>,
-  TPluginProps extends AnyRecord = EmptyRecord,
+  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
+    | ClassPluginFactory<AnyRecord>
+    | undefined,
 >(
-  options: WebFactoryOptions<TDefault, TProps, TVariants, TPreset, TPluginProps>,
+  options: WebFactoryOptions<TDefault, TProps, TVariants, TPreset, TPlugin>,
 ): WebContractComponent<TVariants> {
   const bundle = buildRuntime(options as WebFactoryOptions<TDefault, TProps, TVariants, TPreset>)
   const looseBundle = toLooseBundle(bundle)
