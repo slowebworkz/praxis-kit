@@ -4,6 +4,7 @@ import type {
   ClassPluginFactory,
   ElementType,
   EmptyRecord,
+  ExtractPluginProps,
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
@@ -171,17 +172,25 @@ export function createContractComponent<
     | undefined,
 >(
   options: LitFactoryOptions<TDefault, TProps, TVariants, TPreset, TPlugin>,
-): LitContractComponent<TVariants> {
+): LitContractComponent<TVariants, ExtractPluginProps<TPlugin>> {
   const bundle = buildRuntime(options as LitFactoryOptions<TDefault, TProps, TVariants, TPreset>)
   const looseBundle = toLooseBundle(bundle)
 
   const variantKeys = options.styling?.variants ? Object.keys(options.styling.variants) : []
+  const pluginKeys: readonly string[] =
+    'classPlugin' in bundle.runtime ? [...(bundle.runtime.classPlugin.ownedKeys ?? [])] : []
 
   // Set of reactive property keys owned by the praxis pipeline. Used in
   // requestUpdate() to decide whether a given property change requires a
   // pipeline re-run. Manual requestUpdate() calls (name === undefined) always
   // set the dirty flag so ARIA/role reconciliation is never skipped.
-  const praxisProps = new Set<PropertyKey>(['as', 'recipe', 'praxisClass', ...variantKeys])
+  const praxisProps = new Set<PropertyKey>([
+    'as',
+    'recipe',
+    'praxisClass',
+    ...variantKeys,
+    ...pluginKeys,
+  ])
 
   const staticProps: Record<string, { type: typeof String; attribute: string | boolean }> = {
     as: { type: String, attribute: 'as' },
@@ -193,6 +202,9 @@ export function createContractComponent<
   for (const key of variantKeys) {
     staticProps[key] = { type: String, attribute: key }
   }
+  for (const key of pluginKeys) {
+    staticProps[key] = { type: String, attribute: key }
+  }
 
   // Typed view of the reactive instance properties that _applyPraxis reads.
   // `declare` emits no JS — Lit's finalize() installs the actual getters/setters
@@ -201,7 +213,7 @@ export function createContractComponent<
     as: string | undefined
     recipe: string | undefined
     praxisClass: string | undefined
-  } & { [K in Extract<keyof TVariants, string>]?: string | null }
+  } & { [K in Extract<keyof TVariants, string>]?: string | null } & ExtractPluginProps<TPlugin>
 
   class PolymorphicLitElement extends LitElement {
     declare as: string | undefined
@@ -293,5 +305,8 @@ export function createContractComponent<
 
   // Variant key properties are installed by Lit's finalize() at runtime, not
   // statically declared — cast to the exported contract type here at the boundary.
-  return PolymorphicLitElement as unknown as LitContractComponent<TVariants>
+  return PolymorphicLitElement as unknown as LitContractComponent<
+    TVariants,
+    ExtractPluginProps<TPlugin>
+  >
 }

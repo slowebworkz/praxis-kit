@@ -13,6 +13,7 @@ import type {
   EmptyRecord,
   FactoryOptions,
   IntrinsicProps,
+  PluginInstance,
   PolymorphicGenerics,
   PolymorphicRuntime,
   RecipeMap,
@@ -102,16 +103,20 @@ export function createPolymorphic<
   Props extends AnyRecord,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
+  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
+    | ClassPluginFactory<AnyRecord>
+    | undefined,
 >(
-  options: FactoryOptions<
-    TDefault,
-    Props,
-    Variants,
-    TPreset,
-    ClassPluginFactory<AnyRecord> | undefined
-  > = {},
+  options: FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> = {},
   capabilities?: Capabilities,
-): PolymorphicRuntime<TDefault, Props, Variants, Extract<keyof TPreset, string>, TPreset> {
+): PolymorphicRuntime<
+  TDefault,
+  Props,
+  Variants,
+  Extract<keyof TPreset, string>,
+  TPreset,
+  PluginInstance<TPlugin>
+> {
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
   const baseResolved = resolveFactoryOptions(options)
   const resolved =
@@ -153,6 +158,7 @@ export function createPolymorphic<
     Props,
     Variants,
     Extract<keyof TPreset, string>,
-    TPreset
+    TPreset,
+    PluginInstance<TPlugin>
   >
 }
