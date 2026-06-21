@@ -1,5 +1,6 @@
 import type {
   AnyRecord,
+  ClassPluginFactory,
   ElementType as CoreElementType,
   EmptyRecord,
   FactoryOptions,
@@ -13,8 +14,10 @@ export type SvelteFactoryOptions<
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPluginProps extends AnyRecord = EmptyRecord,
-> = FactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps> & {
+  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
+    | ClassPluginFactory<AnyRecord>
+    | undefined,
+> = FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> & {
   /**
    * Return true for any prop key that should be consumed but not forwarded to the DOM.
    * Receives `runtime.options.variantKeys` as a convenience if needed.

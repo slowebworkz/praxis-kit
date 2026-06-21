@@ -3,9 +3,11 @@ import { createClassPipeline } from '@praxis-kit/styling'
 import { createPolymorphic as _createPolymorphic } from './create-polymorphic'
 import type {
   AnyRecord,
+  ClassPluginFactory,
   ElementType,
   EmptyRecord,
   FactoryOptions,
+  PluginInstance,
   PolymorphicRuntime,
   RecipeMap,
   VariantMap,
@@ -25,8 +27,18 @@ export function createPolymorphic<
   Props extends AnyRecord,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
+  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
+    | ClassPluginFactory<AnyRecord>
+    | undefined,
 >(
-  options: FactoryOptions<TDefault, Props, Variants, TPreset> = {},
-): PolymorphicRuntime<TDefault, Props, Variants, Extract<keyof TPreset, string>, TPreset> {
+  options: FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> = {},
+): PolymorphicRuntime<
+  TDefault,
+  Props,
+  Variants,
+  Extract<keyof TPreset, string>,
+  TPreset,
+  PluginInstance<TPlugin>
+> {
   return _createPolymorphic(options, FULL_CAPABILITIES)
 }

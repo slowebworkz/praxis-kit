@@ -1,7 +1,9 @@
 import type {
   AnyRecord,
+  ClassPluginFactory,
   ElementType,
   EmptyRecord,
+  ExtractPluginProps,
   PolymorphicGenerics,
   RecipeMap,
   VariantMap,
@@ -18,9 +20,11 @@ export function createContractComponent<
   Props extends UnknownProps = EmptyRecord,
   Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPluginProps extends AnyRecord = EmptyRecord,
+  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
+    | ClassPluginFactory<AnyRecord>
+    | undefined,
   TAllowed extends ElementType = ElementType,
->(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps, TAllowed>) {
+>(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin, TAllowed>) {
   const bundle = buildRuntime(
     options as ReactFactoryOptions<TDefault, Props, Variants, TPreset>,
     Slot,
@@ -36,6 +40,6 @@ export function createContractComponent<
     Object.assign(Component, { [COMPONENT_DEFAULT_TAG]: bundle.runtime.options.defaultTag })
   }
   return Component as unknown as PolymorphicComponent<
-    PolymorphicGenerics<TDefault, Props & TPluginProps, Variants, TPreset, TAllowed>
+    PolymorphicGenerics<TDefault, Props & ExtractPluginProps<TPlugin>, Variants, TPreset, TAllowed>
   >
 }

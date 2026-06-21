@@ -1,7 +1,9 @@
 import type {
   AnyRecord,
+  ClassPluginFactory,
   ElementType,
   EmptyRecord,
+  ExtractPluginProps,
   PolymorphicGenerics,
   RecipeMap,
   VariantMap,
@@ -18,8 +20,10 @@ export function createContractComponent<
   Props extends UnknownProps = EmptyRecord,
   Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPluginProps extends AnyRecord = EmptyRecord,
->(options: SolidFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps>) {
+  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
+    | ClassPluginFactory<AnyRecord>
+    | undefined,
+>(options: SolidFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin>) {
   const bundle = buildRuntime(options as SolidFactoryOptions<TDefault, Props, Variants, TPreset>)
 
   const Component = (props: UnknownProps): SolidElement => {
@@ -34,6 +38,6 @@ export function createContractComponent<
     Object.assign(Component, { [COMPONENT_DEFAULT_TAG]: bundle.runtime.options.defaultTag })
   }
   return Component as unknown as PolymorphicComponent<
-    PolymorphicGenerics<TDefault, Props & TPluginProps, Variants, TPreset>
+    PolymorphicGenerics<TDefault, Props & ExtractPluginProps<TPlugin>, Variants, TPreset>
   >
 }

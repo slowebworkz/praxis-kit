@@ -1,7 +1,9 @@
 import type {
   AnyRecord,
+  ClassPluginFactory,
   ElementType,
   EmptyRecord,
+  ExtractPluginProps,
   PolymorphicGenerics,
   RecipeMap,
   VariantMap,
@@ -23,8 +25,10 @@ export function createAriaEnforcedComponent<
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPluginProps extends AnyRecord = EmptyRecord,
->(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps>) {
+  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
+    | ClassPluginFactory<AnyRecord>
+    | undefined,
+>(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin>) {
   const name = options.name ?? 'PolymorphicComponent'
   const strict = options.enforcement?.strict ?? 'throw'
   const slotComponent = options.slotComponent ?? Slot
@@ -49,6 +53,6 @@ export function createAriaEnforcedComponent<
 
   applyDisplayName(Component, name)
   return Component as unknown as PolymorphicComponent<
-    PolymorphicGenerics<TDefault, Props & TPluginProps, Variants, TPreset>
+    PolymorphicGenerics<TDefault, Props & ExtractPluginProps<TPlugin>, Variants, TPreset>
   >
 }

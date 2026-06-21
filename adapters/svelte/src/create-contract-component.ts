@@ -1,7 +1,9 @@
 import type {
   AnyRecord,
+  ClassPluginFactory,
   ElementType,
   EmptyRecord,
+  ExtractPluginProps,
   PolymorphicGenerics,
   RecipeMap,
   VariantMap,
@@ -20,20 +22,25 @@ export function createContractComponent<
   Props extends UnknownProps = EmptyRecord,
   Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPluginProps extends AnyRecord = EmptyRecord,
+  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
+    | ClassPluginFactory<AnyRecord>
+    | undefined,
   TOptions extends WithChildRules = SvelteFactoryOptions<
     TDefault,
-    Props & TPluginProps,
+    Props & ExtractPluginProps<TPlugin>,
     Variants,
     TPreset
   >,
 >(
-  options: SvelteFactoryOptions<TDefault, Props, Variants, TPreset, TPluginProps> & TOptions,
-): BuiltRuntime<PolymorphicGenerics<TDefault, Props & TPluginProps, Variants, TPreset>, TOptions> {
+  options: SvelteFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> & TOptions,
+): BuiltRuntime<
+  PolymorphicGenerics<TDefault, Props & ExtractPluginProps<TPlugin>, Variants, TPreset>,
+  TOptions
+> {
   return buildRuntime(
     options as SvelteFactoryOptions<TDefault, Props, Variants, TPreset> & TOptions,
   ) as unknown as BuiltRuntime<
-    PolymorphicGenerics<TDefault, Props & TPluginProps, Variants, TPreset>,
+    PolymorphicGenerics<TDefault, Props & ExtractPluginProps<TPlugin>, Variants, TPreset>,
     TOptions
   >
 }

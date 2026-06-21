@@ -1,1 +1,7 @@
-export type { ClassPlugin, ClassPluginFactory, OwnedPropKeys } from '@praxis-kit/shared/types'
+export type {
+  ClassPlugin,
+  ClassPluginFactory,
+  ExtractPluginProps,
+  OwnedPropKeys,
+  PluginInstance,
+} from '@praxis-kit/shared/types'
