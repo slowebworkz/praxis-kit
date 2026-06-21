@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import type { Pass } from './Pass'
-import type { Pipeline } from './Pipeline'
-import type { PipelineNode } from './PipelineNode'
+import type { Pass } from './pass'
+import type { Pipeline } from './pipeline'
+import type { PipelineNode } from './pipeline-node'
 
 interface TestContext {
   value: number

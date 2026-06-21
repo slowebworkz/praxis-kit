@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { Pass } from './Pass'
-import type { PassResult } from './PassResult'
+import type { Pass } from './pass'
+import type { PassResult } from './pass-result'
 
 interface TestContext {
   value: number
