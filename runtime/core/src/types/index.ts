@@ -1,4 +1,13 @@
 export type { ComponentContext } from './component-context'
+export type {
+  AttributeMap,
+  DecorationMap,
+  Listener,
+  ListenerMap,
+  NodeDecoration,
+  StyleMap,
+} from './node-decoration'
+export type { RenderContext } from './render-context'
 export type { ComponentDefinition } from './component-definition'
 export type { ComponentIdentity } from './component-identity'
 export type { ComponentTreeNode } from './component-tree-node'
