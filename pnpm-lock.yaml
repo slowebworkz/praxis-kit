@@ -451,6 +451,67 @@ importers:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
+  backends/react:
+    dependencies:
+      '@pk2/core':
+        specifier: workspace:*
+        version: link:../../runtime/core
+      '@pk2/foundation':
+        specifier: workspace:*
+        version: link:../../engine/foundation
+    devDependencies:
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.17
+      react:
+        specifier: 'catalog:'
+        version: 19.2.7
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
+  domains/style:
+    dependencies:
+      '@pk2/foundation':
+        specifier: workspace:*
+        version: link:../../engine/foundation
+      '@pk2/merge':
+        specifier: workspace:*
+        version: link:../../engine/merge
+      '@pk2/pipeline':
+        specifier: workspace:*
+        version: link:../../engine/pipeline
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
+  engine/foundation:
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
+  engine/merge:
+    dependencies:
+      '@pk2/foundation':
+        specifier: workspace:*
+        version: link:../foundation
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
+  engine/pipeline:
+    dependencies:
+      '@pk2/foundation':
+        specifier: workspace:*
+        version: link:../foundation
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
   examples/lit:
     dependencies:
       '@praxis-kit/core':
@@ -1076,6 +1137,35 @@ importers:
       vite:
         specifier: ^8.0.16
         version: 8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
+  plugins/tailwind:
+    dependencies:
+      '@pk2/foundation':
+        specifier: workspace:*
+        version: link:../../engine/foundation
+      '@pk2/pipeline':
+        specifier: workspace:*
+        version: link:../../engine/pipeline
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
+  runtime/core:
+    dependencies:
+      '@pk2/foundation':
+        specifier: workspace:*
+        version: link:../../engine/foundation
+      '@pk2/merge':
+        specifier: workspace:*
+        version: link:../../engine/merge
+      '@pk2/pipeline':
+        specifier: workspace:*
+        version: link:../../engine/pipeline
+    devDependencies:
       vitest:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))

@@ -3,6 +3,11 @@ packages:
   - "lib/*"
   - "adapters/*"
   - "examples/*"
+  - "engine/*"
+  - "domains/*"
+  - "runtime/*"
+  - "backends/*"
+  - "plugins/*"
 overrides:
   esbuild: ">=0.25.0"
 
