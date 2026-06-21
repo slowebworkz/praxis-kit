@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { VariantMap } from './VariantMap'
+import type { VariantMap } from './variant-map'
 
 describe('VariantMap', () => {
   it('holds string arrays keyed by variant name', () => {

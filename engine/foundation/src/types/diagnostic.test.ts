@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Diagnostic } from './Diagnostic'
+import type { Diagnostic } from './diagnostic'
 
 describe('Diagnostic', () => {
   it('accepts error severity', () => {
