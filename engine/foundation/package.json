@@ -1,0 +1,18 @@
+{
+  "name": "@pk2/foundation",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
+}

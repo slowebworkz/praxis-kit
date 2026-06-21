@@ -21,4 +21,12 @@ export default defineWorkspace([
   './examples/preact/vitest.config.ts',
   './examples/solid/vitest.config.ts',
   './examples/svelte/vitest.config.ts',
+  // PK2
+  './engine/foundation/vitest.config.ts',
+  './engine/pipeline/vitest.config.ts',
+  './engine/merge/vitest.config.ts',
+  './domains/style/vitest.config.ts',
+  './runtime/core/vitest.config.ts',
+  './backends/react/vitest.config.ts',
+  './plugins/tailwind/vitest.config.ts',
 ])
