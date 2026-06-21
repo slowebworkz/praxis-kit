@@ -1,5 +1,6 @@
 import type {
   AnyRecord,
+  ClassPluginFactory,
   ElementType,
   EmptyRecord,
   FactoryOptions,
@@ -40,7 +41,13 @@ export function resolveFactoryOptions<
   V extends Readonly<VariantMap>,
   TPreset extends RecipeMap<V>,
 >(
-  options: FactoryOptions<TDefault, Props, V, TPreset> = {},
+  options: FactoryOptions<
+    TDefault,
+    Props,
+    V,
+    TPreset,
+    ClassPluginFactory<AnyRecord> | undefined
+  > = {},
 ): Readonly<ResolvedFactoryOptions<TDefault, Props, V, TPreset>> {
   const { styling, enforcement } = options
   const composedNormalizeFn = composeNormalizers(enforcement?.props, options.normalize)

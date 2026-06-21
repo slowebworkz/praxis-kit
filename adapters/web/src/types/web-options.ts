@@ -1,5 +1,6 @@
 import type {
   AnyRecord,
+  ClassPluginFactory,
   ElementType,
   EmptyRecord,
   FactoryOptions,
@@ -19,7 +20,9 @@ export type WebFactoryOptions<
   TProps extends AnyRecord = EmptyRecord,
   TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<TVariants> = Readonly<EmptyRecord>,
-  TPluginProps extends AnyRecord = EmptyRecord,
-> = FactoryOptions<TDefault, TProps, TVariants, TPreset, TPluginProps> & {
+  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
+    | ClassPluginFactory<AnyRecord>
+    | undefined,
+> = FactoryOptions<TDefault, TProps, TVariants, TPreset, TPlugin> & {
   readonly filterProps?: FilterPredicate
 }

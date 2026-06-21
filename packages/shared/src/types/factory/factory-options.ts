@@ -1,5 +1,6 @@
 import type { AnyRecord, ElementType, EmptyRecord, IntrinsicProps } from '../primitives'
 import type { RecipeMap, VariantMap } from '../variants'
+import type { ClassPluginFactory } from '../class'
 import type { EnforcementOptions } from './enforcement-options'
 import type { StylingOptions } from './styling-options'
 import type { PropNormalizer } from './prop-normalizer'
@@ -16,7 +17,7 @@ export type AnyFactoryOptions = FactoryOptions<
   AnyRecord,
   VariantMap,
   RecipeMap<VariantMap>,
-  AnyRecord
+  ClassPluginFactory<AnyRecord> | undefined
 >
 
 export type FactoryOptions<
@@ -24,13 +25,15 @@ export type FactoryOptions<
   Props extends AnyRecord = EmptyRecord,
   V extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<V> = Readonly<EmptyRecord>,
-  TPluginProps extends AnyRecord = EmptyRecord,
+  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
+    | ClassPluginFactory<AnyRecord>
+    | undefined,
   TAllowed extends ElementType = ElementType,
 > = {
   readonly tag?: TDefault
   readonly name?: string
   readonly defaults?: Partial<NoInfer<Props>>
   readonly normalize?: NormalizeFn<NoInfer<Props>>
-  readonly styling?: StylingOptions<V, TPreset, TPluginProps>
+  readonly styling?: StylingOptions<V, TPreset, TPlugin>
   readonly enforcement?: EnforcementOptions<TAllowed>
 }

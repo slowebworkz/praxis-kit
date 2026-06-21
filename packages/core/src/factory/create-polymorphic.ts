@@ -13,6 +13,7 @@ import type {
   EmptyRecord,
   FactoryOptions,
   IntrinsicProps,
+  PluginInstance,
   PolymorphicGenerics,
   PolymorphicRuntime,
   RecipeMap,
@@ -33,7 +34,7 @@ const NOOP_CLASS_PIPELINE: ClassPipelineFn = (_tag, _props, className) =>
   Array.isArray(className) ? className.join(' ') : (className ?? '')
 
 function resolveClassPipeline<TVariants extends VariantMap>(
-  options: { styling?: { plugin?: ClassPluginFactory } },
+  options: { styling?: { plugin?: ClassPluginFactory<AnyRecord> | undefined } },
   resolved: ClassPipelineOptions<TVariants>,
   strict: StrictMode,
   capabilities?: Capabilities,
@@ -102,10 +103,20 @@ export function createPolymorphic<
   Props extends AnyRecord,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
+  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
+    | ClassPluginFactory<AnyRecord>
+    | undefined,
 >(
-  options: FactoryOptions<TDefault, Props, Variants, TPreset> = {},
+  options: FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> = {},
   capabilities?: Capabilities,
-): PolymorphicRuntime<TDefault, Props, Variants, Extract<keyof TPreset, string>, TPreset> {
+): PolymorphicRuntime<
+  TDefault,
+  Props,
+  Variants,
+  Extract<keyof TPreset, string>,
+  TPreset,
+  PluginInstance<TPlugin>
+> {
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
   const baseResolved = resolveFactoryOptions(options)
   const resolved =
@@ -147,6 +158,7 @@ export function createPolymorphic<
     Props,
     Variants,
     Extract<keyof TPreset, string>,
-    TPreset
+    TPreset,
+    PluginInstance<TPlugin>
   >
 }
