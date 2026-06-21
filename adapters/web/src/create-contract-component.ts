@@ -3,6 +3,7 @@ import type {
   ClassPluginFactory,
   ElementType,
   EmptyRecord,
+  ExtractPluginProps,
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
@@ -163,22 +164,24 @@ export function createContractComponent<
     | undefined,
 >(
   options: WebFactoryOptions<TDefault, TProps, TVariants, TPreset, TPlugin>,
-): WebContractComponent<TVariants> {
+): WebContractComponent<TVariants, ExtractPluginProps<TPlugin>> {
   const bundle = buildRuntime(options as WebFactoryOptions<TDefault, TProps, TVariants, TPreset>)
   const looseBundle = toLooseBundle(bundle)
 
   const variantKeys = options.styling?.variants ? Object.keys(options.styling.variants) : []
+  const pluginKeys: readonly string[] =
+    'classPlugin' in bundle.runtime ? [...(bundle.runtime.classPlugin.ownedKeys ?? [])] : []
 
   // Attribute names observed by the browser's native attribute-change callback.
   // Variant keys use their raw name; praxisClass maps to the 'praxis-class' attribute
   // to avoid a circular class→pipeline→class read.
-  const observedAttrNames = ['as', 'variant-key', 'praxis-class', ...variantKeys]
+  const observedAttrNames = ['as', 'variant-key', 'praxis-class', ...variantKeys, ...pluginKeys]
 
   type InstanceProps = {
     as: string | undefined
     recipe: string | undefined
     praxisClass: string | undefined
-  } & { [K in Extract<keyof TVariants, string>]?: string | null }
+  } & { [K in Extract<keyof TVariants, string>]?: string | null } & ExtractPluginProps<TPlugin>
 
   // In SSR (Node) environments HTMLElement is not defined. The class still needs
   // to be created so registerForSsr() can register the bundle — but the element
@@ -261,5 +264,8 @@ export function createContractComponent<
 
   registerForSsr(PolymorphicWebElement as unknown as WebContractComponent, looseBundle)
 
-  return PolymorphicWebElement as unknown as WebContractComponent<TVariants>
+  return PolymorphicWebElement as unknown as WebContractComponent<
+    TVariants,
+    ExtractPluginProps<TPlugin>
+  >
 }

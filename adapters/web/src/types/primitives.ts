@@ -1,4 +1,4 @@
-import type { EmptyRecord, StrictMode, VariantMap } from '@praxis-kit/core'
+import type { AnyRecord, EmptyRecord, StrictMode, VariantMap } from '@praxis-kit/core'
 
 export type UnknownProps = Record<string, unknown>
 
@@ -8,14 +8,17 @@ export type UnknownProps = Record<string, unknown>
  * Describes the public contract without exposing HTMLElement's internal members.
  * Variant key instance properties are typed via TVariants.
  */
-export type WebContractComponent<TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>> = {
+export type WebContractComponent<
+  TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
+  TPluginProps extends AnyRecord = EmptyRecord,
+> = {
   new (): HTMLElement & {
     as: string | undefined
     recipe: string | undefined
     praxisClass: string | undefined
     /** Re-runs the pipeline — call after setting non-reactive attributes (aria-*, role, data-*). */
     update(): void
-  } & { [K in Extract<keyof TVariants, string>]?: string | null }
+  } & { [K in Extract<keyof TVariants, string>]?: string | null } & TPluginProps
   /** The resolved strict mode for this component — usable by subclasses for custom enforcement. */
   readonly strict: Exclude<StrictMode, undefined>
 }

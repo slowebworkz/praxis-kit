@@ -15,10 +15,13 @@ export type UnknownProps = AnyRecord
  * (which would trigger TS4094 in declaration emit). Variant key instance
  * properties are typed via the TVariants parameter.
  */
-export type LitContractComponent<TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>> = {
+export type LitContractComponent<
+  TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
+  TPluginProps extends AnyRecord = EmptyRecord,
+> = {
   new (): LitElement & {
     as: string | undefined
     recipe: string | undefined
     praxisClass: string | undefined
-  } & { [K in Extract<keyof TVariants, string>]?: string | null }
+  } & { [K in Extract<keyof TVariants, string>]?: string | null } & TPluginProps
 }

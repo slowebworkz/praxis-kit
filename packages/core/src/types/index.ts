@@ -31,6 +31,7 @@ export type {
   ClassPluginFactory,
   ExtractPluginProps,
   OwnedPropKeys,
+  PluginInstance,
 } from './class-plugin'
 export type {
   CompoundVariant,

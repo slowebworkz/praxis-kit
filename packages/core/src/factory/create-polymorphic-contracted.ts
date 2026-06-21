@@ -6,6 +6,7 @@ import type {
   ElementType,
   EmptyRecord,
   FactoryOptions,
+  PluginInstance,
   PolymorphicRuntime,
   RecipeMap,
   VariantMap,
@@ -25,14 +26,18 @@ export function createContractedPolymorphic<
   Props extends AnyRecord,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
+  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
+    | ClassPluginFactory<AnyRecord>
+    | undefined,
 >(
-  options: FactoryOptions<
-    TDefault,
-    Props,
-    Variants,
-    TPreset,
-    ClassPluginFactory<AnyRecord> | undefined
-  > = {},
-): PolymorphicRuntime<TDefault, Props, Variants, Extract<keyof TPreset, string>, TPreset> {
+  options: FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> = {},
+): PolymorphicRuntime<
+  TDefault,
+  Props,
+  Variants,
+  Extract<keyof TPreset, string>,
+  TPreset,
+  PluginInstance<TPlugin>
+> {
   return _createPolymorphic(options, CONTRACTED_CAPABILITIES)
 }

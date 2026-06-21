@@ -15,3 +15,6 @@ export type ExtractPluginProps<TPlugin extends ClassPluginFactory<AnyRecord> | u
       ? EmptyRecord
       : T
     : EmptyRecord
+
+export type PluginInstance<TPlugin extends ClassPluginFactory<AnyRecord> | undefined> =
+  TPlugin extends ClassPluginFactory<infer TProps> ? ClassPlugin<TProps> : undefined
