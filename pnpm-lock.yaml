@@ -507,6 +507,9 @@ importers:
       '@pk2/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@pk2/merge':
+        specifier: workspace:*
+        version: link:../merge
     devDependencies:
       vitest:
         specifier: 'catalog:'

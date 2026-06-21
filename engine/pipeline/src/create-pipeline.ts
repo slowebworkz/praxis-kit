@@ -68,6 +68,7 @@ export function createPipeline<TContext>(options: PipelineOptions<TContext>): Pi
   return Object.freeze({
     name: options.name,
     strategy: options.strategy,
+    merge: options.merge,
     nodes: registry.nodes,
   }) satisfies Pipeline<TContext>
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { MergeStrategy } from '@pk2/merge'
 import type { Pass } from './pass'
 import type { Pipeline } from './pipeline'
 import type { PipelineNode } from './pipeline-node'
@@ -12,11 +13,16 @@ const makePass = (name: string): Pass<TestContext> => ({
   execute: (ctx) => ({ context: { value: ctx.value + 1 } }),
 })
 
+const identityMerge: MergeStrategy<TestContext> = {
+  merge: (previous, incoming) => ({ ...previous, ...incoming }),
+}
+
 describe('Pipeline', () => {
   it('represents a sequential pipeline', () => {
     const pipeline: Pipeline<TestContext> = {
       name: 'test',
       strategy: 'sequential',
+      merge: identityMerge,
       nodes: new Map([
         ['a', makePass('a')],
         ['b', makePass('b')],
@@ -30,6 +36,7 @@ describe('Pipeline', () => {
     const pipeline: Pipeline<TestContext> = {
       name: 'test',
       strategy: 'parallel',
+      merge: identityMerge,
       nodes: new Map([
         ['a', makePass('a')],
         ['b', makePass('b')],
@@ -44,6 +51,7 @@ describe('Pipeline', () => {
     const inner: Pipeline<TestContext> = {
       name: 'inner',
       strategy: 'sequential',
+      merge: identityMerge,
       nodes: new Map([
         ['b', makePass('b')],
         ['c', makePass('c')],
@@ -52,6 +60,7 @@ describe('Pipeline', () => {
     const outer: Pipeline<TestContext> = {
       name: 'outer',
       strategy: 'sequential',
+      merge: identityMerge,
       nodes: new Map<string, PipelineNode<TestContext>>([
         ['a', makePass('a')],
         ['inner', inner],
@@ -66,6 +75,7 @@ describe('Pipeline', () => {
     const pipeline: Pipeline<TestContext> = {
       name: 'empty',
       strategy: 'sequential',
+      merge: identityMerge,
       nodes: new Map(),
     }
     expect(pipeline.nodes.size).toBe(0)

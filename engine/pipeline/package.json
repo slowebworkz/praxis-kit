@@ -13,7 +13,8 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@pk2/foundation": "workspace:*"
+    "@pk2/foundation": "workspace:*",
+    "@pk2/merge": "workspace:*"
   },
   "devDependencies": {
     "vitest": "catalog:"

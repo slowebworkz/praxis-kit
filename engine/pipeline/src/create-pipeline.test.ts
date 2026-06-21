@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { MergeStrategy } from '@pk2/merge'
 import type { Pass, PipelineOptions } from './types'
 import { createPipeline } from './create-pipeline'
 
@@ -11,10 +12,15 @@ const makePass = (name: string): Pass<TestContext> => ({
   execute: (ctx) => ({ context: { value: ctx.value + 1 } }),
 })
 
+const identityMerge: MergeStrategy<TestContext> = {
+  merge: (previous, incoming) => ({ ...previous, ...incoming }),
+}
+
 function makePipeline(overrides: Partial<PipelineOptions<TestContext>> = {}) {
   return createPipeline<TestContext>({
     name: 'test',
     strategy: 'sequential',
+    merge: identityMerge,
     nodes: new Map(),
     ...overrides,
   })
