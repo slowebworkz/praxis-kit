@@ -79,6 +79,7 @@ const config = [
             'runtime/*/vitest.config.ts',
             'backends/*/vitest.config.ts',
             'plugins/*/vitest.config.ts',
+            'spikes/*/vitest.config.ts',
             // framework-specific scenarios are excluded from the tree-shaking-tests tsconfig
             // (jsxImportSource:react conflicts with Solid/Vue/Preact/Svelte JSX/return types)
             'lib/tree-shaking-tests/scenarios/solid-minimal/*.ts',

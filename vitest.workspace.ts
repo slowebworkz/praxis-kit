@@ -29,4 +29,5 @@ export default defineWorkspace([
   './runtime/core/vitest.config.ts',
   './backends/react/vitest.config.ts',
   './plugins/tailwind/vitest.config.ts',
+  './spikes/merge-ownership/vitest.config.ts',
 ])

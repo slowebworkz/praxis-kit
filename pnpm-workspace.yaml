@@ -8,6 +8,7 @@ packages:
   - "runtime/*"
   - "backends/*"
   - "plugins/*"
+  - "spikes/*"
 overrides:
   esbuild: ">=0.25.0"
 
