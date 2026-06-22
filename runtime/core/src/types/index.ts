@@ -8,6 +8,7 @@ export type {
   ListenerMap,
   NodeDecoration,
   StyleMap,
+  VariantMap,
 } from './node-decoration'
 export type { RenderContext } from './render-context'
 export type { ComponentDefinition } from './component-definition'
