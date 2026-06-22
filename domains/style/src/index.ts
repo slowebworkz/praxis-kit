@@ -1,3 +1,5 @@
 export type * from './types'
 export { basePass, focusPass, hoverPass } from './passes'
 export { styleMergeStrategy } from './style-merge-strategy'
+export { createVariantPass } from './variant-pass'
+export type { VariantConfig } from './variant-pass'

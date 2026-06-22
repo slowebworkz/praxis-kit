@@ -1,6 +1,7 @@
 export type * from './types'
 export { componentMergeStrategy } from './merge-context'
 export { isCompleteIdentity, resolveDefinition } from './resolve-definition'
+export { applyAttributes } from './apply-attributes'
 export { renderComponent } from './render-component'
 export { buildTreeContext } from './build-tree-context'
 export { buildRenderContext } from './build-render-context'

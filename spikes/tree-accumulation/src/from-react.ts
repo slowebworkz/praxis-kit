@@ -12,6 +12,7 @@ function extractDecoration(props: Record<string, unknown>): NodeDecoration {
   const attributes: AttributeMap = {}
   const styles: StyleMap = {}
   const listeners: ListenerMap = {}
+  const variants: Record<string, unknown> = {}
   const dec: NodeDecoration = {}
 
   for (const [key, value] of Object.entries(props)) {
@@ -25,12 +26,15 @@ function extractDecoration(props: Record<string, unknown>): NodeDecoration {
       listeners[key] = value as ListenerMap[string]
     } else if (typeof value === 'string') {
       attributes[key] = value
+    } else if (typeof value === 'boolean') {
+      variants[key] = value
     }
   }
 
   if (Object.keys(attributes).length > 0) dec.attributes = attributes
   if (Object.keys(styles).length > 0) dec.styles = styles
   if (Object.keys(listeners).length > 0) dec.listeners = listeners
+  if (Object.keys(variants).length > 0) dec.variants = variants
   if ('ref' in props && props.ref !== undefined) dec.ref = props.ref
 
   return dec

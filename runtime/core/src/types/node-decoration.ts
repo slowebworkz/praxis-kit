@@ -11,6 +11,7 @@ export interface NodeDecoration {
   styles?: StyleMap
   listeners?: ListenerMap
   ref?: unknown
+  variants?: Record<string, unknown>
 }
 
 export type DecorationMap = ReadonlyMap<NodeId, NodeDecoration>
