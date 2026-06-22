@@ -1,3 +1,3 @@
 import { defineLibConfig } from '../../configs/vitest.base'
 
-export default defineLibConfig('pk2-react', { passWithNoTests: true })
+export default defineLibConfig('pk2-react')
