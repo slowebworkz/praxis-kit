@@ -1187,6 +1187,9 @@ importers:
       '@pk2/pipeline':
         specifier: workspace:*
         version: link:../../engine/pipeline
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.7.0
     devDependencies:
       vitest:
         specifier: 'catalog:'
