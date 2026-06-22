@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { renderComponent } from './render-component'
 import type {
+  AttributeValue,
   Backend,
   ComponentDefinition,
   RenderContext,
@@ -49,7 +50,7 @@ describe('renderComponent', () => {
 
   it('passes render context to backend via RuntimeContext', () => {
     const decoration = new Map([['root', { attributes: { 'aria-label': 'close' } }]])
-    const backend: Backend<string | undefined> = {
+    const backend: Backend<AttributeValue | undefined> = {
       render: (ctx) => ctx.render.decoration.get('root')?.attributes?.['aria-label'],
     }
     expect(renderComponent(definition(), tree(), { decoration }, backend)).toBe('close')
