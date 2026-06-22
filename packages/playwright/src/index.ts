@@ -25,3 +25,15 @@ export {
   expectNoContractWarnings,
 } from './cardinality'
 export type { ConsoleMessage } from './cardinality'
+export {
+  filterDiagnostics,
+  hasDiagnostic,
+  expectNoDiagnostics,
+  expectDiagnostic,
+  expectDiagnosticCount,
+  expectDiagnosticSeverity,
+  expectNoDiagnosticsOfSeverity,
+  expectCardinalityDiagnostic,
+  expectNoContractDiagnostics,
+} from './diagnostics'
+export type { Diagnostic } from './diagnostics'
