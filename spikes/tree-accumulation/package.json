@@ -1,0 +1,22 @@
+{
+  "name": "@pk2/spike-tree-accumulation",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@pk2/compiler": "workspace:*",
+    "@pk2/core": "workspace:*",
+    "@pk2/pipeline": "workspace:*",
+    "@pk2/foundation": "workspace:*",
+    "@pk2/react": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "react": "catalog:",
+    "vitest": "catalog:"
+  }
+}

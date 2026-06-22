@@ -1217,6 +1217,34 @@ importers:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
+  spikes/tree-accumulation:
+    dependencies:
+      '@pk2/compiler':
+        specifier: workspace:*
+        version: link:../../runtime/compiler
+      '@pk2/core':
+        specifier: workspace:*
+        version: link:../../runtime/core
+      '@pk2/foundation':
+        specifier: workspace:*
+        version: link:../../engine/foundation
+      '@pk2/pipeline':
+        specifier: workspace:*
+        version: link:../../engine/pipeline
+      '@pk2/react':
+        specifier: workspace:*
+        version: link:../../backends/react
+    devDependencies:
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.17
+      react:
+        specifier: 'catalog:'
+        version: 19.2.7
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
 packages:
 
   '@asamuzakjp/css-color@5.1.11':
