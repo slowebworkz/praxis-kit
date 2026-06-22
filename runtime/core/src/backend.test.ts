@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Backend, RuntimeContext } from './types'
+import type { AttributeValue, Backend, RuntimeContext } from './types'
 
 const context: RuntimeContext = {
   definition: {
@@ -59,7 +59,7 @@ describe('Backend', () => {
         decoration: new Map([['btn-1', { attributes: { type: 'button' } }]]),
       },
     }
-    const backend: Backend<string | undefined> = {
+    const backend: Backend<AttributeValue | undefined> = {
       render: (ctx) => ctx.render.decoration.get('btn-1')?.attributes?.type,
     }
     expect(backend.render(decorated)).toBe('button')

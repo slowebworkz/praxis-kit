@@ -3,11 +3,13 @@ export type { ComponentContext } from './component-context'
 
 export type {
   AttributeMap,
+  AttributeValue,
   DecorationMap,
   Listener,
   ListenerMap,
   NodeDecoration,
   StyleMap,
+  StyleValue,
   VariantMap,
 } from './node-decoration'
 export type { RenderContext } from './render-context'

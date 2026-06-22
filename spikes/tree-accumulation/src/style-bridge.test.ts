@@ -63,7 +63,7 @@ async function resolveStyleContext(activeProps: Record<string, unknown>): Promis
 }
 
 async function renderBoxElement(el: ReactElement): Promise<WideElement> {
-  const { root, decoration } = fromReactElement(el)
+  const { root, decoration } = fromReactElement(el as ReactElement<Record<string, unknown>>)
   const activeProps = getActiveProps('root', decoration)
   const styleContext = await resolveStyleContext(activeProps)
   const className = styleContext.classes.join(' ')
@@ -119,24 +119,22 @@ describe('style bridge — variant props → className', () => {
   })
 })
 
-describe('style bridge — boolean variant capture', () => {
-  it('captures boolean flex prop into variants', () => {
-    const el = createElement('div', { flex: true, direction: 'row' })
-    const { decoration } = fromReactElement(el)
+describe('style bridge — schema-driven variant classification', () => {
+  it('routes variant keys to variants when variantKeys provided', () => {
+    const variantKeys = new Set(['direction', 'flex'])
+    const el = createElement('div', { direction: 'row', flex: true }) as ReactElement<
+      Record<string, unknown>
+    >
+    const { decoration } = fromReactElement(el, variantKeys)
+    expect(decoration['root']?.variants?.['direction']).toBe('row')
     expect(decoration['root']?.variants?.['flex']).toBe(true)
-    expect(decoration['root']?.attributes?.['direction']).toBe('row')
+    expect(decoration['root']?.attributes?.['direction']).toBeUndefined()
   })
 
-  it('captures boolean grid prop into variants', () => {
-    const el = createElement('div', { grid: true, cols: '3' })
+  it('puts non-variant booleans in attributes', () => {
+    const el = createElement('button', { disabled: true }) as ReactElement<Record<string, unknown>>
     const { decoration } = fromReactElement(el)
-    expect(decoration['root']?.variants?.['grid']).toBe(true)
-    expect(decoration['root']?.attributes?.['cols']).toBe('3')
-  })
-
-  it('does not put booleans into attributes', () => {
-    const el = createElement('div', { flex: true })
-    const { decoration } = fromReactElement(el)
-    expect(decoration['root']?.attributes?.['flex']).toBeUndefined()
+    expect(decoration['root']?.attributes?.['disabled']).toBe(true)
+    expect(decoration['root']?.variants).toBeUndefined()
   })
 })

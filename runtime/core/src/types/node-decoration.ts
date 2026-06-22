@@ -2,8 +2,11 @@ import type { NodeId } from '@pk2/foundation'
 
 export type Listener = (...args: unknown[]) => void
 
-export type AttributeMap = Record<string, string>
-export type StyleMap = Record<string, string>
+export type AttributeValue = string | number | boolean
+export type StyleValue = string | number
+
+export type AttributeMap = Record<string, AttributeValue>
+export type StyleMap = Record<string, StyleValue>
 export type ListenerMap = Record<string, Listener>
 export type VariantMap = Record<string, unknown>
 

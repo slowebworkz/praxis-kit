@@ -23,8 +23,9 @@ const identityPass: Pass<ComponentContext> = {
 }
 
 type WideElement = ReactElement<Record<string, unknown>>
+const w = (el: ReactElement): WideElement => el as WideElement
 
-async function renderThroughPipeline(el: ReactElement): Promise<WideElement> {
+async function renderThroughPipeline(el: WideElement): Promise<WideElement> {
   const { root, decoration } = fromReactElement(el)
   const tree = buildTreeContext(root)
   const render = buildRenderContext(decoration)
@@ -34,36 +35,36 @@ async function renderThroughPipeline(el: ReactElement): Promise<WideElement> {
 
 describe('tree accumulation — fromReactElement', () => {
   it('produces a native root node from a plain element', () => {
-    const el = createElement('button', { type: 'button' })
-    const { root } = fromReactElement(el)
+    const { root } = fromReactElement(w(createElement('button', { type: 'button' })))
     expect(root).toMatchObject({ kind: 'native', id: 'root', tag: 'button' })
   })
 
   it('extracts attributes into decoration', () => {
-    const el = createElement('button', { type: 'button', 'aria-label': 'close' })
-    const { decoration } = fromReactElement(el)
+    const { decoration } = fromReactElement(
+      w(createElement('button', { type: 'button', 'aria-label': 'close' })),
+    )
     expect(decoration['root']?.attributes).toEqual({ type: 'button', 'aria-label': 'close' })
   })
 
   it('extracts listeners into decoration', () => {
     const onClick = () => {}
-    const el = createElement('button', { onClick })
-    const { decoration } = fromReactElement(el)
+    const { decoration } = fromReactElement(w(createElement('button', { onClick })))
     expect(decoration['root']?.listeners?.onClick).toBe(onClick)
   })
 
   it('extracts style into decoration', () => {
-    const el = createElement('button', { style: { color: 'red' } })
-    const { decoration } = fromReactElement(el)
+    const { decoration } = fromReactElement(w(createElement('button', { style: { color: 'red' } })))
     expect(decoration['root']?.styles).toEqual({ color: 'red' })
   })
 
   it('walks children recursively and assigns ids', () => {
-    const el = createElement(
-      'div',
-      null,
-      createElement('span', { 'aria-hidden': 'true' }),
-      createElement('button', { type: 'button' }),
+    const el = w(
+      createElement(
+        'div',
+        null,
+        createElement('span', { 'aria-hidden': 'true' }),
+        createElement('button', { type: 'button' }),
+      ),
     )
     const { root, decoration } = fromReactElement(el)
     const children = root.children ?? []
@@ -75,27 +76,25 @@ describe('tree accumulation — fromReactElement', () => {
 
   it('produces a component node for non-string element types', () => {
     const MyComponent = () => null
-    const el = createElement(MyComponent, null)
-    const { root } = fromReactElement(el as never)
+    const { root } = fromReactElement(w(createElement(MyComponent, null)))
     expect(root.kind).toBe('component')
   })
 
   it('collects slot from child props', () => {
-    const el = createElement('div', null, createElement('button', { slot: 'trigger' }))
+    const el = w(createElement('div', null, createElement('button', { slot: 'trigger' })))
     const { root } = fromReactElement(el)
     expect((root.children ?? [])[0]).toMatchObject({ slot: 'trigger' })
   })
 
   it('omits decoration entry when node has no decoratable props', () => {
-    const el = createElement('div', null)
-    const { decoration } = fromReactElement(el)
+    const { decoration } = fromReactElement(w(createElement('div', null)))
     expect(decoration['root']).toBeUndefined()
   })
 })
 
 describe('tree accumulation — end-to-end pipeline', () => {
   it('round-trips a React element through PK2', async () => {
-    const input = createElement('button', { type: 'button', 'aria-label': 'Save' })
+    const input = w(createElement('button', { type: 'button', 'aria-label': 'Save' }))
     const output = await renderThroughPipeline(input)
 
     expect(output.type).toBe('button')
@@ -104,17 +103,19 @@ describe('tree accumulation — end-to-end pipeline', () => {
   })
 
   it('preserves attributes on the output element', async () => {
-    const el = createElement('button', { type: 'button', 'aria-label': 'Save' })
+    const el = w(createElement('button', { type: 'button', 'aria-label': 'Save' }))
     const output = await renderThroughPipeline(el)
     expect(output.props['aria-label']).toBe('Save')
   })
 
   it('preserves topology through nested children', async () => {
-    const el = createElement(
-      'div',
-      { 'aria-label': 'wrapper' },
-      createElement('span', null),
-      createElement('button', { type: 'submit' }),
+    const el = w(
+      createElement(
+        'div',
+        { 'aria-label': 'wrapper' },
+        createElement('span', null),
+        createElement('button', { type: 'submit' }),
+      ),
     )
     const output = await renderThroughPipeline(el)
     const children = Children.toArray(output.props.children as ReactNode) as WideElement[]
@@ -125,7 +126,7 @@ describe('tree accumulation — end-to-end pipeline', () => {
   })
 
   it('passes slot assignments through buildTreeContext', async () => {
-    const el = createElement('div', null, createElement('button', { slot: 'trigger' }))
+    const el = w(createElement('div', null, createElement('button', { slot: 'trigger' })))
     const { root } = fromReactElement(el)
     const tree = buildTreeContext(root)
 
