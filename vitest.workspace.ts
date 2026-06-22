@@ -27,6 +27,7 @@ export default defineWorkspace([
   './engine/merge/vitest.config.ts',
   './domains/style/vitest.config.ts',
   './runtime/core/vitest.config.ts',
+  './runtime/compiler/vitest.config.ts',
   './backends/react/vitest.config.ts',
   './plugins/tailwind/vitest.config.ts',
   './spikes/merge-ownership/vitest.config.ts',
