@@ -162,6 +162,50 @@ praxis-kit
 
 ---
 
+## How It Works
+
+Praxis Kit separates component compilation from rendering through two pipelines.
+
+**Definition pipeline** — runs once per component definition, or at build time via the Vite plugin:
+
+```text
+Pass → Pass → Pass
+           ↓
+      MergeStrategy
+           ↓
+  ComponentDefinition
+```
+
+Each **Pass** contributes a partial result — identity, capabilities, accessibility policies,
+structural contracts. A **MergeStrategy** accumulates them into a stable **ComponentDefinition**.
+The expensive work happens once; the result is reused across every render.
+
+**Runtime pipeline** — runs at render time:
+
+```text
+JSX tree
+    ↓
+TreeContext      ← node topology + slot assignments
+RenderContext    ← attributes, styles, listeners, refs
+
+ComponentDefinition + TreeContext + RenderContext
+    ↓
+    RuntimeContext
+    ↓
+    Backend<TOutput>
+    ↓
+    ReactElement / Vue VDOM / etc.
+```
+
+The JSX tree is walked to produce two framework-neutral IRs: **TreeContext** (structure) and
+**RenderContext** (decoration). These combine with the compiled definition into a **RuntimeContext**
+that a framework **Backend** consumes to produce its native output.
+
+The render path is pure IR assembly plus backend delegation — no policy evaluation, no contract
+checking. Those costs are paid once at definition time.
+
+---
+
 ## Philosophy
 
 TypeScript can tell you that a prop exists. Praxis can tell you that a component hierarchy is valid.

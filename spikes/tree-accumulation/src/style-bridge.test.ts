@@ -2,7 +2,13 @@ import { createElement } from 'react'
 import type { ReactElement } from 'react'
 import { describe, expect, it } from 'vitest'
 import { compileComponent } from '@pk2/compiler'
-import { applyAttributes, buildRenderContext, buildTreeContext, renderComponent } from '@pk2/core'
+import {
+  applyAttributes,
+  buildRenderContext,
+  buildTreeContext,
+  getActiveProps,
+  renderComponent,
+} from '@pk2/core'
 import type { ComponentContext } from '@pk2/core'
 import type { Pass } from '@pk2/pipeline'
 import { createPipeline, executePipeline } from '@pk2/pipeline'
@@ -58,10 +64,7 @@ async function resolveStyleContext(activeProps: Record<string, unknown>): Promis
 
 async function renderBoxElement(el: ReactElement): Promise<WideElement> {
   const { root, decoration } = fromReactElement(el)
-  const activeProps = {
-    ...(decoration['root']?.attributes ?? {}),
-    ...(decoration['root']?.variants ?? {}),
-  }
+  const activeProps = getActiveProps('root', decoration)
   const styleContext = await resolveStyleContext(activeProps)
   const className = styleContext.classes.join(' ')
   const classAttr = className.length > 0 ? { className } : {}
@@ -109,8 +112,10 @@ describe('style bridge — variant props → className', () => {
 
   it('produces empty className when no matching variants', async () => {
     const output = await renderBoxElement(createElement('div', { 'aria-label': 'bare' }))
-    expect(output.props.className).toBeUndefined()
+    expect(output.props).not.toHaveProperty('direction')
+    expect(output.props).not.toHaveProperty('gap')
     expect(output.props['aria-label']).toBe('bare')
+    expect(output.props.className).toBeUndefined()
   })
 })
 
