@@ -2,6 +2,8 @@ import type { FilterPredicate } from '@praxis-kit/adapter-utils'
 import { buildEngines, resolveAdapterCommonOptions } from '@praxis-kit/adapter-utils'
 import type {
   AnyRecord,
+  ClassPlugin,
+  ClassPipelineOptions,
   ClassPluginFactory,
   ElementType,
   EmptyRecord,
@@ -10,6 +12,7 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
+import { getHtmlChildrenEvaluator } from '@praxis-kit/core'
 import { AriaPolicyEngine } from '@praxis-kit/core/contract'
 import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/shared/guards/children'
 import type { ReactElement, ReactNode, Ref } from 'react'
@@ -43,6 +46,8 @@ import {
 
 declare const process: { env: { NODE_ENV: string } }
 
+const EMPTY_SET: ReadonlySet<string> = new Set()
+
 export function createContractComponent<
   TDefault extends ElementType,
   Props extends UnknownProps = EmptyRecord,
@@ -71,11 +76,24 @@ export function createContractComponent<
   const compounds = options.styling?.compounds as ReadonlyArray<CompoundRecord> | undefined
   const filterFn = options.filterProps as FilterPredicate | undefined
 
-  const { childrenEvaluator } = buildEngines(
+  // Wire class plugin: call the factory once at creation time
+  const classPlugin: ClassPlugin<AnyRecord> | undefined =
+    options.styling?.plugin !== undefined
+      ? (options.styling.plugin as ClassPluginFactory<AnyRecord>)(
+          options.styling as unknown as ClassPipelineOptions,
+          resolved.strict,
+        )
+      : undefined
+  const pluginKeys: ReadonlySet<string> = classPlugin?.ownedKeys ?? EMPTY_SET
+
+  // Children enforcement: explicit config takes priority; built-in HTML contracts are the fallback
+  const { childrenEvaluator: explicitEvaluator } = buildEngines(
     resolved.strict,
     options.enforcement?.children,
     displayName,
   )
+  const childrenEvaluator = explicitEvaluator ?? getHtmlChildrenEvaluator(defaultTag)
+
   const ariaEngine =
     options.enforcement !== undefined ? new AriaPolicyEngine(resolved.strict) : undefined
 
@@ -100,11 +118,27 @@ export function createContractComponent<
 
     const tag = typeof as === 'string' ? as : defaultTag
 
-    const allOwnProps =
+    const baseProps =
       domDefaults !== undefined
         ? { ...domDefaults, ...ownProps }
         : (ownProps as Record<string, unknown>)
-    const rootDec = extractDecoration(allOwnProps, variantKeys)
+
+    // Extract plugin-owned props before decoration so they don't leak to the DOM
+    const pluginProps: AnyRecord = {}
+    const propsForExtraction: Record<string, unknown> =
+      pluginKeys.size > 0
+        ? Object.fromEntries(
+            Object.entries(baseProps).filter(([k]) => {
+              if (pluginKeys.has(k)) {
+                pluginProps[k] = baseProps[k]
+                return false
+              }
+              return true
+            }),
+          )
+        : baseProps
+
+    const rootDec = extractDecoration(propsForExtraction, variantKeys)
     const decoration = applyAria(
       Object.keys(rootDec).length > 0 ? { root: rootDec } : {},
       tag,
@@ -124,7 +158,11 @@ export function createContractComponent<
       compounds,
     )
 
-    const className = joinClasses(base, ...variantClasses, ...compoundClasses, callerClassName)
+    const rawClassName = joinClasses(base, ...variantClasses, ...compoundClasses, callerClassName)
+    const className =
+      classPlugin !== undefined
+        ? classPlugin.pipeline(tag, pluginProps, rawClassName, recipeName)
+        : rawClassName
 
     if (typeof render === 'function')
       return renderWithCallback(render as RenderCallback, className, ref)
