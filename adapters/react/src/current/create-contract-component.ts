@@ -60,7 +60,8 @@ export function createContractComponent<
     options.styling?.variants as VariantRecord | undefined,
     options.styling?.presets as PresetRecord | undefined,
   )
-  const defaults = (options.styling?.defaults ?? {}) as Record<string, string>
+  const domDefaults = options.defaults as Record<string, unknown> | undefined
+  const variantDefaults = (options.styling?.defaults ?? {}) as Record<string, string>
   const base = options.styling?.base
   const compounds = options.styling?.compounds as ReadonlyArray<CompoundRecord> | undefined
   const filterFn = options.filterProps as FilterPredicate | undefined
@@ -95,7 +96,11 @@ export function createContractComponent<
     const tag = typeof as === 'string' ? as : defaultTag
 
     let decoration: Record<NodeId, NodeDecoration> = {}
-    const rootDec = extractDecoration(ownProps as Record<string, unknown>, variantKeys)
+    const allOwnProps =
+      domDefaults !== undefined
+        ? { ...domDefaults, ...ownProps }
+        : (ownProps as Record<string, unknown>)
+    const rootDec = extractDecoration(allOwnProps, variantKeys)
     if (Object.keys(rootDec).length > 0) decoration['root'] = rootDec
 
     decoration = applyAria(decoration, tag, ariaEngine)
@@ -108,7 +113,7 @@ export function createContractComponent<
     const treeCtx = buildTreeContext(root)
 
     const active = getActiveProps('root', decoration)
-    const activeWithDefaults: AnyRecord = { ...defaults, ...active }
+    const activeWithDefaults: AnyRecord = { ...variantDefaults, ...active }
     if (typeof recipe === 'string') activeWithDefaults['preset'] = recipe
 
     const result = createVariantPass(activeWithDefaults, variantConfig).execute({
