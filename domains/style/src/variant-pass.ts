@@ -1,4 +1,3 @@
-import type { Pass } from '@pk2/pipeline'
 import type { StyleContext } from './types'
 
 export interface VariantConfig {
@@ -7,10 +6,15 @@ export interface VariantConfig {
   defaults?: Record<string, string>
 }
 
+export interface VariantPass {
+  name: string
+  execute(context: Readonly<StyleContext>): { context: { classes: string[] } }
+}
+
 export function createVariantPass(
   activeProps: Record<string, unknown>,
   config: VariantConfig,
-): Pass<StyleContext> {
+): VariantPass {
   return {
     name: 'variant',
     execute() {

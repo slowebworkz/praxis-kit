@@ -5,6 +5,7 @@ import type { VariantConfig } from '@pk2/style'
 export type VariantTable<T> = StringMap<StringMap<T>>
 export type VariantRecord = VariantTable<ClassName>
 export type PresetValues = Record<string, string>
+export type Defaults = PresetValues
 export type PresetRecord = StringMap<PresetValues>
 export type CompoundRecord = StringMap<ClassName> & { class: ClassName }
 
@@ -27,7 +28,7 @@ function mapVariantRecord<T, U>(source: VariantTable<T>, mapper: (value: T) => U
 export function buildVariantConfig(
   variants?: VariantRecord,
   presets?: PresetRecord,
-  defaults?: Record<string, string>,
+  defaults?: Defaults,
 ): VariantConfig {
   return {
     variants: mapVariantRecord(variants ?? {}, flattenClassName),
