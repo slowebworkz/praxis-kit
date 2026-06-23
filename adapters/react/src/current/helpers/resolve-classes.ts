@@ -1,9 +1,8 @@
-import type { AnyRecord } from '@praxis-kit/core'
-import type { NodeId } from '@pk2/foundation'
 import type { NodeDecoration } from '@pk2/core'
 import { getActiveProps } from '@pk2/core'
-import { createVariantPass } from '@pk2/style'
+import type { NodeId } from '@pk2/foundation'
 import type { VariantConfig } from '@pk2/style'
+import { createVariantPass } from '@pk2/style'
 import type { CompoundRecord, Defaults } from './build-variant-config'
 import { resolveCompounds } from './resolve-compounds'
 
@@ -26,8 +25,7 @@ export function resolveClasses(
   const { context } = createVariantPass(passInput, variantConfig).execute({ classes: [] })
   const variantClasses = context.classes
 
-  const presetOverrides: AnyRecord =
-    recipe !== undefined ? ((variantConfig.presets?.[recipe] as AnyRecord | undefined) ?? {}) : {}
+  const presetOverrides = recipe !== undefined ? (variantConfig.presets?.[recipe] ?? {}) : {}
 
   const resolvedValues = {
     ...variantDefaults,
