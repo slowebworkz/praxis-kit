@@ -1,3 +1,5 @@
+import type { FilterPredicate } from '@praxis-kit/adapter-utils'
+import { buildEngines, resolveAdapterCommonOptions } from '@praxis-kit/adapter-utils'
 import type {
   AnyRecord,
   ClassPluginFactory,
@@ -9,32 +11,32 @@ import type {
   VariantMap,
 } from '@praxis-kit/core'
 import { AriaPolicyEngine } from '@praxis-kit/core/contract'
-import type { FilterPredicate } from '@praxis-kit/adapter-utils'
-import { buildEngines, resolveAdapterCommonOptions } from '@praxis-kit/adapter-utils'
 import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/shared/guards/children'
-import type { Ref, ReactElement } from 'react'
+import type { ReactElement, Ref } from 'react'
+import type { PolymorphicComponent, ReactFactoryOptions, UnknownProps } from '../shared'
 import { applyDisplayName } from '../shared'
-import type { UnknownProps, PolymorphicComponent, ReactFactoryOptions } from '../shared'
 import { normalizeChildren } from './normalize-children'
 
-import type { NodeId } from '@pk2/foundation'
 import type { NodeDecoration, NodeInput } from '@pk2/core'
 import { applyAttributes, buildTreeContext, getActiveProps } from '@pk2/core'
+import type { NodeId } from '@pk2/foundation'
 import { extractDecoration } from '@pk2/react'
 import { createVariantPass } from '@pk2/style'
 
-import { buildDefinition } from './helpers/build-definition'
 import {
+  applyAria,
+  applyFilterProps,
+  buildDefinition,
   buildVariantConfig,
+  renderAsChild,
+  renderNormally,
+  renderWithCallback,
+  resolveCompounds,
   type CompoundRecord,
   type PresetRecord,
+  type RenderCallback,
   type VariantRecord,
-} from './helpers/build-variant-config'
-import { resolveCompounds } from './helpers/resolve-compounds'
-import { applyAria } from './helpers/apply-aria'
-import { applyFilterProps } from './helpers/apply-filter-props'
-import { renderAsChild } from './helpers/render-as-child'
-import { renderNormally } from './helpers/render-normally'
+} from './helpers'
 
 declare const process: { env: { NODE_ENV: string } }
 
@@ -121,13 +123,8 @@ export function createContractComponent<
       .filter(Boolean)
       .join(' ')
 
-    if (typeof render === 'function') {
-      const fn = render as (p: { className?: string; ref?: unknown }) => ReactElement
-      const cbProps: { className?: string; ref?: unknown } = {}
-      if (className) cbProps.className = className
-      if (ref !== undefined) cbProps.ref = ref
-      return fn(cbProps)
-    }
+    if (typeof render === 'function')
+      return renderWithCallback(render as RenderCallback, className, ref)
 
     if (asChild === true) return renderAsChild(children, className, ref)
 
