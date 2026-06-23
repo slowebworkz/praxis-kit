@@ -45,7 +45,11 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "vitest": "catalog:",
-    "@praxis-kit/core": "workspace:*"
+    "@praxis-kit/core": "workspace:*",
+    "@pk2/core": "workspace:*",
+    "@pk2/foundation": "workspace:*",
+    "@pk2/react": "workspace:*",
+    "@pk2/style": "workspace:*"
   },
   "repository": {
     "type": "git",
