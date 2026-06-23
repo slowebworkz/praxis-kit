@@ -1,5 +1,6 @@
 import type {
   AnyRecord,
+  ClassName,
   ClassPluginFactory,
   ElementType,
   EmptyRecord,
@@ -9,7 +10,7 @@ import type {
   VariantMap,
 } from '@praxis-kit/core'
 import { AriaPolicyEngine } from '@praxis-kit/core/contract'
-import { cloneElement } from 'react'
+import { cloneElement, isValidElement } from 'react'
 import type { ReactElement, Ref } from 'react'
 import { buildEngines, resolveAdapterCommonOptions } from '@praxis-kit/adapter-utils'
 import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/shared/guards/children'
@@ -17,7 +18,7 @@ import { applyDisplayName } from '../shared'
 import type { UnknownProps, PolymorphicComponent, ReactFactoryOptions } from '../shared'
 import { normalizeChildren } from './normalize-children'
 
-import type { NodeId } from '@pk2/foundation'
+import type { NodeId, StringMap } from '@pk2/foundation'
 import type { ComponentDefinition, NodeDecoration, NodeInput } from '@pk2/core'
 import {
   applyAttributes,
@@ -27,24 +28,32 @@ import {
   renderComponent,
 } from '@pk2/core'
 import { extractDecoration, reactBackend } from '@pk2/react'
+import { cloneSlotChild } from './slot/cloneSlotChild'
 import { createVariantPass } from '@pk2/style'
 import type { VariantConfig } from '@pk2/style'
 
+type VariantRecord = StringMap<StringMap<ClassName>>
+type CompoundRecord = StringMap<ClassName> & { class: ClassName }
+
 declare const process: { env: { NODE_ENV: string } }
+
+function flattenClassName(cls: ClassName): string {
+  return Array.isArray(cls) ? cls.join(' ') : cls
+}
 
 function buildDefinition(name: string, tag: string): ComponentDefinition {
   return { identity: { id: name, name, tag }, capabilities: {}, metadata: {}, diagnostics: [] }
 }
 
 function buildVariantConfig(
-  variants: Record<string, Record<string, string | string[]>> | undefined,
-  presets: Record<string, unknown> | undefined,
+  variants: VariantRecord | undefined,
+  presets: AnyRecord | undefined,
 ): VariantConfig {
-  const flat: Record<string, Record<string, string>> = {}
+  const flat: StringMap<StringMap<string>> = {}
   for (const [key, valueMap] of Object.entries(variants ?? {})) {
-    const inner: Record<string, string> = {}
+    const inner: StringMap<string> = {}
     for (const [val, cls] of Object.entries(valueMap)) {
-      inner[val] = Array.isArray(cls) ? cls.join(' ') : (cls as string)
+      inner[val] = flattenClassName(cls)
     }
     flat[key] = inner
   }
@@ -58,9 +67,7 @@ function buildVariantConfig(
 
 function resolveCompounds(
   active: Record<string, unknown>,
-  compounds:
-    | ReadonlyArray<Record<string, string | string[]> & { class: string | string[] }>
-    | undefined,
+  compounds: ReadonlyArray<CompoundRecord> | undefined,
 ): string[] {
   if (compounds === undefined || compounds.length === 0) return []
   const out: string[] = []
@@ -70,7 +77,7 @@ function resolveCompounds(
       const a = active[k]
       return Array.isArray(v) ? v.includes(a as string) : a === v
     })
-    if (matches) out.push(Array.isArray(cls) ? cls.join(' ') : cls)
+    if (matches) out.push(flattenClassName(cls))
   }
   return out
 }
@@ -94,14 +101,12 @@ export function createContractComponent<
 
   const variantKeys = new Set(Object.keys(options.styling?.variants ?? {}))
   const variantConfig = buildVariantConfig(
-    options.styling?.variants as Record<string, Record<string, string | string[]>> | undefined,
-    options.styling?.presets as Record<string, unknown> | undefined,
+    options.styling?.variants as VariantRecord | undefined,
+    options.styling?.presets as AnyRecord | undefined,
   )
   const defaults = (options.styling?.defaults ?? {}) as Record<string, string>
   const base = options.styling?.base
-  const compounds = options.styling?.compounds as
-    | ReadonlyArray<Record<string, string | string[]> & { class: string | string[] }>
-    | undefined
+  const compounds = options.styling?.compounds as ReadonlyArray<CompoundRecord> | undefined
   const filterFn = options.filterProps
 
   const { childrenEvaluator } = buildEngines(
@@ -116,8 +121,8 @@ export function createContractComponent<
   function Component({ ref, ...props }: UnknownProps & { ref?: Ref<unknown> }): ReactElement {
     const {
       as,
-      asChild: _asChild, // TODO Phase 20: asChild via Slot
-      render: _render, // TODO Phase 20: render-prop support
+      asChild,
+      render,
       children,
       className: callerClassName,
       recipe,
@@ -158,17 +163,34 @@ export function createContractComponent<
     const treeCtx = buildTreeContext(root)
 
     const active = getActiveProps('root', decoration)
-    const activeWithDefaults: Record<string, unknown> = { ...defaults, ...active }
+    const activeWithDefaults: AnyRecord = { ...defaults, ...active }
     if (typeof recipe === 'string') activeWithDefaults['preset'] = recipe
 
     const pass = createVariantPass(activeWithDefaults, variantConfig)
-    const passResult = pass.execute({ classes: [] }) as { context: { classes: string[] } }
-    const variantClasses = passResult.context.classes
+    const result = pass.execute({ classes: [] }) as { context?: { classes?: string[] } }
+    const variantClasses = result.context?.classes ?? []
     const compoundClasses = resolveCompounds(activeWithDefaults, compounds)
 
     const className = [base, ...variantClasses, ...compoundClasses, callerClassName]
       .filter(Boolean)
       .join(' ')
+
+    // render prop takes priority; then asChild; then normal DOM path
+    if (typeof render === 'function') {
+      const fn = render as (p: { className?: string; ref?: unknown }) => ReactElement
+      const cbProps: { className?: string; ref?: unknown } = {}
+      if (className) cbProps.className = className
+      if (ref !== undefined) cbProps.ref = ref
+      return fn(cbProps)
+    }
+
+    // asChild: merge className + ref onto the single child element
+    if (asChild === true) {
+      if (!isValidElement(children)) throw new Error('asChild requires a React element child')
+      const slotProps: Record<string, unknown> = {}
+      if (className) slotProps.className = className
+      return cloneSlotChild({ child: children, slotProps, ref: ref ?? null })
+    }
 
     let finalDecoration = className
       ? applyAttributes('root', { className }, decoration, variantKeys)
