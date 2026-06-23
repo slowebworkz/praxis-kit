@@ -55,32 +55,33 @@ describe('compileComponent', () => {
     expect(result).toBeNull()
   })
 
-  it('returns a ComponentDefinition when identity is complete', async () => {
+  it('returns a CompiledComponentArtifact when identity is complete', async () => {
     const result = await compileComponent(nodes(normalizePass))
     expect(result).not.toBeNull()
-    expect(result!.identity).toEqual({ id: 'btn-1', name: 'Button', tag: 'button' })
+    expect(result!.version).toBe(1)
+    expect(result!.definition.identity).toEqual({ id: 'btn-1', name: 'Button', tag: 'button' })
   })
 
   it('accumulates identity across multiple passes', async () => {
     const result = await compileComponent(nodes(namePass, tagPass, idPass))
     expect(result).not.toBeNull()
-    expect(result!.identity).toEqual({ id: 'btn-1', name: 'Button', tag: 'button' })
+    expect(result!.definition.identity).toEqual({ id: 'btn-1', name: 'Button', tag: 'button' })
   })
 
   it('carries capabilities into the definition', async () => {
     const result = await compileComponent(nodes(normalizePass, capabilitiesPass))
-    expect(result!.capabilities).toEqual({ interactive: true })
+    expect(result!.definition.capabilities).toEqual({ interactive: true })
   })
 
   it('carries metadata into the definition', async () => {
     const result = await compileComponent(nodes(normalizePass, metadataPass))
-    expect(result!.metadata).toEqual({ role: 'button' })
+    expect(result!.definition.metadata).toEqual({ role: 'button' })
   })
 
   it('accumulates diagnostics across passes', async () => {
     const result = await compileComponent(nodes(normalizePass, diagnosticPass))
-    expect(result!.diagnostics).toHaveLength(1)
-    expect(result!.diagnostics[0]!.code).toBe('W001')
+    expect(result!.definition.diagnostics).toHaveLength(1)
+    expect(result!.definition.diagnostics[0]!.code).toBe('W001')
   })
 
   it('later pass wins on identity field conflict', async () => {
@@ -89,7 +90,31 @@ describe('compileComponent', () => {
       execute: () => ({ context: { identity: { name: 'Link' } } }),
     }
     const result = await compileComponent(nodes(normalizePass, overridePass))
-    expect(result!.identity.name).toBe('Link')
+    expect(result!.definition.identity.name).toBe('Link')
+  })
+
+  it('mirrors capabilities and diagnostics into artifact metadata', async () => {
+    const result = await compileComponent(nodes(normalizePass, capabilitiesPass, diagnosticPass))
+    expect(result!.metadata.capabilities).toEqual({ interactive: true })
+    expect(result!.metadata.diagnostics).toHaveLength(1)
+  })
+
+  it('produces topology and styling hashes', async () => {
+    const result = await compileComponent(nodes(normalizePass))
+    expect(typeof result!.hashes.topology).toBe('string')
+    expect(result!.hashes.topology).toHaveLength(16)
+    expect(typeof result!.hashes.styling).toBe('string')
+    expect(result!.hashes.styling).toHaveLength(16)
+  })
+
+  it('topology hash changes when identity changes', async () => {
+    const r1 = await compileComponent(nodes(normalizePass))
+    const differentNamePass: Pass<ComponentContext> = {
+      name: 'normalize',
+      execute: () => ({ context: { identity: { name: 'Link', tag: 'a', id: 'lnk-1' } } }),
+    }
+    const r2 = await compileComponent(nodes(differentNamePass))
+    expect(r1!.hashes.topology).not.toBe(r2!.hashes.topology)
   })
 
   it('accepts plugin injection', async () => {
@@ -114,9 +139,11 @@ describe('compileComponent', () => {
       nodes(namePass, tagPass, idPass, capabilitiesPass, metadataPass, diagnosticPass),
     )
     expect(result).not.toBeNull()
-    expect(result!.identity).toEqual({ id: 'btn-1', name: 'Button', tag: 'button' })
-    expect(result!.capabilities).toEqual({ interactive: true })
-    expect(result!.metadata).toEqual({ role: 'button' })
-    expect(result!.diagnostics).toHaveLength(1)
+    expect(result!.version).toBe(1)
+    expect(result!.definition.identity).toEqual({ id: 'btn-1', name: 'Button', tag: 'button' })
+    expect(result!.definition.capabilities).toEqual({ interactive: true })
+    expect(result!.definition.metadata).toEqual({ role: 'button' })
+    expect(result!.definition.diagnostics).toHaveLength(1)
+    expect(result!.hashes.topology).toHaveLength(16)
   })
 })

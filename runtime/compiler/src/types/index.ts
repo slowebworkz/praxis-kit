@@ -1,7 +1,6 @@
-export { compileComponent } from './compile-component'
 export type {
   ArtifactHashes,
   ArtifactMetadata,
   CompiledComponentArtifact,
   SourceLocation,
-} from './types'
+} from './compiled-component-artifact'
