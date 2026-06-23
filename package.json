@@ -22,7 +22,7 @@
     "format:check": "prettier --check .",
     "format:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.md' | xargs prettier --write",
     "clean": "rm -rf node_modules packages/**/node_modules packages/**/dist",
-    "prepare": "husky",
+    "prepare": "husky && pnpm --filter @praxis-kit/ts-plugin build",
     "repo-state": "node --experimental-strip-types scripts/generate-repo-state.ts",
     "arch:validate": "depcruise --config .dependency-cruiser.cjs lib packages",
     "analyze:deps": "depcruise --config .dependency-cruiser.cjs lib packages",

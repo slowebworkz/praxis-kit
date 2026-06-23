@@ -12,6 +12,7 @@
     "sourceMap": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    "plugins": [{ "name": "@praxis-kit/ts-plugin" }]
   }
 }
