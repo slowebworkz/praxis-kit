@@ -12,27 +12,30 @@ import type {
 } from '@praxis-kit/core'
 import { AriaPolicyEngine } from '@praxis-kit/core/contract'
 import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/shared/guards/children'
-import type { ReactElement, Ref } from 'react'
+import type { ReactElement, ReactNode, Ref } from 'react'
 import type { PolymorphicComponent, ReactFactoryOptions, UnknownProps } from '../shared'
 import { applyDisplayName } from '../shared'
 import { normalizeChildren } from './normalize-children'
 
-import type { NodeDecoration, NodeInput } from '@pk2/core'
-import { applyAttributes, buildTreeContext, getActiveProps } from '@pk2/core'
+import type { NodeDecoration } from '@pk2/core'
+import { applyAttributes } from '@pk2/core'
 import type { NodeId } from '@pk2/foundation'
 import { extractDecoration } from '@pk2/react'
-import { createVariantPass } from '@pk2/style'
 
 import {
   applyAria,
   applyFilterProps,
+  applyRef,
   buildDefinition,
   buildVariantConfig,
+  flattenClassName,
+  joinClasses,
   renderAsChild,
   renderNormally,
   renderWithCallback,
-  resolveCompounds,
+  resolveClasses,
   type CompoundRecord,
+  type Defaults,
   type PresetRecord,
   type RenderCallback,
   type VariantRecord,
@@ -56,13 +59,15 @@ export function createContractComponent<
 
   const definition = buildDefinition(displayName, defaultTag)
   const variantKeys = new Set(Object.keys(options.styling?.variants ?? {}))
+  const domDefaults = options.defaults as Record<string, unknown> | undefined
+  const variantDefaults = (options.styling?.defaults ?? {}) as Defaults
   const variantConfig = buildVariantConfig(
     options.styling?.variants as VariantRecord | undefined,
     options.styling?.presets as PresetRecord | undefined,
+    variantDefaults,
   )
-  const domDefaults = options.defaults as Record<string, unknown> | undefined
-  const variantDefaults = (options.styling?.defaults ?? {}) as Record<string, string>
-  const base = options.styling?.base
+  const base =
+    options.styling?.base !== undefined ? flattenClassName(options.styling.base) : undefined
   const compounds = options.styling?.compounds as ReadonlyArray<CompoundRecord> | undefined
   const filterFn = options.filterProps as FilterPredicate | undefined
 
@@ -87,7 +92,7 @@ export function createContractComponent<
       as?: string
       asChild?: boolean
       render?: unknown
-      children?: unknown
+      children?: ReactNode
       className?: string
       recipe?: string
       [key: string]: unknown
@@ -95,38 +100,31 @@ export function createContractComponent<
 
     const tag = typeof as === 'string' ? as : defaultTag
 
-    let decoration: Record<NodeId, NodeDecoration> = {}
     const allOwnProps =
       domDefaults !== undefined
         ? { ...domDefaults, ...ownProps }
         : (ownProps as Record<string, unknown>)
     const rootDec = extractDecoration(allOwnProps, variantKeys)
-    if (Object.keys(rootDec).length > 0) decoration['root'] = rootDec
-
-    decoration = applyAria(decoration, tag, ariaEngine)
+    const decoration = applyAria(
+      Object.keys(rootDec).length > 0 ? { root: rootDec } : {},
+      tag,
+      ariaEngine,
+    )
 
     if (process.env.NODE_ENV !== 'production' && childrenEvaluator !== undefined) {
       childrenEvaluator.evaluate(normalizeChildren(children))
     }
 
-    const root: NodeInput = { kind: 'native', tag, id: 'root', children: [] }
-    const treeCtx = buildTreeContext(root)
+    const recipeName = typeof recipe === 'string' ? recipe : undefined
+    const { variantClasses, compoundClasses } = resolveClasses(
+      decoration,
+      variantConfig,
+      variantDefaults,
+      recipeName,
+      compounds,
+    )
 
-    const active = getActiveProps('root', decoration)
-    const activeWithDefaults: AnyRecord = { ...variantDefaults, ...active }
-    if (typeof recipe === 'string') activeWithDefaults['preset'] = recipe
-
-    const result = createVariantPass(activeWithDefaults, variantConfig).execute({
-      classes: [],
-    }) as {
-      context?: { classes?: string[] }
-    }
-    const variantClasses = result.context?.classes ?? []
-    const compoundClasses = resolveCompounds(activeWithDefaults, compounds)
-
-    const className = [base, ...variantClasses, ...compoundClasses, callerClassName]
-      .filter(Boolean)
-      .join(' ')
+    const className = joinClasses(base, ...variantClasses, ...compoundClasses, callerClassName)
 
     if (typeof render === 'function')
       return renderWithCallback(render as RenderCallback, className, ref)
@@ -137,18 +135,14 @@ export function createContractComponent<
       return renderAsChild(children, className, ref)
     }
 
-    let finalDecoration = className
+    let finalDecoration: Record<NodeId, NodeDecoration> = className
       ? applyAttributes('root', { className }, decoration, variantKeys)
       : decoration
 
     finalDecoration = applyFilterProps(finalDecoration, filterFn, variantKeys)
+    finalDecoration = applyRef(finalDecoration, ref)
 
-    if (ref !== undefined) {
-      const existing = finalDecoration['root'] ?? {}
-      finalDecoration = { ...finalDecoration, root: { ...existing, ref } }
-    }
-
-    return renderNormally(definition, treeCtx, finalDecoration, children)
+    return renderNormally(definition, tag, finalDecoration, children)
   }
 
   applyDisplayName(Component, options.name)

@@ -1,21 +1,22 @@
 import { cloneElement } from 'react'
-import type { ReactElement } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import type { NodeId } from '@pk2/foundation'
-import type { ComponentDefinition, NodeDecoration, TreeContext } from '@pk2/core'
-import { buildRenderContext, renderComponent } from '@pk2/core'
+import type { ComponentDefinition, NodeDecoration } from '@pk2/core'
+import { buildRenderContext, buildTreeContext, renderComponent } from '@pk2/core'
 import { reactBackend } from '@pk2/react'
 
 export function renderNormally(
   definition: ComponentDefinition,
-  treeCtx: TreeContext,
+  tag: string,
   decoration: Record<NodeId, NodeDecoration>,
-  children: unknown,
+  children?: ReactNode,
 ): ReactElement {
+  const treeCtx = buildTreeContext({ kind: 'native', tag, id: 'root', children: [] })
   const rendered = renderComponent(
     definition,
     treeCtx,
     buildRenderContext(decoration),
     reactBackend,
   )
-  return children !== undefined ? cloneElement(rendered, {}, children as ReactElement) : rendered
+  return children === undefined ? rendered : cloneElement(rendered, {}, children)
 }

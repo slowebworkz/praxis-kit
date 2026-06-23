@@ -1,1 +1,3 @@
-export type MetadataMap = Record<string, unknown>
+import type { AnyRecord } from './any-record'
+
+export type MetadataMap = AnyRecord

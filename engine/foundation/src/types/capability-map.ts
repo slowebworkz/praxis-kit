@@ -1,1 +1,3 @@
-export type CapabilityMap = Record<string, boolean>
+import type { StringMap } from './string-map'
+
+export type CapabilityMap = StringMap<boolean>
