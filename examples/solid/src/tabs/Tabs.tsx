@@ -4,7 +4,8 @@
  * Solid's createSignal owns the active-tab state; createContext/useContext
  * propagates it down the tree. praxis-kit owns the contract layer.
  */
-import { createSignal, Show, type JSX, type Component } from 'solid-js'
+import { createSignal, Show } from 'solid-js'
+import type { JSX, Component } from 'solid-js'
 import { createContractComponent } from '@praxis-kit/solid'
 import { TabsContext, useTabs } from './context'
 import { tabId, panelId } from './utils'

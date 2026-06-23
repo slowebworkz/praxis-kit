@@ -25,6 +25,13 @@ import { applyAttributes } from '@pk2/core'
 import type { NodeId } from '@pk2/foundation'
 import { extractDecoration } from '@pk2/react'
 
+import type {
+  CompoundRecord,
+  Defaults,
+  PresetRecord,
+  RenderCallback,
+  VariantRecord,
+} from './helpers'
 import {
   applyAria,
   applyFilterProps,
@@ -37,11 +44,6 @@ import {
   renderNormally,
   renderWithCallback,
   resolveClasses,
-  type CompoundRecord,
-  type Defaults,
-  type PresetRecord,
-  type RenderCallback,
-  type VariantRecord,
 } from './helpers'
 
 declare const process: { env: { NODE_ENV: string } }

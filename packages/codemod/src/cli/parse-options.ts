@@ -1,4 +1,5 @@
-import { parseArgs, type ParseArgsConfig } from 'node:util'
+import { parseArgs } from 'node:util'
+import type { ParseArgsConfig } from 'node:util'
 import type { CommandOptions, RenameLikeOptions } from '../types/index.js'
 import { ALL_SOURCE_GLOB, TS_ONLY_GLOB } from './constants.js'
 import { renameOptions, sharedOptions, tsconfigOption } from './options.js'
