@@ -60,7 +60,7 @@
   },
   "packageManager": "pnpm@11.0.4",
   "engines": {
-    "node": ">=24"
+    "node": ">=22"
   },
   "author": "K Huehn <slowebworkz@gmail.com>"
 }
