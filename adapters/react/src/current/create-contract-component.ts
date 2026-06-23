@@ -8,6 +8,7 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
+import { AriaPolicyEngine } from '@praxis-kit/core/contract'
 import { cloneElement } from 'react'
 import type { ReactElement, Ref } from 'react'
 import { buildEngines, resolveAdapterCommonOptions } from '@praxis-kit/adapter-utils'
@@ -103,12 +104,14 @@ export function createContractComponent<
     | undefined
   const filterFn = options.filterProps
 
-  // TODO Phase 20: replace with PK2 enforcement passes
   const { childrenEvaluator } = buildEngines(
     resolved.strict,
     options.enforcement?.children,
     displayName,
   )
+  // Active only when enforcement is explicitly configured; absent = no ARIA engine at all
+  const ariaEngine =
+    options.enforcement !== undefined ? new AriaPolicyEngine(resolved.strict) : undefined
 
   function Component({ ref, ...props }: UnknownProps & { ref?: Ref<unknown> }): ReactElement {
     const {
@@ -134,6 +137,17 @@ export function createContractComponent<
     const decoration: Record<NodeId, NodeDecoration> = {}
     const rootDec = extractDecoration(ownProps as Record<string, unknown>, variantKeys)
     if (Object.keys(rootDec).length > 0) decoration['root'] = rootDec
+
+    if (ariaEngine !== undefined) {
+      const dec = decoration['root']
+      if (dec !== undefined && dec.attributes !== undefined) {
+        const result = ariaEngine.validate(tag, dec.attributes as Record<string, unknown>)
+        const cleaned = result.props as typeof dec.attributes
+        const { attributes: _a, ...rest } = dec
+        decoration['root'] =
+          Object.keys(cleaned).length > 0 ? { ...rest, attributes: cleaned } : rest
+      }
+    }
 
     if (process.env.NODE_ENV !== 'production' && childrenEvaluator !== undefined) {
       childrenEvaluator.evaluate(normalizeChildren(children))
