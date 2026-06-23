@@ -7,7 +7,7 @@ export function defineLibConfig(
 ): ReturnType<typeof defineConfig> {
   return defineConfig({
     resolve: { tsconfigPaths: true },
-    test: { name, include: ['src/**/*.test.ts'], ...overrides },
+    test: { name, include: ['src/**/*.{test,spec}.ts'], ...overrides },
   })
 }
 
@@ -17,6 +17,6 @@ export function defineJsdomConfig(
 ): ReturnType<typeof defineConfig> {
   return defineConfig({
     resolve: { tsconfigPaths: true },
-    test: { name, include: ['src/**/*.test.ts'], environment: 'jsdom', ...overrides },
+    test: { name, include: ['src/**/*.{test,spec}.ts'], environment: 'jsdom', ...overrides },
   })
 }

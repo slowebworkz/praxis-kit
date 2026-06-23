@@ -1189,6 +1189,9 @@ importers:
       '@pk2/foundation':
         specifier: workspace:*
         version: link:../../engine/foundation
+      '@pk2/merge':
+        specifier: workspace:*
+        version: link:../../engine/merge
       '@pk2/pipeline':
         specifier: workspace:*
         version: link:../../engine/pipeline
