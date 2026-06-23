@@ -131,7 +131,11 @@ export function createContractComponent<
     if (typeof render === 'function')
       return renderWithCallback(render as RenderCallback, className, ref)
 
-    if (asChild === true) return renderAsChild(children, className, ref)
+    if (asChild === true) {
+      if (typeof as === 'string')
+        throw new Error(`${displayName}: cannot use both 'as' and 'asChild' on the same element`)
+      return renderAsChild(children, className, ref)
+    }
 
     let finalDecoration = className
       ? applyAttributes('root', { className }, decoration, variantKeys)
