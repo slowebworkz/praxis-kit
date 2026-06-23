@@ -4,6 +4,7 @@ import type { StyleContext } from './types'
 export interface VariantConfig {
   variants: Record<string, Record<string, string>>
   presets?: Record<string, Record<string, string>>
+  defaults?: Record<string, string>
 }
 
 export function createVariantPass(
@@ -16,7 +17,12 @@ export function createVariantPass(
       const preset = typeof activeProps['preset'] === 'string' ? activeProps['preset'] : undefined
       const presetDefaults =
         preset !== undefined && config.presets?.[preset] !== undefined ? config.presets[preset] : {}
-      const resolved: Record<string, unknown> = { ...presetDefaults, ...activeProps }
+      // Merge order: factory defaults < preset values < explicitly set props
+      const resolved: Record<string, unknown> = {
+        ...config.defaults,
+        ...presetDefaults,
+        ...activeProps,
+      }
 
       const classes: string[] = []
       for (const [key, valueMap] of Object.entries(config.variants)) {

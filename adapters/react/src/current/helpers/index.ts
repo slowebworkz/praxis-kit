@@ -4,8 +4,9 @@ export {
   flattenClassName,
   type CompoundRecord,
   type PresetRecord,
-  type VariantMapRecord,
+  type PresetValues,
   type VariantRecord,
+  type VariantTable,
 } from './build-variant-config'
 export { resolveCompounds } from './resolve-compounds'
 export { withAttributes } from './decoration-utils'

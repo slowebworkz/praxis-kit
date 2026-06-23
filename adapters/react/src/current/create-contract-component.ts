@@ -56,12 +56,13 @@ export function createContractComponent<
 
   const definition = buildDefinition(displayName, defaultTag)
   const variantKeys = new Set(Object.keys(options.styling?.variants ?? {}))
+  const domDefaults = options.defaults as Record<string, unknown> | undefined
+  const variantDefaults = (options.styling?.defaults ?? {}) as Record<string, string>
   const variantConfig = buildVariantConfig(
     options.styling?.variants as VariantRecord | undefined,
     options.styling?.presets as PresetRecord | undefined,
+    variantDefaults,
   )
-  const domDefaults = options.defaults as Record<string, unknown> | undefined
-  const variantDefaults = (options.styling?.defaults ?? {}) as Record<string, string>
   const base = options.styling?.base
   const compounds = options.styling?.compounds as ReadonlyArray<CompoundRecord> | undefined
   const filterFn = options.filterProps as FilterPredicate | undefined
@@ -113,16 +114,25 @@ export function createContractComponent<
     const treeCtx = buildTreeContext(root)
 
     const active = getActiveProps('root', decoration)
-    const activeWithDefaults: AnyRecord = { ...variantDefaults, ...active }
-    if (typeof recipe === 'string') activeWithDefaults['preset'] = recipe
+    // Only explicitly-set props go into the pass; defaults live in variantConfig.defaults
+    const activeForPass: AnyRecord = { ...active }
+    if (typeof recipe === 'string') activeForPass['preset'] = recipe
 
-    const result = createVariantPass(activeWithDefaults, variantConfig).execute({
+    const result = createVariantPass(activeForPass, variantConfig).execute({
       classes: [],
     }) as {
       context?: { classes?: string[] }
     }
     const variantClasses = result.context?.classes ?? []
-    const compoundClasses = resolveCompounds(activeWithDefaults, compounds)
+    // Compounds need the fully-resolved values: defaults < preset < explicit
+    const presetVars: AnyRecord =
+      typeof recipe === 'string'
+        ? ((variantConfig.presets?.[recipe] as AnyRecord | undefined) ?? {})
+        : {}
+    const compoundClasses = resolveCompounds(
+      { ...variantDefaults, ...presetVars, ...active },
+      compounds,
+    )
 
     const className = [base, ...variantClasses, ...compoundClasses, callerClassName]
       .filter(Boolean)
