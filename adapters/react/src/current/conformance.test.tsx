@@ -10,14 +10,9 @@ import { makeReactConformanceAdapter } from '../shared/make-conformance-adapter'
 import type { ReactConformanceComponent } from '../shared/make-conformance-adapter'
 import { createContractComponent } from './create-contract-component'
 
-const adapter = {
-  ...makeReactConformanceAdapter(
-    (options) =>
-      createContractComponent(options as BareFactoryOptions) as ReactConformanceComponent,
-  ),
-  // TODO Phase 20: asChild via Slot
-  capabilities: { asChild: false as const },
-}
+const adapter = makeReactConformanceAdapter(
+  (options) => createContractComponent(options as BareFactoryOptions) as ReactConformanceComponent,
+)
 
 conformanceSuite(adapter)
 conformanceA11ySuite(adapter)
