@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { createElement, Fragment, createRef } from 'react'
 import type { RenderCallbackProps } from '../shared'
 import { box, useReactDom } from '../shared/test-utils'
@@ -288,5 +288,98 @@ describe('createContractComponent (current / React 19)', () => {
 
     expect(dom.container.querySelector('section')).toBeTruthy()
     expect(dom.container.querySelector('div')).toBeNull()
+  })
+
+  it('render prop: forwards non-variant DOM props (e.g. data-testid) through callback', () => {
+    const Box = createContractComponent({ tag: 'div' })
+    const received: Record<string, unknown> = {}
+
+    dom.mount(
+      createElement(box(Box), {
+        'data-testid': 'my-box',
+        render: (p: RenderCallbackProps) => {
+          Object.assign(received, p)
+          return createElement('a', p as never)
+        },
+      } as never),
+    )
+
+    expect(received['data-testid']).toBe('my-box')
+  })
+
+  // ── allowedAs enforcement ───────────────────────────────────────────────────
+
+  it('allowedAs: does not warn when as matches the allowed list', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Box = createContractComponent({
+      enforcement: { strict: 'warn', allowedAs: ['button', 'a'] },
+    })
+
+    dom.mount(createElement(box(Box), { as: 'button' }))
+
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('allowedAs: warns when as does not match the allowed list (strict: warn)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Box = createContractComponent({
+      enforcement: { strict: 'warn', allowedAs: ['button', 'a'] },
+    })
+
+    dom.mount(createElement(box(Box), { as: 'div' }))
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"div"'))
+    warn.mockRestore()
+  })
+
+  it('allowedAs: throws when as does not match the allowed list (strict: throw)', () => {
+    const Box = createContractComponent({
+      enforcement: { strict: 'throw', allowedAs: ['button', 'a'] },
+    })
+
+    expect(() => dom.mount(createElement(box(Box), { as: 'div' }))).toThrow(/"div"/)
+  })
+
+  // ── normalize ───────────────────────────────────────────────────────────────
+
+  it('normalize: callback fires and its return value replaces props', () => {
+    const Box = createContractComponent({
+      normalize: (props) => ({ ...props, 'data-normalized': 'yes' }),
+    })
+
+    dom.mount(createElement(box(Box), null))
+
+    expect(dom.container.querySelector('[data-normalized="yes"]')).toBeTruthy()
+  })
+
+  it('normalize: can remove a prop before it reaches the DOM', () => {
+    const Box = createContractComponent({
+      normalize: ({ unwanted: _, ...rest }) => rest,
+    })
+
+    dom.mount(createElement(box(Box), { unwanted: 'bad' } as never))
+
+    expect(dom.container.querySelector('[unwanted]')).toBeNull()
+  })
+
+  // ── HTML contract uses active tag ────────────────────────────────────────────
+
+  it('html contract: evaluates against the active tag, not the default tag', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    // Picture requires specific children (source*, img); evaluate against 'ul' which has no contract
+    // Using 'ul' as default but rendering as 'picture' — the picture contract should fire
+    const Pic = createContractComponent({ tag: 'ul' })
+
+    // 'picture' requires img as last child; passing a div should trigger a warning
+    dom.mount(createElement(box(Pic), { as: 'picture' }, createElement('div')))
+
+    // Warning expected because <picture> children contract fires for the active 'picture' tag
+    expect(warn).toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 })

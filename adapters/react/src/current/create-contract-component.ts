@@ -12,7 +12,7 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { getHtmlChildrenEvaluator } from '@praxis-kit/core'
+import { enforceAllowedAs, getHtmlChildrenEvaluator } from '@praxis-kit/core'
 import { AriaPolicyEngine } from '@praxis-kit/core/contract'
 import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/shared/guards/children'
 import type { ReactElement, ReactNode, Ref } from 'react'
@@ -75,6 +75,10 @@ export function createContractComponent<
     options.styling?.base !== undefined ? flattenClassName(options.styling.base) : undefined
   const compounds = options.styling?.compounds as ReadonlyArray<CompoundRecord> | undefined
   const filterFn = options.filterProps as FilterPredicate | undefined
+  const allowedAs = options.enforcement?.allowedAs as readonly ElementType[] | undefined
+  const normalizeFn = options.normalize as
+    | ((props: Record<string, unknown>) => Record<string, unknown>)
+    | undefined
 
   // Wire class plugin: call the factory once at creation time
   const classPlugin: ClassPlugin<AnyRecord> | undefined =
@@ -86,13 +90,12 @@ export function createContractComponent<
       : undefined
   const pluginKeys: ReadonlySet<string> = classPlugin?.ownedKeys ?? EMPTY_SET
 
-  // Children enforcement: explicit config takes priority; built-in HTML contracts are the fallback
+  // Children enforcement: explicit config takes priority; built-in HTML contracts checked per-render
   const { childrenEvaluator: explicitEvaluator } = buildEngines(
     resolved.strict,
     options.enforcement?.children,
     displayName,
   )
-  const childrenEvaluator = explicitEvaluator ?? getHtmlChildrenEvaluator(defaultTag)
 
   const ariaEngine =
     options.enforcement !== undefined ? new AriaPolicyEngine(resolved.strict) : undefined
@@ -118,10 +121,13 @@ export function createContractComponent<
 
     const tag = typeof as === 'string' ? as : defaultTag
 
-    const baseProps =
+    if (allowedAs !== undefined) enforceAllowedAs(tag, allowedAs, resolved.strict, displayName)
+
+    const rawBaseProps =
       domDefaults !== undefined
         ? { ...domDefaults, ...ownProps }
         : (ownProps as Record<string, unknown>)
+    const baseProps = normalizeFn !== undefined ? normalizeFn(rawBaseProps) : rawBaseProps
 
     // Extract plugin-owned props before decoration so they don't leak to the DOM
     const pluginProps: AnyRecord = {}
@@ -145,8 +151,9 @@ export function createContractComponent<
       ariaEngine,
     )
 
-    if (process.env.NODE_ENV !== 'production' && childrenEvaluator !== undefined) {
-      childrenEvaluator.evaluate(normalizeChildren(children))
+    if (process.env.NODE_ENV !== 'production') {
+      const childEval = explicitEvaluator ?? getHtmlChildrenEvaluator(tag)
+      childEval?.evaluate(normalizeChildren(children))
     }
 
     const recipeName = typeof recipe === 'string' ? recipe : undefined
@@ -164,9 +171,6 @@ export function createContractComponent<
         ? classPlugin.pipeline(tag, pluginProps, rawClassName, recipeName)
         : rawClassName
 
-    if (typeof render === 'function')
-      return renderWithCallback(render as RenderCallback, className, ref)
-
     if (asChild === true) {
       if (typeof as === 'string')
         throw new Error(`${displayName}: cannot use both 'as' and 'asChild' on the same element`)
@@ -179,6 +183,14 @@ export function createContractComponent<
 
     finalDecoration = applyFilterProps(finalDecoration, filterFn, variantKeys)
     finalDecoration = applyRef(finalDecoration, ref)
+
+    if (typeof render === 'function')
+      return renderWithCallback(
+        render as RenderCallback,
+        (finalDecoration['root']?.attributes ?? {}) as Record<string, unknown>,
+        className,
+        ref,
+      )
 
     return renderNormally(definition, tag, finalDecoration, children)
   }

@@ -6,7 +6,6 @@
   ],
   "mustExclude": [
     "lib/styling/src",
-    "lib/contract/src/children",
     "adapters/vue/src",
     "adapters/solid/src",
     "adapters/preact/src",
