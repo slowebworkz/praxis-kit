@@ -1,1 +1,3 @@
-export type AnyRecord = Record<PropertyKey, unknown>
+import type { StringMap } from './string-map'
+
+export type AnyRecord = StringMap<unknown>

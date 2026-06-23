@@ -1,1 +1,3 @@
-export type VariantMap = Record<string, string[]>
+import type { StringMap } from './string-map'
+
+export type VariantMap = StringMap<string[]>
