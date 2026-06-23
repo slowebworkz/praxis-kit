@@ -1,6 +1,7 @@
+import type { FilterPredicate } from '@praxis-kit/adapter-utils'
+import { buildEngines, resolveAdapterCommonOptions } from '@praxis-kit/adapter-utils'
 import type {
   AnyRecord,
-  ClassName,
   ClassPluginFactory,
   ElementType,
   EmptyRecord,
@@ -10,77 +11,34 @@ import type {
   VariantMap,
 } from '@praxis-kit/core'
 import { AriaPolicyEngine } from '@praxis-kit/core/contract'
-import { cloneElement, isValidElement } from 'react'
-import type { ReactElement, Ref } from 'react'
-import { buildEngines, resolveAdapterCommonOptions } from '@praxis-kit/adapter-utils'
 import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/shared/guards/children'
+import type { ReactElement, Ref } from 'react'
+import type { PolymorphicComponent, ReactFactoryOptions, UnknownProps } from '../shared'
 import { applyDisplayName } from '../shared'
-import type { UnknownProps, PolymorphicComponent, ReactFactoryOptions } from '../shared'
 import { normalizeChildren } from './normalize-children'
 
-import type { NodeId, StringMap } from '@pk2/foundation'
-import type { ComponentDefinition, NodeDecoration, NodeInput } from '@pk2/core'
-import {
-  applyAttributes,
-  buildRenderContext,
-  buildTreeContext,
-  getActiveProps,
-  renderComponent,
-} from '@pk2/core'
-import { extractDecoration, reactBackend } from '@pk2/react'
-import { cloneSlotChild } from './slot/cloneSlotChild'
+import type { NodeDecoration, NodeInput } from '@pk2/core'
+import { applyAttributes, buildTreeContext, getActiveProps } from '@pk2/core'
+import type { NodeId } from '@pk2/foundation'
+import { extractDecoration } from '@pk2/react'
 import { createVariantPass } from '@pk2/style'
-import type { VariantConfig } from '@pk2/style'
 
-type VariantRecord = StringMap<StringMap<ClassName>>
-type CompoundRecord = StringMap<ClassName> & { class: ClassName }
+import {
+  applyAria,
+  applyFilterProps,
+  buildDefinition,
+  buildVariantConfig,
+  renderAsChild,
+  renderNormally,
+  renderWithCallback,
+  resolveCompounds,
+  type CompoundRecord,
+  type PresetRecord,
+  type RenderCallback,
+  type VariantRecord,
+} from './helpers'
 
 declare const process: { env: { NODE_ENV: string } }
-
-function flattenClassName(cls: ClassName): string {
-  return Array.isArray(cls) ? cls.join(' ') : cls
-}
-
-function buildDefinition(name: string, tag: string): ComponentDefinition {
-  return { identity: { id: name, name, tag }, capabilities: {}, metadata: {}, diagnostics: [] }
-}
-
-function buildVariantConfig(
-  variants: VariantRecord | undefined,
-  presets: AnyRecord | undefined,
-): VariantConfig {
-  const flat: StringMap<StringMap<string>> = {}
-  for (const [key, valueMap] of Object.entries(variants ?? {})) {
-    const inner: StringMap<string> = {}
-    for (const [val, cls] of Object.entries(valueMap)) {
-      inner[val] = flattenClassName(cls)
-    }
-    flat[key] = inner
-  }
-  return {
-    variants: flat,
-    ...(presets !== undefined && Object.keys(presets).length > 0
-      ? { presets: presets as Record<string, Record<string, string>> }
-      : {}),
-  }
-}
-
-function resolveCompounds(
-  active: Record<string, unknown>,
-  compounds: ReadonlyArray<CompoundRecord> | undefined,
-): string[] {
-  if (compounds === undefined || compounds.length === 0) return []
-  const out: string[] = []
-  for (const compound of compounds) {
-    const { class: cls, ...conditions } = compound
-    const matches = Object.entries(conditions).every(([k, v]) => {
-      const a = active[k]
-      return Array.isArray(v) ? v.includes(a as string) : a === v
-    })
-    if (matches) out.push(flattenClassName(cls))
-  }
-  return out
-}
 
 export function createContractComponent<
   TDefault extends ElementType,
@@ -96,25 +54,22 @@ export function createContractComponent<
   const displayName = resolved.name
   const defaultTag = (options.tag as string | undefined) ?? 'div'
 
-  // Synchronous definition — async compileComponent is Phase 20 (enforcement passes)
   const definition = buildDefinition(displayName, defaultTag)
-
   const variantKeys = new Set(Object.keys(options.styling?.variants ?? {}))
   const variantConfig = buildVariantConfig(
     options.styling?.variants as VariantRecord | undefined,
-    options.styling?.presets as AnyRecord | undefined,
+    options.styling?.presets as PresetRecord | undefined,
   )
   const defaults = (options.styling?.defaults ?? {}) as Record<string, string>
   const base = options.styling?.base
   const compounds = options.styling?.compounds as ReadonlyArray<CompoundRecord> | undefined
-  const filterFn = options.filterProps
+  const filterFn = options.filterProps as FilterPredicate | undefined
 
   const { childrenEvaluator } = buildEngines(
     resolved.strict,
     options.enforcement?.children,
     displayName,
   )
-  // Active only when enforcement is explicitly configured; absent = no ARIA engine at all
   const ariaEngine =
     options.enforcement !== undefined ? new AriaPolicyEngine(resolved.strict) : undefined
 
@@ -139,26 +94,16 @@ export function createContractComponent<
 
     const tag = typeof as === 'string' ? as : defaultTag
 
-    const decoration: Record<NodeId, NodeDecoration> = {}
+    let decoration: Record<NodeId, NodeDecoration> = {}
     const rootDec = extractDecoration(ownProps as Record<string, unknown>, variantKeys)
     if (Object.keys(rootDec).length > 0) decoration['root'] = rootDec
 
-    if (ariaEngine !== undefined) {
-      const dec = decoration['root']
-      if (dec !== undefined && dec.attributes !== undefined) {
-        const result = ariaEngine.validate(tag, dec.attributes as Record<string, unknown>)
-        const cleaned = result.props as typeof dec.attributes
-        const { attributes: _a, ...rest } = dec
-        decoration['root'] =
-          Object.keys(cleaned).length > 0 ? { ...rest, attributes: cleaned } : rest
-      }
-    }
+    decoration = applyAria(decoration, tag, ariaEngine)
 
     if (process.env.NODE_ENV !== 'production' && childrenEvaluator !== undefined) {
       childrenEvaluator.evaluate(normalizeChildren(children))
     }
 
-    // children: [] — raw children re-injected via cloneElement to preserve text nodes
     const root: NodeInput = { kind: 'native', tag, id: 'root', children: [] }
     const treeCtx = buildTreeContext(root)
 
@@ -166,8 +111,11 @@ export function createContractComponent<
     const activeWithDefaults: AnyRecord = { ...defaults, ...active }
     if (typeof recipe === 'string') activeWithDefaults['preset'] = recipe
 
-    const pass = createVariantPass(activeWithDefaults, variantConfig)
-    const result = pass.execute({ classes: [] }) as { context?: { classes?: string[] } }
+    const result = createVariantPass(activeWithDefaults, variantConfig).execute({
+      classes: [],
+    }) as {
+      context?: { classes?: string[] }
+    }
     const variantClasses = result.context?.classes ?? []
     const compoundClasses = resolveCompounds(activeWithDefaults, compounds)
 
@@ -175,55 +123,23 @@ export function createContractComponent<
       .filter(Boolean)
       .join(' ')
 
-    // render prop takes priority; then asChild; then normal DOM path
-    if (typeof render === 'function') {
-      const fn = render as (p: { className?: string; ref?: unknown }) => ReactElement
-      const cbProps: { className?: string; ref?: unknown } = {}
-      if (className) cbProps.className = className
-      if (ref !== undefined) cbProps.ref = ref
-      return fn(cbProps)
-    }
+    if (typeof render === 'function')
+      return renderWithCallback(render as RenderCallback, className, ref)
 
-    // asChild: merge className + ref onto the single child element
-    if (asChild === true) {
-      if (!isValidElement(children)) throw new Error('asChild requires a React element child')
-      const slotProps: Record<string, unknown> = {}
-      if (className) slotProps.className = className
-      return cloneSlotChild({ child: children, slotProps, ref: ref ?? null })
-    }
+    if (asChild === true) return renderAsChild(children, className, ref)
 
     let finalDecoration = className
       ? applyAttributes('root', { className }, decoration, variantKeys)
       : decoration
 
-    // filterFn strips custom props from DOM attributes; variant keys are already in
-    // dec.variants (not attributes) so they are never spread to the DOM regardless
-    if (filterFn !== undefined) {
-      const dec = finalDecoration['root']
-      if (dec?.attributes !== undefined) {
-        const kept = Object.fromEntries(
-          Object.entries(dec.attributes).filter(([k]) => !filterFn(k, variantKeys)),
-        )
-        const { attributes: _a, ...rest } = dec
-        finalDecoration = {
-          ...finalDecoration,
-          root: Object.keys(kept).length > 0 ? { ...rest, attributes: kept } : rest,
-        }
-      }
-    }
+    finalDecoration = applyFilterProps(finalDecoration, filterFn, variantKeys)
 
     if (ref !== undefined) {
       const existing = finalDecoration['root'] ?? {}
       finalDecoration = { ...finalDecoration, root: { ...existing, ref } }
     }
 
-    const rendered = renderComponent(
-      definition,
-      treeCtx,
-      buildRenderContext(finalDecoration),
-      reactBackend,
-    )
-    return children !== undefined ? cloneElement(rendered, {}, children as ReactElement) : rendered
+    return renderNormally(definition, treeCtx, finalDecoration, children)
   }
 
   applyDisplayName(Component, options.name)
