@@ -1,3 +1,6 @@
 {
-  "extends": ["../../configs/tsconfig.preact.json", "../../configs/tsconfig.shared.paths.json"]
+  "extends": [
+    "../../configs/tsconfig.preact.json",
+    "../../configs/tsconfig.shared.paths.json"
+  ]
 }

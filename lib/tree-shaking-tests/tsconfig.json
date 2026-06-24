@@ -5,10 +5,7 @@
     "jsx": "react-jsx",
     "jsxImportSource": "react"
   },
-  "include": [
-    "scripts/**/*",
-    "scenarios/**/*"
-  ],
+  "include": ["scripts/**/*", "scenarios/**/*"],
   "exclude": [
     "scenarios/solid-minimal",
     "scenarios/vue-minimal",

@@ -1,8 +1,4 @@
 {
   "extends": "../../configs/tsconfig.svelte.json",
-  "include": [
-    "src",
-    "./vitest.config.ts",
-    "./vitest.ssr.config.ts"
-  ]
+  "include": ["src", "./vitest.config.ts", "./vitest.ssr.config.ts"]
 }
