@@ -95,10 +95,10 @@ describe('startPipeline', () => {
     expect(await executePipeline(outer, initial)).toEqual({ values: [20, 2] })
   })
 
-  it('duplicate names — last processor with the same name wins', async () => {
-    const pipeline = startPipeline(buildOptions).then(pass('a', 1)).then(pass('a', 2)).build()
-    expect([...pipeline.nodes.keys()]).toEqual(['a'])
-    expect(await executePipeline(pipeline, initial)).toEqual({ values: [2] })
+  it('duplicate names — build() throws', () => {
+    expect(() => startPipeline(buildOptions).then(pass('a', 1)).then(pass('a', 2)).build()).toThrow(
+      'duplicate processor name "a"',
+    )
   })
 
   it('build() sets name and strategy on the pipeline', () => {
