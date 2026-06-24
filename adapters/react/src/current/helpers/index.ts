@@ -1,5 +1,5 @@
-export { buildDefinition } from './build-definition'
-export { buildStylePipeline, type StylePipeline } from './build-pipeline'
+export { buildDefinition } from '@praxis-kit/adapter-utils'
+export { buildStylePipeline, type StylePipeline } from '@praxis-kit/adapter-utils'
 export {
   buildVariantConfig,
   flattenClassName,
@@ -9,14 +9,14 @@ export {
   type PresetValues,
   type VariantRecord,
   type VariantTable,
-} from './build-variant-config'
-export { resolveCompounds } from './resolve-compounds'
-export { resolveClasses, type ClassResolution } from './resolve-classes'
-export { joinClasses } from './join-classes'
-export { withAttributes } from './decoration-utils'
-export { applyAria } from './apply-aria'
-export { applyFilterProps } from './apply-filter-props'
-export { applyRef } from './apply-ref'
+} from '@praxis-kit/adapter-utils'
+export { resolveCompounds } from '@praxis-kit/adapter-utils'
+export { resolveClasses, type ClassResolution } from '@praxis-kit/adapter-utils'
+export { joinClasses } from '@praxis-kit/adapter-utils'
+export { withAttributes } from '@praxis-kit/adapter-utils'
+export { applyAria } from '@praxis-kit/adapter-utils'
+export { applyFilterProps } from '@praxis-kit/adapter-utils'
+export { applyRef } from '@praxis-kit/adapter-utils'
 export { renderNormally } from './render-normally'
 export {
   renderWithCallback,

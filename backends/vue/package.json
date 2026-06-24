@@ -1,5 +1,5 @@
 {
-  "name": "@pk2/react",
+  "name": "@pk2/vue",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,9 +8,7 @@
   },
   "sideEffects": false,
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:related": "vitest run --changed"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@pk2/backend-utils": "workspace:*",
@@ -19,11 +17,9 @@
     "@praxis-kit/primitive": "workspace:*"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "vue": ">=3.3"
   },
   "devDependencies": {
-    "@types/react": "catalog:",
-    "react": "catalog:",
-    "vitest": "catalog:"
+    "vue": "catalog:"
   }
 }

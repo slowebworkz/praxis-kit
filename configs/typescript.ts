@@ -71,6 +71,7 @@ const config = [
             // remaining tsup.config.ts files are included in each package's tsconfig — removed from here
             // lib/contract and lib/styling include vitest.config.ts in their tsconfig — listed explicitly
             'lib/adapter-utils/vitest.config.ts',
+            'lib/backend-utils/vitest.config.ts',
             'lib/primitive/vitest.config.ts',
             'examples/*/vite.config.ts',
             // PK2 workspace vitest configs live outside any tsconfig include
