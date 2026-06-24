@@ -21,6 +21,11 @@ const distDir = join(pkg, '../dist')
 
 // Workspace source aliases — resolve published packages to their TypeScript source.
 const workspaceAlias: Record<string, string> = {
+  '@pk2/compiler': join(root, 'runtime/compiler/src/index.ts'),
+  '@pk2/foundation': join(root, 'engine/foundation/src/index.ts'),
+  '@pk2/merge': join(root, 'engine/merge/src/index.ts'),
+  '@pk2/pipeline': join(root, 'engine/pipeline/src/index.ts'),
+  '@pk2/core': join(root, 'runtime/core/src/index.ts'),
   '@praxis-kit/react': join(root, 'adapters/react/src/index.ts'),
   '@praxis-kit/preact': join(root, 'adapters/preact/src/index.ts'),
   '@praxis-kit/vue': join(root, 'adapters/vue/src/index.ts'),
@@ -73,7 +78,9 @@ const externalStrings = [
 
 // esbuild's `external` option only accepts strings; regex patterns need a plugin.
 function frameworkExternalPlugin(): Plugin {
-  const re = /^(solid-js|preact|svelte)\//
+  // Covers framework subpaths (solid-js/web, preact/compat, etc.) and Node built-ins
+  // (node:crypto, node:fs, …) used by PK2 compiler scenarios.
+  const re = /^(solid-js|preact|svelte)\/|^node:/
   return {
     name: 'framework-external',
     setup(b) {

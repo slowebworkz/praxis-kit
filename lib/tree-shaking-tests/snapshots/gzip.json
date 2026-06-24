@@ -31,5 +31,14 @@
   },
   "svelte-minimal": {
     "gzip": 7356
+  },
+  "pk2-compiler-minimal": {
+    "gzip": 1318
+  },
+  "pk2-compiler-with-variants": {
+    "gzip": 1425
+  },
+  "pk2-engine-only": {
+    "gzip": 603
   }
 }

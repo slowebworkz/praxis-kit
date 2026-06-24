@@ -1,0 +1,12 @@
+{
+  "mustInclude": ["engine/pipeline/src"],
+  "mustExclude": [
+    "runtime/compiler/src",
+    "adapters/react/src",
+    "adapters/vue/src",
+    "adapters/solid/src",
+    "adapters/preact/src",
+    "domains/style/src",
+    "plugins/tailwind/src"
+  ]
+}
