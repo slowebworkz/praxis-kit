@@ -1,0 +1,23 @@
+{
+  "name": "@pk2/lit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pk2/core": "workspace:*",
+    "@pk2/foundation": "workspace:*"
+  },
+  "peerDependencies": {
+    "lit": ">=3.0"
+  },
+  "devDependencies": {
+    "lit": "catalog:"
+  }
+}

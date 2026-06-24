@@ -1,5 +1,5 @@
 {
-  "name": "@pk2/react",
+  "name": "@pk2/backend-utils",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,17 +13,11 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@pk2/backend-utils": "workspace:*",
     "@pk2/core": "workspace:*",
     "@pk2/foundation": "workspace:*",
     "@praxis-kit/primitive": "workspace:*"
   },
-  "peerDependencies": {
-    "react": ">=18"
-  },
   "devDependencies": {
-    "@types/react": "catalog:",
-    "react": "catalog:",
     "vitest": "catalog:"
   }
 }

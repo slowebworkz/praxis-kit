@@ -304,4 +304,31 @@ describe('fromReactElement', () => {
     expect(decoration['root']?.listeners?.onClick).toBe(onClick)
     expect(decoration['root']?.ref).toBeDefined()
   })
+
+  it('builds a complete tree: root → root-0 + root-1 with decoration on each node', () => {
+    // <div id="wrap">
+    //   <span aria-label="text" />
+    //   <button disabled />
+    // </div>
+    const el = w(
+      React.createElement(
+        'div',
+        { id: 'wrap' },
+        React.createElement('span', { key: '0', 'aria-label': 'text' }),
+        React.createElement('button', { key: '1', disabled: true }),
+      ),
+    )
+    const { root, decoration } = fromReactElement(el)
+
+    // tree shape
+    expect(root).toMatchObject({ kind: 'native', id: 'root', tag: 'div' })
+    expect(root.children).toHaveLength(2)
+    expect(root.children?.[0]).toMatchObject({ kind: 'native', id: 'root-0', tag: 'span' })
+    expect(root.children?.[1]).toMatchObject({ kind: 'native', id: 'root-1', tag: 'button' })
+
+    // decoration attached to the correct ids
+    expect(decoration['root']?.attributes).toEqual({ id: 'wrap' })
+    expect(decoration['root-0']?.attributes).toEqual({ 'aria-label': 'text' })
+    expect(decoration['root-1']?.attributes).toEqual({ disabled: true })
+  })
 })

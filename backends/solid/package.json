@@ -1,5 +1,5 @@
 {
-  "name": "@pk2/react",
+  "name": "@pk2/solid",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,22 +8,17 @@
   },
   "sideEffects": false,
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:related": "vitest run --changed"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@pk2/backend-utils": "workspace:*",
     "@pk2/core": "workspace:*",
-    "@pk2/foundation": "workspace:*",
-    "@praxis-kit/primitive": "workspace:*"
+    "@pk2/foundation": "workspace:*"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "solid-js": ">=1.6"
   },
   "devDependencies": {
-    "@types/react": "catalog:",
-    "react": "catalog:",
-    "vitest": "catalog:"
+    "solid-js": "catalog:"
   }
 }
