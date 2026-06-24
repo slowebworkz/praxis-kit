@@ -23,6 +23,8 @@ import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/shared/guards/children'
 import type { ReactElement, ReactNode, Ref } from 'react'
 import type { PolymorphicComponent, ReactFactoryOptions, UnknownProps } from '../shared'
 import { applyDisplayName } from '../shared'
+import { makeRenderAsChild, SlotValidator } from '../shared/slot'
+import { cloneSlotChild } from './slot/cloneSlotChild'
 import { normalizeChildren } from './normalize-children'
 
 import type { NodeDecoration } from '@pk2/core'
@@ -46,7 +48,6 @@ import {
   buildStylePipeline,
   flattenClassName,
   joinClasses,
-  renderAsChild,
   renderNormally,
   renderWithCallback,
 } from './helpers'
@@ -108,6 +109,9 @@ export function createContractComponent<
 
   const ariaEngine =
     options.enforcement !== undefined ? new AriaPolicyEngine(resolved.strict) : undefined
+
+  const slotValidator = new SlotValidator(displayName, resolved.strict)
+  const renderAsChild = makeRenderAsChild(cloneSlotChild)
 
   function Component({ ref, ...props }: UnknownProps & { ref?: Ref<unknown> }): ReactElement {
     const {
@@ -178,9 +182,12 @@ export function createContractComponent<
         : rawClassName
 
     if (asChild === true) {
-      if (typeof as === 'string')
-        throw new Error(`${displayName}: cannot use both 'as' and 'asChild' on the same element`)
-      return renderAsChild(children, className, ref)
+      if (typeof as === 'string') {
+        slotValidator.assertExclusive()
+        // Non-throw modes: warned and fell through — render normally as a fallback.
+      } else {
+        return renderAsChild(children, className, ref)
+      }
     }
 
     let finalDecoration: Record<NodeId, NodeDecoration> = className

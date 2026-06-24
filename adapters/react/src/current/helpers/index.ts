@@ -17,7 +17,6 @@ export { withAttributes } from './decoration-utils'
 export { applyAria } from './apply-aria'
 export { applyFilterProps } from './apply-filter-props'
 export { applyRef } from './apply-ref'
-export { renderAsChild } from './render-as-child'
 export { renderNormally } from './render-normally'
 export {
   renderWithCallback,
