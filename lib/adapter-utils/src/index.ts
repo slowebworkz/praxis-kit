@@ -6,6 +6,7 @@ export type {
   WithChildRules,
 } from './types'
 export { applyFilter } from './apply-filter'
+export { applyPropNormalizers } from './apply-prop-normalizers'
 export { defineContractComponent } from './define-component'
 export { buildCoreRuntime } from './build-core-runtime'
 export { buildEngines } from './build-engines'
