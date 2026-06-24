@@ -39,7 +39,9 @@ export const diagnosticPass: Pass<CompilerContext> = {
 }
 
 export function nodes(
-  ...passes: Pass<CompilerContext>[]
+  ...passes: (Pass<CompilerContext> | undefined)[]
 ): ReadonlyMap<string, Pass<CompilerContext>> {
-  return new Map(passes.map((p) => [p.name, p]))
+  return new Map(
+    passes.filter((p): p is Pass<CompilerContext> => p !== undefined).map((p) => [p.name, p]),
+  )
 }
