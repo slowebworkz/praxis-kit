@@ -12,7 +12,7 @@ export function applyPropNormalizers(
   props: AnyRecord,
   additional?: readonly PropNormalizer[],
 ): AnyRecord {
-  const all = [...(getHtmlPropNormalizers(tag) ?? []), ...(additional ?? [])]
-  if (all.length === 0) return props
-  return all.reduce<AnyRecord>((acc, fn) => ({ ...acc, ...fn(acc) }), props)
+  const normalizers = [...(getHtmlPropNormalizers(tag) ?? []), ...(additional ?? [])]
+  if (normalizers.length === 0) return props
+  return normalizers.reduce<AnyRecord>((acc, fn) => ({ ...acc, ...fn(acc) }), props)
 }
