@@ -95,6 +95,24 @@ describe('startPipeline', () => {
     expect(await executePipeline(outer, initial)).toEqual({ values: [20, 2] })
   })
 
+  it('pass after nested pipeline sees nested pipeline final context', async () => {
+    const seen: number[][] = []
+    const inner = startPipeline({ name: 'inner', strategy: 'sequential', merge: appendMerge })
+      .then(pass('x', 10))
+      .then(pass('y', 20))
+      .build()
+    const observer: Pass<Ctx> = {
+      name: 'observer',
+      execute(ctx) {
+        seen.push([...ctx.values])
+        return {}
+      },
+    }
+    const outer = startPipeline(buildOptions).then(pass('a', 1)).then(inner).then(observer).build()
+    await executePipeline(outer, initial)
+    expect(seen[0]).toEqual([1, 10, 20])
+  })
+
   it('duplicate names — build() throws', () => {
     expect(() => startPipeline(buildOptions).then(pass('a', 1)).then(pass('a', 2)).build()).toThrow(
       'duplicate processor name "a"',
