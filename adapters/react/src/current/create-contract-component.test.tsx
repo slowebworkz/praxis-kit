@@ -363,6 +363,79 @@ describe('createContractComponent (current / React 19)', () => {
     expect(dom.container.querySelector('[unwanted]')).toBeNull()
   })
 
+  // ── HTML prop normalizers ────────────────────────────────────────────────────
+
+  it('prop normalizers: disabled on button adds aria-disabled and data-disabled', () => {
+    const Btn = createContractComponent({ tag: 'button' })
+    dom.mount(createElement(box(Btn), { disabled: true } as never))
+    const el = dom.container.querySelector('button')!
+    expect(el.getAttribute('aria-disabled')).toBe('true')
+    expect(el.getAttribute('data-disabled')).toBe('')
+  })
+
+  it('prop normalizers: does not add aria-disabled when disabled is false', () => {
+    const Btn = createContractComponent({ tag: 'button' })
+    dom.mount(createElement(box(Btn), { disabled: false } as never))
+    const el = dom.container.querySelector('button')!
+    expect(el.getAttribute('aria-disabled')).toBeNull()
+  })
+
+  it('prop normalizers: disabled on non-form element does not add aria-disabled', () => {
+    const Box = createContractComponent({ tag: 'div' })
+    dom.mount(createElement(box(Box), { disabled: true } as never))
+    const el = dom.container.querySelector('div')!
+    expect(el.getAttribute('aria-disabled')).toBeNull()
+  })
+
+  it('prop normalizers: explicit aria-disabled is not overridden', () => {
+    const Btn = createContractComponent({ tag: 'button' })
+    dom.mount(createElement(box(Btn), { disabled: true, 'aria-disabled': 'false' } as never))
+    const el = dom.container.querySelector('button')!
+    expect(el.getAttribute('aria-disabled')).toBe('false')
+  })
+
+  it('prop normalizers: enforcement.props normalizer fires after HTML built-ins', () => {
+    const seenAriaDisabled: Array<string | undefined> = []
+    const Btn = createContractComponent({
+      tag: 'button',
+      enforcement: {
+        props: [
+          (props) => {
+            seenAriaDisabled.push(props['aria-disabled'] as string | undefined)
+            return {}
+          },
+        ],
+      },
+    })
+    dom.mount(createElement(box(Btn), { disabled: true } as never))
+    expect(seenAriaDisabled).toEqual(['true'])
+  })
+
+  it('prop normalizers: enforcement.props normalizer can override built-in', () => {
+    const Btn = createContractComponent({
+      tag: 'button',
+      enforcement: {
+        props: [() => ({ 'aria-disabled': 'false' })],
+      },
+    })
+    dom.mount(createElement(box(Btn), { disabled: true } as never))
+    const el = dom.container.querySelector('button')!
+    expect(el.getAttribute('aria-disabled')).toBe('false')
+  })
+
+  it('prop normalizers: normalize callback sees already-patched props', () => {
+    const seenAriaDisabled: Array<string | undefined> = []
+    const Btn = createContractComponent({
+      tag: 'button',
+      normalize: (props) => {
+        seenAriaDisabled.push(props['aria-disabled'] as string | undefined)
+        return props
+      },
+    })
+    dom.mount(createElement(box(Btn), { disabled: true } as never))
+    expect(seenAriaDisabled).toEqual(['true'])
+  })
+
   // ── HTML contract uses active tag ────────────────────────────────────────────
 
   it('html contract: evaluates against the active tag, not the default tag', () => {

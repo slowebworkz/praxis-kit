@@ -1,5 +1,9 @@
 import type { FilterPredicate } from '@praxis-kit/adapter-utils'
-import { buildEngines, resolveAdapterCommonOptions } from '@praxis-kit/adapter-utils'
+import {
+  applyPropNormalizers,
+  buildEngines,
+  resolveAdapterCommonOptions,
+} from '@praxis-kit/adapter-utils'
 import type {
   AnyRecord,
   ClassPlugin,
@@ -9,6 +13,7 @@ import type {
   EmptyRecord,
   ExtractPluginProps,
   PolymorphicGenerics,
+  PropNormalizer,
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
@@ -82,6 +87,7 @@ export function createContractComponent<
   const normalizeFn = options.normalize as
     | ((props: Record<string, unknown>) => Record<string, unknown>)
     | undefined
+  const enforcementNormalizers = options.enforcement?.props as readonly PropNormalizer[] | undefined
 
   // Wire class plugin: call the factory once at creation time
   const classPlugin: ClassPlugin<AnyRecord> | undefined =
@@ -130,7 +136,8 @@ export function createContractComponent<
       domDefaults !== undefined
         ? { ...domDefaults, ...ownProps }
         : (ownProps as Record<string, unknown>)
-    const baseProps = normalizeFn !== undefined ? normalizeFn(rawBaseProps) : rawBaseProps
+    const normalizedProps = applyPropNormalizers(tag, rawBaseProps, enforcementNormalizers)
+    const baseProps = normalizeFn !== undefined ? normalizeFn(normalizedProps) : normalizedProps
 
     // Extract plugin-owned props before decoration so they don't leak to the DOM
     const pluginProps: AnyRecord = {}
