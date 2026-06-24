@@ -30,6 +30,7 @@ import type {
   Defaults,
   PresetRecord,
   RenderCallback,
+  StylePipeline,
   VariantRecord,
 } from './helpers'
 import {
@@ -37,13 +38,12 @@ import {
   applyFilterProps,
   applyRef,
   buildDefinition,
-  buildVariantConfig,
+  buildStylePipeline,
   flattenClassName,
   joinClasses,
   renderAsChild,
   renderNormally,
   renderWithCallback,
-  resolveClasses,
 } from './helpers'
 
 declare const process: { env: { NODE_ENV: string } }
@@ -66,16 +66,14 @@ export function createContractComponent<
 
   const artifact = options.artifact
   const definition = artifact?.definition ?? buildDefinition(displayName, defaultTag)
-  const variantLookup = artifact?.precomputed?.variantLookup
   const variantKeys = new Set(Object.keys(options.styling?.variants ?? {}))
   const domDefaults = options.defaults as Record<string, unknown> | undefined
-  const variantDefaults = (options.styling?.defaults ?? {}) as Defaults
-  const compounds = options.styling?.compounds as ReadonlyArray<CompoundRecord> | undefined
-  const variantConfig = buildVariantConfig(
+  const stylePipeline: StylePipeline | undefined = buildStylePipeline(
     options.styling?.variants as VariantRecord | undefined,
     options.styling?.presets as PresetRecord | undefined,
-    variantDefaults,
-    compounds,
+    (options.styling?.defaults ?? {}) as Defaults,
+    options.styling?.compounds as ReadonlyArray<CompoundRecord> | undefined,
+    artifact?.precomputed?.variantLookup,
   )
   const base =
     options.styling?.base !== undefined ? flattenClassName(options.styling.base) : undefined
@@ -162,14 +160,9 @@ export function createContractComponent<
     }
 
     const recipeName = typeof recipe === 'string' ? recipe : undefined
-    const { variantClasses, compoundClasses } = resolveClasses(
-      decoration,
-      variantConfig,
-      variantDefaults,
-      recipeName,
-      compounds,
-      variantLookup,
-    )
+    const { variantClasses, compoundClasses } = stylePipeline
+      ? stylePipeline.execute(decoration, recipeName)
+      : { variantClasses: [], compoundClasses: [] }
 
     const rawClassName = joinClasses(base, ...variantClasses, ...compoundClasses, callerClassName)
     const className =

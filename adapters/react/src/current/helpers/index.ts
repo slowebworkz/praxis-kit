@@ -1,4 +1,5 @@
 export { buildDefinition } from './build-definition'
+export { buildStylePipeline, type StylePipeline } from './build-pipeline'
 export {
   buildVariantConfig,
   flattenClassName,
