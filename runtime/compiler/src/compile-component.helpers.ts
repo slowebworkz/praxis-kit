@@ -1,4 +1,4 @@
-import type { Pass } from '@pk2/pipeline'
+import type { Pass, PipelineNode } from '@pk2/pipeline'
 import type { CompilerContext } from './types'
 
 export const completeIdentityPass: Pass<CompilerContext> = {
@@ -39,9 +39,11 @@ export const diagnosticPass: Pass<CompilerContext> = {
 }
 
 export function nodes(
-  ...passes: (Pass<CompilerContext> | undefined)[]
-): ReadonlyMap<string, Pass<CompilerContext>> {
+  ...entries: (PipelineNode<CompilerContext> | undefined)[]
+): ReadonlyMap<string, PipelineNode<CompilerContext>> {
   return new Map(
-    passes.filter((p): p is Pass<CompilerContext> => p !== undefined).map((p) => [p.name, p]),
+    entries
+      .filter((n): n is PipelineNode<CompilerContext> => n !== undefined)
+      .map((n) => [n.name, n]),
   )
 }
