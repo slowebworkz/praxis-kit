@@ -15,6 +15,7 @@ export {
   contributeSlots,
   contributeVariants,
 } from './passes'
+export { variantProvider, type VariantProviderOptions } from './variant-provider'
 export type {
   ArtifactHashes,
   ArtifactMetadata,
