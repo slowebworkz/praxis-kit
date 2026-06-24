@@ -1,4 +1,4 @@
-export type { ReactFactoryOptions } from './react-options'
+export type { CompiledArtifact, ReactFactoryOptions } from './react-options'
 export type {
   FilterPredicate,
   NormalizeChildren,

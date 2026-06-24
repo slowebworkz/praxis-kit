@@ -56,6 +56,7 @@ function buildArtifact(
       topology: sha256({ identity: definition.identity, capabilities: definition.capabilities }),
       styling: sha256(definition.metadata),
     },
+    ...(context.precomputed !== undefined ? { precomputed: context.precomputed } : {}),
   })
 }
 

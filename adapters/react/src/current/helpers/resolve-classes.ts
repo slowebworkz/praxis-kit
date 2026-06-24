@@ -2,7 +2,7 @@ import type { NodeDecoration } from '@pk2/core'
 import { getActiveProps } from '@pk2/core'
 import type { NodeId } from '@pk2/foundation'
 import type { VariantConfig } from '@pk2/style'
-import { createVariantPass } from '@pk2/style'
+import { buildPrecomputedKey, createVariantPass } from '@pk2/style'
 import type { CompoundRecord, Defaults } from './build-variant-config'
 import { resolveCompounds } from './resolve-compounds'
 
@@ -17,8 +17,28 @@ export function resolveClasses(
   variantDefaults: Defaults,
   recipe: string | undefined,
   compounds?: ReadonlyArray<CompoundRecord>,
+  variantLookup?: Record<string, string>,
 ): ClassResolution {
   const active = getActiveProps('root', decoration)
+
+  // Fast path: precomputed lookup already includes both variant and compound classes.
+  // Skip only when no recipe is active — presets alter class resolution beyond what the
+  // lookup table captures.
+  if (variantLookup !== undefined && recipe === undefined) {
+    const activeVariants: Record<string, string> = {}
+    for (const key of Object.keys(variantConfig.variants)) {
+      const value = active[key]
+      if (typeof value === 'string') activeVariants[key] = value
+    }
+    const lookupKey = buildPrecomputedKey(activeVariants)
+    const precomputedValue = variantLookup[lookupKey]
+    if (precomputedValue !== undefined) {
+      return {
+        variantClasses: precomputedValue !== '' ? [precomputedValue] : [],
+        compoundClasses: [],
+      }
+    }
+  }
 
   const passInput = recipe !== undefined ? { ...active, preset: recipe } : active
 

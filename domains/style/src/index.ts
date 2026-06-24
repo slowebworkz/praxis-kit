@@ -1,5 +1,6 @@
 export type * from './types'
 export { basePass, focusPass, hoverPass } from './passes'
+export { buildPrecomputedKey, compileVariantLookup } from './compile-variant-lookup'
 export { styleMergeStrategy } from './style-merge-strategy'
 export { createVariantPass } from './variant-pass'
-export type { VariantConfig, VariantPass } from './variant-pass'
+export type { CompoundVariant, VariantConfig, VariantPass } from './variant-pass'

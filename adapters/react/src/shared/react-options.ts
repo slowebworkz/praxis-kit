@@ -7,7 +7,16 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
+import type { ComponentDefinition } from '@pk2/core'
 import type { UnknownProps, SlotComponent } from './types'
+
+/** Structural subset of `CompiledComponentArtifact` consumed by the React adapter. */
+export interface CompiledArtifact {
+  readonly definition: ComponentDefinition
+  readonly precomputed?: {
+    readonly variantLookup?: Record<string, string>
+  }
+}
 
 /**
  * Extends FactoryOptions with React-specific configuration.
@@ -31,4 +40,7 @@ export type ReactFactoryOptions<
    * Receives `runtime.options.variantKeys` as a convenience if needed.
    */
   filterProps?: (key: string, variantKeys: ReadonlySet<string>) => boolean
+  /** Pre-compiled artifact from `@pk2/compiler`. When provided, replaces the stub
+   *  definition and enables the precomputed variant lookup fast path. */
+  artifact?: CompiledArtifact
 }

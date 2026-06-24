@@ -1,4 +1,5 @@
 export { compileComponent } from './compile-component'
+export { variantLookupPass } from './variant-lookup-pass'
 export {
   capabilityMerge,
   compilerMergeStrategy,
@@ -17,6 +18,7 @@ export {
 export type {
   ArtifactHashes,
   ArtifactMetadata,
+  ArtifactPrecomputed,
   CompiledComponentArtifact,
   CompilerContext,
   SourceLocation,

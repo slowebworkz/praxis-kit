@@ -64,18 +64,21 @@ export function createContractComponent<
   const displayName = resolved.name
   const defaultTag = (options.tag as string | undefined) ?? 'div'
 
-  const definition = buildDefinition(displayName, defaultTag)
+  const artifact = options.artifact
+  const definition = artifact?.definition ?? buildDefinition(displayName, defaultTag)
+  const variantLookup = artifact?.precomputed?.variantLookup
   const variantKeys = new Set(Object.keys(options.styling?.variants ?? {}))
   const domDefaults = options.defaults as Record<string, unknown> | undefined
   const variantDefaults = (options.styling?.defaults ?? {}) as Defaults
+  const compounds = options.styling?.compounds as ReadonlyArray<CompoundRecord> | undefined
   const variantConfig = buildVariantConfig(
     options.styling?.variants as VariantRecord | undefined,
     options.styling?.presets as PresetRecord | undefined,
     variantDefaults,
+    compounds,
   )
   const base =
     options.styling?.base !== undefined ? flattenClassName(options.styling.base) : undefined
-  const compounds = options.styling?.compounds as ReadonlyArray<CompoundRecord> | undefined
   const filterFn = options.filterProps as FilterPredicate | undefined
   const allowedAs = options.enforcement?.allowedAs as readonly ElementType[] | undefined
   const normalizeFn = options.normalize as
@@ -165,6 +168,7 @@ export function createContractComponent<
       variantDefaults,
       recipeName,
       compounds,
+      variantLookup,
     )
 
     const rawClassName = joinClasses(base, ...variantClasses, ...compoundClasses, callerClassName)

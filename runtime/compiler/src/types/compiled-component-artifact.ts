@@ -30,9 +30,15 @@ export interface ArtifactHashes {
  * `version` guards against loading artifacts produced by an incompatible compiler.
  * The runtime should reject artifacts whose version does not match its own.
  */
+export interface ArtifactPrecomputed {
+  /** Variant + compound class string keyed by `buildPrecomputedKey(activeProps)`. */
+  readonly variantLookup: Record<string, string>
+}
+
 export interface CompiledComponentArtifact {
   readonly version: 1
   readonly definition: ComponentDefinition
   readonly metadata: ArtifactMetadata
   readonly hashes: ArtifactHashes
+  readonly precomputed?: ArtifactPrecomputed
 }

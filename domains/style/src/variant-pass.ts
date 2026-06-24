@@ -1,9 +1,16 @@
 import type { StyleContext } from './types'
 
+/** Flat compound variant: all keys except `class` are condition key:value pairs. */
+export type CompoundVariant = { readonly class: string | readonly string[] } & Record<
+  string,
+  string | readonly string[]
+>
+
 export interface VariantConfig {
   variants: Record<string, Record<string, string>>
   presets?: Record<string, Record<string, string>>
   defaults?: Record<string, string>
+  compounds?: ReadonlyArray<CompoundVariant>
 }
 
 export interface VariantPass {

@@ -1,6 +1,6 @@
 import type { ClassName } from '@praxis-kit/core'
 import type { StringMap } from '@pk2/foundation'
-import type { VariantConfig } from '@pk2/style'
+import type { CompoundVariant, VariantConfig } from '@pk2/style'
 
 export type VariantTable<T> = StringMap<StringMap<T>>
 export type VariantRecord = VariantTable<ClassName>
@@ -29,10 +29,15 @@ export function buildVariantConfig(
   variants?: VariantRecord,
   presets?: PresetRecord,
   defaults?: Defaults,
+  compounds?: ReadonlyArray<CompoundRecord>,
 ): VariantConfig {
   return {
     variants: mapVariantRecord(variants ?? {}, flattenClassName),
     ...(presets !== undefined && Object.keys(presets).length > 0 && { presets }),
     ...(defaults !== undefined && Object.keys(defaults).length > 0 && { defaults }),
+    ...(compounds !== undefined &&
+      compounds.length > 0 && {
+        compounds: compounds as unknown as ReadonlyArray<CompoundVariant>,
+      }),
   }
 }

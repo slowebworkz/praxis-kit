@@ -96,7 +96,8 @@ export function variantMerge(
 
 export const compilerMergeStrategy: MergeStrategy<CompilerContext> = {
   merge(previous, incoming) {
-    const { identity, capabilities, metadata, diagnostics, slots, variants, ...rest } = incoming
+    const { identity, capabilities, metadata, diagnostics, slots, variants, precomputed, ...rest } =
+      incoming
 
     const mergedSlots = slotMerge(previous.slots, slots)
     const mergedVariants = variantMerge(previous.variants, variants)
@@ -110,6 +111,7 @@ export const compilerMergeStrategy: MergeStrategy<CompilerContext> = {
       diagnostics: diagnosticMerge(previous.diagnostics, diagnostics),
       ...(mergedSlots !== undefined ? { slots: mergedSlots } : {}),
       ...(mergedVariants !== undefined ? { variants: mergedVariants } : {}),
+      ...(precomputed !== undefined ? { precomputed } : {}),
     }
   },
 }

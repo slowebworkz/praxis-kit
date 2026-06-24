@@ -1195,6 +1195,9 @@ importers:
       '@pk2/pipeline':
         specifier: workspace:*
         version: link:../../engine/pipeline
+      '@pk2/style':
+        specifier: workspace:*
+        version: link:../../domains/style
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
