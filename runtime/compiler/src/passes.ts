@@ -2,29 +2,51 @@ import type { Pass } from '@pk2/pipeline'
 import type { CapabilityMap, MetadataMap, SlotName, VariantMap } from '@pk2/foundation'
 import type { CompilerContext } from './types'
 
-function createContextPass(context: Partial<CompilerContext>, name: string): Pass<CompilerContext> {
+function field<K extends keyof CompilerContext>(
+  key: K,
+  value: CompilerContext[K] | undefined,
+): Pick<CompilerContext, K> | undefined {
+  return value === undefined ? undefined : ({ [key]: value } as Pick<CompilerContext, K>)
+}
+
+function contribute<TContext>(
+  name: string,
+  context: Partial<TContext> | undefined,
+): Pass<TContext> | undefined {
+  if (context === undefined) return undefined
   const snapshot = structuredClone(context)
   return {
     name,
-    execute: () => ({ context: snapshot }),
+    execute() {
+      return { context: snapshot }
+    },
   }
 }
 
-export function contributeSlots(slots: readonly SlotName[], name: string): Pass<CompilerContext> {
-  return createContextPass({ slots }, name)
+export function contributeSlots(
+  slots: readonly SlotName[] | undefined,
+  name = 'slots',
+): Pass<CompilerContext> | undefined {
+  return contribute<CompilerContext>(name, field('slots', slots))
 }
 
-export function contributeVariants(variants: VariantMap, name: string): Pass<CompilerContext> {
-  return createContextPass({ variants }, name)
+export function contributeVariants(
+  variants: VariantMap | undefined,
+  name = 'variants',
+): Pass<CompilerContext> | undefined {
+  return contribute<CompilerContext>(name, field('variants', variants))
 }
 
 export function contributeCapabilities(
-  capabilities: CapabilityMap,
-  name: string,
-): Pass<CompilerContext> {
-  return createContextPass({ capabilities }, name)
+  capabilities: CapabilityMap | undefined,
+  name = 'capabilities',
+): Pass<CompilerContext> | undefined {
+  return contribute<CompilerContext>(name, field('capabilities', capabilities))
 }
 
-export function contributeMetadata(metadata: MetadataMap, name: string): Pass<CompilerContext> {
-  return createContextPass({ metadata }, name)
+export function contributeMetadata(
+  metadata: MetadataMap | undefined,
+  name = 'metadata',
+): Pass<CompilerContext> | undefined {
+  return contribute<CompilerContext>(name, field('metadata', metadata))
 }
