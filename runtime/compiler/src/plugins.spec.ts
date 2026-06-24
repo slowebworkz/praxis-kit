@@ -5,7 +5,7 @@ import { compileComponent } from './compile-component'
 import { completeIdentityPass, nodes } from './compile-component.helpers'
 
 describe('plugins', () => {
-  it('plugin nodes run alongside pipeline nodes', async () => {
+  it('plugin processors run alongside pipeline nodes', async () => {
     const seen: string[] = []
     const pluginPass: Pass<CompilerContext> = {
       name: 'plugin-pass',
@@ -16,16 +16,25 @@ describe('plugins', () => {
     }
     const plugin: Plugin<CompilerContext> = {
       name: 'test-plugin',
-      nodes: new Map([['plugin-pass', pluginPass]]),
+      create: () => [pluginPass],
     }
     await compileComponent(nodes(completeIdentityPass), [plugin])
     expect(seen).toContain('plugin')
   })
 
-  it('throws when a plugin tries to inject a node that already exists in the pipeline', async () => {
+  it('plugin returning empty array contributes nothing', async () => {
+    const plugin: Plugin<CompilerContext> = {
+      name: 'empty-plugin',
+      create: () => [],
+    }
+    const result = await compileComponent(nodes(completeIdentityPass), [plugin])
+    expect(result).not.toBeNull()
+  })
+
+  it('throws when a plugin tries to inject a processor that already exists in the pipeline', async () => {
     const conflictPlugin: Plugin<CompilerContext> = {
       name: 'conflict-plugin',
-      nodes: new Map([['complete-identity', completeIdentityPass]]),
+      create: () => [completeIdentityPass],
     }
     await expect(compileComponent(nodes(completeIdentityPass), [conflictPlugin])).rejects.toThrow(
       '"complete-identity"',

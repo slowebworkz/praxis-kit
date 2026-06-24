@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { MergeStrategy } from '@pk2/merge'
-import type { Pass, PipelineOptions } from './types'
+import type { Pass, Plugin, PipelineOptions } from './types'
 import { createPipeline } from './create-pipeline'
 
 interface TestContext {
@@ -10,6 +10,11 @@ interface TestContext {
 const makePass = (name: string): Pass<TestContext> => ({
   name,
   execute: (ctx) => ({ context: { value: ctx.value + 1 } }),
+})
+
+const makePlugin = (name: string, passes: Pass<TestContext>[]): Plugin<TestContext> => ({
+  name,
+  create: () => passes,
 })
 
 const identityMerge: MergeStrategy<TestContext> = {
@@ -49,21 +54,43 @@ describe('createPipeline()', () => {
     expect(pipeline.nodes.size).toBe(2)
   })
 
-  it('injects plugin nodes', () => {
+  it('injects processors returned by plugin.create()', () => {
     const pipeline = makePipeline({
       nodes: new Map([['core', makePass('core')]]),
-      plugins: [{ name: 'plugin', nodes: new Map([['extra', makePass('extra')]]) }],
+      plugins: [makePlugin('plugin', [makePass('extra')])],
     })
     expect(pipeline.nodes.size).toBe(2)
     expect(pipeline.nodes.has('core')).toBe(true)
     expect(pipeline.nodes.has('extra')).toBe(true)
   })
 
+  it('plugin.create() returning empty array contributes nothing', () => {
+    const pipeline = makePipeline({
+      nodes: new Map([['core', makePass('core')]]),
+      plugins: [makePlugin('empty', [])],
+    })
+    expect(pipeline.nodes.size).toBe(1)
+    expect(pipeline.nodes.has('core')).toBe(true)
+  })
+
+  it('plugin.create() is called once at pipeline construction time', () => {
+    let calls = 0
+    const plugin: Plugin<TestContext> = {
+      name: 'counted',
+      create() {
+        calls++
+        return [makePass('p')]
+      },
+    }
+    makePipeline({ plugins: [plugin] })
+    expect(calls).toBe(1)
+  })
+
   it('does not mutate the original nodes map', () => {
     const original = new Map([['a', makePass('a')]])
     makePipeline({
       nodes: original,
-      plugins: [{ name: 'p', nodes: new Map([['b', makePass('b')]]) }],
+      plugins: [makePlugin('p', [makePass('b')])],
     })
     expect(original.size).toBe(1)
   })
@@ -91,8 +118,8 @@ describe('createPipeline()', () => {
     expect(() =>
       makePipeline({
         name: 'core',
-        nodes: new Map([['shared', makePass('core-version')]]),
-        plugins: [{ name: 'override', nodes: new Map([['shared', makePass('plugin-version')]]) }],
+        nodes: new Map([['shared', makePass('shared')]]),
+        plugins: [makePlugin('override', [makePass('shared')])],
       }),
     ).toThrow(
       'Plugin "override" tried to inject node "shared", but "shared" was already registered by pipeline "core".',
@@ -102,10 +129,7 @@ describe('createPipeline()', () => {
   it('reports plugin ownership on plugin-to-plugin collision', () => {
     expect(() =>
       makePipeline({
-        plugins: [
-          { name: 'first', nodes: new Map([['x', makePass('first')]]) },
-          { name: 'second', nodes: new Map([['x', makePass('second')]]) },
-        ],
+        plugins: [makePlugin('first', [makePass('x')]), makePlugin('second', [makePass('x')])],
       }),
     ).toThrow(
       'Plugin "second" tried to inject node "x", but "x" was already registered by plugin "first".',
@@ -116,10 +140,18 @@ describe('createPipeline()', () => {
     expect(() =>
       makePipeline({
         plugins: [
-          { name: 'first', nodes: new Map([['shared', makePass('a')]]) },
-          { name: 'second', nodes: new Map([['shared', makePass('b')]]) },
+          makePlugin('first', [makePass('shared')]),
+          makePlugin('second', [makePass('shared')]),
         ],
       }),
     ).toThrow('registered by plugin "first"')
+  })
+
+  it('plugin contributing multiple processors injects all of them', () => {
+    const pipeline = makePipeline({
+      plugins: [makePlugin('multi', [makePass('x'), makePass('y'), makePass('z')])],
+    })
+    expect(pipeline.nodes.size).toBe(3)
+    expect([...pipeline.nodes.keys()]).toEqual(['x', 'y', 'z'])
   })
 })

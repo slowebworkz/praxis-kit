@@ -6,5 +6,5 @@ export const TAILWIND_NODE = 'tailwind'
 
 export const tailwindPlugin: Plugin<StyleContext> = {
   name: 'tailwind',
-  nodes: new Map([[TAILWIND_NODE, tailwindPass]]),
+  create: () => [tailwindPass],
 }

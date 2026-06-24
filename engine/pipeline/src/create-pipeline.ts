@@ -1,11 +1,4 @@
-import type {
-  NodeOwner,
-  NodeRegistry,
-  PipelineNode,
-  Pipeline,
-  PipelineOptions,
-  Plugin,
-} from './types'
+import type { NodeOwner, NodeRegistry, Processor, Pipeline, PipelineOptions, Plugin } from './types'
 
 function pipelineOwner(name: string): NodeOwner {
   return { kind: 'pipeline', name }
@@ -34,23 +27,22 @@ function createNodeRegistry<TContext>(options: PipelineOptions<TContext>): NodeR
   return { nodes, owners }
 }
 
-function injectNode<TContext>(
+function injectProcessor<TContext>(
   registry: NodeRegistry<TContext>,
   plugin: Plugin<TContext>,
-  key: string,
-  node: PipelineNode<TContext>,
+  processor: Processor<TContext>,
 ): void {
-  const owner = registry.owners.get(key)
+  const owner = registry.owners.get(processor.name)
   if (owner) {
-    throw duplicateNodeError(plugin.name, key, owner)
+    throw duplicateNodeError(plugin.name, processor.name, owner)
   }
-  registry.nodes.set(key, node)
-  registry.owners.set(key, pluginOwner(plugin.name))
+  registry.nodes.set(processor.name, processor)
+  registry.owners.set(processor.name, pluginOwner(plugin.name))
 }
 
 function injectPlugin<TContext>(registry: NodeRegistry<TContext>, plugin: Plugin<TContext>): void {
-  for (const [key, node] of plugin.nodes) {
-    injectNode(registry, plugin, key, node)
+  for (const processor of plugin.create()) {
+    injectProcessor(registry, plugin, processor)
   }
 }
 

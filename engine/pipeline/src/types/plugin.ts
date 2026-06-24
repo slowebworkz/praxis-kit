@@ -1,6 +1,6 @@
-import type { PipelineNode } from './pipeline-node'
+import type { Processor } from './processor'
 
 export interface Plugin<TContext> {
   name: string
-  nodes: Map<string, PipelineNode<TContext>>
+  create(): ReadonlyArray<Processor<TContext>>
 }
