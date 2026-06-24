@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import type { Pass, Plugin } from '@pk2/pipeline'
+import type { PipelineNode, Plugin } from '@pk2/pipeline'
 import { createPipeline, executePipeline } from '@pk2/pipeline'
 import type { ComponentDefinition } from '@pk2/core'
 import { resolveDefinition } from '@pk2/core'
@@ -61,7 +61,7 @@ function buildArtifact(
 }
 
 export async function compileComponent(
-  nodes: ReadonlyMap<string, Pass<CompilerContext>>,
+  nodes: ReadonlyMap<string, PipelineNode<CompilerContext>>,
   plugins?: Plugin<CompilerContext>[],
 ): Promise<CompiledComponentArtifact | null> {
   const pipeline = createPipeline<CompilerContext>({
