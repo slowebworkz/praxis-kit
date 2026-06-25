@@ -10,11 +10,13 @@ import {
   buildStylePipeline,
   flattenClassName,
   joinClasses,
-  type CompoundRecord,
-  type Defaults,
-  type PresetRecord,
-  type StylePipeline,
-  type VariantRecord,
+} from '@praxis-kit/adapter-utils'
+import type {
+  CompoundRecord,
+  Defaults,
+  PresetRecord,
+  StylePipeline,
+  VariantRecord,
 } from '@praxis-kit/adapter-utils'
 import type {
   AnyRecord,

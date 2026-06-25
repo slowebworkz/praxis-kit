@@ -38,7 +38,7 @@ const config = [
         'error',
         {
           prefer: 'type-imports',
-          disallowTypeAnnotations: false,
+          disallowTypeAnnotations: true,
           fixStyle: 'separate-type-imports',
         },
       ],
