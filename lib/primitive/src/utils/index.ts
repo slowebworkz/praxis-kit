@@ -1,4 +1,5 @@
 export { assertNever } from './assert-never'
 export { cn } from './cn'
 export { isObject, isString, isNumber } from './is-object'
+export { iterate } from './iterate'
 export { mergeProps } from './merge-props'
