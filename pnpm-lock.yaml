@@ -240,6 +240,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1
@@ -440,6 +443,9 @@ importers:
       '@praxis-kit/playwright':
         specifier: workspace:*
         version: link:../../packages/playwright
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
       '@vitejs/plugin-vue':
         specifier: 'catalog:'
         version: 6.0.7(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))(vue@3.5.38(typescript@6.0.3))
@@ -594,6 +600,9 @@ importers:
       '@pk2/foundation':
         specifier: workspace:*
         version: link:../../engine/foundation
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
 
   domains/style:
     dependencies:
@@ -856,6 +865,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../primitive
       '@praxis-kit/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -1282,6 +1294,10 @@ importers:
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
   packages/ts-plugin:
+    dependencies:
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
     devDependencies:
       tsup:
         specifier: 'catalog:'
