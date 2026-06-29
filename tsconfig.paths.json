@@ -73,6 +73,7 @@
       "@praxis-kit/solid": ["./adapters/solid/src/index.ts"],
       "@praxis-kit/svelte": ["./adapters/svelte/src/index.ts"],
       "@praxis-kit/svelte/*": ["./adapters/svelte/src/*"],
+      "@praxis-kit/diagnostics": ["./packages/diagnostics/src/index.ts"],
       "@praxis-kit/tailwind": ["./packages/tailwind/src/index.ts"],
       "@praxis-kit/lit": ["./adapters/lit/src/index.ts"],
       "@praxis-kit/web": ["./adapters/web/src/index.ts"]

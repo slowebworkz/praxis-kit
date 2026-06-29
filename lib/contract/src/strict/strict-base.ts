@@ -1,52 +1,33 @@
 import type { StrictMode } from '../types'
-import { iterate } from '@praxis-kit/primitive'
-
-// Batch buffer for async-warn mode. All messages queued in one synchronous
-// pass are flushed in a single microtask rather than one microtask each.
-const pendingAsyncWarns = new Set<string>()
-let asyncWarnScheduled = false
-
-function flushAsyncWarns(): void {
-  asyncWarnScheduled = false
-  const messages = [...pendingAsyncWarns]
-  pendingAsyncWarns.clear()
-  iterate.forEach(messages, (msg) => {
-    console.warn(msg)
-  })
-}
-
-function scheduleAsyncWarn(message: string): void {
-  if (pendingAsyncWarns.has(message)) return
-  pendingAsyncWarns.add(message)
-  if (!asyncWarnScheduled) {
-    asyncWarnScheduled = true
-    queueMicrotask(flushAsyncWarns)
-  }
-}
+import type { Diagnostics } from '@praxis-kit/diagnostics'
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
+import { diagnosticsFromStrictMode } from './strict-bridge'
 
 export abstract class StrictBase {
   protected readonly strict: StrictMode
+  private readonly diagnostics: Diagnostics
 
   constructor(strict: StrictMode) {
     this.strict = strict
+    this.diagnostics = diagnosticsFromStrictMode(strict)
   }
 
   protected violate(message: string): void {
-    if (this.strict === true || this.strict === 'throw') {
-      throw new Error(message)
-    }
-    this.warn(message)
+    this.diagnostics.error({
+      code: DiagnosticCode.InternalError,
+      category: DiagnosticCategory.Contract,
+      message,
+    })
   }
 
-  // Always caps at console.warn — never throws. ARIA 'warning' violations route here
+  // Always caps at warn — never throws. ARIA 'warning' violations route here
   // so they surface even in strict='throw' mode without aborting a render.
   protected warn(message: string): void {
-    if (!this.strict) return
-    if (this.strict === 'async-warn') {
-      scheduleAsyncWarn(message)
-      return
-    }
-    console.warn(message)
+    this.diagnostics.warn({
+      code: DiagnosticCode.InternalError,
+      category: DiagnosticCategory.Contract,
+      message,
+    })
   }
 
   protected invariant(condition: unknown, message: string): void {
@@ -56,8 +37,5 @@ export abstract class StrictBase {
   }
 }
 
-/** Clears pending async-warn messages. Exposed for test isolation only. */
-export function _resetAsyncWarns(): void {
-  pendingAsyncWarns.clear()
-  asyncWarnScheduled = false
-}
+/** No-op shim retained for test compatibility. */
+export function _resetAsyncWarns(): void {}

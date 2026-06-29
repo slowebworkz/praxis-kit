@@ -10,6 +10,7 @@
     { "path": "./lib/bundle-analysis" },
     { "path": "./packages/core" },
     { "path": "./packages/kit" },
+    { "path": "./packages/diagnostics" },
     { "path": "./packages/tailwind" },
     { "path": "./packages/eslint-plugin" },
     { "path": "./packages/ts-plugin" },

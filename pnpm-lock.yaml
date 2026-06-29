@@ -998,6 +998,9 @@ importers:
 
   lib/contract:
     dependencies:
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../packages/diagnostics
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../primitive
@@ -1150,6 +1153,25 @@ importers:
       '@praxis-kit/styling':
         specifier: workspace:*
         version: link:../../lib/styling
+      tsup:
+        specifier: 'catalog:'
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
+  packages/diagnostics:
+    dependencies:
+      '@pk2/foundation':
+        specifier: workspace:*
+        version: link:../../engine/foundation
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.7.0
+    devDependencies:
       tsup:
         specifier: 'catalog:'
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
