@@ -58,6 +58,44 @@ export const ContractDiagnostics = {
     }
   },
 
+  unknownVariantDim(component: string, label: string, dim: string): DiagnosticInput {
+    return {
+      code: DiagnosticCode.ContractUnknownVariantDim,
+      category: DiagnosticCategory.Contract,
+      message: `${component}: ${label} references unknown variant "${dim}".`,
+    }
+  },
+
+  unknownVariantValue(
+    component: string,
+    label: string,
+    dim: string,
+    value: string,
+    valid: string[],
+  ): DiagnosticInput {
+    return {
+      code: DiagnosticCode.ContractUnknownVariantValue,
+      category: DiagnosticCategory.Contract,
+      message: `${component}: ${label} sets "${dim}" to unknown value "${value}" (valid: ${valid.join(', ')}).`,
+    }
+  },
+
+  unknownRecipeKey(component: string, key: string): DiagnosticInput {
+    return {
+      code: DiagnosticCode.ContractUnknownRecipeKey,
+      category: DiagnosticCategory.Contract,
+      message: `${component} Unknown recipeKey "${key}" — no preset with that name exists.`,
+    }
+  },
+
+  invalidVariantValue(component: string, key: string, value: string): DiagnosticInput {
+    return {
+      code: DiagnosticCode.ContractInvalidVariantValue,
+      category: DiagnosticCategory.Contract,
+      message: `${component} Variant "${key}=${value}" is not a defined value for the "${key}" dimension.`,
+    }
+  },
+
   allowedAsViolation(
     tag: string,
     allowedAs: readonly unknown[],

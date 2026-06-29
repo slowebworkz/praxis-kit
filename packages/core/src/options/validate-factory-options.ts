@@ -7,8 +7,7 @@ import type {
   VariantMap,
 } from '../types'
 import { iterate } from '@praxis-kit/primitive'
-import { diagnosticsFromStrictMode } from '@praxis-kit/contract'
-import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
+import { ContractDiagnostics, diagnosticsFromStrictMode } from '@praxis-kit/contract'
 
 // Construction-time warnings are one-shot — async deferral is unnecessary.
 // Map 'async-warn' → 'warn' so warnings surface synchronously here.
@@ -52,11 +51,7 @@ export function validateFactoryOptions<
       // Only present values are checked against the declared variant states.
       if (value === undefined || value === null) return
       if (!variants || !Object.hasOwn(variants, dim)) {
-        diagnostics.error({
-          code: DiagnosticCode.InternalError,
-          category: DiagnosticCategory.Contract,
-          message: `${name}: ${label} references unknown variant "${dim}".`,
-        })
+        diagnostics.error(ContractDiagnostics.unknownVariantDim(name, label, dim))
         return
       }
       const states = variants[dim]!
@@ -65,13 +60,9 @@ export function validateFactoryOptions<
       // validates against `disabled: { true: '...', false: '...' }`.
       const stateKey = String(value)
       if (!Object.hasOwn(states, stateKey)) {
-        diagnostics.error({
-          code: DiagnosticCode.InternalError,
-          category: DiagnosticCategory.Contract,
-          message:
-            `${name}: ${label} sets "${dim}" to unknown value "${stateKey}" ` +
-            `(valid: ${Object.keys(states).join(', ')}).`,
-        })
+        diagnostics.error(
+          ContractDiagnostics.unknownVariantValue(name, label, dim, stateKey, Object.keys(states)),
+        )
       }
     })
   }

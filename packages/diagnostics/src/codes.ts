@@ -56,6 +56,17 @@ export enum DiagnosticCode {
   LintCardinalityViolation = 'LINT5015',
   LintAriaTagOverride = 'LINT5016',
 
+  // Contract — configuration violations (factory-time and render-time)
+  ContractUnknownVariantDim = 'COMP1010',
+  ContractUnknownVariantValue = 'COMP1011',
+  ContractUnknownRecipeKey = 'COMP1012',
+  ContractInvalidVariantValue = 'COMP1013',
+
+  // Tailwind / CSS pipeline
+  TailwindMultipleDisplayProps = 'CSS6001',
+  TailwindReservedLayoutLiteral = 'CSS6002',
+  TailwindDeadVariantClass = 'CSS6003',
+
   // Internal
   InternalError = 'INTERNAL9000',
 }

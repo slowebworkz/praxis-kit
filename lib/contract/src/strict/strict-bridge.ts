@@ -16,8 +16,14 @@ const ignoreAllPolicy: DiagnosticPolicy = {
 // no formatting prefix, no severity label. Replaced in a later phase when
 // formatted output is intentionally adopted.
 
-const rawWarnReporter: DiagnosticReporter = {
-  report: (d) => console.warn(d.message),
+class RawWarnReporter implements DiagnosticReporter {
+  private readonly seen = new Set<string>()
+
+  report(d: { message: string }): void {
+    if (this.seen.has(d.message)) return
+    this.seen.add(d.message)
+    console.warn(d.message)
+  }
 }
 
 class RawAsyncWarnReporter implements DiagnosticReporter {
@@ -43,7 +49,7 @@ export function diagnosticsFromStrictMode(mode: StrictMode): Diagnostics {
   if (!mode) return new Diagnostics(nullReporter, ignoreAllPolicy)
 
   const reporter: DiagnosticReporter =
-    mode === 'async-warn' ? new RawAsyncWarnReporter() : rawWarnReporter
+    mode === 'async-warn' ? new RawAsyncWarnReporter() : new RawWarnReporter()
 
   const policy =
     mode === true || mode === 'throw'

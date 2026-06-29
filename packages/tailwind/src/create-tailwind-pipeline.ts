@@ -20,15 +20,19 @@ import type { LayoutKey, LayoutMode, LayoutProps, CompoundVariant, VariantSelect
 import { isString } from '@praxis-kit/shared'
 import { iterate } from '@praxis-kit/primitive'
 import { diagnosticsFromStrictMode } from '@praxis-kit/contract'
-import type { Diagnostics } from '@praxis-kit/diagnostics'
-import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
+import { Diagnostics, DefaultPolicy, Severity } from '@praxis-kit/diagnostics'
+import { TailwindDiagnostics } from './diagnostics'
 
 declare const process: { env: { NODE_ENV: string } }
 const DEV = process.env.NODE_ENV !== 'production'
 
 // Used for the display-prop conflict warning, which fires regardless of strict —
-// multiple display props is always a misconfiguration, not a variant contract violation.
-const devDiagnostics = diagnosticsFromStrictMode('warn')
+// multiple display props is always a misconfiguration. Does not dedup: every
+// render that triggers this warning should be visible.
+const devDiagnostics = new Diagnostics(
+  { report: (d) => console.warn(d.message) },
+  new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
+)
 
 const classifier = new ClassClassifier()
 const evaluator = new DependencyEvaluator(defaultDependencyRules)
@@ -45,11 +49,7 @@ function resolveLayout(diagnostics: Diagnostics, props: LayoutProps & AnyRecord)
     if (props[key]) active.push(key)
   })
   if (DEV && active.length > 1) {
-    diagnostics.warn({
-      code: DiagnosticCode.InternalError,
-      category: DiagnosticCategory.Contract,
-      message: `[createTailwindPipeline] Multiple display props set (${active.join(', ')}); "${active[0]}" takes precedence.`,
-    })
+    diagnostics.warn(TailwindDiagnostics.multipleDisplayProps(active))
   }
   return active[0] ?? 'none'
 }
@@ -61,15 +61,7 @@ function warnReservedLayoutLiterals(diagnostics: Diagnostics, tokens: Classified
   })
   if (reserved.length === 0) return
 
-  diagnostics.warn({
-    code: DiagnosticCode.InternalError,
-    category: DiagnosticCategory.Contract,
-    message:
-      `[createTailwindPipeline] Reserved display class(es) ${reserved
-        .map((r) => `"${r}"`)
-        .join(', ')} found in resolved classes. ` +
-      'The display mode is controlled by the display props (flex, inline-flex, grid, block, hidden, etc.), not by class strings.',
-  })
+  diagnostics.warn(TailwindDiagnostics.reservedLayoutLiteral(reserved))
 }
 
 function getVariantConfig<V extends VariantMap>(
@@ -146,13 +138,7 @@ function warnDeadVariants<V extends VariantMap>(
     if (tokens.length === 0) return
 
     if (tokens.every((t) => !evaluator.evaluate(t, state))) {
-      diagnostics.warn({
-        code: DiagnosticCode.InternalError,
-        category: DiagnosticCategory.Contract,
-        message:
-          `[createTailwindPipeline] Variant "${dim}=${value}" contributes only classes stripped under ` +
-          `layout mode "${state.mode}" ("${classStr}") — it produces nothing in this mode.`,
-      })
+      diagnostics.warn(TailwindDiagnostics.deadVariantClass(dim, value, state.mode, classStr))
     }
   })
 }
