@@ -1,2 +1,2 @@
-export { StrictBase, _resetAsyncWarns } from './strict-base'
+export { InvariantBase, InvariantBase as StrictBase } from './invariant-base'
 export { diagnosticsFromStrictMode } from './strict-bridge'

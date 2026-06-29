@@ -1,10 +1,10 @@
 import type { MatchMatrix, NormalizedChildRule } from '../types'
 import { assertNever, iterate } from '@praxis-kit/primitive'
-import { StrictBase } from '../strict'
+import { InvariantBase } from '../strict'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 import { ContractDiagnostics } from '../diagnostics'
 
-export class RuleValidator extends StrictBase {
+export class RuleValidator extends InvariantBase {
   readonly #context: string
 
   constructor(context: string, diagnostics: Diagnostics) {

@@ -1,7 +1,7 @@
 import { iterate } from '@praxis-kit/primitive'
 import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-kit/shared'
 import { isNull, isNumber, isString } from '@praxis-kit/shared'
-import { StrictBase } from '../strict'
+import { InvariantBase } from '../strict'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 import { AriaDiagnostics } from '../diagnostics'
 import type {
@@ -36,7 +36,7 @@ function omitProp<T extends Readonly<AnyRecord>, K extends keyof T>(obj: T, key:
   return rest as Omit<T, K>
 }
 
-export class AriaPolicyEngine extends StrictBase {
+export class AriaPolicyEngine extends InvariantBase {
   readonly #extraRules: readonly AriaRule[]
   readonly #planCache = new Map<string, AriaPlan>()
   static readonly #MAX_CACHE = 100

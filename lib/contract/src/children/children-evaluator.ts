@@ -1,6 +1,6 @@
 import type { ChildRuleInput, NormalizedChildRule } from '../types'
 import { iterate } from '@praxis-kit/primitive'
-import { StrictBase } from '../strict'
+import { InvariantBase } from '../strict'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 import { ContractDiagnostics } from '../diagnostics'
 import { getTypeName } from './get-type-name'
@@ -8,7 +8,7 @@ import { normalizeChildRule } from './normalize-child-rule'
 import { RuleMatcher } from './rules-matcher'
 import { RuleValidator } from './rule-validator'
 
-export class ChildrenEvaluator extends StrictBase {
+export class ChildrenEvaluator extends InvariantBase {
   readonly #context: string
   readonly #rules: NormalizedChildRule[]
   readonly #ruleNames: readonly string[]
