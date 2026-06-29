@@ -1300,6 +1300,9 @@ importers:
 
   packages/shared:
     dependencies:
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive

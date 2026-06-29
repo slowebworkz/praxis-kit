@@ -19,6 +19,12 @@ export enum DiagnosticCode {
   // ARIA
   MissingAriaRelationship = 'ARIA2001',
   AriaViolation = 'ARIA2002',
+  AriaAttributeInvalid = 'ARIA2003',
+  AriaMissingLiveRegion = 'ARIA2004',
+  AriaMissingAtomic = 'ARIA2005',
+  AriaRelevantInvalidToken = 'ARIA2006',
+  AriaRelevantSuperseded = 'ARIA2007',
+  AriaInvalidRole = 'ARIA2008',
 
   // HTML
   InvalidHeadingHierarchy = 'HTML3001',

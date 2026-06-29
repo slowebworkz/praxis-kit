@@ -1,3 +1,4 @@
+import type { DiagnosticInput } from '@praxis-kit/diagnostics'
 import type { Severity } from './severity'
 
 export type ValidationViolation = {
@@ -7,4 +8,5 @@ export type ValidationViolation = {
   attribute: string | undefined
   severity: Severity
   phase: 'evaluate' | 'fix'
+  diagnostic?: DiagnosticInput
 }

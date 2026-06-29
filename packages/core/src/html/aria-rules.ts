@@ -17,13 +17,15 @@ export function landmarkRoleRule({ tag, props, implicitRole }: AriaContext): rea
   const role = props.role
   // role === implicitRole is already caught by the built-in #checkRedundantRole (warns, removes).
   if (!role || role === implicitRole) return []
+  const d = HtmlDiagnostics.landmarkRoleOverride(tag, implicitRole, role)
   return [
     {
       valid: false,
       fixable: true,
       severity: 'error',
       fix: removeLandmarkRoleOverride,
-      message: HtmlDiagnostics.landmarkRoleOverride(tag, implicitRole, role).message,
+      diagnostic: d,
+      message: d.message,
     },
   ]
 }
