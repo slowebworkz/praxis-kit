@@ -1,4 +1,3 @@
-import { iterate } from '@praxis-kit/primitive'
 import type {
   AnyRecord,
   ElementType,
@@ -7,15 +6,14 @@ import type {
   StrictMode,
   VariantMap,
 } from '../types'
+import { iterate } from '@praxis-kit/primitive'
+import { diagnosticsFromStrictMode } from '@praxis-kit/contract'
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 
-// Mirrors the StrictBase semantics: silent when off, console.warn on 'warn' /
-// 'async-warn' (construction-time warnings are one-shot, so no deferral needed),
-// throw on 'throw' / true.
-function report(strict: StrictMode, message: string): void {
-  if (strict === false) return
-  const mode = strict === true ? 'throw' : strict
-  if (mode === 'throw') throw new Error(message)
-  console.warn(message)
+// Construction-time warnings are one-shot — async deferral is unnecessary.
+// Map 'async-warn' → 'warn' so warnings surface synchronously here.
+function effectiveStrict(strict: StrictMode): StrictMode {
+  return strict === 'async-warn' ? 'warn' : strict
 }
 
 /**
@@ -38,8 +36,9 @@ export function validateFactoryOptions<
   TPreset extends RecipeMap<V>,
 >(resolved: ResolvedFactoryOptions<TDefault, Props, V, TPreset>): void {
   const { strict } = resolved
-  if (strict === false) return
+  if (!strict) return
 
+  const diagnostics = diagnosticsFromStrictMode(effectiveStrict(strict))
   const name = resolved.displayName ?? 'Component'
   const { variants } = resolved
 
@@ -53,7 +52,11 @@ export function validateFactoryOptions<
       // Only present values are checked against the declared variant states.
       if (value === undefined || value === null) return
       if (!variants || !Object.hasOwn(variants, dim)) {
-        report(strict, `${name}: ${label} references unknown variant "${dim}".`)
+        diagnostics.error({
+          code: DiagnosticCode.InternalError,
+          category: DiagnosticCategory.Contract,
+          message: `${name}: ${label} references unknown variant "${dim}".`,
+        })
         return
       }
       const states = variants[dim]!
@@ -62,11 +65,13 @@ export function validateFactoryOptions<
       // validates against `disabled: { true: '...', false: '...' }`.
       const stateKey = String(value)
       if (!Object.hasOwn(states, stateKey)) {
-        report(
-          strict,
-          `${name}: ${label} sets "${dim}" to unknown value "${stateKey}" ` +
+        diagnostics.error({
+          code: DiagnosticCode.InternalError,
+          category: DiagnosticCategory.Contract,
+          message:
+            `${name}: ${label} sets "${dim}" to unknown value "${stateKey}" ` +
             `(valid: ${Object.keys(states).join(', ')}).`,
-        )
+        })
       }
     })
   }

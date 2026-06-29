@@ -36,10 +36,11 @@
   },
   "sideEffects": false,
   "dependencies": {
+    "@praxis-kit/contract": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {
-    "@praxis-kit/contract": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
     "@praxis-kit/shared": "workspace:*",
     "@praxis-kit/styling": "workspace:*",

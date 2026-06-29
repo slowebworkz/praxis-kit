@@ -1,5 +1,7 @@
 import type { AnyRecord, StrictMode, VariantMap } from '../types'
 import { iterate } from '@praxis-kit/primitive'
+import { diagnosticsFromStrictMode } from '@praxis-kit/contract'
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 
 type Options = {
   readonly recipeMap?: Readonly<AnyRecord>
@@ -17,15 +19,28 @@ function flushAsyncWarns(): void {
   asyncWarnScheduled = false
   const messages = [...pendingAsyncWarns]
   pendingAsyncWarns.clear()
+  // Flush is already in the microtask — use sync reporter to emit immediately.
+  const d = diagnosticsFromStrictMode('warn')
   iterate.forEach(messages, (msg) => {
-    console.warn(msg)
+    d.warn({
+      code: DiagnosticCode.InternalError,
+      category: DiagnosticCategory.Contract,
+      message: msg,
+    })
   })
 }
 
 function report(strict: StrictMode, message: string): void {
   if (!strict) return
   const mode = strict === true ? 'throw' : strict
-  if (mode === 'throw') throw new Error(message)
+  if (mode === 'throw') {
+    diagnosticsFromStrictMode('throw').error({
+      code: DiagnosticCode.InternalError,
+      category: DiagnosticCategory.Contract,
+      message,
+    })
+    return
+  }
   if (mode === 'async-warn') {
     if (pendingAsyncWarns.has(message)) return
     pendingAsyncWarns.add(message)
@@ -37,7 +52,11 @@ function report(strict: StrictMode, message: string): void {
   }
   if (warned.has(message)) return
   warned.add(message)
-  console.warn(message)
+  diagnosticsFromStrictMode('warn').warn({
+    code: DiagnosticCode.InternalError,
+    category: DiagnosticCategory.Contract,
+    message,
+  })
 }
 
 function label(name?: string): string {

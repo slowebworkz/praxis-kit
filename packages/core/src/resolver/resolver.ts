@@ -1,5 +1,6 @@
 import { mergeProps, resolveTag } from '@praxis-kit/primitive'
-import { AriaPolicyEngine } from '@praxis-kit/contract'
+import { AriaPolicyEngine, diagnosticsFromStrictMode } from '@praxis-kit/contract'
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 import type {
   AnyRecord,
   ClassPipelineFn,
@@ -18,15 +19,15 @@ export function enforceAllowedAs(
   displayName?: string,
 ): void {
   if (allowedAs.includes(tag)) return
+  if (!strict) return
   const component = displayName ? `<${displayName}>` : 'component'
   const allowed = allowedAs.map((t) => `"${String(t)}"`).join(', ')
   const message = `${component}: "as" prop received "${String(tag)}" but only [${allowed}] are allowed.`
-  if (strict === true || strict === 'throw') {
-    throw new Error(message)
-  }
-  if (strict) {
-    console.warn(message)
-  }
+  diagnosticsFromStrictMode(strict).error({
+    code: DiagnosticCode.InternalError,
+    category: DiagnosticCategory.Contract,
+    message,
+  })
 }
 
 export function createResolverPipeline<

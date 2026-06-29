@@ -1137,13 +1137,16 @@ importers:
 
   packages/core:
     dependencies:
+      '@praxis-kit/contract':
+        specifier: workspace:*
+        version: link:../../lib/contract
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
       type-fest:
         specifier: 'catalog:'
         version: 5.7.0
     devDependencies:
-      '@praxis-kit/contract':
-        specifier: workspace:*
-        version: link:../../lib/contract
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -1313,6 +1316,12 @@ importers:
 
   packages/tailwind:
     dependencies:
+      '@praxis-kit/contract':
+        specifier: workspace:*
+        version: link:../../lib/contract
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
       type-fest:
         specifier: 'catalog:'
         version: 5.7.0

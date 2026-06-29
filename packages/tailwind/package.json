@@ -20,6 +20,8 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
+    "@praxis-kit/contract": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {

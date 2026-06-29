@@ -19,38 +19,16 @@ import type { ClassifiedToken } from './types/classified-token'
 import type { LayoutKey, LayoutMode, LayoutProps, CompoundVariant, VariantSelection } from './types'
 import { isString } from '@praxis-kit/shared'
 import { iterate } from '@praxis-kit/primitive'
+import { diagnosticsFromStrictMode } from '@praxis-kit/contract'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 
 declare const process: { env: { NODE_ENV: string } }
 const DEV = process.env.NODE_ENV !== 'production'
 
-// Batched async-warn implementation — mirrors StrictBase.scheduleAsyncWarn.
-// All messages queued in one synchronous pass flush in a single microtask;
-// duplicates within the same tick are suppressed.
-const pendingAsyncWarns = new Set<string>()
-let asyncWarnScheduled = false
-
-function flushAsyncWarns(): void {
-  asyncWarnScheduled = false
-  const messages = [...pendingAsyncWarns]
-  pendingAsyncWarns.clear()
-  iterate.forEach(messages, (msg) => {
-    console.warn(msg)
-  })
-}
-
-function pipelineWarn(strict: StrictMode, message: string): void {
-  if (!strict) return
-  if (strict === 'async-warn') {
-    if (pendingAsyncWarns.has(message)) return
-    pendingAsyncWarns.add(message)
-    if (!asyncWarnScheduled) {
-      asyncWarnScheduled = true
-      queueMicrotask(flushAsyncWarns)
-    }
-    return
-  }
-  console.warn(message)
-}
+// Used for the display-prop conflict warning, which fires regardless of strict —
+// multiple display props is always a misconfiguration, not a variant contract violation.
+const devDiagnostics = diagnosticsFromStrictMode('warn')
 
 const classifier = new ClassClassifier()
 const evaluator = new DependencyEvaluator(defaultDependencyRules)
@@ -61,35 +39,37 @@ function normalizeVariantValue(value: VariantValue): string {
   return value.join(' ')
 }
 
-function resolveLayout(props: LayoutProps & AnyRecord): LayoutMode {
+function resolveLayout(diagnostics: Diagnostics, props: LayoutProps & AnyRecord): LayoutMode {
   const active: LayoutKey[] = []
   iterate.forEach(layoutKeys, (key) => {
     if (props[key]) active.push(key)
   })
   if (DEV && active.length > 1) {
-    // Not gated on strict — multiple display props is a misconfiguration, not a variant contract violation.
-    console.warn(
-      `[createTailwindPipeline] Multiple display props set (${active.join(', ')}); "${active[0]}" takes precedence.`,
-    )
+    diagnostics.warn({
+      code: DiagnosticCode.InternalError,
+      category: DiagnosticCategory.Contract,
+      message: `[createTailwindPipeline] Multiple display props set (${active.join(', ')}); "${active[0]}" takes precedence.`,
+    })
   }
   return active[0] ?? 'none'
 }
 
-function warnReservedLayoutLiterals(strict: StrictMode, tokens: ClassifiedToken[]): void {
-  if (!strict) return
+function warnReservedLayoutLiterals(diagnostics: Diagnostics, tokens: ClassifiedToken[]): void {
   const reserved: string[] = []
   iterate.forEach(tokens, (token) => {
     if (token.kind === 'layout') reserved.push(token.raw)
   })
   if (reserved.length === 0) return
 
-  pipelineWarn(
-    strict,
-    `[createTailwindPipeline] Reserved display class(es) ${reserved
-      .map((r) => `"${r}"`)
-      .join(', ')} found in resolved classes. ` +
+  diagnostics.warn({
+    code: DiagnosticCode.InternalError,
+    category: DiagnosticCategory.Contract,
+    message:
+      `[createTailwindPipeline] Reserved display class(es) ${reserved
+        .map((r) => `"${r}"`)
+        .join(', ')} found in resolved classes. ` +
       'The display mode is controlled by the display props (flex, inline-flex, grid, block, hidden, etc.), not by class strings.',
-  )
+  })
 }
 
 function getVariantConfig<V extends VariantMap>(
@@ -143,14 +123,13 @@ function resolveActiveSelection<V extends VariantMap>(
 }
 
 function warnDeadVariants<V extends VariantMap>(
-  strict: StrictMode,
+  diagnostics: Diagnostics,
   options: ClassPipelineOptions<V>,
   compoundDims: ReadonlySet<string>,
   props: AnyRecord,
   recipe: string | undefined,
   state: LayoutState,
 ): void {
-  if (!strict) return
   const variants = getVariantConfig(options)
   if (!variants) return
 
@@ -167,11 +146,13 @@ function warnDeadVariants<V extends VariantMap>(
     if (tokens.length === 0) return
 
     if (tokens.every((t) => !evaluator.evaluate(t, state))) {
-      pipelineWarn(
-        strict,
-        `[createTailwindPipeline] Variant "${dim}=${value}" contributes only classes stripped under ` +
+      diagnostics.warn({
+        code: DiagnosticCode.InternalError,
+        category: DiagnosticCategory.Contract,
+        message:
+          `[createTailwindPipeline] Variant "${dim}=${value}" contributes only classes stripped under ` +
           `layout mode "${state.mode}" ("${classStr}") — it produces nothing in this mode.`,
-      )
+      })
     }
   })
 }
@@ -215,19 +196,21 @@ export function createTailwindPipeline<V extends VariantMap = VariantMap>(
 ): ClassPlugin<LayoutProps> {
   const pipeline = createClassPipeline(options)
   const compoundDims = compoundDimensions(getCompoundVariants(options))
+  const diagnostics = diagnosticsFromStrictMode(strict)
 
   return {
     ownedKeys: LAYOUT_OWNED_KEYS,
 
     pipeline(tag, props, className, recipe) {
-      const mode = resolveLayout(props)
+      // devDiagnostics fires regardless of strict — conflict is always a misconfiguration.
+      const mode = resolveLayout(devDiagnostics, props)
       const raw = pipeline(tag, props, className, recipe)
       const tokens = classifyTokens(raw)
       const state = new LayoutState(mode)
 
       if (DEV) {
-        warnReservedLayoutLiterals(strict, tokens)
-        warnDeadVariants(strict, options, compoundDims, props, recipe, state)
+        warnReservedLayoutLiterals(diagnostics, tokens)
+        warnDeadVariants(diagnostics, options, compoundDims, props, recipe, state)
       }
 
       const filtered = tokens.filter((token) => evaluator.evaluate(token, state))
@@ -239,8 +222,5 @@ export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   }
 }
 
-/** Clears pending async-warn messages. Exposed for test isolation only. */
-export function _resetPipelineWarns(): void {
-  pendingAsyncWarns.clear()
-  asyncWarnScheduled = false
-}
+/** No-op shim retained for test compatibility. Async state now lives per-pipeline. */
+export function _resetPipelineWarns(): void {}
