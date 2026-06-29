@@ -2,8 +2,9 @@
  * Prints a formatted summary of the current metrics snapshot.
  * Run after `pnpm collect`, or use `pnpm metrics` to do both in one step.
  */
+import { iterate } from '@praxis-kit/primitive'
 import { readFile } from 'node:fs/promises'
-import { join, dirname } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { ReadonlyDeep } from 'type-fest'
 import type { Snapshot } from './types.ts'
@@ -26,11 +27,10 @@ lines.push(`\nPraxis Kit — Metrics Dashboard  (${generated})`)
 
 lines.push(`\n${'BUNDLES'.padEnd(30)}${'gzip'.padStart(8)}`)
 lines.push(hr)
-for (const scenario in snap.bundles) {
-  const gzip = snap.bundles[scenario]!
+iterate.forEachEntry(snap.bundles, (scenario, gzip) => {
   const bar = '█'.repeat(Math.round((gzip / 8500) * 20))
   lines.push(`  ${scenario.padEnd(28)}${String(gzip).padStart(7)}B  ${bar}`)
-}
+})
 
 // ── Architecture ──────────────────────────────────────────────────────────────
 // collect.ts writes exports alpha-sorted; JSON.parse preserves insertion
@@ -43,13 +43,12 @@ lines.push(`\n${'ARCHITECTURE'.padEnd(30)}`)
 lines.push(hr)
 lines.push(`  Dependency graph          ${statusLabel}`)
 lines.push(`\n  Public API surface (values + types):`)
-for (const name in exp) {
-  const { values, types } = exp[name]!
+iterate.forEachEntry(exp, (name, { values, types }) => {
   const total = values + types
   lines.push(
     `    ${name.replace('@praxis-kit/', '').padEnd(20)}  ${String(total).padStart(4)}  (${values}v + ${types}t)`,
   )
-}
+})
 
 // ── Complexity ────────────────────────────────────────────────────────────────
 
@@ -62,8 +61,7 @@ let totalFiles = 0
 let totalFunctions = 0
 let totalLoc = 0
 
-for (const key in snap.complexity) {
-  const { files, functions, loc } = snap.complexity[key]!
+iterate.forEachEntry(snap.complexity, (key, { files, functions, loc }) => {
   const label = key.replace('packages/', '').replace('lib/', '')
   lines.push(
     `  ${label.padEnd(20)}${String(files).padStart(8)}${String(functions).padStart(8)}${String(loc).padStart(8)}`,
@@ -71,7 +69,7 @@ for (const key in snap.complexity) {
   totalFiles += files
   totalFunctions += functions
   totalLoc += loc
-}
+})
 
 lines.push(hr)
 lines.push(

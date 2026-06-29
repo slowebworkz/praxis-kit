@@ -10,6 +10,7 @@ import {
   getPropertyKey,
   isFactoryCall,
 } from '../utils/ast'
+import { iterate } from '@praxis-kit/primitive'
 
 type Property = TSESTree.Property
 
@@ -76,14 +77,16 @@ export const noDeadCompound = createRule<Options, MessageIds>({
         const compounds = asArrayExpression(compoundsProp.value)
         if (!compounds) return
 
-        for (const element of compounds.elements) {
-          if (!element || element.type !== 'ObjectExpression') continue
+        iterate.forEach(compounds.elements, (element) => {
+          if (!element || element.type !== 'ObjectExpression') return
 
-          for (const prop of element.properties) {
-            if (prop.type !== 'Property') continue
+          iterate.forEach(element.properties, (prop) => {
+            if (prop.type !== 'Property') return
 
-            const key = getPropertyKey(prop as Property)
-            if (!key || key === 'class' || key === 'className') continue
+            const literalProp = prop as Property
+
+            const key = getPropertyKey(literalProp)
+            if (!key || key === 'class' || key === 'className') return
 
             if (!variantMap.has(key)) {
               context.report({
@@ -91,15 +94,15 @@ export const noDeadCompound = createRule<Options, MessageIds>({
                 messageId: 'unknownVariantKey',
                 data: { key },
               })
-              continue
+              return
             }
 
-            const value = asStringLiteral((prop as Property).value)
+            const value = asStringLiteral(literalProp.value)
             if (value === undefined) {
               if (reportNonLiteral) {
                 context.report({ node: prop, messageId: 'nonLiteralValue', data: { key } })
               }
-              continue
+              return
             }
 
             const allowed = variantMap.get(key)!
@@ -107,11 +110,17 @@ export const noDeadCompound = createRule<Options, MessageIds>({
               context.report({
                 node: prop,
                 messageId: 'unknownVariantValue',
-                data: { key, value, allowed: [...allowed].map((v) => `"${v}"`).join(', ') },
+                data: {
+                  key,
+                  value,
+                  allowed: iterate.reduce([...allowed], '', (acc, value, index) =>
+                    index === 0 ? `"${value}"` : `${acc}, "${value}"`,
+                  ),
+                },
               })
             }
-          }
-        }
+          })
+        })
       },
     }
   },

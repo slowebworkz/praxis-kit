@@ -1,4 +1,5 @@
 import type { StyleContext } from './types'
+import { iterate } from '@praxis-kit/primitive'
 
 /** Flat compound variant: all keys except `class` are condition key:value pairs. */
 export type CompoundVariant = { readonly class: string | readonly string[] } & Record<
@@ -36,13 +37,13 @@ export function createVariantPass(
       }
 
       const classes: string[] = []
-      for (const [key, valueMap] of Object.entries(config.variants)) {
+      iterate.forEachEntry(config.variants, (key, valueMap) => {
         const active = resolved[key]
         if (typeof active === 'string') {
           const cls = valueMap[active]
           if (cls !== undefined) classes.push(cls)
         }
-      }
+      })
 
       return { context: { classes } }
     },

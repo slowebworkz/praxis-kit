@@ -20,6 +20,7 @@
  */
 import { createContractComponent } from '@praxis-kit/web'
 import type { StrictMode } from '@praxis-kit/core'
+import { iterate } from '@praxis-kit/primitive'
 
 // Typed base for subclassing praxis components. TypeScript doesn't include CE
 // lifecycle methods on HTMLElement, so we declare them here and cast the praxis
@@ -170,15 +171,15 @@ export class Root extends _Root {
 
     if (value !== null) this.dataset.value = value
 
-    for (const el of triggers) {
+    iterate.forEach(triggers, (el) => {
       const v = el.getAttribute('value')
       ;(el as HTMLElement).dataset.state = v === value ? 'active' : 'inactive'
       el.setAttribute('aria-selected', String(v === value))
-    }
+    })
 
-    for (const el of this.querySelectorAll('example-tabs-content')) {
+    iterate.forEach([...this.querySelectorAll('example-tabs-content')], (el) => {
       ;(el as HTMLElement).hidden = el.getAttribute('value') !== value
-    }
+    })
   }
 
   private _firstTriggerValue(): string | null {

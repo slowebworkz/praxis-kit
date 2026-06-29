@@ -1,4 +1,5 @@
 import type { StrictMode } from '../types'
+import { iterate } from '@praxis-kit/primitive'
 
 // Batch buffer for async-warn mode. All messages queued in one synchronous
 // pass are flushed in a single microtask rather than one microtask each.
@@ -9,9 +10,9 @@ function flushAsyncWarns(): void {
   asyncWarnScheduled = false
   const messages = [...pendingAsyncWarns]
   pendingAsyncWarns.clear()
-  for (const msg of messages) {
+  iterate.forEach(messages, (msg) => {
     console.warn(msg)
-  }
+  })
 }
 
 function scheduleAsyncWarn(message: string): void {

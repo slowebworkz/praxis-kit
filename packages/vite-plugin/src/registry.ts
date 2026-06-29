@@ -1,4 +1,5 @@
 import type { ComponentConstraint, FileDiagnostic, PendingUsage, Severity } from './types'
+import { iterate } from '@praxis-kit/primitive'
 
 /**
  * Accumulates constraint and import data across multiple `transform` calls so
@@ -21,6 +22,7 @@ export class ConstraintRegistry {
   private readonly importMap = new Map<string, Map<string, string>>()
   private readonly pending = new Map<string, PendingUsage[]>()
 
+  /** Records the component constraints declared in a source file, keyed by component name. */
   registerConstraints(fileId: string, cs: ComponentConstraint[]): void {
     this.constraints.set(fileId, new Map(cs.map((c) => [c.name, c])))
   }
@@ -30,6 +32,7 @@ export class ConstraintRegistry {
     this.importMap.set(fileId, resolvedImports)
   }
 
+  /** Queues a JSX usage site whose constraint lives in another file for deferred cross-file validation at buildEnd. */
   addPendingUsage(fileId: string, usage: PendingUsage): void {
     let list = this.pending.get(fileId)
     if (!list) {
@@ -51,17 +54,17 @@ export class ConstraintRegistry {
   /** Returns cardinality violations across all pending cross-file usages. */
   diagnostics(severity: Severity): FileDiagnostic[] {
     const result: FileDiagnostic[] = []
+    iterate.forEach(this.pending, ([fileId, usages]) => {
+      iterate.forEach(usages, ({ col, count, line, tagName }) => {
+        if (count === undefined) return
 
-    for (const [fileId, usages] of this.pending) {
-      for (const usage of usages) {
-        if (usage.count === undefined) continue
-
-        const constraint = this.resolveConstraint(fileId, usage.tagName)
-        if (!constraint) continue
+        const constraint = this.resolveConstraint(fileId, tagName)
+        if (!constraint) return
 
         const { totalMin, totalMax, name } = constraint
+        const { min, max } = count
         // Only fire when the count range is certainly outside the required bounds.
-        if (usage.count.max >= totalMin && usage.count.min <= totalMax) continue
+        if (max >= totalMin && min <= totalMax) return
 
         const rangeText =
           totalMax === Infinity
@@ -70,20 +73,17 @@ export class ConstraintRegistry {
               ? `exactly ${totalMin}`
               : `${totalMin}–${totalMax}`
         const childWord = totalMax === 1 && totalMin === 1 ? 'child' : 'children'
-        const receivedText =
-          usage.count.min === usage.count.max
-            ? `${usage.count.min}`
-            : `${usage.count.min}–${usage.count.max}`
+        const receivedText = min === max ? `${min}` : `${min}–${max}`
 
         result.push({
           fileId,
           message: `<${name}> expects ${rangeText} ${childWord} but received ${receivedText}.`,
-          line: usage.line,
-          col: usage.col,
+          line,
+          col,
           severity,
         })
-      }
-    }
+      })
+    })
 
     return result
   }

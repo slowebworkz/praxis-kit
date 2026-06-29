@@ -29,6 +29,7 @@ import type {
 import { createContractComponent } from './create-contract-component'
 import type { LitConformanceComponent, LitConformanceEl } from './types/index'
 import type { AnyRecord } from '@praxis-kit/core'
+import { iterate } from '@praxis-kit/primitive'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -50,12 +51,12 @@ type ListenerMap = Map<string, EventListener>
 
 function applyStyle(el: HTMLElement, nextStyle: AnyRecord, prevStyle: AnyRecord): void {
   // Remove properties present in the previous style but absent in the new one.
-  for (const prop of Object.keys(prevStyle)) {
+  iterate.forEachKey(prevStyle, (prop) => {
     if (!(prop in nextStyle)) el.style.removeProperty(prop)
-  }
-  for (const [prop, value] of Object.entries(nextStyle)) {
+  })
+  iterate.forEachEntry(nextStyle, (prop, value) => {
     el.style.setProperty(prop, String(value))
-  }
+  })
 }
 
 function applyProps(
@@ -64,7 +65,7 @@ function applyProps(
   listeners: ListenerMap,
   prevStyle: AnyRecord = {},
 ): void {
-  for (const [key, value] of Object.entries(props)) {
+  iterate.forEachEntry(props, (key, value) => {
     const nativeEvent = EVENT_MAP[key]
     if (nativeEvent) {
       // Remove old listener for this event before adding the new one.
@@ -73,15 +74,15 @@ function applyProps(
       const fn = value as EventListener
       el.addEventListener(nativeEvent, fn)
       listeners.set(nativeEvent, fn)
-      continue
+      return
     }
     if (key === 'className' || key === 'class') {
       el.setAttribute('praxis-class', value as string)
-      continue
+      return
     }
     if (key === 'recipe') {
       el.setAttribute('variant-key', value as string)
-      continue
+      return
     }
     if (key === 'style') {
       applyStyle(
@@ -89,18 +90,18 @@ function applyProps(
         typeof value === 'object' && value !== null ? (value as AnyRecord) : {},
         prevStyle,
       )
-      continue
+      return
     }
     if (value === true) {
       el.setAttribute(key, '')
-      continue
+      return
     }
     if (value === false || value === null || value === undefined) {
       el.removeAttribute(key)
-      continue
+      return
     }
     el.setAttribute(key, String(value))
-  }
+  })
 }
 
 function clearStaleProps(
@@ -110,8 +111,8 @@ function clearStaleProps(
   listeners: ListenerMap,
 ): void {
   // Remove attributes and event listeners present in prevProps but absent in nextProps.
-  for (const key of Object.keys(prevProps)) {
-    if (key in nextProps) continue
+  iterate.forEachKey(prevProps, (key) => {
+    if (key in nextProps) return
     const nativeEvent = EVENT_MAP[key]
     if (nativeEvent) {
       const listener = listeners.get(nativeEvent)
@@ -119,7 +120,7 @@ function clearStaleProps(
         el.removeEventListener(nativeEvent, listener)
         listeners.delete(nativeEvent)
       }
-      continue
+      return
     }
     const attr =
       key === 'recipe'
@@ -128,7 +129,7 @@ function clearStaleProps(
           ? 'praxis-class'
           : key
     el.removeAttribute(attr)
-  }
+  })
 }
 
 function buildChild(spec: ChildSpec): HTMLElement {
@@ -137,13 +138,13 @@ function buildChild(spec: ChildSpec): HTMLElement {
     const el = document.createElement(comp.elementName)
     const listeners: ListenerMap = new Map()
     applyProps(el, spec.props ?? {}, listeners)
-    for (const c of spec.children ?? []) el.appendChild(buildChild(c))
+    iterate.forEach(spec.children ?? [], (c) => el.appendChild(buildChild(c)))
     return el as HTMLElement
   }
   const el = document.createElement(spec.tag)
   const listeners: ListenerMap = new Map()
   applyProps(el, spec.props ?? {}, listeners)
-  for (const c of spec.children ?? []) el.appendChild(buildChild(c))
+  iterate.forEach(spec.children ?? [], (c) => el.appendChild(buildChild(c)))
   return el as HTMLElement
 }
 
@@ -173,7 +174,7 @@ const adapter: ConformanceAdapter<LitConformanceComponent> = {
     // Track user-provided children separately so rerender can remove only these
     // and leave Lit's internal template nodes (slot, comment markers) intact.
     const userChildren: Node[] = children.map((c) => buildChild(c))
-    for (const c of userChildren) elHtml.appendChild(c)
+    iterate.forEach(userChildren, (c) => elHtml.appendChild(c))
 
     container.appendChild(elHtml)
     applyProps(elHtml, props, listeners)
@@ -192,10 +193,12 @@ const adapter: ConformanceAdapter<LitConformanceComponent> = {
 
         // Remove only the user-provided children — Lit's slot and comment
         // marker nodes must remain or ChildPart tracking breaks.
-        for (const c of userChildren) if (c.parentNode) c.parentNode.removeChild(c)
+        iterate.forEach(userChildren, (c) => {
+          if (c.parentNode) c.parentNode.removeChild(c)
+        })
         userChildren.length = 0
         const fresh = newChildren.map((c) => buildChild(c))
-        for (const c of fresh) elHtml.appendChild(c)
+        iterate.forEach(fresh, (c) => elHtml.appendChild(c))
         userChildren.push(...fresh)
 
         applyProps(elHtml, newProps, listeners, prevStyle)

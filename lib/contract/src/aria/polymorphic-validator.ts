@@ -1,4 +1,5 @@
-import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-kit/shared/types'
+import { iterate } from '@praxis-kit/primitive'
+import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-kit/shared'
 import { isNull, isNumber, isString } from '@praxis-kit/shared'
 import { StrictBase } from '../strict'
 import type {
@@ -18,7 +19,7 @@ import type {
 import { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attribute-policy'
 import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
 
-export { isInvalid } from '@praxis-kit/shared/guards/aria'
+export { isInvalid } from '@praxis-kit/shared'
 
 const VALID = [{ valid: true }] as const
 
@@ -96,21 +97,27 @@ export class AriaPolicyEngine extends StrictBase {
     const violations: ValidationViolation[] = []
     const fixes: AriaFix[] = []
 
-    for (const rule of rules) {
-      for (const result of rule(context)) {
-        if (!result.valid) {
-          violations.push({
-            message: result.message ?? `Invalid role "${context.props.role}" on <${context.tag}>`,
-            tag: context.tag,
-            role: context.props.role,
-            attribute: result.attribute,
-            severity: result.severity,
-            phase: 'evaluate',
-          })
-          if (result.fixable) fixes.push(result.fix)
-        }
-      }
-    }
+    iterate.forEach(rules, (rule) => {
+      iterate.forEach(rule(context), (result) => {
+        if (result.valid) return
+
+        const {
+          tag,
+          props: { role },
+        } = context
+        const { message, attribute, severity } = result
+
+        violations.push({
+          message: message ?? `Invalid role "${role}" on <${tag}>`,
+          tag,
+          role,
+          attribute,
+          severity,
+          phase: 'evaluate',
+        })
+        if (result.fixable) fixes.push(result.fix)
+      })
+    })
 
     return { violations, fixes }
   }
@@ -152,10 +159,10 @@ export class AriaPolicyEngine extends StrictBase {
   }
 
   report(violations: ReadonlyArray<ValidationViolation>): void {
-    for (const v of violations) {
+    iterate.forEach(violations, (v) => {
       if (v.severity === 'error') this.violate(v.message)
       else this.warn(v.message)
-    }
+    })
   }
 
   // Cache key covers only the aria-relevant subset of props (tag + role + aria-* attrs).
@@ -169,13 +176,12 @@ export class AriaPolicyEngine extends StrictBase {
     const parts: string[] = [tag]
     if (typeof props.role === 'string') parts.push(`role:${props.role}`)
     const ariaEntries: string[] = []
-    for (const k in props) {
-      if (!Object.hasOwn(props, k) || !k.startsWith('aria-')) continue
-      const v = props[k as keyof typeof props]
+    iterate.forEachEntry(props, (k, v) => {
+      if (!k.startsWith('aria-')) return
       // Skip non-primitive values — String([object Object]) would produce colliding keys.
-      if (!isString(v) && !isNumber(v) && typeof v !== 'boolean') continue
+      if (!isString(v) && !isNumber(v) && typeof v !== 'boolean') return
       ariaEntries.push(`${k}:${String(v)}`)
-    }
+    })
     if (ariaEntries.length > 0) parts.push(...ariaEntries.sort())
     return parts.join('|')
   }
@@ -186,15 +192,13 @@ export class AriaPolicyEngine extends StrictBase {
   ): { removals: ReadonlySet<string>; updates: Readonly<AnyRecord> } {
     const removals = new Set<string>()
     const updates: AnyRecord = {}
-    for (const key in inputProps) {
-      if (Object.hasOwn(inputProps, key) && !(key in (resultProps as object))) removals.add(key)
-    }
-    for (const key in resultProps) {
-      if (!Object.hasOwn(resultProps, key)) continue
-      const resultVal = (resultProps as AnyRecord)[key]
+    iterate.forEachKey(inputProps, (key) => {
+      if (!(key in (resultProps as object))) removals.add(key)
+    })
+    iterate.forEachEntry(resultProps, (key, resultVal) => {
       // Capture both new keys (additions) and changed values (modifications).
       if ((inputProps as AnyRecord)[key] !== resultVal) updates[key] = resultVal
-    }
+    })
     return { removals, updates }
   }
 
@@ -207,9 +211,9 @@ export class AriaPolicyEngine extends StrictBase {
     const hasUpdates = Object.keys(updates).length > 0
     if (!hasRemovals && !hasUpdates) return props
     const next: AnyRecord = {}
-    for (const k in props) {
-      if (Object.hasOwn(props, k) && !removals.has(k)) next[k] = props[k]
-    }
+    iterate.forEachEntry(props, (k, v) => {
+      if (!removals.has(k)) next[k] = v
+    })
     Object.assign(next, updates)
     return next as unknown as T
   }
@@ -266,12 +270,12 @@ export class AriaPolicyEngine extends StrictBase {
     if (fixes.length === 0) return props
     const sorted = [...fixes].sort((a, b) => (a.priority ?? Infinity) - (b.priority ?? Infinity))
     let next: IntrinsicProps = props
-    for (const { apply } of sorted) {
+    iterate.forEach(sorted, ({ apply }) => {
       const effectiveRole = next.role ?? implicitRole
       const fixContext: AriaContext = { tag, implicitRole, effectiveRole, props: next }
       const fixResult = apply(fixContext)
       if (fixResult.applied) next = fixResult.next as IntrinsicProps
-    }
+    })
     return next as T
   }
 
@@ -369,11 +373,10 @@ export class AriaPolicyEngine extends StrictBase {
   }: AriaContext): readonly AriaResult[] {
     const results: AriaResult[] = []
 
-    for (const key in props) {
-      if (!Object.hasOwn(props, key)) continue
-      if (!key.startsWith('aria-')) continue
-      if (isGlobalAriaAttribute(key)) continue
-      if (isAriaAttributeValidForRole(key, effectiveRole)) continue
+    iterate.forEachEntry(props, (key) => {
+      if (!key.startsWith('aria-')) return
+      if (isGlobalAriaAttribute(key)) return
+      if (isAriaAttributeValidForRole(key, effectiveRole)) return
 
       results.push({
         valid: false,
@@ -383,7 +386,7 @@ export class AriaPolicyEngine extends StrictBase {
         message: `"${key}" is not valid on role="${effectiveRole ?? tag}". It will be removed.`,
         fix: AriaPolicyEngine.#makeRemoveAttributeFix(key),
       })
-    }
+    })
 
     return results
   }

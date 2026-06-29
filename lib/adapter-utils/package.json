@@ -16,6 +16,7 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
+    "@praxis-kit/primitive": "workspace:*",
     "@praxis-kit/shared": "workspace:*",
     "@praxis-kit/core": "workspace:*",
     "@pk2/core": "workspace:*",

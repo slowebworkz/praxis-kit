@@ -7,6 +7,7 @@ import { hydrationParitySuite } from '@praxis-kit/adapter-utils/testing'
 import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
 import type { UnknownProps } from './types'
 import { createContractComponent } from './create-contract-component'
+import { iterate } from '@praxis-kit/primitive'
 
 function parseAttributes(html: string): Record<string, string> {
   const container = document.createElement('div')
@@ -14,17 +15,17 @@ function parseAttributes(html: string): Record<string, string> {
   const el = container.firstElementChild
   if (!el) return {}
   const attrs: Record<string, string> = {}
-  for (const { name, value } of el.attributes) {
+  iterate.forEach(iterate.items(el.attributes), ({ name, value }) => {
     attrs[name] = value
-  }
+  })
   return attrs
 }
 
 function normalizeAttrs(attrs: Record<string, string>): Record<string, string> {
   const out: Record<string, string> = {}
-  for (const [k, v] of Object.entries(attrs)) {
+  iterate.forEachEntry(attrs, (k, v) => {
     out[k] = k === 'class' ? v.split(' ').sort().join(' ') : v
-  }
+  })
   return out
 }
 

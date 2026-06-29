@@ -1,10 +1,13 @@
-import { createHash } from 'node:crypto'
-import type { PipelineNode, Plugin } from '@pk2/pipeline'
-import { createPipeline, executePipeline } from '@pk2/pipeline'
 import type { ComponentDefinition } from '@pk2/core'
 import { resolveDefinition } from '@pk2/core'
+import { isObject } from '@pk2/foundation'
+import type { AnyRecord } from '@pk2/foundation'
+import type { PipelineNode, Plugin } from '@pk2/pipeline'
+import { createPipeline, executePipeline } from '@pk2/pipeline'
+import { createHash } from 'node:crypto'
 import { compilerMergeStrategy } from './compiler-merge-strategy'
-import type { CompilerContext, CompiledComponentArtifact } from './types'
+import type { CompiledComponentArtifact, CompilerContext } from './types'
+import { iterate } from '@praxis-kit/primitive'
 
 const emptyContext = (): CompilerContext => ({
   identity: {},
@@ -16,9 +19,9 @@ const emptyContext = (): CompilerContext => ({
 // Sorts object keys recursively so hash output is independent of property insertion order.
 function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize)
-  if (typeof value === 'object' && value !== null)
+  if (isObject(value))
     return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
+      Object.entries(value as AnyRecord)
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([k, v]) => [k, canonicalize(v)]),
     )
@@ -33,9 +36,11 @@ function sha256(value: unknown): string {
 }
 
 function deepFreeze<T>(value: T): T {
-  if (typeof value !== 'object' || value === null || Object.isFrozen(value)) return value
+  if (!isObject(value) || Object.isFrozen(value)) return value
   Object.freeze(value)
-  for (const v of Object.values(value as Record<string, unknown>)) deepFreeze(v)
+  iterate.forEachValue(value as AnyRecord, (v) => {
+    deepFreeze(v)
+  })
   return value
 }
 

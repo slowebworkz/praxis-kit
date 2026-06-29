@@ -21,10 +21,7 @@ function rule(overrides: Partial<NormalizedChildRule> & { name: string }): Norma
 }
 
 function matrix(byRule: Set<number>[], _childCount = 3): MatchMatrix {
-  const reverse = new Map<number, Set<number>>()
-  for (const [ri, children] of byRule.entries()) {
-    reverse.set(ri, children)
-  }
+  const reverse = new Map(byRule.entries())
   return { childToRules: { forward: new Map(), reverse } }
 }
 

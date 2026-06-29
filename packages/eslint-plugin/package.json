@@ -24,12 +24,14 @@
   },
   "sideEffects": false,
   "dependencies": {
+    "@praxis-kit/primitive": "workspace:*",
     "@typescript-eslint/utils": "catalog:"
   },
   "peerDependencies": {
     "eslint": ">=9"
   },
   "devDependencies": {
+    "@pk2/foundation": "workspace:*",
     "@typescript-eslint/rule-tester": "catalog:",
     "eslint": "catalog:",
     "tsup": "catalog:",

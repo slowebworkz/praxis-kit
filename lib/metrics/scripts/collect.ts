@@ -13,45 +13,50 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Node, Project, SyntaxKind } from 'ts-morph'
 import type { DepGraph, ExportsFile, GzipSnapshot, PackageMetrics, Snapshot } from './types.ts'
+import { iterate } from '@praxis-kit/primitive'
 
 const pkg = dirname(fileURLToPath(import.meta.url))
 const root = join(pkg, '../../..')
 
+async function readJson<T>(path: string): Promise<T> {
+  return JSON.parse(await readFile(path, 'utf8')) as T
+}
+
 // ── Bundles ───────────────────────────────────────────────────────────────────
 
-const gzipRaw = JSON.parse(
-  await readFile(join(root, 'lib/tree-shaking-tests/snapshots/gzip.json'), 'utf8'),
-) as GzipSnapshot
+const gzipRaw = await readJson<GzipSnapshot>(
+  join(root, 'lib/tree-shaking-tests/snapshots/gzip.json'),
+)
 
 const bundles: Record<string, number> = {}
-for (const scenario of Object.keys(gzipRaw).sort((a, b) => gzipRaw[b]!.gzip - gzipRaw[a]!.gzip)) {
-  bundles[scenario] = gzipRaw[scenario]!.gzip
-}
+iterate.forEach(
+  Object.keys(gzipRaw).sort((a, b) => gzipRaw[b]!.gzip - gzipRaw[a]!.gzip),
+  (scenario) => {
+    bundles[scenario] = gzipRaw[scenario]!.gzip
+  },
+)
 
 // ── Architecture ──────────────────────────────────────────────────────────────
 
-const depGraph = JSON.parse(
-  await readFile(join(root, '.repo-state/dependency-graph.json'), 'utf8'),
-) as DepGraph
+const depGraph = await readJson<DepGraph>(join(root, '.repo-state/dependency-graph.json'))
+const exportsFile = await readJson<ExportsFile>(join(root, '.repo-state/exports.json'))
 
-const exportsFile = JSON.parse(
-  await readFile(join(root, '.repo-state/exports.json'), 'utf8'),
-) as ExportsFile
+function collectExports(file: ExportsFile): Record<string, { values: number; types: number }> {
+  const out: Record<string, { values: number; types: number }> = {}
+  const keys = Object.keys(file)
+    .filter((k) => k !== 'generated' && k.startsWith('@'))
+    .sort()
+  iterate.forEach(keys, (name) => {
+    const d = file[name] as { values?: string[]; types?: string[] }
+    out[name] = { values: (d.values ?? []).length, types: (d.types ?? []).length }
+  })
+  return out
+}
 
 const architecture = {
   status: depGraph.status,
   violations: depGraph.violations.length,
-  exports: (() => {
-    const out: Record<string, { values: number; types: number }> = {}
-    const keys = Object.keys(exportsFile)
-      .filter((k) => k !== 'generated' && k.startsWith('@'))
-      .sort()
-    for (const name of keys) {
-      const d = exportsFile[name] as { values?: string[]; types?: string[] }
-      out[name] = { values: (d.values ?? []).length, types: (d.types ?? []).length }
-    }
-    return out
-  })(),
+  exports: collectExports(exportsFile),
 }
 
 // ── Complexity ────────────────────────────────────────────────────────────────
@@ -62,7 +67,7 @@ const SOURCE_PACKAGES = [
   { key: 'lib/styling', src: 'lib/styling/src' },
   { key: 'lib/adapter-utils', src: 'lib/adapter-utils/src' },
   { key: 'packages/core', src: 'packages/core/src' },
-]
+] as const
 
 // One Project for all packages — parse and build AST once, not once per package.
 const project = new Project({ skipAddingFilesFromTsConfig: true })
@@ -81,21 +86,25 @@ const prefixes = SOURCE_PACKAGES.map(({ key, src }) => ({
 }))
 
 const complexity: Record<string, PackageMetrics> = {}
-for (const { key } of SOURCE_PACKAGES) {
+iterate.forEach(SOURCE_PACKAGES, ({ key }) => {
   complexity[key] = { files: 0, functions: 0, loc: 0 }
+})
+
+function isModuleArrowFunction(node: Node): boolean {
+  return (
+    Node.isVariableDeclaration(node) &&
+    node.getInitializerIfKind(SyntaxKind.ArrowFunction) !== undefined &&
+    Node.isSourceFile(node.getParent()?.getParent()?.getParent())
+  )
 }
 
-for (const sf of project.getSourceFiles()) {
+iterate.forEach(project.getSourceFiles(), (sf) => {
   const filePath = sf.getFilePath()
 
-  let metrics: PackageMetrics | undefined
-  for (const { prefix, key } of prefixes) {
-    if (filePath.startsWith(prefix)) {
-      metrics = complexity[key]
-      break
-    }
-  }
-  if (!metrics) continue
+  const metrics = iterate.find(prefixes, ({ prefix, key }) =>
+    filePath.startsWith(prefix) ? complexity[key] : null,
+  )
+  if (!metrics) return
 
   metrics.files++
 
@@ -125,19 +134,11 @@ for (const sf of project.getSourceFiles()) {
         metrics.functions++
         break
       case SyntaxKind.VariableDeclaration:
-        // Arrow functions declared directly in module scope only.
-        // AST path: VariableDeclaration → VariableDeclarationList
-        //           → VariableStatement → SourceFile
-        if (
-          Node.isVariableDeclaration(node) &&
-          node.getInitializerIfKind(SyntaxKind.ArrowFunction) &&
-          Node.isSourceFile(node.getParent()?.getParent()?.getParent())
-        )
-          metrics.functions++
+        if (isModuleArrowFunction(node)) metrics.functions++
         break
     }
   })
-}
+})
 
 // ── Write snapshot ────────────────────────────────────────────────────────────
 

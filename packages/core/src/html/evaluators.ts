@@ -1,13 +1,14 @@
 import { ChildrenEvaluator } from '@praxis-kit/contract'
+import { iterate } from '@praxis-kit/primitive'
 import { htmlContracts } from './contracts'
 
 function buildEvaluatorMap(): ReadonlyMap<string, ChildrenEvaluator> {
   const map = new Map<string, ChildrenEvaluator>()
-  for (const [tag, { children }] of Object.entries(htmlContracts)) {
+  iterate.forEachEntry(htmlContracts, (tag, { children }) => {
     if (children?.length) {
       map.set(tag, new ChildrenEvaluator(children, 'warn', `<${tag}>`))
     }
-  }
+  })
   return map
 }
 

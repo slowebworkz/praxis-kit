@@ -1,3 +1,4 @@
+import { iterate } from '@praxis-kit/primitive'
 import type {
   AnyRecord,
   ElementType,
@@ -46,16 +47,14 @@ export function validateFactoryOptions<
   // Typed as `object` so callers pass it without a cast; the single cast to an
   // indexable record is localized here.
   const checkSelection = (label: string, selection: object): void => {
-    const record = selection as AnyRecord
-    for (const dim in record) {
-      const value = record[dim]
+    iterate.forEachEntry(selection as AnyRecord, (dim, value) => {
       // `null`/`undefined` is the "unset" sentinel and is skipped: a selection
       // that doesn't pick a dimension is a missing reference, not a dead one.
       // Only present values are checked against the declared variant states.
-      if (value === undefined || value === null) continue
+      if (value === undefined || value === null) return
       if (!variants || !Object.hasOwn(variants, dim)) {
         report(strict, `${name}: ${label} references unknown variant "${dim}".`)
-        continue
+        return
       }
       const states = variants[dim]!
       // CVA keys are always strings, so booleans coerce: `true` → `'true'`.
@@ -69,14 +68,14 @@ export function validateFactoryOptions<
             `(valid: ${Object.keys(states).join(', ')}).`,
         )
       }
-    }
+    })
   }
 
   const { recipeMap } = resolved
   if (recipeMap) {
-    for (const recipeKey in recipeMap) {
-      checkSelection(`preset "${recipeKey}"`, recipeMap[recipeKey]!)
-    }
+    iterate.forEachEntry(recipeMap, (recipeKey, selection) => {
+      checkSelection(`preset "${recipeKey}"`, selection)
+    })
   }
 
   if (resolved.defaultVariants) checkSelection('defaults', resolved.defaultVariants)

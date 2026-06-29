@@ -9,6 +9,7 @@
 // hydration-parity.dom.test.tsx also asserts for CSR. Parity is maintained by both
 // suites asserting against the same EXPECTED_* constants — divergence fails one side.
 import { describe, it, expect } from 'vitest'
+import { iterate } from '@praxis-kit/primitive'
 import { renderToString } from 'solid-js/web'
 import { createContractComponent } from './create-contract-component'
 
@@ -33,13 +34,13 @@ function parseAttributes(html: string): Record<string, string> {
 
 function normalizeAttrs(attrs: Record<string, string>): Record<string, string> {
   const out: Record<string, string> = {}
-  for (const [k, v] of Object.entries(attrs)) {
+  iterate.forEachEntry(attrs, (k, v) => {
     // Solid's Dynamic SSR appends a trailing space to class attribute values
     // (confirmed: `<Dynamic component="div" class="x" />` → `class="x "`).
     // Normalize with trim + filter so semantic comparison is not affected by
     // the extra whitespace. The CSR path does not produce trailing spaces.
     out[k] = k === 'class' ? v.trim().split(/\s+/).filter(Boolean).sort().join(' ') : v
-  }
+  })
   return out
 }
 

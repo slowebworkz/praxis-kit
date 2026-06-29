@@ -1,4 +1,5 @@
 import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
+import type { TSESTree } from '@typescript-eslint/utils'
 import {
   asArrayExpression,
   asNumericLiteral,
@@ -7,6 +8,7 @@ import {
   getObjectProperty,
   isFactoryCall,
 } from '../utils/ast'
+import { iterate } from '@praxis-kit/primitive'
 
 const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)
 
@@ -43,6 +45,37 @@ export const validCardinality = createRule<Options, MessageIds>({
   create(context) {
     const calleeNames = new Set(context.options[0]?.calleeNames ?? ['createContractComponent'])
 
+    function validateCardinality(cardProp: TSESTree.Property): void {
+      const card = asObjectExpression(cardProp.value)
+      if (!card) return
+
+      const minProp = getObjectProperty(card, 'min')
+      const maxProp = getObjectProperty(card, 'max')
+
+      const min = minProp ? asNumericLiteral(minProp.value) : undefined
+      const max = maxProp ? asNumericLiteral(maxProp.value) : undefined
+
+      if (minProp && min !== undefined && min < 0) {
+        context.report({ node: minProp, messageId: 'negativeMin', data: { value: String(min) } })
+      }
+
+      if (maxProp && max !== undefined && max < 0) {
+        context.report({ node: maxProp, messageId: 'negativeMax', data: { value: String(max) } })
+      }
+
+      if (maxProp && max === 0) {
+        context.report({ node: maxProp, messageId: 'zeroMax' })
+      }
+
+      if (min !== undefined && max !== undefined && min >= 0 && max > 0 && max < min) {
+        context.report({
+          node: cardProp,
+          messageId: 'maxLessThanMin',
+          data: { min: String(min), max: String(max) },
+        })
+      }
+    }
+
     return {
       CallExpression(node) {
         if (!isFactoryCall(node, calleeNames)) return
@@ -62,49 +95,14 @@ export const validCardinality = createRule<Options, MessageIds>({
         const arr = asArrayExpression(childrenProp.value)
         if (!arr) return
 
-        for (const element of arr.elements) {
-          if (!element || element.type !== 'ObjectExpression') continue
+        iterate.forEach(arr.elements, (element) => {
+          if (!element || element.type !== 'ObjectExpression') return
 
           const cardProp = getObjectProperty(element, 'cardinality')
-          if (!cardProp) continue
+          if (!cardProp) return
 
-          const card = asObjectExpression(cardProp.value)
-          if (!card) continue
-
-          const minProp = getObjectProperty(card, 'min')
-          const maxProp = getObjectProperty(card, 'max')
-
-          const min = minProp ? asNumericLiteral(minProp.value) : undefined
-          const max = maxProp ? asNumericLiteral(maxProp.value) : undefined
-
-          if (min !== undefined && min < 0) {
-            context.report({
-              node: minProp!,
-              messageId: 'negativeMin',
-              data: { value: String(min) },
-            })
-          }
-
-          if (max !== undefined && max < 0) {
-            context.report({
-              node: maxProp!,
-              messageId: 'negativeMax',
-              data: { value: String(max) },
-            })
-          }
-
-          if (max !== undefined && max === 0) {
-            context.report({ node: maxProp!, messageId: 'zeroMax' })
-          }
-
-          if (min !== undefined && max !== undefined && min >= 0 && max > 0 && max < min) {
-            context.report({
-              node: cardProp,
-              messageId: 'maxLessThanMin',
-              data: { min: String(min), max: String(max) },
-            })
-          }
-        }
+          validateCardinality(cardProp)
+        })
       },
     }
   },

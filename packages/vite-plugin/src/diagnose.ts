@@ -1,6 +1,7 @@
 import ts from 'typescript'
-import { walk } from './ast'
+import { walkEach } from './ast'
 import type { ChildCount, ComponentConstraint, Diagnostic, PendingUsage, Severity } from './types'
+import { iterate } from '@praxis-kit/primitive'
 
 /**
  * Single-pass variant of diagnoseUsages + diagnoseAriaTagOverrides + collectJsxUsages.
@@ -19,7 +20,7 @@ export function analyzeJsxSites(
   const diagnostics: Diagnostic[] = []
   const usages: PendingUsage[] = []
 
-  walk(source, (node) => {
+  walkEach(source, (node) => {
     let tagName: string | undefined
     let attributes: ts.JsxAttributes | undefined
     let count: ChildCount | undefined
@@ -67,20 +68,24 @@ export function analyzeJsxSites(
     if (attributes) {
       const c = byNameAria.get(tagName)
       if (c) {
-        for (const attr of attributes.properties) {
-          if (!ts.isJsxAttribute(attr)) continue
-          const attrName = ts.isIdentifier(attr.name) ? attr.name.text : undefined
-          if (attrName !== 'as' || !attr.initializer) continue
+        iterate.forEach(attributes.properties, (attr) => {
+          if (!ts.isJsxAttribute(attr)) return
+
+          const { initializer, name } = attr
+          const attrName = ts.isIdentifier(name) ? name.text : undefined
+          if (attrName !== 'as' || !initializer) return
+
           let asValue: string | undefined
-          if (ts.isStringLiteral(attr.initializer)) {
-            asValue = attr.initializer.text
+          if (ts.isStringLiteral(initializer)) {
+            asValue = initializer.text
           } else if (
-            ts.isJsxExpression(attr.initializer) &&
-            attr.initializer.expression !== undefined &&
-            ts.isStringLiteral(attr.initializer.expression)
+            ts.isJsxExpression(initializer) &&
+            initializer.expression !== undefined &&
+            ts.isStringLiteral(initializer.expression)
           ) {
-            asValue = attr.initializer.expression.text
+            asValue = initializer.expression.text
           }
+
           if (asValue !== undefined && asValue !== c.defaultTag) {
             const { line, character } = getPos()
             diagnostics.push({
@@ -90,7 +95,7 @@ export function analyzeJsxSites(
               severity,
             })
           }
-        }
+        })
       }
     }
 
@@ -198,6 +203,7 @@ function countJsxChildren(children: ts.NodeArray<ts.JsxChild>): ChildCount | und
     } else {
       c = ONE // JsxElement, JsxSelfClosingElement
     }
+
     if (!c) return undefined
     min += c.min
     max += c.max
@@ -220,7 +226,7 @@ export function diagnoseUsages(
   const byName = new Map(constraints.filter((c) => c.rules.length > 0).map((c) => [c.name, c]))
   const diagnostics: Diagnostic[] = []
 
-  walk(source, (node) => {
+  walkEach(source, (node) => {
     let tagName: string | undefined
     let count: ChildCount | undefined
 
@@ -284,7 +290,7 @@ export function diagnoseAriaTagOverrides(
 
   const diagnostics: Diagnostic[] = []
 
-  walk(source, (node) => {
+  walkEach(source, (node) => {
     let tagName: string | undefined
     let attributes: ts.JsxAttributes | undefined
 
@@ -303,24 +309,26 @@ export function diagnoseAriaTagOverrides(
     const constraint = byName.get(tagName)
     if (!constraint) return
 
-    for (const attr of attributes.properties) {
-      if (!ts.isJsxAttribute(attr)) continue
-      const attrName = ts.isIdentifier(attr.name) ? attr.name.text : undefined
-      if (attrName !== 'as') continue
-      if (!attr.initializer) continue
+    iterate.forEach(attributes.properties, (attr) => {
+      if (!ts.isJsxAttribute(attr)) return
+
+      const { initializer, name } = attr
+      const attrName = ts.isIdentifier(name) ? name.text : undefined
+      if (attrName !== 'as') return
+      if (!initializer) return
 
       let asValue: string | undefined
-      if (ts.isStringLiteral(attr.initializer)) {
-        asValue = attr.initializer.text
+      if (ts.isStringLiteral(initializer)) {
+        asValue = initializer.text
       } else if (
-        ts.isJsxExpression(attr.initializer) &&
-        attr.initializer.expression !== undefined &&
-        ts.isStringLiteral(attr.initializer.expression)
+        ts.isJsxExpression(initializer) &&
+        initializer.expression !== undefined &&
+        ts.isStringLiteral(initializer.expression)
       ) {
-        asValue = attr.initializer.expression.text
+        asValue = initializer.expression.text
       }
 
-      if (asValue === undefined || asValue === constraint.defaultTag) continue
+      if (asValue === undefined || asValue === constraint.defaultTag) return
 
       const { line, character } = source.getLineAndCharacterOfPosition(node.getStart(source))
       diagnostics.push({
@@ -329,7 +337,7 @@ export function diagnoseAriaTagOverrides(
         col: character + 1,
         severity,
       })
-    }
+    })
   })
 
   return diagnostics
@@ -344,7 +352,7 @@ export function diagnoseAriaTagOverrides(
 export function collectJsxUsages(source: ts.SourceFile): PendingUsage[] {
   const usages: PendingUsage[] = []
 
-  walk(source, (node) => {
+  walkEach(source, (node) => {
     let tagName: string | undefined
     let count: ChildCount | undefined
 

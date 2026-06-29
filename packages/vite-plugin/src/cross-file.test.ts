@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { parseSource } from './ast'
 import { collectConstraints } from './collect'
 import { collectJsxUsages } from './diagnose'
 import { extractImportSpecifiers } from './imports'
 import { ConstraintRegistry } from './registry'
+import { iterate } from '@praxis-kit/primitive'
 
 // ---------------------------------------------------------------------------
 // extractImportSpecifiers
@@ -193,17 +194,17 @@ describe('ConstraintRegistry.diagnostics', () => {
     // Simulate import resolution: './button' → '/abs/button.tsx'
     const importSpecifiers = extractImportSpecifiers(appFile)
     const resolvedImports = new Map<string, string>()
-    for (const [name, { specifier }] of importSpecifiers) {
+    iterate.forEach(importSpecifiers, ([name, { specifier }]) => {
       resolvedImports.set(name, specifier.replace('./', '/abs/') + '.tsx')
-    }
+    })
     registry.registerImports('/abs/app.tsx', resolvedImports)
 
     const localNames = new Set(appConstraints.map((c) => c.name))
-    for (const usage of collectJsxUsages(appFile)) {
+    iterate.forEach(collectJsxUsages(appFile), (usage) => {
       if (!localNames.has(usage.tagName)) {
         registry.addPendingUsage('/abs/app.tsx', usage)
       }
-    }
+    })
 
     return registry
   }

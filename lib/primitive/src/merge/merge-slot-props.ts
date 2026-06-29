@@ -1,4 +1,5 @@
 import type { AnyRecord } from '../types'
+import { iterate } from '../utils'
 import { isEventKey, isFunction } from './predicates'
 import { policyHandlers } from './policies'
 import type { PropMergePolicy } from './policies'
@@ -11,10 +12,9 @@ const NAMED_PROP_POLICIES = new Map<string, PropMergePolicy>([
 
 export function mergeSlotProps(slotProps: AnyRecord, childProps: AnyRecord): AnyRecord {
   const merged: AnyRecord = { ...slotProps }
-  for (const key in childProps) {
-    if (!Object.hasOwn(childProps, key)) continue
-    merged[key] = applyMergePolicy(key, slotProps[key], childProps[key])
-  }
+  iterate.forEachEntry(childProps, (key, childVal) => {
+    merged[key] = applyMergePolicy(key, slotProps[key], childVal)
+  })
   return merged
 }
 

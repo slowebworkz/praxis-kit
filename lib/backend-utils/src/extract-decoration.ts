@@ -8,7 +8,7 @@ import type {
   VariantMap,
 } from '@pk2/core'
 import type { AnyRecord } from '@pk2/foundation'
-import { isNumber, isObject, isString } from '@praxis-kit/primitive'
+import { isNumber, isObject, isString, iterate } from '@praxis-kit/primitive'
 import { isFunction } from '@praxis-kit/shared'
 import type { DecorationCollectionKey } from './types'
 
@@ -33,11 +33,11 @@ function assignIfNotEmpty<K extends DecorationCollectionKey>(
 function extractStyles(value: unknown, styles: StyleMap): boolean {
   if (!isObject(value)) return false
 
-  for (const [k, v] of Object.entries(value)) {
+  iterate.forEachEntry(value, (k, v) => {
     if (isStyleValue(v)) {
       styles[k] = v
     }
-  }
+  })
 
   return true
 }
@@ -75,21 +75,17 @@ export function extractDecoration(
   const variants: VariantMap = {}
   const dec: NodeDecoration = {}
 
-  for (const [key, value] of Object.entries(props)) {
-    if (key === 'children' || key === 'slot' || key === 'ref') continue
+  iterate.forEachEntry(props, (key, value) => {
+    if (key === 'children' || key === 'slot' || key === 'ref') return
 
-    if (key === 'style' && extractStyles(value, styles)) {
-      continue
-    }
+    if (key === 'style' && extractStyles(value, styles)) return
 
-    if (extractListener(key, value, listeners)) {
-      continue
-    }
+    if (extractListener(key, value, listeners)) return
 
     if (isAttributeValue(value)) {
       extractAttributeOrVariant(key, value, attributes, variants, variantKeys)
     }
-  }
+  })
 
   assignIfNotEmpty(dec, 'attributes', attributes)
   assignIfNotEmpty(dec, 'styles', styles)

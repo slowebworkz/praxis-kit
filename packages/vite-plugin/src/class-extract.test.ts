@@ -7,6 +7,7 @@ import {
   injectPrecomputedClasses,
 } from './class-extract'
 import { parseSource } from './ast'
+import { iterate } from '@praxis-kit/primitive'
 
 const CALLEE_NAMES = new Set(['createContractComponent'])
 
@@ -25,7 +26,7 @@ function parseStylingObj(stylingSource: string): ts.ObjectLiteralExpression {
     ) {
       const arg = node.arguments[0]
       if (arg && ts.isObjectLiteralExpression(arg)) {
-        for (const p of arg.properties) {
+        iterate.forEach(arg.properties, (p) => {
           if (
             ts.isPropertyAssignment(p) &&
             ts.isIdentifier(p.name) &&
@@ -34,7 +35,7 @@ function parseStylingObj(stylingSource: string): ts.ObjectLiteralExpression {
           ) {
             result = p.initializer
           }
-        }
+        })
       }
     }
     ts.forEachChild(node, visit)

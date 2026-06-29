@@ -1,5 +1,6 @@
 import ts from 'typescript'
-import { walk } from './ast'
+import { walkEach } from './ast'
+import { iterate } from '@praxis-kit/primitive'
 
 export type ImportBinding = {
   /** The exported name in the source module (the name before `as`, if any). */
@@ -22,7 +23,7 @@ export type ImportBinding = {
 export function extractImportSpecifiers(source: ts.SourceFile): Map<string, ImportBinding> {
   const result = new Map<string, ImportBinding>()
 
-  walk(source, (node) => {
+  walkEach(source, (node) => {
     if (!ts.isImportDeclaration(node)) return
     const moduleSpecifier = node.moduleSpecifier
     if (!ts.isStringLiteral(moduleSpecifier)) return
@@ -31,13 +32,15 @@ export function extractImportSpecifiers(source: ts.SourceFile): Map<string, Impo
     const namedBindings = node.importClause?.namedBindings
     if (!namedBindings || !ts.isNamedImports(namedBindings)) return
 
-    for (const element of namedBindings.elements) {
-      if (element.isTypeOnly) continue
-      const localName = element.name.text
+    iterate.forEach(namedBindings.elements, (element) => {
+      const { isTypeOnly, name, propertyName } = element
+      if (isTypeOnly) return
+
+      const { text: localName } = name
       // propertyName is present only when aliased: `import { Foo as Bar }` → propertyName = Foo
-      const importedName = element.propertyName?.text ?? localName
+      const importedName = propertyName?.text ?? localName
       result.set(localName, { importedName, specifier })
-    }
+    })
   })
 
   return result

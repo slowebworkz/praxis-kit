@@ -1,12 +1,17 @@
 import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
 import type { TSESTree } from '@typescript-eslint/utils'
-import { IMPLICIT_ROLES } from '../utils/implicit-roles'
+import { IMPLICIT_ROLES } from '../utils'
+import { iterate, isString } from '@praxis-kit/primitive'
 
 const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)
 
 export type Options = []
 
 export type MessageIds = 'redundantRole'
+
+function isRedundantRole(explicit: string, implicit: string): boolean {
+  return explicit === implicit
+}
 
 function getJsxTagName(node: TSESTree.JSXOpeningElement): string | undefined {
   const name = node.name
@@ -18,25 +23,28 @@ function getJsxStringAttribute(
   node: TSESTree.JSXOpeningElement,
   attrName: string,
 ): { node: TSESTree.JSXAttribute; value: string } | undefined {
-  for (const attr of node.attributes) {
-    if (attr.type !== 'JSXAttribute') continue
-    const key = attr.name
-    if (key.type !== 'JSXIdentifier' || key.name !== attrName) continue
+  return (
+    iterate.find(node.attributes, (attr) => {
+      if (attr.type !== 'JSXAttribute') return null
 
-    const val = attr.value
-    if (val === null) continue // boolean attribute, no value
-    if (val.type === 'Literal' && typeof val.value === 'string') {
-      return { node: attr, value: val.value }
-    }
-    if (
-      val.type === 'JSXExpressionContainer' &&
-      val.expression.type === 'Literal' &&
-      typeof val.expression.value === 'string'
-    ) {
-      return { node: attr, value: val.expression.value }
-    }
-  }
-  return undefined
+      const { name: key } = attr
+      if (key.type !== 'JSXIdentifier' || key.name !== attrName) return null
+
+      const { value: val } = attr
+      if (val === null) return null
+      if (val.type === 'Literal' && isString(val.value)) {
+        return { node: attr, value: val.value }
+      }
+      if (
+        val.type === 'JSXExpressionContainer' &&
+        val.expression.type === 'Literal' &&
+        isString(val.expression.value)
+      ) {
+        return { node: attr, value: val.expression.value }
+      }
+      return null
+    }) ?? undefined
+  )
 }
 
 export const noRedundantRole = createRule<Options, MessageIds>({
@@ -67,7 +75,7 @@ export const noRedundantRole = createRule<Options, MessageIds>({
         const roleAttr = getJsxStringAttribute(node, 'role')
         if (!roleAttr) return
 
-        if (roleAttr.value === implicitRole) {
+        if (isRedundantRole(roleAttr.value, implicitRole)) {
           context.report({
             node: roleAttr.node,
             messageId: 'redundantRole',

@@ -6,10 +6,11 @@ import {
   firstObjectArg,
   getProperty,
   isFactoryCall,
-  walk,
+  walkEach,
 } from './ast'
 import type { ImportBinding } from './imports'
 import type { Cardinality, ChildRulePosition, ComponentConstraint, StaticBound } from './types'
+import { iterate } from '@praxis-kit/primitive'
 
 /**
  * Extracts a StaticBound from one element of the enforcement.children array,
@@ -51,10 +52,12 @@ function extractBound(element: ts.Expression): StaticBound | undefined {
   return { cardinality, position }
 }
 
+/** Returns the lower bound of a Cardinality as an integer (unbounded → 0). */
 function cardinalityMin(c: Cardinality): number {
   return c.kind === 'bounded' ? c.min : 0
 }
 
+/** Returns the upper bound of a Cardinality (unbounded → Infinity). */
 function cardinalityMax(c: Cardinality): number {
   return c.kind === 'bounded' ? c.max : Infinity
 }
@@ -76,12 +79,14 @@ function processVariableStatement(
   calleeNames: ReadonlySet<string>,
   out: ComponentConstraint[],
 ): void {
-  for (const decl of node.declarationList.declarations) {
-    if (!decl.initializer || !ts.isCallExpression(decl.initializer)) continue
-    if (!isFactoryCall(decl.initializer, calleeNames)) continue
+  iterate.forEach(node.declarationList.declarations, (decl) => {
+    const { initializer, name } = decl
 
-    const arg = firstObjectArg(decl.initializer)
-    if (!arg) continue
+    if (!initializer || !ts.isCallExpression(initializer)) return
+    if (!isFactoryCall(initializer, calleeNames)) return
+
+    const arg = firstObjectArg(initializer)
+    if (!arg) return
 
     // Extract default tag (top-level `tag: 'button'`).
     const tagNode = getProperty(arg, 'tag')
@@ -99,26 +104,26 @@ function processVariableStatement(
 
     const rules: StaticBound[] = []
     if (childrenArr) {
-      for (const element of childrenArr.elements) {
+      iterate.forEach(childrenArr.elements, (element) => {
         const bound = extractBound(element)
         if (bound) rules.push(bound)
-      }
+      })
     }
 
     // Collect the constraint even when there are no children rules, if the component
     // has a default tag or ARIA rules — needed for the ARIA as-override check.
-    if (rules.length === 0 && !hasAriaRules && !defaultTag) continue
+    if (rules.length === 0 && !hasAriaRules && !defaultTag) return
 
     let totalMin = 0
     let totalMax = 0
-    for (const rule of rules) {
+    iterate.forEach(rules, (rule) => {
       totalMin += cardinalityMin(rule.cardinality)
       const max = cardinalityMax(rule.cardinality)
       totalMax = totalMax === Infinity || max === Infinity ? Infinity : totalMax + max
-    }
+    })
 
-    const componentName = ts.isIdentifier(decl.name) ? decl.name.text : undefined
-    if (!componentName) continue
+    const componentName = ts.isIdentifier(name) ? name.text : undefined
+    if (!componentName) return
 
     out.push({
       name: componentName,
@@ -128,15 +133,16 @@ function processVariableStatement(
       ...(defaultTag !== undefined && { defaultTag }),
       hasAriaRules,
     })
-  }
+  })
 }
 
+/** Walks a SourceFile and returns a ComponentConstraint for each factory call with statically-extractable enforcement or ARIA rules. */
 export function collectConstraints(
   source: ts.SourceFile,
   calleeNames: ReadonlySet<string>,
 ): ComponentConstraint[] {
   const constraints: ComponentConstraint[] = []
-  walk(source, (node) => {
+  walkEach(source, (node) => {
     if (ts.isVariableStatement(node)) processVariableStatement(node, calleeNames, constraints)
   })
   return constraints
@@ -154,7 +160,7 @@ export function collectFileDeclarations(
   const constraints: ComponentConstraint[] = []
   const importSpecifiers = new Map<string, ImportBinding>()
 
-  walk(source, (node) => {
+  walkEach(source, (node) => {
     if (ts.isVariableStatement(node)) {
       processVariableStatement(node, calleeNames, constraints)
     } else if (ts.isImportDeclaration(node)) {
@@ -163,12 +169,12 @@ export function collectFileDeclarations(
       const namedBindings = node.importClause?.namedBindings
       if (!namedBindings || !ts.isNamedImports(namedBindings)) return
       const specifier = spec.text
-      for (const el of namedBindings.elements) {
-        if (el.isTypeOnly) continue
-        const localName = el.name.text
-        const importedName = el.propertyName?.text ?? localName
+      iterate.forEach(namedBindings.elements, ({ isTypeOnly, name, propertyName }) => {
+        if (isTypeOnly) return
+        const localName = name.text
+        const importedName = propertyName?.text ?? localName
         importSpecifiers.set(localName, { importedName, specifier })
-      }
+      })
     }
   })
 

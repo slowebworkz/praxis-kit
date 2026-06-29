@@ -14,21 +14,28 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { ReadonlyDeep } from 'type-fest'
 import type { Snapshot } from './types.ts'
+import { iterate } from '@praxis-kit/primitive'
 
 const totalExports = (pkg: { values: number; types: number }) => pkg.values + pkg.types
-const percentGrowth = (previous: number, current: number) => ((current - previous) / previous) * 100
+const percentGrowth = (previous: number, current: number) =>
+  previous === 0 ? 0 : ((current - previous) / previous) * 100
 
 const pkg = dirname(fileURLToPath(import.meta.url))
 const snapshotPath = join(pkg, '../snapshots/metrics.json')
 
+function parseSnapshot(json: string): ReadonlyDeep<Snapshot> {
+  return JSON.parse(json) as ReadonlyDeep<Snapshot>
+}
+
 let current: ReadonlyDeep<Snapshot>
 try {
-  current = JSON.parse(await readFile(snapshotPath, 'utf8')) as ReadonlyDeep<Snapshot>
+  current = parseSnapshot(await readFile(snapshotPath, 'utf8'))
 } catch {
   console.log('No snapshot found — run `pnpm collect` first.')
   process.exit(1)
 }
 
+const warnings: string[] = []
 let failed = false
 
 // ── Architecture violations (hard gate) ───────────────────────────────────────
@@ -42,71 +49,86 @@ if (current.architecture.violations > 0) {
   console.log('✓ architecture: dependency graph clean')
 }
 
-// ── Public API growth (soft gate — warn only) ─────────────────────────────────
-// Baseline is the committed snapshot in git HEAD, so the comparison always
-// reflects "what changed since the last commit" rather than a stale one-time file.
+// ── Public API + complexity growth (soft gate — warn only) ────────────────────
+// Prefer the merge base of the current branch and origin/main so the comparison
+// is stable against squash merges, rebases, and shallow clones. Falls back to
+// HEAD~1 (previous commit) and then HEAD as a last resort.
 
-// HEAD~1 is the commit before the current one — the state before this PR's
-// changes landed. Comparing against HEAD would always show zero diff when
-// metrics.json is committed as part of the same commit that triggered CI.
-let previous: ReadonlyDeep<Snapshot> | null = null
 const gitPath = 'lib/metrics/snapshots/metrics.json'
-for (const ref of ['HEAD~1', 'HEAD']) {
+const refs = [
+  ...(() => {
+    try {
+      return [execSync('git merge-base HEAD origin/main', { encoding: 'utf8' }).trim()]
+    } catch {
+      return []
+    }
+  })(),
+  'HEAD~1',
+  'HEAD',
+]
+
+function loadCommittedSnapshot(ref: string): ReadonlyDeep<Snapshot> | null {
   try {
     const raw = execSync(`git show ${ref}:${gitPath}`, { encoding: 'utf8' })
-    previous = JSON.parse(raw) as ReadonlyDeep<Snapshot>
-    break
+    return parseSnapshot(raw)
   } catch {
-    // try next ref
+    return null
   }
 }
+
+const previous = iterate.find(refs, loadCommittedSnapshot)
+
 if (!previous) {
   console.log('✓ public API: no committed baseline found — skipping growth check')
-}
-
-if (previous) {
-  for (const name in current.architecture.exports) {
-    const curr = current.architecture.exports[name]!
+} else {
+  iterate.forEachEntry(current.architecture.exports, (name, curr) => {
     const prev = previous.architecture.exports[name]
     if (!prev) {
-      console.warn(`  ⚠ public API: new package ${name} introduced (${totalExports(curr)} exports)`)
-      continue
+      warnings.push(
+        `  ⚠ public API: new package ${name} introduced (${curr.values} values / ${curr.types} types)`,
+      )
+      return
     }
     const prevTotal = totalExports(prev)
     const currTotal = totalExports(curr)
     if (currTotal > prevTotal) {
-      console.warn(
-        `  ⚠ public API: ${name} grew by ${currTotal - prevTotal} exports (${prevTotal} → ${currTotal})`,
+      warnings.push(
+        `  ⚠ public API: ${name} grew by ${currTotal - prevTotal} exports` +
+          ` (${prevTotal} → ${currTotal}: ${curr.values} values / ${curr.types} types)`,
       )
     }
-  }
-  for (const name in previous.architecture.exports) {
+  })
+
+  iterate.forEachKey(previous.architecture.exports, (name) => {
     if (!(name in current.architecture.exports)) {
-      console.warn(`  ⚠ public API: ${name} removed`)
+      warnings.push(`  ⚠ public API: ${name} removed`)
     }
-  }
+  })
+
   console.log('✓ public API: checked against committed baseline')
-}
 
-// ── Complexity growth (soft gate — warn only) ─────────────────────────────────
-
-if (previous) {
-  for (const key in current.complexity) {
-    const curr = current.complexity[key]!
+  iterate.forEachEntry(current.complexity, (key, curr) => {
     const prev = previous.complexity[key]
-    if (!prev) continue
-    if (prev.loc === 0) continue
+    if (!prev || prev.loc === 0) return
     const pct = percentGrowth(prev.loc, curr.loc)
-    if (pct >= 20) {
-      console.warn(`  ⚠ complexity: ${key} LOC grew ${pct.toFixed(0)}% (${prev.loc} → ${curr.loc})`)
+    if (pct >= 20 && curr.loc - prev.loc >= 20) {
+      warnings.push(
+        `  ⚠ complexity: ${key} LOC grew ${pct.toFixed(0)}% (${prev.loc} → ${curr.loc})`,
+      )
     }
-  }
+  })
 }
 
 // ── Result ────────────────────────────────────────────────────────────────────
 
+if (warnings.length > 0) {
+  console.warn('\nWarnings:')
+  iterate.forEach(warnings, (w) => console.warn(w))
+  console.warn('')
+}
+
 if (failed) {
-  process.exit(1)
+  process.exitCode = 1
 } else {
   console.log('✓ all hard gates passed')
 }

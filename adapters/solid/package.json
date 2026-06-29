@@ -29,6 +29,7 @@
     "solid-js": ">=1.6"
   },
   "devDependencies": {
+    "@praxis-kit/primitive": "workspace:*",
     "@praxis-kit/adapter-utils": "workspace:*",
     "@solidjs/testing-library": "catalog:",
     "jsdom": "catalog:",

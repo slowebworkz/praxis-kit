@@ -14,7 +14,8 @@
  * every compound in every factory call passes the validity check.
  */
 import ts from 'typescript'
-import { asArray, asObject, firstObjectArg, getProperty, isFactoryCall, walk } from './ast'
+import { asArray, asObject, firstObjectArg, getProperty, isFactoryCall, walkEach } from './ast'
+import { iterate } from '@praxis-kit/primitive'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -24,21 +25,26 @@ function extractVariantMap(stylingObj: ts.ObjectLiteralExpression): Map<string, 
   const variantsObj = asObject(getProperty(stylingObj, 'variants'))
   if (!variantsObj) return result
 
-  for (const prop of variantsObj.properties) {
-    if (!ts.isPropertyAssignment(prop)) continue
-    const key =
-      ts.isIdentifier(prop.name) || ts.isStringLiteral(prop.name) ? prop.name.text : undefined
-    if (!key) continue
+  iterate.forEach(variantsObj.properties, (prop) => {
+    if (!ts.isPropertyAssignment(prop)) return
+
+    const { name } = prop
+
+    const key = ts.isIdentifier(name) || ts.isStringLiteral(name) ? name.text : undefined
+    if (!key) return
     const valuesObj = asObject(prop.initializer)
-    if (!valuesObj) continue
+    if (!valuesObj) return
+
     const valid = new Set<string>()
-    for (const vp of valuesObj.properties) {
-      if (!ts.isPropertyAssignment(vp)) continue
-      const vk = ts.isIdentifier(vp.name) || ts.isStringLiteral(vp.name) ? vp.name.text : undefined
+    iterate.forEach(valuesObj.properties, (vp) => {
+      if (!ts.isPropertyAssignment(vp)) return
+
+      const { name } = vp
+      const vk = ts.isIdentifier(name) || ts.isStringLiteral(name) ? name.text : undefined
       if (vk) valid.add(vk)
-    }
+    })
     result.set(key, valid)
-  }
+  })
   return result
 }
 
@@ -52,32 +58,39 @@ function isDeadCompound(
   entry: ts.ObjectLiteralExpression,
   variantMap: Map<string, Set<string>>,
 ): boolean {
-  for (const prop of entry.properties) {
-    if (!ts.isPropertyAssignment(prop)) continue
-    const key =
-      ts.isIdentifier(prop.name) || ts.isStringLiteral(prop.name) ? prop.name.text : undefined
-    if (!key || key === 'class') continue
+  return (
+    iterate.find(entry.properties, (prop) => {
+      if (!ts.isPropertyAssignment(prop)) return null
 
-    const validValues = variantMap.get(key)
-    if (!validValues) return true // unknown variant key — dead
+      const { name } = prop
+      const key = ts.isIdentifier(name) || ts.isStringLiteral(name) ? name.text : undefined
+      if (!key || key === 'class') return null
 
-    const val = prop.initializer
-    if (ts.isStringLiteral(val)) {
-      if (!validValues.has(val.text)) return true
-    } else if (ts.isArrayLiteralExpression(val)) {
-      // All elements must be string literals to evaluate; if any is non-literal, skip.
-      const allLiterals = val.elements.every(ts.isStringLiteral)
-      if (!allLiterals) continue
-      const hasAnyValid = val.elements.some((e) => ts.isStringLiteral(e) && validValues.has(e.text))
-      if (!hasAnyValid) return true // every value in the OR-list is invalid — dead
-    }
-    // Non-literal condition value → conservative: skip, not dead
-  }
-  return false
+      const validValues = variantMap.get(key)
+      if (!validValues) return true // unknown variant key — dead
+
+      const { initializer: val } = prop
+      if (ts.isStringLiteral(val)) {
+        if (!validValues.has(val.text)) return true
+      } else if (ts.isArrayLiteralExpression(val)) {
+        // All elements must be string literals to evaluate; if any is non-literal, skip.
+        const allLiterals = val.elements.every(ts.isStringLiteral)
+        if (!allLiterals) return null
+
+        const hasAnyValid = val.elements.some(
+          (e) => ts.isStringLiteral(e) && validValues.has(e.text),
+        )
+        if (!hasAnyValid) return true // every value in the OR-list is invalid — dead
+      }
+      // Non-literal condition value → conservative: skip, not dead
+      return null
+    }) ?? false
+  )
 }
 
 // ─── Transformer ──────────────────────────────────────────────────────────────
 
+/** Returns a TS transformer that removes dead compound entries from every eligible factory call in a source file. */
 function createCompoundPruner(
   factory: ts.NodeFactory,
   calleeNames: ReadonlySet<string>,
@@ -160,7 +173,7 @@ export function pruneDeadCompounds(
   calleeNames: ReadonlySet<string>,
 ): string | null {
   let hasCompounds = false
-  walk(source, (n) => {
+  walkEach(source, (n) => {
     if (hasCompounds) return
     if (ts.isPropertyAssignment(n)) {
       const key = ts.isIdentifier(n.name) || ts.isStringLiteral(n.name) ? n.name.text : undefined

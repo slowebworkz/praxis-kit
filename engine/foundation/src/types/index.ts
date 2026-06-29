@@ -1,5 +1,6 @@
 export type { AnyRecord } from './any-record'
 export type { CapabilityMap } from './capability-map'
+export type { DefaultMap } from './default-map'
 export type { Diagnostic } from './diagnostic'
 export type { MetadataMap } from './metadata-map'
 export type { NodeId } from './node-id'

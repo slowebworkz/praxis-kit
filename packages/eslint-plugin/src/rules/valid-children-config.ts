@@ -9,8 +9,47 @@ import {
   getObjectProperty,
   isFactoryCall,
 } from '../utils/ast'
+import { iterate } from '@praxis-kit/primitive'
 
 const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)
+
+type ChildrenAnalysis = {
+  firstPositionProps: TSESTree.Property[]
+  lastPositionProps: TSESTree.Property[]
+  onlyWithMinProp: TSESTree.Property | null
+  requiredRuleCount: number
+}
+
+function analyzeChildrenRules(elements: TSESTree.ArrayExpression['elements']): ChildrenAnalysis {
+  const firstPositionProps: TSESTree.Property[] = []
+  const lastPositionProps: TSESTree.Property[] = []
+  let onlyWithMinProp: TSESTree.Property | null = null
+  let requiredRuleCount = 0
+
+  iterate.forEach(elements, (element) => {
+    if (!element || element.type !== 'ObjectExpression') return
+
+    const positionProp = getObjectProperty(element, 'position')
+    const position = positionProp ? asStringLiteral(positionProp.value) : undefined
+
+    const cardProp = getObjectProperty(element, 'cardinality')
+    const card = cardProp ? asObjectExpression(cardProp.value) : undefined
+    const minProp = card ? getObjectProperty(card, 'min') : undefined
+    const min = minProp ? (asNumericLiteral(minProp.value) ?? 0) : 0
+
+    if (position === 'first' && positionProp) firstPositionProps.push(positionProp)
+    if (position === 'last' && positionProp) lastPositionProps.push(positionProp)
+
+    if (min >= 1) {
+      requiredRuleCount++
+      if (position === 'only' && positionProp && !onlyWithMinProp) {
+        onlyWithMinProp = positionProp
+      }
+    }
+  })
+
+  return { firstPositionProps, lastPositionProps, onlyWithMinProp, requiredRuleCount }
+}
 
 export type Options = [{ calleeNames?: string[] }]
 
@@ -65,50 +104,22 @@ export const validChildrenConfig = createRule<Options, MessageIds>({
         const arr = asArrayExpression(childrenProp.value)
         if (!arr) return
 
-        const firstPositionProps: TSESTree.Property[] = []
-        const lastPositionProps: TSESTree.Property[] = []
-        let onlyWithMinProp: TSESTree.Property | null = null
-        let rulesWithMinCount = 0
+        const { firstPositionProps, lastPositionProps, onlyWithMinProp, requiredRuleCount } =
+          analyzeChildrenRules(arr.elements)
 
-        for (const element of arr.elements) {
-          if (!element || element.type !== 'ObjectExpression') continue
-
-          const positionProp = getObjectProperty(element, 'position')
-          const position = positionProp ? asStringLiteral(positionProp.value) : undefined
-
-          const cardProp = getObjectProperty(element, 'cardinality')
-          const card = cardProp ? asObjectExpression(cardProp.value) : undefined
-          const minProp = card ? getObjectProperty(card, 'min') : undefined
-          const min = minProp ? (asNumericLiteral(minProp.value) ?? 0) : 0
-
-          if (position === 'first' && positionProp) {
-            firstPositionProps.push(positionProp)
-          }
-          if (position === 'last' && positionProp) {
-            lastPositionProps.push(positionProp)
-          }
-
-          if (min >= 1) {
-            rulesWithMinCount++
-            if (position === 'only' && positionProp && !onlyWithMinProp) {
-              onlyWithMinProp = positionProp
-            }
-          }
-        }
-
-        for (const prop of firstPositionProps.slice(1)) {
+        iterate.forEach(firstPositionProps.slice(1), (prop) => {
           context.report({ node: prop, messageId: 'multipleFirst' })
-        }
+        })
 
-        for (const prop of lastPositionProps.slice(1)) {
+        iterate.forEach(lastPositionProps.slice(1), (prop) => {
           context.report({ node: prop, messageId: 'multipleLast' })
-        }
+        })
 
-        if (onlyWithMinProp && rulesWithMinCount > 1) {
+        if (onlyWithMinProp && requiredRuleCount > 1) {
           context.report({
             node: onlyWithMinProp,
             messageId: 'minSumExceedsCapacity',
-            data: { count: String(rulesWithMinCount - 1) },
+            data: { count: String(requiredRuleCount - 1) },
           })
         }
       },

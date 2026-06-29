@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { ClassClassifier } from './class-classifier'
 
+import { iterate } from '@praxis-kit/primitive'
+
 const c = new ClassClassifier()
 
 describe('ClassClassifier — layout tokens', () => {
@@ -187,8 +189,8 @@ describe('ClassClassifier — raw preservation', () => {
       'hover:flex-col',
       '[&.flex]:items-start',
     ]
-    for (const token of tokens) {
+    iterate.forEach(tokens, (token) => {
       expect(c.classify(token).raw).toBe(token)
-    }
+    })
   })
 })

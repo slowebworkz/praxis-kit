@@ -1,5 +1,4 @@
 import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
-import type { TSESTree } from '@typescript-eslint/utils'
 import {
   asObjectExpression,
   asStringLiteral,
@@ -9,8 +8,11 @@ import {
   getPropertyKey,
   isFactoryCall,
 } from '../utils/ast'
+import { iterate } from '@praxis-kit/primitive'
 
-type Property = TSESTree.Property
+function formatAllowedValues(values: ReadonlySet<string>): string {
+  return Array.from(values, (value) => `"${value}"`).join(', ')
+}
 
 const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)
 
@@ -75,23 +77,23 @@ export const noInvalidDefault = createRule<Options, MessageIds>({
         const defaults = asObjectExpression(defaultsProp.value)
         if (!defaults) return
 
-        for (const prop of defaults.properties) {
-          if (prop.type !== 'Property') continue
+        iterate.forEach(defaults.properties, (prop) => {
+          if (prop.type !== 'Property') return
 
-          const key = getPropertyKey(prop as Property)
-          if (!key) continue
+          const key = getPropertyKey(prop)
+          if (!key) return
 
           if (!variantMap.has(key)) {
             context.report({ node: prop, messageId: 'unknownDefaultKey', data: { key } })
-            continue
+            return
           }
 
-          const value = asStringLiteral((prop as Property).value)
+          const value = asStringLiteral(prop.value)
           if (value === undefined) {
             if (reportNonLiteral) {
               context.report({ node: prop, messageId: 'nonLiteralValue', data: { key } })
             }
-            continue
+            return
           }
 
           const allowed = variantMap.get(key)!
@@ -99,10 +101,10 @@ export const noInvalidDefault = createRule<Options, MessageIds>({
             context.report({
               node: prop,
               messageId: 'unknownDefaultValue',
-              data: { key, value, allowed: [...allowed].map((v) => `"${v}"`).join(', ') },
+              data: { key, value, allowed: formatAllowedValues(allowed) },
             })
           }
-        }
+        })
       },
     }
   },

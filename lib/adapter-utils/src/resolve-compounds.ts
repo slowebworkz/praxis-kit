@@ -1,19 +1,30 @@
 import type { CompoundRecord } from './build-variant-config'
 import { flattenClassName } from './build-variant-config'
+import { iterate } from '@praxis-kit/primitive'
+import type { AnyRecord } from '@pk2/foundation'
+
+function matchesCompound(active: AnyRecord, compound: CompoundRecord): boolean {
+  const { class: _, ...conditions } = compound
+
+  return Object.entries(conditions).every(([key, expected]) => {
+    const actual = active[key]
+    return Array.isArray(expected) ? expected.includes(actual as string) : actual === expected
+  })
+}
 
 export function resolveCompounds(
-  active: Record<string, unknown>,
-  compounds: ReadonlyArray<CompoundRecord> | undefined,
+  active: AnyRecord,
+  compounds: readonly CompoundRecord[] | undefined,
 ): string[] {
-  if (compounds === undefined || compounds.length === 0) return []
+  if (!compounds?.length) return []
+
   const out: string[] = []
-  for (const compound of compounds) {
-    const { class: cls, ...conditions } = compound
-    const matches = Object.entries(conditions).every(([k, v]) => {
-      const a = active[k]
-      return Array.isArray(v) ? v.includes(a as string) : a === v
-    })
-    if (matches) out.push(flattenClassName(cls))
-  }
+
+  iterate.forEach(compounds, (compound) => {
+    if (matchesCompound(active, compound)) {
+      out.push(flattenClassName(compound.class))
+    }
+  })
+
   return out
 }

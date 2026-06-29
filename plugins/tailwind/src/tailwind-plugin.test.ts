@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
-import { createPipeline, isPass } from '@pk2/pipeline'
-import type { Pipeline } from '@pk2/pipeline'
 import type { MergeStrategy } from '@pk2/merge'
-import { basePass, focusPass, hoverPass, styleMergeStrategy } from '@pk2/style'
+import type { Pipeline } from '@pk2/pipeline'
+import { createPipeline, isPass } from '@pk2/pipeline'
 import type { StyleContext } from '@pk2/style'
+import { basePass, focusPass, hoverPass, styleMergeStrategy } from '@pk2/style'
+import { describe, expect, it } from 'vitest'
 import { tailwindPlugin } from './tailwind-plugin'
 
 async function runPipeline(pipeline: Pipeline<StyleContext>): Promise<StyleContext> {

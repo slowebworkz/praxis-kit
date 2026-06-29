@@ -13,6 +13,7 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import type { AnyRecord } from '@pk2/foundation'
 
 const pkg = dirname(fileURLToPath(import.meta.url))
 const distDir = join(pkg, '../dist')
@@ -26,7 +27,7 @@ type Expected = {
 type OutputInputs = Record<string, { bytesInOutput: number }>
 
 type Metafile = {
-  inputs: Record<string, unknown>
+  inputs: AnyRecord
   outputs: Record<string, { inputs: OutputInputs }>
 }
 

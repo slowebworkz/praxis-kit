@@ -1,5 +1,6 @@
 import { LAYOUT_OWNED_KEYS } from './constants'
 import type { ClassifiedToken, ClassToken, LayoutFamily, LayoutKey } from './types'
+import { iterate } from '@praxis-kit/primitive'
 
 const CONDITIONALS = {
   '[&.flex': 'flex',
@@ -10,17 +11,17 @@ export class ClassClassifier {
   static #getBaseUtility(token: string): string {
     let depth = 0
 
-    for (let i = token.length - 1; i >= 0; i--) {
-      const char = token[i]
+    return (
+      iterate.findLast(token, (char, index) => {
+        if (char === ']') depth++
+        else if (char === '[') depth--
+        else if (char === ':' && depth === 0 && token[index - 1] !== '\\') {
+          return token.slice(index + 1)
+        }
 
-      if (char === ']') depth++
-      else if (char === '[') depth--
-      else if (char === ':' && depth === 0 && token[i - 1] !== '\\') {
-        return token.slice(i + 1)
-      }
-    }
-
-    return token
+        return null
+      }) ?? token
+    )
   }
 
   classify(token: ClassToken): ClassifiedToken {
@@ -34,15 +35,19 @@ export class ClassClassifier {
       }
     }
 
-    for (const [prefix, requires] of Object.entries(CONDITIONALS)) {
-      if (token.startsWith(prefix)) {
-        return {
-          kind: 'conditional',
-          requires,
-          raw: token,
-        }
-      }
-    }
+    const conditional: ClassifiedToken | null = iterate.find(
+      Object.entries(CONDITIONALS),
+      ([prefix, requires]) => {
+        return token.startsWith(prefix)
+          ? {
+              kind: 'conditional',
+              requires,
+              raw: token,
+            }
+          : null
+      },
+    )
+    if (conditional !== null) return conditional
 
     return base === 'gap' || base.startsWith('gap-')
       ? {

@@ -58,7 +58,7 @@ for (const scenario of scenarios) {
     livePaths = []
     for (const outData of Object.values(metafile.outputs)) {
       for (const [path, data] of Object.entries(outData.inputs)) {
-        if (data.bytesInOutput > 0) livePaths.push(path)
+        if (data.bytesInOutput > 0 && livePaths) livePaths.push(path)
       }
     }
   } catch {
@@ -87,17 +87,18 @@ for (const scenario of scenarios) {
       : '—'
 
   const features = LIB_TAGS.filter((tag) => livePaths!.some((p) => p.includes(tag)))
-    .map((tag) => tag.replace('lib/', '').replace('src/', ''))
+    .map((tag) => tag.replace(/^(?:lib|src)\//, ''))
     .join(', ')
 
-  console.log(
-    scenario.padEnd(28) +
-      String(moduleCount).padStart(8) +
-      gzipStr.padStart(10) +
-      deltaStr.padStart(10) +
-      '  ' +
-      (features || '(baseline)'),
-  )
+  const scenarioName = scenario.padEnd(28)
+  const modules = String(moduleCount).padStart(8)
+  const gzip = gzipStr.padStart(10)
+  const delta = deltaStr.padStart(10)
+  const featureList = features || '(baseline)'
+
+  console.log(`${scenarioName}${modules}${gzip}${delta}  ${featureList}`)
 }
 
-console.log('─'.repeat(72))
+const TABLE_WIDTH = 72
+
+console.log('─'.repeat(TABLE_WIDTH))

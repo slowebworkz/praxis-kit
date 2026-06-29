@@ -1,4 +1,5 @@
 import type { ChildRuleInput, NormalizedChildRule, StrictMode } from '../types'
+import { iterate } from '@praxis-kit/primitive'
 import { StrictBase } from '../strict'
 import { getTypeName } from './get-type-name'
 import { MatchValidationErrorBuilder } from './match-validation-error-builder'
@@ -23,7 +24,7 @@ export class ChildrenEvaluator extends StrictBase {
     this.#rules = rules.map((r) => normalizeChildRule(r))
     this.#ruleNames = this.#rules.map((r) => r.name)
 
-    for (const rule of this.#rules) {
+    iterate.forEach(this.#rules, (rule) => {
       const { name, position, cardinality } = rule
       // A positional rule can satisfy at most one child by definition; allowing max>1
       // creates a cardinality that is structurally impossible to ever satisfy.
@@ -35,7 +36,7 @@ export class ChildrenEvaluator extends StrictBase {
           `ChildrenEvaluator [${context}]: rule "${name}" sets position="${position}" with an unbound or >1 max. position="first|last" implies max=1.`,
         )
       }
-    }
+    })
 
     this.#matcher = new RuleMatcher(this.#rules)
     this.#ruleValidator = new RuleValidator(context, strict)
@@ -53,7 +54,7 @@ export class ChildrenEvaluator extends StrictBase {
     // Process only violating children in index order — no full re-traversal.
     const errors: string[] = []
     const violating = [...unexpectedIndices, ...ambiguousIndices].sort((a, b) => a - b)
-    for (const ci of violating) {
+    iterate.forEach(violating, (ci) => {
       const typeName = getTypeName(children[ci])
       if (unexpectedIndices.has(ci)) {
         errors.push(this.#matchBuilder.unexpectedChild(typeName, ci))
@@ -62,7 +63,7 @@ export class ChildrenEvaluator extends StrictBase {
         const names = [...matches].map((ri) => this.#ruleNames[ri] ?? `#${ri}`)
         errors.push(this.#matchBuilder.multipleMatches(typeName, ci, names))
       }
-    }
+    })
 
     this.invariant(errors.length === 0, this.#matchBuilder.toError(errors).message)
   }

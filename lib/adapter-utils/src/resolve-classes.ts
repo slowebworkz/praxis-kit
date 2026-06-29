@@ -1,10 +1,11 @@
 import type { NodeDecoration } from '@pk2/core'
 import { getActiveProps } from '@pk2/core'
-import type { NodeId } from '@pk2/foundation'
+import type { NodeId, DefaultMap  } from '@pk2/foundation'
 import type { VariantConfig } from '@pk2/style'
 import { buildPrecomputedKey, createVariantPass } from '@pk2/style'
 import type { CompoundRecord, Defaults } from './build-variant-config'
 import { resolveCompounds } from './resolve-compounds'
+import { iterate } from '@praxis-kit/primitive'
 
 export interface ClassResolution {
   variantClasses: string[]
@@ -17,16 +18,16 @@ export function resolveClasses(
   variantDefaults: Defaults,
   recipe: string | undefined,
   compounds?: ReadonlyArray<CompoundRecord>,
-  variantLookup?: Record<string, string>,
+  variantLookup?: DefaultMap,
 ): ClassResolution {
   const active = getActiveProps('root', decoration)
 
   if (variantLookup !== undefined && recipe === undefined) {
-    const activeVariants: Record<string, string> = {}
-    for (const key of Object.keys(variantConfig.variants)) {
+    const activeVariants: DefaultMap = {}
+    iterate.forEachKey(variantConfig.variants, (key) => {
       const value = active[key]
       if (typeof value === 'string') activeVariants[key] = value
-    }
+    })
     const lookupKey = buildPrecomputedKey(activeVariants)
     const precomputedValue = variantLookup[lookupKey]
     if (precomputedValue !== undefined) {

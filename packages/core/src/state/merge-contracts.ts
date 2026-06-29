@@ -1,4 +1,5 @@
 import type { EnforcementOptions } from '../types'
+import { iterate } from '@praxis-kit/primitive'
 
 export function mergeContracts(...contracts: readonly EnforcementOptions[]): EnforcementOptions {
   const props = contracts.flatMap((c) => c.props ?? [])
@@ -8,10 +9,10 @@ export function mergeContracts(...contracts: readonly EnforcementOptions[]): Enf
   let strict: EnforcementOptions['strict']
   let allowedAs: EnforcementOptions['allowedAs']
 
-  for (const c of contracts) {
+  iterate.forEach(contracts, (c) => {
     if (c.strict !== undefined) strict = c.strict
     if (c.allowedAs !== undefined) allowedAs = c.allowedAs
-  }
+  })
 
   return {
     ...(props.length > 0 && { props }),

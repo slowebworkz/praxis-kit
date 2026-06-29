@@ -1,5 +1,6 @@
 import { beforeEach, afterEach, describe, it, expect } from 'vitest'
-import type { AnyRecord } from '@praxis-kit/core'
+import type { AnyRecord } from '@pk2/foundation'
+import { iterate } from '@praxis-kit/primitive'
 import type { ConformanceComponent, ConformanceFactoryOptions } from './types'
 
 /**
@@ -31,17 +32,17 @@ function parseAttributes(html: string): Attributes {
   const child = tpl.content.firstElementChild
   if (!child) return {}
   const out: Attributes = {}
-  for (const { name, value } of child.attributes) {
+  iterate.forEach(iterate.items(child.attributes), ({ name, value }) => {
     out[name] = value
-  }
+  })
   return out
 }
 
 function normalizeAttrs(attrs: Attributes): Attributes {
   const out: Attributes = {}
-  for (const [k, v] of Object.entries(attrs)) {
+  iterate.forEachEntry(attrs, (k, v) => {
     out[k] = k === 'class' ? v.split(' ').sort().join(' ') : v
-  }
+  })
   return out
 }
 
@@ -61,9 +62,9 @@ async function domAttrs<C extends ConformanceComponent>(
 ): Promise<Attributes> {
   const el = await adapter.renderToDOM(comp, props)
   const out: Attributes = {}
-  for (const { name, value } of el.attributes) {
+  iterate.forEach(iterate.items(el.attributes), ({ name, value }) => {
     out[name] = value
-  }
+  })
   return normalizeAttrs(out)
 }
 

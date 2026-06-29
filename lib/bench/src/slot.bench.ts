@@ -1,12 +1,11 @@
-import { bench, describe } from 'vitest'
-import { createElement, cloneElement, Fragment } from 'react'
 import type { ReactElement } from 'react'
+import { cloneElement, createElement, Fragment } from 'react'
+import { bench, describe } from 'vitest'
 
 import type { AnyRecord } from '@praxis-kit/core'
-import { mergeProps } from '@praxis-kit/react/shared/slot/mergeProps'
-import { applySlot } from '@praxis-kit/react/shared/slot/applySlot'
-import { Slottable } from '@praxis-kit/react/shared/slot/Slottable'
-import { cloneSlotChild } from '@praxis-kit/react/current/slot/cloneSlotChild'
+import { cloneSlotChild } from '@praxis-kit/react'
+import { applySlot, mergeProps, Slottable } from '@praxis-kit/react/shared'
+import { iterate } from '@praxis-kit/primitive'
 
 type AnyFn = (...args: unknown[]) => void
 
@@ -17,9 +16,10 @@ type AnyFn = (...args: unknown[]) => void
 
 function radixMergeProps(slotProps: AnyRecord, childProps: AnyRecord): AnyRecord {
   const overrideProps: AnyRecord = { ...childProps }
-  for (const propName in childProps) {
+  iterate.forEachEntry(childProps, (propName) => {
     const slotVal = slotProps[propName]
     const childVal = childProps[propName]
+
     if (/^on[A-Z]/.test(propName)) {
       if (slotVal && childVal) {
         overrideProps[propName] = (...args: unknown[]) => {
@@ -34,7 +34,7 @@ function radixMergeProps(slotProps: AnyRecord, childProps: AnyRecord): AnyRecord
     } else if (propName === 'className') {
       overrideProps[propName] = [slotVal, childVal].filter(Boolean).join(' ')
     }
-  }
+  })
   return { ...slotProps, ...overrideProps }
 }
 

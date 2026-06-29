@@ -8,6 +8,7 @@ import type {
   VariantMap,
 } from '@pk2/foundation'
 import { isObject } from '@pk2/foundation'
+import { iterate } from '@praxis-kit/primitive'
 import type { MergeStrategy } from '@pk2/merge'
 import type { CompilerContext } from './types'
 
@@ -30,18 +31,18 @@ export function capabilityMerge(
 ): CapabilityMap {
   if (next === undefined) return prev
   const result: CapabilityMap = { ...prev }
-  for (const [key, value] of Object.entries(next)) {
+  iterate.forEachEntry(next, (key, value) => {
     if (!result[key]) result[key] = value
-  }
+  })
   return result
 }
 
 function deepMergeRecord(prev: AnyRecord, next: AnyRecord): AnyRecord {
   const result: AnyRecord = { ...prev }
-  for (const [key, value] of Object.entries(next)) {
+  iterate.forEachEntry(next, (key, value) => {
     const existing = result[key]
     result[key] = isObject(existing) && isObject(value) ? deepMergeRecord(existing, value) : value
-  }
+  })
   return result
 }
 
@@ -85,10 +86,10 @@ export function variantMerge(
   const a = prev ?? {}
   const b = next ?? {}
   const result: VariantMap = { ...a }
-  for (const [key, values] of Object.entries(b)) {
+  iterate.forEachEntry(b, (key, values) => {
     const existing = result[key]
     result[key] = existing !== undefined ? [...new Set([...existing, ...values])] : [...values]
-  }
+  })
   return result
 }
 

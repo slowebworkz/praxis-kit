@@ -26,10 +26,11 @@
  *     "allClasses": ["btn", "btn-sm", ...]
  *   }
  */
+import { iterate } from '@praxis-kit/primitive'
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import type { Plugin } from 'vite'
 import ts from 'typescript'
+import type { Plugin } from 'vite'
 import { asArray, asObject, firstObjectArg, getProperty, isFactoryCall, parseSource } from './ast'
 import { ALL_EXTS, DEFAULT_CALLEE_NAMES } from './constants'
 import type { PluginOptions } from './types'
@@ -50,6 +51,7 @@ export type DesignTokenManifest = {
 
 // ─── AST extraction helpers ───────────────────────────────────────────────────
 
+/** Recursively appends non-empty string literals from `node` into `out`. Handles string and array literals; ignores other shapes. */
 function collectStringValues(node: ts.Node | undefined, out: string[]): void {
   if (!node) return
   if (ts.isStringLiteral(node)) {
@@ -57,10 +59,13 @@ function collectStringValues(node: ts.Node | undefined, out: string[]): void {
     return
   }
   if (ts.isArrayLiteralExpression(node)) {
-    for (const elem of node.elements) collectStringValues(elem, out)
+    iterate.forEach(node.elements, (elem) => {
+      collectStringValues(elem, out)
+    })
   }
 }
 
+/** Extracts all statically-declared class strings from a `styling` object's `base`, `variants`, `compounds`, and `tags` fields. */
 function extractStylingTokens(stylingObj: ts.ObjectLiteralExpression): ComponentTokens {
   const base: string[] = []
   const variantClasses: string[] = []
@@ -73,34 +78,36 @@ function extractStylingTokens(stylingObj: ts.ObjectLiteralExpression): Component
   // variant class values
   const variantsObj = asObject(getProperty(stylingObj, 'variants'))
   if (variantsObj) {
-    for (const dimProp of variantsObj.properties) {
-      if (!ts.isPropertyAssignment(dimProp)) continue
+    iterate.forEach(variantsObj.properties, (dimProp) => {
+      if (!ts.isPropertyAssignment(dimProp)) return
+
       const valuesObj = asObject(dimProp.initializer)
-      if (!valuesObj) continue
-      for (const vp of valuesObj.properties) {
-        if (!ts.isPropertyAssignment(vp)) continue
+      if (!valuesObj) return
+
+      iterate.forEach(valuesObj.properties, (vp) => {
+        if (!ts.isPropertyAssignment(vp)) return
         collectStringValues(vp.initializer, variantClasses)
-      }
-    }
+      })
+    })
   }
 
   // compound class values
   const compoundsArr = asArray(getProperty(stylingObj, 'compounds'))
   if (compoundsArr) {
-    for (const elem of compoundsArr.elements) {
+    iterate.forEach(compoundsArr.elements, (elem) => {
       const obj = asObject(elem)
-      if (!obj) continue
+      if (!obj) return
       collectStringValues(getProperty(obj, 'class'), compoundClasses)
-    }
+    })
   }
 
   // tag-map class values
   const tagsObj = asObject(getProperty(stylingObj, 'tags'))
   if (tagsObj) {
-    for (const tp of tagsObj.properties) {
-      if (!ts.isPropertyAssignment(tp)) continue
+    iterate.forEach(tagsObj.properties, (tp) => {
+      if (!ts.isPropertyAssignment(tp)) return
       collectStringValues(tp.initializer, tagClasses)
-    }
+    })
   }
 
   return { base, variantClasses, compoundClasses, tagClasses }
@@ -123,18 +130,23 @@ export function collectFileTokens(
 
   ts.forEachChild(source, (stmt) => {
     if (!ts.isVariableStatement(stmt)) return
-    for (const decl of stmt.declarationList.declarations) {
-      if (!decl.initializer || !ts.isCallExpression(decl.initializer)) continue
-      if (!isFactoryCall(decl.initializer, calleeNames)) continue
-      const arg = firstObjectArg(decl.initializer)
-      if (!arg) continue
+    iterate.forEach(stmt.declarationList.declarations, (decl) => {
+      const { initializer, name } = decl
+      if (!initializer || !ts.isCallExpression(initializer)) return
+      if (!isFactoryCall(initializer, calleeNames)) return
+
+      const arg = firstObjectArg(initializer)
+      if (!arg) return
+
       const stylingNode = getProperty(arg, 'styling')
       const stylingObj = asObject(stylingNode)
-      if (!stylingObj) continue
-      const name = ts.isIdentifier(decl.name) ? decl.name.text : undefined
-      if (!name) continue
-      result.set(name, extractStylingTokens(stylingObj))
-    }
+      if (!stylingObj) return
+
+      const definedName = ts.isIdentifier(name) ? name.text : undefined
+      if (!definedName) return
+
+      result.set(definedName, extractStylingTokens(stylingObj))
+    })
   })
 
   return result
@@ -142,6 +154,7 @@ export function collectFileTokens(
 
 // ─── Manifest builder ─────────────────────────────────────────────────────────
 
+/** Merges two ComponentTokens with deduplication per class list. Returns `incoming` when `existing` is undefined. */
 function mergeTokens(
   existing: ComponentTokens | undefined,
   incoming: ComponentTokens,
@@ -155,23 +168,23 @@ function mergeTokens(
   }
 }
 
+/** Builds a DesignTokenManifest from the accumulated per-component token maps, including a flat sorted `allClasses` union. */
 export function buildManifest(allTokens: Map<string, ComponentTokens>): DesignTokenManifest {
   const components: Record<string, ComponentTokens> = {}
   const seen = new Set<string>()
 
-  for (const [name, tokens] of allTokens) {
+  iterate.forEach(allTokens, ([name, tokens]) => {
     components[name] = tokens
-    for (const cls of [
-      ...tokens.base,
-      ...tokens.variantClasses,
-      ...tokens.compoundClasses,
-      ...tokens.tagClasses,
-    ]) {
-      for (const part of cls.split(/\s+/)) {
-        if (part) seen.add(part)
-      }
-    }
-  }
+
+    iterate.forEach(
+      [...tokens.base, ...tokens.variantClasses, ...tokens.compoundClasses, ...tokens.tagClasses],
+      (cls) => {
+        iterate.forEach(cls.split(/\s+/), (part) => {
+          if (part) seen.add(part)
+        })
+      },
+    )
+  })
 
   return {
     components,
@@ -219,9 +232,9 @@ export function designTokensPlugin(options?: DesignTokensOptions): Plugin {
       const ext = id.split('.').pop() ?? ''
       if (!ALL_EXTS.has(ext)) return null
       const source = parseSource(id, code)
-      for (const [name, tokens] of collectFileTokens(source, calleeNames)) {
+      iterate.forEach(collectFileTokens(source, calleeNames), ([name, tokens]) => {
         accumulated.set(name, mergeTokens(accumulated.get(name), tokens))
-      }
+      })
       return null
     },
 

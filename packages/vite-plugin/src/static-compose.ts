@@ -35,8 +35,9 @@
  * All three degrade gracefully to the runtime path — no error, no broken output.
  */
 import ts from 'typescript'
-import { asObject, firstObjectArg, getProperty, isFactoryCall, walk } from './ast'
+import { asObject, firstObjectArg, getProperty, isFactoryCall, walkEach } from './ast'
 import { buildCacheKey } from './class-extract'
+import { iterate } from '@praxis-kit/primitive'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,6 +49,7 @@ export type StaticComponent = {
 
 // ─── Phase 1: collect factory call metadata ───────────────────────────────────
 
+/** Returns the text of a string literal node, or undefined. */
 function asStringLiteral(node: ts.Node | undefined): string | undefined {
   return node !== undefined && ts.isStringLiteral(node) ? node.text : undefined
 }
@@ -62,7 +64,7 @@ export function extractStaticComponents(
 ): Map<string, StaticComponent> {
   const result = new Map<string, StaticComponent>()
 
-  walk(source, (node) => {
+  walkEach(source, (node) => {
     if (!ts.isVariableDeclaration(node)) return
     if (!ts.isIdentifier(node.name)) return
     const varName = node.name.text
@@ -97,13 +99,23 @@ export function extractStaticComponents(
 
     // Extract precomputedClasses as a plain Record.
     const precomputedClasses: Record<string, string> = {}
-    for (const prop of precomputedNode.properties) {
-      if (!ts.isPropertyAssignment(prop)) return
-      const key = ts.isStringLiteral(prop.name) ? prop.name.text : undefined
-      const val = asStringLiteral(prop.initializer)
-      if (key === undefined || val === undefined) return
-      precomputedClasses[key] = val
-    }
+
+    const isNotPrecomputed = iterate.find<ts.ObjectLiteralElementLike, true>(
+      precomputedNode.properties,
+      (prop) => {
+        if (!ts.isPropertyAssignment(prop)) return true
+
+        const { initializer, name } = prop
+        const key = ts.isStringLiteral(name) ? name.text : undefined
+        const val = asStringLiteral(initializer)
+
+        if (key === undefined || val === undefined) return true
+        precomputedClasses[key] = val
+
+        return null
+      },
+    )
+    if (isNotPrecomputed) return
 
     // Bail if the component has top-level `defaults` or `enforcement`:
     // those involve prop merging or ARIA normalization that inlining would skip.
@@ -114,14 +126,14 @@ export function extractStaticComponents(
     const variantKeys = new Set<string>()
     const variantsObj = asObject(getProperty(stylingObj, 'variants'))
     if (variantsObj) {
-      for (const prop of variantsObj.properties) {
+      iterate.forEach(variantsObj.properties, (prop) => {
         if (
           ts.isPropertyAssignment(prop) &&
           (ts.isIdentifier(prop.name) || ts.isStringLiteral(prop.name))
         ) {
           variantKeys.add(prop.name.text)
         }
-      }
+      })
     }
 
     result.set(varName, { defaultTag, variantKeys, precomputedClasses })
@@ -134,6 +146,7 @@ export function extractStaticComponents(
 
 type AttrValue = { kind: 'absent' } | { kind: 'string'; value: string } | { kind: 'dynamic' }
 
+/** Reads the value of a named JSX attribute from the attribute list: absent, a static string, or dynamic. */
 function readAttrValue(attrs: ts.NodeArray<ts.JsxAttributeLike>, name: string): AttrValue {
   for (const attr of attrs) {
     if (!ts.isJsxAttribute(attr)) continue
@@ -153,6 +166,7 @@ function readAttrValue(attrs: ts.NodeArray<ts.JsxAttributeLike>, name: string): 
 
 // ─── Phase 3: AST transformer ─────────────────────────────────────────────────
 
+/** Returns a TS transformer that replaces eligible JSX usage sites with direct element creation. */
 function createStaticCompositionTransformer(
   factory: ts.NodeFactory,
   components: Map<string, StaticComponent>,
@@ -281,7 +295,7 @@ export function composeStatically(
   // Fast path: skip transform if none of the component names appear as JSX tags.
   const componentNames = new Set(components.keys())
   let hasEligibleTag = false
-  walk(source, (n) => {
+  walkEach(source, (n) => {
     if (hasEligibleTag) return
     const tagNode = ts.isJsxElement(n)
       ? n.openingElement.tagName

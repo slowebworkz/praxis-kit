@@ -1,7 +1,8 @@
 import { assertNever } from '@praxis-kit/core'
-import type { ClassifiedToken } from './types'
 import type { DependencyRules } from './dependency-rules'
 import type { LayoutState } from './layout-state'
+import type { ClassifiedToken } from './types'
+import { iterate } from '@praxis-kit/primitive'
 
 export class DependencyEvaluator {
   constructor(private readonly rules: DependencyRules) {}
@@ -17,13 +18,13 @@ export class DependencyEvaluator {
       }
 
       case 'utility': {
-        for (const layout of Object.keys(this.rules) as (keyof DependencyRules)[]) {
-          if (this.rules[layout].some((r) => r.test(token.base))) {
-            return state.family === layout
-          }
-        }
-
-        return true
+        return (
+          iterate.find(Object.keys(this.rules) as (keyof DependencyRules)[], (layout) =>
+            this.rules[layout].some((rule) => rule.test(token.base))
+              ? state.family === layout
+              : null,
+          ) ?? true
+        )
       }
 
       case 'gap': {

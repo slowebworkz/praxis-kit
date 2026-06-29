@@ -1,4 +1,5 @@
 import type { AnyRecord, StrictMode, VariantMap } from '../types'
+import { iterate } from '@praxis-kit/primitive'
 
 type Options = {
   readonly recipeMap?: Readonly<AnyRecord>
@@ -16,9 +17,9 @@ function flushAsyncWarns(): void {
   asyncWarnScheduled = false
   const messages = [...pendingAsyncWarns]
   pendingAsyncWarns.clear()
-  for (const msg of messages) {
+  iterate.forEach(messages, (msg) => {
     console.warn(msg)
-  }
+  })
 }
 
 function report(strict: StrictMode, message: string): void {
@@ -61,10 +62,10 @@ export function validateRenderProps(
   // Undefined variant value — prop key is a known variant dimension but the value
   // is not a defined variant value for that dimension.
   if (variants) {
-    for (const key in variants) {
-      if (!Object.hasOwn(props, key)) continue
+    iterate.forEachKey(variants, (key) => {
+      if (!Object.hasOwn(props, key)) return
       const value = props[key]
-      if (value === undefined || value === null) continue
+      if (value === undefined || value === null) return
       const dim = variants[key]
       if (dim && !Object.hasOwn(dim, String(value))) {
         report(
@@ -72,7 +73,7 @@ export function validateRenderProps(
           `${tag} Variant "${key}=${String(value)}" is not a defined value for the "${key}" dimension.`,
         )
       }
-    }
+    })
   }
 }
 

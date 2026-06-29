@@ -24,6 +24,7 @@ import {
   videoContract,
   voidContract,
 } from './contracts'
+import { iterate } from '@praxis-kit/primitive'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -459,27 +460,30 @@ describe('landmarkContract', () => {
 
 describe('htmlContracts', () => {
   it('maps list elements to listContract', () => {
-    for (const tag of ['ul', 'ol', 'menu']) {
+    iterate.forEach(['ul', 'ol', 'menu'], (tag) => {
       expect(htmlContracts[tag]).toBe(listContract)
-    }
+    })
   })
 
   it('maps table section elements to tableBodyContract', () => {
-    for (const tag of ['thead', 'tbody', 'tfoot']) {
+    iterate.forEach(['thead', 'tbody', 'tfoot'], (tag) => {
       expect(htmlContracts[tag]).toBe(tableBodyContract)
-    }
+    })
   })
 
   it('maps void elements to voidContract', () => {
-    for (const tag of ['area', 'br', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track']) {
-      expect(htmlContracts[tag]).toBe(voidContract)
-    }
+    iterate.forEach(
+      ['area', 'br', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track'],
+      (tag) => {
+        expect(htmlContracts[tag]).toBe(voidContract)
+      },
+    )
   })
 
   it('maps landmark elements to landmarkContract', () => {
-    for (const tag of ['article', 'aside', 'footer', 'header', 'main', 'nav']) {
+    iterate.forEach(['article', 'aside', 'footer', 'header', 'main', 'nav'], (tag) => {
       expect(htmlContracts[tag]).toBe(landmarkContract)
-    }
+    })
   })
 
   it('maps audio and video to the same media contract', () => {

@@ -1,6 +1,6 @@
 import type { LayoutFamily, LayoutKey } from './layout'
 import type { EmptyRecord } from '@praxis-kit/shared'
-
+import type { Simplify } from 'type-fest'
 export type ClassToken = string
 
 type Token<TKind extends string, TData extends object = EmptyRecord> = {
@@ -13,4 +13,4 @@ export type ConditionalToken = Token<'conditional', { requires: Exclude<LayoutFa
 export type GapToken = Token<'gap'>
 export type UtilityToken = Token<'utility', { base: string }>
 
-export type ClassifiedToken = LayoutToken | ConditionalToken | GapToken | UtilityToken
+export type ClassifiedToken = Simplify<LayoutToken | ConditionalToken | GapToken | UtilityToken>

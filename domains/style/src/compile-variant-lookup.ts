@@ -1,3 +1,5 @@
+import type { DefaultMap } from '@pk2/foundation'
+import { iterate } from '@praxis-kit/primitive'
 import type { CompoundVariant, VariantConfig } from './variant-pass'
 
 // 512 mirrors the vite-plugin cap — keeps artifact payloads reasonable.
@@ -10,47 +12,75 @@ type Dimension = { key: string; values: string[] }
  * Absent dimensions are excluded; the precomputed value already bakes in defaults.
  * Both compilation and runtime lookup must call this with the same input shape.
  */
-export function buildPrecomputedKey(props: Record<string, string>): string {
-  return Object.keys(props)
-    .sort()
-    .map((k) => `${k}:${props[k]}`)
+export function buildPrecomputedKey(props: DefaultMap): string {
+  return Object.entries(props)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}:${v}`)
     .join('|')
 }
 
-function enumerateCombinations(dimensions: Dimension[]): Array<Record<string, string>> | null {
-  if (dimensions.length === 0) return [{}]
-
-  let total = 1
-  for (const { values } of dimensions) {
-    total *= values.length + 1 // +1 for the "absent" case
-    if (total > MAX_COMBINATIONS) return null
-  }
-
-  function rec(remaining: Dimension[]): Array<Record<string, string>> {
-    if (remaining.length === 0) return [{}]
-    const [first, ...rest] = remaining as [Dimension, ...Dimension[]]
-    const restCombos = rec(rest)
-    const out: Array<Record<string, string>> = []
-    for (const combo of restCombos) {
-      out.push(combo) // dimension absent
-      for (const v of first.values) out.push({ [first.key]: v, ...combo })
-    }
-    return out
-  }
-
-  return rec(dimensions)
+function combinationCount(dimensions: readonly Dimension[]): number {
+  return iterate.reduce(dimensions, 1, (total, { values }) => total * (values.length + 1))
 }
 
-function matchesCompound(compound: CompoundVariant, effective: Record<string, string>): boolean {
-  for (const [key, value] of Object.entries(compound)) {
-    if (key === 'class') continue
-    if (effective[key] !== value) return false
-  }
-  return true
+function enumerateCombinations(dimensions: readonly Dimension[]): Array<DefaultMap> {
+  let combos: DefaultMap[] = [{}]
+
+  iterate.forEach(dimensions, ({ key, values }) => {
+    const next: DefaultMap[] = []
+    iterate.forEach(combos, (combo) => {
+      next.push(combo) // dimension absent
+      iterate.forEach(values, (value) => {
+        next.push({ ...combo, [key]: value })
+      })
+    })
+    combos = next
+  })
+
+  return combos
+}
+
+function matchesCompound(compound: CompoundVariant, effective: DefaultMap): boolean {
+  let matches = true
+
+  iterate.forEachEntry(compound, (key, value) => {
+    if (key === 'class') return
+
+    if (effective[key] !== value) {
+      matches = false
+    }
+  })
+
+  return matches
 }
 
 function flattenClass(cls: string | readonly string[]): string {
-  return Array.isArray(cls) ? (cls as string[]).join(' ') : (cls as string)
+  return typeof cls === 'string' ? cls : cls.join(' ')
+}
+
+function resolveCombo(
+  config: Pick<VariantConfig, 'variants' | 'compounds'>,
+  dimensions: readonly Dimension[],
+  effective: DefaultMap,
+): string {
+  const classes: string[] = []
+
+  iterate.forEach(dimensions, ({ key }) => {
+    const active = effective[key]
+    if (active !== undefined) {
+      const cls = config.variants[key]?.[active]
+      if (cls !== undefined && cls !== '') classes.push(cls)
+    }
+  })
+
+  iterate.forEach(config.compounds ?? [], (compound) => {
+    if (matchesCompound(compound, effective)) {
+      const cls = flattenClass(compound.class)
+      if (cls !== '') classes.push(cls)
+    }
+  })
+
+  return classes.join(' ')
 }
 
 /**
@@ -61,7 +91,7 @@ function flattenClass(cls: string | readonly string[]): string {
  * Returns null when variants are empty or combination count exceeds MAX_COMBINATIONS —
  * the caller should fall back to the runtime pass.
  */
-export function compileVariantLookup(config: VariantConfig): Record<string, string> | null {
+export function compileVariantLookup(config: VariantConfig): DefaultMap | null {
   const { variants, defaults = {}, compounds = [] } = config
   const dimensions: Dimension[] = Object.entries(variants).map(([key, valueMap]) => ({
     key,
@@ -69,35 +99,18 @@ export function compileVariantLookup(config: VariantConfig): Record<string, stri
   }))
 
   if (dimensions.length === 0) return null
+  if (combinationCount(dimensions) > MAX_COMBINATIONS) return null
 
-  const combos = enumerateCombinations(dimensions)
-  if (!combos) return null
+  const result: DefaultMap = {}
 
-  const result: Record<string, string> = {}
-
-  for (const combo of combos) {
-    const key = buildPrecomputedKey(combo)
-    const effective: Record<string, string> = { ...defaults, ...combo }
-    const classes: string[] = []
-
-    for (const { key: dim, values } of dimensions) {
-      const active = effective[dim]
-      if (active !== undefined) {
-        const cls = variants[dim]?.[active]
-        if (cls !== undefined && cls !== '') classes.push(cls)
-      }
-      void values // used only for enumeration
-    }
-
-    for (const compound of compounds) {
-      if (matchesCompound(compound, effective)) {
-        const cls = flattenClass(compound.class)
-        if (cls !== '') classes.push(cls)
-      }
-    }
-
-    result[key] = classes.join(' ')
-  }
+  iterate.forEach(enumerateCombinations(dimensions), (combo) => {
+    const effective: DefaultMap = { ...defaults, ...combo }
+    result[buildPrecomputedKey(combo)] = resolveCombo(
+      { variants, compounds },
+      dimensions,
+      effective,
+    )
+  })
 
   return result
 }

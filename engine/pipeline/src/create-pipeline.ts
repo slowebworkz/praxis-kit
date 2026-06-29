@@ -1,4 +1,5 @@
 import type { NodeOwner, NodeRegistry, Processor, Pipeline, PipelineOptions, Plugin } from './types'
+import { iterate } from '@praxis-kit/primitive'
 
 function pipelineOwner(name: string): NodeOwner {
   return { kind: 'pipeline', name }
@@ -21,9 +22,9 @@ function duplicateNodeError(pluginName: string, key: string, owner: NodeOwner): 
 function createNodeRegistry<TContext>(options: PipelineOptions<TContext>): NodeRegistry<TContext> {
   const nodes = new Map(options.nodes)
   const owners = new Map<string, NodeOwner>()
-  for (const key of nodes.keys()) {
+  iterate.forEach(Array.from(nodes.keys()), (key) => {
     owners.set(key, pipelineOwner(options.name))
-  }
+  })
   return { nodes, owners }
 }
 
@@ -41,9 +42,9 @@ function injectProcessor<TContext>(
 }
 
 function injectPlugin<TContext>(registry: NodeRegistry<TContext>, plugin: Plugin<TContext>): void {
-  for (const processor of plugin.create()) {
+  iterate.forEach(plugin.create(), (processor) => {
     injectProcessor(registry, plugin, processor)
-  }
+  })
 }
 
 // Plugins are applied in declaration order. Key collisions throw — "inject" implies additive
@@ -53,9 +54,9 @@ function injectPlugin<TContext>(registry: NodeRegistry<TContext>, plugin: Plugin
 export function createPipeline<TContext>(options: PipelineOptions<TContext>): Pipeline<TContext> {
   const registry = createNodeRegistry(options)
 
-  for (const plugin of options.plugins ?? []) {
+  iterate.forEach(options.plugins ?? [], (plugin) => {
     injectPlugin(registry, plugin)
-  }
+  })
 
   return Object.freeze({
     name: options.name,

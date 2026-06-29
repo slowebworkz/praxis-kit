@@ -16,6 +16,7 @@
     "@pk2/foundation": "workspace:*",
     "@pk2/merge": "workspace:*",
     "@pk2/pipeline": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {

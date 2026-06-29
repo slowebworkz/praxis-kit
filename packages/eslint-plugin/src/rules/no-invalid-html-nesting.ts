@@ -1,6 +1,7 @@
 import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
 import type { TSESTree } from '@typescript-eslint/utils'
 import { HTML_CONTENT_MODELS, TAG_CATEGORIES } from '../utils/html-nesting'
+import { iterate } from '@praxis-kit/primitive'
 
 const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)
 
@@ -53,14 +54,14 @@ export const noInvalidHtmlNesting = createRule<Options, MessageIds>({
         const model = HTML_CONTENT_MODELS[parentTag]
         if (!model) return
 
-        for (const child of node.children) {
+        iterate.forEach(node.children, (child) => {
           // JSXText, JSXExpressionContainer, JSXSpreadChild, JSXFragment — skip.
           // Text nodes are whitespace; expressions are dynamic (can't statically analyze).
-          if (child.type !== 'JSXElement') continue
+          if (child.type !== 'JSXElement') return
 
           const childTag = getIntrinsicTag(child.openingElement.name)
-          if (childTag === undefined) continue
-          if (isAllowed(childTag, model)) continue
+          if (childTag === undefined) return
+          if (isAllowed(childTag, model)) return
 
           context.report({
             node: child,
@@ -71,7 +72,7 @@ export const noInvalidHtmlNesting = createRule<Options, MessageIds>({
               allowed: ALLOWED_TEXT[parentTag] ?? '',
             },
           })
-        }
+        })
       },
     }
   },

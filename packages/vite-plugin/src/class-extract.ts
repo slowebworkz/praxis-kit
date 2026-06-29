@@ -18,6 +18,7 @@
  */
 import ts from 'typescript'
 import { asArray, asObject, firstObjectArg, getProperty, isFactoryCall, walk } from './ast'
+import { iterate } from '@praxis-kit/primitive'
 
 // Cap to keep injected code size reasonable.
 const MAX_COMBINATIONS = 512
@@ -41,89 +42,121 @@ type StylingConfig = {
 
 // ─── AST extraction ───────────────────────────────────────────────────────────
 
+/** Returns the text of a string literal node, or undefined. */
 function asString(node: ts.Node | undefined): string | undefined {
   return node && ts.isStringLiteral(node) ? node.text : undefined
 }
 
+/**
+ * Returns the text of a string literal, the texts of all elements of an array literal
+ * (every element must be a string literal), or undefined for any other shape.
+ */
 function asStringOrStringArray(node: ts.Node | undefined): string | string[] | undefined {
   if (!node) return undefined
   if (ts.isStringLiteral(node)) return node.text
   if (ts.isArrayLiteralExpression(node)) {
     const items: string[] = []
-    for (const elem of node.elements) {
-      if (!ts.isStringLiteral(elem)) return undefined
+    const allStrings = iterate.every(node.elements, (elem) => {
+      if (!ts.isStringLiteral(elem)) return false
       items.push(elem.text)
-    }
+      return true
+    })
+    if (!allStrings) return undefined
     return items
   }
   return undefined
 }
 
+/** Returns the name text of a property assignment with an identifier or string literal key, or undefined. */
 function propKey(prop: ts.ObjectLiteralElementLike): string | undefined {
   if (!ts.isPropertyAssignment(prop)) return undefined
   const n = prop.name
   return ts.isIdentifier(n) || ts.isStringLiteral(n) ? n.text : undefined
 }
 
+/**
+ * Extracts `styling.variants` into a nested `VariantMap`.
+ * Returns null when any variant key or value entry is non-literal (bail — can't enumerate).
+ */
 function extractVariantMap(stylingObj: ts.ObjectLiteralExpression): VariantMap | null {
   const variantsObj = asObject(getProperty(stylingObj, 'variants'))
   if (!variantsObj) return null
 
-  const result: VariantMap = {}
-  for (const prop of variantsObj.properties) {
+  return iterate.collect(variantsObj.properties, (prop) => {
     const key = propKey(prop)
     if (!key || !ts.isPropertyAssignment(prop)) return null
+
     const valuesObj = asObject(prop.initializer)
     if (!valuesObj) return null
-    const values: VariantValues = {}
-    for (const vp of valuesObj.properties) {
+
+    const values = iterate.collect(valuesObj.properties, (vp) => {
       const vk = propKey(vp)
       if (!vk || !ts.isPropertyAssignment(vp)) return null
-      const v = asStringOrStringArray(vp.initializer)
-      if (v === undefined) return null
-      values[vk] = v
-    }
-    result[key] = values
-  }
-  return result
+
+      const value = asStringOrStringArray(vp.initializer)
+      if (value === undefined) return null
+
+      return [vk, value] as const
+    })
+
+    if (!values) return null
+
+    return [key, values] as const
+  })
 }
 
+/** Extracts `styling.defaults` as a `Record<variantKey, defaultValue>`. Returns `{}` when absent or non-literal. */
 function extractDefaults(stylingObj: ts.ObjectLiteralExpression): DefaultMap {
   const defaultsObj = asObject(getProperty(stylingObj, 'defaults'))
   if (!defaultsObj) return {}
-  const result: DefaultMap = {}
-  for (const prop of defaultsObj.properties) {
-    const key = propKey(prop)
-    if (!key || !ts.isPropertyAssignment(prop)) return {}
-    const v = asString(prop.initializer)
-    if (v === undefined) return {}
-    result[key] = v
-  }
-  return result
+  return (
+    iterate.collect(defaultsObj.properties, (prop) => {
+      const key = propKey(prop)
+      if (!key || !ts.isPropertyAssignment(prop)) return null
+
+      const value = asString(prop.initializer)
+      if (value === undefined) return null
+
+      return [key, value] as const
+    }) ?? {}
+  )
 }
 
+/**
+ * Extracts `styling.compounds` as a typed array.
+ * Returns null when any entry has a non-literal condition value or class — signals bail to the caller.
+ */
 function extractCompounds(stylingObj: ts.ObjectLiteralExpression): CompoundEntry[] | null {
   const compoundsArr = asArray(getProperty(stylingObj, 'compounds'))
   if (!compoundsArr) return []
 
   const result: CompoundEntry[] = []
-  for (const elem of compoundsArr.elements) {
+  const resultReturned = iterate.every(compoundsArr.elements, (elem) => {
     const obj = asObject(elem)
-    if (!obj) return null
+    if (!obj) return false
+
     const cls = asStringOrStringArray(getProperty(obj, 'class'))
-    if (cls === undefined) return null
+    if (cls === undefined) return false
+
     const conditions: Record<string, string | string[]> = {}
-    for (const cp of obj.properties) {
+    const keyOrVNotDefined = iterate.every(obj.properties, (cp) => {
       const key = propKey(cp)
-      if (!key || !ts.isPropertyAssignment(cp)) return null
-      if (key === 'class') continue
+      if (!key || !ts.isPropertyAssignment(cp)) return false
+      if (key === 'class') return true
+
       const v = asStringOrStringArray(cp.initializer)
-      if (v === undefined) return null
+      if (v === undefined) return false
+
       conditions[key] = v
-    }
+      return true
+    })
+    if (!keyOrVNotDefined) return false
+
     result.push({ conditions, cls })
-  }
-  return result
+
+    return true
+  })
+  return resultReturned ? result : null
 }
 
 // ─── Combination enumeration ──────────────────────────────────────────────────
@@ -139,10 +172,11 @@ export function enumerateCombinations(
   if (keys.length === 0) return [{}]
 
   let total = 1
-  for (const key of keys) {
+  const totalUnderMaxLimit = iterate.every(keys, (key) => {
     total *= Object.keys(variantMap[key]!).length + 1
-    if (total > MAX_COMBINATIONS) return null
-  }
+    return total <= MAX_COMBINATIONS
+  })
+  if (!totalUnderMaxLimit) return null
 
   function rec(remaining: string[]): Array<Record<string, string>> {
     if (remaining.length === 0) return [{}]
@@ -151,12 +185,12 @@ export function enumerateCombinations(
     const restCombos = rec(rest)
     const valueKeys = Object.keys(variantMap[first]!)
     const out: Array<Record<string, string>> = []
-    for (const combo of restCombos) {
+    iterate.forEach(restCombos, (combo) => {
       out.push(combo)
-      for (const v of valueKeys) {
+      iterate.forEach(valueKeys, (v) => {
         out.push({ [first]: v, ...combo })
-      }
-    }
+      })
+    })
     return out
   }
 
@@ -178,41 +212,32 @@ export function buildCacheKey(props: Record<string, string>): string {
 
 // ─── Class computation ────────────────────────────────────────────────────────
 
+/** Computes the final class string for a given explicit prop combination against a resolved styling config. */
 function computeClasses(config: StylingConfig, props: Record<string, string>): string {
   const { variantMap, defaults, compounds } = config
   const effective = { ...defaults, ...props }
   const classes: string[] = []
-
-  for (const [key, values] of Object.entries(variantMap)) {
+  iterate.forEachEntry(variantMap, (key, values) => {
     const v = effective[key]
-    if (v === undefined) continue
+    if (v === undefined) return
     const cls = values[v]
-    if (cls === undefined) continue
+    if (cls === undefined) return
     if (Array.isArray(cls)) classes.push(...cls)
     else classes.push(cls)
-  }
+  })
 
-  for (const { conditions, cls } of compounds) {
-    let ok = true
-    for (const [key, cond] of Object.entries(conditions)) {
-      const v = effective[key]
-      if (Array.isArray(cond)) {
-        if (v === undefined || !cond.includes(v)) {
-          ok = false
-          break
-        }
-      } else {
-        if (v !== cond) {
-          ok = false
-          break
-        }
-      }
-    }
+  iterate.forEach(compounds, ({ conditions, cls }) => {
+    const ok = iterate.every(iterate.entries(conditions), ([key, cond]) => {
+      const value = effective[key]
+
+      return Array.isArray(cond) ? value !== undefined && cond.includes(value) : value === cond
+    })
+
     if (ok) {
       if (Array.isArray(cls)) classes.push(...cls)
       else classes.push(cls)
     }
-  }
+  })
 
   return classes.filter(Boolean).join(' ')
 }
@@ -241,15 +266,15 @@ export function buildPrecomputedClasses(
   if (!combos) return null
 
   const config: StylingConfig = { variantMap, defaults, compounds }
-  const map: Record<string, string> = {}
-  for (const combo of combos) {
-    map[buildCacheKey(combo)] = computeClasses(config, combo)
-  }
-  return map
+  return iterate.collect(
+    combos,
+    (combo) => [buildCacheKey(combo), computeClasses(config, combo)] as const,
+  )
 }
 
 // ─── AST transformer ─────────────────────────────────────────────────────────
 
+/** Returns a TS transformer that injects a `precomputedClasses` property into each eligible factory call's `styling` object. */
 function createClassExtractTransformer(
   factory: ts.NodeFactory,
   calleeNames: ReadonlySet<string>,
@@ -273,10 +298,12 @@ function createClassExtractTransformer(
       onInjected()
 
       // Build `precomputedClasses: { 'key': 'value', ... }` property.
-      const mapProps = Object.entries(map).map(([k, v]) =>
-        factory.createPropertyAssignment(
-          factory.createStringLiteral(k),
-          factory.createStringLiteral(v),
+      const mapProps = Array.from(
+        iterate.map(iterate.entries(map), ([key, value]) =>
+          factory.createPropertyAssignment(
+            factory.createStringLiteral(key),
+            factory.createStringLiteral(value),
+          ),
         ),
       )
       const mapLiteral = factory.createObjectLiteralExpression(mapProps, true)
@@ -322,16 +349,13 @@ export function injectPrecomputedClasses(
   source: ts.SourceFile,
   calleeNames: ReadonlySet<string>,
 ): string | null {
-  let hasVariants = false
-  walk(source, (n) => {
-    if (hasVariants) return
-    if (
-      ts.isPropertyAssignment(n) &&
-      (ts.isIdentifier(n.name) || ts.isStringLiteral(n.name)) &&
-      n.name.text === 'variants'
-    )
-      hasVariants = true
-  })
+  const hasVariants = iterate.some(
+    walk(source),
+    (node) =>
+      ts.isPropertyAssignment(node) &&
+      (ts.isIdentifier(node.name) || ts.isStringLiteral(node.name)) &&
+      node.name.text === 'variants',
+  )
   if (!hasVariants) return null
 
   let didInject = false

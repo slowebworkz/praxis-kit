@@ -1,6 +1,6 @@
 import type { AnyRecord, ClassPipelineOptions, VariantConditionValue, VariantMap } from './types'
 import { cva } from './cva'
-import { cn } from '@praxis-kit/primitive'
+import { cn, iterate } from '@praxis-kit/primitive'
 
 export type CompoundTrace = {
   conditions: Record<string, VariantConditionValue>
@@ -54,10 +54,10 @@ export function diagnoseClassPipeline<TVariants extends VariantMap>(
     const typedConditions = conditions as Record<string, VariantConditionValue>
     const mismatches: CompoundTrace['mismatches'] = []
 
-    for (const [key, expected] of Object.entries(typedConditions)) {
+    iterate.forEachEntry(typedConditions, (key, expected) => {
       const got = effectiveVariants[key]
       if (!conditionMatches(got, expected)) mismatches.push({ key, expected, got })
-    }
+    })
 
     return {
       conditions: typedConditions,

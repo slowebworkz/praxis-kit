@@ -6,6 +6,7 @@ import {
   getObjectProperty,
   isFactoryCall,
 } from '../utils/ast'
+import { iterate } from '@praxis-kit/primitive'
 
 const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)
 
@@ -55,21 +56,32 @@ export const noEnforcementWithoutStrict = createRule<Options, MessageIds>({
 
         const hasStrict = getObjectProperty(enf, 'strict') !== undefined
 
-        for (const field of ['children', 'aria'] as const) {
+        if (hasStrict) return
+
+        const field = iterate.find(['children', 'aria'] as const, (field) => {
           const fieldProp = getObjectProperty(enf, field)
-          if (!fieldProp) continue
+          if (!fieldProp) {
+            return null
+          }
 
           // children must be a non-empty array to be meaningful
           if (field === 'children') {
             const arr = asArrayExpression(fieldProp.value)
-            if (!arr || arr.elements.length === 0) continue
+            if (!arr || arr.elements.length === 0) {
+              return null
+            }
           }
 
-          if (!hasStrict) {
-            // Report on the call expression so eslint-disable-next-line works on the factory call line.
-            context.report({ node, messageId: 'missingStrict', data: { field } })
-            return // one report per factory call is enough
-          }
+          return field
+        })
+
+        if (field) {
+          // Report on the call expression so eslint-disable-next-line works on the factory call line.
+          context.report({
+            node,
+            messageId: 'missingStrict',
+            data: { field },
+          })
         }
       },
     }

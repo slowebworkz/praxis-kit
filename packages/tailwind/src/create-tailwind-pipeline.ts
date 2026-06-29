@@ -18,6 +18,7 @@ import { COMPOUND_META_KEYS, EMPTY_SET, LAYOUT_OWNED_KEYS } from './constants'
 import type { ClassifiedToken } from './types/classified-token'
 import type { LayoutKey, LayoutMode, LayoutProps, CompoundVariant, VariantSelection } from './types'
 import { isString } from '@praxis-kit/shared'
+import { iterate } from '@praxis-kit/primitive'
 
 declare const process: { env: { NODE_ENV: string } }
 const DEV = process.env.NODE_ENV !== 'production'
@@ -32,9 +33,9 @@ function flushAsyncWarns(): void {
   asyncWarnScheduled = false
   const messages = [...pendingAsyncWarns]
   pendingAsyncWarns.clear()
-  for (const msg of messages) {
+  iterate.forEach(messages, (msg) => {
     console.warn(msg)
-  }
+  })
 }
 
 function pipelineWarn(strict: StrictMode, message: string): void {
@@ -62,9 +63,9 @@ function normalizeVariantValue(value: VariantValue): string {
 
 function resolveLayout(props: LayoutProps & AnyRecord): LayoutMode {
   const active: LayoutKey[] = []
-  for (const key of layoutKeys) {
+  iterate.forEach(layoutKeys, (key) => {
     if (props[key]) active.push(key)
-  }
+  })
   if (DEV && active.length > 1) {
     // Not gated on strict — multiple display props is a misconfiguration, not a variant contract violation.
     console.warn(
@@ -77,9 +78,9 @@ function resolveLayout(props: LayoutProps & AnyRecord): LayoutMode {
 function warnReservedLayoutLiterals(strict: StrictMode, tokens: ClassifiedToken[]): void {
   if (!strict) return
   const reserved: string[] = []
-  for (const token of tokens) {
+  iterate.forEach(tokens, (token) => {
     if (token.kind === 'layout') reserved.push(token.raw)
-  }
+  })
   if (reserved.length === 0) return
 
   pipelineWarn(
@@ -110,11 +111,11 @@ function classifyTokens(className: string): ClassifiedToken[] {
 function compoundDimensions(compounds: readonly CompoundVariant[]): ReadonlySet<string> {
   if (compounds.length === 0) return EMPTY_SET
   const dims = new Set<string>()
-  for (const compound of compounds) {
-    for (const key in compound) {
+  iterate.forEach(compounds, (compound) => {
+    iterate.forEachKey(compound, (key) => {
       if (!COMPOUND_META_KEYS.has(key)) dims.add(key)
-    }
-  }
+    })
+  })
   return dims
 }
 
@@ -134,10 +135,10 @@ function resolveActiveSelection<V extends VariantMap>(
   const defaults = getDefaultVariants(options)
 
   const selection: VariantSelection = {}
-  for (const dim in variants) {
+  iterate.forEachKey(variants, (dim) => {
     const value = props[dim] ?? preset?.[dim] ?? defaults?.[dim]
     if (value !== undefined && value !== null) selection[dim] = String(value)
-  }
+  })
   return selection
 }
 
@@ -154,17 +155,16 @@ function warnDeadVariants<V extends VariantMap>(
   if (!variants) return
 
   const selection = resolveActiveSelection(options, variants, props, recipe)
-  for (const dim in selection) {
-    if (compoundDims.has(dim)) continue
+  iterate.forEachEntry(selection, (dim, value) => {
+    if (compoundDims.has(dim)) return
 
-    const value = selection[dim]!
     const raw = variants[dim]?.[value]
-    if (raw == null) continue
+    if (raw == null) return
 
     const classStr = normalizeVariantValue(raw)
     const tokens = classifyTokens(classStr)
 
-    if (tokens.length === 0) continue
+    if (tokens.length === 0) return
 
     if (tokens.every((t) => !evaluator.evaluate(t, state))) {
       pipelineWarn(
@@ -173,7 +173,7 @@ function warnDeadVariants<V extends VariantMap>(
           `layout mode "${state.mode}" ("${classStr}") — it produces nothing in this mode.`,
       )
     }
-  }
+  })
 }
 
 /**

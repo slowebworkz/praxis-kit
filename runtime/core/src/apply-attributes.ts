@@ -1,5 +1,6 @@
 import type { NodeId } from '@pk2/foundation'
 import type { AttributeMap, NodeDecoration } from './types'
+import { iterate } from '@praxis-kit/primitive'
 
 export function applyAttributes(
   nodeId: NodeId,
@@ -11,9 +12,9 @@ export function applyAttributes(
   const next: AttributeMap = { ...existing.attributes }
 
   if (removedKeys !== undefined) {
-    for (const key of removedKeys) {
+    iterate.forEachSet(removedKeys, (key) => {
       delete next[key]
-    }
+    })
   }
 
   Object.assign(next, incoming)

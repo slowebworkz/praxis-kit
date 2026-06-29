@@ -5,23 +5,24 @@ import { collectFileDeclarations } from './collect'
 import { pruneDeadCompounds } from './compound-prune'
 import { ALL_EXTS, DEFAULT_CALLEE_NAMES, JSX_EXTS } from './constants'
 import { analyzeJsxSites } from './diagnose'
+import { extractImportSpecifiers } from './imports'
 import { ConstraintRegistry } from './registry'
 import { transformAsChild } from './slot-transform'
-import { composeStatically, extractStaticComponents } from './static-compose'
 import type { StaticComponent } from './static-compose'
-import { extractImportSpecifiers } from './imports'
+import { composeStatically, extractStaticComponents } from './static-compose'
 import type { PluginOptions } from './types'
+import { iterate } from '@praxis-kit/primitive'
 
-export type { PluginOptions, Diagnostic, ComponentConstraint, StaticBound } from './types'
-export type { ComponentTokens, DesignTokenManifest, DesignTokensOptions } from './design-tokens'
-export type { StaticComponent } from './static-compose'
-export type { ImportBinding } from './imports'
 export { analyze } from './analyze'
-export { transformAsChild } from './slot-transform'
-export { pruneDeadCompounds } from './compound-prune'
 export { buildPrecomputedClasses, injectPrecomputedClasses } from './class-extract'
-export { collectFileTokens, buildManifest, designTokensPlugin } from './design-tokens'
+export { pruneDeadCompounds } from './compound-prune'
+export { buildManifest, collectFileTokens, designTokensPlugin } from './design-tokens'
+export type { ComponentTokens, DesignTokenManifest, DesignTokensOptions } from './design-tokens'
+export type { ImportBinding } from './imports'
+export { transformAsChild } from './slot-transform'
 export { composeStatically, extractStaticComponents } from './static-compose'
+export type { StaticComponent } from './static-compose'
+export type { ComponentConstraint, Diagnostic, PluginOptions, StaticBound } from './types'
 
 /**
  * Vite plugin that performs static enforcement.children cardinality checks at
@@ -61,14 +62,14 @@ export function contractPlugin(options?: PluginOptions): Plugin {
       // One walk for cardinality violations + ARIA overrides + cross-file usages (replaces three).
       const { diagnostics, usages: allUsages } = analyzeJsxSites(source, constraints, severity)
 
-      for (const d of diagnostics) {
-        const loc = { file: id, line: d.line, column: d.col }
-        if (d.severity === 'error') {
-          this.error({ message: d.message, loc })
+      iterate.forEach(diagnostics, ({ col, line, message, severity }) => {
+        const loc = { file: id, line, column: col }
+        if (severity === 'error') {
+          this.error({ message, loc })
         } else {
-          this.warn({ message: d.message, loc })
+          this.warn({ message, loc })
         }
-      }
+      })
 
       const localNames = new Set(constraints.map((c) => c.name))
 
@@ -88,23 +89,26 @@ export function contractPlugin(options?: PluginOptions): Plugin {
         }
         registry.registerImports(id, resolvedImports)
 
-        for (const usage of allUsages) {
+        iterate.forEach(allUsages, (usage) => {
           if (importedTagsInUse.has(usage.tagName)) {
             registry.addPendingUsage(id, usage)
           }
-        }
+        })
       }
     },
 
     buildEnd() {
-      for (const d of registry.diagnostics(severity)) {
-        const loc = { file: d.fileId, line: d.line, column: d.col }
-        if (d.severity === 'error') {
-          this.error({ message: d.message, loc })
-        } else {
-          this.warn({ message: d.message, loc })
-        }
-      }
+      iterate.forEach(
+        registry.diagnostics(severity),
+        ({ col, fileId, line, message, severity }) => {
+          const loc = { file: fileId, line, column: col }
+          if (severity === 'error') {
+            this.error({ message, loc })
+          } else {
+            this.warn({ message, loc })
+          }
+        },
+      )
     },
   }
 }

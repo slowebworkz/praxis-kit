@@ -1,17 +1,22 @@
 import ts from 'typescript'
+import { iterate } from '@praxis-kit/primitive'
 
 /** Returns the value of a named property in an object literal, or undefined. */
 export function getProperty(
   obj: ts.ObjectLiteralExpression,
   key: string,
 ): ts.Expression | undefined {
-  for (const prop of obj.properties) {
-    if (!ts.isPropertyAssignment(prop)) continue
-    const name = prop.name
-    if ((ts.isIdentifier(name) || ts.isStringLiteral(name)) && name.text === key)
-      return prop.initializer
-  }
-  return undefined
+  return (
+    iterate.find(obj.properties, (prop) => {
+      if (!ts.isPropertyAssignment(prop)) return null
+
+      const { name } = prop
+      if ((ts.isIdentifier(name) || ts.isStringLiteral(name)) && name.text === key)
+        return prop.initializer
+
+      return null
+    }) ?? undefined
+  )
 }
 
 /** Narrows to ObjectLiteralExpression or returns undefined. */
@@ -53,10 +58,23 @@ export function firstObjectArg(call: ts.CallExpression): ts.ObjectLiteralExpress
   return first && ts.isObjectLiteralExpression(first) ? first : undefined
 }
 
+/** Visits every node in a subtree depth-first, yielding each. */
+export function* walk(node: ts.Node): IterableIterator<ts.Node> {
+  yield node
+  const children: ts.Node[] = []
+  ts.forEachChild(node, (child) => {
+    children.push(child)
+  })
+  for (const child of children) {
+    yield* walk(child)
+  }
+}
+
 /** Visits every node in a subtree depth-first, calling visitor for each. */
-export function walk(node: ts.Node, visitor: (n: ts.Node) => void): void {
-  visitor(node)
-  ts.forEachChild(node, (child) => walk(child, visitor))
+export function walkEach(node: ts.Node, visitor: (node: ts.Node) => void): void {
+  for (const child of walk(node)) {
+    visitor(child)
+  }
 }
 
 /** Parses source text as TSX and returns a SourceFile. */

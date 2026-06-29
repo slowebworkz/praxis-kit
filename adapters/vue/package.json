@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "catalog:",
+    "@praxis-kit/primitive": "workspace:*",
     "@playwright/experimental-ct-vue": "catalog:",
     "@playwright/test": "catalog:",
     "@praxis-kit/adapter-utils": "workspace:*",

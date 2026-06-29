@@ -28,11 +28,13 @@
  * The transform is conservative: any condition that is not statically clear
  * causes the node to be left unchanged.
  */
+import { iterate } from '@praxis-kit/primitive'
 import ts from 'typescript'
 import { walk } from './ast'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+/** Returns true when the first character of `s` is an uppercase ASCII letter (A–Z). */
 function isUpperCase(s: string): boolean {
   return s.charCodeAt(0) >= 65 && s.charCodeAt(0) <= 90
 }
@@ -58,6 +60,7 @@ function getStaticClassName(
   const attrs = ts.isJsxElement(child)
     ? child.openingElement.attributes.properties
     : child.attributes.properties
+
   for (const attr of attrs) {
     if (!ts.isJsxAttribute(attr) || jsxAttrName(attr) !== 'className') continue
     const init = attr.initializer
@@ -197,7 +200,7 @@ function buildTransformedAttributes(
 
   const hasStaticCls = !clsResult.absent
   const hasStyle = !styleInfo.absent
-  const handlerNames = new Set(handlers.map((h) => h.name))
+  const handlerNames = new Set(iterate.map(handlers, (h) => h.name))
 
   // Child's own attributes — exclude ref and any props we're overriding after the spread.
   const childOpeningAttrs = (
@@ -408,11 +411,11 @@ function createAsChildTransformer(factory: ts.NodeFactory): ts.TransformerFactor
  */
 export function transformAsChild(source: ts.SourceFile): string | null {
   // Fast path: bail immediately if no asChild attribute is present
-  let hasAny = false
-  walk(source, (n) => {
-    if (hasAny) return
-    if (ts.isJsxAttribute(n) && jsxAttrName(n) === 'asChild') hasAny = true
-  })
+  const hasAny = iterate.some(
+    walk(source),
+    (node) => ts.isJsxAttribute(node) && jsxAttrName(node) === 'asChild',
+  )
+
   if (!hasAny) return null
 
   const result = ts.transform(source, [createAsChildTransformer(ts.factory)], {
