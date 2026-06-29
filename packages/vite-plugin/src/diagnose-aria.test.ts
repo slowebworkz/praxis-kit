@@ -75,8 +75,8 @@ describe('diagnoseAriaTagOverrides — diagnostics emitted', () => {
       function App() { return <Btn as="a" /> }
     `)
     expect(diagnostics).toHaveLength(1)
-    expect(diagnostics[0]!.message).toContain('as="a"')
-    expect(diagnostics[0]!.message).toContain("'button'")
+    expect(diagnostics[0]!.diagnostic.message).toContain('as="a"')
+    expect(diagnostics[0]!.diagnostic.message).toContain("'button'")
     expect(diagnostics[0]!.severity).toBe('warning')
   })
 
@@ -89,7 +89,7 @@ describe('diagnoseAriaTagOverrides — diagnostics emitted', () => {
       function App() { return <Btn as={"a"} /> }
     `)
     expect(diagnostics).toHaveLength(1)
-    expect(diagnostics[0]!.message).toContain('as="a"')
+    expect(diagnostics[0]!.diagnostic.message).toContain('as="a"')
   })
 
   it('emits once per JSX usage site (two usages → two diagnostics)', () => {
@@ -126,6 +126,6 @@ describe('diagnoseAriaTagOverrides — diagnostics emitted', () => {
       }
     `)
     expect(diagnostics).toHaveLength(1)
-    expect(diagnostics[0]!.message).toContain('as="a"')
+    expect(diagnostics[0]!.diagnostic.message).toContain('as="a"')
   })
 })

@@ -123,9 +123,9 @@ describe('analyze — diagnostics emitted', () => {
     `
     const result = analyze(code, FILE)
     expect(result).toHaveLength(1)
-    expect(result[0]!.message).toContain('<Button>')
-    expect(result[0]!.message).toContain('exactly 1 child')
-    expect(result[0]!.message).toContain('received 2')
+    expect(result[0]!.diagnostic.message).toContain('<Button>')
+    expect(result[0]!.diagnostic.message).toContain('exactly 1 child')
+    expect(result[0]!.diagnostic.message).toContain('received 2')
     expect(result[0]!.severity).toBe('warning')
   })
 
@@ -139,9 +139,9 @@ describe('analyze — diagnostics emitted', () => {
     `
     const result = analyze(code, FILE)
     expect(result).toHaveLength(1)
-    expect(result[0]!.message).toContain('<Banner>')
-    expect(result[0]!.message).toContain('2–4 children')
-    expect(result[0]!.message).toContain('received 1')
+    expect(result[0]!.diagnostic.message).toContain('<Banner>')
+    expect(result[0]!.diagnostic.message).toContain('2–4 children')
+    expect(result[0]!.diagnostic.message).toContain('received 1')
   })
 
   it('emits error severity when configured', () => {
@@ -219,8 +219,8 @@ describe('analyze — diagnostics emitted', () => {
     `
     const result = analyze(code, FILE)
     expect(result).toHaveLength(1)
-    expect(result[0]!.message).toContain('1–2 children')
-    expect(result[0]!.message).toContain('received 3')
+    expect(result[0]!.diagnostic.message).toContain('1–2 children')
+    expect(result[0]!.diagnostic.message).toContain('received 3')
   })
 
   it('treats {false} and {null} as zero children', () => {
@@ -233,7 +233,7 @@ describe('analyze — diagnostics emitted', () => {
     `
     const result = analyze(code, FILE)
     expect(result).toHaveLength(1)
-    expect(result[0]!.message).toContain('received 0')
+    expect(result[0]!.diagnostic.message).toContain('received 0')
   })
 
   it('fires when {cond && <El />} certainly misses a min:2 constraint', () => {
@@ -249,8 +249,8 @@ describe('analyze — diagnostics emitted', () => {
     `
     const result = analyze(code, FILE)
     expect(result).toHaveLength(1)
-    expect(result[0]!.message).toContain('2–4 children')
-    expect(result[0]!.message).toContain('received 0–1')
+    expect(result[0]!.diagnostic.message).toContain('2–4 children')
+    expect(result[0]!.diagnostic.message).toContain('received 0–1')
   })
 
   it('fires with a range message when a ternary always violates', () => {
@@ -274,8 +274,8 @@ describe('analyze — diagnostics emitted', () => {
     `
     const result = analyze(code, FILE)
     expect(result).toHaveLength(1)
-    expect(result[0]!.message).toContain('exactly 1 child')
-    expect(result[0]!.message).toContain('received 2')
+    expect(result[0]!.diagnostic.message).toContain('exactly 1 child')
+    expect(result[0]!.diagnostic.message).toContain('received 2')
   })
 
   it('reports line and column position', () => {

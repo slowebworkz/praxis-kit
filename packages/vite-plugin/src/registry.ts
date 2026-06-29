@@ -1,5 +1,6 @@
 import type { ComponentConstraint, FileDiagnostic, PendingUsage, Severity } from './types'
 import { iterate } from '@praxis-kit/primitive'
+import { ViteDiagnostics } from './vite-diagnostics'
 
 /**
  * Accumulates constraint and import data across multiple `transform` calls so
@@ -66,18 +67,9 @@ export class ConstraintRegistry {
         // Only fire when the count range is certainly outside the required bounds.
         if (max >= totalMin && min <= totalMax) return
 
-        const rangeText =
-          totalMax === Infinity
-            ? `at least ${totalMin}`
-            : totalMin === totalMax
-              ? `exactly ${totalMin}`
-              : `${totalMin}–${totalMax}`
-        const childWord = totalMax === 1 && totalMin === 1 ? 'child' : 'children'
-        const receivedText = min === max ? `${min}` : `${min}–${max}`
-
         result.push({
           fileId,
-          message: `<${name}> expects ${rangeText} ${childWord} but received ${receivedText}.`,
+          diagnostic: ViteDiagnostics.cardinalityViolation(name, totalMin, totalMax, min, max),
           line,
           col,
           severity,

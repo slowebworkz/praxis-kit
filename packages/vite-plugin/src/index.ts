@@ -62,12 +62,12 @@ export function contractPlugin(options?: PluginOptions): Plugin {
       // One walk for cardinality violations + ARIA overrides + cross-file usages (replaces three).
       const { diagnostics, usages: allUsages } = analyzeJsxSites(source, constraints, severity)
 
-      iterate.forEach(diagnostics, ({ col, line, message, severity }) => {
+      iterate.forEach(diagnostics, ({ col, diagnostic, line, severity }) => {
         const loc = { file: id, line, column: col }
         if (severity === 'error') {
-          this.error({ message, loc })
+          this.error({ message: diagnostic.message, loc })
         } else {
-          this.warn({ message, loc })
+          this.warn({ message: diagnostic.message, loc })
         }
       })
 
@@ -100,12 +100,12 @@ export function contractPlugin(options?: PluginOptions): Plugin {
     buildEnd() {
       iterate.forEach(
         registry.diagnostics(severity),
-        ({ col, fileId, line, message, severity }) => {
+        ({ col, diagnostic, fileId, line, severity }) => {
           const loc = { file: fileId, line, column: col }
           if (severity === 'error') {
-            this.error({ message, loc })
+            this.error({ message: diagnostic.message, loc })
           } else {
-            this.warn({ message, loc })
+            this.warn({ message: diagnostic.message, loc })
           }
         },
       )

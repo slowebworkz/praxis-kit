@@ -2,6 +2,7 @@ import ts from 'typescript'
 import { walkEach } from './ast'
 import type { ChildCount, ComponentConstraint, Diagnostic, PendingUsage, Severity } from './types'
 import { iterate } from '@praxis-kit/primitive'
+import { ViteDiagnostics } from './vite-diagnostics'
 
 /**
  * Single-pass variant of diagnoseUsages + diagnoseAriaTagOverrides + collectJsxUsages.
@@ -47,16 +48,14 @@ export function analyzeJsxSites(
       const c = byName.get(tagName)
       if (c && (count.max < c.totalMin || count.min > c.totalMax)) {
         const { line, character } = getPos()
-        const { totalMin, totalMax, name } = c
-        const rangeText =
-          totalMax === Infinity
-            ? `at least ${totalMin}`
-            : totalMin === totalMax
-              ? `exactly ${totalMin}`
-              : `${totalMin}–${totalMax}`
-        const receivedText = count.min === count.max ? `${count.min}` : `${count.min}–${count.max}`
         diagnostics.push({
-          message: `<${name}> expects ${rangeText} ${totalMax === 1 && totalMin === 1 ? 'child' : 'children'} but received ${receivedText}.`,
+          diagnostic: ViteDiagnostics.cardinalityViolation(
+            c.name,
+            c.totalMin,
+            c.totalMax,
+            count.min,
+            count.max,
+          ),
           line: line + 1,
           col: character + 1,
           severity,
@@ -89,7 +88,7 @@ export function analyzeJsxSites(
           if (asValue !== undefined && asValue !== c.defaultTag) {
             const { line, character } = getPos()
             diagnostics.push({
-              message: `<${tagName} as="${asValue}"> changes the element type from '${c.defaultTag}' — ARIA enforcement rules may not apply as expected.`,
+              diagnostic: ViteDiagnostics.ariaTagOverride(tagName, asValue, c.defaultTag!),
               line: line + 1,
               col: character + 1,
               severity,
@@ -250,15 +249,14 @@ export function diagnoseUsages(
 
     if (count.max < totalMin || count.min > totalMax) {
       const { line, character } = source.getLineAndCharacterOfPosition(node.getStart(source))
-      const rangeText =
-        totalMax === Infinity
-          ? `at least ${totalMin}`
-          : totalMin === totalMax
-            ? `exactly ${totalMin}`
-            : `${totalMin}–${totalMax}`
-      const receivedText = count.min === count.max ? `${count.min}` : `${count.min}–${count.max}`
       diagnostics.push({
-        message: `<${name}> expects ${rangeText} ${totalMax === 1 && totalMin === 1 ? 'child' : 'children'} but received ${receivedText}.`,
+        diagnostic: ViteDiagnostics.cardinalityViolation(
+          name,
+          totalMin,
+          totalMax,
+          count.min,
+          count.max,
+        ),
         line: line + 1,
         col: character + 1,
         severity,
@@ -332,7 +330,7 @@ export function diagnoseAriaTagOverrides(
 
       const { line, character } = source.getLineAndCharacterOfPosition(node.getStart(source))
       diagnostics.push({
-        message: `<${tagName} as="${asValue}"> changes the element type from '${constraint.defaultTag}' — ARIA enforcement rules may not apply as expected.`,
+        diagnostic: ViteDiagnostics.ariaTagOverride(tagName!, asValue, constraint.defaultTag!),
         line: line + 1,
         col: character + 1,
         severity,

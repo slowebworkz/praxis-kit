@@ -1,8 +1,9 @@
+import type { DiagnosticInput } from '@praxis-kit/diagnostics'
 import type { Severity } from '@praxis-kit/core'
 
 /** A diagnostic produced by the static analysis pass. */
 export type Diagnostic = {
-  message: string
+  diagnostic: DiagnosticInput
   /** 1-based line number in the source file. */
   line: number
   /** 1-based column number. */

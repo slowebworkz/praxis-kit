@@ -226,9 +226,9 @@ describe('ConstraintRegistry.diagnostics', () => {
     )
     const diags = registry.diagnostics('warning')
     expect(diags).toHaveLength(1)
-    expect(diags[0]!.message).toContain('<Button>')
-    expect(diags[0]!.message).toContain('exactly 1 child')
-    expect(diags[0]!.message).toContain('received 2')
+    expect(diags[0]!.diagnostic.message).toContain('<Button>')
+    expect(diags[0]!.diagnostic.message).toContain('exactly 1 child')
+    expect(diags[0]!.diagnostic.message).toContain('received 2')
     expect(diags[0]!.severity).toBe('warning')
     expect(diags[0]!.fileId).toBe('/abs/app.tsx')
   })
@@ -241,7 +241,7 @@ describe('ConstraintRegistry.diagnostics', () => {
     )
     const diags = registry.diagnostics('warning')
     expect(diags).toHaveLength(1)
-    expect(diags[0]!.message).toContain('received 0')
+    expect(diags[0]!.diagnostic.message).toContain('received 0')
   })
 
   it('emits no diagnostic when child count is valid', () => {

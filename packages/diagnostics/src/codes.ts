@@ -53,6 +53,8 @@ export enum DiagnosticCode {
   LintMultipleFirst = 'LINT5012',
   LintMultipleLast = 'LINT5013',
   LintMinSumExceedsCapacity = 'LINT5014',
+  LintCardinalityViolation = 'LINT5015',
+  LintAriaTagOverride = 'LINT5016',
 
   // Internal
   InternalError = 'INTERNAL9000',
