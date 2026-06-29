@@ -21,6 +21,8 @@
 import { createContractComponent } from '@praxis-kit/web'
 import type { StrictMode } from '@praxis-kit/core'
 import { iterate } from '@praxis-kit/primitive'
+import { diagnosticsFromStrictMode } from '@praxis-kit/core/contract'
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 
 // Typed base for subclassing praxis components. TypeScript doesn't include CE
 // lifecycle methods on HTMLElement, so we declare them here and cast the praxis
@@ -160,11 +162,11 @@ export class Root extends _Root {
     if (!valid) {
       const fallback = triggers[0]?.getAttribute('value') ?? null
       if (value !== null) {
-        const msg = `[TabsRoot] setActiveValue: "${value}" does not match any trigger. Falling back to "${fallback}".`
-        const strict = _Root.strict
-        if (strict === true || strict === 'throw') throw new Error(msg)
-        else if (strict === 'async-warn') queueMicrotask(() => console.warn(msg))
-        else if (strict) console.warn(msg)
+        diagnosticsFromStrictMode(_Root.strict ?? false).error({
+          code: DiagnosticCode.InternalError,
+          category: DiagnosticCategory.Contract,
+          message: `[TabsRoot] setActiveValue: "${value}" does not match any trigger. Falling back to "${fallback}".`,
+        })
       }
       value = fallback
     }

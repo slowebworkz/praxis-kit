@@ -32,16 +32,15 @@ function flushAsyncWarns(): void {
 
 function report(strict: StrictMode, message: string): void {
   if (!strict) return
-  const mode = strict === true ? 'throw' : strict
-  if (mode === 'throw') {
-    diagnosticsFromStrictMode('throw').error({
+  if (strict === true || strict === 'throw') {
+    diagnosticsFromStrictMode(strict).error({
       code: DiagnosticCode.InternalError,
       category: DiagnosticCategory.Contract,
       message,
     })
     return
   }
-  if (mode === 'async-warn') {
+  if (strict === 'async-warn') {
     if (pendingAsyncWarns.has(message)) return
     pendingAsyncWarns.add(message)
     if (!asyncWarnScheduled) {
