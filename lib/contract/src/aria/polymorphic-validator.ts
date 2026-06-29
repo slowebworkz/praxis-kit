@@ -3,7 +3,7 @@ import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-kit/shared'
 import { isNull, isNumber, isString } from '@praxis-kit/shared'
 import { InvariantBase } from '../strict'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
-import { AriaDiagnostics } from '../diagnostics'
+import { AriaDiagnostics, HtmlDiagnostics } from '../diagnostics'
 import type {
   AriaContext,
   AriaFix,
@@ -57,7 +57,7 @@ export class AriaPolicyEngine extends InvariantBase {
         props: omitProp(props, 'role'),
         violations: [
           {
-            message: `<${tag}> has an explicit empty role="". Omit the attribute instead.`,
+            message: HtmlDiagnostics.emptyRole(tag).message,
             tag,
             role: '',
             attribute: undefined,
@@ -328,7 +328,7 @@ export class AriaPolicyEngine extends InvariantBase {
           fixable: true,
           severity: 'error',
           fix: AriaPolicyEngine.#removeRole,
-          message: `<${tag}> should not override its implicit role="${implicitRole}" with role="${role}".`,
+          message: HtmlDiagnostics.implicitRoleOverride(tag, implicitRole, role).message,
         },
       ]
     }
@@ -346,7 +346,7 @@ export class AriaPolicyEngine extends InvariantBase {
         fixable: true,
         severity: 'warning',
         fix: AriaPolicyEngine.#removeRole,
-        message: `<${tag}> already has implicit role="${implicitRole}". Avoid redundant role assignment.`,
+        message: HtmlDiagnostics.implicitRoleRedundant(tag, implicitRole).message,
       },
     ]
   }
@@ -362,7 +362,7 @@ export class AriaPolicyEngine extends InvariantBase {
         fixable: true,
         severity: 'error',
         fix: AriaPolicyEngine.#removeRole,
-        message: `<${tag}> is a self-contained element with implicit role="${implicitRole}". Assigning role="region" has been removed.`,
+        message: HtmlDiagnostics.standaloneRegionOverride(tag, implicitRole ?? tag).message,
       },
     ]
   }

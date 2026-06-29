@@ -22,6 +22,11 @@ export enum DiagnosticCode {
 
   // HTML
   InvalidHeadingHierarchy = 'HTML3001',
+  HtmlEmptyRole = 'HTML3002',
+  HtmlImplicitRoleRedundant = 'HTML3003',
+  HtmlImplicitRoleOverride = 'HTML3004',
+  HtmlStandaloneRegionOverride = 'HTML3005',
+  HtmlLandmarkRoleOverride = 'HTML3006',
 
   // Rendering
   InvalidRenderingTarget = 'RENDER4001',

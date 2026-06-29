@@ -1,4 +1,5 @@
 import type { AriaContext, AriaFix, AriaResult, AriaRule } from '../types'
+import { HtmlDiagnostics } from '@praxis-kit/contract'
 
 const LANDMARK_TAG_SET = new Set(['article', 'aside', 'footer', 'header', 'main', 'nav'])
 
@@ -22,7 +23,7 @@ export function landmarkRoleRule({ tag, props, implicitRole }: AriaContext): rea
       fixable: true,
       severity: 'error',
       fix: removeLandmarkRoleOverride,
-      message: `<${tag}> has a fixed landmark role="${implicitRole}". role="${role}" overrides it and confuses assistive technology. The override has been removed.`,
+      message: HtmlDiagnostics.landmarkRoleOverride(tag, implicitRole, role).message,
     },
   ]
 }

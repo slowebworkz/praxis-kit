@@ -8,7 +8,12 @@ export {
   InvariantBase as StrictBase,
   diagnosticsFromStrictMode,
 } from '@praxis-kit/contract'
-export { AriaDiagnostics, ContractDiagnostics, SlotDiagnostics } from '@praxis-kit/contract'
+export {
+  AriaDiagnostics,
+  ContractDiagnostics,
+  HtmlDiagnostics,
+  SlotDiagnostics,
+} from '@praxis-kit/contract'
 export { disabledProps, invalidProps } from '@praxis-kit/contract'
 export {
   AriaPolicyEngine,
