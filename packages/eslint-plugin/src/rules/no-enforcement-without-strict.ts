@@ -7,6 +7,7 @@ import {
   isFactoryCall,
 } from '../utils/ast'
 import { iterate } from '@praxis-kit/primitive'
+import { EslintDiagnosticTemplates } from '../diagnostics'
 
 const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)
 
@@ -23,9 +24,7 @@ export const noEnforcementWithoutStrict = createRule<Options, MessageIds>({
         'Require enforcement.strict when enforcement.children or enforcement.aria is defined.',
     },
     messages: {
-      missingStrict:
-        'enforcement.{{ field }} is defined but enforcement.strict is not explicitly set. ' +
-        'Adapter defaults vary — declare strict explicitly so the behavior is clear at the call site.',
+      missingStrict: EslintDiagnosticTemplates.missingStrict,
     },
     schema: [
       {

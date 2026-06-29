@@ -9,6 +9,7 @@ import {
   isFactoryCall,
 } from '../utils/ast'
 import { iterate } from '@praxis-kit/primitive'
+import { EslintDiagnosticTemplates } from '../diagnostics'
 
 function formatAllowedValues(values: ReadonlySet<string>): string {
   return Array.from(values, (value) => `"${value}"`).join(', ')
@@ -29,12 +30,9 @@ export const noInvalidDefault = createRule<Options, MessageIds>({
         'Disallow styling.defaults entries whose keys or values do not exist in styling.variants.',
     },
     messages: {
-      unknownDefaultKey:
-        '"{{ key }}" is not a variant defined in styling.variants. This default will have no effect.',
-      unknownDefaultValue:
-        '"{{ value }}" is not a valid value for variant "{{ key }}". Expected one of: {{ allowed }}. This default will have no effect.',
-      nonLiteralValue:
-        'Default value for "{{ key }}" is not a string literal and cannot be statically validated.',
+      unknownDefaultKey: EslintDiagnosticTemplates.invalidDefaultKey,
+      unknownDefaultValue: EslintDiagnosticTemplates.invalidDefaultValue,
+      nonLiteralValue: EslintDiagnosticTemplates.invalidDefaultNonLiteral,
     },
     schema: [
       {

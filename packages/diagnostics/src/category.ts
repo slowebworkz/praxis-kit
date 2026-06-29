@@ -8,4 +8,5 @@ export enum DiagnosticCategory {
   Performance,
   Internal,
   Deprecation,
+  Lint,
 }

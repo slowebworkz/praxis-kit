@@ -10,6 +10,7 @@ import {
   isFactoryCall,
 } from '../utils/ast'
 import { iterate } from '@praxis-kit/primitive'
+import { EslintDiagnosticTemplates } from '../diagnostics'
 
 const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)
 
@@ -64,12 +65,9 @@ export const validChildrenConfig = createRule<Options, MessageIds>({
         'Enforce cross-rule consistency of enforcement.children — detect positional conflicts and cardinality impossibilities.',
     },
     messages: {
-      multipleFirst:
-        'Multiple enforcement.children rules require position: "first". Only one child can occupy the first position.',
-      multipleLast:
-        'Multiple enforcement.children rules require position: "last". Only one child can occupy the last position.',
-      minSumExceedsCapacity:
-        'A rule with position: "only" requires min >= 1, but {{ count }} other rule(s) also require min >= 1. These constraints cannot be satisfied simultaneously.',
+      multipleFirst: EslintDiagnosticTemplates.multipleFirst,
+      multipleLast: EslintDiagnosticTemplates.multipleLast,
+      minSumExceedsCapacity: EslintDiagnosticTemplates.minSumExceedsCapacity,
     },
     schema: [
       {

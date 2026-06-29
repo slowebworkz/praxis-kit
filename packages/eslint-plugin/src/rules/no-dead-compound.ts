@@ -11,6 +11,7 @@ import {
   isFactoryCall,
 } from '../utils/ast'
 import { iterate } from '@praxis-kit/primitive'
+import { EslintDiagnosticTemplates } from '../diagnostics'
 
 type Property = TSESTree.Property
 
@@ -29,12 +30,9 @@ export const noDeadCompound = createRule<Options, MessageIds>({
         'Disallow compound variant conditions that reference unknown variant keys or values — compounds that can never fire.',
     },
     messages: {
-      unknownVariantKey:
-        '"{{ key }}" is not a variant defined in styling.variants. This compound condition can never match.',
-      unknownVariantValue:
-        '"{{ value }}" is not a valid value for variant "{{ key }}". Expected one of: {{ allowed }}. This compound condition can never match.',
-      nonLiteralValue:
-        'Compound value for "{{ key }}" is not a string literal and cannot be statically validated.',
+      unknownVariantKey: EslintDiagnosticTemplates.deadCompoundKey,
+      unknownVariantValue: EslintDiagnosticTemplates.deadCompoundValue,
+      nonLiteralValue: EslintDiagnosticTemplates.deadCompoundNonLiteral,
     },
     schema: [
       {

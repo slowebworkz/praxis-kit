@@ -2,6 +2,7 @@ import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
 import type { TSESTree } from '@typescript-eslint/utils'
 import { IMPLICIT_ROLES } from '../utils'
 import { iterate, isString } from '@praxis-kit/primitive'
+import { EslintDiagnosticTemplates } from '../diagnostics'
 
 const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)
 
@@ -57,8 +58,7 @@ export const noRedundantRole = createRule<Options, MessageIds>({
     },
     fixable: 'code',
     messages: {
-      redundantRole:
-        'role="{{ role }}" is redundant on <{{ tag }}>: the element already carries this implicit ARIA role. Remove the attribute.',
+      redundantRole: EslintDiagnosticTemplates.redundantRole,
     },
     schema: [],
   },
@@ -79,7 +79,7 @@ export const noRedundantRole = createRule<Options, MessageIds>({
           context.report({
             node: roleAttr.node,
             messageId: 'redundantRole',
-            data: { role: roleAttr.value, tag },
+            data: { tag, role: roleAttr.value },
             fix(fixer) {
               return fixer.remove(roleAttr.node)
             },

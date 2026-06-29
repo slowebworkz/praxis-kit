@@ -24,6 +24,7 @@
   },
   "sideEffects": false,
   "dependencies": {
+    "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
     "@typescript-eslint/utils": "catalog:"
   },

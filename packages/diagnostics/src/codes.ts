@@ -33,9 +33,26 @@ export enum DiagnosticCode {
   HtmlImplicitRoleOverride = 'HTML3004',
   HtmlStandaloneRegionOverride = 'HTML3005',
   HtmlLandmarkRoleOverride = 'HTML3006',
+  HtmlInvalidChild = 'HTML3007',
 
   // Rendering
   InvalidRenderingTarget = 'RENDER4001',
+
+  // Lint (static analysis only — no runtime counterpart)
+  LintDeadCompoundKey = 'LINT5001',
+  LintDeadCompoundValue = 'LINT5002',
+  LintDeadCompoundNonLiteral = 'LINT5003',
+  LintMissingStrict = 'LINT5004',
+  LintInvalidDefaultKey = 'LINT5005',
+  LintInvalidDefaultValue = 'LINT5006',
+  LintInvalidDefaultNonLiteral = 'LINT5007',
+  LintNegativeMin = 'LINT5008',
+  LintNegativeMax = 'LINT5009',
+  LintMaxLessThanMin = 'LINT5010',
+  LintZeroMax = 'LINT5011',
+  LintMultipleFirst = 'LINT5012',
+  LintMultipleLast = 'LINT5013',
+  LintMinSumExceedsCapacity = 'LINT5014',
 
   // Internal
   InternalError = 'INTERNAL9000',

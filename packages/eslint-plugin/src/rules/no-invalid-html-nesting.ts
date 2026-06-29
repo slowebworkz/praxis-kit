@@ -2,6 +2,7 @@ import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
 import type { TSESTree } from '@typescript-eslint/utils'
 import { HTML_CONTENT_MODELS, TAG_CATEGORIES } from '../utils/html-nesting'
 import { iterate } from '@praxis-kit/primitive'
+import { EslintDiagnosticTemplates } from '../diagnostics'
 
 const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)
 
@@ -39,8 +40,7 @@ export const noInvalidHtmlNesting = createRule<Options, MessageIds>({
         'Disallow HTML children that violate the HTML5 content model for their parent element.',
     },
     messages: {
-      invalidChild:
-        '<{{ child }}> is not a valid direct child of <{{ parent }}>. ' + 'Allowed: {{ allowed }}.',
+      invalidChild: EslintDiagnosticTemplates.invalidChild,
     },
     schema: [],
   },

@@ -41,4 +41,12 @@ export const HtmlDiagnostics = {
       message: `<${tag}> has a fixed landmark role="${implicitRole}". role="${role}" overrides it and confuses assistive technology. The override has been removed.`,
     }
   },
+
+  invalidChild(child: string, parent: string, allowed: string): DiagnosticInput {
+    return {
+      code: DiagnosticCode.HtmlInvalidChild,
+      category: DiagnosticCategory.HTML,
+      message: `<${child}> is not a valid direct child of <${parent}>. Allowed: ${allowed}.`,
+    }
+  },
 }

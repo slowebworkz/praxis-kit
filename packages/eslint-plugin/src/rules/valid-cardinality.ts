@@ -9,6 +9,7 @@ import {
   isFactoryCall,
 } from '../utils/ast'
 import { iterate } from '@praxis-kit/primitive'
+import { EslintDiagnosticTemplates } from '../diagnostics'
 
 const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)
 
@@ -24,12 +25,10 @@ export const validCardinality = createRule<Options, MessageIds>({
       description: 'Enforce valid min/max values in enforcement.children cardinality rules.',
     },
     messages: {
-      negativeMin: 'cardinality.min must be >= 0 (got {{ value }}).',
-      negativeMax: 'cardinality.max must be >= 0 (got {{ value }}).',
-      maxLessThanMin:
-        'cardinality.max ({{ max }}) must be >= cardinality.min ({{ min }}). This rule can never be satisfied.',
-      zeroMax:
-        'cardinality.max of 0 means no children of this type are allowed. Use 0 intentionally or remove the rule.',
+      negativeMin: EslintDiagnosticTemplates.negativeMin,
+      negativeMax: EslintDiagnosticTemplates.negativeMax,
+      maxLessThanMin: EslintDiagnosticTemplates.maxLessThanMin,
+      zeroMax: EslintDiagnosticTemplates.zeroMax,
     },
     schema: [
       {
