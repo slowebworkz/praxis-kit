@@ -2,6 +2,7 @@ import { iterate } from '@praxis-kit/primitive'
 import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-kit/shared'
 import { isNull, isNumber, isString } from '@praxis-kit/shared'
 import { StrictBase } from '../strict'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 import type {
   AriaContext,
   AriaFix,
@@ -12,7 +13,6 @@ import type {
   IntrinsicProps,
   NormalizationResult,
   PropsWithRole,
-  StrictMode,
   ValidationResult,
   ValidationViolation,
 } from '../types'
@@ -43,8 +43,8 @@ export class AriaPolicyEngine extends StrictBase {
   // finite so this Map is bounded and avoids recreating closures on every cache miss.
   static readonly #removeAttributeFixCache = new Map<string, AriaFix>()
 
-  constructor(strict: StrictMode = 'warn', options?: { rules?: readonly AriaRule[] }) {
-    super(strict)
+  constructor(diagnostics: Diagnostics, options?: { rules?: readonly AriaRule[] }) {
+    super(diagnostics)
     this.#extraRules = options?.rules ?? []
   }
 

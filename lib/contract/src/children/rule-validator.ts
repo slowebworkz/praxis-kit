@@ -1,12 +1,13 @@
-import type { MatchMatrix, NormalizedChildRule, StrictMode } from '../types'
+import type { MatchMatrix, NormalizedChildRule } from '../types'
 import { assertNever, iterate } from '@praxis-kit/primitive'
 import { StrictBase } from '../strict'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 
 export class RuleValidator extends StrictBase {
   readonly #context: string
 
-  constructor(context: string, strict: StrictMode) {
-    super(strict)
+  constructor(context: string, diagnostics: Diagnostics) {
+    super(diagnostics)
     this.#context = context
   }
 

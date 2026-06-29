@@ -1,10 +1,45 @@
 # Praxis Kit
 
-**Build components that enforce their own structure.**
+> **Build components that enforce the rules of the web.**
 
-Praxis Kit is a framework-neutral component infrastructure framework that validates component
-composition, accessibility rules, and rendering contracts at runtime. Instead of allowing invalid UI
-structures to render and fail later, Praxis catches them immediately.
+Praxis Kit is a **contract-based UI framework** that enforces HTML semantics, ARIA requirements, and
+component composition through executable contracts.
+
+Instead of relying on documentation, conventions, or code review, Praxis Kit allows components to
+define the rules that govern how they may be composed, rendered, and used. Invalid component
+hierarchies become runtime validation errors instead of latent bugs.
+
+Framework adapters allow these same contracts to be shared across React, Vue, Solid, Svelte, Lit,
+Web Components, and other rendering environments.
+
+---
+
+## Why Praxis?
+
+Modern component libraries solve three important problems:
+
+- styling
+- state management
+- rendering
+
+Praxis solves a fourth:
+
+> **correctness.**
+
+A component should know:
+
+- where it is allowed to appear
+- which children it requires
+- which parents it belongs to
+- which HTML elements it may render as
+- which ARIA relationships must exist
+- which accessibility requirements must be satisfied
+
+These rules become executable contracts rather than documentation.
+
+---
+
+## Example
 
 ```tsx
 <Tabs>
@@ -13,73 +48,23 @@ structures to render and fail later, Praxis catches them immediately.
 ```
 
 ```text
-✖ TabsList required
-✖ TabsPanel required
+✖ TabsList is required.
+✖ TabsPanel is required.
 ```
 
+Or:
+
 ```tsx
-<Tabs>
-  <TabsList>
-    <TabsTrigger />
-  </TabsList>
-  <TabsPanel>Content</TabsPanel>
-</Tabs>
+<Menu>
+  <Button />
+</Menu>
 ```
 
 ```text
-✔ Valid structure
+✖ Button cannot be a direct child of Menu.
 ```
 
----
-
-## Installation
-
-All adapters and tooling are bundled in the single `praxis-kit` package:
-
-```bash
-npm install praxis-kit
-```
-
-Then import from the sub-entry for your framework:
-
-```ts
-import { createContractComponent } from 'praxis-kit/react' // React 19+
-import { createContractComponent } from 'praxis-kit/vue'
-import { createContractComponent } from 'praxis-kit/svelte'
-import { createContractComponent } from 'praxis-kit/solid'
-import { createContractComponent } from 'praxis-kit/preact'
-```
-
-Optional tooling sub-entries:
-
-```ts
-import plugin from 'praxis-kit/eslint' // ESLint rules
-import plugin from 'praxis-kit/vite-plugin' // Vite static analysis
-import plugin from 'praxis-kit/tailwind' // Tailwind class pipeline
-```
-
-> **Migrating from `@praxis-kit/*`?** Run `pnpm dlx @praxis-kit/codemod migrate` to rewrite import
-> paths and the factory rename automatically.
-
----
-
-## Why Praxis?
-
-Traditional component libraries validate props, types, and accessibility attributes. Praxis
-additionally validates:
-
-- required children and parent/child relationships
-- component composition contracts
-- accessibility policies
-- rendering capabilities
-
-…before broken UI reaches production.
-
----
-
-## What Problems Does It Solve?
-
-### Structural Validation
+Or:
 
 ```tsx
 <Dialog>
@@ -88,153 +73,139 @@ additionally validates:
 ```
 
 ```text
-✖ DialogTrigger missing
+✖ DialogTitle is required.
+✖ Accessible name is missing.
 ```
 
-### Accessibility Enforcement
-
-```tsx
-<nav role="navigation" />
-```
-
-```text
-✖ Redundant role — stripped before it reaches the DOM
-```
-
-### Polymorphic Rendering
-
-```tsx
-<Button as="a" href="/pricing">
-  Pricing
-</Button>
-```
-
-```html
-<a href="/pricing">Pricing</a>
-```
-
-### Framework-Neutral Core
-
-Business logic lives outside framework adapters. One engine, five runtimes.
-
-```text
-praxis-kit
-  ├─ praxis-kit/react
-  ├─ praxis-kit/svelte
-  ├─ praxis-kit/vue
-  ├─ praxis-kit/solid
-  ├─ praxis-kit/preact
-  ├─ praxis-kit/lit
-  └─ praxis-kit/web
-```
+Praxis validates these structures automatically during development.
 
 ---
 
-## Packages
+## Contracts
 
-| Sub-entry                | Description                                                       |
-| ------------------------ | ----------------------------------------------------------------- |
-| `praxis-kit/react`       | React 19+ · `praxis-kit/react/legacy` for React 18                |
-| `praxis-kit/vue`         | Vue 3                                                             |
-| `praxis-kit/solid`       | Solid · client and SSR                                            |
-| `praxis-kit/preact`      | Preact                                                            |
-| `praxis-kit/svelte`      | Svelte 5                                                          |
-| `praxis-kit/lit`         | Lit                                                               |
-| `praxis-kit/web`         | Vanilla Custom Elements — no framework required                   |
-| `praxis-kit/tailwind`    | Layout-aware Tailwind class pipeline plugin                       |
-| `praxis-kit/vite-plugin` | Vite plugins for static composition, SSR, and contract validation |
-| `praxis-kit/eslint`      | ESLint rules for enforcing Praxis Kit patterns                    |
-| `praxis-kit/ts-plugin`   | TypeScript language service plugin with inline diagnostics        |
-| `praxis-kit/codemod`     | Codemods for migrations                                           |
-| `praxis-kit/playwright`  | Playwright CT helpers — ARIA snapshots, axe sweeps, keyboard      |
+A contract describes the semantic rules of a component.
 
----
+Contracts may define:
 
-## vs. Other Tools
+- required children
+- forbidden children
+- required parents
+- permitted descendants
+- HTML content model restrictions
+- polymorphic rendering capabilities
+- ARIA relationships
+- accessibility policies
+- lifecycle constraints
+- custom validation rules
 
-|                | Headless Components | Structural Contracts | Runtime Composition Validation | Accessibility Policies | Framework-Neutral Core |
-| -------------- | ------------------- | -------------------- | ------------------------------ | ---------------------- | ---------------------- |
-| **Praxis Kit** | — rules only        | ✓                    | ✓                              | ✓                      | ✓                      |
-| **Radix UI**   | ✓                   | ✗                    | ✗                              | Partial                | ✗ — React only         |
-| **Ark UI**     | ✓                   | Partial              | ✗                              | Partial                | Partial                |
-| **React Aria** | ✓                   | ✗                    | ✗                              | ✓                      | ✗                      |
-| **CVA**        | ✗                   | ✗                    | ✗                              | ✗                      | ✗ — class strings only |
+Every component becomes self-describing.
 
 ---
 
-## How It Works
+## HTML and ARIA as Executable Rules
 
-Praxis Kit separates component compilation from rendering through two pipelines.
+HTML and ARIA specifications contain thousands of rules that are usually expressed as prose.
 
-**Definition pipeline** — runs once per component definition, or at build time via the Vite plugin:
+Praxis transforms those rules into executable contracts.
 
-```text
-Pass → Pass → Pass
-           ↓
-      MergeStrategy
-           ↓
-  ComponentDefinition
-```
+Instead of asking developers to remember the HTML specification or ARIA Authoring Practices Guide,
+Praxis validates those requirements directly.
 
-Each **Pass** contributes a partial result — identity, capabilities, accessibility policies,
-structural contracts. A **MergeStrategy** accumulates them into a stable **ComponentDefinition**.
-The expensive work happens once; the result is reused across every render.
+Examples include:
 
-**Runtime pipeline** — runs at render time:
+- heading hierarchy
+- landmark semantics
+- form relationships
+- menu ownership
+- dialog accessibility
+- tab relationships
+- list semantics
+- sectioning content
+- interactive element restrictions
 
-```text
-JSX tree
-    ↓
-TreeContext      ← node topology + slot assignments
-RenderContext    ← attributes, styles, listeners, refs
+These are platform rules—not framework conventions.
 
-ComponentDefinition + TreeContext + RenderContext
-    ↓
-    RuntimeContext
-    ↓
-    Backend<TOutput>
-    ↓
-    ReactElement / Vue VDOM / etc.
-```
+---
 
-The JSX tree is walked to produce two framework-neutral IRs: **TreeContext** (structure) and
-**RenderContext** (decoration). These combine with the compiled definition into a **RuntimeContext**
-that a framework **Backend** consumes to produce its native output.
+## Polymorphism as a Foundation
 
-The render path is pure IR assembly plus backend delegation — no policy evaluation, no contract
-checking. Those costs are paid once at definition time.
+Components are polymorphic because semantics should not depend on implementation details.
+
+A component may render different HTML elements when appropriate, but every rendered element must
+still satisfy the component's contract.
+
+Rendering flexibility never bypasses semantic correctness.
+
+---
+
+## Framework Neutral
+
+Contracts are independent of rendering frameworks.
+
+The same component contract can be evaluated in:
+
+- React
+- Vue
+- Solid
+- Svelte
+- Lit
+- Web Components
+
+Framework adapters translate rendering. The contract remains the same.
 
 ---
 
 ## Philosophy
 
-TypeScript can tell you that a prop exists. Praxis can tell you that a component hierarchy is valid.
+TypeScript tells you whether an API is valid.
 
-```tsx
-<Tabs>
-  <p>Hello</p>
-</Tabs>
-```
+Praxis tells you whether a UI is valid.
 
-TypeScript: `✔ Compiles` — Praxis: `✖ Invalid Tabs structure`
+Types guarantee syntax.
+
+Contracts guarantee semantics.
 
 ---
 
-## Learn Praxis in 10 Minutes
+## Comparison
 
-The [Getting Started guide](GETTING_STARTED.md) walks from a minimal component:
-
-```ts
-const Box = createContractComponent({ tag: 'div' })
-```
-
-to variants, compound variants, polymorphic rendering, accessibility validation, structural
-contracts, slot rendering, and presets.
-
-**[→ Start here](GETTING_STARTED.md)**
+| Capability                               | Typical Component Libraries | Praxis Kit |
+| ---------------------------------------- | --------------------------- | ---------- |
+| Type-safe APIs                           | ✅                          | ✅         |
+| Polymorphic components                   | Sometimes                   | ✅         |
+| Runtime composition validation           | Rare                        | ✅         |
+| Required and forbidden child enforcement | Rare                        | ✅         |
+| HTML semantic validation                 | ❌                          | ✅         |
+| ARIA contract enforcement                | Limited                     | ✅         |
+| Executable accessibility rules           | Rare                        | ✅         |
+| Framework-neutral contracts              | Rare                        | ✅         |
 
 ---
 
-## License
+## Packages
 
-MIT — see [LICENSE](LICENSE) for details.
+The repository contains:
+
+- Core contract engine
+- HTML and ARIA contract libraries
+- Framework adapters
+- Runtime validator
+- Component primitives
+- Styling integration
+- Tooling and codemods
+- ESLint integration
+- Build plugins
+
+---
+
+## Vision
+
+Praxis Kit treats components as semantic contracts rather than render functions.
+
+A component should not merely describe what it looks like.
+
+It should define what it is allowed to be.
+
+By encoding the rules of HTML, ARIA, and component composition into reusable contracts, Praxis helps
+developers build interfaces that are structurally correct, semantically meaningful, and accessible
+by default.

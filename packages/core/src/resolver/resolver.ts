@@ -38,7 +38,7 @@ export function createResolverPipeline<
   resolved: ResolverOptions,
   classPipeline: ClassPipelineFn,
 ): (input: ResolveInput<Props, TSlot, Children>) => ResolveOutput<Props, Children> {
-  const engine = new AriaPolicyEngine(resolved.strict)
+  const engine = new AriaPolicyEngine(diagnosticsFromStrictMode(resolved.strict ?? false))
 
   return function resolve(input) {
     const tag = resolveTag(resolved.defaultTag, input.as)

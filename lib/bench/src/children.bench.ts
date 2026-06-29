@@ -1,6 +1,7 @@
 import { bench, describe } from 'vitest'
 import { ChildrenEvaluator, diagnoseChildren } from '@praxis-kit/core'
 import { isObject } from '@praxis-kit/primitive'
+import { diagnosticsFromStrictMode } from '@praxis-kit/core/contract'
 
 // strict:'warn' — evaluate() runs the full match cycle. Unbounded-cardinality rules
 // ensure passing-path children never trigger console.warn.
@@ -34,14 +35,17 @@ const el = (type: symbol): { type: symbol } => ({ type })
 
 // ── Evaluators ────────────────────────────────────────────────────────────────
 
-const singlePredicateEvaluator = new ChildrenEvaluator([{ name: 'Item', match: isString }], 'warn')
+const singlePredicateEvaluator = new ChildrenEvaluator(
+  [{ name: 'Item', match: isString }],
+  diagnosticsFromStrictMode('warn'),
+)
 
 const twoRuleEvaluator = new ChildrenEvaluator(
   [
     { name: 'Header', match: isString, cardinality: { min: 1, max: 1 }, position: 'first' },
     { name: 'Body', match: isNumber, cardinality: { min: 1 } },
   ],
-  'warn',
+  diagnosticsFromStrictMode('warn'),
 )
 
 // ── Rule index expansion: fallback-frequency evaluators ───────────────────────
@@ -56,7 +60,7 @@ const pct0TypedEvaluator = new ChildrenEvaluator(
     { name: 'C', match: isC },
     { name: 'D', match: isD },
   ],
-  'warn',
+  diagnosticsFromStrictMode('warn'),
 )
 
 // 25% typed — 1 of 4 rules indexed: matched children skip 1 predicate, still scan 3
@@ -67,7 +71,7 @@ const pct25TypedEvaluator = new ChildrenEvaluator(
     { name: 'C', match: isC },
     { name: 'D', match: isD },
   ],
-  'warn',
+  diagnosticsFromStrictMode('warn'),
 )
 
 // 50% typed — 2 of 4 rules indexed: two rule types dispatched O(1), two scan
@@ -78,7 +82,7 @@ const pct50TypedEvaluator = new ChildrenEvaluator(
     { name: 'C', match: isC },
     { name: 'D', match: isD },
   ],
-  'warn',
+  diagnosticsFromStrictMode('warn'),
 )
 
 // 75% typed — 3 of 4 rules indexed: only 1 rule requires predicate scan
@@ -89,7 +93,7 @@ const pct75TypedEvaluator = new ChildrenEvaluator(
     { name: 'C', match: isC, type: CT },
     { name: 'D', match: isD },
   ],
-  'warn',
+  diagnosticsFromStrictMode('warn'),
 )
 
 // 100% typed — all 4 rules indexed: O(n) dispatch, zero predicate calls
@@ -100,7 +104,7 @@ const pct100TypedEvaluator = new ChildrenEvaluator(
     { name: 'C', match: isC, type: CT },
     { name: 'D', match: isD, type: DT },
   ],
-  'warn',
+  diagnosticsFromStrictMode('warn'),
 )
 
 // ── Children arrays ───────────────────────────────────────────────────────────

@@ -2,14 +2,15 @@ import { describe, expect, it, vi } from 'vitest'
 
 import type { NormalizedChildRule, MatchMatrix } from '../types'
 import { RuleValidator } from './rule-validator'
+import { diagnosticsFromStrictMode } from '../strict'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const throwValidator = new RuleValidator('Test', 'throw')
-const warnValidator = new RuleValidator('Test', 'warn')
-const silentValidator = new RuleValidator('Test', false)
+const throwValidator = new RuleValidator('Test', diagnosticsFromStrictMode('throw'))
+const warnValidator = new RuleValidator('Test', diagnosticsFromStrictMode('warn'))
+const silentValidator = new RuleValidator('Test', diagnosticsFromStrictMode(false))
 
 function rule(overrides: Partial<NormalizedChildRule> & { name: string }): NormalizedChildRule {
   return {

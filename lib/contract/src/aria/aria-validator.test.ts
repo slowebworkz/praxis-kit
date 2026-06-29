@@ -1,13 +1,15 @@
 import { describe, expect, it, vi } from 'vitest'
 
+import type { StrictMode } from '../types'
+import { diagnosticsFromStrictMode } from '../strict'
 import { AriaPolicyEngine, isInvalid } from './polymorphic-validator'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeValidator(strict: ConstructorParameters<typeof AriaPolicyEngine>[0] = 'warn') {
-  return new AriaPolicyEngine(strict)
+function makeValidator(strict: StrictMode = 'warn') {
+  return new AriaPolicyEngine(diagnosticsFromStrictMode(strict))
 }
 
 // ---------------------------------------------------------------------------
@@ -628,7 +630,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
         fixable: false as const,
       },
     ]
-    const v = new AriaPolicyEngine(false, { rules: [customRule] })
+    const v = new AriaPolicyEngine(diagnosticsFromStrictMode(false), { rules: [customRule] })
     const { violations } = v.validate('nav', {})
     expect(violations.some((v) => v.message === 'custom rule fired')).toBe(true)
   })
@@ -655,7 +657,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
         },
       },
     ]
-    const v = new AriaPolicyEngine(false, { rules: [customRule] })
+    const v = new AriaPolicyEngine(diagnosticsFromStrictMode(false), { rules: [customRule] })
     const { props } = v.validate('nav', { 'data-custom': '1' } as never)
     expect(props).not.toHaveProperty('data-custom')
   })
@@ -677,7 +679,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
         fixable: false as const,
       },
     ]
-    const v = new AriaPolicyEngine(false, { rules: [ruleA, ruleB] })
+    const v = new AriaPolicyEngine(diagnosticsFromStrictMode(false), { rules: [ruleA, ruleB] })
     const { violations } = v.validate('nav', {})
     const msgs = violations.map((v) => v.message)
     expect(msgs).toContain('A')
@@ -693,7 +695,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
         fixable: false as const,
       },
     ]
-    const v = new AriaPolicyEngine(false, { rules: [customRule] })
+    const v = new AriaPolicyEngine(diagnosticsFromStrictMode(false), { rules: [customRule] })
     // div has no implicit role — engine short-circuits before rules run
     const { violations } = v.validate('div', {})
     expect(violations.every((v) => v.message !== 'should not fire')).toBe(true)
@@ -701,7 +703,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
 
   it('custom rule returning valid results adds no violation', () => {
     const customRule = () => [{ valid: true as const }]
-    const v = new AriaPolicyEngine(false, { rules: [customRule] })
+    const v = new AriaPolicyEngine(diagnosticsFromStrictMode(false), { rules: [customRule] })
     const { violations } = v.validate('nav', {})
     expect(violations).toHaveLength(0)
   })
@@ -754,7 +756,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
         },
       },
     ]
-    const v = new AriaPolicyEngine(false, { rules: [ruleLow, ruleHigh] })
+    const v = new AriaPolicyEngine(diagnosticsFromStrictMode(false), { rules: [ruleLow, ruleHigh] })
     const { props } = v.validate('nav', { 'data-high': '1', 'data-low': '2' } as never)
     expect(props).not.toHaveProperty('data-high')
     expect(props).not.toHaveProperty('data-low')

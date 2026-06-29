@@ -3,7 +3,7 @@
 export * from './primitive'
 export * from './html'
 export * from './state'
-export { StrictBase } from '@praxis-kit/contract'
+export { StrictBase, diagnosticsFromStrictMode } from '@praxis-kit/contract'
 export { disabledProps, invalidProps } from '@praxis-kit/contract'
 export {
   AriaPolicyEngine,

@@ -25,6 +25,7 @@ import type {
   VariantsOf,
 } from '../types'
 import { resolveFactoryOptions, validateFactoryOptions, validateRenderProps } from '../options'
+import { diagnosticsFromStrictMode } from '../contract'
 import { assertPluginShape, guardPipeline } from './plugin-invariants'
 
 declare const process: { env: { NODE_ENV: string } }
@@ -142,7 +143,7 @@ export function createPolymorphic<
   const engine =
     options.enforcement !== undefined && capabilities?.AriaEngine
       ? new capabilities.AriaEngine(
-          resolved.strict,
+          diagnosticsFromStrictMode(resolved.strict),
           allAriaRules.length ? { rules: allAriaRules } : undefined,
         )
       : null

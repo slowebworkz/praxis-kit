@@ -18,7 +18,7 @@ import type {
   VariantMap,
 } from '@praxis-kit/core'
 import { enforceAllowedAs, getHtmlChildrenEvaluator } from '@praxis-kit/core'
-import { AriaPolicyEngine } from '@praxis-kit/core/contract'
+import { AriaPolicyEngine, diagnosticsFromStrictMode } from '@praxis-kit/core/contract'
 import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/shared/guards/children'
 import { forwardRef } from 'react'
 import type { ReactElement, ReactNode, Ref } from 'react'
@@ -109,7 +109,9 @@ export function createContractComponent<
   )
 
   const ariaEngine =
-    options.enforcement !== undefined ? new AriaPolicyEngine(resolved.strict) : undefined
+    options.enforcement !== undefined
+      ? new AriaPolicyEngine(diagnosticsFromStrictMode(resolved.strict))
+      : undefined
 
   const slotValidator = new SlotValidator(displayName, resolved.strict)
   const renderAsChild = makeRenderAsChild(cloneSlotChild)

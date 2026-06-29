@@ -1,15 +1,15 @@
-import type { StrictMode } from '../types'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
-import { diagnosticsFromStrictMode } from './strict-bridge'
 
 export abstract class StrictBase {
-  protected readonly strict: StrictMode
   private readonly diagnostics: Diagnostics
 
-  constructor(strict: StrictMode) {
-    this.strict = strict
-    this.diagnostics = diagnosticsFromStrictMode(strict)
+  constructor(diagnostics: Diagnostics) {
+    this.diagnostics = diagnostics
+  }
+
+  protected get active(): boolean {
+    return this.diagnostics.active
   }
 
   protected violate(message: string): void {

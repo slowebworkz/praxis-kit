@@ -11,10 +11,14 @@ type DiagnosticInput = Except<Diagnostic, 'severity'>
 export class Diagnostics {
   private readonly reporter: DiagnosticReporter
   private readonly policy: DiagnosticPolicy
+  // Pre-computed at construction time: true if Warning-level diagnostics are not ignored.
+  readonly active: boolean
 
   constructor(reporter: DiagnosticReporter, policy: DiagnosticPolicy = new DefaultPolicy()) {
     this.reporter = reporter
     this.policy = policy
+    this.active =
+      policy.resolve({ severity: Severity.Warning } as unknown as Diagnostic) !== Enforcement.Ignore
   }
 
   report(diagnostic: Diagnostic): Diagnostic {

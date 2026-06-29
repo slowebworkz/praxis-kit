@@ -1,4 +1,4 @@
-import { AriaPolicyEngine, diagnoseChildren } from '@praxis-kit/contract'
+import { AriaPolicyEngine, diagnoseChildren, diagnosticsFromStrictMode } from '@praxis-kit/contract'
 import type { ChildViolation, ValidationViolation } from '@praxis-kit/contract'
 import { diagnoseClassPipeline } from '@praxis-kit/styling'
 import type { ClassDiagnosis } from '@praxis-kit/styling'
@@ -22,8 +22,10 @@ export function diagnose(
 
   let aria: ReadonlyArray<ValidationViolation>
   if (options.ariaRules?.length) {
-    // strict:false silences report() so validate() returns violations without throwing/warning
-    const engine = new AriaPolicyEngine(false, { rules: options.ariaRules })
+    // diagnosticsFromStrictMode(false) silences all output — validate() returns violations without side effects
+    const engine = new AriaPolicyEngine(diagnosticsFromStrictMode(false), {
+      rules: options.ariaRules,
+    })
     aria = engine.validate(tag, props as IntrinsicProps).violations
   } else {
     aria = AriaPolicyEngine.evaluate(tag, props as IntrinsicProps).violations

@@ -1,6 +1,7 @@
-import type { ChildRuleInput, NormalizedChildRule, StrictMode } from '../types'
+import type { ChildRuleInput, NormalizedChildRule } from '../types'
 import { iterate } from '@praxis-kit/primitive'
 import { StrictBase } from '../strict'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 import { getTypeName } from './get-type-name'
 import { MatchValidationErrorBuilder } from './match-validation-error-builder'
 import { normalizeChildRule } from './normalize-child-rule'
@@ -14,12 +15,8 @@ export class ChildrenEvaluator extends StrictBase {
   readonly #ruleValidator: RuleValidator
   readonly #matchBuilder: MatchValidationErrorBuilder
 
-  constructor(
-    rules: readonly ChildRuleInput[],
-    strict: StrictMode = 'warn',
-    context = 'Component',
-  ) {
-    super(strict)
+  constructor(rules: readonly ChildRuleInput[], diagnostics: Diagnostics, context = 'Component') {
+    super(diagnostics)
 
     this.#rules = rules.map((r) => normalizeChildRule(r))
     this.#ruleNames = this.#rules.map((r) => r.name)
@@ -39,13 +36,13 @@ export class ChildrenEvaluator extends StrictBase {
     })
 
     this.#matcher = new RuleMatcher(this.#rules)
-    this.#ruleValidator = new RuleValidator(context, strict)
+    this.#ruleValidator = new RuleValidator(context, diagnostics)
     this.#matchBuilder = new MatchValidationErrorBuilder(context)
   }
 
   evaluate(children: unknown[]): void {
-    // strict:false means all violations are swallowed — skip the full match/validate cycle.
-    if (!this.strict) return
+    // When no diagnostic would be reported, skip the full match/validate cycle.
+    if (!this.active) return
     const { matrix, unexpectedIndices, ambiguousIndices } = this.#matcher.match(children)
     this.#ruleValidator.validate(this.#rules, matrix, children.length)
 

@@ -1,11 +1,12 @@
 import { StrictBase } from '@praxis-kit/core'
 import type { StrictMode } from '@praxis-kit/core'
+import { diagnosticsFromStrictMode } from '@praxis-kit/core/contract'
 
 export class SlotValidator extends StrictBase {
   readonly #name: string
 
   constructor(name: string, strict: StrictMode) {
-    super(strict)
+    super(diagnosticsFromStrictMode(strict))
     this.#name = name
   }
 
