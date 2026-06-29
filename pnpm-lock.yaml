@@ -363,6 +363,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
       '@solidjs/testing-library':
         specifier: 'catalog:'
         version: 0.8.10(solid-js@1.9.13)
@@ -470,6 +473,9 @@ importers:
 
   adapters/web:
     dependencies:
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
       type-fest:
         specifier: 'catalog:'
         version: 5.7.0
@@ -615,6 +621,9 @@ importers:
       '@pk2/pipeline':
         specifier: workspace:*
         version: link:../../engine/pipeline
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
     devDependencies:
       vitest:
         specifier: 'catalog:'
@@ -1150,10 +1159,16 @@ importers:
 
   packages/eslint-plugin:
     dependencies:
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
       '@typescript-eslint/utils':
         specifier: 'catalog:'
         version: 8.60.0(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
     devDependencies:
+      '@pk2/foundation':
+        specifier: workspace:*
+        version: link:../../engine/foundation
       '@typescript-eslint/rule-tester':
         specifier: 'catalog:'
         version: 8.60.0(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
@@ -1283,6 +1298,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../core
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
       '@praxis-kit/shared':
         specifier: workspace:*
         version: link:../shared
@@ -1294,10 +1312,6 @@ importers:
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
   packages/ts-plugin:
-    dependencies:
-      '@praxis-kit/primitive':
-        specifier: workspace:*
-        version: link:../../lib/primitive
     devDependencies:
       tsup:
         specifier: 'catalog:'
@@ -1315,6 +1329,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../core
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
       tsup:
         specifier: 'catalog:'
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
@@ -1361,6 +1378,9 @@ importers:
       '@pk2/style':
         specifier: workspace:*
         version: link:../../domains/style
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -1380,6 +1400,9 @@ importers:
       '@pk2/pipeline':
         specifier: workspace:*
         version: link:../../engine/pipeline
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
       type-fest:
         specifier: 'catalog:'
         version: 5.7.0
