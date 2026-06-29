@@ -2,6 +2,8 @@ import { describe, expect, it, vi, afterEach } from 'vitest'
 
 import { StrictBase, _resetAsyncWarns } from './strict-base'
 import { diagnosticsFromStrictMode } from './strict-bridge'
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
+import type { DiagnosticInput } from '@praxis-kit/diagnostics'
 
 afterEach(() => {
   _resetAsyncWarns()
@@ -11,17 +13,21 @@ afterEach(() => {
 // Concrete subclass — StrictBase is abstract
 // ---------------------------------------------------------------------------
 
+function d(message: string): DiagnosticInput {
+  return { code: DiagnosticCode.InternalError, category: DiagnosticCategory.Internal, message }
+}
+
 class TestStrict extends StrictBase {
   callViolate(message: string) {
-    this.violate(message)
+    this.violate(d(message))
   }
 
   callWarn(message: string) {
-    this.warn(message)
+    this.warn(d(message))
   }
 
   callInvariant(condition: unknown, message: string) {
-    this.invariant(condition, message)
+    this.invariant(condition, d(message))
   }
 }
 

@@ -2,22 +2,22 @@ import type { ChildRuleInput, NormalizedChildRule } from '../types'
 import { iterate } from '@praxis-kit/primitive'
 import { StrictBase } from '../strict'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
+import { ContractDiagnostics } from '../diagnostics'
 import { getTypeName } from './get-type-name'
-import { MatchValidationErrorBuilder } from './match-validation-error-builder'
 import { normalizeChildRule } from './normalize-child-rule'
 import { RuleMatcher } from './rules-matcher'
 import { RuleValidator } from './rule-validator'
 
 export class ChildrenEvaluator extends StrictBase {
+  readonly #context: string
   readonly #rules: NormalizedChildRule[]
   readonly #ruleNames: readonly string[]
   readonly #matcher: RuleMatcher
   readonly #ruleValidator: RuleValidator
-  readonly #matchBuilder: MatchValidationErrorBuilder
 
   constructor(rules: readonly ChildRuleInput[], diagnostics: Diagnostics, context = 'Component') {
     super(diagnostics)
-
+    this.#context = context
     this.#rules = rules.map((r) => normalizeChildRule(r))
     this.#ruleNames = this.#rules.map((r) => r.name)
 
@@ -37,7 +37,6 @@ export class ChildrenEvaluator extends StrictBase {
 
     this.#matcher = new RuleMatcher(this.#rules)
     this.#ruleValidator = new RuleValidator(context, diagnostics)
-    this.#matchBuilder = new MatchValidationErrorBuilder(context)
   }
 
   evaluate(children: unknown[]): void {
@@ -48,20 +47,17 @@ export class ChildrenEvaluator extends StrictBase {
 
     if (unexpectedIndices.size === 0 && ambiguousIndices.size === 0) return
 
-    // Process only violating children in index order — no full re-traversal.
-    const errors: string[] = []
+    // Emit one diagnostic per violating child in index order.
     const violating = [...unexpectedIndices, ...ambiguousIndices].sort((a, b) => a - b)
     iterate.forEach(violating, (ci) => {
       const typeName = getTypeName(children[ci])
       if (unexpectedIndices.has(ci)) {
-        errors.push(this.#matchBuilder.unexpectedChild(typeName, ci))
+        this.violate(ContractDiagnostics.unexpectedChild(typeName, ci, this.#context))
       } else {
         const matches = matrix.childToRules.forward.get(ci)!
         const names = [...matches].map((ri) => this.#ruleNames[ri] ?? `#${ri}`)
-        errors.push(this.#matchBuilder.multipleMatches(typeName, ci, names))
+        this.violate(ContractDiagnostics.ambiguousChild(typeName, ci, names, this.#context))
       }
     })
-
-    this.invariant(errors.length === 0, this.#matchBuilder.toError(errors).message)
   }
 }

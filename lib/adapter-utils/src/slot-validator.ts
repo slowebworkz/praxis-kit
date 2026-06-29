@@ -1,6 +1,6 @@
 import { StrictBase } from '@praxis-kit/core'
 import type { StrictMode } from '@praxis-kit/core'
-import { diagnosticsFromStrictMode } from '@praxis-kit/core/contract'
+import { diagnosticsFromStrictMode, SlotDiagnostics  } from '@praxis-kit/core/contract'
 
 export class SlotValidator extends StrictBase {
   readonly #name: string
@@ -13,22 +13,18 @@ export class SlotValidator extends StrictBase {
   }
 
   assertExclusive(): void {
-    this.violate(`${this.#name}: "as" and "asChild" are mutually exclusive`)
+    this.violate(SlotDiagnostics.exclusive(this.#name))
   }
 
   warnDiscardedChildren(count: number): void {
-    const suffix = count === 1 ? '' : 'ren'
-    this.warn(
-      `${this.#name}: asChild discarded ${count} non-element child${suffix} — ` +
-        `only ${this.#elementTerm}s are valid asChild children.`,
-    )
+    this.warn(SlotDiagnostics.discardedChildren(this.#name, this.#elementTerm, count))
   }
 
   assertSingleChild(count: number): void {
-    const msg =
+    this.violate(
       count === 0
-        ? `${this.#name}: asChild requires a ${this.#elementTerm} child`
-        : `${this.#name}: asChild requires exactly one ${this.#elementTerm} child, got ${count}`
-    this.violate(msg)
+        ? SlotDiagnostics.singleChildRequired(this.#name, this.#elementTerm)
+        : SlotDiagnostics.singleChildExceeded(this.#name, this.#elementTerm, count),
+    )
   }
 }

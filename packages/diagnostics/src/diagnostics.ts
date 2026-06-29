@@ -6,7 +6,7 @@ import { DefaultPolicy, Enforcement } from './policy'
 import { Severity } from './severity'
 import type { Except } from 'type-fest'
 
-type DiagnosticInput = Except<Diagnostic, 'severity'>
+export type DiagnosticInput = Except<Diagnostic, 'severity'>
 
 export class Diagnostics {
   private readonly reporter: DiagnosticReporter

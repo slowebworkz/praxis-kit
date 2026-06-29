@@ -3,6 +3,7 @@ import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-kit/shared'
 import { isNull, isNumber, isString } from '@praxis-kit/shared'
 import { StrictBase } from '../strict'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
+import { AriaDiagnostics } from '../diagnostics'
 import type {
   AriaContext,
   AriaFix,
@@ -160,8 +161,8 @@ export class AriaPolicyEngine extends StrictBase {
 
   report(violations: ReadonlyArray<ValidationViolation>): void {
     iterate.forEach(violations, (v) => {
-      if (v.severity === 'error') this.violate(v.message)
-      else this.warn(v.message)
+      if (v.severity === 'error') this.violate(AriaDiagnostics.fromViolation(v))
+      else this.warn(AriaDiagnostics.fromViolation(v))
     })
   }
 

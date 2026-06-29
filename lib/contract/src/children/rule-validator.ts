@@ -2,6 +2,7 @@ import type { MatchMatrix, NormalizedChildRule } from '../types'
 import { assertNever, iterate } from '@praxis-kit/primitive'
 import { StrictBase } from '../strict'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
+import { ContractDiagnostics } from '../diagnostics'
 
 export class RuleValidator extends StrictBase {
   readonly #context: string
@@ -38,13 +39,12 @@ export class RuleValidator extends StrictBase {
     const { min, max } = cardinality
 
     if (matchCount < min) {
-      this.violate(`${this.#context}: "${name}" requires at least ${min}.`)
-
+      this.violate(ContractDiagnostics.cardinalityMin(name, min, this.#context))
       return
     }
 
     if (matchCount > max) {
-      this.violate(`${this.#context}: "${name}" allows at most ${max}.`)
+      this.violate(ContractDiagnostics.cardinalityMax(name, max, this.#context))
     }
   }
 
@@ -60,7 +60,7 @@ export class RuleValidator extends StrictBase {
         return
       }
 
-      this.violate(`${this.#context}: "${name}" must be ${position}, got index ${index}`)
+      this.violate(ContractDiagnostics.positionViolation(name, position, index, this.#context))
     })
   }
 
