@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { h, Fragment, createRef } from 'preact'
 import { render } from 'preact'
 import type { ComponentType } from 'preact'
+import { silentDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
 import type { AnyVNode, UnknownProps } from './types'
 import { createContractComponent } from './create-contract-component'
 
@@ -201,7 +202,7 @@ describe('createContractComponent (Preact adapter)', () => {
   it('strips redundant ARIA role from intrinsic element', () => {
     const Nav = createContractComponent({
       tag: 'nav',
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
 
     mount(h(box(Nav), { role: 'navigation' } as never))
@@ -227,7 +228,7 @@ describe('createContractComponent (Preact adapter)', () => {
     const Group = createContractComponent({
       tag: 'div',
       enforcement: {
-        strict: 'throw',
+        diagnostics: throwDiagnostics,
         children: [
           {
             name: 'Button',

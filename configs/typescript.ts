@@ -53,7 +53,6 @@ const config = [
         projectService: {
           allowDefaultProject: [
             '*.ts',
-            'scripts/*.ts',
             'configs/*.ts',
             'packages/*/eslint.config.ts',
             'adapters/*/eslint.config.ts',

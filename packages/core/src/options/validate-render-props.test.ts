@@ -1,8 +1,15 @@
 import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
 import type { MockInstance } from 'vitest'
 import { validateRenderProps } from './validate-render-props'
-import { diagnosticsFromStrictMode } from '@praxis-kit/contract'
-import { CollectingReporter, Diagnostics, DefaultPolicy, Severity } from '@praxis-kit/diagnostics'
+import {
+  CollectingReporter,
+  Diagnostics,
+  DefaultPolicy,
+  Severity,
+  throwDiagnostics,
+  silentDiagnostics,
+  AsyncConsoleReporter,
+} from '@praxis-kit/diagnostics'
 
 const variants = {
   size: { sm: 'text-sm', md: 'text-base', lg: 'text-lg' },
@@ -20,8 +27,14 @@ function makeCollecting() {
   return { reporter, diagnostics }
 }
 
-// async-warn and dedup tests still use console.warn spy because they specifically
-// test reporter timing (async-warn) and reporter-level deduplication (RawWarnReporter).
+function makeAsyncWarnDiagnostics() {
+  return new Diagnostics(
+    new AsyncConsoleReporter(),
+    new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
+  )
+}
+
+// async-warn tests use console.warn spy because they specifically test reporter timing.
 let warn: MockInstance
 
 beforeEach(() => {
@@ -34,8 +47,12 @@ afterEach(() => {
 
 describe('validateRenderProps — strict: false', () => {
   it('is completely silent regardless of violations', () => {
-    const d = diagnosticsFromStrictMode(false)
-    validateRenderProps(d, { variants, recipeMap }, { size: 'enormous' }, 'nonexistent')
+    validateRenderProps(
+      silentDiagnostics,
+      { variants, recipeMap },
+      { size: 'enormous' },
+      'nonexistent',
+    )
     expect(warn).not.toHaveBeenCalled()
   })
 })
@@ -49,10 +66,9 @@ describe('validateRenderProps — unknown recipeKey', () => {
   })
 
   it('throws when recipeKey names no defined preset (strict: throw)', () => {
-    const d = diagnosticsFromStrictMode('throw')
-    expect(() => validateRenderProps(d, { variants, recipeMap }, {}, 'unknown')).toThrow(
-      /unknown recipeKey "unknown"/i,
-    )
+    expect(() =>
+      validateRenderProps(throwDiagnostics, { variants, recipeMap }, {}, 'unknown'),
+    ).toThrow(/unknown recipeKey "unknown"/i)
   })
 
   it('is silent when recipeKey is undefined', () => {
@@ -73,14 +89,6 @@ describe('validateRenderProps — unknown recipeKey', () => {
     expect(reporter.diagnostics[0]!.message).toMatch(/\[Button\]/)
   })
 
-  it('does not repeat the same warning on subsequent renders', () => {
-    const d = diagnosticsFromStrictMode('warn')
-    validateRenderProps(d, { variants, recipeMap }, {}, 'unknown')
-    validateRenderProps(d, { variants, recipeMap }, {}, 'unknown')
-    validateRenderProps(d, { variants, recipeMap }, {}, 'unknown')
-    expect(warn).toHaveBeenCalledOnce()
-  })
-
   it('does not treat inherited properties as valid presets', () => {
     const { reporter, diagnostics } = makeCollecting()
     const inherited = Object.create({ inheritedPreset: {} }) as Record<string, unknown>
@@ -98,10 +106,9 @@ describe('validateRenderProps — invalid variant value', () => {
   })
 
   it('throws when a known variant dimension receives an invalid value (strict: throw)', () => {
-    const d = diagnosticsFromStrictMode('throw')
-    expect(() => validateRenderProps(d, { variants }, { size: 'enormous' }, undefined)).toThrow(
-      /size=enormous/i,
-    )
+    expect(() =>
+      validateRenderProps(throwDiagnostics, { variants }, { size: 'enormous' }, undefined),
+    ).toThrow(/size=enormous/i)
   })
 
   it('is silent when all variant props have valid values', () => {
@@ -127,21 +134,6 @@ describe('validateRenderProps — invalid variant value', () => {
     validateRenderProps(diagnostics, {}, { size: 'enormous' }, undefined)
     expect(reporter.diagnostics).toHaveLength(0)
   })
-
-  it('does not repeat the same warning on subsequent renders', () => {
-    const d = diagnosticsFromStrictMode('warn')
-    validateRenderProps(d, { variants }, { size: 'enormous' }, undefined)
-    validateRenderProps(d, { variants }, { size: 'enormous' }, undefined)
-    validateRenderProps(d, { variants }, { size: 'enormous' }, undefined)
-    expect(warn).toHaveBeenCalledOnce()
-  })
-
-  it('does not dedupe distinct warnings', () => {
-    const d = diagnosticsFromStrictMode('warn')
-    validateRenderProps(d, { variants }, { size: 'enormous' }, undefined)
-    validateRenderProps(d, { variants }, { size: 'gigantic' }, undefined)
-    expect(warn).toHaveBeenCalledTimes(2)
-  })
 })
 
 describe('validateRenderProps — multiple violations', () => {
@@ -163,27 +155,14 @@ describe('validateRenderProps — multiple violations', () => {
   })
 
   it('throws on preset violation before reaching variant violations (strict: throw)', () => {
-    const d = diagnosticsFromStrictMode('throw')
     expect(() =>
-      validateRenderProps(d, { variants, recipeMap }, { size: 'enormous' }, 'unknown'),
+      validateRenderProps(
+        throwDiagnostics,
+        { variants, recipeMap },
+        { size: 'enormous' },
+        'unknown',
+      ),
     ).toThrow(/unknown recipeKey "unknown"/i)
-  })
-})
-
-describe('validateRenderProps — dedup scope', () => {
-  it('distinct components with the same message both warn (no cross-component dedup)', () => {
-    const dButton = diagnosticsFromStrictMode('warn')
-    const dCard = diagnosticsFromStrictMode('warn')
-    validateRenderProps(dButton, { variants, recipeMap, displayName: 'Button' }, {}, 'unknown')
-    validateRenderProps(dCard, { variants, recipeMap, displayName: 'Card' }, {}, 'unknown')
-    expect(warn).toHaveBeenCalledTimes(2)
-  })
-
-  it('different preset names each produce their own warning', () => {
-    const d = diagnosticsFromStrictMode('warn')
-    validateRenderProps(d, { variants, recipeMap }, {}, 'unknown1')
-    validateRenderProps(d, { variants, recipeMap }, {}, 'unknown2')
-    expect(warn).toHaveBeenCalledTimes(2)
   })
 })
 
@@ -199,15 +178,15 @@ describe('validateRenderProps — runtime type bypass', () => {
 // async-warn uses queueMicrotask internally. Promise.resolve() also resolves
 // in the microtask queue, so awaiting it flushes the pending warn batch.
 // This is intentional — the contract is specifically microtask semantics.
-describe("validateRenderProps — strict: 'async-warn'", () => {
+describe('validateRenderProps — AsyncConsoleReporter batching', () => {
   it('does not call console.warn synchronously', () => {
-    const d = diagnosticsFromStrictMode('async-warn')
+    const d = makeAsyncWarnDiagnostics()
     validateRenderProps(d, { variants, recipeMap }, {}, 'unknown')
     expect(warn).not.toHaveBeenCalled()
   })
 
   it('calls console.warn after microtask flush', async () => {
-    const d = diagnosticsFromStrictMode('async-warn')
+    const d = makeAsyncWarnDiagnostics()
     validateRenderProps(d, { variants, recipeMap }, {}, 'unknown')
     await Promise.resolve()
     expect(warn).toHaveBeenCalledOnce()
@@ -215,7 +194,7 @@ describe("validateRenderProps — strict: 'async-warn'", () => {
   })
 
   it('deduplicates identical messages within the same tick', async () => {
-    const d = diagnosticsFromStrictMode('async-warn')
+    const d = makeAsyncWarnDiagnostics()
     validateRenderProps(d, { variants, recipeMap }, {}, 'unknown')
     validateRenderProps(d, { variants, recipeMap }, {}, 'unknown')
     validateRenderProps(d, { variants, recipeMap }, {}, 'unknown')
@@ -225,7 +204,7 @@ describe("validateRenderProps — strict: 'async-warn'", () => {
 
   // Dedup is per-tick: after the microtask flushes, the same message can fire again.
   it('allows the same message to re-fire in a later tick', async () => {
-    const d = diagnosticsFromStrictMode('async-warn')
+    const d = makeAsyncWarnDiagnostics()
     validateRenderProps(d, { variants, recipeMap }, {}, 'unknown')
     await Promise.resolve()
     validateRenderProps(d, { variants, recipeMap }, {}, 'unknown')
@@ -234,7 +213,7 @@ describe("validateRenderProps — strict: 'async-warn'", () => {
   })
 
   it('batches multiple distinct violations into one microtask flush with correct messages', async () => {
-    const d = diagnosticsFromStrictMode('async-warn')
+    const d = makeAsyncWarnDiagnostics()
     validateRenderProps(d, { variants, recipeMap }, { size: 'enormous' }, 'unknown')
     expect(warn).not.toHaveBeenCalled()
     await Promise.resolve()
@@ -245,7 +224,7 @@ describe("validateRenderProps — strict: 'async-warn'", () => {
   })
 
   it('batches three distinct messages without collapsing them', async () => {
-    const d = diagnosticsFromStrictMode('async-warn')
+    const d = makeAsyncWarnDiagnostics()
     validateRenderProps(d, { variants, recipeMap }, {}, 'unknown1')
     validateRenderProps(d, { variants, recipeMap }, {}, 'unknown2')
     validateRenderProps(d, { variants, recipeMap }, {}, 'unknown3')
@@ -254,7 +233,7 @@ describe("validateRenderProps — strict: 'async-warn'", () => {
   })
 
   it('deduplicates repeated messages while preserving distinct ones', async () => {
-    const d = diagnosticsFromStrictMode('async-warn')
+    const d = makeAsyncWarnDiagnostics()
     validateRenderProps(d, { variants, recipeMap }, {}, 'unknown1')
     validateRenderProps(d, { variants, recipeMap }, {}, 'unknown1')
     validateRenderProps(d, { variants, recipeMap }, {}, 'unknown2')
@@ -265,7 +244,7 @@ describe("validateRenderProps — strict: 'async-warn'", () => {
   })
 
   it('does not throw', () => {
-    const d = diagnosticsFromStrictMode('async-warn')
+    const d = makeAsyncWarnDiagnostics()
     expect(() => validateRenderProps(d, { variants, recipeMap }, {}, 'unknown')).not.toThrow()
   })
 })

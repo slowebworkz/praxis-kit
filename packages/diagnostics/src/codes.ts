@@ -67,6 +67,10 @@ export enum DiagnosticCode {
   TailwindReservedLayoutLiteral = 'CSS6002',
   TailwindDeadVariantClass = 'CSS6003',
 
+  // Plugin API contract violations (developer-facing, not user-facing)
+  PluginInvalidShape = 'PLUGIN7001',
+  PluginPipelineReturnType = 'PLUGIN7002',
+
   // Internal
   InternalError = 'INTERNAL9000',
 }

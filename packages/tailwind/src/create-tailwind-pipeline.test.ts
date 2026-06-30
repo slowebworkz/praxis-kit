@@ -1,8 +1,23 @@
 import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
 
 import { createTailwindPipeline, _resetPipelineWarns } from './create-tailwind-pipeline'
+import {
+  silentDiagnostics,
+  warnDiagnostics,
+  Diagnostics,
+  DefaultPolicy,
+  Severity,
+  AsyncConsoleReporter,
+} from '@praxis-kit/diagnostics'
 
 import type { LayoutProps } from './types/layout'
+
+function makeAsyncWarnDiagnostics(): Diagnostics {
+  return new Diagnostics(
+    new AsyncConsoleReporter(),
+    new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
+  )
+}
 
 function resolve(
   plugin: ReturnType<typeof createTailwindPipeline>,
@@ -13,7 +28,7 @@ function resolve(
 }
 
 describe('createTailwindPipeline — none mode (no layout prop)', () => {
-  const pipeline = createTailwindPipeline({ baseClassName: 'base' }, false)
+  const pipeline = createTailwindPipeline({ baseClassName: 'base' }, silentDiagnostics)
 
   it('strips the flex display literal and flex utilities (and gap), keeps plain utilities', () => {
     const cls = resolve(pipeline, 'flex flex-col gap-4 rounded')
@@ -34,7 +49,7 @@ describe('createTailwindPipeline — none mode (no layout prop)', () => {
 })
 
 describe('createTailwindPipeline — flex active', () => {
-  const pipeline = createTailwindPipeline({}, false)
+  const pipeline = createTailwindPipeline({}, silentDiagnostics)
 
   it('prepends flex to className', () => {
     expect(resolve(pipeline, 'rounded', { flex: true })).toMatch(/\bflex\b/)
@@ -75,7 +90,7 @@ describe('createTailwindPipeline — flex active', () => {
 })
 
 describe('createTailwindPipeline — inline-flex active', () => {
-  const pipeline = createTailwindPipeline({}, false)
+  const pipeline = createTailwindPipeline({}, silentDiagnostics)
 
   it('prepends inline-flex to className', () => {
     expect(resolve(pipeline, 'rounded', { 'inline-flex': true })).toMatch(/\binline-flex\b/)
@@ -109,7 +124,7 @@ describe('createTailwindPipeline — inline-flex active', () => {
 })
 
 describe('createTailwindPipeline — grid active', () => {
-  const pipeline = createTailwindPipeline({}, false)
+  const pipeline = createTailwindPipeline({}, silentDiagnostics)
 
   it('prepends grid to className', () => {
     expect(resolve(pipeline, 'rounded', { grid: true })).toMatch(/\bgrid\b/)
@@ -141,7 +156,7 @@ describe('createTailwindPipeline — grid active', () => {
 })
 
 describe('createTailwindPipeline — inline-grid active', () => {
-  const pipeline = createTailwindPipeline({}, false)
+  const pipeline = createTailwindPipeline({}, silentDiagnostics)
 
   it('prepends inline-grid to className', () => {
     expect(resolve(pipeline, 'rounded', { 'inline-grid': true })).toMatch(/\binline-grid\b/)
@@ -175,7 +190,7 @@ describe('createTailwindPipeline — inline-grid active', () => {
 })
 
 describe('createTailwindPipeline — neutral display (block/hidden/etc.)', () => {
-  const pipeline = createTailwindPipeline({}, false)
+  const pipeline = createTailwindPipeline({}, silentDiagnostics)
 
   it('prepends block to className', () => {
     expect(resolve(pipeline, 'rounded', { block: true })).toMatch(/\bblock\b/)
@@ -213,7 +228,7 @@ describe('createTailwindPipeline — neutral display (block/hidden/etc.)', () =>
 })
 
 describe('createTailwindPipeline — conditional tokens', () => {
-  const pipeline = createTailwindPipeline({}, false)
+  const pipeline = createTailwindPipeline({}, silentDiagnostics)
 
   it('includes [&.flex]: token when flex is active', () => {
     expect(resolve(pipeline, '[&.flex]:items-center rounded', { flex: true })).toMatch(
@@ -259,7 +274,7 @@ describe('createTailwindPipeline — conditional tokens', () => {
 })
 
 describe('createTailwindPipeline — arbitrary variant prefixes', () => {
-  const pipeline = createTailwindPipeline({}, false)
+  const pipeline = createTailwindPipeline({}, silentDiagnostics)
 
   it('strips prefixed grid class when flex is active', () => {
     const cls = resolve(pipeline, 'data-[orientation=horizontal]:grid-cols-3 rounded', {
@@ -292,7 +307,7 @@ describe('createTailwindPipeline — arbitrary variant prefixes', () => {
 })
 
 describe('createTailwindPipeline — layout param overrides className tokens', () => {
-  const pipeline = createTailwindPipeline({}, false)
+  const pipeline = createTailwindPipeline({}, silentDiagnostics)
 
   it('flex param forces flex mode even when className contains grid tokens', () => {
     const cls = resolve(pipeline, 'grid grid-cols-3 gap-4 rounded', { flex: true })
@@ -314,7 +329,7 @@ describe('createTailwindPipeline — layout param overrides className tokens', (
 describe('createTailwindPipeline — multiple display props (mutual exclusion)', () => {
   // The conflict warning fires regardless of strict — multiple display props is a
   // misconfiguration at the call site, not a variant contract violation.
-  const pipeline = createTailwindPipeline({}, false)
+  const pipeline = createTailwindPipeline({}, silentDiagnostics)
 
   afterEach(() => {
     vi.restoreAllMocks()
@@ -365,7 +380,7 @@ describe('createTailwindPipeline — multiple display props (mutual exclusion)',
 })
 
 describe('createTailwindPipeline — reserved layout literals', () => {
-  const pipeline = createTailwindPipeline({}, 'warn')
+  const pipeline = createTailwindPipeline({}, warnDiagnostics)
 
   afterEach(() => {
     vi.restoreAllMocks()
@@ -390,7 +405,7 @@ describe('createTailwindPipeline — reserved layout literals', () => {
   })
 
   it('is silent when strict is false', () => {
-    const silent = createTailwindPipeline({}, false)
+    const silent = createTailwindPipeline({}, silentDiagnostics)
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     silent.pipeline('div', { flex: true }, 'flex rounded', undefined)
     expect(warn.mock.calls.some((c) => /reserved display class/i.test(String(c[0])))).toBe(false)
@@ -411,7 +426,7 @@ describe('createTailwindPipeline — dead-variant detection (Case B)', () => {
           pad: { sm: 'p-2', lg: 'p-8' },
         },
       },
-      'warn',
+      warnDiagnostics,
     )
 
   function deadVariantWarned(warn: ReturnType<typeof vi.spyOn>): boolean {
@@ -449,7 +464,7 @@ describe('createTailwindPipeline — dead-variant detection (Case B)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const pipeline = createTailwindPipeline(
       { variants: { cols: { '2': 'grid-cols-2' } }, recipeMap: { grid2: { cols: '2' } } },
-      'warn',
+      warnDiagnostics,
     )
     pipeline.pipeline('div', { flex: true }, '', 'grid2')
     expect(deadVariantWarned(warn)).toBe(true)
@@ -459,7 +474,7 @@ describe('createTailwindPipeline — dead-variant detection (Case B)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const pipeline = createTailwindPipeline(
       { variants: { cols: { '2': 'grid-cols-2' } }, defaultVariants: { cols: '2' } },
-      'warn',
+      warnDiagnostics,
     )
     pipeline.pipeline('div', { flex: true }, '', undefined)
     expect(deadVariantWarned(warn)).toBe(true)
@@ -470,7 +485,7 @@ describe('createTailwindPipeline — dead-variant detection (Case B)', () => {
     const pipeline = createTailwindPipeline(
       // grid-cols-2 strips in flex mode, but rounded survives → not dead.
       { variants: { box: { a: 'grid-cols-2 rounded' } } },
-      'warn',
+      warnDiagnostics,
     )
     pipeline.pipeline('div', { flex: true, box: 'a' }, '', undefined)
     expect(deadVariantWarned(warn)).toBe(false)
@@ -485,15 +500,18 @@ describe('createTailwindPipeline — dead-variant detection (Case B)', () => {
         variants: { cols: { '2': 'grid-cols-2' }, size: { lg: 'text-lg' } },
         compoundVariants: [{ cols: '2', size: 'lg', class: 'flex-row' }],
       },
-      'warn',
+      warnDiagnostics,
     )
     pipeline.pipeline('div', { flex: true, cols: '2' }, '', undefined)
     expect(deadVariantWarned(warn)).toBe(false)
   })
 
-  it('is silent when strict is false', () => {
+  it('is silent when diagnostics are silent', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    const pipeline = createTailwindPipeline({ variants: { cols: { '2': 'grid-cols-2' } } }, false)
+    const pipeline = createTailwindPipeline(
+      { variants: { cols: { '2': 'grid-cols-2' } } },
+      silentDiagnostics,
+    )
     pipeline.pipeline('div', { flex: true, cols: '2' }, '', undefined)
     expect(deadVariantWarned(warn)).toBe(false)
   })
@@ -501,7 +519,10 @@ describe('createTailwindPipeline — dead-variant detection (Case B)', () => {
 
 describe('createTailwindPipeline — baseClassName layout stripping', () => {
   it('strips layout classes from baseClassName when no layout is active (none mode)', () => {
-    const pipeline = createTailwindPipeline({ baseClassName: 'flex flex-col gap-4 rounded' }, false)
+    const pipeline = createTailwindPipeline(
+      { baseClassName: 'flex flex-col gap-4 rounded' },
+      silentDiagnostics,
+    )
     const cls = resolve(pipeline)
     expect(cls).not.toMatch(/\bflex\b/)
     expect(cls).not.toMatch(/\bflex-col\b/)
@@ -510,7 +531,10 @@ describe('createTailwindPipeline — baseClassName layout stripping', () => {
   })
 
   it('preserves layout classes from baseClassName when flex is active', () => {
-    const pipeline = createTailwindPipeline({ baseClassName: 'items-center gap-4 rounded' }, false)
+    const pipeline = createTailwindPipeline(
+      { baseClassName: 'items-center gap-4 rounded' },
+      silentDiagnostics,
+    )
     const cls = resolve(pipeline, '', { flex: true })
     expect(cls).toMatch(/\bitems-center\b/)
     expect(cls).toMatch(/\bgap-4\b/)
@@ -531,13 +555,13 @@ describe('createTailwindPipeline — async-warn mode', () => {
   })
 
   it('does not call console.warn synchronously for reserved layout literals', () => {
-    const pipeline = createTailwindPipeline({ baseClassName: 'flex' }, 'async-warn')
+    const pipeline = createTailwindPipeline({ baseClassName: 'flex' }, makeAsyncWarnDiagnostics())
     resolve(pipeline, '')
     expect(warn).not.toHaveBeenCalled()
   })
 
   it('calls console.warn after microtask flush for reserved layout literals', async () => {
-    const pipeline = createTailwindPipeline({ baseClassName: 'flex' }, 'async-warn')
+    const pipeline = createTailwindPipeline({ baseClassName: 'flex' }, makeAsyncWarnDiagnostics())
     resolve(pipeline, '')
     await Promise.resolve()
     expect(warn).toHaveBeenCalledOnce()
@@ -547,7 +571,7 @@ describe('createTailwindPipeline — async-warn mode', () => {
   it('does not call console.warn synchronously for dead variants', () => {
     const pipeline = createTailwindPipeline(
       { variants: { cols: { '2': 'grid-cols-2' } } },
-      'async-warn',
+      makeAsyncWarnDiagnostics(),
     )
     pipeline.pipeline('div', { flex: true, cols: '2' }, '', undefined)
     expect(warn).not.toHaveBeenCalled()
@@ -556,7 +580,7 @@ describe('createTailwindPipeline — async-warn mode', () => {
   it('calls console.warn after microtask flush for dead variants', async () => {
     const pipeline = createTailwindPipeline(
       { variants: { cols: { '2': 'grid-cols-2' } } },
-      'async-warn',
+      makeAsyncWarnDiagnostics(),
     )
     pipeline.pipeline('div', { flex: true, cols: '2' }, '', undefined)
     await Promise.resolve()
@@ -565,7 +589,7 @@ describe('createTailwindPipeline — async-warn mode', () => {
   })
 
   it('deduplicates identical messages within the same tick', async () => {
-    const pipeline = createTailwindPipeline({ baseClassName: 'flex' }, 'async-warn')
+    const pipeline = createTailwindPipeline({ baseClassName: 'flex' }, makeAsyncWarnDiagnostics())
     resolve(pipeline, '')
     resolve(pipeline, '')
     resolve(pipeline, '')
@@ -577,7 +601,7 @@ describe('createTailwindPipeline — async-warn mode', () => {
     // baseClassName 'flex' triggers reserved-literal; grid-only variant in flex mode triggers dead-variant
     const pipeline = createTailwindPipeline(
       { baseClassName: 'flex', variants: { cols: { '2': 'grid-cols-2' } } },
-      'async-warn',
+      makeAsyncWarnDiagnostics(),
     )
     pipeline.pipeline('div', { flex: true, cols: '2' }, '', undefined)
     expect(warn).not.toHaveBeenCalled()

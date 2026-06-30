@@ -2,6 +2,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { render as solidRender, cleanup } from '@solidjs/testing-library'
 import { createSignal } from 'solid-js'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from './create-contract-component'
 
 afterEach(cleanup)
@@ -93,7 +94,10 @@ describe('createContractComponent (Solid adapter)', () => {
   })
 
   it('strips redundant ARIA role from intrinsic element', () => {
-    const Comp = createContractComponent({ tag: 'button', enforcement: { strict: false } })
+    const Comp = createContractComponent({
+      tag: 'button',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const { container } = solidRender(() => <Comp role="button" />)
     // button has an implicit role="button" — redundant role should be stripped
     expect(container.querySelector('button')?.getAttribute('role')).toBeNull()

@@ -1,9 +1,9 @@
-import { ChildrenEvaluator, diagnosticsFromStrictMode } from '@praxis-kit/contract'
+import { ChildrenEvaluator } from '@praxis-kit/contract'
 import { iterate } from '@praxis-kit/primitive'
+import { warnDiagnostics } from '@praxis-kit/diagnostics'
 import { htmlContracts } from './contracts'
 
-// HTML evaluators use 'warn' mode: structural violations are surfaced but never throw.
-const htmlDiagnostics = diagnosticsFromStrictMode('warn')
+const htmlDiagnostics = warnDiagnostics
 
 function buildEvaluatorMap(): ReadonlyMap<string, ChildrenEvaluator> {
   const map = new Map<string, ChildrenEvaluator>()

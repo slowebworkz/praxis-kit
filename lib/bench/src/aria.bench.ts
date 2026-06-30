@@ -1,10 +1,10 @@
 import { bench, describe } from 'vitest'
 import { AriaPolicyEngine } from '@praxis-kit/core'
-import { diagnosticsFromStrictMode } from '@praxis-kit/core/contract'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 
-// strict: false suppresses console.warn so violation paths don't flood bench output.
-// The evaluate() static method is used where strict overhead should be excluded entirely.
-const engine = new AriaPolicyEngine(diagnosticsFromStrictMode(false))
+// silentDiagnostics suppresses console output so violation paths don't flood bench output.
+// The evaluate() static method is used where report overhead should be excluded entirely.
+const engine = new AriaPolicyEngine(silentDiagnostics)
 
 describe('AriaPolicyEngine.validate — no-op paths', () => {
   bench('div (no implicit role → early exit)', () => {

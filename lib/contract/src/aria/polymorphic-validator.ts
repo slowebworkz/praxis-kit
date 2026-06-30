@@ -109,10 +109,11 @@ export class AriaPolicyEngine extends InvariantBase {
           props: { role },
         } = context
         const { message, attribute, severity } = result
-
-        const fallbackDiag = message == null ? AriaDiagnostics.invalidRole(role, tag) : undefined
+        const resolvedMessage = message ?? result.diagnostic?.message
+        const fallbackDiag =
+          resolvedMessage == null ? AriaDiagnostics.invalidRole(role, tag) : undefined
         violations.push({
-          message: message ?? fallbackDiag!.message,
+          message: resolvedMessage ?? fallbackDiag!.message,
           tag,
           role,
           attribute,
@@ -328,15 +329,13 @@ export class AriaPolicyEngine extends InvariantBase {
     if (!implicitRole || !role || role === implicitRole) return VALID
 
     if (isStrongImplicitRole(tag) && role === 'region') {
-      const d = HtmlDiagnostics.implicitRoleOverride(tag, implicitRole, role)
       return [
         {
           valid: false,
           fixable: true,
           severity: 'error',
           fix: AriaPolicyEngine.#removeRole,
-          diagnostic: d,
-          message: d.message,
+          diagnostic: HtmlDiagnostics.implicitRoleOverride(tag, implicitRole, role),
         },
       ]
     }
@@ -348,15 +347,13 @@ export class AriaPolicyEngine extends InvariantBase {
     const role = props.role
     if (!implicitRole || !role || role !== implicitRole) return VALID
 
-    const d = HtmlDiagnostics.implicitRoleRedundant(tag, implicitRole)
     return [
       {
         valid: false,
         fixable: true,
         severity: 'warning',
         fix: AriaPolicyEngine.#removeRole,
-        diagnostic: d,
-        message: d.message,
+        diagnostic: HtmlDiagnostics.implicitRoleRedundant(tag, implicitRole),
       },
     ]
   }
@@ -366,15 +363,13 @@ export class AriaPolicyEngine extends InvariantBase {
     if (role !== 'region') return VALID
     if (!isStandaloneTag(tag)) return VALID
 
-    const d = HtmlDiagnostics.standaloneRegionOverride(tag, implicitRole ?? tag)
     return [
       {
         valid: false,
         fixable: true,
         severity: 'error',
         fix: AriaPolicyEngine.#removeRole,
-        diagnostic: d,
-        message: d.message,
+        diagnostic: HtmlDiagnostics.standaloneRegionOverride(tag, implicitRole ?? tag),
       },
     ]
   }
@@ -391,14 +386,12 @@ export class AriaPolicyEngine extends InvariantBase {
       if (isGlobalAriaAttribute(key)) return
       if (isAriaAttributeValidForRole(key, effectiveRole)) return
 
-      const d = AriaDiagnostics.attributeInvalid(key, effectiveRole ?? tag)
       results.push({
         valid: false,
         severity: 'warning',
         fixable: true,
         attribute: key,
-        diagnostic: d,
-        message: d.message,
+        diagnostic: AriaDiagnostics.attributeInvalid(key, effectiveRole ?? tag),
         fix: AriaPolicyEngine.#makeRemoveAttributeFix(key),
       })
     })
@@ -429,15 +422,13 @@ export class AriaPolicyEngine extends InvariantBase {
       }),
     }
 
-    const d = AriaDiagnostics.missingLiveRegion(effectiveRole, impliedLive)
     return [
       {
         valid: false,
         fixable: true,
         severity: 'warning',
         fix: injectLive,
-        diagnostic: d,
-        message: d.message,
+        diagnostic: AriaDiagnostics.missingLiveRegion(effectiveRole, impliedLive),
       },
     ]
   }
@@ -446,14 +437,12 @@ export class AriaPolicyEngine extends InvariantBase {
     if (!effectiveRole || !AriaPolicyEngine.#LIVE_REGION_ROLES.has(effectiveRole)) return VALID
     if ('aria-atomic' in props) return VALID
 
-    const d = AriaDiagnostics.missingAtomic(effectiveRole)
     return [
       {
         valid: false,
         fixable: false,
         severity: 'warning',
-        diagnostic: d,
-        message: d.message,
+        diagnostic: AriaDiagnostics.missingAtomic(effectiveRole),
       },
     ]
   }
@@ -480,15 +469,13 @@ export class AriaPolicyEngine extends InvariantBase {
     const tokens = relevant.trim().split(/\s+/)
     const invalid = tokens.filter((t) => !AriaPolicyEngine.#VALID_RELEVANT_TOKENS.has(t))
     if (invalid.length > 0) {
-      const d = AriaDiagnostics.relevantInvalidTokens(invalid)
       return [
         {
           valid: false,
           fixable: true,
           severity: 'warning',
           attribute: 'aria-relevant',
-          diagnostic: d,
-          message: d.message,
+          diagnostic: AriaDiagnostics.relevantInvalidTokens(invalid),
           fix: AriaPolicyEngine.#makeRemoveAttributeFix('aria-relevant'),
         },
       ]
@@ -496,15 +483,13 @@ export class AriaPolicyEngine extends InvariantBase {
 
     // "all" supersedes the other tokens — "all additions text" is redundant, normalize to "all".
     if (tokens.includes('all') && tokens.length > 1) {
-      const d = AriaDiagnostics.relevantSuperseded()
       return [
         {
           valid: false,
           fixable: true,
           severity: 'warning',
           attribute: 'aria-relevant',
-          diagnostic: d,
-          message: d.message,
+          diagnostic: AriaDiagnostics.relevantSuperseded(),
           fix: AriaPolicyEngine.#normalizeRelevantAllFix,
         },
       ]

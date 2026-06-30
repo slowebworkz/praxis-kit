@@ -2,6 +2,7 @@
 // Each component is registered once per test run in beforeAll.
 
 import type { EmptyRecord } from '@praxis-kit/core'
+import { throwDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from './create-contract-component'
 
 // ─── Box ─────────────────────────────────────────────────────────────────────
@@ -43,7 +44,7 @@ export const ButtonElement = createContractComponent<'button', EmptyRecord, type
       subtle: { intent: 'ghost', size: 'sm' },
     },
   },
-  enforcement: { strict: 'warn' },
+  enforcement: { diagnostics: warnDiagnostics },
 })
 
 // ─── Nav (ARIA exercise) ─────────────────────────────────────────────────────
@@ -53,7 +54,7 @@ export const NavElement = createContractComponent({
   tag: 'nav',
   name: 'Nav',
   styling: { base: 'nav-base' },
-  enforcement: { strict: 'warn' },
+  enforcement: { diagnostics: warnDiagnostics },
 })
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
@@ -71,7 +72,7 @@ export const TabsRootElement = createContractComponent({
   name: 'TabsRoot',
   styling: { base: 'tabs-root' },
   enforcement: {
-    strict: 'throw',
+    diagnostics: throwDiagnostics,
     children: [
       { name: 'TabsTrigger', match: isTabsTrigger, cardinality: { min: 1 } },
       { name: 'TabsContent', match: isTabsContent, cardinality: { min: 1 } },

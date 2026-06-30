@@ -41,12 +41,12 @@ export function buildRuntime<
   const normalized = normalizeOptions<G>(options)
   const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
   const { childrenEvaluator } = buildEngines(
-    normalized.strict,
+    normalized.diagnostics,
     normalized.enforcement?.children,
     normalized.name,
   )
   const filterProps = composeFilter(ownedKeys, normalized.filterProps)
-  const slotValidator = new SlotValidator(normalized.name, normalized.strict)
+  const slotValidator = new SlotValidator(normalized.name, normalized.diagnostics)
 
   return {
     runtime,

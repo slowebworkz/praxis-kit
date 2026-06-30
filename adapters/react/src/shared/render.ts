@@ -61,7 +61,7 @@ function resolveRenderState(
     enforceAllowedAs(
       tag,
       runtime.options.allowedAs,
-      runtime.options.strict,
+      runtime.options.diagnostics,
       runtime.options.displayName,
     )
   }

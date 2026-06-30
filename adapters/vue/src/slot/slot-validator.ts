@@ -1,8 +1,8 @@
 import { SlotValidator as BaseSlotValidator } from '@praxis-kit/adapter-utils'
-import type { StrictMode } from '@praxis-kit/core'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 
 export class SlotValidator extends BaseSlotValidator {
-  constructor(name: string, strict: StrictMode) {
-    super(name, strict, 'VNode')
+  constructor(name: string, diagnostics: Diagnostics) {
+    super(name, diagnostics, 'VNode')
   }
 }

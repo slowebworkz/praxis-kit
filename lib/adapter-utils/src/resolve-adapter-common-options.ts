@@ -1,19 +1,20 @@
-import type { StrictMode } from '@praxis-kit/core'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
+import { throwDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
 
 type OptionsShape = Readonly<{
   name?: string
-  enforcement?: { strict?: StrictMode }
+  enforcement?: { diagnostics?: Diagnostics }
 }>
 
 /** The two fields every adapter's `NormalizedOptions` must supply. */
 export type AdapterDefaults = {
   name: string
-  strict: StrictMode
+  diagnostics: Diagnostics
 }
 
 /**
  * Resolves the two fields that every adapter's `normalizeOptions` must provide:
- * `name` (required string) and `strict` (required StrictMode).
+ * `name` (required string) and `diagnostics` (required Diagnostics instance).
  *
  * Called by each adapter's `normalizeOptions` and spread into the result:
  *
@@ -23,17 +24,19 @@ export type AdapterDefaults = {
  * }
  * ```
  *
- * The defaults (`'PolymorphicComponent'` and `'throw'`) match the convention used
+ * The defaults (`'PolymorphicComponent'` and `throwDiagnostics`) match the convention used
  * by React, Vue, Preact, Solid, and Svelte. Adapters with different defaults
- * (e.g. Lit: `'PolymorphicElement'` / `false`) pass override arguments.
+ * (e.g. Lit, Web: `silentDiagnostics`) pass an override argument.
  */
 export function resolveAdapterCommonOptions(
   options: OptionsShape,
   defaultName = 'PolymorphicComponent',
-  defaultStrict: StrictMode = 'throw',
+  defaultDiagnostics: Diagnostics = throwDiagnostics,
 ): AdapterDefaults {
   return {
     name: options.name ?? defaultName,
-    strict: options.enforcement?.strict ?? defaultStrict,
+    diagnostics: options.enforcement?.diagnostics ?? defaultDiagnostics,
   }
 }
+
+export { throwDiagnostics, silentDiagnostics }

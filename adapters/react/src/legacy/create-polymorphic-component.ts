@@ -10,6 +10,7 @@ import type {
 } from '@praxis-kit/core'
 import { createPolymorphic } from '@praxis-kit/core/primitive'
 import { composeFilter } from '@praxis-kit/adapter-utils'
+import { throwDiagnostics } from '@praxis-kit/diagnostics'
 import { forwardRef } from 'react'
 import type { ReactElement } from 'react'
 import { Slot } from './slot'
@@ -33,7 +34,7 @@ export function createPolymorphicComponent<
 
   const runtime = createPolymorphic(options)
   const filterProps = composeFilter(new Set(), options.filterProps)
-  const slotValidator = new SlotValidator(name, 'throw')
+  const slotValidator = new SlotValidator(name, throwDiagnostics)
 
   const Component = forwardRef<unknown, UnknownProps>(
     function PolymorphicComponent(props, ref): ReactElement {

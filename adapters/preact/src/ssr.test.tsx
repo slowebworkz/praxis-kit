@@ -5,6 +5,7 @@ import type { ComponentType } from 'preact'
 import { renderToString } from 'preact-render-to-string'
 import { ssrConformanceSuite } from '@praxis-kit/adapter-utils/testing'
 import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import type { UnknownProps } from './types'
 import { createContractComponent } from './create-contract-component'
 
@@ -16,7 +17,10 @@ function ssr(comp: unknown, props?: UnknownProps, ...children: unknown[]) {
 
 describe('createContractComponent — SSR (preact-render-to-string)', () => {
   it('renders to HTML without accessing browser globals', () => {
-    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({
+      tag: 'nav',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     expect(ssr(Nav)).toContain('<nav')
   })
 
@@ -24,13 +28,16 @@ describe('createContractComponent — SSR (preact-render-to-string)', () => {
     const Box = createContractComponent({
       tag: 'div',
       styling: { base: 'box-base' },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
     expect(ssr(Box)).toContain('box-base')
   })
 
   it('strips redundant ARIA role — server HTML agrees with what client hydration would produce', () => {
-    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({
+      tag: 'nav',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const html = ssr(Nav, { role: 'navigation' })
     expect(html).toContain('<nav')
     expect(html).not.toContain('role=')
@@ -43,20 +50,26 @@ describe('createContractComponent — SSR (preact-render-to-string)', () => {
         variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
         defaults: { size: 'lg' },
       },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
     expect(ssr(Box)).toContain('text-lg')
   })
 
   it('as prop overrides the default tag in server-rendered HTML', () => {
-    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({
+      tag: 'nav',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const html = ssr(Nav, { as: 'section' })
     expect(html).toContain('<section')
     expect(html).not.toContain('<nav')
   })
 
   it('asChild renders child element type, not the default tag', () => {
-    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({
+      tag: 'nav',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const html = ssr(Nav, { asChild: true }, h('a', { href: '#target' }, 'link'))
     expect(html).toContain('<a ')
     expect(html).toContain('href="#target"')
@@ -67,7 +80,7 @@ describe('createContractComponent — SSR (preact-render-to-string)', () => {
     const Box = createContractComponent({
       tag: 'div',
       styling: { base: 'slot-cls' },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
     const html = ssr(Box, { asChild: true }, h('span', { className: 'child-cls' }))
     expect(html).toContain('slot-cls')

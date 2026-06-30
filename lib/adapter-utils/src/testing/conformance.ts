@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import type { ConformanceAdapter, ConformanceComponent } from './types'
+import { throwDiagnostics, warnDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
 export type {
   BareFactoryOptions,
   ChildSpec,
@@ -338,10 +339,10 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
   // ── enforcement ───────────────────────────────────────────────────────────────
 
   describe('conformance — enforcement', () => {
-    it('throws when children count is below min (strict: throw)', () => {
+    it('throws when children count is below min (throwDiagnostics)', () => {
       const Group = adapter.createComponent({
         enforcement: {
-          strict: 'throw',
+          diagnostics: throwDiagnostics,
           children: [
             { name: 'Item', match: (c): c is unknown => !!c || !c, cardinality: { min: 2 } },
           ],
@@ -351,10 +352,10 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       expect(() => adapter.render(Group, {}, [{ tag: 'span' }])).toThrow()
     })
 
-    it('throws when children count exceeds max (strict: throw)', () => {
+    it('throws when children count exceeds max (throwDiagnostics)', () => {
       const Group = adapter.createComponent({
         enforcement: {
-          strict: 'throw',
+          diagnostics: throwDiagnostics,
           children: [
             { name: 'Item', match: (c): c is unknown => !!c || !c, cardinality: { max: 2 } },
           ],
@@ -366,11 +367,11 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       ).toThrow()
     })
 
-    it('warns but does not throw when strict is warn', () => {
+    it('warns but does not throw when warnDiagnostics', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
       const Group = adapter.createComponent({
         enforcement: {
-          strict: 'warn',
+          diagnostics: warnDiagnostics,
           children: [
             {
               name: 'Item',
@@ -385,11 +386,11 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       warnSpy.mockRestore()
     })
 
-    it('is silent when strict is false', () => {
+    it('is silent when silentDiagnostics', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
       const Group = adapter.createComponent({
         enforcement: {
-          strict: false,
+          diagnostics: silentDiagnostics,
           children: [
             {
               name: 'Item',

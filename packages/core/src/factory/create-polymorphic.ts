@@ -20,12 +20,10 @@ import type {
   RecipeOf,
   PropsOf,
   ResolvedFactoryOptions,
-  StrictMode,
   VariantMap,
   VariantsOf,
 } from '../types'
 import { resolveFactoryOptions, validateFactoryOptions, validateRenderProps } from '../options'
-import { diagnosticsFromStrictMode } from '../contract'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 import { assertPluginShape, guardPipeline } from './plugin-invariants'
 
@@ -38,7 +36,7 @@ const NOOP_CLASS_PIPELINE: ClassPipelineFn = (_tag, _props, className) =>
 function resolveClassPipeline<TVariants extends VariantMap>(
   options: { styling?: { plugin?: ClassPluginFactory<AnyRecord> | undefined } },
   resolved: ClassPipelineOptions<TVariants>,
-  strict: StrictMode,
+  diagnostics: Diagnostics,
   capabilities?: Capabilities,
 ) {
   const factory = options.styling?.plugin
@@ -48,7 +46,7 @@ function resolveClassPipeline<TVariants extends VariantMap>(
     return { pluginResult: undefined, classPipeline }
   }
 
-  const pluginResult = factory(resolved, strict)
+  const pluginResult = factory(resolved, diagnostics)
   assertPluginShape(pluginResult)
   const classPipeline = guardPipeline(pluginResult.pipeline)
 
@@ -129,17 +127,13 @@ export function createPolymorphic<
           htmlPropNormalizersFn: capabilities.htmlPropNormalizersFn,
         })
       : baseResolved
-  // Construction-time contract check — dev-only (tree-shaken from production) and
-  // further gated on `strict` inside. async-warn → warn: one-shot warnings don't
-  // need deferral.
   if (process.env.NODE_ENV !== 'production') {
-    const factoryStrict = resolved.strict === 'async-warn' ? 'warn' : resolved.strict
-    validateFactoryOptions(resolved, diagnosticsFromStrictMode(factoryStrict))
+    validateFactoryOptions(resolved, resolved.diagnostics)
   }
   const { pluginResult, classPipeline } = resolveClassPipeline(
     options,
     resolved,
-    resolved.strict,
+    resolved.diagnostics,
     capabilities,
   )
 
@@ -149,13 +143,12 @@ export function createPolymorphic<
   const engine =
     options.enforcement !== undefined && capabilities?.AriaEngine
       ? new capabilities.AriaEngine(
-          diagnosticsFromStrictMode(resolved.strict),
+          resolved.diagnostics,
           allAriaRules.length ? { rules: allAriaRules } : undefined,
         )
       : null
 
-  const renderDiagnostics = diagnosticsFromStrictMode(resolved.strict)
-  const methods = createRuntimeMethods<G>(resolved, classPipeline, engine, renderDiagnostics)
+  const methods = createRuntimeMethods<G>(resolved, classPipeline, engine, resolved.diagnostics)
 
   return createRuntimeObject<G, typeof pluginResult>(
     methods,

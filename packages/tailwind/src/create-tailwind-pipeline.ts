@@ -3,7 +3,6 @@ import type {
   AnyRecord,
   ClassPipelineOptions,
   ClassPlugin,
-  StrictMode,
   VariantMap,
   VariantValue,
 } from '@praxis-kit/core'
@@ -19,8 +18,7 @@ import type { ClassifiedToken } from './types/classified-token'
 import type { LayoutKey, LayoutMode, LayoutProps, CompoundVariant, VariantSelection } from './types'
 import { isString } from '@praxis-kit/shared'
 import { iterate } from '@praxis-kit/primitive'
-import { diagnosticsFromStrictMode } from '@praxis-kit/contract'
-import { Diagnostics, DefaultPolicy, Severity } from '@praxis-kit/diagnostics'
+import { ConsoleReporter, Diagnostics, DefaultPolicy, Severity } from '@praxis-kit/diagnostics'
 import { TailwindDiagnostics } from './diagnostics'
 
 declare const process: { env: { NODE_ENV: string } }
@@ -30,7 +28,7 @@ const DEV = process.env.NODE_ENV !== 'production'
 // multiple display props is always a misconfiguration. Does not dedup: every
 // render that triggers this warning should be visible.
 const devDiagnostics = new Diagnostics(
-  { report: (d) => console.warn(d.message) },
+  new ConsoleReporter(),
   new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
 )
 
@@ -178,11 +176,10 @@ function warnDeadVariants<V extends VariantMap>(
  */
 export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   options: ClassPipelineOptions<V>,
-  strict: StrictMode,
+  diagnostics: Diagnostics,
 ): ClassPlugin<LayoutProps> {
   const pipeline = createClassPipeline(options)
   const compoundDims = compoundDimensions(getCompoundVariants(options))
-  const diagnostics = diagnosticsFromStrictMode(strict)
 
   return {
     ownedKeys: LAYOUT_OWNED_KEYS,

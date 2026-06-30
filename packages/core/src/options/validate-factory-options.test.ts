@@ -2,8 +2,14 @@ import { describe, expect, it } from 'vitest'
 
 import type { ResolvedFactoryOptions } from '../types'
 import { validateFactoryOptions } from './validate-factory-options'
-import { CollectingReporter, Diagnostics, DefaultPolicy, Severity } from '@praxis-kit/diagnostics'
-import { diagnosticsFromStrictMode } from '@praxis-kit/contract'
+import {
+  CollectingReporter,
+  Diagnostics,
+  DefaultPolicy,
+  Severity,
+  throwDiagnostics,
+  silentDiagnostics,
+} from '@praxis-kit/diagnostics'
 
 // The validator exists for untyped/cast consumers, so the tests construct
 // resolved-options shapes directly and cast past the typed surface.
@@ -11,7 +17,6 @@ function resolved(over: Record<string, unknown>): ResolvedFactoryOptions {
   return {
     defaultTag: 'div',
     displayName: 'Box',
-    strict: 'warn',
     variantKeys: new Set<string>(),
     ...over,
   } as unknown as ResolvedFactoryOptions
@@ -77,29 +82,29 @@ describe('validateFactoryOptions — defaults', () => {
 })
 
 describe('validateFactoryOptions — strict gating', () => {
-  it('throws under strict: "throw"', () => {
+  it('throws under throwDiagnostics', () => {
     expect(() =>
       validateFactoryOptions(
-        resolved({ ...SIZE, strict: 'throw', recipeMap: { p: { size: 'xl' } } }),
-        diagnosticsFromStrictMode('throw'),
+        resolved({ ...SIZE, recipeMap: { p: { size: 'xl' } } }),
+        throwDiagnostics,
       ),
     ).toThrow(/unknown value "xl"/)
   })
 
-  it('throws under strict: true', () => {
+  it('also throws for an unknown variant under throwDiagnostics', () => {
     expect(() =>
       validateFactoryOptions(
-        resolved({ ...SIZE, strict: true, recipeMap: { p: { bad: 'x' } } }),
-        diagnosticsFromStrictMode(true),
+        resolved({ ...SIZE, recipeMap: { p: { bad: 'x' } } }),
+        throwDiagnostics,
       ),
     ).toThrow(/unknown variant "bad"/)
   })
 
-  it('is silent under strict: false even with an invalid preset', () => {
+  it('is silent under silentDiagnostics even with an invalid preset', () => {
     expect(() =>
       validateFactoryOptions(
-        resolved({ ...SIZE, strict: false, recipeMap: { p: { size: 'xl' } } }),
-        diagnosticsFromStrictMode(false),
+        resolved({ ...SIZE, recipeMap: { p: { size: 'xl' } } }),
+        silentDiagnostics,
       ),
     ).not.toThrow()
   })
@@ -148,11 +153,11 @@ describe('validateFactoryOptions — edge cases', () => {
   })
 })
 
-describe("validateFactoryOptions — strict: 'async-warn'", () => {
+describe('validateFactoryOptions — warn diagnostics', () => {
   it('warns synchronously (construction-time warnings are one-shot, no deferral needed)', () => {
     const { reporter, diagnostics } = makeCollecting()
     validateFactoryOptions(
-      resolved({ ...SIZE, strict: 'async-warn', recipeMap: { p: { intent: 'primary' } } }),
+      resolved({ ...SIZE, recipeMap: { p: { intent: 'primary' } } }),
       diagnostics,
     )
     expect(reporter.diagnostics.some((d) => d.message.includes('unknown variant "intent"'))).toBe(
@@ -164,7 +169,7 @@ describe("validateFactoryOptions — strict: 'async-warn'", () => {
     const { diagnostics } = makeCollecting()
     expect(() =>
       validateFactoryOptions(
-        resolved({ ...SIZE, strict: 'async-warn', recipeMap: { p: { intent: 'primary' } } }),
+        resolved({ ...SIZE, recipeMap: { p: { intent: 'primary' } } }),
         diagnostics,
       ),
     ).not.toThrow()

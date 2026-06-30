@@ -1,3 +1,4 @@
+import { warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from '@praxis-kit/web'
 
 type ButtonProps = { loading?: boolean; type?: string }
@@ -29,5 +30,5 @@ export const Button = createContractComponent<'button', ButtonProps, typeof vari
     },
   },
   filterProps: (key, variantKeys) => variantKeys.has(key) || key === 'loading',
-  enforcement: { strict: 'warn' },
+  enforcement: { diagnostics: warnDiagnostics },
 })

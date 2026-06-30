@@ -17,7 +17,7 @@ export type RuntimeOptions = Readonly<
     ResolvedFactoryOptions,
     | 'defaultTag'
     | 'displayName'
-    | 'strict'
+    | 'diagnostics'
     | 'variantKeys'
     | 'childRules'
     | 'allowedAs'

@@ -1,4 +1,5 @@
-import type { AnyRecord, EmptyRecord, StrictMode, VariantMap } from '@praxis-kit/core'
+import type { AnyRecord, EmptyRecord, VariantMap } from '@praxis-kit/core'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 
 export type UnknownProps = Record<string, unknown>
 
@@ -19,6 +20,6 @@ export type WebContractComponent<
     /** Re-runs the pipeline — call after setting non-reactive attributes (aria-*, role, data-*). */
     update(): void
   } & { [K in Extract<keyof TVariants, string>]?: string | null } & TPluginProps
-  /** The resolved strict mode for this component — usable by subclasses for custom enforcement. */
-  readonly strict: Exclude<StrictMode, undefined>
+  /** The resolved diagnostics for this component — usable by subclasses for custom enforcement. */
+  readonly diagnostics: Diagnostics
 }

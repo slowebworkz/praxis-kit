@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { ConformanceAdapter, ConformanceComponent } from './types'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 
 /**
  * Isolation conformance suite.
@@ -23,11 +24,11 @@ export function conformanceIsolationSuite<C extends ConformanceComponent = Confo
     it('two components with different base classes render independently', () => {
       const Box = adapter.createComponent({
         styling: { base: 'box-base' },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       const Button = adapter.createComponent({
         styling: { base: 'btn-base' },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const boxEl = adapter.render(Box).element
@@ -42,11 +43,11 @@ export function conformanceIsolationSuite<C extends ConformanceComponent = Confo
     it('variant definitions on one component do not affect another', () => {
       const Box = adapter.createComponent({
         styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       const Button = adapter.createComponent({
         styling: { variants: { intent: { primary: 'bg-blue', ghost: 'bg-transparent' } } },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const boxEl = adapter.render(Box, { size: 'lg' }).element
@@ -64,11 +65,11 @@ export function conformanceIsolationSuite<C extends ConformanceComponent = Confo
           variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
           defaults: { size: 'lg' },
         },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       const Button = adapter.createComponent({
         styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
 
       // Render Box twice to warm any default cache, then render Button fresh.
@@ -87,10 +88,10 @@ export function conformanceIsolationSuite<C extends ConformanceComponent = Confo
       it('filterProps on one component does not filter on another', () => {
         const Filtered = adapter.createComponent({
           filterProps: (key) => key === 'loading',
-          enforcement: { strict: false },
+          enforcement: { diagnostics: silentDiagnostics },
         })
         const Plain = adapter.createComponent({
-          enforcement: { strict: false },
+          enforcement: { diagnostics: silentDiagnostics },
         })
 
         const filteredEl = adapter.render(Filtered, { 'data-id': 'a', loading: 'true' }).element
@@ -106,8 +107,14 @@ export function conformanceIsolationSuite<C extends ConformanceComponent = Confo
     // ── Independent naming ────────────────────────────────────────────────────
 
     it('displayName is independent per component', () => {
-      const Box = adapter.createComponent({ name: 'Box', enforcement: { strict: false } })
-      const Button = adapter.createComponent({ name: 'Button', enforcement: { strict: false } })
+      const Box = adapter.createComponent({
+        name: 'Box',
+        enforcement: { diagnostics: silentDiagnostics },
+      })
+      const Button = adapter.createComponent({
+        name: 'Button',
+        enforcement: { diagnostics: silentDiagnostics },
+      })
 
       expect(Box.displayName).toBe('Box')
       expect(Button.displayName).toBe('Button')
@@ -118,11 +125,11 @@ export function conformanceIsolationSuite<C extends ConformanceComponent = Confo
     it('re-rendering one component does not change the other', () => {
       const Box = adapter.createComponent({
         styling: { base: 'box', variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       const Button = adapter.createComponent({
         styling: { base: 'btn' },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const boxResult = adapter.render(Box, { size: 'sm' })
@@ -143,7 +150,10 @@ export function conformanceIsolationSuite<C extends ConformanceComponent = Confo
       const variants = { size: { sm: 'text-sm', lg: 'text-lg' } }
       const snapshot = JSON.stringify(variants)
 
-      adapter.createComponent({ styling: { variants }, enforcement: { strict: false } })
+      adapter.createComponent({
+        styling: { variants },
+        enforcement: { diagnostics: silentDiagnostics },
+      })
 
       expect(JSON.stringify(variants)).toBe(snapshot)
     })

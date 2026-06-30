@@ -1,12 +1,12 @@
 import type { AnyRecord, EmptyRecord } from '../primitives'
-import type { StrictMode } from '../config'
 import type { ClassPipelineOptions } from '../pipeline/class-pipeline-options'
 import type { VariantMap } from '../variants/variant-map'
 import type { ClassPlugin } from './class-plugin'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 
 export type ClassPluginFactory<TProps extends AnyRecord = EmptyRecord> = <V extends VariantMap>(
   options: ClassPipelineOptions<V>,
-  strict: StrictMode,
+  diagnostics: Diagnostics,
 ) => ClassPlugin<TProps>
 
 export type ExtractPluginProps<TPlugin extends ClassPluginFactory<AnyRecord> | undefined> =

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 // Full version injects AriaPolicyEngine + createClassPipeline as capabilities.
 // The raw create-polymorphic is tested separately for primitive-only behavior.
 import { createPolymorphic } from './create-polymorphic-full'
+import { silentDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
 // resolveTag
@@ -130,8 +131,8 @@ describe('createPolymorphic — options', () => {
     expect(Object.isFrozen(runtime.options)).toBe(true)
   })
 
-  it('strict defaults to false', () => {
-    expect(createPolymorphic({}).options.strict).toBe(false)
+  it('diagnostics defaults to silentDiagnostics', () => {
+    expect(createPolymorphic({}).options.diagnostics).toBe(silentDiagnostics)
   })
 })
 
@@ -159,34 +160,49 @@ describe('createPolymorphic — resolveAria() without enforcement', () => {
 
 describe('createPolymorphic — resolveAria() with enforcement', () => {
   it('returns props unchanged when all aria-* attrs are valid', () => {
-    const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: false } })
+    const runtime = createPolymorphic({
+      tag: 'button',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const props = { 'aria-label': 'submit' }
     expect(runtime.resolveAria('button', props).props).toMatchObject({ 'aria-label': 'submit' })
   })
 
   it('strips an invalid aria-* attribute for the effective role', () => {
-    const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: false } })
+    const runtime = createPolymorphic({
+      tag: 'button',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     // aria-checked is not valid on role="button"
     const result = runtime.resolveAria('button', { 'aria-checked': 'true' })
     expect(result.props).not.toHaveProperty('aria-checked')
   })
 
   it('does not strip a valid role-restricted attribute', () => {
-    const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: false } })
+    const runtime = createPolymorphic({
+      tag: 'button',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     // aria-expanded is valid on role="button"
     const result = runtime.resolveAria('button', { 'aria-expanded': 'true' })
     expect(result.props).toMatchObject({ 'aria-expanded': 'true' })
   })
 
   it('does not strip global aria-* attributes', () => {
-    const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: false } })
+    const runtime = createPolymorphic({
+      tag: 'button',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const result = runtime.resolveAria('button', { 'aria-label': 'save', 'aria-hidden': 'true' })
     expect(result.props).toMatchObject({ 'aria-label': 'save', 'aria-hidden': 'true' })
   })
 
   it('warns for invalid attribute when strict is "warn"', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: 'warn' } })
+    const runtime = createPolymorphic({
+      tag: 'button',
+      enforcement: { diagnostics: warnDiagnostics },
+    })
     runtime.resolveAria('button', { 'aria-checked': 'true' })
     await Promise.resolve()
     expect(warn).toHaveBeenCalled()
@@ -195,14 +211,20 @@ describe('createPolymorphic — resolveAria() with enforcement', () => {
 
   it('is silent for invalid attribute when strict is false', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: false } })
+    const runtime = createPolymorphic({
+      tag: 'button',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     runtime.resolveAria('button', { 'aria-checked': 'true' })
     expect(warn).not.toHaveBeenCalled()
     warn.mockRestore()
   })
 
   it('passes through props unchanged for a tag with no implicit role', () => {
-    const runtime = createPolymorphic({ tag: 'div', enforcement: { strict: false } })
+    const runtime = createPolymorphic({
+      tag: 'div',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const props = { 'aria-checked': 'true' }
     expect(runtime.resolveAria('div', props).props).toBe(props)
   })
@@ -282,7 +304,7 @@ describe('createPolymorphic — enforcement.aria option', () => {
     ]
     const runtime = createPolymorphic({
       tag: 'nav',
-      enforcement: { strict: 'warn', aria: [customRule] },
+      enforcement: { diagnostics: warnDiagnostics, aria: [customRule] },
     })
     runtime.resolveAria('nav', {})
     await Promise.resolve()
@@ -312,7 +334,7 @@ describe('createPolymorphic — enforcement.aria option', () => {
     ]
     const runtime = createPolymorphic({
       tag: 'nav',
-      enforcement: { strict: false, aria: [customRule] },
+      enforcement: { diagnostics: silentDiagnostics, aria: [customRule] },
     })
     const { props } = runtime.resolveAria('nav', { 'data-x': '1' } as never)
     expect(props).not.toHaveProperty('data-x')
@@ -320,7 +342,10 @@ describe('createPolymorphic — enforcement.aria option', () => {
 
   it('resolveAria() behaves normally when enforcement.aria is not provided', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const runtime = createPolymorphic({ tag: 'button', enforcement: { strict: 'warn' } })
+    const runtime = createPolymorphic({
+      tag: 'button',
+      enforcement: { diagnostics: warnDiagnostics },
+    })
     const { props } = runtime.resolveAria('button', { 'aria-label': 'ok' })
     expect(props).toMatchObject({ 'aria-label': 'ok' })
     expect(warn).not.toHaveBeenCalled()

@@ -6,7 +6,7 @@ import type { DiagnosticInput } from '@praxis-kit/diagnostics'
 type AriaInvalidBase<M extends string = string> = {
   valid: false
   severity: Severity
-  message: M
+  message?: M
   attribute?: string
   diagnostic?: DiagnosticInput
 }

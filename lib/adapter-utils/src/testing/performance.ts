@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { ConformanceAdapter, ConformanceComponent } from './types'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 
 /**
  * Performance conformance suite.
@@ -26,7 +27,7 @@ export function conformancePerformanceSuite<C extends ConformanceComponent = Con
           variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
           defaults: { size: 'sm' },
         },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const result = adapter.render(Box, { size: 'lg' })
@@ -42,7 +43,7 @@ export function conformancePerformanceSuite<C extends ConformanceComponent = Con
     it('repeated renders without props produce the same className', () => {
       const Box = adapter.createComponent({
         styling: { base: 'base', variants: { size: { sm: 'text-sm' } }, defaults: { size: 'sm' } },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const result = adapter.render(Box)
@@ -57,7 +58,7 @@ export function conformancePerformanceSuite<C extends ConformanceComponent = Con
     it('different variant values produce different className', () => {
       const Box = adapter.createComponent({
         styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const result = adapter.render(Box, { size: 'sm' })
@@ -79,7 +80,7 @@ export function conformancePerformanceSuite<C extends ConformanceComponent = Con
           base: 'base-cls',
           variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
         },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const result = adapter.render(Box, { size: 'sm' })
@@ -97,11 +98,11 @@ export function conformancePerformanceSuite<C extends ConformanceComponent = Con
     it('interleaved renders of two components are independent', () => {
       const Box = adapter.createComponent({
         styling: { base: 'box', variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       const Button = adapter.createComponent({
         styling: { base: 'btn', variants: { intent: { primary: 'btn-primary' } } },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const boxResult = adapter.render(Box, { size: 'sm' })
@@ -132,7 +133,7 @@ export function conformancePerformanceSuite<C extends ConformanceComponent = Con
           },
           compounds: [{ size: 'lg', intent: 'primary', class: 'compound-cls' }],
         },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const result = adapter.render(Box, { size: 'lg', intent: 'primary' })
@@ -153,7 +154,7 @@ export function conformancePerformanceSuite<C extends ConformanceComponent = Con
           },
           compounds: [{ size: 'lg', intent: 'primary', class: 'compound-cls' }],
         },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const result = adapter.render(Box, { size: 'lg', intent: 'primary' })
@@ -174,7 +175,7 @@ export function conformancePerformanceSuite<C extends ConformanceComponent = Con
           base: 'base',
           variants: { size: { lg: 'text-lg' } },
         },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const result = adapter.render(Box, { size: 'lg' })
@@ -191,7 +192,7 @@ export function conformancePerformanceSuite<C extends ConformanceComponent = Con
     it('two instances of the same component are independent', () => {
       const Box = adapter.createComponent({
         styling: { base: 'box', variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const a = adapter.render(Box, { size: 'sm' })
@@ -218,7 +219,7 @@ export function conformancePerformanceSuite<C extends ConformanceComponent = Con
           variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
           defaults: { size: 'sm' },
         },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const withUndefined = adapter.render(Box, { size: undefined }).element.className

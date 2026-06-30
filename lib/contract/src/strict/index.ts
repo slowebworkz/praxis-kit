@@ -1,2 +1,1 @@
-export { InvariantBase, InvariantBase as StrictBase } from './invariant-base'
-export { diagnosticsFromStrictMode } from './strict-compat'
+export { InvariantBase } from './invariant-base'

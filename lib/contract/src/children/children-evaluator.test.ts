@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { ChildRuleInput } from '../types'
 import { ChildrenEvaluator } from './children-evaluator'
-import { diagnosticsFromStrictMode } from '../strict'
+import { throwDiagnostics } from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
 // Helpers — plain class instances
@@ -49,7 +49,7 @@ const bodyRule: ChildRuleInput = {
 }
 
 function makeEvaluator(rules: ChildRuleInput[], context = 'Test') {
-  return new ChildrenEvaluator(rules, diagnosticsFromStrictMode('throw'), context)
+  return new ChildrenEvaluator(rules, throwDiagnostics, context)
 }
 
 // ---------------------------------------------------------------------------
@@ -69,7 +69,7 @@ describe('ChildrenEvaluator constructor', () => {
               cardinality: { max: 2 },
             },
           ],
-          diagnosticsFromStrictMode('throw'),
+          throwDiagnostics,
           'Test',
         ),
     ).toThrow(RangeError)
@@ -87,7 +87,7 @@ describe('ChildrenEvaluator constructor', () => {
               cardinality: { max: 3 },
             },
           ],
-          diagnosticsFromStrictMode('throw'),
+          throwDiagnostics,
           'Test',
         ),
     ).toThrow(RangeError)
@@ -105,7 +105,7 @@ describe('ChildrenEvaluator constructor', () => {
               cardinality: { max: 2 },
             },
           ],
-          diagnosticsFromStrictMode('throw'),
+          throwDiagnostics,
           'Test',
         ),
     ).not.toThrow()
@@ -170,7 +170,7 @@ describe('ChildrenEvaluator.evaluate() — unexpected child', () => {
   })
 
   it('error message names the context', () => {
-    const ev = new ChildrenEvaluator([flexRule], diagnosticsFromStrictMode('throw'), 'MyComponent')
+    const ev = new ChildrenEvaluator([flexRule], throwDiagnostics, 'MyComponent')
     expect(() => ev.evaluate([gridEl])).toThrow(/MyComponent/)
   })
 

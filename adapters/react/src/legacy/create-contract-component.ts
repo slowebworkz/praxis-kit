@@ -18,7 +18,7 @@ import type {
   VariantMap,
 } from '@praxis-kit/core'
 import { enforceAllowedAs, getHtmlChildrenEvaluator } from '@praxis-kit/core'
-import { AriaPolicyEngine, diagnosticsFromStrictMode } from '@praxis-kit/core/contract'
+import { AriaPolicyEngine } from '@praxis-kit/core/contract'
 import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/shared/guards/children'
 import { forwardRef } from 'react'
 import type { ReactElement, ReactNode, Ref } from 'react'
@@ -96,24 +96,22 @@ export function createContractComponent<
     options.styling?.plugin !== undefined
       ? (options.styling.plugin as ClassPluginFactory<AnyRecord>)(
           options.styling as unknown as ClassPipelineOptions,
-          resolved.strict,
+          resolved.diagnostics,
         )
       : undefined
   const pluginKeys: ReadonlySet<string> = classPlugin?.ownedKeys ?? EMPTY_SET
 
   // Children enforcement: explicit config takes priority; built-in HTML contracts checked per-render
   const { childrenEvaluator: explicitEvaluator } = buildEngines(
-    resolved.strict,
+    resolved.diagnostics,
     options.enforcement?.children,
     displayName,
   )
 
   const ariaEngine =
-    options.enforcement !== undefined
-      ? new AriaPolicyEngine(diagnosticsFromStrictMode(resolved.strict))
-      : undefined
+    options.enforcement !== undefined ? new AriaPolicyEngine(resolved.diagnostics) : undefined
 
-  const slotValidator = new SlotValidator(displayName, resolved.strict)
+  const slotValidator = new SlotValidator(displayName, resolved.diagnostics)
   const renderAsChild = makeRenderAsChild(cloneSlotChild)
 
   // React 18: ref is not available as a plain prop — forwardRef is required.
@@ -141,7 +139,7 @@ export function createContractComponent<
 
     const tag = typeof as === 'string' ? as : defaultTag
 
-    if (allowedAs !== undefined) enforceAllowedAs(tag, allowedAs, resolved.strict, displayName)
+    if (allowedAs !== undefined) enforceAllowedAs(tag, allowedAs, resolved.diagnostics, displayName)
 
     const rawBaseProps =
       domDefaults !== undefined

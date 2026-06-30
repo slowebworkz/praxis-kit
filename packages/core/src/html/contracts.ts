@@ -2,6 +2,7 @@ import type { ChildRuleInput, EnforcementOptions } from '../types'
 import { isTag } from '@praxis-kit/shared/guards/children'
 import { isNumber, isObject, isString } from '@praxis-kit/primitive'
 import { landmarkRoleRule } from './aria-rules'
+import { warnDiagnostics } from '@praxis-kit/diagnostics'
 
 // Matches any element whose tag is NOT in the blocked set, plus component children
 // (whose `type` is a function/class rather than a string). Used as the open-content
@@ -28,11 +29,11 @@ function firstOptional(name: string, tag: string): ChildRuleInput {
 }
 
 function contract(children: readonly ChildRuleInput[]): EnforcementOptions {
-  return { strict: 'warn', children }
+  return { diagnostics: warnDiagnostics, children }
 }
 
 function ariaContract(aria: NonNullable<EnforcementOptions['aria']>): EnforcementOptions {
-  return { strict: 'warn', aria }
+  return { diagnostics: warnDiagnostics, aria }
 }
 
 // An optional singleton that must be the first child, followed by open flow content.

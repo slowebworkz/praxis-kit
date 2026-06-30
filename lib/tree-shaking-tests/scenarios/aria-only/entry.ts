@@ -2,6 +2,7 @@
  * Claim: a component with ARIA enforcement retains AriaPolicyEngine.
  * No Tailwind pipeline, no other framework adapter should appear.
  */
+import { warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createAriaEnforcedComponent } from '@praxis-kit/react'
 import type { AriaRule } from '@praxis-kit/core/contract'
 
@@ -14,7 +15,7 @@ export const Button = createAriaEnforcedComponent({
   tag: 'button',
   name: 'Button',
   enforcement: {
-    strict: 'warn',
+    diagnostics: warnDiagnostics,
     aria: [requireAriaLabel],
   },
 })

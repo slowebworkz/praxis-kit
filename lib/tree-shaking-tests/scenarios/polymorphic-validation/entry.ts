@@ -4,6 +4,7 @@
  */
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
+import { warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createChildrenEnforcedComponent } from '@praxis-kit/react'
 
 const Item = createChildrenEnforcedComponent({ tag: 'li', name: 'Item' })
@@ -12,7 +13,7 @@ export const List = createChildrenEnforcedComponent({
   tag: 'ul',
   name: 'List',
   enforcement: {
-    strict: 'warn',
+    diagnostics: warnDiagnostics,
     children: [
       {
         name: 'Item',
