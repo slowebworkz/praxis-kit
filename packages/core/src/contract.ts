@@ -3,7 +3,7 @@
 export * from './primitive'
 export * from './html'
 export * from './state'
-export { InvariantBase, InvariantBase as StrictBase } from '@praxis-kit/contract'
+export { InvariantBase } from '@praxis-kit/contract'
 export {
   AriaDiagnostics,
   ContractDiagnostics,

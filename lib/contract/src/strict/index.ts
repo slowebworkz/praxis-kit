@@ -1,1 +1,1 @@
-export { InvariantBase, InvariantBase as StrictBase } from './invariant-base'
+export { InvariantBase } from './invariant-base'
