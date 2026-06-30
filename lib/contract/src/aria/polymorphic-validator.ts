@@ -73,7 +73,7 @@ export class AriaPolicyEngine extends InvariantBase {
 
   static #deriveContext(tag: AnyTag, props: IntrinsicProps): EvaluationContext {
     if (!isIntrinsicTag(tag)) return { proceed: false, result: { props, violations: [] } }
-    const implicitRole = getImplicitRole(tag)
+    const implicitRole = getImplicitRole(tag, props)
     // Also proceed for explicit live-region roles on tags with no implicit role (e.g. <div role="alert">).
     const hasExplicitLiveRole =
       !implicitRole && AriaPolicyEngine.#LIVE_REGION_ROLES.has(props.role ?? '')
@@ -130,9 +130,17 @@ export class AriaPolicyEngine extends InvariantBase {
   }
 
   static #getRules(context: AriaContext): readonly AriaRule[] {
-    return AriaPolicyEngine.#hasRole(context.props)
-      ? AriaPolicyEngine.#pipeline
-      : [AriaPolicyEngine.#checkInvalidAriaAttributes]
+    // Run the full pipeline when there's an explicit role, or when the implicit role
+    // is a live-region role (so that injection and advisory checks fire even without
+    // an explicit role prop — e.g. <output> implicitly has role=status).
+    if (
+      AriaPolicyEngine.#hasRole(context.props) ||
+      (context.effectiveRole != null &&
+        AriaPolicyEngine.#LIVE_REGION_ROLES.has(context.effectiveRole))
+    ) {
+      return AriaPolicyEngine.#pipeline
+    }
+    return [AriaPolicyEngine.#checkInvalidAriaAttributes]
   }
 
   static evaluate(tag: AnyTag, props: IntrinsicProps): ValidationResult {
@@ -183,6 +191,8 @@ export class AriaPolicyEngine extends InvariantBase {
     if (!isIntrinsicTag(tag)) return null
     const parts: string[] = [tag]
     if (typeof props.role === 'string') parts.push(`role:${props.role}`)
+    // input's implicit role depends on type — include it so different types never share a cache entry
+    if (tag === 'input' && typeof props.type === 'string') parts.push(`type:${props.type}`)
     const ariaEntries: string[] = []
     iterate.forEachEntry(props, (k, v) => {
       if (!k.startsWith('aria-')) return

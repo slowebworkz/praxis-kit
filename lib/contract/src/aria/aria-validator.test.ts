@@ -1006,3 +1006,223 @@ describe('validate() — aria-relevant validation and normalisation', () => {
     expect(violations.some((v) => v.attribute === 'aria-relevant')).toBe(false)
   })
 })
+
+// ---------------------------------------------------------------------------
+// validate() — expanded static implicit roles
+// ---------------------------------------------------------------------------
+
+describe('validate() — textarea (implicit role: textbox)', () => {
+  it('allows aria-multiline on textarea (valid for textbox)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('textarea', {
+      'aria-multiline': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('warns for aria-checked on textarea (not valid for textbox)', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('textarea', { 'aria-checked': 'true' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
+  })
+
+  it('strips aria-checked from textarea props', () => {
+    const { props } = makeValidator(silentDiagnostics).validate('textarea', {
+      'aria-checked': 'true',
+    })
+    expect(props).not.toHaveProperty('aria-checked')
+  })
+
+  it('warns for redundant role="textbox" on textarea', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('textarea', { role: 'textbox' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
+  })
+})
+
+describe('validate() — fieldset (implicit role: group)', () => {
+  it('allows aria-activedescendant on fieldset (valid for group)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('fieldset', {
+      'aria-activedescendant': 'input-id',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('warns for aria-checked on fieldset (not valid for group)', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('fieldset', { 'aria-checked': 'true' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
+  })
+})
+
+describe('validate() — dialog (implicit role: dialog)', () => {
+  it('allows aria-modal on dialog (valid for dialog role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('dialog', {
+      'aria-modal': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('warns for redundant role="dialog" on dialog element', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('dialog', { role: 'dialog' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
+  })
+})
+
+describe('validate() — progress (implicit role: progressbar)', () => {
+  it('allows aria-valuenow on progress (valid for progressbar)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('progress', {
+      'aria-valuenow': '50',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('warns for aria-checked on progress (not valid for progressbar)', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('progress', { 'aria-checked': 'true' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
+  })
+})
+
+describe('validate() — output (implicit role: status)', () => {
+  it('does not flag aria-label on output (global attribute is always valid)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('output', {
+      'aria-label': 'Result',
+    })
+    // aria-label is globally valid — any violations are about missing aria-live, not the label
+    expect(violations.some((v) => v.attribute === 'aria-label')).toBe(false)
+  })
+
+  it('injects aria-live="polite" on output (status role implies it)', () => {
+    const { props } = makeValidator(silentDiagnostics).validate('output', {})
+    expect(props).toHaveProperty('aria-live', 'polite')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — input[type=...] implicit role
+// ---------------------------------------------------------------------------
+
+describe('validate() — input implicit roles via type attribute', () => {
+  it('allows aria-checked on input[type=checkbox] (checkbox role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'checkbox',
+      'aria-checked': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('warns for aria-pressed on input[type=checkbox] (not valid for checkbox)', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('input', { type: 'checkbox', 'aria-pressed': 'true' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
+  })
+
+  it('allows aria-checked on input[type=radio] (radio role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'radio',
+      'aria-checked': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('allows aria-multiline on input[type=text] (textbox role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'text',
+      'aria-multiline': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('treats input with no type as textbox', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      'aria-multiline': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('allows aria-valuenow on input[type=range] (slider role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'range',
+      'aria-valuenow': '50',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('allows aria-valuenow on input[type=number] (spinbutton role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'number',
+      'aria-valuenow': '5',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('skips validation for input[type=hidden] (no ARIA role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'hidden',
+      'aria-checked': 'true',
+    })
+    // No implicit role → engine skips → no false positive
+    expect(violations).toHaveLength(0)
+  })
+
+  it('does not share cache between input[type=checkbox] and input[type=radio]', () => {
+    const engine = makeValidator(silentDiagnostics)
+    // checkbox allows aria-checked; radio also allows it — test with an attribute invalid on one but valid on both
+    // Use aria-pressed: valid on button only, not checkbox or radio
+    engine.validate('input', { type: 'checkbox', 'aria-pressed': 'true' })
+    const { violations } = engine.validate('input', { type: 'radio', 'aria-pressed': 'true' })
+    // Radio also doesn't allow aria-pressed — violation should appear (not a stale checkbox cache hit)
+    expect(violations.some((v) => v.attribute === 'aria-pressed')).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — conditional landmarks: section and form
+// ---------------------------------------------------------------------------
+
+describe('validate() — section conditional landmark (role: region when named)', () => {
+  it('derives role=region when section has aria-label', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('section', {
+      'aria-label': 'News',
+      role: 'region',
+    })
+    // role="region" matches implicit region → redundant → one warning
+    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+  })
+
+  it('engine skips unnamed section (no implicit role without accessible name)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('section', {
+      'aria-checked': 'true',
+    })
+    // No implicit role → no processing → no false positives
+    expect(violations).toHaveLength(0)
+  })
+
+  it('validates aria-* on section when aria-labelledby provides the name', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('section', {
+      'aria-labelledby': 'heading-id',
+      'aria-checked': 'true',
+    })
+    // section → region; aria-checked is not valid for region → violation
+    expect(violations.some((v) => v.attribute === 'aria-checked')).toBe(true)
+  })
+})
+
+describe('validate() — form conditional landmark (role: form when named)', () => {
+  it('derives role=form when form has aria-label', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('form', {
+      'aria-label': 'Login',
+      role: 'form',
+    })
+    // role="form" matches implicit form → redundant → one warning
+    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+  })
+
+  it('engine skips unnamed form (no implicit role without accessible name)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('form', {
+      'aria-checked': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+})

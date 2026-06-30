@@ -1,6 +1,7 @@
 export { GLOBAL_ARIA_ATTRIBUTES } from './global-aria-attributes'
 export {
   IMPLICIT_ROLE_RECORD,
+  INPUT_TYPE_ROLE_MAP,
   STANDALONE_ROLES,
   STANDALONE_ROLES_SET,
   STRONG_ROLES,

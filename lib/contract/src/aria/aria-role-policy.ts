@@ -1,38 +1,24 @@
 import type { IntrinsicTag } from '@praxis-kit/shared/types'
-import { isStandaloneTag, isStrongImplicitRole } from '@praxis-kit/shared/guards/aria'
+import type { IntrinsicProps } from '../types'
+import {
+  getConditionalImplicitRole,
+  getInputImplicitRole,
+  isStandaloneTag,
+  isStrongImplicitRole,
+} from '@praxis-kit/shared/guards/aria'
+import { IMPLICIT_ROLE_RECORD } from '@praxis-kit/shared/constants/aria'
 
 export { isStandaloneTag, isStrongImplicitRole }
 
-const IMPLICIT_ROLE_RECORD = {
-  article: 'article',
-  aside: 'complementary',
-  footer: 'contentinfo',
-  header: 'banner',
-  main: 'main',
-  nav: 'navigation',
-  button: 'button',
-  a: 'link',
-  select: 'listbox',
-  h1: 'heading',
-  h2: 'heading',
-  h3: 'heading',
-  h4: 'heading',
-  h5: 'heading',
-  h6: 'heading',
-  ul: 'list',
-  ol: 'list',
-  li: 'listitem',
-  table: 'table',
-  tr: 'row',
-  td: 'cell',
-  th: 'columnheader',
-} as const satisfies Partial<Record<IntrinsicTag, string>>
+type Tag = keyof typeof IMPLICIT_ROLE_RECORD
 
-export type ImplicitRoleMap = typeof IMPLICIT_ROLE_RECORD
-type Tag = keyof ImplicitRoleMap
-type Role = ImplicitRoleMap[Tag]
-
-export function getImplicitRole(tag: IntrinsicTag): Role | undefined {
+// Returns the implicit ARIA role for a tag, optionally informed by props for
+// elements whose role depends on attributes (input[type=...], section, form).
+export function getImplicitRole(tag: IntrinsicTag, props?: IntrinsicProps): string | undefined {
   if (tag in IMPLICIT_ROLE_RECORD) return IMPLICIT_ROLE_RECORD[tag as Tag]
+  if (tag === 'input') return getInputImplicitRole(props?.type as string | undefined)
+  if (tag === 'section' || tag === 'form') {
+    return getConditionalImplicitRole(tag, props?.['aria-label'], props?.['aria-labelledby'])
+  }
   return undefined
 }
