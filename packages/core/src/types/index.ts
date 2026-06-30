@@ -32,7 +32,7 @@ export type {
   ExtractPluginProps,
   OwnedPropKeys,
   PluginInstance,
-} from './class-plugin'
+} from '@praxis-kit/primitive/types'
 export type {
   CompoundVariant,
   CVACompounds,
@@ -48,7 +48,7 @@ export type {
   PropNormalizer,
   StylingOptions,
 } from './factory-options'
-export type { NonEmptyArray } from './non-empty-array'
+export type { NonEmptyArray } from '@praxis-kit/primitive/types'
 export type {
   AllowedOf,
   DefaultOf,
@@ -57,20 +57,18 @@ export type {
   PropsOf,
   VariantsOf,
 } from './polymorphic-generics'
-export type { PolymorphicRuntime, ResolveTagFn } from './polymorphic-runtime'
+export type { PolymorphicRuntime, ResolveTagFn } from '@praxis-kit/primitive/types'
 export type {
   AnyRecord,
-  AriaRole,
   ClassName,
   DefaultProps,
   ElementType,
   EmptyRecord,
-  IntrinsicProps,
   IntrinsicTag,
-  KnownAriaRole,
-  PropsWithRole,
-} from './primitives'
-export type { ResolvedFactoryOptions } from './resolved-factory-options'
+} from '@praxis-kit/primitive/types'
+export type { IntrinsicProps, PropsWithRole } from '@praxis-kit/primitive/types/primitives'
+export type { AriaRole, KnownAriaRole } from '@praxis-kit/contract/types'
+export type { ResolvedFactoryOptions } from '@praxis-kit/primitive/types'
 export type { ResolveInput, ResolveOutput, ResolverOptions } from './resolver'
 export type {
   EvaluationContext,
@@ -85,4 +83,4 @@ export type {
   VariantProps,
   VariantSelection,
   VariantValue,
-} from './variant'
+} from '@praxis-kit/primitive/types'

@@ -4,7 +4,7 @@ export { resolveTag, makeResolveTag } from '@praxis-kit/primitive'
 export { mergeProps, cn, assertNever } from '@praxis-kit/primitive'
 export { createPolymorphic } from './factory/create-polymorphic'
 export type { ResolveTagFn } from './types'
-export { isKnownAriaRole, hasRole, KNOWN_ARIA_ROLES } from './types/aria-role'
+export { isKnownAriaRole, hasRole, KNOWN_ARIA_ROLES } from '@praxis-kit/contract/types'
 export type {
   AnyRecord,
   AriaRole,

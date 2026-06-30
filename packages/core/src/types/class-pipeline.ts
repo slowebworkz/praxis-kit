@@ -1,4 +1,4 @@
-import type { AnyRecord, ClassName } from './primitives'
+import type { AnyRecord, ClassName } from '@praxis-kit/primitive/types'
 
 /**
  * The resolved class-computation function produced by `createClassPipeline`.
