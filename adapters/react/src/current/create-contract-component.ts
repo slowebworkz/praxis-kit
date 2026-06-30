@@ -110,7 +110,7 @@ export function createContractComponent<
   const ariaEngine =
     options.enforcement !== undefined ? new AriaPolicyEngine(resolved.diagnostics) : undefined
 
-  const slotValidator = new SlotValidator(displayName, resolved.diagnostics)
+  const slotValidator = new SlotValidator(displayName, resolved.diagnostics, 'React element')
   const renderAsChild = makeRenderAsChild(cloneSlotChild)
 
   function Component({ ref, ...props }: UnknownProps & { ref?: Ref<unknown> }): ReactElement {

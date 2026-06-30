@@ -111,7 +111,7 @@ export function createContractComponent<
   const ariaEngine =
     options.enforcement !== undefined ? new AriaPolicyEngine(resolved.diagnostics) : undefined
 
-  const slotValidator = new SlotValidator(displayName, resolved.diagnostics)
+  const slotValidator = new SlotValidator(displayName, resolved.diagnostics, 'React element')
   const renderAsChild = makeRenderAsChild(cloneSlotChild)
 
   // React 18: ref is not available as a plain prop — forwardRef is required.
