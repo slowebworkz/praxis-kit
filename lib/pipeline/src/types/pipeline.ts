@@ -1,6 +1,6 @@
 import type { MergeStrategy } from '@pk2/pipeline'
 import type { PipelineNode } from './pipeline-node'
-import type { PipelineStrategy } from './pipeline-strategy'
+import type { PipelineStrategy } from './primitives'
 
 export interface Pipeline<TContext> {
   readonly name: string

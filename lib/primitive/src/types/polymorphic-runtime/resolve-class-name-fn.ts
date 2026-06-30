@@ -1,5 +1,4 @@
-import type { ClassName, ElementType } from '../primitives'
-import type { AnyRecord } from '../primitives/any-record'
+import type { ClassName, ElementType, AnyRecord  } from '../primitives'
 
 export type ResolveClassNameFn<Props extends AnyRecord, TSlot extends string = never> = (
   tag: ElementType,

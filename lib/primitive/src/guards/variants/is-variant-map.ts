@@ -1,5 +1,5 @@
 import type { VariantMap } from '../../types'
-import { isRecord } from '../foundational/is-record'
+import { isRecord } from '../foundational'
 
 export function isVariantMap(value: unknown): value is VariantMap {
   if (!isRecord(value)) return false

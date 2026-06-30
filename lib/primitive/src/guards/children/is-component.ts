@@ -1,5 +1,5 @@
 import { isObject } from '../../utils/is-object'
-import { isString } from '../foundational/is-string'
+import { isString } from '../foundational'
 import { COMPONENT_ID, createComponentId } from './component-id'
 import type { RestrictedPropertyKey } from '../../types'
 

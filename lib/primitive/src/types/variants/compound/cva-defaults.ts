@@ -1,5 +1,4 @@
-import type { DefaultVariants } from '../variant-props'
-import type { VariantMap } from '../variant-map'
+import type { DefaultVariants, VariantMap  } from '..'
 
 export interface CVADefaults<V extends VariantMap> {
   defaultVariants?: DefaultVariants<V>

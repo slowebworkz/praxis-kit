@@ -1,1 +1,2 @@
-export type AnyRecord = Record<string, unknown>
+export type StringMap<T = unknown> = Record<string, T>
+export type AnyRecord = StringMap<unknown>

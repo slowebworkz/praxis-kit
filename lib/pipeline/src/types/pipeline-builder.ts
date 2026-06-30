@@ -1,6 +1,6 @@
 import type { MergeStrategy } from '@pk2/pipeline'
 import type { Pipeline } from './pipeline'
-import type { PipelineStrategy } from './pipeline-strategy'
+import type { PipelineStrategy } from './primitives'
 import type { Plugin } from './plugin'
 import type { Processor } from './processor'
 

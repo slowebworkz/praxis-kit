@@ -1,4 +1,4 @@
-import type { VariantMap } from '../variants/variant-map'
+import type { VariantMap } from '../variants'
 import type { RecipeOptions } from './recipe-options'
 import type { TagMapOptions } from './tag-map-options'
 import type { Simplify } from 'type-fest'

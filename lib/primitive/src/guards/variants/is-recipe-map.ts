@@ -1,5 +1,5 @@
 import type { RecipeMap } from '../../types'
-import { isRecord } from '../foundational/is-record'
+import { isRecord } from '../foundational'
 import { isVariantSelection } from './is-variant-selection'
 
 export function isRecipeMap(value: unknown): value is RecipeMap {

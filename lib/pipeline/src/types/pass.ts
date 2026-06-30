@@ -1,4 +1,4 @@
-import type { MaybePromise } from './maybe-promise'
+import type { MaybePromise } from './primitives'
 import type { PassResult } from './pass-result'
 
 export interface Pass<TContext> {
