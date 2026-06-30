@@ -1,5 +1,5 @@
 import { cloneElement } from 'preact'
-import type { NodeId } from '@pk2/foundation'
+import type { NodeId } from '@pk2/pipeline'
 import type { ComponentDefinition, NodeDecoration } from '@pk2/core'
 import { buildRenderContext, buildTreeContext, renderComponent } from '@pk2/core'
 import { preactBackend } from '@pk2/preact'

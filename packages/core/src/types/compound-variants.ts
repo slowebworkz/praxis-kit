@@ -4,4 +4,4 @@ export type {
   CVAConfig,
   CVADefaults,
   CVAVariants,
-} from '@praxis-kit/shared/types'
+} from '@praxis-kit/primitive/types'

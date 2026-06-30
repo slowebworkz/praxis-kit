@@ -5,4 +5,4 @@ export type {
   ResolvePropsFn,
   ResolveTagFn,
   RuntimePluginField,
-} from '@praxis-kit/shared/types'
+} from '@praxis-kit/primitive/types'

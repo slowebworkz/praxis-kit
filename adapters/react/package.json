@@ -47,7 +47,7 @@
     "vitest": "catalog:",
     "@praxis-kit/core": "workspace:*",
     "@pk2/core": "workspace:*",
-    "@pk2/foundation": "workspace:*",
+    "@pk2/pipeline": "workspace:*",
     "@pk2/react": "workspace:*",
     "@pk2/style": "workspace:*"
   },

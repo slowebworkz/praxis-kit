@@ -1,6 +1,6 @@
 import type { NodeDecoration } from '@pk2/core'
 import { getActiveProps } from '@pk2/core'
-import type { NodeId, DefaultMap  } from '@pk2/foundation'
+import type { NodeId, DefaultMap } from '@pk2/pipeline'
 import type { VariantConfig } from '@pk2/style'
 import { buildPrecomputedKey, createVariantPass } from '@pk2/style'
 import type { CompoundRecord, Defaults } from './build-variant-config'

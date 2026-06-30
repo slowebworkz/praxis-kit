@@ -1,4 +1,4 @@
-import type { NodeId } from '@pk2/foundation'
+import type { NodeId } from '@pk2/pipeline'
 
 export type Listener = (...args: unknown[]) => void
 

@@ -1,5 +1,4 @@
-import type { MergeStrategy } from '@pk2/merge'
-import type { Pipeline } from '@pk2/pipeline'
+import type { MergeStrategy, Pipeline  } from '@pk2/pipeline'
 import { createPipeline, isPass } from '@pk2/pipeline'
 import type { StyleContext } from '@pk2/style'
 import { basePass, focusPass, hoverPass, styleMergeStrategy } from '@pk2/style'

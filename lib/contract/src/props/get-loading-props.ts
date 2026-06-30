@@ -1,4 +1,4 @@
-import type { PropNormalizer } from '@praxis-kit/shared/types'
+import type { PropNormalizer } from '@praxis-kit/primitive/types'
 
 export const loadingProps: PropNormalizer = ({
   loading,

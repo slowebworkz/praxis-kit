@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import type { ClassValue } from 'clsx'
-import { isRecord } from '@praxis-kit/shared/guards/foundational'
+import { isPlainObject as isRecord } from '@praxis-kit/primitive'
 
 export const PROP_MERGE_POLICIES = ['chain', 'concat', 'shallow-merge', 'child-wins'] as const
 export type PropMergePolicy = (typeof PROP_MERGE_POLICIES)[number]

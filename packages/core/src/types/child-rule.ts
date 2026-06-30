@@ -5,7 +5,7 @@ export type {
   ChildRuleMatch,
   ChildRulePosition,
   NormalizedChildRule,
-} from '@praxis-kit/shared/types'
+} from '@praxis-kit/primitive/types'
 
 type IndexSet = ReadonlySet<number>
 type IndexMap = ReadonlyMap<number, IndexSet>

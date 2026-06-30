@@ -7,4 +7,4 @@ export type {
   RecipeTarget,
   StyleOptions,
   TagMapOptions,
-} from '@praxis-kit/shared/types'
+} from '@praxis-kit/primitive/types'

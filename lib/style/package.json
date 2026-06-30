@@ -1,0 +1,24 @@
+{
+  "name": "@pk2/style",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "@pk2/pipeline": "workspace:*",
+    "@pk2/pipeline": "workspace:*",
+    "@pk2/pipeline": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
+}

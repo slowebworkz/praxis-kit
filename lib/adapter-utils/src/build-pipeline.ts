@@ -1,5 +1,5 @@
 import type { NodeDecoration } from '@pk2/core'
-import type { NodeId } from '@pk2/foundation'
+import type { NodeId } from '@pk2/pipeline'
 import type { CompoundRecord, Defaults, PresetRecord, VariantRecord } from './build-variant-config'
 import { buildVariantConfig } from './build-variant-config'
 import type { ClassResolution } from './resolve-classes'

@@ -4,4 +4,4 @@ export type {
   ExtractPluginProps,
   OwnedPropKeys,
   PluginInstance,
-} from '@praxis-kit/shared/types'
+} from '@praxis-kit/primitive/types'

@@ -1,4 +1,4 @@
-import type { NodeId } from '@pk2/foundation'
+import type { NodeId } from '@pk2/pipeline'
 import type { NodeDecoration } from '@pk2/core'
 import type { FilterPredicate } from './types'
 import { withAttributes } from './decoration-utils'

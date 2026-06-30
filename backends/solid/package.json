@@ -13,7 +13,7 @@
   "dependencies": {
     "@pk2/backend-utils": "workspace:*",
     "@pk2/core": "workspace:*",
-    "@pk2/foundation": "workspace:*"
+    "@pk2/pipeline": "workspace:*"
   },
   "peerDependencies": {
     "solid-js": ">=1.6"

@@ -1,5 +1,5 @@
 import type { Linter } from 'eslint'
-import praxisPlugin from '../packages/eslint-plugin/src/index'
+import praxisPlugin from '../plugins/eslint/src/index'
 
 type EslintPlugin = NonNullable<Linter.Config['plugins']>[string]
 

@@ -5,11 +5,10 @@ import type {
   Diagnostic,
   MetadataMap,
   SlotName,
-  VariantMap,
-} from '@pk2/foundation'
-import { isObject } from '@pk2/foundation'
+  VariantMap, MergeStrategy 
+} from '@pk2/pipeline'
+import { isObject } from '@pk2/pipeline'
 import { iterate } from '@praxis-kit/primitive'
-import type { MergeStrategy } from '@pk2/merge'
 import type { CompilerContext } from './types'
 
 // ─── Domain merge functions ───────────────────────────────────────────────────

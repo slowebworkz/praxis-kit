@@ -2,7 +2,7 @@ import React from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
 import type { NodeDecoration } from '@pk2/core'
-import type { NodeId } from '@pk2/foundation'
+import type { NodeId } from '@pk2/pipeline'
 import { extractDecoration } from './extract-decoration'
 import { fromChildren, fromReactElement } from './from-react-element'
 

@@ -1,4 +1,4 @@
-import type { NodeId } from '@pk2/foundation'
+import type { NodeId } from '@pk2/pipeline'
 
 export interface ComponentIdentity {
   id: NodeId

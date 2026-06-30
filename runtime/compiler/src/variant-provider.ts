@@ -1,5 +1,4 @@
-import type { Pass, PipelineProvider } from '@pk2/pipeline'
-import type { VariantMap } from '@pk2/foundation'
+import type { Pass, PipelineProvider, VariantMap  } from '@pk2/pipeline'
 import type { CompilerContext } from './types'
 import { contributeVariants } from './passes'
 

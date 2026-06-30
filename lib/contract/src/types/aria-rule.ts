@@ -11,6 +11,6 @@ export type {
   FixKind,
   RemoveAttributeFixKind,
   Severity,
-} from '@praxis-kit/shared/types'
+} from '@praxis-kit/primitive/types'
 
-export type { ValidResult } from '@praxis-kit/shared/types'
+export type { ValidResult } from '@praxis-kit/primitive/types'

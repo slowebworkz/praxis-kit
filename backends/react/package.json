@@ -15,7 +15,7 @@
   "dependencies": {
     "@pk2/backend-utils": "workspace:*",
     "@pk2/core": "workspace:*",
-    "@pk2/foundation": "workspace:*",
+    "@pk2/pipeline": "workspace:*",
     "@praxis-kit/primitive": "workspace:*"
   },
   "peerDependencies": {

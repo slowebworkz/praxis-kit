@@ -1,6 +1,6 @@
 import { cloneElement } from 'react'
 import type { ReactElement, ReactNode } from 'react'
-import type { NodeId } from '@pk2/foundation'
+import type { NodeId } from '@pk2/pipeline'
 import type { ComponentDefinition, NodeDecoration } from '@pk2/core'
 import { buildRenderContext, buildTreeContext, renderComponent } from '@pk2/core'
 import { reactBackend } from '@pk2/react'

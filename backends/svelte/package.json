@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@pk2/core": "workspace:*",
-    "@pk2/foundation": "workspace:*"
+    "@pk2/pipeline": "workspace:*"
   },
   "peerDependencies": {
     "svelte": ">=5.0"

@@ -1,6 +1,6 @@
 import { Children, isValidElement } from 'react'
 import type { ReactElement, ReactNode } from 'react'
-import type { NodeId, SlotName } from '@pk2/foundation'
+import type { NodeId, SlotName } from '@pk2/pipeline'
 import type { NodeDecoration, NodeInput } from '@pk2/core'
 import { extractDecoration } from './extract-decoration'
 

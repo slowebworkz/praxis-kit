@@ -1,4 +1,4 @@
-import type { CapabilityMap, Diagnostic, SlotName, VariantMap } from '@pk2/foundation'
+import type { CapabilityMap, Diagnostic, SlotName, VariantMap } from '@pk2/pipeline'
 import type { ComponentDefinition } from '@pk2/core'
 
 export interface SourceLocation {

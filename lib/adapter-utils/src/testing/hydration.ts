@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, it, expect } from 'vitest'
-import type { AnyRecord } from '@pk2/foundation'
+import type { AnyRecord } from '@pk2/pipeline'
 import { iterate } from '@praxis-kit/primitive'
 import type { ConformanceComponent, ConformanceFactoryOptions } from './types'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
