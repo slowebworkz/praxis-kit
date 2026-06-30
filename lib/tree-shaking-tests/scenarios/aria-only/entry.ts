@@ -3,7 +3,7 @@
  * No Tailwind pipeline, no other framework adapter should appear.
  */
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
-import { createAriaEnforcedComponent } from '@praxis-kit/react'
+import { createContractComponent } from '@praxis-kit/react'
 import type { AriaRule } from '@praxis-kit/core/contract'
 
 const requireAriaLabel: AriaRule = ({ props }) =>
@@ -11,7 +11,7 @@ const requireAriaLabel: AriaRule = ({ props }) =>
     ? [{ valid: true }]
     : [{ valid: false, severity: 'warning', fixable: false, message: 'Missing accessible label' }]
 
-export const Button = createAriaEnforcedComponent({
+export const Button = createContractComponent({
   tag: 'button',
   name: 'Button',
   enforcement: {

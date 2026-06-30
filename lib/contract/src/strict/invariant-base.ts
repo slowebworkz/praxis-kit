@@ -25,6 +25,3 @@ export abstract class InvariantBase {
     if (!condition) this.violate(input)
   }
 }
-
-/** @deprecated Use InvariantBase. Alias kept for backward compatibility. */
-export { InvariantBase as StrictBase }

@@ -1,7 +1,6 @@
 export type * from './primitives'
 
 export type * from './capabilities'
-export type * from './config'
 export type * from './contracts'
 export type * from './validation'
 export type * from './variants'
