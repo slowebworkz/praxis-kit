@@ -122,7 +122,7 @@ describe('report()', () => {
         },
       ]),
     ).not.toThrow()
-    // false-mode policy ignores all — verified by strict-bridge tests
+    // false-mode policy ignores all — verified by strict-compat tests
   })
 
   it('does not throw for error-severity violations when strict is "warn"', () => {

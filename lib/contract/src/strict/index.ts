@@ -1,2 +1,2 @@
 export { InvariantBase, InvariantBase as StrictBase } from './invariant-base'
-export { diagnosticsFromStrictMode } from './strict-bridge'
+export { diagnosticsFromStrictMode } from './strict-compat'

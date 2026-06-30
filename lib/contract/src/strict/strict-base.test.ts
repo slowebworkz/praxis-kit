@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { InvariantBase } from './invariant-base'
-import { diagnosticsFromStrictMode } from './strict-bridge'
+import { diagnosticsFromStrictMode } from './strict-compat'
 import {
   CollectingReporter,
   Diagnostics,
@@ -64,7 +64,7 @@ describe('InvariantBase.violate()', () => {
   it('is silent when strict is false', () => {
     const s = new TestInvariant(diagnosticsFromStrictMode(false))
     expect(() => s.callViolate('msg')).not.toThrow()
-    // false-mode policy ignores all — verified by strict-bridge tests
+    // false-mode policy ignores all — verified by strict-compat tests
   })
 
   it('warns when strict is "warn"', () => {
