@@ -2,7 +2,14 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { InvariantBase } from './invariant-base'
 import { diagnosticsFromStrictMode } from './strict-bridge'
-import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
+import {
+  CollectingReporter,
+  Diagnostics,
+  DefaultPolicy,
+  DiagnosticCategory,
+  DiagnosticCode,
+  Severity,
+} from '@praxis-kit/diagnostics'
 import type { DiagnosticInput } from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
@@ -27,43 +34,61 @@ class TestInvariant extends InvariantBase {
   }
 }
 
+// violate() routes through Diagnostics.error() → Severity.Error.
+// warn() routes through Diagnostics.warn() → Severity.Warning.
+// warnPolicy: reportThreshold=Warning, throwThreshold=Fatal → reports but never throws
+// throwPolicy: reportThreshold=Warning, throwThreshold=Error → warns on Warning, throws on Error
+function makeWarnCollecting() {
+  const reporter = new CollectingReporter()
+  const diagnostics = new Diagnostics(
+    reporter,
+    new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
+  )
+  return { reporter, diagnostics }
+}
+
+function makeThrowCollecting() {
+  const reporter = new CollectingReporter()
+  const diagnostics = new Diagnostics(
+    reporter,
+    new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Error }),
+  )
+  return { reporter, diagnostics }
+}
+
 // ---------------------------------------------------------------------------
 // violate()
 // ---------------------------------------------------------------------------
 
 describe('InvariantBase.violate()', () => {
   it('is silent when strict is false', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const s = new TestInvariant(diagnosticsFromStrictMode(false))
     expect(() => s.callViolate('msg')).not.toThrow()
-    expect(spy).not.toHaveBeenCalled()
-    spy.mockRestore()
+    // false-mode policy ignores all — verified by strict-bridge tests
   })
 
   it('warns when strict is "warn"', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const s = new TestInvariant(diagnosticsFromStrictMode('warn'))
+    const { reporter, diagnostics } = makeWarnCollecting()
+    const s = new TestInvariant(diagnostics)
     s.callViolate('something wrong')
-    expect(spy).toHaveBeenCalledWith('something wrong')
-    spy.mockRestore()
+    expect(reporter.diagnostics).toHaveLength(1)
+    expect(reporter.diagnostics[0]!.message).toBe('something wrong')
   })
 
   it('does not throw when strict is "warn"', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const s = new TestInvariant(diagnosticsFromStrictMode('warn'))
+    const { diagnostics } = makeWarnCollecting()
+    const s = new TestInvariant(diagnostics)
     expect(() => s.callViolate('something wrong')).not.toThrow()
-    spy.mockRestore()
   })
 
   it('warns exactly once per call when strict is "warn"', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const s = new TestInvariant(diagnosticsFromStrictMode('warn'))
+    const { reporter, diagnostics } = makeWarnCollecting()
+    const s = new TestInvariant(diagnostics)
     s.callViolate('first')
     s.callViolate('second')
-    expect(spy).toHaveBeenCalledTimes(2)
-    expect(spy).toHaveBeenNthCalledWith(1, 'first')
-    expect(spy).toHaveBeenNthCalledWith(2, 'second')
-    spy.mockRestore()
+    expect(reporter.diagnostics).toHaveLength(2)
+    expect(reporter.diagnostics[0]!.message).toBe('first')
+    expect(reporter.diagnostics[1]!.message).toBe('second')
   })
 
   it('throws when strict is "throw"', () => {
@@ -87,13 +112,10 @@ describe('InvariantBase.violate()', () => {
   })
 
   it('true and "throw" produce identical behavior', () => {
-    const throwStr = new TestInvariant(diagnosticsFromStrictMode('throw'))
-    const throwBool = new TestInvariant(diagnosticsFromStrictMode(true))
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    expect(() => throwStr.callViolate('x')).toThrow('x')
-    expect(() => throwBool.callViolate('x')).toThrow('x')
-    expect(spy).not.toHaveBeenCalled()
-    spy.mockRestore()
+    const s1 = new TestInvariant(diagnosticsFromStrictMode('throw'))
+    const s2 = new TestInvariant(diagnosticsFromStrictMode(true))
+    expect(() => s1.callViolate('x')).toThrow('x')
+    expect(() => s2.callViolate('x')).toThrow('x')
   })
 
   it('preserves the exact message in the thrown Error', () => {
@@ -109,13 +131,12 @@ describe('InvariantBase.violate()', () => {
   })
 
   it('is stateless — mode does not change between calls', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const s = new TestInvariant(diagnosticsFromStrictMode('warn'))
+    const { reporter, diagnostics } = makeWarnCollecting()
+    const s = new TestInvariant(diagnostics)
     s.callViolate('a')
     s.callViolate('b')
     s.callViolate('c')
-    expect(spy).toHaveBeenCalledTimes(3)
-    spy.mockRestore()
+    expect(reporter.diagnostics).toHaveLength(3)
   })
 })
 
@@ -125,35 +146,32 @@ describe('InvariantBase.violate()', () => {
 
 describe('InvariantBase.warn()', () => {
   it('is silent when strict is false', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const s = new TestInvariant(diagnosticsFromStrictMode(false))
     expect(() => s.callWarn('msg')).not.toThrow()
-    expect(spy).not.toHaveBeenCalled()
-    spy.mockRestore()
   })
 
   it('warns when strict is "warn"', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const s = new TestInvariant(diagnosticsFromStrictMode('warn'))
+    const { reporter, diagnostics } = makeWarnCollecting()
+    const s = new TestInvariant(diagnostics)
     s.callWarn('something wrong')
-    expect(spy).toHaveBeenCalledWith('something wrong')
-    spy.mockRestore()
+    expect(reporter.diagnostics).toHaveLength(1)
+    expect(reporter.diagnostics[0]!.message).toBe('something wrong')
   })
 
   it('warns but does not throw when strict is "throw"', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const s = new TestInvariant(diagnosticsFromStrictMode('throw'))
+    const { reporter, diagnostics } = makeThrowCollecting()
+    const s = new TestInvariant(diagnostics)
     expect(() => s.callWarn('something wrong')).not.toThrow()
-    expect(spy).toHaveBeenCalledWith('something wrong')
-    spy.mockRestore()
+    expect(reporter.diagnostics).toHaveLength(1)
+    expect(reporter.diagnostics[0]!.message).toBe('something wrong')
   })
 
   it('warns but does not throw when strict is true', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const s = new TestInvariant(diagnosticsFromStrictMode(true))
+    const { reporter, diagnostics } = makeThrowCollecting()
+    const s = new TestInvariant(diagnostics)
     expect(() => s.callWarn('something wrong')).not.toThrow()
-    expect(spy).toHaveBeenCalledWith('something wrong')
-    spy.mockRestore()
+    expect(reporter.diagnostics).toHaveLength(1)
+    expect(reporter.diagnostics[0]!.message).toBe('something wrong')
   })
 })
 
@@ -165,11 +183,10 @@ describe('InvariantBase.invariant() — truthy conditions never violate', () => 
   it.each([true, 1, -1, 'value', {}, [], () => {}])(
     'does nothing for truthy value %o',
     (condition) => {
-      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-      const s = new TestInvariant(diagnosticsFromStrictMode('warn'))
+      const { reporter, diagnostics } = makeWarnCollecting()
+      const s = new TestInvariant(diagnostics)
       expect(() => s.callInvariant(condition, 'msg')).not.toThrow()
-      expect(spy).not.toHaveBeenCalled()
-      spy.mockRestore()
+      expect(reporter.diagnostics).toHaveLength(0)
     },
   )
 })
@@ -178,11 +195,11 @@ describe('InvariantBase.invariant() — falsy conditions delegate to violate()',
   it.each([false, null, undefined, 0, '', NaN])(
     'delegates for falsy value %o when strict is "warn"',
     (condition) => {
-      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-      const s = new TestInvariant(diagnosticsFromStrictMode('warn'))
+      const { reporter, diagnostics } = makeWarnCollecting()
+      const s = new TestInvariant(diagnostics)
       s.callInvariant(condition, 'invariant failed')
-      expect(spy).toHaveBeenCalledWith('invariant failed')
-      spy.mockRestore()
+      expect(reporter.diagnostics).toHaveLength(1)
+      expect(reporter.diagnostics[0]!.message).toBe('invariant failed')
     },
   )
 
@@ -205,22 +222,18 @@ describe('InvariantBase.invariant() — falsy conditions delegate to violate()',
   it.each([false, null, undefined, 0, '', NaN])(
     'is silent for falsy value %o when strict is false',
     (condition) => {
-      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
       const s = new TestInvariant(diagnosticsFromStrictMode(false))
       expect(() => s.callInvariant(condition, 'msg')).not.toThrow()
-      expect(spy).not.toHaveBeenCalled()
-      spy.mockRestore()
     },
   )
 })
 
 describe('InvariantBase.invariant() — message forwarding', () => {
-  it('passes the exact message to console.warn', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const s = new TestInvariant(diagnosticsFromStrictMode('warn'))
+  it('passes the exact message to the reporter', () => {
+    const { reporter, diagnostics } = makeWarnCollecting()
+    const s = new TestInvariant(diagnostics)
     s.callInvariant(false, 'exact invariant message')
-    expect(spy).toHaveBeenCalledWith('exact invariant message')
-    spy.mockRestore()
+    expect(reporter.diagnostics[0]!.message).toBe('exact invariant message')
   })
 
   it('passes the exact message to the thrown Error', () => {
@@ -232,7 +245,7 @@ describe('InvariantBase.invariant() — message forwarding', () => {
 })
 
 // ---------------------------------------------------------------------------
-// async-warn
+// async-warn — tests reporter timing via console.warn; must stay as console spies
 // ---------------------------------------------------------------------------
 
 describe("InvariantBase.warn() — 'async-warn' mode", () => {

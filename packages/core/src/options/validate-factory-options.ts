@@ -3,20 +3,14 @@ import type {
   ElementType,
   RecipeMap,
   ResolvedFactoryOptions,
-  StrictMode,
   VariantMap,
 } from '../types'
 import { iterate } from '@praxis-kit/primitive'
-import { ContractDiagnostics, diagnosticsFromStrictMode } from '@praxis-kit/contract'
-
-// Construction-time warnings are one-shot — async deferral is unnecessary.
-// Map 'async-warn' → 'warn' so warnings surface synchronously here.
-function effectiveStrict(strict: StrictMode): StrictMode {
-  return strict === 'async-warn' ? 'warn' : strict
-}
+import { ContractDiagnostics } from '@praxis-kit/contract'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 
 /**
- * Construction-time validation of the variant surface, gated on `strict`.
+ * Construction-time validation of the variant surface.
  *
  * A `presets` selection or `defaults` entry that references a variant key — or a
  * value of a key — not declared in `variants` resolves to no class at runtime,
@@ -33,11 +27,8 @@ export function validateFactoryOptions<
   Props extends AnyRecord,
   V extends Readonly<VariantMap>,
   TPreset extends RecipeMap<V>,
->(resolved: ResolvedFactoryOptions<TDefault, Props, V, TPreset>): void {
-  const { strict } = resolved
-  if (!strict) return
-
-  const diagnostics = diagnosticsFromStrictMode(effectiveStrict(strict))
+>(resolved: ResolvedFactoryOptions<TDefault, Props, V, TPreset>, diagnostics: Diagnostics): void {
+  if (!resolved.strict) return
   const name = resolved.displayName ?? 'Component'
   const { variants } = resolved
 

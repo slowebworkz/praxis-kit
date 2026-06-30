@@ -130,8 +130,12 @@ export function createPolymorphic<
         })
       : baseResolved
   // Construction-time contract check — dev-only (tree-shaken from production) and
-  // further gated on `strict` inside.
-  if (process.env.NODE_ENV !== 'production') validateFactoryOptions(resolved)
+  // further gated on `strict` inside. async-warn → warn: one-shot warnings don't
+  // need deferral.
+  if (process.env.NODE_ENV !== 'production') {
+    const factoryStrict = resolved.strict === 'async-warn' ? 'warn' : resolved.strict
+    validateFactoryOptions(resolved, diagnosticsFromStrictMode(factoryStrict))
+  }
   const { pluginResult, classPipeline } = resolveClassPipeline(
     options,
     resolved,

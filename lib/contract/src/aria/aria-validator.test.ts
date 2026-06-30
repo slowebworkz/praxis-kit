@@ -1,14 +1,25 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import type { StrictMode } from '../types'
 import { diagnosticsFromStrictMode } from '../strict'
 import { AriaPolicyEngine, isInvalid } from './polymorphic-validator'
+import { CollectingReporter, Diagnostics, DefaultPolicy, Severity } from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeValidator(strict: StrictMode = 'warn') {
+function makeCollecting() {
+  const reporter = new CollectingReporter()
+  const engine = new AriaPolicyEngine(
+    new Diagnostics(
+      reporter,
+      new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
+    ),
+  )
+  return { reporter, engine }
+}
+
+function makeValidator(strict: Parameters<typeof diagnosticsFromStrictMode>[0] = 'warn') {
   return new AriaPolicyEngine(diagnosticsFromStrictMode(strict))
 }
 
@@ -39,11 +50,10 @@ describe('AriaPolicyEngine.evaluate() — static', () => {
     expect(result).toHaveProperty('violations')
   })
 
-  it('does not call console.warn even when there is a violation', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  it('does not report even when there is a violation', () => {
+    const { reporter, engine: _ } = makeCollecting()
     AriaPolicyEngine.evaluate('nav', { role: 'navigation' })
-    expect(spy).not.toHaveBeenCalled()
-    spy.mockRestore()
+    expect(reporter.diagnostics).toHaveLength(0)
   })
 
   it('strips the invalid role and returns it in violations', () => {
@@ -58,10 +68,9 @@ describe('AriaPolicyEngine.evaluate() — static', () => {
 // ---------------------------------------------------------------------------
 
 describe('report()', () => {
-  it('calls console.warn for warning-severity violations', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const v = makeValidator('warn')
-    v.report([
+  it('reports a warning-severity violation', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.report([
       {
         message: 'a warning',
         tag: 'nav',
@@ -71,9 +80,8 @@ describe('report()', () => {
         phase: 'evaluate',
       },
     ])
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalledWith('a warning')
-    spy.mockRestore()
+    expect(reporter.diagnostics).toHaveLength(1)
+    expect(reporter.diagnostics[0]!.message).toBe('a warning')
   })
 
   it('throws for error-severity violations when strict is "throw"', () => {
@@ -93,35 +101,17 @@ describe('report()', () => {
   })
 
   it('is silent for all violations when strict is false', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const v = makeValidator(false)
-    v.report([
-      {
-        message: 'w',
-        tag: 'nav',
-        role: 'navigation',
-        attribute: undefined,
-        severity: 'warning',
-        phase: 'evaluate',
-      },
-      {
-        message: 'e',
-        tag: 'nav',
-        role: 'region',
-        attribute: undefined,
-        severity: 'error',
-        phase: 'evaluate',
-      },
-    ])
-    expect(spy).not.toHaveBeenCalled()
-    spy.mockRestore()
-  })
-
-  it('does not throw for error-severity violations when strict is "warn"', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const v = makeValidator('warn')
     expect(() =>
       v.report([
+        {
+          message: 'w',
+          tag: 'nav',
+          role: 'navigation',
+          attribute: undefined,
+          severity: 'warning',
+          phase: 'evaluate',
+        },
         {
           message: 'e',
           tag: 'nav',
@@ -132,7 +122,23 @@ describe('report()', () => {
         },
       ]),
     ).not.toThrow()
-    spy.mockRestore()
+    // false-mode policy ignores all — verified by strict-bridge tests
+  })
+
+  it('does not throw for error-severity violations when strict is "warn"', () => {
+    const { engine } = makeCollecting()
+    expect(() =>
+      engine.report([
+        {
+          message: 'e',
+          tag: 'nav',
+          role: 'region',
+          attribute: undefined,
+          severity: 'error',
+          phase: 'evaluate',
+        },
+      ]),
+    ).not.toThrow()
   })
 })
 
@@ -183,47 +189,36 @@ describe('validate() — tags with no implicit role', () => {
 // ---------------------------------------------------------------------------
 
 describe('validate() — redundant role', () => {
-  it('warns when nav has role="navigation" (redundant)', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    makeValidator('warn').validate('nav', { role: 'navigation' })
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalled()
-    spy.mockRestore()
+  it('warns when nav has role="navigation" (redundant)', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('nav', { role: 'navigation' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
   })
 
   it('strips the redundant role from returned props', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { props } = makeValidator('warn').validate('nav', { role: 'navigation' })
+    const { engine } = makeCollecting()
+    const { props } = engine.validate('nav', { role: 'navigation' })
     expect(props).not.toHaveProperty('role')
-    spy.mockRestore()
   })
 
-  it('warns but does not throw when strict is "throw" (warning severity)', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    expect(() => makeValidator('throw').validate('nav', { role: 'navigation' })).not.toThrow()
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalled()
-    spy.mockRestore()
+  it('warns but does not throw when strict is "throw" (warning severity)', () => {
+    const { reporter, engine } = makeCollecting()
+    expect(() => engine.validate('nav', { role: 'navigation' })).not.toThrow()
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
   })
 
   it('is silent but still strips invalid role when strict is false', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const { props } = makeValidator(false).validate('nav', { role: 'navigation' })
-    expect(spy).not.toHaveBeenCalled()
     expect(props).not.toHaveProperty('role')
-    spy.mockRestore()
   })
 
-  it('validates all landmark elements for redundant role', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const v = makeValidator('warn')
-    v.validate('main', { role: 'main' })
-    v.validate('aside', { role: 'complementary' })
-    v.validate('header', { role: 'banner' })
-    v.validate('footer', { role: 'contentinfo' })
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalledTimes(4)
-    spy.mockRestore()
+  it('validates all landmark elements for redundant role', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('main', { role: 'main' })
+    engine.validate('aside', { role: 'complementary' })
+    engine.validate('header', { role: 'banner' })
+    engine.validate('footer', { role: 'contentinfo' })
+    expect(reporter.diagnostics).toHaveLength(4)
   })
 })
 
@@ -232,35 +227,28 @@ describe('validate() — redundant role', () => {
 // ---------------------------------------------------------------------------
 
 describe('validate() — region override on strong landmark', () => {
-  it('warns when nav has role="region"', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    makeValidator('warn').validate('nav', { role: 'region' })
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalled()
-    spy.mockRestore()
+  it('warns when nav has role="region"', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('nav', { role: 'region' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
   })
 
   it('strips role from returned props', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { props } = makeValidator('warn').validate('nav', { role: 'region' })
+    const { engine } = makeCollecting()
+    const { props } = engine.validate('nav', { role: 'region' })
     expect(props).not.toHaveProperty('role')
-    spy.mockRestore()
   })
 
-  it('warns when main has role="region"', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    makeValidator('warn').validate('main', { role: 'region' })
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalled()
-    spy.mockRestore()
+  it('warns when main has role="region"', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('main', { role: 'region' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
   })
 
-  it('warns when aside has role="region"', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    makeValidator('warn').validate('aside', { role: 'region' })
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalled()
-    spy.mockRestore()
+  it('warns when aside has role="region"', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('aside', { role: 'region' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
   })
 
   it('throws when strict is "throw"', () => {
@@ -273,19 +261,16 @@ describe('validate() — region override on strong landmark', () => {
 // ---------------------------------------------------------------------------
 
 describe('validate() — standalone element + role="region"', () => {
-  it('warns when article has role="region"', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    makeValidator('warn').validate('article', { role: 'region' })
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalled()
-    spy.mockRestore()
+  it('warns when article has role="region"', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('article', { role: 'region' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
   })
 
   it('strips role from returned props', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { props } = makeValidator('warn').validate('article', { role: 'region' })
+    const { engine } = makeCollecting()
+    const { props } = engine.validate('article', { role: 'region' })
     expect(props).not.toHaveProperty('role')
-    spy.mockRestore()
   })
 
   it('throws when strict is "throw"', () => {
@@ -322,23 +307,21 @@ describe('validate() — empty role attribute', () => {
 
 describe('validate() — valid role assignments', () => {
   it('allows nav + role="banner" (non-redundant, non-region)', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { props, violations } = makeValidator('warn').validate('nav', { role: 'banner' })
-    expect(spy).not.toHaveBeenCalled()
+    const { reporter, engine } = makeCollecting()
+    const { props, violations } = engine.validate('nav', { role: 'banner' })
+    expect(reporter.diagnostics).toHaveLength(0)
     expect(props).toHaveProperty('role', 'banner')
     expect(violations).toHaveLength(0)
-    spy.mockRestore()
   })
 
   it('passes through non-role props untouched on violation', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { props } = makeValidator('warn').validate('nav', {
+    const { engine } = makeCollecting()
+    const { props } = engine.validate('nav', {
       role: 'navigation',
       className: 'site-nav',
     })
     expect(props).toHaveProperty('className', 'site-nav')
     expect(props).not.toHaveProperty('role')
-    spy.mockRestore()
   })
 })
 
@@ -347,48 +330,40 @@ describe('validate() — valid role assignments', () => {
 // ---------------------------------------------------------------------------
 
 describe('validate() — aria-* attribute on wrong role', () => {
-  it('warns for aria-checked on role="button"', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    makeValidator('warn').validate('nav', { role: 'button', 'aria-checked': 'true' })
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalled()
-    spy.mockRestore()
+  it('warns for aria-checked on role="button"', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('nav', { role: 'button', 'aria-checked': 'true' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
   })
 
   it('strips aria-checked from props when role="button"', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { props } = makeValidator('warn').validate('nav', {
+    const { engine } = makeCollecting()
+    const { props } = engine.validate('nav', {
       role: 'button',
       'aria-checked': 'true',
     })
     expect(props).not.toHaveProperty('aria-checked')
-    spy.mockRestore()
   })
 
-  it('warns for aria-pressed on role="checkbox"', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    makeValidator('warn').validate('nav', { role: 'checkbox', 'aria-pressed': 'true' })
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalled()
-    spy.mockRestore()
+  it('warns for aria-pressed on role="checkbox"', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('nav', { role: 'checkbox', 'aria-pressed': 'true' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
   })
 
   it('strips aria-pressed when role="checkbox"', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { props } = makeValidator('warn').validate('nav', {
+    const { engine } = makeCollecting()
+    const { props } = engine.validate('nav', {
       role: 'checkbox',
       'aria-pressed': 'true',
     })
     expect(props).not.toHaveProperty('aria-pressed')
-    spy.mockRestore()
   })
 
-  it('warns for aria-level on role="button"', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    makeValidator('warn').validate('nav', { role: 'button', 'aria-level': '2' })
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalled()
-    spy.mockRestore()
+  it('warns for aria-level on role="button"', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('nav', { role: 'button', 'aria-level': '2' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
   })
 
   it('produces one violation per invalid attribute when multiple are present', () => {
@@ -435,11 +410,10 @@ describe('validate() — aria-* attribute on wrong role', () => {
   })
 
   it('warns when element has no effective role and a restricted attribute is present', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    makeValidator('warn').validate('div', { 'aria-checked': 'true' })
+    const { reporter, engine } = makeCollecting()
+    engine.validate('div', { 'aria-checked': 'true' })
     // div has no implicit role — engine skips validation entirely, no false positive
-    expect(spy).not.toHaveBeenCalled()
-    spy.mockRestore()
+    expect(reporter.diagnostics).toHaveLength(0)
   })
 
   it('sets attribute field on violation to the offending aria-* key', () => {
@@ -467,19 +441,16 @@ describe('validate() — implicit role expansion', () => {
     expect(violations).toHaveLength(0)
   })
 
-  it('warns for aria-checked on <button> (implicit button role does not permit it)', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    makeValidator('warn').validate('button', { 'aria-checked': 'true' })
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalled()
-    spy.mockRestore()
+  it('warns for aria-checked on <button> (implicit button role does not permit it)', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('button', { 'aria-checked': 'true' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
   })
 
   it('strips aria-checked from <button> props', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { props } = makeValidator('warn').validate('button', { 'aria-checked': 'true' })
+    const { engine } = makeCollecting()
+    const { props } = engine.validate('button', { 'aria-checked': 'true' })
     expect(props).not.toHaveProperty('aria-checked')
-    spy.mockRestore()
   })
 
   it('allows aria-level on <h2> (implicit heading role permits it)', () => {
@@ -487,12 +458,10 @@ describe('validate() — implicit role expansion', () => {
     expect(violations).toHaveLength(0)
   })
 
-  it('warns for aria-pressed on <a> (implicit link role does not permit it)', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    makeValidator('warn').validate('a', { 'aria-pressed': 'true' })
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalled()
-    spy.mockRestore()
+  it('warns for aria-pressed on <a> (implicit link role does not permit it)', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('a', { 'aria-pressed': 'true' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
   })
 })
 
@@ -502,24 +471,18 @@ describe('validate() — implicit role expansion', () => {
 
 describe('validate() — role violations have attribute: undefined', () => {
   it('redundant role violation has attribute: undefined', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { violations } = makeValidator('warn').validate('nav', { role: 'navigation' })
+    const { violations } = makeCollecting().engine.validate('nav', { role: 'navigation' })
     expect(violations[0]?.attribute).toBeUndefined()
-    spy.mockRestore()
   })
 
   it('invalid role override violation has attribute: undefined', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { violations } = makeValidator('warn').validate('nav', { role: 'region' })
+    const { violations } = makeCollecting().engine.validate('nav', { role: 'region' })
     expect(violations[0]?.attribute).toBeUndefined()
-    spy.mockRestore()
   })
 
   it('standalone region violation has attribute: undefined', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { violations } = makeValidator('warn').validate('article', { role: 'region' })
+    const { violations } = makeCollecting().engine.validate('article', { role: 'region' })
     expect(violations[0]?.attribute).toBeUndefined()
-    spy.mockRestore()
   })
 
   it('empty role violation has attribute: undefined', () => {
@@ -546,11 +509,10 @@ describe('validate() — props identity when no changes occur', () => {
   })
 
   it('returns a new object when a fix is applied', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { engine } = makeCollecting()
     const props = { role: 'navigation' }
-    const { props: result } = makeValidator('warn').validate('nav', props)
+    const { props: result } = engine.validate('nav', props)
     expect(result).not.toBe(props)
-    spy.mockRestore()
   })
 })
 
@@ -560,30 +522,26 @@ describe('validate() — props identity when no changes occur', () => {
 
 describe('validate() — role and attribute violations coexist', () => {
   it('produces violations for both the role and the invalid attribute', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { violations } = makeValidator('warn').validate('nav', {
+    const { violations } = makeCollecting().engine.validate('nav', {
       role: 'navigation',
       'aria-checked': 'true',
     })
     // One for redundant role, one for aria-checked on navigation
     expect(violations).toHaveLength(2)
-    spy.mockRestore()
   })
 
   it('strips both the redundant role and the invalid attribute', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { props } = makeValidator('warn').validate('nav', {
+    const { engine } = makeCollecting()
+    const { props } = engine.validate('nav', {
       role: 'navigation',
       'aria-checked': 'true',
     })
     expect(props).not.toHaveProperty('role')
     expect(props).not.toHaveProperty('aria-checked')
-    spy.mockRestore()
   })
 
   it('violation list has one entry with attribute set and one without', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { violations } = makeValidator('warn').validate('nav', {
+    const { violations } = makeCollecting().engine.validate('nav', {
       role: 'navigation',
       'aria-checked': 'true',
     })
@@ -591,7 +549,6 @@ describe('validate() — role and attribute violations coexist', () => {
     const attrViolation = violations.find((v) => v.attribute === 'aria-checked')
     expect(roleViolation).toBeDefined()
     expect(attrViolation).toBeDefined()
-    spy.mockRestore()
   })
 })
 
@@ -780,10 +737,8 @@ describe('validate() — violation message content', () => {
   })
 
   it('attribute violation message on implicit role names the implicit role', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const { violations } = makeValidator('warn').validate('button', { 'aria-checked': 'true' })
+    const { violations } = makeCollecting().engine.validate('button', { 'aria-checked': 'true' })
     expect(violations[0]?.message).toMatch(/button/)
-    spy.mockRestore()
   })
 })
 

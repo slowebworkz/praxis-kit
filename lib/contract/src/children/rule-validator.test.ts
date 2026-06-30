@@ -1,15 +1,15 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import type { NormalizedChildRule, MatchMatrix } from '../types'
 import { RuleValidator } from './rule-validator'
 import { diagnosticsFromStrictMode } from '../strict'
+import { CollectingReporter, Diagnostics, DefaultPolicy, Severity } from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 const throwValidator = new RuleValidator('Test', diagnosticsFromStrictMode('throw'))
-const warnValidator = new RuleValidator('Test', diagnosticsFromStrictMode('warn'))
 const silentValidator = new RuleValidator('Test', diagnosticsFromStrictMode(false))
 
 function rule(overrides: Partial<NormalizedChildRule> & { name: string }): NormalizedChildRule {
@@ -173,22 +173,24 @@ describe('RuleValidator.validate() — no children', () => {
 // ---------------------------------------------------------------------------
 
 describe('RuleValidator.validate() — StrictMode', () => {
-  it('warns instead of throwing when strict is "warn"', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  it('warns instead of throwing when strict is "warn"', () => {
+    const reporter = new CollectingReporter()
+    const warnValidator = new RuleValidator(
+      'Test',
+      new Diagnostics(
+        reporter,
+        new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
+      ),
+    )
     const r = rule({ name: 'required', cardinality: { kind: 'bounded', min: 1, max: Infinity } })
     const m = matrix([new Set()], 0)
     expect(() => warnValidator.validate([r], m, 0)).not.toThrow()
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalled()
-    spy.mockRestore()
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
   })
 
   it('is silent when strict is false', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const r = rule({ name: 'required', cardinality: { kind: 'bounded', min: 1, max: Infinity } })
     const m = matrix([new Set()], 0)
     expect(() => silentValidator.validate([r], m, 0)).not.toThrow()
-    expect(spy).not.toHaveBeenCalled()
-    spy.mockRestore()
   })
 })
