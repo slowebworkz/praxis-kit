@@ -100,7 +100,7 @@ export function createContractComponent<
   const ariaEngine =
     options.enforcement !== undefined ? new AriaPolicyEngine(resolved.diagnostics) : undefined
 
-  const slotValidator = new SlotValidator(displayName, resolved.diagnostics)
+  const slotValidator = new SlotValidator(displayName, resolved.diagnostics, 'VNode')
 
   const Component = defineComponent({
     name: displayName,

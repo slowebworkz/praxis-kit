@@ -1,6 +1,6 @@
 import type { ChildrenEvaluator, ElementType } from '@praxis-kit/core'
 import type { Ref } from 'preact'
-import type { SlotValidator } from '../slot/slot-validator'
+import type { SlotValidator } from '../slot'
 import type {
   AnyVNode,
   FilterPredicate,

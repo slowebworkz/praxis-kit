@@ -4,7 +4,7 @@ import type { ReactElement } from 'react'
 import { throwDiagnostics, warnDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
 import { render } from './render'
 import { Slottable } from './slot'
-import { SlotValidator } from './slot/slot-validator'
+import { SlotValidator } from '@praxis-kit/adapter-utils'
 import type { FilterPredicate, Runtime } from './types'
 
 function makeRuntime(overrides?: Partial<Runtime>): Runtime {
@@ -31,7 +31,7 @@ const slotComponent = ({ children }: { children?: unknown }) =>
   createElement('div', { 'data-slot': true }, children as ReactElement)
 
 const noopFilter: FilterPredicate = () => false
-const defaultValidator = new SlotValidator('Test', throwDiagnostics)
+const defaultValidator = new SlotValidator('Test', throwDiagnostics, 'React element')
 
 describe('render', () => {
   it('renders the default tag when no as prop is given', () => {
@@ -274,7 +274,7 @@ describe('render', () => {
       // normalizeChildren strips the text node — child count shrinks from 2 to 1
       normalizeChildren: () => [child],
       filterProps: noopFilter,
-      slotValidator: new SlotValidator('Test', warnDiagnostics),
+      slotValidator: new SlotValidator('Test', warnDiagnostics, 'React element'),
     })
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('discarded 1 non-element child'))
     warnSpy.mockRestore()
@@ -297,7 +297,7 @@ describe('render', () => {
       slotComponent,
       normalizeChildren: () => [child],
       filterProps: noopFilter,
-      slotValidator: new SlotValidator('Test', silentDiagnostics),
+      slotValidator: new SlotValidator('Test', silentDiagnostics, 'React element'),
     })
     expect(warnSpy).not.toHaveBeenCalled()
     warnSpy.mockRestore()

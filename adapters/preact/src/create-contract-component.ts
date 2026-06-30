@@ -44,7 +44,7 @@ import { applyDisplayName } from './apply-display-name'
 import { makeRenderAsChild, renderNormally } from './helpers'
 import { normalizeChildren } from './normalize-children'
 import { cloneSlotChild } from './slot/cloneSlotChild'
-import { SlotValidator } from './slot/slot-validator'
+import { SlotValidator } from './slot'
 import type { AnyVNode, UnknownProps } from './types'
 import type { PolymorphicComponent } from './types/polymorphic-props'
 import type { PreactFactoryOptions } from './preact-options'
@@ -103,7 +103,7 @@ export function createContractComponent<
   const ariaEngine =
     options.enforcement !== undefined ? new AriaPolicyEngine(resolved.diagnostics) : undefined
 
-  const slotValidator = new SlotValidator(displayName, resolved.diagnostics)
+  const slotValidator = new SlotValidator(displayName, resolved.diagnostics, 'Preact element')
   const renderAsChild = makeRenderAsChild(cloneSlotChild)
 
   const Component = forwardRef(function Component(
