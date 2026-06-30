@@ -1,74 +1,62 @@
 import { describe, it, expect } from 'vitest'
 import { resolveAdapterCommonOptions } from './resolve-adapter-common-options'
+import { throwDiagnostics, warnDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
 
 describe('resolveAdapterCommonOptions — defaults', () => {
   it('returns built-in defaults when no options are provided', () => {
-    expect(resolveAdapterCommonOptions({})).toEqual({
-      name: 'PolymorphicComponent',
-      strict: 'throw',
-    })
+    const result = resolveAdapterCommonOptions({})
+    expect(result.name).toBe('PolymorphicComponent')
+    expect(result.diagnostics).toBe(throwDiagnostics)
   })
 
   it('supports custom defaults for both fields (Lit adapter pattern)', () => {
-    expect(resolveAdapterCommonOptions({}, 'PolymorphicElement', false)).toEqual({
-      name: 'PolymorphicElement',
-      strict: false,
-    })
+    const result = resolveAdapterCommonOptions({}, 'PolymorphicElement', silentDiagnostics)
+    expect(result.name).toBe('PolymorphicElement')
+    expect(result.diagnostics).toBe(silentDiagnostics)
   })
 })
 
 describe('resolveAdapterCommonOptions — name resolution', () => {
   it('uses the explicit name when provided', () => {
-    expect(resolveAdapterCommonOptions({ name: 'Button' })).toEqual({
-      name: 'Button',
-      strict: 'throw',
-    })
+    const result = resolveAdapterCommonOptions({ name: 'Button' })
+    expect(result.name).toBe('Button')
+    expect(result.diagnostics).toBe(throwDiagnostics)
   })
 
   it('explicit name wins over custom defaultName', () => {
-    expect(resolveAdapterCommonOptions({ name: 'Nav' }, 'PolymorphicElement')).toEqual({
-      name: 'Nav',
-      strict: 'throw',
-    })
+    const result = resolveAdapterCommonOptions({ name: 'Nav' }, 'PolymorphicElement')
+    expect(result.name).toBe('Nav')
+    expect(result.diagnostics).toBe(throwDiagnostics)
   })
 })
 
-describe('resolveAdapterCommonOptions — strict resolution', () => {
-  it('uses enforcement.strict when provided', () => {
-    expect(resolveAdapterCommonOptions({ enforcement: { strict: 'warn' } })).toEqual({
-      name: 'PolymorphicComponent',
-      strict: 'warn',
-    })
+describe('resolveAdapterCommonOptions — diagnostics resolution', () => {
+  it('uses enforcement.diagnostics when provided', () => {
+    const result = resolveAdapterCommonOptions({ enforcement: { diagnostics: warnDiagnostics } })
+    expect(result.diagnostics).toBe(warnDiagnostics)
   })
 
   it('falls back to the built-in default when enforcement is absent', () => {
-    expect(resolveAdapterCommonOptions({})).toEqual({
-      name: 'PolymorphicComponent',
-      strict: 'throw',
-    })
+    expect(resolveAdapterCommonOptions({}).diagnostics).toBe(throwDiagnostics)
   })
 
-  it('falls back to the built-in default when enforcement.strict is absent', () => {
-    expect(resolveAdapterCommonOptions({ enforcement: {} })).toEqual({
-      name: 'PolymorphicComponent',
-      strict: 'throw',
-    })
+  it('falls back to the built-in default when enforcement.diagnostics is absent', () => {
+    expect(resolveAdapterCommonOptions({ enforcement: {} }).diagnostics).toBe(throwDiagnostics)
   })
 
-  it('enforcement.strict wins over custom defaultStrict', () => {
-    expect(
-      resolveAdapterCommonOptions(
-        { enforcement: { strict: 'warn' } },
-        'PolymorphicComponent',
-        false,
-      ),
-    ).toEqual({ name: 'PolymorphicComponent', strict: 'warn' })
+  it('enforcement.diagnostics wins over custom defaultDiagnostics', () => {
+    const result = resolveAdapterCommonOptions(
+      { enforcement: { diagnostics: warnDiagnostics } },
+      'PolymorphicComponent',
+      silentDiagnostics,
+    )
+    expect(result.diagnostics).toBe(warnDiagnostics)
   })
 
-  it.each([false, 'warn', 'async-warn', 'throw', true] as const)(
-    'passes strict=%s through unchanged',
-    (strict) => {
-      expect(resolveAdapterCommonOptions({ enforcement: { strict } }).strict).toBe(strict)
+  it.each([throwDiagnostics, warnDiagnostics, silentDiagnostics])(
+    'passes diagnostics through unchanged',
+    (d) => {
+      expect(resolveAdapterCommonOptions({ enforcement: { diagnostics: d } }).diagnostics).toBe(d)
     },
   )
 })

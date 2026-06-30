@@ -1,6 +1,6 @@
 import type { AnyRecord, ClassName, ElementType, EmptyRecord, TagMap } from '../primitives'
-import type { StrictMode } from '../config'
 import type { AriaRule } from '../aria-rule'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 import type { NormalizeFn } from './factory-options'
 import type { PropNormalizer } from './prop-normalizer'
 import type { ChildRuleInput } from '../contracts'
@@ -22,7 +22,7 @@ export type ResolvedFactoryOptions<
   readonly defaultVariants?: Partial<DefaultVariants<V>>
   readonly compoundVariants?: readonly CompoundVariant<V>[]
   readonly displayName?: string
-  readonly strict: StrictMode
+  readonly diagnostics: Diagnostics
   readonly variantKeys: ReadonlySet<string>
   readonly normalizeFn?: NormalizeFn<Props>
   readonly htmlPropNormalizersFn?: (tag: unknown) => readonly PropNormalizer[] | undefined

@@ -3,11 +3,7 @@
 export * from './primitive'
 export * from './html'
 export * from './state'
-export {
-  InvariantBase,
-  InvariantBase as StrictBase,
-  diagnosticsFromStrictMode,
-} from '@praxis-kit/contract'
+export { InvariantBase, InvariantBase as StrictBase } from '@praxis-kit/contract'
 export {
   AriaDiagnostics,
   ContractDiagnostics,
@@ -31,7 +27,6 @@ export {
 export { createContractedPolymorphic } from './factory/create-polymorphic-contracted'
 export { createResolverPipeline } from './resolver'
 export type {
-  StrictMode,
   AriaContext,
   AriaFix,
   AriaFixResult,

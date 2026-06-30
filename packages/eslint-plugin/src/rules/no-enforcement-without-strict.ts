@@ -53,9 +53,9 @@ export const noEnforcementWithoutStrict = createRule<Options, MessageIds>({
         const enf = asObjectExpression(enfProp.value)
         if (!enf) return
 
-        const hasStrict = getObjectProperty(enf, 'strict') !== undefined
+        const hasDiagnostics = getObjectProperty(enf, 'diagnostics') !== undefined
 
-        if (hasStrict) return
+        if (hasDiagnostics) return
 
         const field = iterate.find(['children', 'aria'] as const, (field) => {
           const fieldProp = getObjectProperty(enf, field)

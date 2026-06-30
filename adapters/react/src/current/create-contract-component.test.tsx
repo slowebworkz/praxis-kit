@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { createElement, Fragment, createRef } from 'react'
 import type { RenderCallbackProps } from '../shared'
+import { warnDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
 import { box, useReactDom } from '../shared/test-utils'
 import { createContractComponent } from './create-contract-component'
 
@@ -312,7 +313,7 @@ describe('createContractComponent (current / React 19)', () => {
   it('allowedAs: does not warn when as matches the allowed list', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const Box = createContractComponent({
-      enforcement: { strict: 'warn', allowedAs: ['button', 'a'] },
+      enforcement: { diagnostics: warnDiagnostics, allowedAs: ['button', 'a'] },
     })
 
     dom.mount(createElement(box(Box), { as: 'button' }))
@@ -324,7 +325,7 @@ describe('createContractComponent (current / React 19)', () => {
   it('allowedAs: warns when as does not match the allowed list (strict: warn)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const Box = createContractComponent({
-      enforcement: { strict: 'warn', allowedAs: ['button', 'a'] },
+      enforcement: { diagnostics: warnDiagnostics, allowedAs: ['button', 'a'] },
     })
 
     dom.mount(createElement(box(Box), { as: 'div' }))
@@ -335,7 +336,7 @@ describe('createContractComponent (current / React 19)', () => {
 
   it('allowedAs: throws when as does not match the allowed list (strict: throw)', () => {
     const Box = createContractComponent({
-      enforcement: { strict: 'throw', allowedAs: ['button', 'a'] },
+      enforcement: { diagnostics: throwDiagnostics, allowedAs: ['button', 'a'] },
     })
 
     expect(() => dom.mount(createElement(box(Box), { as: 'div' }))).toThrow(/"div"/)

@@ -2,6 +2,7 @@ import { beforeEach, afterEach, describe, it, expect } from 'vitest'
 import type { AnyRecord } from '@pk2/foundation'
 import { iterate } from '@praxis-kit/primitive'
 import type { ConformanceComponent, ConformanceFactoryOptions } from './types'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 
 /**
  * Adapter contract for the hydration parity suite.
@@ -84,7 +85,7 @@ export function hydrationParitySuite<C extends ConformanceComponent = Conformanc
     it('base class matches between server and client', async () => {
       const Box = adapter.createComponent({
         styling: { base: 'box-base' },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       expect(await ssrAttrs(adapter, Box)).toEqual(await domAttrs(adapter, Box))
     })
@@ -95,7 +96,7 @@ export function hydrationParitySuite<C extends ConformanceComponent = Conformanc
           variants: { size: { sm: 'box-sm', lg: 'box-lg' } },
           defaults: { size: 'lg' },
         },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       expect(await ssrAttrs(adapter, Box)).toEqual(await domAttrs(adapter, Box))
     })
@@ -110,7 +111,7 @@ export function hydrationParitySuite<C extends ConformanceComponent = Conformanc
           },
           compounds: [{ size: 'lg', intent: 'ghost', class: 'btn-lg-ghost' }],
         },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       const props = { size: 'lg', intent: 'ghost' }
       const s = await ssrAttrs(adapter, Box, props)
@@ -122,7 +123,10 @@ export function hydrationParitySuite<C extends ConformanceComponent = Conformanc
 
   describe('hydration parity — ARIA normalisation', () => {
     it('redundant role absent on both server and client', async () => {
-      const Nav = adapter.createComponent({ tag: 'nav', enforcement: { strict: false } })
+      const Nav = adapter.createComponent({
+        tag: 'nav',
+        enforcement: { diagnostics: silentDiagnostics },
+      })
       const props = { role: 'navigation' }
       const s = await ssrAttrs(adapter, Nav, props)
       const d = await domAttrs(adapter, Nav, props)
@@ -132,7 +136,7 @@ export function hydrationParitySuite<C extends ConformanceComponent = Conformanc
     })
 
     it('non-redundant role present on both server and client', async () => {
-      const Box = adapter.createComponent({ enforcement: { strict: false } })
+      const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
       const props = { role: 'dialog' }
       const s = await ssrAttrs(adapter, Box, props)
       const d = await domAttrs(adapter, Box, props)
@@ -143,7 +147,7 @@ export function hydrationParitySuite<C extends ConformanceComponent = Conformanc
 
   describe('hydration parity — tag and props', () => {
     it('as prop override: tag matches between server and client', async () => {
-      const Box = adapter.createComponent({ enforcement: { strict: false } })
+      const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
       const props = { as: 'section' }
       const serverHtml = await adapter.renderToString(Box, props)
       const clientEl = await adapter.renderToDOM(Box, props)

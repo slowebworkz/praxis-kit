@@ -7,6 +7,7 @@ import { createRoot } from 'react-dom/client'
 import { hydrationParitySuite } from '@praxis-kit/adapter-utils/testing'
 import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
 import { parseAttributes, parseNormalizedAttributes } from '@praxis-kit/shared/tests'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import type { UnknownProps } from '../shared'
 import { createContractComponent } from './create-contract-component'
 
@@ -40,7 +41,7 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
     const Box = createContractComponent({
       tag: 'div',
       styling: { base: 'box-base' },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
 
     const serverAttrs = parseNormalizedAttributes(ssr(Box))
@@ -57,7 +58,7 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
         variants: { size: { sm: 'box-sm', lg: 'box-lg' } },
         defaults: { size: 'lg' },
       },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
 
     const serverAttrs = parseNormalizedAttributes(ssr(Box))
@@ -67,7 +68,10 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
   })
 
   it('ARIA strip result matches: redundant role absent on both server and client', async () => {
-    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({
+      tag: 'nav',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const props = { role: 'navigation' } as UnknownProps
 
     const serverAttrs = parseAttributes(ssr(Nav, props))
@@ -79,7 +83,10 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
   })
 
   it('ARIA strip result matches: invalid aria-* absent on both server and client', async () => {
-    const Button = createContractComponent({ tag: 'button', enforcement: { strict: false } })
+    const Button = createContractComponent({
+      tag: 'button',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const props = { 'aria-checked': 'true' } as UnknownProps
 
     const serverAttrs = parseAttributes(ssr(Button, props))
@@ -91,7 +98,10 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
   })
 
   it('as prop override: tag and attributes match between server and client', async () => {
-    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({
+      tag: 'nav',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const props = { as: 'section' } as UnknownProps
 
     const serverHtml = ssr(Nav, props)
@@ -114,7 +124,7 @@ describe('SSR/CSR hydration parity — class and tag attributes', () => {
         defaults: { size: 'sm', intent: 'primary' },
         compounds: [{ size: 'lg', intent: 'ghost', class: 'btn-lg-ghost' }],
       },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
     const props = { size: 'lg', intent: 'ghost' } as UnknownProps
 

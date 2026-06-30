@@ -3,9 +3,9 @@ import type {
   PolymorphicGenerics,
   RecipeOf,
   PropsOf,
-  StrictMode,
   VariantsOf,
 } from '@praxis-kit/core'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 import type { SolidFactoryOptions } from '../solid-options'
 
 export type NormalizedOptions<G extends PolymorphicGenerics> = SolidFactoryOptions<
@@ -15,5 +15,5 @@ export type NormalizedOptions<G extends PolymorphicGenerics> = SolidFactoryOptio
   RecipeOf<G>
 > & {
   readonly name: string
-  readonly strict: Exclude<StrictMode, undefined>
+  readonly diagnostics: Diagnostics
 }

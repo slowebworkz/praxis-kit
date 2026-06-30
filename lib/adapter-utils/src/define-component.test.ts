@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { defineContractComponent } from './define-component'
+import { warnDiagnostics } from '@praxis-kit/diagnostics'
 
 describe('defineContractComponent', () => {
   it('passes options to the factory', () => {
@@ -18,7 +19,7 @@ describe('defineContractComponent', () => {
       tag: 'button' as const,
       name: 'Button',
       styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-      enforcement: { strict: 'warn' as const },
+      enforcement: { diagnostics: warnDiagnostics },
     }
     const createButton = defineContractComponent(options)
     expect(createButton((opts) => opts)).toBe(options)

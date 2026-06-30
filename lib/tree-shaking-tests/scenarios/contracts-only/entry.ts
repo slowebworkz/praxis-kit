@@ -5,6 +5,7 @@
  */
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
+import { warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractedComponent } from '@praxis-kit/react'
 import type { AriaRule } from '@praxis-kit/core/contract'
 
@@ -19,7 +20,7 @@ export const ButtonGroup = createContractedComponent({
   tag: 'ul',
   name: 'ButtonGroup',
   enforcement: {
-    strict: 'warn',
+    diagnostics: warnDiagnostics,
     aria: [requireAriaLabel],
     children: [
       {

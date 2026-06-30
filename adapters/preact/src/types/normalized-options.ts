@@ -3,9 +3,9 @@ import type {
   PolymorphicGenerics,
   RecipeOf,
   PropsOf,
-  StrictMode,
   VariantsOf,
 } from '@praxis-kit/core'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 import type { PreactFactoryOptions } from '../preact-options'
 import type { SlotComponent } from './primitives'
 
@@ -17,5 +17,5 @@ export type NormalizedOptions<G extends PolymorphicGenerics> = PreactFactoryOpti
 > & {
   readonly slotComponent: SlotComponent
   readonly name: string
-  readonly strict: Exclude<StrictMode, undefined>
+  readonly diagnostics: Diagnostics
 }

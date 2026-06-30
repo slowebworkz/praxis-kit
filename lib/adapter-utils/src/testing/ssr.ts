@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { AnyRecord } from '@praxis-kit/core'
 import type { ConformanceComponent, ConformanceFactoryOptions } from './types'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 
 /**
  * Adapter contract for the SSR conformance suite.
@@ -29,26 +30,29 @@ export function ssrConformanceSuite<C extends ConformanceComponent = Conformance
 
   describe('ssr — basic rendering', () => {
     it('renders without accessing browser globals', async () => {
-      const Box = adapter.createComponent({ enforcement: { strict: false } })
+      const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
       const result = adapter.renderToString(Box)
       // Works for both sync (string) and async (Promise<string>) renderers.
       await expect(Promise.resolve(result)).resolves.not.toThrow()
     })
 
     it('renders default tag (div) to HTML', async () => {
-      const Box = adapter.createComponent({ enforcement: { strict: false } })
+      const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
       const html = await adapter.renderToString(Box)
       expect(html).toMatch(/<div[\s>]/)
     })
 
     it('respects a custom tag option', async () => {
-      const Nav = adapter.createComponent({ tag: 'nav', enforcement: { strict: false } })
+      const Nav = adapter.createComponent({
+        tag: 'nav',
+        enforcement: { diagnostics: silentDiagnostics },
+      })
       const html = await adapter.renderToString(Nav)
       expect(html).toMatch(/<nav[\s>]/)
     })
 
     it('as prop overrides the default tag', async () => {
-      const Box = adapter.createComponent({ enforcement: { strict: false } })
+      const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
       const html = await adapter.renderToString(Box, { as: 'section' })
       expect(html).toMatch(/<section[\s>]/)
       expect(html).not.toMatch(/<div[\s>]/)
@@ -61,7 +65,7 @@ export function ssrConformanceSuite<C extends ConformanceComponent = Conformance
     it('applies base class', async () => {
       const Box = adapter.createComponent({
         styling: { base: 'box-base' },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       const html = await adapter.renderToString(Box)
       expect(html).toContain('box-base')
@@ -73,7 +77,7 @@ export function ssrConformanceSuite<C extends ConformanceComponent = Conformance
           variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
           defaults: { size: 'lg' },
         },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       const html = await adapter.renderToString(Box)
       expect(html).toContain('text-lg')
@@ -82,7 +86,7 @@ export function ssrConformanceSuite<C extends ConformanceComponent = Conformance
     it('applies variant class from prop', async () => {
       const Box = adapter.createComponent({
         styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       const html = await adapter.renderToString(Box, { size: 'sm' })
       expect(html).toContain('text-sm')
@@ -91,7 +95,7 @@ export function ssrConformanceSuite<C extends ConformanceComponent = Conformance
     it('merges caller class with base', async () => {
       const Box = adapter.createComponent({
         styling: { base: 'base' },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       const html = await adapter.renderToString(Box, { class: 'extra' })
       expect(html).toContain('base')
@@ -108,7 +112,7 @@ export function ssrConformanceSuite<C extends ConformanceComponent = Conformance
           },
           compounds: [{ size: 'lg', intent: 'ghost', class: 'btn-lg-ghost' }],
         },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       const html = await adapter.renderToString(Box, { size: 'lg', intent: 'ghost' })
       const classAttr = html.match(/class="([^"]*)"/)?.[1] ?? ''
@@ -120,13 +124,13 @@ export function ssrConformanceSuite<C extends ConformanceComponent = Conformance
 
   describe('ssr — prop forwarding', () => {
     it('forwards data attributes', async () => {
-      const Box = adapter.createComponent({ enforcement: { strict: false } })
+      const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
       const html = await adapter.renderToString(Box, { 'data-testid': 'box' })
       expect(html).toContain('data-testid="box"')
     })
 
     it('forwards aria-label', async () => {
-      const Box = adapter.createComponent({ enforcement: { strict: false } })
+      const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
       const html = await adapter.renderToString(Box, { 'aria-label': 'Close' })
       expect(html).toContain('aria-label="Close"')
     })
@@ -136,13 +140,16 @@ export function ssrConformanceSuite<C extends ConformanceComponent = Conformance
 
   describe('ssr — boolean attributes', () => {
     it('renders disabled on a button element', async () => {
-      const Button = adapter.createComponent({ tag: 'button', enforcement: { strict: false } })
+      const Button = adapter.createComponent({
+        tag: 'button',
+        enforcement: { diagnostics: silentDiagnostics },
+      })
       const html = await adapter.renderToString(Button, { disabled: true })
       expect(html).toMatch(/disabled/)
     })
 
     it('renders hidden attribute', async () => {
-      const Box = adapter.createComponent({ enforcement: { strict: false } })
+      const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
       const html = await adapter.renderToString(Box, { hidden: true })
       expect(html).toMatch(/hidden/)
     })
@@ -152,14 +159,14 @@ export function ssrConformanceSuite<C extends ConformanceComponent = Conformance
 
   describe('ssr — attribute escaping', () => {
     it('escapes double quotes in aria-label', async () => {
-      const Box = adapter.createComponent({ enforcement: { strict: false } })
+      const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
       const html = await adapter.renderToString(Box, { 'aria-label': 'Hello "world"' })
       expect(html).not.toContain('aria-label="Hello "world""')
       expect(html).toMatch(/aria-label=/)
     })
 
     it('does not produce a bare script element from a data attribute value', async () => {
-      const Box = adapter.createComponent({ enforcement: { strict: false } })
+      const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
       const html = await adapter.renderToString(Box, { 'data-value': '<b>text</b>' })
       // The value must be inside the attribute — not injected as free HTML content.
       expect(html).toContain('data-value=')
@@ -171,14 +178,17 @@ export function ssrConformanceSuite<C extends ConformanceComponent = Conformance
 
   describe('ssr — ARIA normalisation', () => {
     it('strips redundant role (nav has implicit role=navigation)', async () => {
-      const Nav = adapter.createComponent({ tag: 'nav', enforcement: { strict: false } })
+      const Nav = adapter.createComponent({
+        tag: 'nav',
+        enforcement: { diagnostics: silentDiagnostics },
+      })
       const html = await adapter.renderToString(Nav, { role: 'navigation' })
       expect(html).toContain('<nav')
       expect(html).not.toContain('role=')
     })
 
     it('forwards non-redundant role', async () => {
-      const Box = adapter.createComponent({ enforcement: { strict: false } })
+      const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
       const html = await adapter.renderToString(Box, { role: 'dialog' })
       expect(html).toContain('role="dialog"')
     })

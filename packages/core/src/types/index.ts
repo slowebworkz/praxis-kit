@@ -72,7 +72,6 @@ export type {
 } from './primitives'
 export type { ResolvedFactoryOptions } from './resolved-factory-options'
 export type { ResolveInput, ResolveOutput, ResolverOptions } from './resolver'
-export type { StrictMode } from './strict-mode'
 export type {
   EvaluationContext,
   NormalizationResult,

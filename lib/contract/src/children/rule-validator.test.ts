@@ -2,15 +2,21 @@ import { describe, expect, it } from 'vitest'
 
 import type { NormalizedChildRule, MatchMatrix } from '../types'
 import { RuleValidator } from './rule-validator'
-import { diagnosticsFromStrictMode } from '../strict'
-import { CollectingReporter, Diagnostics, DefaultPolicy, Severity } from '@praxis-kit/diagnostics'
+import {
+  CollectingReporter,
+  Diagnostics,
+  DefaultPolicy,
+  Severity,
+  throwDiagnostics,
+  silentDiagnostics,
+} from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const throwValidator = new RuleValidator('Test', diagnosticsFromStrictMode('throw'))
-const silentValidator = new RuleValidator('Test', diagnosticsFromStrictMode(false))
+const throwValidator = new RuleValidator('Test', throwDiagnostics)
+const silentValidator = new RuleValidator('Test', silentDiagnostics)
 
 function rule(overrides: Partial<NormalizedChildRule> & { name: string }): NormalizedChildRule {
   return {

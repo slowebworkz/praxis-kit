@@ -1,11 +1,11 @@
-import type { StrictMode } from '../config/strict-mode'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 
 export type Capabilities = {
   readonly createClassPipeline?: (
     opts: Record<string, unknown>,
   ) => (props: Record<string, unknown>) => string
   readonly AriaEngine?: new (
-    strict?: StrictMode,
+    diagnostics?: Diagnostics,
     options?: { rules?: readonly unknown[] },
   ) => object
 }

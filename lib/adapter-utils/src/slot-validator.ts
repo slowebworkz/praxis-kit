@@ -1,13 +1,13 @@
 import { InvariantBase } from '@praxis-kit/core'
-import type { StrictMode } from '@praxis-kit/core'
-import { diagnosticsFromStrictMode, SlotDiagnostics } from '@praxis-kit/core/contract'
+import { SlotDiagnostics } from '@praxis-kit/core/contract'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 
 export class SlotValidator extends InvariantBase {
   readonly #name: string
   readonly #elementTerm: string
 
-  constructor(name: string, strict: StrictMode, elementTerm: string) {
-    super(diagnosticsFromStrictMode(strict))
+  constructor(name: string, diagnostics: Diagnostics, elementTerm: string) {
+    super(diagnostics)
     this.#name = name
     this.#elementTerm = elementTerm
   }

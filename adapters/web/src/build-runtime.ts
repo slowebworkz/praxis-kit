@@ -5,6 +5,7 @@ import {
   composeFilter,
   resolveAdapterCommonOptions,
 } from '@praxis-kit/adapter-utils'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import type { BuiltRuntime, NormalizedOptions, RuntimeG } from './types/index'
 import type { WebFactoryOptions } from './types/index'
 
@@ -20,13 +21,13 @@ export function buildRuntime<
 
   const normalized = {
     ...options,
-    ...resolveAdapterCommonOptions(options, 'PolymorphicElement', false),
+    ...resolveAdapterCommonOptions(options, 'PolymorphicElement', silentDiagnostics),
   } as NormalizedOptions<G>
 
   const { filterProps: customFilter, enforcement } = normalized
   const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
   const { childrenEvaluator } = buildEngines(
-    normalized.strict,
+    normalized.diagnostics,
     enforcement?.children,
     normalized.name,
   )
@@ -35,7 +36,7 @@ export function buildRuntime<
   return {
     runtime,
     filterProps,
-    strict: normalized.strict,
+    diagnostics: normalized.diagnostics,
     ...(childrenEvaluator !== undefined && { childrenEvaluator }),
   }
 }

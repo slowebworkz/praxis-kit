@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import { h, createSSRApp } from 'vue'
 import type { Component } from 'vue'
 import { renderToString } from '@vue/server-renderer'
@@ -43,7 +44,7 @@ describe('SSR/CSR hydration parity — Vue', () => {
     const Box = createContractComponent({
       tag: 'div',
       styling: { base: 'box-base' },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
     expect(normalizeAttrs(parseAttributes(await ssr(Box)))).toEqual(
       normalizeAttrs(parseAttributes(csr(Box))),
@@ -58,7 +59,7 @@ describe('SSR/CSR hydration parity — Vue', () => {
         variants: { size: { sm: 'box-sm', lg: 'box-lg' } },
         defaults: { size: 'lg' },
       },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
     expect(normalizeAttrs(parseAttributes(await ssr(Box)))).toEqual(
       normalizeAttrs(parseAttributes(csr(Box))),
@@ -77,7 +78,7 @@ describe('SSR/CSR hydration parity — Vue', () => {
         defaults: { size: 'sm', intent: 'primary' },
         compounds: [{ size: 'lg', intent: 'ghost', class: 'btn-lg-ghost' }],
       },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
     const props = { size: 'lg', intent: 'ghost' } as UnknownProps
 
@@ -89,7 +90,10 @@ describe('SSR/CSR hydration parity — Vue', () => {
   })
 
   it('ARIA strip: redundant role absent on both server and client', async () => {
-    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({
+      tag: 'nav',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const props = { role: 'navigation' } as UnknownProps
 
     const serverAttrs = parseAttributes(await ssr(Nav, props))
@@ -101,7 +105,10 @@ describe('SSR/CSR hydration parity — Vue', () => {
   })
 
   it('ARIA strip: invalid aria-* absent on both server and client', async () => {
-    const Button = createContractComponent({ tag: 'button', enforcement: { strict: false } })
+    const Button = createContractComponent({
+      tag: 'button',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const props = { 'aria-checked': 'true' } as UnknownProps
 
     const serverAttrs = parseAttributes(await ssr(Button, props))
@@ -113,7 +120,10 @@ describe('SSR/CSR hydration parity — Vue', () => {
   })
 
   it('as prop override: tag and attributes match between server and client', async () => {
-    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({
+      tag: 'nav',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const props = { as: 'section' } as UnknownProps
 
     const serverHtml = await ssr(Nav, props)

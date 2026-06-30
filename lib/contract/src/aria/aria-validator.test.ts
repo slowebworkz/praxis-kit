@@ -1,8 +1,15 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { diagnosticsFromStrictMode } from '../strict'
 import { AriaPolicyEngine, isInvalid } from './polymorphic-validator'
-import { CollectingReporter, Diagnostics, DefaultPolicy, Severity } from '@praxis-kit/diagnostics'
+import {
+  CollectingReporter,
+  Diagnostics,
+  DefaultPolicy,
+  Severity,
+  throwDiagnostics,
+  warnDiagnostics,
+  silentDiagnostics,
+} from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -19,8 +26,8 @@ function makeCollecting() {
   return { reporter, engine }
 }
 
-function makeValidator(strict: Parameters<typeof diagnosticsFromStrictMode>[0] = 'warn') {
-  return new AriaPolicyEngine(diagnosticsFromStrictMode(strict))
+function makeValidator(diagnostics: Diagnostics = warnDiagnostics) {
+  return new AriaPolicyEngine(diagnostics)
 }
 
 // ---------------------------------------------------------------------------
@@ -85,7 +92,7 @@ describe('report()', () => {
   })
 
   it('throws for error-severity violations when strict is "throw"', () => {
-    const v = makeValidator('throw')
+    const v = makeValidator(throwDiagnostics)
     expect(() =>
       v.report([
         {
@@ -101,7 +108,7 @@ describe('report()', () => {
   })
 
   it('is silent for all violations when strict is false', () => {
-    const v = makeValidator(false)
+    const v = makeValidator(silentDiagnostics)
     expect(() =>
       v.report([
         {
@@ -148,13 +155,13 @@ describe('report()', () => {
 
 describe('validate() — unknown string tags', () => {
   it('returns props unchanged for a custom element with no implicit role', () => {
-    const v = makeValidator('throw')
+    const v = makeValidator(throwDiagnostics)
     const props = { role: 'navigation' as const, className: 'foo' }
     expect(v.validate('my-custom-element', props).props).toBe(props)
   })
 
   it('returns props unchanged for an arbitrary unknown tag', () => {
-    const v = makeValidator('throw')
+    const v = makeValidator(throwDiagnostics)
     const props = { role: 'navigation' }
     expect(v.validate('x-widget', props).props).toBe(props)
   })
@@ -166,19 +173,19 @@ describe('validate() — unknown string tags', () => {
 
 describe('validate() — tags with no implicit role', () => {
   it('returns props unchanged for div + any role', () => {
-    const v = makeValidator('throw')
+    const v = makeValidator(throwDiagnostics)
     const props = { role: 'region' as const }
     expect(v.validate('div', props).props).toEqual(props)
   })
 
   it('returns props unchanged for span + any non-live-region role', () => {
-    const v = makeValidator('throw')
+    const v = makeValidator(throwDiagnostics)
     const props = { role: 'dialog' as const }
     expect(v.validate('span', props).props).toEqual(props)
   })
 
   it('returns props unchanged when no role prop is set', () => {
-    const v = makeValidator('throw')
+    const v = makeValidator(throwDiagnostics)
     const props = { className: 'foo' }
     expect(v.validate('nav', props).props).toEqual(props)
   })
@@ -208,7 +215,7 @@ describe('validate() — redundant role', () => {
   })
 
   it('is silent but still strips invalid role when strict is false', () => {
-    const { props } = makeValidator(false).validate('nav', { role: 'navigation' })
+    const { props } = makeValidator(silentDiagnostics).validate('nav', { role: 'navigation' })
     expect(props).not.toHaveProperty('role')
   })
 
@@ -252,7 +259,7 @@ describe('validate() — region override on strong landmark', () => {
   })
 
   it('throws when strict is "throw"', () => {
-    expect(() => makeValidator('throw').validate('nav', { role: 'region' })).toThrow()
+    expect(() => makeValidator(throwDiagnostics).validate('nav', { role: 'region' })).toThrow()
   })
 })
 
@@ -274,7 +281,7 @@ describe('validate() — standalone element + role="region"', () => {
   })
 
   it('throws when strict is "throw"', () => {
-    expect(() => makeValidator('throw').validate('article', { role: 'region' })).toThrow()
+    expect(() => makeValidator(throwDiagnostics).validate('article', { role: 'region' })).toThrow()
   })
 })
 
@@ -284,18 +291,21 @@ describe('validate() — standalone element + role="region"', () => {
 
 describe('validate() — empty role attribute', () => {
   it('strips the empty role from returned props', () => {
-    const { props } = makeValidator(false).validate('nav', { role: '' })
+    const { props } = makeValidator(silentDiagnostics).validate('nav', { role: '' })
     expect(props).not.toHaveProperty('role')
   })
 
   it('pushes a violation for the empty role', () => {
-    const { violations } = makeValidator(false).validate('nav', { role: '' })
+    const { violations } = makeValidator(silentDiagnostics).validate('nav', { role: '' })
     expect(violations).toHaveLength(1)
     expect(violations[0]?.message).toMatch(/empty role/)
   })
 
   it('preserves other props when stripping the empty role', () => {
-    const { props } = makeValidator(false).validate('nav', { role: '', className: 'site-nav' })
+    const { props } = makeValidator(silentDiagnostics).validate('nav', {
+      role: '',
+      className: 'site-nav',
+    })
     expect(props).toHaveProperty('className', 'site-nav')
     expect(props).not.toHaveProperty('role')
   })
@@ -367,7 +377,7 @@ describe('validate() — aria-* attribute on wrong role', () => {
   })
 
   it('produces one violation per invalid attribute when multiple are present', () => {
-    const { violations } = makeValidator(false).validate('nav', {
+    const { violations } = makeValidator(silentDiagnostics).validate('nav', {
       role: 'button',
       'aria-checked': 'true',
       'aria-level': '2',
@@ -376,7 +386,7 @@ describe('validate() — aria-* attribute on wrong role', () => {
   })
 
   it('strips all invalid attributes when multiple are present', () => {
-    const { props } = makeValidator(false).validate('nav', {
+    const { props } = makeValidator(silentDiagnostics).validate('nav', {
       role: 'button',
       'aria-checked': 'true',
       'aria-level': '2',
@@ -386,7 +396,7 @@ describe('validate() — aria-* attribute on wrong role', () => {
   })
 
   it('produces no violation for a global attribute (aria-label) on any role', () => {
-    const { violations } = makeValidator('throw').validate('nav', {
+    const { violations } = makeValidator(throwDiagnostics).validate('nav', {
       role: 'button',
       'aria-label': 'close',
     })
@@ -394,7 +404,7 @@ describe('validate() — aria-* attribute on wrong role', () => {
   })
 
   it('produces no violation for a valid pair (aria-checked on checkbox)', () => {
-    const { violations } = makeValidator('throw').validate('nav', {
+    const { violations } = makeValidator(throwDiagnostics).validate('nav', {
       role: 'checkbox',
       'aria-checked': 'true',
     })
@@ -402,7 +412,7 @@ describe('validate() — aria-* attribute on wrong role', () => {
   })
 
   it('produces no violation for an unknown/uncurated attribute', () => {
-    const { violations } = makeValidator('throw').validate('nav', {
+    const { violations } = makeValidator(throwDiagnostics).validate('nav', {
       role: 'button',
       'aria-foo-custom': 'value',
     })
@@ -417,7 +427,7 @@ describe('validate() — aria-* attribute on wrong role', () => {
   })
 
   it('sets attribute field on violation to the offending aria-* key', () => {
-    const { violations } = makeValidator(false).validate('nav', {
+    const { violations } = makeValidator(silentDiagnostics).validate('nav', {
       role: 'button',
       'aria-checked': 'true',
     })
@@ -426,7 +436,7 @@ describe('validate() — aria-* attribute on wrong role', () => {
 
   it('does not throw even when strict is "throw" (warning severity)', () => {
     expect(() =>
-      makeValidator('throw').validate('nav', { role: 'button', 'aria-checked': 'true' }),
+      makeValidator(throwDiagnostics).validate('nav', { role: 'button', 'aria-checked': 'true' }),
     ).not.toThrow()
   })
 })
@@ -437,7 +447,9 @@ describe('validate() — aria-* attribute on wrong role', () => {
 
 describe('validate() — implicit role expansion', () => {
   it('allows aria-expanded on <button> (implicit button role permits it)', () => {
-    const { violations } = makeValidator('throw').validate('button', { 'aria-expanded': 'false' })
+    const { violations } = makeValidator(throwDiagnostics).validate('button', {
+      'aria-expanded': 'false',
+    })
     expect(violations).toHaveLength(0)
   })
 
@@ -454,7 +466,7 @@ describe('validate() — implicit role expansion', () => {
   })
 
   it('allows aria-level on <h2> (implicit heading role permits it)', () => {
-    const { violations } = makeValidator('throw').validate('h2', { 'aria-level': '2' })
+    const { violations } = makeValidator(throwDiagnostics).validate('h2', { 'aria-level': '2' })
     expect(violations).toHaveLength(0)
   })
 
@@ -486,7 +498,7 @@ describe('validate() — role violations have attribute: undefined', () => {
   })
 
   it('empty role violation has attribute: undefined', () => {
-    const { violations } = makeValidator(false).validate('nav', { role: '' })
+    const { violations } = makeValidator(silentDiagnostics).validate('nav', { role: '' })
     expect(violations[0]?.attribute).toBeUndefined()
   })
 })
@@ -498,13 +510,13 @@ describe('validate() — role violations have attribute: undefined', () => {
 describe('validate() — props identity when no changes occur', () => {
   it('returns the same props object reference when no violation fires', () => {
     const props = { className: 'foo' }
-    const { props: result } = makeValidator('throw').validate('nav', props)
+    const { props: result } = makeValidator(throwDiagnostics).validate('nav', props)
     expect(result).toBe(props)
   })
 
   it('returns the same props reference for a tag with no implicit role', () => {
     const props = { role: 'dialog', 'aria-checked': 'true' }
-    const { props: result } = makeValidator('throw').validate('div', props)
+    const { props: result } = makeValidator(throwDiagnostics).validate('div', props)
     expect(result).toBe(props)
   })
 
@@ -558,17 +570,21 @@ describe('validate() — role and attribute violations coexist', () => {
 
 describe('validate() — global aria-* attributes always pass through', () => {
   it('allows aria-label on <button> with no explicit role', () => {
-    const { violations } = makeValidator('throw').validate('button', { 'aria-label': 'close' })
+    const { violations } = makeValidator(throwDiagnostics).validate('button', {
+      'aria-label': 'close',
+    })
     expect(violations).toHaveLength(0)
   })
 
   it('allows aria-hidden on <h1> with no explicit role', () => {
-    const { violations } = makeValidator('throw').validate('h1', { 'aria-hidden': 'true' })
+    const { violations } = makeValidator(throwDiagnostics).validate('h1', { 'aria-hidden': 'true' })
     expect(violations).toHaveLength(0)
   })
 
   it('allows aria-describedby on <nav> with no explicit role', () => {
-    const { violations } = makeValidator('throw').validate('nav', { 'aria-describedby': 'desc' })
+    const { violations } = makeValidator(throwDiagnostics).validate('nav', {
+      'aria-describedby': 'desc',
+    })
     expect(violations).toHaveLength(0)
   })
 })
@@ -587,7 +603,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
         fixable: false as const,
       },
     ]
-    const v = new AriaPolicyEngine(diagnosticsFromStrictMode(false), { rules: [customRule] })
+    const v = new AriaPolicyEngine(silentDiagnostics, { rules: [customRule] })
     const { violations } = v.validate('nav', {})
     expect(violations.some((v) => v.message === 'custom rule fired')).toBe(true)
   })
@@ -614,7 +630,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
         },
       },
     ]
-    const v = new AriaPolicyEngine(diagnosticsFromStrictMode(false), { rules: [customRule] })
+    const v = new AriaPolicyEngine(silentDiagnostics, { rules: [customRule] })
     const { props } = v.validate('nav', { 'data-custom': '1' } as never)
     expect(props).not.toHaveProperty('data-custom')
   })
@@ -636,7 +652,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
         fixable: false as const,
       },
     ]
-    const v = new AriaPolicyEngine(diagnosticsFromStrictMode(false), { rules: [ruleA, ruleB] })
+    const v = new AriaPolicyEngine(silentDiagnostics, { rules: [ruleA, ruleB] })
     const { violations } = v.validate('nav', {})
     const msgs = violations.map((v) => v.message)
     expect(msgs).toContain('A')
@@ -652,7 +668,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
         fixable: false as const,
       },
     ]
-    const v = new AriaPolicyEngine(diagnosticsFromStrictMode(false), { rules: [customRule] })
+    const v = new AriaPolicyEngine(silentDiagnostics, { rules: [customRule] })
     // div has no implicit role — engine short-circuits before rules run
     const { violations } = v.validate('div', {})
     expect(violations.every((v) => v.message !== 'should not fire')).toBe(true)
@@ -660,7 +676,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
 
   it('custom rule returning valid results adds no violation', () => {
     const customRule = () => [{ valid: true as const }]
-    const v = new AriaPolicyEngine(diagnosticsFromStrictMode(false), { rules: [customRule] })
+    const v = new AriaPolicyEngine(silentDiagnostics, { rules: [customRule] })
     const { violations } = v.validate('nav', {})
     expect(violations).toHaveLength(0)
   })
@@ -713,7 +729,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
         },
       },
     ]
-    const v = new AriaPolicyEngine(diagnosticsFromStrictMode(false), { rules: [ruleLow, ruleHigh] })
+    const v = new AriaPolicyEngine(silentDiagnostics, { rules: [ruleLow, ruleHigh] })
     const { props } = v.validate('nav', { 'data-high': '1', 'data-low': '2' } as never)
     expect(props).not.toHaveProperty('data-high')
     expect(props).not.toHaveProperty('data-low')
@@ -728,7 +744,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
 
 describe('validate() — violation message content', () => {
   it('attribute violation message names the attribute and the effective role', () => {
-    const { violations } = makeValidator(false).validate('nav', {
+    const { violations } = makeValidator(silentDiagnostics).validate('nav', {
       role: 'button',
       'aria-checked': 'true',
     })
@@ -748,14 +764,14 @@ describe('validate() — violation message content', () => {
 
 describe('validate() — fix-plan cache', () => {
   it('returns same violations on cache hit', () => {
-    const engine = makeValidator(false)
+    const engine = makeValidator(silentDiagnostics)
     const r1 = engine.validate('nav', { role: 'navigation' })
     const r2 = engine.validate('nav', { role: 'navigation' })
     expect(r2.violations).toEqual(r1.violations)
   })
 
   it('applies cached removals to current props, not to the first call props', () => {
-    const engine = makeValidator(false)
+    const engine = makeValidator(silentDiagnostics)
     engine.validate('nav', { role: 'navigation', className: 'first' })
     const r2 = engine.validate('nav', { role: 'navigation', className: 'second' })
     // role should be stripped (cached plan), className should be from the current call
@@ -764,7 +780,7 @@ describe('validate() — fix-plan cache', () => {
   })
 
   it('calls report() on every validate call, including cache hits', () => {
-    const engine = makeValidator('warn')
+    const engine = makeValidator()
     const spy = vi.spyOn(engine, 'report')
     const props = { role: 'navigation' as const }
     engine.validate('nav', props)
@@ -775,7 +791,7 @@ describe('validate() — fix-plan cache', () => {
   })
 
   it('produces a cache miss when aria-relevant props change', () => {
-    const engine = makeValidator(false)
+    const engine = makeValidator(silentDiagnostics)
     // evaluate() is called on every cache miss; violations may be empty so report() is unreliable here
     const spy = vi.spyOn(AriaPolicyEngine, 'evaluate')
     engine.validate('nav', { role: 'navigation' })
@@ -785,7 +801,7 @@ describe('validate() — fix-plan cache', () => {
   })
 
   it('produces a cache hit when only non-aria props change', () => {
-    const engine = makeValidator('warn')
+    const engine = makeValidator()
     const spy = vi.spyOn(engine, 'report')
     engine.validate('nav', { role: 'navigation', className: 'a', onClick: () => {} })
     engine.validate('nav', { role: 'navigation', className: 'b', id: 'x' })
@@ -795,7 +811,7 @@ describe('validate() — fix-plan cache', () => {
   })
 
   it('bypasses cache for non-string (component) tags', () => {
-    const engine = makeValidator(false)
+    const engine = makeValidator(silentDiagnostics)
     const spy = vi.spyOn(engine, 'report')
     const Tag = () => null
     const props = { role: 'navigation' as const }
@@ -807,7 +823,7 @@ describe('validate() — fix-plan cache', () => {
   })
 
   it('applies cached updates (injected aria-live) to current props on cache hit', () => {
-    const engine = makeValidator(false)
+    const engine = makeValidator(silentDiagnostics)
     // First call: cache miss — aria-live should be injected
     const r1 = engine.validate('div', { role: 'alert' })
     expect(r1.props).toHaveProperty('aria-live', 'assertive')
@@ -817,7 +833,7 @@ describe('validate() — fix-plan cache', () => {
   })
 
   it('replays aria-relevant normalisation on cache hit', () => {
-    const engine = makeValidator(false)
+    const engine = makeValidator(silentDiagnostics)
     const r1 = engine.validate('div', { role: 'alert', 'aria-relevant': 'all additions' })
     expect(r1.props).toHaveProperty('aria-relevant', 'all')
     const r2 = engine.validate('div', { role: 'alert', 'aria-relevant': 'all additions' })
@@ -825,7 +841,7 @@ describe('validate() — fix-plan cache', () => {
   })
 
   it('evicts LRU entry when cache exceeds 100 entries', () => {
-    const engine = makeValidator(false)
+    const engine = makeValidator(silentDiagnostics)
     // Spy on the static evaluate method — called once per cache miss, never on hits
     const spy = vi.spyOn(AriaPolicyEngine, 'evaluate')
     // Fill the cache with 100 entries; label-0 is LRU, label-99 is MRU
@@ -852,27 +868,27 @@ describe('validate() — fix-plan cache', () => {
 
 describe('validate() — missing aria-live on live region roles', () => {
   it('injects aria-live="assertive" for role="alert"', () => {
-    const { props } = makeValidator(false).validate('div', { role: 'alert' })
+    const { props } = makeValidator(silentDiagnostics).validate('div', { role: 'alert' })
     expect(props).toHaveProperty('aria-live', 'assertive')
   })
 
   it('injects aria-live="polite" for role="status"', () => {
-    const { props } = makeValidator(false).validate('div', { role: 'status' })
+    const { props } = makeValidator(silentDiagnostics).validate('div', { role: 'status' })
     expect(props).toHaveProperty('aria-live', 'polite')
   })
 
   it('injects aria-live="polite" for role="log"', () => {
-    const { props } = makeValidator(false).validate('div', { role: 'log' })
+    const { props } = makeValidator(silentDiagnostics).validate('div', { role: 'log' })
     expect(props).toHaveProperty('aria-live', 'polite')
   })
 
   it('injects aria-live="off" for role="timer"', () => {
-    const { props } = makeValidator(false).validate('div', { role: 'timer' })
+    const { props } = makeValidator(silentDiagnostics).validate('div', { role: 'timer' })
     expect(props).toHaveProperty('aria-live', 'off')
   })
 
   it('does not inject when aria-live is already present', () => {
-    const { props, violations } = makeValidator(false).validate('div', {
+    const { props, violations } = makeValidator(silentDiagnostics).validate('div', {
       role: 'alert',
       'aria-live': 'polite',
     })
@@ -881,18 +897,18 @@ describe('validate() — missing aria-live on live region roles', () => {
   })
 
   it('pushes a warning violation when injecting', () => {
-    const { violations } = makeValidator(false).validate('div', { role: 'alert' })
+    const { violations } = makeValidator(silentDiagnostics).validate('div', { role: 'alert' })
     expect(violations.some((v) => v.message.includes('aria-live'))).toBe(true)
     expect(violations.find((v) => v.message.includes('aria-live'))?.severity).toBe('warning')
   })
 
   it('does not fire for a non-live-region role', () => {
-    const { violations } = makeValidator(false).validate('div', { role: 'button' })
+    const { violations } = makeValidator(silentDiagnostics).validate('div', { role: 'button' })
     expect(violations.some((v) => v.message.includes('aria-live'))).toBe(false)
   })
 
   it('proceeds for a live-region role on a tag with no implicit role', () => {
-    const { props } = makeValidator(false).validate('span', { role: 'status' })
+    const { props } = makeValidator(silentDiagnostics).validate('span', { role: 'status' })
     expect(props).toHaveProperty('aria-live', 'polite')
   })
 })
@@ -903,12 +919,12 @@ describe('validate() — missing aria-live on live region roles', () => {
 
 describe('validate() — missing aria-atomic advisory on live region roles', () => {
   it('produces a warning when aria-atomic is absent on role="alert"', () => {
-    const { violations } = makeValidator(false).validate('div', { role: 'alert' })
+    const { violations } = makeValidator(silentDiagnostics).validate('div', { role: 'alert' })
     expect(violations.some((v) => v.message.includes('aria-atomic'))).toBe(true)
   })
 
   it('does not fire when aria-atomic is already set', () => {
-    const { violations } = makeValidator(false).validate('div', {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
       role: 'alert',
       'aria-atomic': 'true',
     })
@@ -916,17 +932,17 @@ describe('validate() — missing aria-atomic advisory on live region roles', () 
   })
 
   it('does not fire for non-live-region roles', () => {
-    const { violations } = makeValidator(false).validate('nav', { role: 'banner' })
+    const { violations } = makeValidator(silentDiagnostics).validate('nav', { role: 'banner' })
     expect(violations.some((v) => v.message.includes('aria-atomic'))).toBe(false)
   })
 
   it('is advisory only — does not inject aria-atomic into props', () => {
-    const { props } = makeValidator(false).validate('div', { role: 'status' })
+    const { props } = makeValidator(silentDiagnostics).validate('div', { role: 'status' })
     expect(props).not.toHaveProperty('aria-atomic')
   })
 
   it('does not throw even when strict is "throw"', () => {
-    expect(() => makeValidator('throw').validate('div', { role: 'log' })).not.toThrow()
+    expect(() => makeValidator(throwDiagnostics).validate('div', { role: 'log' })).not.toThrow()
   })
 })
 
@@ -936,7 +952,7 @@ describe('validate() — missing aria-atomic advisory on live region roles', () 
 
 describe('validate() — aria-relevant validation and normalisation', () => {
   it('removes aria-relevant entirely when an invalid token is present', () => {
-    const { props } = makeValidator(false).validate('div', {
+    const { props } = makeValidator(silentDiagnostics).validate('div', {
       role: 'alert',
       'aria-relevant': 'additions bogus',
     })
@@ -944,7 +960,7 @@ describe('validate() — aria-relevant validation and normalisation', () => {
   })
 
   it('pushes a violation listing the invalid token', () => {
-    const { violations } = makeValidator(false).validate('div', {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
       role: 'alert',
       'aria-relevant': 'additions bogus',
     })
@@ -954,7 +970,7 @@ describe('validate() — aria-relevant validation and normalisation', () => {
   })
 
   it('normalises "all additions" to "all"', () => {
-    const { props } = makeValidator(false).validate('div', {
+    const { props } = makeValidator(silentDiagnostics).validate('div', {
       role: 'alert',
       'aria-relevant': 'all additions',
     })
@@ -962,7 +978,7 @@ describe('validate() — aria-relevant validation and normalisation', () => {
   })
 
   it('normalises "all additions text removals" to "all"', () => {
-    const { props } = makeValidator(false).validate('div', {
+    const { props } = makeValidator(silentDiagnostics).validate('div', {
       role: 'alert',
       'aria-relevant': 'all additions text removals',
     })
@@ -970,7 +986,7 @@ describe('validate() — aria-relevant validation and normalisation', () => {
   })
 
   it('does not fire for valid tokens without "all"', () => {
-    const { violations } = makeValidator(false).validate('div', {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
       role: 'alert',
       'aria-relevant': 'additions text',
     })
@@ -978,12 +994,12 @@ describe('validate() — aria-relevant validation and normalisation', () => {
   })
 
   it('does not fire when aria-relevant is absent', () => {
-    const { violations } = makeValidator(false).validate('div', { role: 'alert' })
+    const { violations } = makeValidator(silentDiagnostics).validate('div', { role: 'alert' })
     expect(violations.some((v) => v.attribute === 'aria-relevant')).toBe(false)
   })
 
   it('accepts "all" alone as valid', () => {
-    const { violations } = makeValidator(false).validate('div', {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
       role: 'alert',
       'aria-relevant': 'all',
     })

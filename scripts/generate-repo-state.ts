@@ -181,7 +181,6 @@ const CONTRACT_NAMES = new Set([
   'PolymorphicGenerics',
   'PolymorphicRuntime',
   'ResolvedFactoryOptions',
-  'StrictMode',
 ])
 
 function extractContracts(packages: PackageMeta[]) {

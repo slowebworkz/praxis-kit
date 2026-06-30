@@ -10,6 +10,7 @@ import type {
 } from '@praxis-kit/core'
 import { createContractedPolymorphic } from '@praxis-kit/core/contract'
 import { buildEngines, composeFilter } from '@praxis-kit/adapter-utils'
+import { throwDiagnostics } from '@praxis-kit/diagnostics'
 import { forwardRef } from 'react'
 import type { ReactElement } from 'react'
 import { Slot } from './slot'
@@ -30,13 +31,13 @@ export function createContractedComponent<
     | undefined,
 >(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin>) {
   const name = options.name ?? 'PolymorphicComponent'
-  const strict = options.enforcement?.strict ?? 'throw'
+  const diagnostics = options.enforcement?.diagnostics ?? throwDiagnostics
   const slotComponent = options.slotComponent ?? Slot
 
   const runtime = createContractedPolymorphic(options)
   const filterProps = composeFilter(new Set(), options.filterProps)
-  const slotValidator = new SlotValidator(name, strict)
-  const { childrenEvaluator } = buildEngines(strict, options.enforcement?.children, name)
+  const slotValidator = new SlotValidator(name, diagnostics)
+  const { childrenEvaluator } = buildEngines(diagnostics, options.enforcement?.children, name)
 
   const Component = forwardRef<unknown, UnknownProps>(
     function PolymorphicComponent(props, ref): ReactElement {

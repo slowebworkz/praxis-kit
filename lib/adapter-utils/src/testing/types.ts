@@ -1,4 +1,5 @@
-import type { AnyRecord, FactoryOptions, VariantMap, StrictMode } from '@praxis-kit/core'
+import type { AnyRecord, FactoryOptions, VariantMap } from '@praxis-kit/core'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 
 /**
  * A maximally-wide FactoryOptions shape used as the bridge cast in adapter
@@ -41,7 +42,7 @@ export type ConformanceFactoryOptions = {
   }
   filterProps?: (key: string, variantKeys: ReadonlySet<string>) => boolean
   enforcement?: {
-    strict?: StrictMode
+    diagnostics?: Diagnostics
     children?: ReadonlyArray<{
       name: string
       match: (c: unknown) => c is unknown

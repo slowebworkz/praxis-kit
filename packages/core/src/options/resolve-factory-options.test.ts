@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { resolveFactoryOptions } from './resolve-factory-options'
+import { throwDiagnostics, warnDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
 // Defaults
@@ -11,8 +12,8 @@ describe('resolveFactoryOptions() — defaults', () => {
     expect(resolveFactoryOptions({}).defaultTag).toBe('div')
   })
 
-  it('defaults strict to false', () => {
-    expect(resolveFactoryOptions({}).strict).toBe(false)
+  it('defaults diagnostics to silentDiagnostics', () => {
+    expect(resolveFactoryOptions({}).diagnostics).toBe(silentDiagnostics)
   })
 
   it('omits baseClassName when not provided', () => {
@@ -49,10 +50,16 @@ describe('resolveFactoryOptions() — provided options', () => {
     expect(resolveFactoryOptions({ tag: 'section' }).defaultTag).toBe('section')
   })
 
-  it('uses provided strict mode', () => {
-    expect(resolveFactoryOptions({ enforcement: { strict: 'warn' } }).strict).toBe('warn')
-    expect(resolveFactoryOptions({ enforcement: { strict: 'throw' } }).strict).toBe('throw')
-    expect(resolveFactoryOptions({ enforcement: { strict: true } }).strict).toBe(true)
+  it('uses provided diagnostics', () => {
+    expect(
+      resolveFactoryOptions({ enforcement: { diagnostics: warnDiagnostics } }).diagnostics,
+    ).toBe(warnDiagnostics)
+    expect(
+      resolveFactoryOptions({ enforcement: { diagnostics: throwDiagnostics } }).diagnostics,
+    ).toBe(throwDiagnostics)
+    expect(
+      resolveFactoryOptions({ enforcement: { diagnostics: silentDiagnostics } }).diagnostics,
+    ).toBe(silentDiagnostics)
   })
 
   it('includes baseClassName when provided', () => {

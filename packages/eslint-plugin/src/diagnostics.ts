@@ -22,7 +22,7 @@ export const EslintDiagnosticTemplates = {
 
   // Enforcement rules
   missingStrict:
-    'enforcement.{{ field }} is defined but enforcement.strict is not explicitly set. Adapter defaults vary — declare strict explicitly so the behavior is clear at the call site.',
+    'enforcement.{{ field }} is defined but enforcement.diagnostics is not explicitly set. Pass a Diagnostics instance (e.g. warnDiagnostics, throwDiagnostics) so the enforcement behavior is clear at the call site.',
 
   // Default value rules
   invalidDefaultKey:

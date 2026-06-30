@@ -1,5 +1,5 @@
 import type { AnyRecord, ClassName, ElementType } from './primitives'
-import type { StrictMode } from './strict-mode'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 
 /**
  * The configuration passed to `createResolverPipeline`.
@@ -11,7 +11,7 @@ import type { StrictMode } from './strict-mode'
 export type ResolverOptions = {
   defaultTag: ElementType
   defaultProps?: AnyRecord
-  strict?: StrictMode
+  diagnostics?: Diagnostics
   allowedAs?: readonly ElementType[]
   displayName?: string
 }

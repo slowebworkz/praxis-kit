@@ -28,7 +28,7 @@ export function validateFactoryOptions<
   V extends Readonly<VariantMap>,
   TPreset extends RecipeMap<V>,
 >(resolved: ResolvedFactoryOptions<TDefault, Props, V, TPreset>, diagnostics: Diagnostics): void {
-  if (!resolved.strict) return
+  if (!diagnostics.active) return
   const name = resolved.displayName ?? 'Component'
   const { variants } = resolved
 

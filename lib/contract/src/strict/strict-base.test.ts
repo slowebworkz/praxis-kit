@@ -1,14 +1,16 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { InvariantBase } from './invariant-base'
-import { diagnosticsFromStrictMode } from './strict-compat'
 import {
+  AsyncConsoleReporter,
   CollectingReporter,
   Diagnostics,
   DefaultPolicy,
   DiagnosticCategory,
   DiagnosticCode,
   Severity,
+  silentDiagnostics,
+  throwDiagnostics,
 } from '@praxis-kit/diagnostics'
 import type { DiagnosticInput } from '@praxis-kit/diagnostics'
 
@@ -56,13 +58,20 @@ function makeThrowCollecting() {
   return { reporter, diagnostics }
 }
 
+function makeAsyncWarnDiagnostics() {
+  return new Diagnostics(
+    new AsyncConsoleReporter(),
+    new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
+  )
+}
+
 // ---------------------------------------------------------------------------
 // violate()
 // ---------------------------------------------------------------------------
 
 describe('InvariantBase.violate()', () => {
   it('is silent when strict is false', () => {
-    const s = new TestInvariant(diagnosticsFromStrictMode(false))
+    const s = new TestInvariant(silentDiagnostics)
     expect(() => s.callViolate('msg')).not.toThrow()
     // false-mode policy ignores all — verified by strict-compat tests
   })
@@ -92,34 +101,34 @@ describe('InvariantBase.violate()', () => {
   })
 
   it('throws when strict is "throw"', () => {
-    const s = new TestInvariant(diagnosticsFromStrictMode('throw'))
+    const s = new TestInvariant(throwDiagnostics)
     expect(() => s.callViolate('bad')).toThrow('bad')
   })
 
   it('throws an Error instance when strict is "throw"', () => {
-    const s = new TestInvariant(diagnosticsFromStrictMode('throw'))
+    const s = new TestInvariant(throwDiagnostics)
     expect(() => s.callViolate('bad')).toThrow(Error)
   })
 
   it('throws when strict is true', () => {
-    const s = new TestInvariant(diagnosticsFromStrictMode(true))
+    const s = new TestInvariant(throwDiagnostics)
     expect(() => s.callViolate('bad')).toThrow('bad')
   })
 
   it('throws an Error instance when strict is true', () => {
-    const s = new TestInvariant(diagnosticsFromStrictMode(true))
+    const s = new TestInvariant(throwDiagnostics)
     expect(() => s.callViolate('bad')).toThrow(Error)
   })
 
   it('true and "throw" produce identical behavior', () => {
-    const s1 = new TestInvariant(diagnosticsFromStrictMode('throw'))
-    const s2 = new TestInvariant(diagnosticsFromStrictMode(true))
+    const s1 = new TestInvariant(throwDiagnostics)
+    const s2 = new TestInvariant(throwDiagnostics)
     expect(() => s1.callViolate('x')).toThrow('x')
     expect(() => s2.callViolate('x')).toThrow('x')
   })
 
   it('preserves the exact message in the thrown Error', () => {
-    const s = new TestInvariant(diagnosticsFromStrictMode('throw'))
+    const s = new TestInvariant(throwDiagnostics)
     let caught: unknown
     try {
       s.callViolate('exact message')
@@ -146,7 +155,7 @@ describe('InvariantBase.violate()', () => {
 
 describe('InvariantBase.warn()', () => {
   it('is silent when strict is false', () => {
-    const s = new TestInvariant(diagnosticsFromStrictMode(false))
+    const s = new TestInvariant(silentDiagnostics)
     expect(() => s.callWarn('msg')).not.toThrow()
   })
 
@@ -206,7 +215,7 @@ describe('InvariantBase.invariant() — falsy conditions delegate to violate()',
   it.each([false, null, undefined, 0, '', NaN])(
     'throws for falsy value %o when strict is "throw"',
     (condition) => {
-      const s = new TestInvariant(diagnosticsFromStrictMode('throw'))
+      const s = new TestInvariant(throwDiagnostics)
       expect(() => s.callInvariant(condition, 'invariant failed')).toThrow('invariant failed')
     },
   )
@@ -214,7 +223,7 @@ describe('InvariantBase.invariant() — falsy conditions delegate to violate()',
   it.each([false, null, undefined, 0, '', NaN])(
     'throws for falsy value %o when strict is true',
     (condition) => {
-      const s = new TestInvariant(diagnosticsFromStrictMode(true))
+      const s = new TestInvariant(throwDiagnostics)
       expect(() => s.callInvariant(condition, 'invariant failed')).toThrow('invariant failed')
     },
   )
@@ -222,7 +231,7 @@ describe('InvariantBase.invariant() — falsy conditions delegate to violate()',
   it.each([false, null, undefined, 0, '', NaN])(
     'is silent for falsy value %o when strict is false',
     (condition) => {
-      const s = new TestInvariant(diagnosticsFromStrictMode(false))
+      const s = new TestInvariant(silentDiagnostics)
       expect(() => s.callInvariant(condition, 'msg')).not.toThrow()
     },
   )
@@ -237,7 +246,7 @@ describe('InvariantBase.invariant() — message forwarding', () => {
   })
 
   it('passes the exact message to the thrown Error', () => {
-    const s = new TestInvariant(diagnosticsFromStrictMode('throw'))
+    const s = new TestInvariant(throwDiagnostics)
     expect(() => s.callInvariant(false, 'exact invariant message')).toThrow(
       'exact invariant message',
     )
@@ -251,7 +260,7 @@ describe('InvariantBase.invariant() — message forwarding', () => {
 describe("InvariantBase.warn() — 'async-warn' mode", () => {
   it('does not call console.warn synchronously', () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const s = new TestInvariant(diagnosticsFromStrictMode('async-warn'))
+    const s = new TestInvariant(makeAsyncWarnDiagnostics())
     s.callWarn('deferred')
     expect(spy).not.toHaveBeenCalled()
     spy.mockRestore()
@@ -259,28 +268,28 @@ describe("InvariantBase.warn() — 'async-warn' mode", () => {
 
   it('calls console.warn after microtask flush', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const s = new TestInvariant(diagnosticsFromStrictMode('async-warn'))
+    const s = new TestInvariant(makeAsyncWarnDiagnostics())
     s.callWarn('deferred')
     await Promise.resolve()
-    expect(spy).toHaveBeenCalledWith('deferred')
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('deferred'))
     spy.mockRestore()
   })
 
   it('deduplicates identical messages within the same tick', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const s = new TestInvariant(diagnosticsFromStrictMode('async-warn'))
+    const s = new TestInvariant(makeAsyncWarnDiagnostics())
     s.callWarn('dup')
     s.callWarn('dup')
     s.callWarn('dup')
     await Promise.resolve()
     expect(spy).toHaveBeenCalledTimes(1)
-    expect(spy).toHaveBeenCalledWith('dup')
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('dup'))
     spy.mockRestore()
   })
 
   it('flushes all unique messages in a single microtask', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const s = new TestInvariant(diagnosticsFromStrictMode('async-warn'))
+    const s = new TestInvariant(makeAsyncWarnDiagnostics())
     s.callWarn('a')
     s.callWarn('b')
     s.callWarn('c')
@@ -291,7 +300,7 @@ describe("InvariantBase.warn() — 'async-warn' mode", () => {
 
   it('allows the same message to re-fire in a later tick', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const s = new TestInvariant(diagnosticsFromStrictMode('async-warn'))
+    const s = new TestInvariant(makeAsyncWarnDiagnostics())
     s.callWarn('repeat')
     await Promise.resolve()
     s.callWarn('repeat')
@@ -302,10 +311,10 @@ describe("InvariantBase.warn() — 'async-warn' mode", () => {
 
   it('does not throw even when strict is async-warn', async () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const s = new TestInvariant(diagnosticsFromStrictMode('async-warn'))
+    const s = new TestInvariant(makeAsyncWarnDiagnostics())
     expect(() => s.callViolate('violation')).not.toThrow()
     await Promise.resolve()
-    expect(spy).toHaveBeenCalledWith('violation')
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('violation'))
     spy.mockRestore()
   })
 })

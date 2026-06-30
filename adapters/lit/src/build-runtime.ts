@@ -5,6 +5,7 @@ import {
   composeFilter,
   resolveAdapterCommonOptions,
 } from '@praxis-kit/adapter-utils'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import type { BuiltRuntime, NormalizedOptions, RuntimeG } from './types/index'
 import type { LitFactoryOptions } from './types/index'
 
@@ -18,7 +19,7 @@ function normalizeOptions<
 ): NormalizedOptions<RuntimeG<TDefault, Props, Variants, TPreset>> {
   return {
     ...options,
-    ...resolveAdapterCommonOptions(options, 'PolymorphicElement', false),
+    ...resolveAdapterCommonOptions(options, 'PolymorphicElement', silentDiagnostics),
   } as NormalizedOptions<RuntimeG<TDefault, Props, Variants, TPreset>>
 }
 
@@ -37,7 +38,7 @@ export function buildRuntime<
 
   const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
   const { childrenEvaluator } = buildEngines(
-    normalized.strict,
+    normalized.diagnostics,
     enforcement?.children,
     normalized.name,
   )

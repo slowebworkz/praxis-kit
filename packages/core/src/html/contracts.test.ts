@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { AriaContext, EnforcementOptions } from '../types'
 import { ChildrenEvaluator, diagnoseChildren } from '../children'
-import { diagnosticsFromStrictMode } from '../contract'
+import { throwDiagnostics } from '@praxis-kit/diagnostics'
 import {
   audioContract,
   colgroupContract,
@@ -398,11 +398,7 @@ describe('voidContract', () => {
 
   it('rejects any child via ChildrenEvaluator', () => {
     // diagnoseChildren short-circuits when rules is empty; ChildrenEvaluator enforces correctly.
-    const ev = new ChildrenEvaluator(
-      voidContract.children!,
-      diagnosticsFromStrictMode('throw'),
-      'VoidElement',
-    )
+    const ev = new ChildrenEvaluator(voidContract.children!, throwDiagnostics, 'VoidElement')
     expect(() => ev.evaluate([el('span')])).toThrow()
   })
 })

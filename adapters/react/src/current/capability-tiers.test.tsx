@@ -9,6 +9,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { createElement, isValidElement } from 'react'
 import type { ReactElement } from 'react'
+import { silentDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
 import { box, useReactDom } from '../shared/test-utils'
 import { createContractComponent } from './create-contract-component'
 
@@ -190,7 +191,7 @@ describe('Tier 3 — ARIA enforcement', () => {
   const Enforced = createContractComponent({
     tag: 'nav',
     styling: { base: 'nav-bar' },
-    enforcement: { strict: false },
+    enforcement: { diagnostics: silentDiagnostics },
   })
 
   it('does not forward an invalid aria-* attribute to the DOM', () => {
@@ -211,7 +212,7 @@ describe('Tier 3 — ARIA enforcement', () => {
 
   it('warns for invalid aria when strict is "warn"', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const W = createContractComponent({ tag: 'nav', enforcement: { strict: 'warn' } })
+    const W = createContractComponent({ tag: 'nav', enforcement: { diagnostics: warnDiagnostics } })
     dom.mount(createElement(box(W), { 'aria-checked': 'true' }))
     expect(warn).toHaveBeenCalled()
   })

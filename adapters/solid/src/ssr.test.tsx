@@ -4,6 +4,7 @@ import { renderToString } from 'solid-js/web'
 import type { Component } from 'solid-js'
 import { ssrConformanceSuite } from '@praxis-kit/adapter-utils/testing'
 import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from './create-contract-component'
 import type { UnknownProps } from './types'
 
@@ -20,7 +21,10 @@ describe('createContractComponent — SSR (solid-js/web renderToString)', () => 
   })
 
   it('strips redundant ARIA role — server HTML agrees with what client hydration would produce', () => {
-    const Comp = createContractComponent({ tag: 'button', enforcement: { strict: false } })
+    const Comp = createContractComponent({
+      tag: 'button',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const html = renderToString(() => <Comp role="button" />)
     // The redundant role should be stripped before serialisation
     expect(html).not.toContain('role=')

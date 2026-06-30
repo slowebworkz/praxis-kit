@@ -6,6 +6,7 @@
  */
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
+import { warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from '@praxis-kit/react'
 import type { AriaRule } from '@praxis-kit/core/contract'
 
@@ -37,7 +38,7 @@ export const Button = createContractComponent<'button', Record<string, never>, t
     defaults: { intent: 'primary', size: 'md' },
   },
   enforcement: {
-    strict: 'warn',
+    diagnostics: warnDiagnostics,
     aria: [requireLabel],
     children: [
       {
