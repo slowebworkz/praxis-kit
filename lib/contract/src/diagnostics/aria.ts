@@ -90,6 +90,124 @@ export const AriaDiagnostics = {
     }
   },
 
+  missingAccessibleName(tag: string): DiagnosticInput {
+    return {
+      code: DiagnosticCode.AriaMissingAccessibleName,
+      category: DiagnosticCategory.ARIA,
+      message: `<${tag}> has no accessible name. Add aria-label or aria-labelledby.`,
+      rationale:
+        'Elements with a landmark or interactive role must have an accessible name so that ' +
+        'assistive technology can identify them when presenting the page outline.',
+      suggestions: [
+        {
+          title: 'Add aria-label',
+          description: `Add aria-label="…" directly to the <${tag}> element.`,
+        },
+        {
+          title: 'Add aria-labelledby',
+          description: 'Point aria-labelledby at the id of an existing heading or label element.',
+        },
+      ],
+    }
+  },
+
+  attributeOnPresentational(attr: string, tag: string): DiagnosticInput {
+    return {
+      code: DiagnosticCode.AriaAttributeOnPresentational,
+      category: DiagnosticCategory.ARIA,
+      message: `"${attr}" is not allowed on a presentational <${tag}>. Presentational elements are invisible to assistive technology.`,
+      rationale:
+        'role="none" and role="presentation" (including <img alt="">) remove an element from the accessibility tree. ARIA attributes on such elements are ignored by assistive technology.',
+      suggestions: [
+        {
+          title: 'Remove the attribute',
+          description: `"${attr}" has no effect when the element has role="none" or role="presentation".`,
+        },
+      ],
+    }
+  },
+
+  ariaHiddenOnFocusable(tag: string): DiagnosticInput {
+    return {
+      code: DiagnosticCode.AriaHiddenOnFocusable,
+      category: DiagnosticCategory.ARIA,
+      message: `aria-hidden="true" must not be used on focusable <${tag}> elements. Screen reader users who navigate by keyboard will encounter the element but receive no information about it.`,
+      rationale:
+        'aria-hidden removes an element from the accessibility tree while leaving it keyboard-reachable. ' +
+        'This creates a "ghost" — a focusable element assistive technology cannot describe.',
+      suggestions: [
+        {
+          title: 'Remove aria-hidden',
+          description:
+            'If the element should be hidden from all users, use the HTML hidden attribute or CSS display:none instead.',
+        },
+        {
+          title: 'Make the element non-focusable',
+          description:
+            'If the element is intentionally decorative, add tabindex="-1" and disable it so it is not reachable by keyboard.',
+        },
+      ],
+    }
+  },
+
+  invalidAttributeValue(attr: string, value: unknown, expected: string): DiagnosticInput {
+    const got =
+      value === null
+        ? 'null'
+        : value === undefined
+          ? 'undefined'
+          : typeof value === 'string'
+            ? `"${value}"`
+            : String(value)
+    return {
+      code: DiagnosticCode.AriaInvalidAttributeValue,
+      category: DiagnosticCategory.ARIA,
+      message: `"${attr}" has an invalid value (${got}). Expected: ${expected}.`,
+      rationale:
+        'ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.',
+      suggestions: [
+        {
+          title: `Use a valid value for ${attr}`,
+          description: `Valid values are: ${expected}.`,
+        },
+      ],
+    }
+  },
+
+  redundantAriaLevel(tag: string, level: number): DiagnosticInput {
+    return {
+      code: DiagnosticCode.AriaRedundantLevelAttribute,
+      category: DiagnosticCategory.ARIA,
+      message: `aria-level="${level}" is redundant on <${tag}>: the element already has an implicit heading level of ${level}. Remove the attribute.`,
+      rationale:
+        'Restating the implicit aria-level adds noise without semantic value. ' +
+        'Use aria-level only to override the native heading level (e.g. aria-level="3" on <h2>).',
+      suggestions: [
+        {
+          title: 'Remove aria-level',
+          description: `<${tag}> already implies aria-level="${level}".`,
+        },
+      ],
+    }
+  },
+
+  requiredProperty(attr: string, role: string): DiagnosticInput {
+    return {
+      code: DiagnosticCode.AriaRequiredProperty,
+      category: DiagnosticCategory.ARIA,
+      message: `"${attr}" is required for role="${role}" but is missing.`,
+      rationale:
+        `WAI-ARIA 1.2 specifies required states and properties for certain roles. ` +
+        `Without "${attr}", assistive technology cannot correctly communicate the element's state to users.`,
+      suggestions: [
+        {
+          title: `Add ${attr}`,
+          description: `role="${role}" requires "${attr}" to be present.`,
+        },
+      ],
+    }
+  },
+
   invalidRole(role: string | undefined, tag: string): DiagnosticInput {
     return {
       code: DiagnosticCode.AriaInvalidRole,

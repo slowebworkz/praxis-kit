@@ -268,7 +268,7 @@ describe('createPolymorphic — plugin contract', () => {
       createPolymorphic({
         styling: { plugin: () => ({ pipeline: 'not-a-fn' as never }) },
       }),
-    ).toThrow("Plugin factory return value is missing a 'pipeline' function. Got pipeline: string.")
+    ).toThrow("Plugin factory must return an object with a 'pipeline' function. Got: object.")
   })
 
   it('throws at render time when the pipeline returns a non-string (dev mode)', () => {

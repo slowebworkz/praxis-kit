@@ -466,7 +466,7 @@ describe('validate() — implicit role expansion', () => {
   })
 
   it('allows aria-level on <h2> (implicit heading role permits it)', () => {
-    const { violations } = makeValidator(throwDiagnostics).validate('h2', { 'aria-level': '2' })
+    const { violations } = makeValidator(throwDiagnostics).validate('h2', { 'aria-level': '3' })
     expect(violations).toHaveLength(0)
   })
 
@@ -514,8 +514,9 @@ describe('validate() — props identity when no changes occur', () => {
     expect(result).toBe(props)
   })
 
-  it('returns the same props reference for a tag with no implicit role', () => {
-    const props = { role: 'dialog', 'aria-checked': 'true' }
+  it('returns the same props reference when explicit role has no violations', () => {
+    // Global aria-* attrs are always valid — no fix applied, same reference returned.
+    const props = { role: 'dialog', 'aria-label': 'My dialog' }
     const { props: result } = makeValidator(throwDiagnostics).validate('div', props)
     expect(result).toBe(props)
   })
@@ -1004,5 +1005,847 @@ describe('validate() — aria-relevant validation and normalisation', () => {
       'aria-relevant': 'all',
     })
     expect(violations.some((v) => v.attribute === 'aria-relevant')).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — expanded static implicit roles
+// ---------------------------------------------------------------------------
+
+describe('validate() — textarea (implicit role: textbox)', () => {
+  it('allows aria-multiline on textarea (valid for textbox)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('textarea', {
+      'aria-multiline': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('warns for aria-checked on textarea (not valid for textbox)', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('textarea', { 'aria-checked': 'true' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
+  })
+
+  it('strips aria-checked from textarea props', () => {
+    const { props } = makeValidator(silentDiagnostics).validate('textarea', {
+      'aria-checked': 'true',
+    })
+    expect(props).not.toHaveProperty('aria-checked')
+  })
+
+  it('warns for redundant role="textbox" on textarea', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('textarea', { role: 'textbox' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
+  })
+})
+
+describe('validate() — fieldset (implicit role: group)', () => {
+  it('allows aria-activedescendant on fieldset (valid for group)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('fieldset', {
+      'aria-activedescendant': 'input-id',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('warns for aria-checked on fieldset (not valid for group)', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('fieldset', { 'aria-checked': 'true' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
+  })
+})
+
+describe('validate() — dialog (implicit role: dialog)', () => {
+  it('allows aria-modal on dialog (valid for dialog role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('dialog', {
+      'aria-modal': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('warns for redundant role="dialog" on dialog element', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('dialog', { role: 'dialog' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
+  })
+})
+
+describe('validate() — progress (implicit role: progressbar)', () => {
+  it('allows aria-valuenow on progress (valid for progressbar)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('progress', {
+      'aria-valuenow': '50',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('warns for aria-checked on progress (not valid for progressbar)', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('progress', { 'aria-checked': 'true' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
+  })
+})
+
+describe('validate() — output (implicit role: status)', () => {
+  it('does not flag aria-label on output (global attribute is always valid)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('output', {
+      'aria-label': 'Result',
+    })
+    // aria-label is globally valid — any violations are about missing aria-live, not the label
+    expect(violations.some((v) => v.attribute === 'aria-label')).toBe(false)
+  })
+
+  it('injects aria-live="polite" on output (status role implies it)', () => {
+    const { props } = makeValidator(silentDiagnostics).validate('output', {})
+    expect(props).toHaveProperty('aria-live', 'polite')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — input[type=...] implicit role
+// ---------------------------------------------------------------------------
+
+describe('validate() — input implicit roles via type attribute', () => {
+  it('allows aria-checked on input[type=checkbox] (checkbox role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'checkbox',
+      'aria-checked': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('warns for aria-pressed on input[type=checkbox] (not valid for checkbox)', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('input', { type: 'checkbox', 'aria-pressed': 'true' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
+  })
+
+  it('allows aria-checked on input[type=radio] (radio role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'radio',
+      'aria-checked': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('allows aria-multiline on input[type=text] (textbox role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'text',
+      'aria-multiline': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('treats input with no type as textbox', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      'aria-multiline': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('allows aria-valuenow on input[type=range] (slider role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'range',
+      'aria-valuenow': '50',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('allows aria-valuenow on input[type=number] (spinbutton role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'number',
+      'aria-valuenow': '5',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('skips validation for input[type=hidden] (no ARIA role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'hidden',
+      'aria-checked': 'true',
+    })
+    // No implicit role → engine skips → no false positive
+    expect(violations).toHaveLength(0)
+  })
+
+  it('does not share cache between input[type=checkbox] and input[type=radio]', () => {
+    const engine = makeValidator(silentDiagnostics)
+    // checkbox allows aria-checked; radio also allows it — test with an attribute invalid on one but valid on both
+    // Use aria-pressed: valid on button only, not checkbox or radio
+    engine.validate('input', { type: 'checkbox', 'aria-pressed': 'true' })
+    const { violations } = engine.validate('input', { type: 'radio', 'aria-pressed': 'true' })
+    // Radio also doesn't allow aria-pressed — violation should appear (not a stale checkbox cache hit)
+    expect(violations.some((v) => v.attribute === 'aria-pressed')).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — conditional landmarks: section and form
+// ---------------------------------------------------------------------------
+
+describe('validate() — section conditional landmark (role: region when named)', () => {
+  it('derives role=region when section has aria-label', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('section', {
+      'aria-label': 'News',
+      role: 'region',
+    })
+    // role="region" matches implicit region → redundant → one warning
+    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+  })
+
+  it('engine skips unnamed section (no implicit role without accessible name)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('section', {
+      'aria-checked': 'true',
+    })
+    // No implicit role → no processing → no false positives
+    expect(violations).toHaveLength(0)
+  })
+
+  it('validates aria-* on section when aria-labelledby provides the name', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('section', {
+      'aria-labelledby': 'heading-id',
+      'aria-checked': 'true',
+    })
+    // section → region; aria-checked is not valid for region → violation
+    expect(violations.some((v) => v.attribute === 'aria-checked')).toBe(true)
+  })
+})
+
+describe('validate() — form conditional landmark (role: form when named)', () => {
+  it('derives role=form when form has aria-label', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('form', {
+      'aria-label': 'Login',
+      role: 'form',
+    })
+    // role="form" matches implicit form → redundant → one warning
+    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+  })
+
+  it('engine skips unnamed form (no implicit role without accessible name)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('form', {
+      'aria-checked': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — img implicit role (alt="" → none, otherwise → img)
+// ---------------------------------------------------------------------------
+
+describe('validate() — img implicit role', () => {
+  it('derives role=img when alt is absent', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('img', {
+      'aria-label': 'Company logo',
+    })
+    // aria-label is global and valid for img role — no violation
+    expect(violations).toHaveLength(0)
+  })
+
+  it('derives role=img when alt is non-empty', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('img', {
+      alt: 'Company logo',
+      'aria-label': 'Company logo',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('warns for aria-label when alt="" (decorative, role=none)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('img', {
+      alt: '',
+      'aria-label': 'Logo',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-label')).toBe(true)
+  })
+
+  it('strips aria-label from decorative img (alt="")', () => {
+    const { props } = makeValidator(silentDiagnostics).validate('img', {
+      alt: '',
+      'aria-label': 'Logo',
+    })
+    expect(props).not.toHaveProperty('aria-label')
+  })
+
+  it('warns for aria-labelledby when alt="" (decorative)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('img', {
+      alt: '',
+      'aria-labelledby': 'caption',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-labelledby')).toBe(true)
+  })
+
+  it('allows aria-hidden on decorative img (redundant but harmless)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('img', {
+      alt: '',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(false)
+  })
+
+  it('does not share cache between alt="" and alt="logo"', () => {
+    const engine = makeValidator(silentDiagnostics)
+    // First call: alt="" → decorative; aria-label is flagged
+    const r1 = engine.validate('img', { alt: '', 'aria-label': 'Logo' })
+    expect(r1.violations.some((v) => v.attribute === 'aria-label')).toBe(true)
+    // Second call: alt="logo" → semantic img; aria-label is valid (global)
+    const r2 = engine.validate('img', { alt: 'Logo', 'aria-label': 'Logo' })
+    expect(r2.violations.some((v) => v.attribute === 'aria-label')).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — #checkPresentationalAriaAttributes (explicit role=none/presentation)
+// ---------------------------------------------------------------------------
+
+describe('validate() — ARIA attributes on presentational role', () => {
+  it('warns for aria-label when role="none"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'none',
+      'aria-label': 'Decorative',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-label')).toBe(true)
+  })
+
+  it('strips aria-label from role="none" element', () => {
+    const { props } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'none',
+      'aria-label': 'Decorative',
+    })
+    expect(props).not.toHaveProperty('aria-label')
+  })
+
+  it('warns for aria-labelledby when role="presentation"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'presentation',
+      'aria-labelledby': 'heading',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-labelledby')).toBe(true)
+  })
+
+  it('allows aria-hidden on role="none" (redundant but harmless)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'none',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(false)
+  })
+
+  it('produces no duplicate violations — #checkInvalidAriaAttributes defers to presentational check', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'none',
+      'aria-checked': 'true',
+    })
+    // Exactly one violation for aria-checked (from presentational check, not invalid-attr check)
+    const ariaCheckedViolations = violations.filter((v) => v.attribute === 'aria-checked')
+    expect(ariaCheckedViolations).toHaveLength(1)
+  })
+
+  it('flags multiple ARIA attributes on role="none"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'none',
+      'aria-label': 'foo',
+      'aria-describedby': 'bar',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-label')).toBe(true)
+    expect(violations.some((v) => v.attribute === 'aria-describedby')).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — #checkAriaHiddenOnFocusable
+// ---------------------------------------------------------------------------
+
+describe('validate() — aria-hidden="true" on focusable elements', () => {
+  it('throws for aria-hidden="true" on <button> (error severity)', () => {
+    expect(() =>
+      makeValidator(throwDiagnostics).validate('button', { 'aria-hidden': 'true' }),
+    ).toThrow()
+  })
+
+  it('reports an error-severity violation for aria-hidden on <button>', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('button', {
+      'aria-hidden': 'true',
+    })
+    const v = violations.find((v) => v.attribute === 'aria-hidden')
+    expect(v).toBeDefined()
+    expect(v?.severity).toBe('error')
+  })
+
+  it('reports a violation for aria-hidden on <input>', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('input', {
+      type: 'text',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(true)
+  })
+
+  it('reports a violation for aria-hidden on <select>', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('select', {
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(true)
+  })
+
+  it('reports a violation for aria-hidden on <a>', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('a', {
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(true)
+  })
+
+  it('does not flag aria-hidden on non-interactive <div>', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('div', {
+      role: 'presentation',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(false)
+  })
+
+  it('does not flag aria-hidden="false" on interactive elements', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('button', {
+      'aria-hidden': 'false',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(false)
+  })
+
+  it('flags aria-hidden on <h2 tabindex="0"> (non-interactive but explicitly tabbable)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('h2', {
+      tabindex: '0',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(true)
+  })
+
+  it('does not flag aria-hidden on <h2 tabindex="-1"> (programmatic focus only)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('h2', {
+      tabindex: '-1',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(false)
+  })
+
+  it('fires through the full pipeline for explicit role elements', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('button', {
+      role: 'listbox',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — #checkRequiredAriaProperties
+// ---------------------------------------------------------------------------
+
+describe('validate() — WAI-ARIA required properties', () => {
+  it('warns for missing aria-expanded on role="combobox"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'combobox',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(true)
+  })
+
+  it('no violation when aria-expanded is present on role="combobox"', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('div', {
+      role: 'combobox',
+      'aria-expanded': 'false',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(false)
+  })
+
+  it('warns for missing aria-selected on role="option"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('li', {
+      role: 'option',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-selected')).toBe(true)
+  })
+
+  it('no violation when aria-selected is present on role="option"', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('li', {
+      role: 'option',
+      'aria-selected': 'false',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-selected')).toBe(false)
+  })
+
+  it('warns for missing aria-valuenow on role="slider"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'slider',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(true)
+  })
+
+  it('warns for missing aria-valuenow on input[type=range] (implicit slider)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('input', {
+      type: 'range',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(true)
+  })
+
+  it('no violation for input[type=range] when aria-valuenow is present', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'range',
+      'aria-valuenow': '50',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(false)
+  })
+
+  it('warns for missing aria-controls and aria-valuenow on role="scrollbar"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'scrollbar',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-controls')).toBe(true)
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(true)
+  })
+
+  it('no violation when all required scrollbar properties are present', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('div', {
+      role: 'scrollbar',
+      'aria-controls': 'content-id',
+      'aria-valuenow': '0',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-controls')).toBe(false)
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(false)
+  })
+
+  it('warns for missing aria-valuenow on role="spinbutton"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'spinbutton',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(true)
+  })
+
+  it('violation severity is warning (not error)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'combobox',
+    })
+    const v = violations.find((v) => v.attribute === 'aria-expanded')
+    expect(v?.severity).toBe('warning')
+  })
+
+  it('does not fire for roles with no required properties', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('nav', {
+      role: 'button',
+    })
+    expect(violations.some((v) => v.message.includes('required'))).toBe(false)
+  })
+
+  it('violation attribute field names the missing property', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'combobox',
+    })
+    const v = violations.find((v) => v.attribute === 'aria-expanded')
+    expect(v?.attribute).toBe('aria-expanded')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — #checkAriaAttributeValues
+// ---------------------------------------------------------------------------
+
+describe('validate() — ARIA attribute value validation', () => {
+  // ── Boolean attributes ───────────────────────────────────────────────────
+
+  it('accepts "true" string for aria-expanded', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('button', {
+      'aria-expanded': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(false)
+  })
+
+  it('accepts boolean true for aria-expanded (JSX shorthand)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('button', {
+      'aria-expanded': true,
+    })
+    expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(false)
+  })
+
+  it('accepts "false" string for aria-expanded', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('button', {
+      'aria-expanded': 'false',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(false)
+  })
+
+  it('warns for "yes" on aria-expanded (not a boolean)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('button', {
+      'aria-expanded': 'yes',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(true)
+  })
+
+  it('warns for numeric 1 on aria-expanded', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('button', {
+      'aria-expanded': 1 as never,
+    })
+    expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(true)
+  })
+
+  it('strips invalid aria-expanded value', () => {
+    const { props } = makeValidator(silentDiagnostics).validate('button', {
+      'aria-expanded': 'yes',
+    })
+    expect(props).not.toHaveProperty('aria-expanded')
+  })
+
+  // ── Tristate attributes ──────────────────────────────────────────────────
+
+  it('accepts "mixed" for aria-checked (tristate)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('nav', {
+      role: 'checkbox',
+      'aria-checked': 'mixed',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-checked')).toBe(false)
+  })
+
+  it('warns for "partial" on aria-checked (not a valid tristate)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('nav', {
+      role: 'checkbox',
+      'aria-checked': 'partial',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-checked')).toBe(true)
+  })
+
+  it('accepts "mixed" for aria-pressed', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('button', {
+      'aria-pressed': 'mixed',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-pressed')).toBe(false)
+  })
+
+  // ── Numeric attributes ───────────────────────────────────────────────────
+
+  it('accepts numeric value for aria-valuenow', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('div', {
+      role: 'slider',
+      'aria-valuenow': 50,
+    })
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(false)
+  })
+
+  it('accepts numeric string for aria-valuenow', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('div', {
+      role: 'slider',
+      'aria-valuenow': '50',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(false)
+  })
+
+  it('warns for non-numeric string on aria-valuenow', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'slider',
+      'aria-valuenow': 'fifty',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(true)
+  })
+
+  // ── Integer range attributes ─────────────────────────────────────────────
+
+  it('accepts aria-level="3" on h2 (valid override)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('h2', {
+      'aria-level': '3',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-level')).toBe(false)
+  })
+
+  it('warns for aria-level="0" (below minimum of 1)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('h2', {
+      'aria-level': '0',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-level')).toBe(true)
+  })
+
+  it('warns for aria-level="7" (above maximum of 6)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('h2', {
+      'aria-level': '7',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-level')).toBe(true)
+  })
+
+  it('accepts aria-level={6} (numeric, within range)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('h2', {
+      'aria-level': 6,
+    })
+    expect(violations.some((v) => v.attribute === 'aria-level')).toBe(false)
+  })
+
+  // ── Enum attributes ──────────────────────────────────────────────────────
+
+  it('accepts valid aria-sort token "ascending"', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('nav', {
+      role: 'columnheader',
+      'aria-sort': 'ascending',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-sort')).toBe(false)
+  })
+
+  it('warns for invalid aria-sort token "asc"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('nav', {
+      role: 'columnheader',
+      'aria-sort': 'asc',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-sort')).toBe(true)
+  })
+
+  it('accepts valid aria-haspopup "menu"', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('button', {
+      'aria-haspopup': 'menu',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-haspopup')).toBe(false)
+  })
+
+  it('warns for invalid aria-haspopup "popup"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('button', {
+      'aria-haspopup': 'popup',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-haspopup')).toBe(true)
+  })
+
+  it('accepts valid aria-autocomplete "list"', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('div', {
+      role: 'combobox',
+      'aria-expanded': 'false',
+      'aria-autocomplete': 'list',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-autocomplete')).toBe(false)
+  })
+
+  it('accepts valid aria-live "polite"', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('div', {
+      role: 'status',
+      'aria-live': 'polite',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-live')).toBe(false)
+  })
+
+  it('warns for invalid aria-live "eager"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'alert',
+      'aria-live': 'eager',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-live')).toBe(true)
+  })
+
+  it('does not fire for presentational elements (attrs handled by presentational check)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'none',
+      'aria-expanded': 'yes',
+    })
+    // presentational check fires; value check defers
+    const valueViolation = violations.find(
+      (v) => v.attribute === 'aria-expanded' && v.message.includes('invalid value'),
+    )
+    expect(valueViolation).toBeUndefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — #checkRedundantAriaLevel
+// ---------------------------------------------------------------------------
+
+describe('validate() — redundant aria-level on heading elements', () => {
+  it('warns when h1 has aria-level="1" (matches implicit level)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('h1', { 'aria-level': '1' })
+    expect(
+      violations.some((v) => v.attribute === 'aria-level' && v.message.includes('redundant')),
+    ).toBe(true)
+  })
+
+  it('warns when h3 has aria-level={3} (numeric, matches implicit level)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('h3', { 'aria-level': 3 })
+    expect(
+      violations.some((v) => v.attribute === 'aria-level' && v.message.includes('redundant')),
+    ).toBe(true)
+  })
+
+  it('strips the redundant aria-level from props', () => {
+    const { props } = makeValidator(silentDiagnostics).validate('h2', { 'aria-level': '2' })
+    expect(props).not.toHaveProperty('aria-level')
+  })
+
+  it('does not warn when aria-level overrides the implicit level', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('h2', { 'aria-level': '3' })
+    expect(
+      violations.some((v) => v.attribute === 'aria-level' && v.message.includes('redundant')),
+    ).toBe(false)
+  })
+
+  it('does not warn when aria-level is absent on a heading', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('h2', {})
+    expect(violations.some((v) => v.attribute === 'aria-level')).toBe(false)
+  })
+
+  it('does not warn for aria-level on non-heading elements', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('div', {
+      role: 'heading',
+      'aria-level': '2',
+    })
+    // role=heading on div with aria-level=2 is not redundant (div has no implicit level)
+    expect(
+      violations.some((v) => v.attribute === 'aria-level' && v.message.includes('redundant')),
+    ).toBe(false)
+  })
+
+  it('does not warn when heading has presentational role override', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('h2', {
+      role: 'none',
+      'aria-level': '2',
+    })
+    // presentational rule fires, not redundant-level rule
+    expect(
+      violations.some((v) => v.message.includes('redundant') && v.attribute === 'aria-level'),
+    ).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — #checkNameRequiredRoles (role=img)
+// ---------------------------------------------------------------------------
+
+describe('validate() — accessible name required for role=img', () => {
+  it('warns when <img> has no alt and no aria-label', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('img', {})
+    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(true)
+  })
+
+  it('does not warn when <img> has non-empty alt (native accessible name)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('img', { alt: 'Company logo' })
+    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(false)
+  })
+
+  it('does not warn when <img> has aria-label', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('img', {
+      'aria-label': 'Chart',
+    })
+    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(false)
+  })
+
+  it('does not warn when <img> has aria-labelledby', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('img', {
+      'aria-labelledby': 'caption-id',
+    })
+    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(false)
+  })
+
+  it('does not warn when <img alt=""> (decorative, role=none)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('img', { alt: '' })
+    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(false)
+  })
+
+  it('warns when <div role="img"> has no aria-label', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', { role: 'img' })
+    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(true)
+  })
+
+  it('does not warn when <div role="img"> has aria-label', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('div', {
+      role: 'img',
+      'aria-label': 'Revenue chart',
+    })
+    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(false)
+  })
+
+  it('does not warn for non-img roles', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('button', {})
+    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(false)
   })
 })

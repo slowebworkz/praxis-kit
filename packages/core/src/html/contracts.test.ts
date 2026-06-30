@@ -11,20 +11,29 @@ import {
   dlContract,
   fieldsetContract,
   figureContract,
+  gridContract,
   headContract,
   htmlContract,
   htmlContracts,
   landmarkContract,
+  listboxContract,
   listContract,
+  menubarContract,
+  menuContract,
   optgroupContract,
   pictureContract,
+  radiogroupContract,
   selectContract,
   tableBodyContract,
   tableContract,
   tableRowContract,
+  tablistContract,
+  treeContract,
   videoContract,
   voidContract,
+  widgetContracts,
 } from './contracts'
+import { landmarkNameAdvisory } from './aria-rules'
 import { iterate } from '@praxis-kit/primitive'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -438,9 +447,9 @@ describe('landmarkContract', () => {
     const [result] = rule(ctx('nav', { role: 'presentation' }, 'navigation'))
     expect(result!.valid).toBe(false)
     if (!result!.valid) {
-      expect(result!.message).toMatch(/nav/)
-      expect(result!.message).toMatch(/navigation/)
-      expect(result!.message).toMatch(/presentation/)
+      expect(result!.diagnostic?.message).toMatch(/nav/)
+      expect(result!.diagnostic?.message).toMatch(/navigation/)
+      expect(result!.diagnostic?.message).toMatch(/presentation/)
     }
   })
 
@@ -505,5 +514,113 @@ describe('htmlContracts', () => {
     expect(htmlContracts['fieldset']).toBe(fieldsetContract)
     expect(htmlContracts['head']).toBe(headContract)
     expect(htmlContracts['html']).toBe(htmlContract)
+  })
+})
+
+// ─── landmarkNameAdvisory ─────────────────────────────────────────────────────
+
+describe('landmarkNameAdvisory', () => {
+  function ctx(
+    tag: string,
+    props: Record<string, unknown>,
+    implicitRole: string | undefined,
+  ): AriaContext {
+    return { tag, props, implicitRole, effectiveRole: implicitRole } as unknown as AriaContext
+  }
+
+  it('warns on <nav> without accessible name', () => {
+    const results = landmarkNameAdvisory(ctx('nav', {}, 'navigation'))
+    expect(results).toMatchObject([{ valid: false, severity: 'warning' }])
+  })
+
+  it('warns on <aside> without accessible name', () => {
+    const results = landmarkNameAdvisory(ctx('aside', {}, 'complementary'))
+    expect(results).toMatchObject([{ valid: false, severity: 'warning' }])
+  })
+
+  it('returns empty when nav has aria-label', () => {
+    expect(landmarkNameAdvisory(ctx('nav', { 'aria-label': 'Main' }, 'navigation'))).toEqual([])
+  })
+
+  it('returns empty when aside has aria-labelledby', () => {
+    expect(
+      landmarkNameAdvisory(ctx('aside', { 'aria-labelledby': 'id-x' }, 'complementary')),
+    ).toEqual([])
+  })
+
+  it('does not fire for <main> (single instance per page)', () => {
+    expect(landmarkNameAdvisory(ctx('main', {}, 'main'))).toEqual([])
+  })
+
+  it('does not fire for <header> without a name', () => {
+    expect(landmarkNameAdvisory(ctx('header', {}, 'banner'))).toEqual([])
+  })
+
+  it('does not fire for <footer> without a name', () => {
+    expect(landmarkNameAdvisory(ctx('footer', {}, 'contentinfo'))).toEqual([])
+  })
+
+  it('does not fire when implicitRole is undefined', () => {
+    // nav without an implicit role (e.g. engine short-circuit scenario)
+    expect(landmarkNameAdvisory(ctx('nav', {}, undefined))).toEqual([])
+  })
+
+  it('landmarkContract exposes landmarkNameAdvisory as second aria rule', () => {
+    expect(landmarkContract.aria![1]).toBe(landmarkNameAdvisory)
+  })
+})
+
+// ─── Widget contracts ─────────────────────────────────────────────────────────
+
+describe('widget contracts', () => {
+  function ctx(tag: string, props: Record<string, unknown>): AriaContext {
+    return {
+      tag,
+      props,
+      implicitRole: undefined,
+      effectiveRole: undefined,
+    } as unknown as AriaContext
+  }
+
+  it.each([
+    ['menuContract', menuContract],
+    ['menubarContract', menubarContract],
+    ['treeContract', treeContract],
+    ['gridContract', gridContract],
+    ['listboxContract', listboxContract],
+    ['tablistContract', tablistContract],
+    ['radiogroupContract', radiogroupContract],
+  ] as const)('%s has a single aria rule (requireAccessibleName)', (_name, contract) => {
+    expect(contract.aria).toHaveLength(1)
+  })
+
+  it.each([
+    ['menu', menuContract],
+    ['menubar', menubarContract],
+    ['tree', treeContract],
+    ['grid', gridContract],
+    ['listbox', listboxContract],
+    ['tablist', tablistContract],
+    ['radiogroup', radiogroupContract],
+  ])('widgetContracts[%s] is the correct contract', (role, expected) => {
+    expect(widgetContracts[role]).toBe(expected)
+  })
+
+  it('requireAccessibleName fires via menuContract when aria-label is absent', () => {
+    const rule = menuContract.aria![0]!
+    const results = rule(ctx('ul', {}))
+    expect(results).toMatchObject([{ valid: false, severity: 'warning' }])
+  })
+
+  it('requireAccessibleName passes via menuContract when aria-label is present', () => {
+    const rule = menuContract.aria![0]!
+    const results = rule(ctx('ul', { 'aria-label': 'File' }))
+    expect(results).toEqual([])
+  })
+
+  it('widgetContracts contains exactly the expected roles', () => {
+    expect(Object.keys(widgetContracts).sort()).toEqual(
+      ['grid', 'listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'tree'].sort(),
+    )
   })
 })

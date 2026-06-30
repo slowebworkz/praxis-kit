@@ -1,7 +1,7 @@
 import type { ChildRuleInput, EnforcementOptions } from '../types'
 import { isTag } from '@praxis-kit/shared/guards/children'
 import { isNumber, isObject, isString } from '@praxis-kit/primitive'
-import { landmarkRoleRule } from './aria-rules'
+import { landmarkNameAdvisory, landmarkRoleRule, requireAccessibleName } from './aria-rules'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
 
 // Matches any element whose tag is NOT in the blocked set, plus component children
@@ -229,8 +229,61 @@ export const textOnlyContract = contract([
  *
  * - `role="<implicit>"` → warning: redundant, removed (built-in engine behaviour).
  * - `role="<anything else>"` → error: overrides the fixed landmark, removed.
+ * - `<nav>` and `<aside>` without an accessible name → warning (commonly multiplied).
  */
-export const landmarkContract = ariaContract([landmarkRoleRule])
+export const landmarkContract = ariaContract([landmarkRoleRule, landmarkNameAdvisory])
+
+/**
+ * `<dialog>` — must have an accessible name (aria-label or aria-labelledby).
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/
+ * Without a name, assistive technology cannot identify the dialog in the page outline
+ * or when focus moves into it.
+ */
+export const dialogContract = ariaContract([requireAccessibleName])
+
+// ─── Widget role contracts ────────────────────────────────────────────────────
+
+/**
+ * `role="menu"` — keyboard-navigable pop-up list of actions or functions.
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/menu/
+ */
+export const menuContract = ariaContract([requireAccessibleName])
+
+/**
+ * `role="menubar"` — persistent horizontal menu bar of menu items.
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/menubar/
+ */
+export const menubarContract = ariaContract([requireAccessibleName])
+
+/**
+ * `role="tree"` — hierarchical list where items can be expanded or collapsed.
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/treeview/
+ */
+export const treeContract = ariaContract([requireAccessibleName])
+
+/**
+ * `role="grid"` — composite widget containing rows of cells, similar to a spreadsheet.
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/grid/
+ */
+export const gridContract = ariaContract([requireAccessibleName])
+
+/**
+ * `role="listbox"` — list from which a user may select one or more options.
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/listbox/
+ */
+export const listboxContract = ariaContract([requireAccessibleName])
+
+/**
+ * `role="tablist"` — container for a set of tabs that manage tab panels.
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/tabs/
+ */
+export const tablistContract = ariaContract([requireAccessibleName])
+
+/**
+ * `role="radiogroup"` — group of radio buttons where only one may be selected at a time.
+ * WAI-ARIA 1.2: https://www.w3.org/TR/wai-aria-1.2/#radiogroup
+ */
+export const radiogroupContract = ariaContract([requireAccessibleName])
 
 // ─── Convenience map ──────────────────────────────────────────────────────────
 
@@ -284,7 +337,31 @@ export const htmlContracts: HtmlContractMap = {
   figure: figureContract,
   details: detailsContract,
   fieldset: fieldsetContract,
+  dialog: dialogContract,
 
   head: headContract,
   html: htmlContract,
+}
+
+/**
+ * Ready-made `EnforcementOptions` objects keyed by WAI-ARIA widget role name.
+ *
+ * Use when the HTML tag itself does not carry semantic meaning and an explicit
+ * `role` attribute provides the widget identity:
+ * ```ts
+ * const Menu = createContractComponent({ tag: 'ul', enforcement: widgetContracts.menu })
+ * // consumer renders: <ul role="menu" aria-label="File">
+ * ```
+ *
+ * Each contract enforces an accessible name (aria-label or aria-labelledby), matching
+ * the WAI-ARIA APG requirement for named landmarks and interactive composite widgets.
+ */
+export const widgetContracts: HtmlContractMap = {
+  menu: menuContract,
+  menubar: menubarContract,
+  tree: treeContract,
+  grid: gridContract,
+  listbox: listboxContract,
+  tablist: tablistContract,
+  radiogroup: radiogroupContract,
 }

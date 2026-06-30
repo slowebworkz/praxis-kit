@@ -22,6 +22,13 @@ import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-r
 
 export { isInvalid } from '@praxis-kit/shared'
 
+type AriaValueType =
+  | { kind: 'boolean' }
+  | { kind: 'tristate' }
+  | { kind: 'number' }
+  | { kind: 'integer'; min?: number; max?: number }
+  | { kind: 'enum'; values: ReadonlySet<string> }
+
 const VALID = [{ valid: true }] as const
 
 // Broader than ElementType: accepts component functions so adapters can pass the `as` prop directly.
@@ -73,12 +80,12 @@ export class AriaPolicyEngine extends InvariantBase {
 
   static #deriveContext(tag: AnyTag, props: IntrinsicProps): EvaluationContext {
     if (!isIntrinsicTag(tag)) return { proceed: false, result: { props, violations: [] } }
-    const implicitRole = getImplicitRole(tag)
-    // Also proceed for explicit live-region roles on tags with no implicit role (e.g. <div role="alert">).
-    const hasExplicitLiveRole =
-      !implicitRole && AriaPolicyEngine.#LIVE_REGION_ROLES.has(props.role ?? '')
-    if (!implicitRole && !hasExplicitLiveRole)
-      return { proceed: false, result: { props, violations: [] } }
+    const implicitRole = getImplicitRole(tag, props)
+    // Proceed when the element has an implicit role (native semantics) or a non-empty explicit
+    // role (author-supplied semantics). Elements with neither have no ARIA semantics to validate.
+    const hasRole =
+      implicitRole != null || (isString(props.role) && (props.role as string).length > 0)
+    if (!hasRole) return { proceed: false, result: { props, violations: [] } }
 
     const normalized = AriaPolicyEngine.#normalizeEmptyRole(tag, props)
     if (normalized.normalized) return { proceed: false, result: normalized.result }
@@ -130,9 +137,17 @@ export class AriaPolicyEngine extends InvariantBase {
   }
 
   static #getRules(context: AriaContext): readonly AriaRule[] {
-    return AriaPolicyEngine.#hasRole(context.props)
-      ? AriaPolicyEngine.#pipeline
-      : [AriaPolicyEngine.#checkInvalidAriaAttributes]
+    // Run the full pipeline when there's an explicit role, or when the implicit role
+    // is a live-region role (so that injection and advisory checks fire even without
+    // an explicit role prop — e.g. <output> implicitly has role=status).
+    if (
+      AriaPolicyEngine.#hasRole(context.props) ||
+      (context.effectiveRole != null &&
+        AriaPolicyEngine.#LIVE_REGION_ROLES.has(context.effectiveRole))
+    ) {
+      return AriaPolicyEngine.#pipeline
+    }
+    return AriaPolicyEngine.#implicitOnlyRules
   }
 
   static evaluate(tag: AnyTag, props: IntrinsicProps): ValidationResult {
@@ -183,6 +198,10 @@ export class AriaPolicyEngine extends InvariantBase {
     if (!isIntrinsicTag(tag)) return null
     const parts: string[] = [tag]
     if (typeof props.role === 'string') parts.push(`role:${props.role}`)
+    // input's implicit role depends on type — include it so different types never share a cache entry
+    if (tag === 'input' && typeof props.type === 'string') parts.push(`type:${props.type}`)
+    // img's implicit role depends on whether alt is empty (none) or non-empty (img)
+    if (tag === 'img') parts.push(`alt:${props.alt === '' ? 'empty' : 'present'}`)
     const ariaEntries: string[] = []
     iterate.forEachEntry(props, (k, v) => {
       if (!k.startsWith('aria-')) return
@@ -314,10 +333,27 @@ export class AriaPolicyEngine extends InvariantBase {
     AriaPolicyEngine.#checkInvalidRoleOverride,
     AriaPolicyEngine.#checkRedundantRole,
     AriaPolicyEngine.#checkStandaloneRegion,
+    AriaPolicyEngine.#checkAriaAttributeValues,
     AriaPolicyEngine.#checkInvalidAriaAttributes,
+    AriaPolicyEngine.#checkRequiredAriaProperties,
+    AriaPolicyEngine.#checkNameRequiredRoles,
+    AriaPolicyEngine.#checkRedundantAriaLevel,
     AriaPolicyEngine.#checkMissingLiveRegion,
     AriaPolicyEngine.#checkMissingAtomic,
     AriaPolicyEngine.#checkInvalidAriaRelevant,
+    AriaPolicyEngine.#checkAriaHiddenOnFocusable,
+    AriaPolicyEngine.#checkPresentationalAriaAttributes,
+  ] as const satisfies readonly AriaRule[]
+
+  // Rules for elements with an implicit role but no explicit role (not a live region).
+  static readonly #implicitOnlyRules = [
+    AriaPolicyEngine.#checkAriaAttributeValues,
+    AriaPolicyEngine.#checkInvalidAriaAttributes,
+    AriaPolicyEngine.#checkRequiredAriaProperties,
+    AriaPolicyEngine.#checkNameRequiredRoles,
+    AriaPolicyEngine.#checkRedundantAriaLevel,
+    AriaPolicyEngine.#checkAriaHiddenOnFocusable,
+    AriaPolicyEngine.#checkPresentationalAriaAttributes,
   ] as const satisfies readonly AriaRule[]
 
   static #checkInvalidRoleOverride({
@@ -379,6 +415,8 @@ export class AriaPolicyEngine extends InvariantBase {
     props,
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
+    // Presentational elements have no semantic role — defer entirely to #checkPresentationalAriaAttributes.
+    if (effectiveRole === 'none' || effectiveRole === 'presentation') return VALID
     const results: AriaResult[] = []
 
     iterate.forEachEntry(props, (key) => {
@@ -396,6 +434,295 @@ export class AriaPolicyEngine extends InvariantBase {
       })
     })
 
+    return results
+  }
+
+  // ─── ARIA attribute value validation ──────────────────────────────────────
+
+  // Accepted value shapes for typed ARIA attributes.
+  // Attributes not in this map are unconstrained (arbitrary string values permitted).
+  static readonly #ARIA_VALUE_TYPES: ReadonlyMap<string, AriaValueType> = new Map([
+    // Boolean (true | false)
+    ['aria-atomic', { kind: 'boolean' }],
+    ['aria-busy', { kind: 'boolean' }],
+    ['aria-disabled', { kind: 'boolean' }],
+    ['aria-expanded', { kind: 'boolean' }],
+    ['aria-hidden', { kind: 'boolean' }],
+    ['aria-modal', { kind: 'boolean' }],
+    ['aria-multiline', { kind: 'boolean' }],
+    ['aria-multiselectable', { kind: 'boolean' }],
+    ['aria-readonly', { kind: 'boolean' }],
+    ['aria-required', { kind: 'boolean' }],
+    ['aria-selected', { kind: 'boolean' }],
+    // Tristate (true | false | mixed)
+    ['aria-checked', { kind: 'tristate' }],
+    ['aria-pressed', { kind: 'tristate' }],
+    // Numeric (any finite number)
+    ['aria-valuenow', { kind: 'number' }],
+    ['aria-valuemin', { kind: 'number' }],
+    ['aria-valuemax', { kind: 'number' }],
+    // Integer with optional range
+    ['aria-level', { kind: 'integer', min: 1, max: 6 }],
+    ['aria-posinset', { kind: 'integer', min: 1 }],
+    ['aria-setsize', { kind: 'integer', min: -1 }],
+    ['aria-rowcount', { kind: 'integer', min: -1 }],
+    ['aria-colcount', { kind: 'integer', min: -1 }],
+    ['aria-rowindex', { kind: 'integer', min: 1 }],
+    ['aria-colindex', { kind: 'integer', min: 1 }],
+    ['aria-rowspan', { kind: 'integer', min: 0 }],
+    ['aria-colspan', { kind: 'integer', min: 0 }],
+    // Enum (specific allowed tokens)
+    ['aria-autocomplete', { kind: 'enum', values: new Set(['inline', 'list', 'both', 'none']) }],
+    [
+      'aria-current',
+      {
+        kind: 'enum',
+        values: new Set(['page', 'step', 'location', 'date', 'time', 'true', 'false']),
+      },
+    ],
+    [
+      'aria-haspopup',
+      {
+        kind: 'enum',
+        values: new Set(['false', 'true', 'menu', 'listbox', 'tree', 'grid', 'dialog']),
+      },
+    ],
+    ['aria-invalid', { kind: 'enum', values: new Set(['grammar', 'false', 'spelling', 'true']) }],
+    ['aria-live', { kind: 'enum', values: new Set(['assertive', 'off', 'polite']) }],
+    [
+      'aria-orientation',
+      { kind: 'enum', values: new Set(['horizontal', 'vertical', 'undefined']) },
+    ],
+    ['aria-sort', { kind: 'enum', values: new Set(['ascending', 'descending', 'none', 'other']) }],
+  ])
+
+  static #isValidAriaValue(value: unknown, type: AriaValueType): boolean {
+    switch (type.kind) {
+      case 'boolean':
+        return value === 'true' || value === 'false' || value === true || value === false
+      case 'tristate':
+        return (
+          value === 'true' ||
+          value === 'false' ||
+          value === 'mixed' ||
+          value === true ||
+          value === false
+        )
+      case 'number': {
+        if (typeof value === 'number') return Number.isFinite(value)
+        if (typeof value !== 'string') return false
+        const n = parseFloat(value)
+        return Number.isFinite(n)
+      }
+      case 'integer': {
+        const n =
+          typeof value === 'number' ? value : typeof value === 'string' ? parseInt(value, 10) : NaN
+        if (!Number.isFinite(n) || !Number.isInteger(n)) return false
+        if (type.min !== undefined && n < type.min) return false
+        if (type.max !== undefined && n > type.max) return false
+        return true
+      }
+      case 'enum':
+        return typeof value === 'string' && type.values.has(value)
+    }
+  }
+
+  static #describeExpected(type: AriaValueType): string {
+    switch (type.kind) {
+      case 'boolean':
+        return '"true" or "false"'
+      case 'tristate':
+        return '"true", "false", or "mixed"'
+      case 'number':
+        return 'a finite number'
+      case 'integer': {
+        const parts: string[] = ['an integer']
+        if (type.min !== undefined && type.max !== undefined)
+          parts.push(`between ${type.min} and ${type.max}`)
+        else if (type.min !== undefined) parts.push(`≥ ${type.min}`)
+        else if (type.max !== undefined) parts.push(`≤ ${type.max}`)
+        return parts.join(' ')
+      }
+      case 'enum':
+        return [...type.values].map((v) => `"${v}"`).join(', ')
+    }
+  }
+
+  static #checkAriaAttributeValues({ props, effectiveRole }: AriaContext): readonly AriaResult[] {
+    // Presentational elements have no ARIA semantics — all attrs handled elsewhere.
+    if (effectiveRole === 'none' || effectiveRole === 'presentation') return VALID
+    const results: AriaResult[] = []
+    iterate.forEachEntry(props, (key, value) => {
+      if (!key.startsWith('aria-')) return
+      const type = AriaPolicyEngine.#ARIA_VALUE_TYPES.get(key)
+      if (type == null) return
+      if (AriaPolicyEngine.#isValidAriaValue(value, type)) return
+      results.push({
+        valid: false,
+        fixable: true,
+        severity: 'warning',
+        attribute: key,
+        diagnostic: AriaDiagnostics.invalidAttributeValue(
+          key,
+          value,
+          AriaPolicyEngine.#describeExpected(type),
+        ),
+        fix: AriaPolicyEngine.#makeRemoveAttributeFix(key),
+      })
+    })
+    return results
+  }
+
+  // ─── Heading implicit level ────────────────────────────────────────────────
+
+  static readonly #HEADING_IMPLICIT_LEVELS: ReadonlyMap<string, number> = new Map([
+    ['h1', 1],
+    ['h2', 2],
+    ['h3', 3],
+    ['h4', 4],
+    ['h5', 5],
+    ['h6', 6],
+  ])
+
+  static #checkRedundantAriaLevel({
+    tag,
+    props,
+    effectiveRole,
+  }: AriaContext): readonly AriaResult[] {
+    if (effectiveRole === 'none' || effectiveRole === 'presentation') return VALID
+    const implicitLevel = AriaPolicyEngine.#HEADING_IMPLICIT_LEVELS.get(tag)
+    if (implicitLevel == null) return VALID
+    const raw = props['aria-level']
+    if (raw == null) return VALID
+    const n = typeof raw === 'number' ? raw : typeof raw === 'string' ? parseInt(raw, 10) : NaN
+    if (!Number.isFinite(n) || n !== implicitLevel) return VALID
+    return [
+      {
+        valid: false,
+        fixable: true,
+        severity: 'warning',
+        attribute: 'aria-level',
+        diagnostic: AriaDiagnostics.redundantAriaLevel(tag, implicitLevel),
+        fix: AriaPolicyEngine.#makeRemoveAttributeFix('aria-level'),
+      },
+    ]
+  }
+
+  // ─── Name-required roles ───────────────────────────────────────────────────
+
+  // Roles that always require an accessible name per WAI-ARIA APG.
+  // Dialog and landmark names are enforced via contracts (ariaContract) rather than
+  // the built-in pipeline so consumers can opt in; img is built in because role=img
+  // on any element (including bare <img>) is definitionally useless without a name.
+  static readonly #NAME_REQUIRED_ROLES: ReadonlySet<string> = new Set(['img'])
+
+  static #checkNameRequiredRoles({
+    tag,
+    props,
+    effectiveRole,
+  }: AriaContext): readonly AriaResult[] {
+    if (!effectiveRole || !AriaPolicyEngine.#NAME_REQUIRED_ROLES.has(effectiveRole)) return VALID
+    if ('aria-label' in props || 'aria-labelledby' in props) return VALID
+    // Native <img> elements can satisfy the name requirement with a non-empty alt attribute.
+    if (tag === 'img' && typeof props.alt === 'string' && props.alt.length > 0) return VALID
+    return [
+      {
+        valid: false,
+        fixable: false,
+        severity: 'warning',
+        diagnostic: AriaDiagnostics.missingAccessibleName(tag),
+      },
+    ]
+  }
+
+  // WAI-ARIA 1.2 required states and properties, keyed by role.
+  // Source: https://www.w3.org/TR/wai-aria-1.2/#requiredState
+  static readonly #REQUIRED_PROPERTIES: ReadonlyMap<string, readonly string[]> = new Map([
+    ['combobox', ['aria-expanded']],
+    ['option', ['aria-selected']],
+    ['slider', ['aria-valuenow']],
+    ['scrollbar', ['aria-controls', 'aria-valuenow']],
+    ['spinbutton', ['aria-valuenow']],
+  ])
+
+  static #checkRequiredAriaProperties({
+    props,
+    effectiveRole,
+  }: AriaContext): readonly AriaResult[] {
+    if (!effectiveRole) return VALID
+    const required = AriaPolicyEngine.#REQUIRED_PROPERTIES.get(effectiveRole)
+    if (required == null) return VALID
+    const results: AriaResult[] = []
+    iterate.forEach(required, (attr) => {
+      if (attr in props) return
+      results.push({
+        valid: false,
+        fixable: false,
+        severity: 'warning',
+        attribute: attr,
+        diagnostic: AriaDiagnostics.requiredProperty(attr, effectiveRole),
+      })
+    })
+    return results
+  }
+
+  // Natively interactive HTML elements — always keyboard-reachable unless explicitly disabled.
+  static readonly #INTERACTIVE_TAGS: ReadonlySet<string> = new Set([
+    'a',
+    'button',
+    'input',
+    'select',
+    'textarea',
+  ])
+
+  // WAI-ARIA 1.2 §6.6: aria-hidden="true" must not be placed on focusable elements.
+  static #checkAriaHiddenOnFocusable({ tag, props }: AriaContext): readonly AriaResult[] {
+    if (props['aria-hidden'] !== 'true' && props['aria-hidden'] !== true) return VALID
+    const isInteractive = AriaPolicyEngine.#INTERACTIVE_TAGS.has(tag)
+    if (!isInteractive) {
+      const tabindex = props.tabindex
+      const n =
+        typeof tabindex === 'number'
+          ? tabindex
+          : typeof tabindex === 'string'
+            ? parseInt(tabindex, 10)
+            : NaN
+      if (!Number.isFinite(n) || n < 0) return VALID
+    }
+    return [
+      {
+        valid: false,
+        fixable: false,
+        severity: 'error',
+        attribute: 'aria-hidden',
+        diagnostic: AriaDiagnostics.ariaHiddenOnFocusable(tag),
+      },
+    ]
+  }
+
+  // Presentational elements (role=none/presentation, including <img alt="">) are removed
+  // from the accessibility tree — ARIA attributes on them are meaningless and misleading.
+  static #checkPresentationalAriaAttributes({
+    tag,
+    props,
+    effectiveRole,
+  }: AriaContext): readonly AriaResult[] {
+    if (effectiveRole !== 'none' && effectiveRole !== 'presentation') return VALID
+    const results: AriaResult[] = []
+    iterate.forEachEntry(props, (key) => {
+      if (!key.startsWith('aria-')) return
+      // aria-hidden is permitted: it further removes the element from the accessibility
+      // tree, which is redundant but not harmful, and avoids noise from defensive coding.
+      if (key === 'aria-hidden') return
+      results.push({
+        valid: false,
+        fixable: true,
+        severity: 'warning',
+        attribute: key,
+        diagnostic: AriaDiagnostics.attributeOnPresentational(key, tag),
+        fix: AriaPolicyEngine.#makeRemoveAttributeFix(key),
+      })
+    })
     return results
   }
 
