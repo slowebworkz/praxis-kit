@@ -25,6 +25,7 @@ export enum DiagnosticCode {
   AriaRelevantInvalidToken = 'ARIA2006',
   AriaRelevantSuperseded = 'ARIA2007',
   AriaInvalidRole = 'ARIA2008',
+  AriaMissingAccessibleName = 'ARIA2009',
 
   // HTML
   InvalidHeadingHierarchy = 'HTML3001',

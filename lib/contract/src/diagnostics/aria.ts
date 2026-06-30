@@ -90,6 +90,27 @@ export const AriaDiagnostics = {
     }
   },
 
+  missingAccessibleName(tag: string): DiagnosticInput {
+    return {
+      code: DiagnosticCode.AriaMissingAccessibleName,
+      category: DiagnosticCategory.ARIA,
+      message: `<${tag}> has no accessible name. Add aria-label or aria-labelledby.`,
+      rationale:
+        'Elements with a landmark or interactive role must have an accessible name so that ' +
+        'assistive technology can identify them when presenting the page outline.',
+      suggestions: [
+        {
+          title: 'Add aria-label',
+          description: `Add aria-label="…" directly to the <${tag}> element.`,
+        },
+        {
+          title: 'Add aria-labelledby',
+          description: 'Point aria-labelledby at the id of an existing heading or label element.',
+        },
+      ],
+    }
+  },
+
   invalidRole(role: string | undefined, tag: string): DiagnosticInput {
     return {
       code: DiagnosticCode.AriaInvalidRole,

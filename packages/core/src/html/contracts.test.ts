@@ -438,9 +438,9 @@ describe('landmarkContract', () => {
     const [result] = rule(ctx('nav', { role: 'presentation' }, 'navigation'))
     expect(result!.valid).toBe(false)
     if (!result!.valid) {
-      expect(result!.message).toMatch(/nav/)
-      expect(result!.message).toMatch(/navigation/)
-      expect(result!.message).toMatch(/presentation/)
+      expect(result!.diagnostic?.message).toMatch(/nav/)
+      expect(result!.diagnostic?.message).toMatch(/navigation/)
+      expect(result!.diagnostic?.message).toMatch(/presentation/)
     }
   })
 

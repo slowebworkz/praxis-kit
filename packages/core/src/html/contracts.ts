@@ -1,7 +1,7 @@
 import type { ChildRuleInput, EnforcementOptions } from '../types'
 import { isTag } from '@praxis-kit/shared/guards/children'
 import { isNumber, isObject, isString } from '@praxis-kit/primitive'
-import { landmarkRoleRule } from './aria-rules'
+import { landmarkRoleRule, requireAccessibleName } from './aria-rules'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
 
 // Matches any element whose tag is NOT in the blocked set, plus component children
@@ -232,6 +232,14 @@ export const textOnlyContract = contract([
  */
 export const landmarkContract = ariaContract([landmarkRoleRule])
 
+/**
+ * `<dialog>` — must have an accessible name (aria-label or aria-labelledby).
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/
+ * Without a name, assistive technology cannot identify the dialog in the page outline
+ * or when focus moves into it.
+ */
+export const dialogContract = ariaContract([requireAccessibleName])
+
 // ─── Convenience map ──────────────────────────────────────────────────────────
 
 const CONTRACT_GROUPS = [
@@ -284,6 +292,7 @@ export const htmlContracts: HtmlContractMap = {
   figure: figureContract,
   details: detailsContract,
   fieldset: fieldsetContract,
+  dialog: dialogContract,
 
   head: headContract,
   html: htmlContract,
