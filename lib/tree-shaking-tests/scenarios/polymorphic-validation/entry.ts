@@ -5,11 +5,11 @@
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
-import { createChildrenEnforcedComponent } from '@praxis-kit/react'
+import { createContractComponent } from '@praxis-kit/react'
 
-const Item = createChildrenEnforcedComponent({ tag: 'li', name: 'Item' })
+const Item = createContractComponent({ tag: 'li', name: 'Item' })
 
-export const List = createChildrenEnforcedComponent({
+export const List = createContractComponent({
   tag: 'ul',
   name: 'List',
   enforcement: {
