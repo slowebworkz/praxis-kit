@@ -1,4 +1,4 @@
-import type { Diagnostic, NodeId, SlotName } from '@pk2/foundation'
+import type { Diagnostic, NodeId, SlotName } from '@pk2/pipeline'
 import type { TreeNode } from './tree-node'
 
 export interface TreeContext {

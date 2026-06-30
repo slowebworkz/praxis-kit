@@ -1,5 +1,5 @@
 import type { NodeDecoration } from '@pk2/core'
-import type { AnyRecord } from '@pk2/foundation'
+import type { AnyRecord } from '@pk2/pipeline'
 
 export function buildPropsFromDecoration(
   id: string,

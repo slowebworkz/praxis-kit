@@ -19,7 +19,7 @@ import type {
 } from '@praxis-kit/core'
 import { enforceAllowedAs, getHtmlChildrenEvaluator } from '@praxis-kit/core'
 import { AriaPolicyEngine } from '@praxis-kit/core/contract'
-import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/shared/guards/children'
+import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/primitive/guards/children'
 import { forwardRef } from 'react'
 import type { ReactElement, ReactNode, Ref } from 'react'
 import type { PolymorphicComponent, ReactFactoryOptions, UnknownProps } from '../shared'
@@ -30,7 +30,7 @@ import { normalizeChildren } from './normalize-children'
 
 import type { NodeDecoration } from '@pk2/core'
 import { applyAttributes } from '@pk2/core'
-import type { NodeId } from '@pk2/foundation'
+import type { NodeId } from '@pk2/pipeline'
 import { extractDecoration } from '@pk2/react'
 
 import type {

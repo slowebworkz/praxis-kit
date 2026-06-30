@@ -5,8 +5,8 @@ export type {
   ElementType,
   EmptyRecord,
   IntrinsicTag,
-} from '@praxis-kit/shared/types'
+} from '@praxis-kit/primitive/types'
 
 export type { AriaRole, KnownAriaRole } from './aria-role'
 
-export type { IntrinsicProps, PropsWithRole, TagMap } from '@praxis-kit/shared/types/primitives'
+export type { IntrinsicProps, PropsWithRole, TagMap } from '@praxis-kit/primitive/types/primitives'

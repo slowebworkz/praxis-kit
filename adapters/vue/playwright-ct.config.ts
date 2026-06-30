@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import vue from '@vitejs/plugin-vue'
 
 // Sub-entries must precede their root alias to avoid prefix-match collisions.
-const sharedRoot = resolve('../shared/src')
+const sharedRoot = resolve('../../lib/primitive/src')
 const vueRoot = resolve('src')
 
 export default defineConfig({
@@ -32,9 +32,12 @@ export default defineConfig({
           { find: '@praxis-kit/core/styling', replacement: resolve('../core/src/styling.ts') },
           { find: '@praxis-kit/core', replacement: resolve('../core/src/index.ts') },
 
-          // @praxis-kit/shared sub-entries (directories with index.ts)
-          { find: /^@praxis-kit\/shared\/(.+)$/, replacement: `${sharedRoot}/$1/index.ts` },
-          { find: '@praxis-kit/shared', replacement: resolve('../shared/src/index.ts') },
+          // @praxis-kit/primitive sub-entries (directories with index.ts)
+          { find: /^@praxis-kit\/primitive\/(.+)$/, replacement: `${sharedRoot}/$1/index.ts` },
+          {
+            find: '@praxis-kit/primitive',
+            replacement: resolve('../../lib/primitive/src/index.ts'),
+          },
 
           // @praxis-kit/contract sub-entries
           {

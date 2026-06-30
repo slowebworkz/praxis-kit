@@ -1,5 +1,5 @@
 import type { AriaPolicyEngine } from '@praxis-kit/core/contract'
-import type { NodeId } from '@pk2/foundation'
+import type { NodeId } from '@pk2/pipeline'
 import type { NodeDecoration } from '@pk2/core'
 import { withAttributes } from './decoration-utils'
 

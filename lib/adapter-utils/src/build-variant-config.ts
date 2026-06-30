@@ -1,4 +1,4 @@
-import type { StringMap } from '@pk2/foundation'
+import type { StringMap } from '@pk2/pipeline'
 import type { CompoundVariant, VariantConfig } from '@pk2/style'
 import type { ClassName } from '@praxis-kit/core'
 import { iterate } from '@praxis-kit/primitive'

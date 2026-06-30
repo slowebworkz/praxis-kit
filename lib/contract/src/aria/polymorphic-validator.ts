@@ -1,6 +1,5 @@
-import { iterate } from '@praxis-kit/primitive'
-import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-kit/shared'
-import { isNull, isNumber, isString } from '@praxis-kit/shared'
+import { iterate, isNull, isNumber, isString  } from '@praxis-kit/primitive'
+import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-kit/primitive'
 import { InvariantBase } from '../strict'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 import { AriaDiagnostics, HtmlDiagnostics } from '../diagnostics'
@@ -20,7 +19,7 @@ import type {
 import { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attribute-policy'
 import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
 
-export { isInvalid } from '@praxis-kit/shared'
+export { isInvalid } from '@praxis-kit/primitive'
 
 type AriaValueType =
   | { kind: 'boolean' }

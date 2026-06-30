@@ -36,7 +36,7 @@
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/playwright": "workspace:*",
     "@pk2/core": "workspace:*",
-    "@pk2/foundation": "workspace:*",
+    "@pk2/pipeline": "workspace:*",
     "@pk2/vue": "workspace:*",
     "@vitejs/plugin-vue": "catalog:",
     "@vue/compiler-dom": "catalog:",

@@ -3,9 +3,9 @@ import { iterate } from '@praxis-kit/primitive'
 import { normalizeChildRule } from './normalize-child-rule'
 import { RuleMatcher } from './rules-matcher'
 import { getTypeName } from './get-type-name'
-import type { ChildViolation } from '@praxis-kit/shared/types'
+import type { ChildViolation } from '@praxis-kit/primitive/types'
 
-export type { ChildViolation, ChildViolationKind } from '@praxis-kit/shared/types'
+export type { ChildViolation, ChildViolationKind } from '@praxis-kit/primitive/types'
 
 function addCardinalityViolations(
   violations: ChildViolation[],

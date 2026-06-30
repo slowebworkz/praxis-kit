@@ -1,0 +1,5 @@
+export { isArray } from './is-array'
+export { isBoolean } from './is-boolean'
+export { isDefined, isUndefined } from './is-defined'
+export { isNull, isNullish } from './is-null'
+export { isRecord } from './is-record'

@@ -5,7 +5,7 @@ import ts from './configs/typescript'
 import architecture from './configs/architecture'
 import imports from './configs/imports'
 import unicorn from './configs/unicorn'
-import praxisPlugin from './packages/eslint-plugin/src/index'
+import praxisPlugin from './plugins/eslint/src/index'
 import type { ValueOf } from 'type-fest'
 
 type EslintPlugin = ValueOf<NonNullable<Linter.Config['plugins']>>

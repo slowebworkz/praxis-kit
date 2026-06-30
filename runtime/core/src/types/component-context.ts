@@ -1,4 +1,4 @@
-import type { CapabilityMap, Diagnostic, MetadataMap } from '@pk2/foundation'
+import type { CapabilityMap, Diagnostic, MetadataMap } from '@pk2/pipeline'
 import type { ComponentIdentity } from './component-identity'
 
 export interface ComponentContext {

@@ -7,9 +7,8 @@ import type {
   StyleValue,
   VariantMap,
 } from '@pk2/core'
-import type { AnyRecord } from '@pk2/foundation'
-import { isNumber, isObject, isString, iterate } from '@praxis-kit/primitive'
-import { isFunction } from '@praxis-kit/shared'
+import type { AnyRecord } from '@pk2/pipeline'
+import { isNumber, isObject, isString, iterate, isFunction  } from '@praxis-kit/primitive'
 import type { DecorationCollectionKey } from './types'
 
 function isStyleValue(v: unknown): v is StyleValue {

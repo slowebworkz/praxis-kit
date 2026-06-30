@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 
 // Sub-entries must precede their root alias to avoid prefix-match collisions.
 // Each entry maps the package's export path to its source file.
-const sharedRoot = resolve('../shared/src')
+const sharedRoot = resolve('../../lib/primitive/src')
 const reactRoot = resolve('src')
 
 export default defineConfig({
@@ -33,9 +33,12 @@ export default defineConfig({
           { find: '@praxis-kit/core/styling', replacement: resolve('../core/src/styling.ts') },
           { find: '@praxis-kit/core', replacement: resolve('../core/src/index.ts') },
 
-          // @praxis-kit/shared sub-entries (directories with index.ts)
-          { find: /^@praxis-kit\/shared\/(.+)$/, replacement: `${sharedRoot}/$1/index.ts` },
-          { find: '@praxis-kit/shared', replacement: resolve('../shared/src/index.ts') },
+          // @praxis-kit/primitive sub-entries (directories with index.ts)
+          { find: /^@praxis-kit\/primitive\/(.+)$/, replacement: `${sharedRoot}/$1/index.ts` },
+          {
+            find: '@praxis-kit/primitive',
+            replacement: resolve('../../lib/primitive/src/index.ts'),
+          },
 
           // @praxis-kit/contract sub-entries
           {

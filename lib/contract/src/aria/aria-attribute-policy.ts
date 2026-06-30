@@ -1,1 +1,4 @@
-export { isAriaAttributeValidForRole, isGlobalAriaAttribute } from '@praxis-kit/shared/guards/aria'
+export {
+  isAriaAttributeValidForRole,
+  isGlobalAriaAttribute,
+} from '@praxis-kit/primitive/guards/aria'

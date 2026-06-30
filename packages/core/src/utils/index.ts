@@ -9,5 +9,5 @@ export {
   readonlyProps,
   selectedProps,
 } from '@praxis-kit/contract'
-export { COMPONENT_ID, isComponent, isTag } from '@praxis-kit/shared/guards/children'
-export type { WithComponentId } from '@praxis-kit/shared/guards/children'
+export { COMPONENT_ID, isComponent, isTag } from '@praxis-kit/primitive/guards/children'
+export type { WithComponentId } from '@praxis-kit/primitive/guards/children'

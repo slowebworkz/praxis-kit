@@ -265,9 +265,9 @@ importers:
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
-      '@pk2/foundation':
+      '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../engine/foundation
+        version: link:../../lib/pipeline
       '@pk2/preact':
         specifier: workspace:*
         version: link:../../backends/preact
@@ -305,15 +305,15 @@ importers:
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
-      '@pk2/foundation':
+      '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../engine/foundation
+        version: link:../../lib/pipeline
       '@pk2/react':
         specifier: workspace:*
         version: link:../../backends/react
       '@pk2/style':
         specifier: workspace:*
-        version: link:../../domains/style
+        version: link:../../lib/style
       '@playwright/experimental-ct-react':
         specifier: 'catalog:'
         version: 1.60.0(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
@@ -325,7 +325,7 @@ importers:
         version: link:../../packages/core
       '@praxis-kit/playwright':
         specifier: workspace:*
-        version: link:../../packages/playwright
+        version: link:../../lib/playwright
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.17
@@ -425,9 +425,9 @@ importers:
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
-      '@pk2/foundation':
+      '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../engine/foundation
+        version: link:../../lib/pipeline
       '@pk2/vue':
         specifier: workspace:*
         version: link:../../backends/vue
@@ -445,7 +445,7 @@ importers:
         version: link:../../packages/core
       '@praxis-kit/playwright':
         specifier: workspace:*
-        version: link:../../packages/playwright
+        version: link:../../lib/playwright
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -498,9 +498,9 @@ importers:
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
-      '@pk2/foundation':
+      '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../engine/foundation
+        version: link:../../lib/pipeline
     devDependencies:
       lit:
         specifier: 'catalog:'
@@ -514,9 +514,9 @@ importers:
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
-      '@pk2/foundation':
+      '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../engine/foundation
+        version: link:../../lib/pipeline
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -533,9 +533,9 @@ importers:
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
-      '@pk2/foundation':
+      '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../engine/foundation
+        version: link:../../lib/pipeline
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -558,9 +558,9 @@ importers:
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
-      '@pk2/foundation':
+      '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../engine/foundation
+        version: link:../../lib/pipeline
     devDependencies:
       solid-js:
         specifier: 'catalog:'
@@ -571,9 +571,9 @@ importers:
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
-      '@pk2/foundation':
+      '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../engine/foundation
+        version: link:../../lib/pipeline
     devDependencies:
       svelte:
         specifier: 'catalog:'
@@ -587,9 +587,9 @@ importers:
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
-      '@pk2/foundation':
+      '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../engine/foundation
+        version: link:../../lib/pipeline
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -603,60 +603,12 @@ importers:
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
-      '@pk2/foundation':
-        specifier: workspace:*
-        version: link:../../engine/foundation
-      '@praxis-kit/primitive':
-        specifier: workspace:*
-        version: link:../../lib/primitive
-
-  domains/style:
-    dependencies:
-      '@pk2/foundation':
-        specifier: workspace:*
-        version: link:../../engine/foundation
-      '@pk2/merge':
-        specifier: workspace:*
-        version: link:../../engine/merge
       '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../engine/pipeline
+        version: link:../../lib/pipeline
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
-    devDependencies:
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
-
-  engine/foundation:
-    devDependencies:
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
-
-  engine/merge:
-    dependencies:
-      '@pk2/foundation':
-        specifier: workspace:*
-        version: link:../foundation
-    devDependencies:
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
-
-  engine/pipeline:
-    dependencies:
-      '@pk2/foundation':
-        specifier: workspace:*
-        version: link:../foundation
-      '@pk2/merge':
-        specifier: workspace:*
-        version: link:../merge
-    devDependencies:
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
   examples/lit:
     dependencies:
@@ -668,7 +620,7 @@ importers:
         version: link:../../adapters/lit
       '@praxis-kit/tailwind':
         specifier: workspace:*
-        version: link:../../packages/tailwind
+        version: link:../../lib/tailwind
     devDependencies:
       jsdom:
         specifier: 'catalog:'
@@ -690,7 +642,7 @@ importers:
         version: link:../../adapters/preact
       '@praxis-kit/tailwind':
         specifier: workspace:*
-        version: link:../../packages/tailwind
+        version: link:../../lib/tailwind
     devDependencies:
       '@preact/preset-vite':
         specifier: 'catalog:'
@@ -721,7 +673,7 @@ importers:
         version: link:../../adapters/react
       '@praxis-kit/tailwind':
         specifier: workspace:*
-        version: link:../../packages/tailwind
+        version: link:../../lib/tailwind
     devDependencies:
       '@types/react':
         specifier: 'catalog:'
@@ -758,7 +710,7 @@ importers:
         version: link:../../adapters/solid
       '@praxis-kit/tailwind':
         specifier: workspace:*
-        version: link:../../packages/tailwind
+        version: link:../../lib/tailwind
     devDependencies:
       '@solidjs/testing-library':
         specifier: 'catalog:'
@@ -789,7 +741,7 @@ importers:
         version: link:../../adapters/svelte
       '@praxis-kit/tailwind':
         specifier: workspace:*
-        version: link:../../packages/tailwind
+        version: link:../../lib/tailwind
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: 'catalog:'
@@ -817,7 +769,7 @@ importers:
         version: link:../../packages/core
       '@praxis-kit/tailwind':
         specifier: workspace:*
-        version: link:../../packages/tailwind
+        version: link:../../lib/tailwind
       '@praxis-kit/vue':
         specifier: workspace:*
         version: link:../../adapters/vue
@@ -848,7 +800,7 @@ importers:
         version: link:../../packages/core
       '@praxis-kit/tailwind':
         specifier: workspace:*
-        version: link:../../packages/tailwind
+        version: link:../../lib/tailwind
       '@praxis-kit/web':
         specifier: workspace:*
         version: link:../../adapters/web
@@ -865,21 +817,18 @@ importers:
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
-      '@pk2/foundation':
+      '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../engine/foundation
+        version: link:../pipeline
       '@pk2/style':
         specifier: workspace:*
-        version: link:../../domains/style
+        version: link:../style
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../primitive
-      '@praxis-kit/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
@@ -895,16 +844,16 @@ importers:
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
       vitest:
         specifier: 'catalog:'
-        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.27.7)(jiti@2.7.0))
 
   lib/backend-utils:
     dependencies:
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
-      '@pk2/foundation':
+      '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../engine/foundation
+        version: link:../pipeline
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../primitive
@@ -912,101 +861,15 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
-
-  lib/bench:
-    dependencies:
-      '@praxis-kit/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@praxis-kit/react':
-        specifier: workspace:*
-        version: link:../../adapters/react
-    devDependencies:
-      '@types/react':
-        specifier: 'catalog:'
-        version: 19.2.17
-      '@types/react-dom':
-        specifier: 'catalog:'
-        version: 19.2.3(@types/react@19.2.17)
-      class-variance-authority:
-        specifier: 'catalog:'
-        version: 0.7.1
-      clsx:
-        specifier: 'catalog:'
-        version: 2.1.1
-      jsdom:
-        specifier: 'catalog:'
-        version: 29.1.1
-      react:
-        specifier: 'catalog:'
-        version: 19.2.7
-      react-dom:
-        specifier: 'catalog:'
-        version: 19.2.7(react@19.2.7)
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
-
-  lib/bundle-analysis:
-    dependencies:
-      '@praxis-kit/adapter-utils':
-        specifier: workspace:*
-        version: link:../adapter-utils
-      '@praxis-kit/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@praxis-kit/preact':
-        specifier: workspace:*
-        version: link:../../adapters/preact
-      '@praxis-kit/react':
-        specifier: workspace:*
-        version: link:../../adapters/react
-      '@praxis-kit/solid':
-        specifier: workspace:*
-        version: link:../../adapters/solid
-      '@praxis-kit/svelte':
-        specifier: workspace:*
-        version: link:../../adapters/svelte
-      '@praxis-kit/tailwind':
-        specifier: workspace:*
-        version: link:../../packages/tailwind
-      '@praxis-kit/vue':
-        specifier: workspace:*
-        version: link:../../adapters/vue
-    devDependencies:
-      '@rollup/plugin-alias':
-        specifier: ^6.0.0
-        version: 6.0.0(rollup@4.62.2)
-      '@rollup/plugin-node-resolve':
-        specifier: ^16.0.3
-        version: 16.0.3(rollup@4.62.2)
-      '@size-limit/preset-small-lib':
-        specifier: ^12.1.0
-        version: 12.1.0(size-limit@12.1.0(jiti@2.7.0))
-      rollup:
-        specifier: ^4.62.2
-        version: 4.62.2
-      rollup-plugin-esbuild:
-        specifier: ^6.2.1
-        version: 6.2.1(esbuild@0.28.1)(rollup@4.62.2)
-      rollup-plugin-visualizer:
-        specifier: ^7.0.1
-        version: 7.0.1(rolldown@1.0.3)(rollup@4.62.2)
-      size-limit:
-        specifier: ^12.1.0
-        version: 12.1.0(jiti@2.7.0)
 
   lib/contract:
     dependencies:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
-        version: link:../../packages/diagnostics
+        version: link:../diagnostics
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../primitive
-      '@praxis-kit/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       type-fest:
         specifier: 'catalog:'
         version: 5.7.0
@@ -1015,17 +878,52 @@ importers:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
-  lib/metrics:
-    devDependencies:
-      '@types/node':
-        specifier: 'catalog:'
-        version: 25.9.1
-      ts-morph:
-        specifier: 'catalog:'
-        version: 28.0.0
+  lib/diagnostics:
+    dependencies:
+      '@pk2/pipeline':
+        specifier: workspace:*
+        version: link:../pipeline
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../primitive
       type-fest:
         specifier: 'catalog:'
         version: 5.7.0
+    devDependencies:
+      tsup:
+        specifier: 'catalog:'
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
+  lib/pipeline:
+    dependencies:
+      '@pk2/pipeline':
+        specifier: workspace:*
+        version: 'link:'
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
+  lib/playwright:
+    devDependencies:
+      '@axe-core/playwright':
+        specifier: 'catalog:'
+        version: 4.11.3(playwright-core@1.60.0)
+      '@pk2/pipeline':
+        specifier: workspace:*
+        version: link:../pipeline
+      '@playwright/test':
+        specifier: 'catalog:'
+        version: 1.60.0
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
 
   lib/primitive:
     dependencies:
@@ -1040,14 +938,24 @@ importers:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
+  lib/style:
+    dependencies:
+      '@pk2/pipeline':
+        specifier: workspace:*
+        version: link:../pipeline
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../primitive
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
   lib/styling:
     dependencies:
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../primitive
-      '@praxis-kit/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
@@ -1062,75 +970,27 @@ importers:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
-  lib/tree-shaking-tests:
+  lib/tailwind:
+    dependencies:
+      '@praxis-kit/contract':
+        specifier: workspace:*
+        version: link:../contract
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.7.0
     devDependencies:
-      '@pk2/compiler':
-        specifier: workspace:*
-        version: link:../../runtime/compiler
-      '@pk2/foundation':
-        specifier: workspace:*
-        version: link:../../engine/foundation
-      '@pk2/merge':
-        specifier: workspace:*
-        version: link:../../engine/merge
-      '@pk2/pipeline':
-        specifier: workspace:*
-        version: link:../../engine/pipeline
-      '@praxis-kit/adapter-utils':
-        specifier: workspace:*
-        version: link:../adapter-utils
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@praxis-kit/preact':
+      '@praxis-kit/primitive':
         specifier: workspace:*
-        version: link:../../adapters/preact
-      '@praxis-kit/react':
-        specifier: workspace:*
-        version: link:../../adapters/react
-      '@praxis-kit/solid':
-        specifier: workspace:*
-        version: link:../../adapters/solid
-      '@praxis-kit/svelte':
-        specifier: workspace:*
-        version: link:../../adapters/svelte
-      '@praxis-kit/tailwind':
-        specifier: workspace:*
-        version: link:../../packages/tailwind
-      '@praxis-kit/vue':
-        specifier: workspace:*
-        version: link:../../adapters/vue
-      '@types/node':
-        specifier: 'catalog:'
-        version: 25.9.1
-      '@types/react':
-        specifier: 'catalog:'
-        version: 19.2.17
-      esbuild:
-        specifier: '>=0.25.0'
-        version: 0.28.1
-      react:
-        specifier: 'catalog:'
-        version: 19.2.7
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-
-  packages/codemod:
-    dependencies:
-      ts-morph:
-        specifier: 'catalog:'
-        version: 28.0.0
-    devDependencies:
-      '@types/node':
-        specifier: ^25.9.1
-        version: 25.9.1
+        version: link:../primitive
       tsup:
         specifier: 'catalog:'
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
       vitest:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
@@ -1142,7 +1002,7 @@ importers:
         version: link:../../lib/contract
       '@praxis-kit/diagnostics':
         specifier: workspace:*
-        version: link:../diagnostics
+        version: link:../../lib/diagnostics
       type-fest:
         specifier: 'catalog:'
         version: 5.7.0
@@ -1150,65 +1010,12 @@ importers:
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
-      '@praxis-kit/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@praxis-kit/styling':
         specifier: workspace:*
         version: link:../../lib/styling
       tsup:
         specifier: 'catalog:'
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
-
-  packages/diagnostics:
-    dependencies:
-      '@pk2/foundation':
-        specifier: workspace:*
-        version: link:../../engine/foundation
-      '@praxis-kit/primitive':
-        specifier: workspace:*
-        version: link:../../lib/primitive
-      type-fest:
-        specifier: 'catalog:'
-        version: 5.7.0
-    devDependencies:
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
-
-  packages/eslint-plugin:
-    dependencies:
-      '@praxis-kit/diagnostics':
-        specifier: workspace:*
-        version: link:../diagnostics
-      '@praxis-kit/primitive':
-        specifier: workspace:*
-        version: link:../../lib/primitive
-      '@typescript-eslint/utils':
-        specifier: 'catalog:'
-        version: 8.60.0(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
-    devDependencies:
-      '@pk2/foundation':
-        specifier: workspace:*
-        version: link:../../engine/foundation
-      '@typescript-eslint/rule-tester':
-        specifier: 'catalog:'
-        version: 8.60.0(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
-      eslint:
-        specifier: 'catalog:'
-        version: 10.5.0(jiti@2.7.0)
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
-      typescript-eslint:
-        specifier: 'catalog:'
-        version: 8.60.0(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
       vitest:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
@@ -1231,9 +1038,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../core
-      '@praxis-kit/shared':
+      '@praxis-kit/primitive':
         specifier: workspace:*
-        version: link:../shared
+        version: link:../../lib/primitive
       '@sveltejs/vite-plugin-svelte':
         specifier: 'catalog:'
         version: 7.1.2(svelte@5.56.3(@typescript-eslint/types@8.60.0))(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
@@ -1283,72 +1090,51 @@ importers:
         specifier: 'catalog:'
         version: 3.5.38(typescript@6.0.3)
 
-  packages/playwright:
-    devDependencies:
-      '@axe-core/playwright':
-        specifier: 'catalog:'
-        version: 4.11.3(playwright-core@1.60.0)
-      '@pk2/foundation':
-        specifier: workspace:*
-        version: link:../../engine/foundation
-      '@playwright/test':
-        specifier: 'catalog:'
-        version: 1.60.0
-      '@types/node':
-        specifier: 'catalog:'
-        version: 25.9.1
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-
-  packages/shared:
+  plugins/eslint:
     dependencies:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
-        version: link:../diagnostics
+        version: link:../../lib/diagnostics
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
-      type-fest:
+      '@typescript-eslint/utils':
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 8.60.0(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
     devDependencies:
+      '@pk2/pipeline':
+        specifier: workspace:*
+        version: link:../../lib/pipeline
+      '@typescript-eslint/rule-tester':
+        specifier: 'catalog:'
+        version: 8.60.0(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
+      eslint:
+        specifier: 'catalog:'
+        version: 10.5.0(jiti@2.7.0)
       tsup:
         specifier: 'catalog:'
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
+      typescript-eslint:
+        specifier: 'catalog:'
+        version: 8.60.0(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
       vitest:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
-  packages/tailwind:
+  plugins/tailwind:
     dependencies:
-      '@praxis-kit/contract':
+      '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../lib/contract
-      '@praxis-kit/diagnostics':
+        version: link:../../lib/pipeline
+      '@pk2/style':
         specifier: workspace:*
-        version: link:../diagnostics
-      type-fest:
-        specifier: 'catalog:'
-        version: 5.7.0
+        version: link:../../lib/style
     devDependencies:
-      '@praxis-kit/core':
-        specifier: workspace:*
-        version: link:../core
-      '@praxis-kit/primitive':
-        specifier: workspace:*
-        version: link:../../lib/primitive
-      '@praxis-kit/shared':
-        specifier: workspace:*
-        version: link:../shared
-      tsup:
-        specifier: 'catalog:'
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
       vitest:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
-  packages/ts-plugin:
+  plugins/typescript:
     devDependencies:
       tsup:
         specifier: 'catalog:'
@@ -1357,18 +1143,18 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
-  packages/vite-plugin:
+  plugins/vite:
     dependencies:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
-        version: link:../diagnostics
+        version: link:../../lib/diagnostics
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
     devDependencies:
       '@praxis-kit/core':
         specifier: workspace:*
-        version: link:../core
+        version: link:../../packages/core
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -1377,47 +1163,165 @@ importers:
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
       vite:
         specifier: ^8.0.16
-        version: 8.0.16(@types/node@25.9.1)(esbuild@0.27.7)(jiti@2.7.0)
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.27.7)(jiti@2.7.0))
-
-  plugins/tailwind:
-    dependencies:
-      '@pk2/foundation':
-        specifier: workspace:*
-        version: link:../../engine/foundation
-      '@pk2/merge':
-        specifier: workspace:*
-        version: link:../../engine/merge
-      '@pk2/pipeline':
-        specifier: workspace:*
-        version: link:../../engine/pipeline
-      '@pk2/style':
-        specifier: workspace:*
-        version: link:../../domains/style
-    devDependencies:
+        version: 8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0)
       vitest:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
+  qa/bench:
+    dependencies:
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@praxis-kit/react':
+        specifier: workspace:*
+        version: link:../../adapters/react
+    devDependencies:
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.3(@types/react@19.2.17)
+      class-variance-authority:
+        specifier: 'catalog:'
+        version: 0.7.1
+      clsx:
+        specifier: 'catalog:'
+        version: 2.1.1
+      jsdom:
+        specifier: 'catalog:'
+        version: 29.1.1
+      react:
+        specifier: 'catalog:'
+        version: 19.2.7
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.7(react@19.2.7)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
+  qa/bundle-analysis:
+    dependencies:
+      '@praxis-kit/adapter-utils':
+        specifier: workspace:*
+        version: link:../../lib/adapter-utils
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@praxis-kit/preact':
+        specifier: workspace:*
+        version: link:../../adapters/preact
+      '@praxis-kit/react':
+        specifier: workspace:*
+        version: link:../../adapters/react
+      '@praxis-kit/solid':
+        specifier: workspace:*
+        version: link:../../adapters/solid
+      '@praxis-kit/svelte':
+        specifier: workspace:*
+        version: link:../../adapters/svelte
+      '@praxis-kit/tailwind':
+        specifier: workspace:*
+        version: link:../../lib/tailwind
+      '@praxis-kit/vue':
+        specifier: workspace:*
+        version: link:../../adapters/vue
+    devDependencies:
+      '@rollup/plugin-alias':
+        specifier: ^6.0.0
+        version: 6.0.0(rollup@4.62.2)
+      '@rollup/plugin-node-resolve':
+        specifier: ^16.0.3
+        version: 16.0.3(rollup@4.62.2)
+      '@size-limit/preset-small-lib':
+        specifier: ^12.1.0
+        version: 12.1.0(size-limit@12.1.0(jiti@2.7.0))
+      rollup:
+        specifier: ^4.62.2
+        version: 4.62.2
+      rollup-plugin-esbuild:
+        specifier: ^6.2.1
+        version: 6.2.1(esbuild@0.28.1)(rollup@4.62.2)
+      rollup-plugin-visualizer:
+        specifier: ^7.0.1
+        version: 7.0.1(rolldown@1.0.3)(rollup@4.62.2)
+      size-limit:
+        specifier: ^12.1.0
+        version: 12.1.0(jiti@2.7.0)
+
+  qa/metrics:
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.1
+      ts-morph:
+        specifier: 'catalog:'
+        version: 28.0.0
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.7.0
+
+  qa/tree-shaking-tests:
+    devDependencies:
+      '@pk2/compiler':
+        specifier: workspace:*
+        version: link:../../runtime/compiler
+      '@pk2/pipeline':
+        specifier: workspace:*
+        version: link:../../lib/pipeline
+      '@praxis-kit/adapter-utils':
+        specifier: workspace:*
+        version: link:../../lib/adapter-utils
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@praxis-kit/preact':
+        specifier: workspace:*
+        version: link:../../adapters/preact
+      '@praxis-kit/react':
+        specifier: workspace:*
+        version: link:../../adapters/react
+      '@praxis-kit/solid':
+        specifier: workspace:*
+        version: link:../../adapters/solid
+      '@praxis-kit/svelte':
+        specifier: workspace:*
+        version: link:../../adapters/svelte
+      '@praxis-kit/tailwind':
+        specifier: workspace:*
+        version: link:../../lib/tailwind
+      '@praxis-kit/vue':
+        specifier: workspace:*
+        version: link:../../adapters/vue
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.1
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.17
+      esbuild:
+        specifier: '>=0.25.0'
+        version: 0.28.1
+      react:
+        specifier: 'catalog:'
+        version: 19.2.7
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
 
   runtime/compiler:
     dependencies:
       '@pk2/core':
         specifier: workspace:*
         version: link:../core
-      '@pk2/foundation':
-        specifier: workspace:*
-        version: link:../../engine/foundation
-      '@pk2/merge':
-        specifier: workspace:*
-        version: link:../../engine/merge
       '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../engine/pipeline
+        version: link:../../lib/pipeline
       '@pk2/style':
         specifier: workspace:*
-        version: link:../../domains/style
+        version: link:../../lib/style
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -1431,15 +1335,9 @@ importers:
 
   runtime/core:
     dependencies:
-      '@pk2/foundation':
-        specifier: workspace:*
-        version: link:../../engine/foundation
-      '@pk2/merge':
-        specifier: workspace:*
-        version: link:../../engine/merge
       '@pk2/pipeline':
         specifier: workspace:*
-        version: link:../../engine/pipeline
+        version: link:../../lib/pipeline
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -1447,6 +1345,25 @@ importers:
         specifier: 'catalog:'
         version: 5.7.0
     devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
+
+  tooling/codemod:
+    dependencies:
+      ts-morph:
+        specifier: 'catalog:'
+        version: 28.0.0
+    devDependencies:
+      '@types/node':
+        specifier: ^25.9.1
+        version: 25.9.1
+      tsup:
+        specifier: 'catalog:'
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@6.0.3)
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
       vitest:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
@@ -4934,10 +4851,6 @@ packages:
     resolution: {integrity: sha512-dAqSqE/RabpBKI8+h26GfLq6Vb3JVXs30XYQjdMjaj/c2tS8IYYMbIzP599KtRj7c57/wYApb3QjgRgXmrCukA==}
     engines: {node: '>=18'}
 
-  tinyglobby@0.2.16:
-    resolution: {integrity: sha512-pn99VhoACYR8nFHhxqix+uvsbXineAasWm5ojXoN8xEwK5Kd3/TrhNn1wByuD52UxWRLy8pu+kRMniEi6Eq9Zg==}
-    engines: {node: '>=12.0.0'}
-
   tinyglobby@0.2.17:
     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
     engines: {node: '>=12.0.0'}
@@ -6491,7 +6404,7 @@ snapshots:
       eslint: 10.5.0(jiti@2.7.0)
       json-stable-stringify-without-jsonify: 1.0.1
       lodash.merge: 4.6.2
-      semver: 7.8.0
+      semver: 7.8.4
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
@@ -6711,7 +6624,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
-      vitest: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.27.7)(jiti@2.7.0))
+      vitest: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
   '@vitest/utils@4.1.9':
     dependencies:
@@ -7579,7 +7492,7 @@ snapshots:
     dependencies:
       magic-string: 0.30.21
       mlly: 1.8.2
-      rollup: 4.61.1
+      rollup: 4.62.2
 
   flat-cache@4.0.1:
     dependencies:
@@ -8650,7 +8563,7 @@ snapshots:
       lilconfig: 3.1.3
       nanospinner: 1.2.2
       picocolors: 1.1.1
-      tinyglobby: 0.2.16
+      tinyglobby: 0.2.17
     optionalDependencies:
       jiti: 2.7.0
 
@@ -8778,11 +8691,6 @@ snapshots:
   tinyexec@0.3.2: {}
 
   tinyexec@1.1.2: {}
-
-  tinyglobby@0.2.16:
-    dependencies:
-      fdir: 6.5.0(picomatch@4.0.4)
-      picomatch: 4.0.4
 
   tinyglobby@0.2.17:
     dependencies:
@@ -8973,7 +8881,7 @@ snapshots:
       fdir: 6.5.0(picomatch@4.0.4)
       picomatch: 4.0.4
       postcss: 8.5.15
-      rollup: 4.61.1
+      rollup: 4.62.2
       tinyglobby: 0.2.17
     optionalDependencies:
       '@types/node': 25.9.1

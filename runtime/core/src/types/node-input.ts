@@ -1,4 +1,4 @@
-import type { NodeId, SlotName } from '@pk2/foundation'
+import type { NodeId, SlotName } from '@pk2/pipeline'
 
 interface BaseNodeInput {
   id: NodeId

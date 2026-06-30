@@ -1,5 +1,5 @@
 import type { ChildRuleInput, EnforcementOptions } from '../types'
-import { isTag } from '@praxis-kit/shared/guards/children'
+import { isTag } from '@praxis-kit/primitive/guards/children'
 import { isNumber, isObject, isString } from '@praxis-kit/primitive'
 import { landmarkNameAdvisory, landmarkRoleRule, requireAccessibleName } from './aria-rules'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'

@@ -11,8 +11,7 @@ export default defineConfig({
     '@praxis-kit/contract',
     '@praxis-kit/contract/types',
     '@praxis-kit/styling',
-    '@praxis-kit/shared',
-    '@praxis-kit/shared/types/primitives',
-    '@praxis-kit/shared/types',
+    '@praxis-kit/primitive/types/primitives',
+    '@praxis-kit/primitive/types',
   ],
 })
