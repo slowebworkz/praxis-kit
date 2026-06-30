@@ -44,4 +44,15 @@ export function requireAccessibleName({ tag, props }: AriaContext): readonly Ari
   ]
 }
 
-export const HTML_ARIA_RULES: readonly AriaRule[] = [landmarkRoleRule]
+// nav and aside are commonly multiplied on a single page (primary nav, breadcrumb nav;
+// main content, sidebar) and each instance must have a unique accessible name so that
+// screen reader users can distinguish them from the landmarks list.
+// WAI-ARIA APG: https://www.w3.org/WAI/ARIA/apg/practices/landmark-regions/
+const NAMED_LANDMARK_TAGS = new Set(['nav', 'aside'])
+
+export function landmarkNameAdvisory(ctx: AriaContext): readonly AriaResult[] {
+  if (!ctx.implicitRole || !NAMED_LANDMARK_TAGS.has(ctx.tag)) return []
+  return requireAccessibleName(ctx)
+}
+
+export const HTML_ARIA_RULES: readonly AriaRule[] = [landmarkRoleRule, landmarkNameAdvisory]

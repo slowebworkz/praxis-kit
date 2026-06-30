@@ -74,15 +74,11 @@ export class AriaPolicyEngine extends InvariantBase {
   static #deriveContext(tag: AnyTag, props: IntrinsicProps): EvaluationContext {
     if (!isIntrinsicTag(tag)) return { proceed: false, result: { props, violations: [] } }
     const implicitRole = getImplicitRole(tag, props)
-    // Also proceed for explicit live-region roles on tags with no implicit role (e.g. <div role="alert">).
-    const hasExplicitLiveRole =
-      !implicitRole && AriaPolicyEngine.#LIVE_REGION_ROLES.has(props.role ?? '')
-    // Also proceed for explicit presentational roles (<div role="none">) so that
-    // #checkPresentationalAriaAttributes can flag ARIA attributes on those elements.
-    const hasExplicitPresentationalRole =
-      !implicitRole && (props.role === 'none' || props.role === 'presentation')
-    if (!implicitRole && !hasExplicitLiveRole && !hasExplicitPresentationalRole)
-      return { proceed: false, result: { props, violations: [] } }
+    // Proceed when the element has an implicit role (native semantics) or a non-empty explicit
+    // role (author-supplied semantics). Elements with neither have no ARIA semantics to validate.
+    const hasRole =
+      implicitRole != null || (isString(props.role) && (props.role as string).length > 0)
+    if (!hasRole) return { proceed: false, result: { props, violations: [] } }
 
     const normalized = AriaPolicyEngine.#normalizeEmptyRole(tag, props)
     if (normalized.normalized) return { proceed: false, result: normalized.result }
@@ -331,6 +327,7 @@ export class AriaPolicyEngine extends InvariantBase {
     AriaPolicyEngine.#checkRedundantRole,
     AriaPolicyEngine.#checkStandaloneRegion,
     AriaPolicyEngine.#checkInvalidAriaAttributes,
+    AriaPolicyEngine.#checkRequiredAriaProperties,
     AriaPolicyEngine.#checkMissingLiveRegion,
     AriaPolicyEngine.#checkMissingAtomic,
     AriaPolicyEngine.#checkInvalidAriaRelevant,
@@ -341,6 +338,7 @@ export class AriaPolicyEngine extends InvariantBase {
   // Rules for elements with an implicit role but no explicit role (not a live region).
   static readonly #implicitOnlyRules = [
     AriaPolicyEngine.#checkInvalidAriaAttributes,
+    AriaPolicyEngine.#checkRequiredAriaProperties,
     AriaPolicyEngine.#checkAriaHiddenOnFocusable,
     AriaPolicyEngine.#checkPresentationalAriaAttributes,
   ] as const satisfies readonly AriaRule[]
@@ -423,6 +421,37 @@ export class AriaPolicyEngine extends InvariantBase {
       })
     })
 
+    return results
+  }
+
+  // WAI-ARIA 1.2 required states and properties, keyed by role.
+  // Source: https://www.w3.org/TR/wai-aria-1.2/#requiredState
+  static readonly #REQUIRED_PROPERTIES: ReadonlyMap<string, readonly string[]> = new Map([
+    ['combobox', ['aria-expanded']],
+    ['option', ['aria-selected']],
+    ['slider', ['aria-valuenow']],
+    ['scrollbar', ['aria-controls', 'aria-valuenow']],
+    ['spinbutton', ['aria-valuenow']],
+  ])
+
+  static #checkRequiredAriaProperties({
+    props,
+    effectiveRole,
+  }: AriaContext): readonly AriaResult[] {
+    if (!effectiveRole) return VALID
+    const required = AriaPolicyEngine.#REQUIRED_PROPERTIES.get(effectiveRole)
+    if (required == null) return VALID
+    const results: AriaResult[] = []
+    iterate.forEach(required, (attr) => {
+      if (attr in props) return
+      results.push({
+        valid: false,
+        fixable: false,
+        severity: 'warning',
+        attribute: attr,
+        diagnostic: AriaDiagnostics.requiredProperty(attr, effectiveRole),
+      })
+    })
     return results
   }
 

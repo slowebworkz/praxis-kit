@@ -150,6 +150,23 @@ export const AriaDiagnostics = {
     }
   },
 
+  requiredProperty(attr: string, role: string): DiagnosticInput {
+    return {
+      code: DiagnosticCode.AriaRequiredProperty,
+      category: DiagnosticCategory.ARIA,
+      message: `"${attr}" is required for role="${role}" but is missing.`,
+      rationale:
+        `WAI-ARIA 1.2 specifies required states and properties for certain roles. ` +
+        `Without "${attr}", assistive technology cannot correctly communicate the element's state to users.`,
+      suggestions: [
+        {
+          title: `Add ${attr}`,
+          description: `role="${role}" requires "${attr}" to be present.`,
+        },
+      ],
+    }
+  },
+
   invalidRole(role: string | undefined, tag: string): DiagnosticInput {
     return {
       code: DiagnosticCode.AriaInvalidRole,

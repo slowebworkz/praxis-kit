@@ -28,6 +28,7 @@ export enum DiagnosticCode {
   AriaMissingAccessibleName = 'ARIA2009',
   AriaAttributeOnPresentational = 'ARIA2010',
   AriaHiddenOnFocusable = 'ARIA2011',
+  AriaRequiredProperty = 'ARIA2012',
 
   // HTML
   InvalidHeadingHierarchy = 'HTML3001',

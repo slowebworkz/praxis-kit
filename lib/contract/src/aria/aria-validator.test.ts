@@ -514,8 +514,9 @@ describe('validate() — props identity when no changes occur', () => {
     expect(result).toBe(props)
   })
 
-  it('returns the same props reference for a tag with no implicit role', () => {
-    const props = { role: 'dialog', 'aria-checked': 'true' }
+  it('returns the same props reference when explicit role has no violations', () => {
+    // Global aria-* attrs are always valid — no fix applied, same reference returned.
+    const props = { role: 'dialog', 'aria-label': 'My dialog' }
     const { props: result } = makeValidator(throwDiagnostics).validate('div', props)
     expect(result).toBe(props)
   })
@@ -1428,5 +1429,111 @@ describe('validate() — aria-hidden="true" on focusable elements', () => {
       'aria-hidden': 'true',
     })
     expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — #checkRequiredAriaProperties
+// ---------------------------------------------------------------------------
+
+describe('validate() — WAI-ARIA required properties', () => {
+  it('warns for missing aria-expanded on role="combobox"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'combobox',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(true)
+  })
+
+  it('no violation when aria-expanded is present on role="combobox"', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('div', {
+      role: 'combobox',
+      'aria-expanded': 'false',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(false)
+  })
+
+  it('warns for missing aria-selected on role="option"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('li', {
+      role: 'option',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-selected')).toBe(true)
+  })
+
+  it('no violation when aria-selected is present on role="option"', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('li', {
+      role: 'option',
+      'aria-selected': 'false',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-selected')).toBe(false)
+  })
+
+  it('warns for missing aria-valuenow on role="slider"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'slider',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(true)
+  })
+
+  it('warns for missing aria-valuenow on input[type=range] (implicit slider)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('input', {
+      type: 'range',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(true)
+  })
+
+  it('no violation for input[type=range] when aria-valuenow is present', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'range',
+      'aria-valuenow': '50',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(false)
+  })
+
+  it('warns for missing aria-controls and aria-valuenow on role="scrollbar"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'scrollbar',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-controls')).toBe(true)
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(true)
+  })
+
+  it('no violation when all required scrollbar properties are present', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('div', {
+      role: 'scrollbar',
+      'aria-controls': 'content-id',
+      'aria-valuenow': '0',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-controls')).toBe(false)
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(false)
+  })
+
+  it('warns for missing aria-valuenow on role="spinbutton"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'spinbutton',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(true)
+  })
+
+  it('violation severity is warning (not error)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'combobox',
+    })
+    const v = violations.find((v) => v.attribute === 'aria-expanded')
+    expect(v?.severity).toBe('warning')
+  })
+
+  it('does not fire for roles with no required properties', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('nav', {
+      role: 'button',
+    })
+    expect(violations.some((v) => v.message.includes('required'))).toBe(false)
+  })
+
+  it('violation attribute field names the missing property', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'combobox',
+    })
+    const v = violations.find((v) => v.attribute === 'aria-expanded')
+    expect(v?.attribute).toBe('aria-expanded')
   })
 })
