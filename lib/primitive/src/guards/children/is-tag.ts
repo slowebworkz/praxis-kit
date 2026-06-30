@@ -1,5 +1,5 @@
 import { isObject } from '../../utils/is-object'
-import { isString } from '../foundational/is-string'
+import { isString } from '../foundational'
 import { COMPONENT_DEFAULT_TAG } from './component-id'
 
 function getAsProp(child: unknown): string | undefined {

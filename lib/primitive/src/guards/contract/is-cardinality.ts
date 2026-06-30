@@ -1,6 +1,5 @@
 import type { Cardinality } from '../../types'
-import { isNumber } from '../foundational/is-number'
-import { isRecord } from '../foundational/is-record'
+import { isNumber, isRecord  } from '../foundational'
 
 export function isCardinality(value: unknown): value is Cardinality {
   if (!isRecord(value)) return false

@@ -1,4 +1,4 @@
-import type { ClassName } from '../primitives/class-name'
+import type { ClassName } from '../primitives'
 
 export interface BaseClassOptions {
   baseClassName?: ClassName

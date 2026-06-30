@@ -1,8 +1,6 @@
 import type { RequireAtLeastOne, Simplify } from 'type-fest'
 import type { EmptyRecord, NonEmptyArray } from '../../primitives'
-import type { VariantKey } from '../variant-key'
-import type { VariantMap } from '../variant-map'
-import type { VariantValue } from '../variant-value'
+import type { VariantKey, VariantMap, VariantValue } from '..'
 
 type RequireAtLeastOneIfNotEmpty<T> = keyof T extends never ? EmptyRecord : RequireAtLeastOne<T>
 

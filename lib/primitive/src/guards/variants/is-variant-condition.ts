@@ -1,7 +1,7 @@
 import type { VariantConditionValue } from '../../types'
 import { isArray } from '../foundational/is-array'
 import { isBoolean } from '../foundational/is-boolean'
-import { isString } from '../foundational/is-string'
+import { isString } from '../foundational'
 
 export function isVariantCondition(value: unknown): value is VariantConditionValue {
   if (isString(value) || isBoolean(value)) return true

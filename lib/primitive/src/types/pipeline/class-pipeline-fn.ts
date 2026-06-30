@@ -1,5 +1,4 @@
-import type { AnyRecord } from '../primitives/any-record'
-import type { ClassName } from '../primitives/class-name'
+import type { AnyRecord, ClassName  } from '../primitives'
 
 export type ClassPipelineFn = (
   tag: unknown,

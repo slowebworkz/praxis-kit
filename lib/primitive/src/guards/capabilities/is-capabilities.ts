@@ -1,7 +1,6 @@
 import type { Capabilities } from '../../types'
 import { isDefined } from '../foundational/is-defined'
-import { isFunction } from '../foundational/is-function'
-import { isRecord } from '../foundational/is-record'
+import { isFunction, isRecord  } from '../foundational'
 
 export function isCapability(value: unknown): value is Capabilities {
   if (!isRecord(value)) return false

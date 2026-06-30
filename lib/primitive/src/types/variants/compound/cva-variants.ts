@@ -1,4 +1,4 @@
-import type { VariantMap } from '../variant-map'
+import type { VariantMap } from '..'
 
 export interface CVAVariants<V extends VariantMap> {
   variants?: V
