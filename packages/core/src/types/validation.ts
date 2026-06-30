@@ -1,4 +1,4 @@
-import type { IntrinsicTag } from './primitives'
+import type { IntrinsicTag } from '@praxis-kit/primitive/types'
 import type { AriaContext } from './aria-rule'
 import type { ValidationResult } from '@praxis-kit/primitive/types'
 

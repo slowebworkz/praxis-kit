@@ -4,7 +4,7 @@ import type { AriaRule } from './aria-rule'
 import type { ClassPipelineFn } from './class-pipeline'
 import type { ClassPipelineOptions } from './class-pipeline-options'
 import type { PropNormalizer } from './factory-options'
-import type { VariantMap } from './variant'
+import type { VariantMap } from '@praxis-kit/primitive/types'
 
 type CreateClassPipeline = <TVariants extends VariantMap>(
   opts: ClassPipelineOptions<TVariants>,

@@ -1,4 +1,4 @@
-import type { AnyRecord, ClassName, ElementType } from './primitives'
+import type { AnyRecord, ClassName, ElementType } from '@praxis-kit/primitive/types'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 
 /**
