@@ -1226,3 +1226,207 @@ describe('validate() — form conditional landmark (role: form when named)', () 
     expect(violations).toHaveLength(0)
   })
 })
+
+// ---------------------------------------------------------------------------
+// validate() — img implicit role (alt="" → none, otherwise → img)
+// ---------------------------------------------------------------------------
+
+describe('validate() — img implicit role', () => {
+  it('derives role=img when alt is absent', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('img', {
+      'aria-label': 'Company logo',
+    })
+    // aria-label is global and valid for img role — no violation
+    expect(violations).toHaveLength(0)
+  })
+
+  it('derives role=img when alt is non-empty', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('img', {
+      alt: 'Company logo',
+      'aria-label': 'Company logo',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('warns for aria-label when alt="" (decorative, role=none)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('img', {
+      alt: '',
+      'aria-label': 'Logo',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-label')).toBe(true)
+  })
+
+  it('strips aria-label from decorative img (alt="")', () => {
+    const { props } = makeValidator(silentDiagnostics).validate('img', {
+      alt: '',
+      'aria-label': 'Logo',
+    })
+    expect(props).not.toHaveProperty('aria-label')
+  })
+
+  it('warns for aria-labelledby when alt="" (decorative)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('img', {
+      alt: '',
+      'aria-labelledby': 'caption',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-labelledby')).toBe(true)
+  })
+
+  it('allows aria-hidden on decorative img (redundant but harmless)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('img', {
+      alt: '',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(false)
+  })
+
+  it('does not share cache between alt="" and alt="logo"', () => {
+    const engine = makeValidator(silentDiagnostics)
+    // First call: alt="" → decorative; aria-label is flagged
+    const r1 = engine.validate('img', { alt: '', 'aria-label': 'Logo' })
+    expect(r1.violations.some((v) => v.attribute === 'aria-label')).toBe(true)
+    // Second call: alt="logo" → semantic img; aria-label is valid (global)
+    const r2 = engine.validate('img', { alt: 'Logo', 'aria-label': 'Logo' })
+    expect(r2.violations.some((v) => v.attribute === 'aria-label')).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — #checkPresentationalAriaAttributes (explicit role=none/presentation)
+// ---------------------------------------------------------------------------
+
+describe('validate() — ARIA attributes on presentational role', () => {
+  it('warns for aria-label when role="none"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'none',
+      'aria-label': 'Decorative',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-label')).toBe(true)
+  })
+
+  it('strips aria-label from role="none" element', () => {
+    const { props } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'none',
+      'aria-label': 'Decorative',
+    })
+    expect(props).not.toHaveProperty('aria-label')
+  })
+
+  it('warns for aria-labelledby when role="presentation"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'presentation',
+      'aria-labelledby': 'heading',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-labelledby')).toBe(true)
+  })
+
+  it('allows aria-hidden on role="none" (redundant but harmless)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'none',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(false)
+  })
+
+  it('produces no duplicate violations — #checkInvalidAriaAttributes defers to presentational check', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'none',
+      'aria-checked': 'true',
+    })
+    // Exactly one violation for aria-checked (from presentational check, not invalid-attr check)
+    const ariaCheckedViolations = violations.filter((v) => v.attribute === 'aria-checked')
+    expect(ariaCheckedViolations).toHaveLength(1)
+  })
+
+  it('flags multiple ARIA attributes on role="none"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'none',
+      'aria-label': 'foo',
+      'aria-describedby': 'bar',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-label')).toBe(true)
+    expect(violations.some((v) => v.attribute === 'aria-describedby')).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — #checkAriaHiddenOnFocusable
+// ---------------------------------------------------------------------------
+
+describe('validate() — aria-hidden="true" on focusable elements', () => {
+  it('throws for aria-hidden="true" on <button> (error severity)', () => {
+    expect(() =>
+      makeValidator(throwDiagnostics).validate('button', { 'aria-hidden': 'true' }),
+    ).toThrow()
+  })
+
+  it('reports an error-severity violation for aria-hidden on <button>', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('button', {
+      'aria-hidden': 'true',
+    })
+    const v = violations.find((v) => v.attribute === 'aria-hidden')
+    expect(v).toBeDefined()
+    expect(v?.severity).toBe('error')
+  })
+
+  it('reports a violation for aria-hidden on <input>', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('input', {
+      type: 'text',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(true)
+  })
+
+  it('reports a violation for aria-hidden on <select>', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('select', {
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(true)
+  })
+
+  it('reports a violation for aria-hidden on <a>', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('a', {
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(true)
+  })
+
+  it('does not flag aria-hidden on non-interactive <div>', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('div', {
+      role: 'presentation',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(false)
+  })
+
+  it('does not flag aria-hidden="false" on interactive elements', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('button', {
+      'aria-hidden': 'false',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(false)
+  })
+
+  it('flags aria-hidden on <h2 tabindex="0"> (non-interactive but explicitly tabbable)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('h2', {
+      tabindex: '0',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(true)
+  })
+
+  it('does not flag aria-hidden on <h2 tabindex="-1"> (programmatic focus only)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('h2', {
+      tabindex: '-1',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(false)
+  })
+
+  it('fires through the full pipeline for explicit role elements', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('button', {
+      role: 'listbox',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(true)
+  })
+})

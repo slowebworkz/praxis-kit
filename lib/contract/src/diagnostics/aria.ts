@@ -111,6 +111,45 @@ export const AriaDiagnostics = {
     }
   },
 
+  attributeOnPresentational(attr: string, tag: string): DiagnosticInput {
+    return {
+      code: DiagnosticCode.AriaAttributeOnPresentational,
+      category: DiagnosticCategory.ARIA,
+      message: `"${attr}" is not allowed on a presentational <${tag}>. Presentational elements are invisible to assistive technology.`,
+      rationale:
+        'role="none" and role="presentation" (including <img alt="">) remove an element from the accessibility tree. ARIA attributes on such elements are ignored by assistive technology.',
+      suggestions: [
+        {
+          title: 'Remove the attribute',
+          description: `"${attr}" has no effect when the element has role="none" or role="presentation".`,
+        },
+      ],
+    }
+  },
+
+  ariaHiddenOnFocusable(tag: string): DiagnosticInput {
+    return {
+      code: DiagnosticCode.AriaHiddenOnFocusable,
+      category: DiagnosticCategory.ARIA,
+      message: `aria-hidden="true" must not be used on focusable <${tag}> elements. Screen reader users who navigate by keyboard will encounter the element but receive no information about it.`,
+      rationale:
+        'aria-hidden removes an element from the accessibility tree while leaving it keyboard-reachable. ' +
+        'This creates a "ghost" — a focusable element assistive technology cannot describe.',
+      suggestions: [
+        {
+          title: 'Remove aria-hidden',
+          description:
+            'If the element should be hidden from all users, use the HTML hidden attribute or CSS display:none instead.',
+        },
+        {
+          title: 'Make the element non-focusable',
+          description:
+            'If the element is intentionally decorative, add tabindex="-1" and disable it so it is not reachable by keyboard.',
+        },
+      ],
+    }
+  },
+
   invalidRole(role: string | undefined, tag: string): DiagnosticInput {
     return {
       code: DiagnosticCode.AriaInvalidRole,

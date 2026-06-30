@@ -17,6 +17,8 @@ type Tag = keyof typeof IMPLICIT_ROLE_RECORD
 export function getImplicitRole(tag: IntrinsicTag, props?: IntrinsicProps): string | undefined {
   if (tag in IMPLICIT_ROLE_RECORD) return IMPLICIT_ROLE_RECORD[tag as Tag]
   if (tag === 'input') return getInputImplicitRole(props?.type as string | undefined)
+  // alt="" marks a decorative image (role=none); any other alt (including absent) keeps role=img.
+  if (tag === 'img') return props?.alt === '' ? 'none' : 'img'
   if (tag === 'section' || tag === 'form') {
     return getConditionalImplicitRole(tag, props?.['aria-label'], props?.['aria-labelledby'])
   }

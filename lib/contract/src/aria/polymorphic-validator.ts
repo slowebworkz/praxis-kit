@@ -77,7 +77,11 @@ export class AriaPolicyEngine extends InvariantBase {
     // Also proceed for explicit live-region roles on tags with no implicit role (e.g. <div role="alert">).
     const hasExplicitLiveRole =
       !implicitRole && AriaPolicyEngine.#LIVE_REGION_ROLES.has(props.role ?? '')
-    if (!implicitRole && !hasExplicitLiveRole)
+    // Also proceed for explicit presentational roles (<div role="none">) so that
+    // #checkPresentationalAriaAttributes can flag ARIA attributes on those elements.
+    const hasExplicitPresentationalRole =
+      !implicitRole && (props.role === 'none' || props.role === 'presentation')
+    if (!implicitRole && !hasExplicitLiveRole && !hasExplicitPresentationalRole)
       return { proceed: false, result: { props, violations: [] } }
 
     const normalized = AriaPolicyEngine.#normalizeEmptyRole(tag, props)
@@ -140,7 +144,7 @@ export class AriaPolicyEngine extends InvariantBase {
     ) {
       return AriaPolicyEngine.#pipeline
     }
-    return [AriaPolicyEngine.#checkInvalidAriaAttributes]
+    return AriaPolicyEngine.#implicitOnlyRules
   }
 
   static evaluate(tag: AnyTag, props: IntrinsicProps): ValidationResult {
@@ -193,6 +197,8 @@ export class AriaPolicyEngine extends InvariantBase {
     if (typeof props.role === 'string') parts.push(`role:${props.role}`)
     // input's implicit role depends on type — include it so different types never share a cache entry
     if (tag === 'input' && typeof props.type === 'string') parts.push(`type:${props.type}`)
+    // img's implicit role depends on whether alt is empty (none) or non-empty (img)
+    if (tag === 'img') parts.push(`alt:${props.alt === '' ? 'empty' : 'present'}`)
     const ariaEntries: string[] = []
     iterate.forEachEntry(props, (k, v) => {
       if (!k.startsWith('aria-')) return
@@ -328,6 +334,15 @@ export class AriaPolicyEngine extends InvariantBase {
     AriaPolicyEngine.#checkMissingLiveRegion,
     AriaPolicyEngine.#checkMissingAtomic,
     AriaPolicyEngine.#checkInvalidAriaRelevant,
+    AriaPolicyEngine.#checkAriaHiddenOnFocusable,
+    AriaPolicyEngine.#checkPresentationalAriaAttributes,
+  ] as const satisfies readonly AriaRule[]
+
+  // Rules for elements with an implicit role but no explicit role (not a live region).
+  static readonly #implicitOnlyRules = [
+    AriaPolicyEngine.#checkInvalidAriaAttributes,
+    AriaPolicyEngine.#checkAriaHiddenOnFocusable,
+    AriaPolicyEngine.#checkPresentationalAriaAttributes,
   ] as const satisfies readonly AriaRule[]
 
   static #checkInvalidRoleOverride({
@@ -389,6 +404,8 @@ export class AriaPolicyEngine extends InvariantBase {
     props,
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
+    // Presentational elements have no semantic role — defer entirely to #checkPresentationalAriaAttributes.
+    if (effectiveRole === 'none' || effectiveRole === 'presentation') return VALID
     const results: AriaResult[] = []
 
     iterate.forEachEntry(props, (key) => {
@@ -406,6 +423,66 @@ export class AriaPolicyEngine extends InvariantBase {
       })
     })
 
+    return results
+  }
+
+  // Natively interactive HTML elements — always keyboard-reachable unless explicitly disabled.
+  static readonly #INTERACTIVE_TAGS: ReadonlySet<string> = new Set([
+    'a',
+    'button',
+    'input',
+    'select',
+    'textarea',
+  ])
+
+  // WAI-ARIA 1.2 §6.6: aria-hidden="true" must not be placed on focusable elements.
+  static #checkAriaHiddenOnFocusable({ tag, props }: AriaContext): readonly AriaResult[] {
+    if (props['aria-hidden'] !== 'true' && props['aria-hidden'] !== true) return VALID
+    const isInteractive = AriaPolicyEngine.#INTERACTIVE_TAGS.has(tag)
+    if (!isInteractive) {
+      const tabindex = props.tabindex
+      const n =
+        typeof tabindex === 'number'
+          ? tabindex
+          : typeof tabindex === 'string'
+            ? parseInt(tabindex, 10)
+            : NaN
+      if (!Number.isFinite(n) || n < 0) return VALID
+    }
+    return [
+      {
+        valid: false,
+        fixable: false,
+        severity: 'error',
+        attribute: 'aria-hidden',
+        diagnostic: AriaDiagnostics.ariaHiddenOnFocusable(tag),
+      },
+    ]
+  }
+
+  // Presentational elements (role=none/presentation, including <img alt="">) are removed
+  // from the accessibility tree — ARIA attributes on them are meaningless and misleading.
+  static #checkPresentationalAriaAttributes({
+    tag,
+    props,
+    effectiveRole,
+  }: AriaContext): readonly AriaResult[] {
+    if (effectiveRole !== 'none' && effectiveRole !== 'presentation') return VALID
+    const results: AriaResult[] = []
+    iterate.forEachEntry(props, (key) => {
+      if (!key.startsWith('aria-')) return
+      // aria-hidden is permitted: it further removes the element from the accessibility
+      // tree, which is redundant but not harmful, and avoids noise from defensive coding.
+      if (key === 'aria-hidden') return
+      results.push({
+        valid: false,
+        fixable: true,
+        severity: 'warning',
+        attribute: key,
+        diagnostic: AriaDiagnostics.attributeOnPresentational(key, tag),
+        fix: AriaPolicyEngine.#makeRemoveAttributeFix(key),
+      })
+    })
     return results
   }
 
