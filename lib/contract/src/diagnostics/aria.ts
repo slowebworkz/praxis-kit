@@ -150,6 +150,47 @@ export const AriaDiagnostics = {
     }
   },
 
+  invalidAttributeValue(attr: string, value: unknown, expected: string): DiagnosticInput {
+    const got =
+      value === null
+        ? 'null'
+        : value === undefined
+          ? 'undefined'
+          : typeof value === 'string'
+            ? `"${value}"`
+            : String(value)
+    return {
+      code: DiagnosticCode.AriaInvalidAttributeValue,
+      category: DiagnosticCategory.ARIA,
+      message: `"${attr}" has an invalid value (${got}). Expected: ${expected}.`,
+      rationale:
+        'ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.',
+      suggestions: [
+        {
+          title: `Use a valid value for ${attr}`,
+          description: `Valid values are: ${expected}.`,
+        },
+      ],
+    }
+  },
+
+  redundantAriaLevel(tag: string, level: number): DiagnosticInput {
+    return {
+      code: DiagnosticCode.AriaRedundantLevelAttribute,
+      category: DiagnosticCategory.ARIA,
+      message: `aria-level="${level}" is redundant on <${tag}>: the element already has an implicit heading level of ${level}. Remove the attribute.`,
+      rationale:
+        'Restating the implicit aria-level adds noise without semantic value. ' +
+        'Use aria-level only to override the native heading level (e.g. aria-level="3" on <h2>).',
+      suggestions: [
+        {
+          title: 'Remove aria-level',
+          description: `<${tag}> already implies aria-level="${level}".`,
+        },
+      ],
+    }
+  },
+
   requiredProperty(attr: string, role: string): DiagnosticInput {
     return {
       code: DiagnosticCode.AriaRequiredProperty,
