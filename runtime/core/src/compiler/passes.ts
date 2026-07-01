@@ -1,4 +1,4 @@
-import type { Pass, CapabilityMap, MetadataMap, SlotName, VariantMap  } from '@pk2/pipeline'
+import type { Pass, CapabilityMap, MetadataMap, SlotName, VariantMap } from '@pk2/pipeline'
 import type { CompilerContext } from './types'
 
 function field<K extends keyof CompilerContext>(

@@ -1,7 +1,7 @@
 import { Fragment, h } from 'vue'
 import type { VNode } from 'vue'
 import type { Backend, ListenerMap, RenderContext, RuntimeContext, TreeNode } from '@pk2/core'
-import { buildPropsFromDecoration } from '@pk2/backend-utils'
+import { buildPropsFromDecoration } from './build-props'
 
 // Vue's hyphenate converts onKeyDown → 'key-down' (invalid event name).
 // Normalize multi-word camelCase handlers to all-lowercase: onKeyDown → onKeydown.

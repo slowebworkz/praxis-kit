@@ -5,7 +5,8 @@ import type {
   Diagnostic,
   MetadataMap,
   SlotName,
-  VariantMap, MergeStrategy 
+  VariantMap,
+  MergeStrategy,
 } from '@pk2/pipeline'
 import { isObject } from '@pk2/pipeline'
 import { iterate } from '@praxis-kit/primitive'

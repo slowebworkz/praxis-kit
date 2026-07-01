@@ -42,7 +42,6 @@
   },
   "devDependencies": {
     "@praxis-kit/primitive": "workspace:*",
-    "@praxis-kit/primitive": "workspace:*",
     "@praxis-kit/styling": "workspace:*",
     "tsup": "catalog:",
     "vitest": "catalog:"

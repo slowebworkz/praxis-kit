@@ -1,7 +1,7 @@
 import { Fragment, h } from 'preact'
 import type { VNode } from 'preact'
 import type { Backend, RenderContext, RuntimeContext, TreeNode } from '@pk2/core'
-import { buildPropsFromDecoration } from '@pk2/backend-utils'
+import { buildPropsFromDecoration } from './build-props'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyVNode = VNode<any>

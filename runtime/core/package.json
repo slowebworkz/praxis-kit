@@ -14,12 +14,12 @@
   },
   "dependencies": {
     "@pk2/pipeline": "workspace:*",
-    "@pk2/pipeline": "workspace:*",
-    "@pk2/pipeline": "workspace:*",
+    "@pk2/style": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "vitest": "catalog:"
   }
 }

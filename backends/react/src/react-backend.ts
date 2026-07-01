@@ -1,6 +1,6 @@
 import React from 'react'
 import type { Backend, RenderContext, RuntimeContext, TreeNode } from '@pk2/core'
-import { buildPropsFromDecoration } from '@pk2/backend-utils'
+import { buildPropsFromDecoration } from './build-props'
 
 function renderNode(node: TreeNode, render: RenderContext): React.ReactElement {
   const children = node.children.map((child) => renderNode(child, render))

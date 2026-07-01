@@ -11,7 +11,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@pk2/backend-utils": "workspace:*",
     "@pk2/core": "workspace:*",
     "@pk2/pipeline": "workspace:*",
     "@praxis-kit/primitive": "workspace:*"
@@ -20,6 +19,7 @@
     "vue": ">=3.3"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "vue": "catalog:"
   }
 }

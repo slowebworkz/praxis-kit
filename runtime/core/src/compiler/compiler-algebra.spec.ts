@@ -1,4 +1,4 @@
-import type { Pass, VariantMap  } from '@pk2/pipeline'
+import type { Pass, VariantMap } from '@pk2/pipeline'
 import type { CompilerContext } from './types'
 import { describe, expect, it } from 'vitest'
 import { compileComponent } from './compile-component'

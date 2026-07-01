@@ -21,7 +21,6 @@ const distDir = join(pkg, '../dist')
 
 // Workspace source aliases — resolve published packages to their TypeScript source.
 const workspaceAlias: Record<string, string> = {
-  '@pk2/compiler': join(root, 'runtime/compiler/src/index.ts'),
   '@pk2/pipeline': join(root, 'lib/pipeline/src/index.ts'),
   '@pk2/core': join(root, 'runtime/core/src/index.ts'),
   '@praxis-kit/react': join(root, 'adapters/react/src/index.ts'),

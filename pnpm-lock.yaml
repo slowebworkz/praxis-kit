@@ -495,9 +495,6 @@ importers:
 
   backends/preact:
     dependencies:
-      '@pk2/backend-utils':
-        specifier: workspace:*
-        version: link:../../lib/backend-utils
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
@@ -508,15 +505,15 @@ importers:
         specifier: workspace:*
         version: link:../../lib/primitive
     devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.1
       preact:
         specifier: 'catalog:'
         version: 10.29.2
 
   backends/react:
     dependencies:
-      '@pk2/backend-utils':
-        specifier: workspace:*
-        version: link:../../lib/backend-utils
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
@@ -527,6 +524,9 @@ importers:
         specifier: workspace:*
         version: link:../../lib/primitive
     devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.1
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.17
@@ -539,9 +539,6 @@ importers:
 
   backends/vue:
     dependencies:
-      '@pk2/backend-utils':
-        specifier: workspace:*
-        version: link:../../lib/backend-utils
       '@pk2/core':
         specifier: workspace:*
         version: link:../../runtime/core
@@ -552,6 +549,9 @@ importers:
         specifier: workspace:*
         version: link:../../lib/primitive
     devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.1
       vue:
         specifier: 'catalog:'
         version: 3.5.38(typescript@6.0.3)
@@ -792,22 +792,6 @@ importers:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.27.7)(jiti@2.7.0))
 
-  lib/backend-utils:
-    dependencies:
-      '@pk2/core':
-        specifier: workspace:*
-        version: link:../../runtime/core
-      '@pk2/pipeline':
-        specifier: workspace:*
-        version: link:../pipeline
-      '@praxis-kit/primitive':
-        specifier: workspace:*
-        version: link:../primitive
-    devDependencies:
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
-
   lib/contract:
     dependencies:
       '@praxis-kit/diagnostics':
@@ -844,10 +828,6 @@ importers:
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
   lib/pipeline:
-    dependencies:
-      '@pk2/pipeline':
-        specifier: workspace:*
-        version: 'link:'
     devDependencies:
       vitest:
         specifier: 'catalog:'
@@ -1211,9 +1191,9 @@ importers:
 
   qa/tree-shaking-tests:
     devDependencies:
-      '@pk2/compiler':
+      '@pk2/core':
         specifier: workspace:*
-        version: link:../../runtime/compiler
+        version: link:../../runtime/core
       '@pk2/pipeline':
         specifier: workspace:*
         version: link:../../lib/pipeline
@@ -1257,11 +1237,8 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
-  runtime/compiler:
+  runtime/core:
     dependencies:
-      '@pk2/core':
-        specifier: workspace:*
-        version: link:../core
       '@pk2/pipeline':
         specifier: workspace:*
         version: link:../../lib/pipeline
@@ -1271,26 +1248,13 @@ importers:
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
-    devDependencies:
-      '@types/node':
-        specifier: 'catalog:'
-        version: 25.9.1
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
-
-  runtime/core:
-    dependencies:
-      '@pk2/pipeline':
-        specifier: workspace:*
-        version: link:../../lib/pipeline
-      '@praxis-kit/primitive':
-        specifier: workspace:*
-        version: link:../../lib/primitive
       type-fest:
         specifier: 'catalog:'
         version: 5.7.0
     devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.1
       vitest:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))

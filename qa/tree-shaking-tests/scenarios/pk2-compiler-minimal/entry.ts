@@ -3,6 +3,6 @@
  * variant-specific code (variantProvider, variant-lookup-pass, passes.ts).
  * The compiler core is present; demand modules are absent.
  */
-import { compileComponent } from '@pk2/compiler'
+import { compileComponent } from '@pk2/core'
 
 export { compileComponent }

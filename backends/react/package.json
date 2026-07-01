@@ -13,7 +13,6 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@pk2/backend-utils": "workspace:*",
     "@pk2/core": "workspace:*",
     "@pk2/pipeline": "workspace:*",
     "@praxis-kit/primitive": "workspace:*"
@@ -22,6 +21,7 @@
     "react": ">=18"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "@types/react": "catalog:",
     "react": "catalog:",
     "vitest": "catalog:"

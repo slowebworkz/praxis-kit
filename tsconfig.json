@@ -5,7 +5,6 @@
     { "path": "./lib/contract" },
     { "path": "./lib/styling" },
     { "path": "./lib/adapter-utils" },
-    { "path": "./lib/backend-utils" },
     { "path": "./qa/bench" },
     { "path": "./qa/bundle-analysis" },
     { "path": "./packages/core" },
