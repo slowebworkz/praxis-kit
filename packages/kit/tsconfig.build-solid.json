@@ -1,6 +1,3 @@
 {
-  "extends": [
-    "../../configs/tsconfig.solid.json",
-    "../../configs/tsconfig.shared.paths.json"
-  ]
+  "extends": ["../../configs/tsconfig.solid.json"]
 }

@@ -1,6 +1,3 @@
 {
-  "extends": [
-    "../../configs/tsconfig.svelte.json",
-    "../../configs/tsconfig.shared.paths.json"
-  ]
+  "extends": ["../../configs/tsconfig.svelte.json"]
 }
