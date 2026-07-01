@@ -4,12 +4,3 @@ export type ChildViolationKind =
   | 'position'
   | 'unexpected'
   | 'ambiguous'
-
-export type ChildViolation = {
-  kind: ChildViolationKind
-  message: string
-  /** Present for cardinality and position violations. */
-  ruleName?: string
-  /** Present for unexpected and ambiguous violations. */
-  childIndex?: number
-}
