@@ -1,5 +1,5 @@
 {
-  "name": "@pk2/core",
+  "name": "@praxis-kit/runtime",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,8 +13,8 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@pk2/pipeline": "workspace:*",
-    "@pk2/style": "workspace:*",
+    "@praxis-kit/pipeline": "workspace:*",
+    "@praxis-kit/styling": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
     "type-fest": "catalog:"
   },

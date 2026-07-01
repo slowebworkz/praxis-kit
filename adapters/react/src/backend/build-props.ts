@@ -1,5 +1,5 @@
-import type { NodeDecoration } from '@pk2/core'
-import type { AnyRecord } from '@pk2/pipeline'
+import type { NodeDecoration } from '@praxis-kit/runtime'
+import type { AnyRecord } from '@praxis-kit/pipeline'
 
 export function buildPropsFromDecoration(
   id: string,

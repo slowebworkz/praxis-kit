@@ -7,7 +7,7 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import type { ComponentDefinition } from '@pk2/core'
+import type { ComponentDefinition } from '@praxis-kit/runtime'
 import type { UnknownProps, SlotComponent } from './types'
 
 /** Structural subset of `CompiledComponentArtifact` consumed by the React adapter. */

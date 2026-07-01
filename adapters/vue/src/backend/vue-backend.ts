@@ -1,6 +1,12 @@
 import { Fragment, h } from 'vue'
 import type { VNode } from 'vue'
-import type { Backend, ListenerMap, RenderContext, RuntimeContext, TreeNode } from '@pk2/core'
+import type {
+  Backend,
+  ListenerMap,
+  RenderContext,
+  RuntimeContext,
+  TreeNode,
+} from '@praxis-kit/runtime'
 import { buildPropsFromDecoration } from './build-props'
 
 // Vue's hyphenate converts onKeyDown → 'key-down' (invalid event name).

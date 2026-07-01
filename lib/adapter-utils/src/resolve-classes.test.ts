@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { resolveClasses } from './resolve-classes'
-import type { NodeDecoration } from '@pk2/core'
-import type { VariantConfig } from '@pk2/style'
+import type { NodeDecoration } from '@praxis-kit/runtime'
+import type { VariantConfig } from '@praxis-kit/styling'
 import type { CompoundRecord } from './build-variant-config'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

@@ -32,7 +32,7 @@
     "eslint": ">=9"
   },
   "devDependencies": {
-    "@pk2/pipeline": "workspace:*",
+    "@praxis-kit/pipeline": "workspace:*",
     "@typescript-eslint/rule-tester": "catalog:",
     "eslint": "catalog:",
     "tsup": "catalog:",

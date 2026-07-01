@@ -1,4 +1,4 @@
-import type { Pass } from '@pk2/pipeline'
+import type { Pass } from '@praxis-kit/pipeline'
 import type { StyleContext } from './types'
 
 export const basePass: Pass<StyleContext> = {

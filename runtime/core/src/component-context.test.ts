@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Pass } from '@pk2/pipeline'
+import type { Pass } from '@praxis-kit/pipeline'
 import type { ComponentContext } from './types'
 
 // Merge semantics are shallow except for identity, which is merged field-by-field.

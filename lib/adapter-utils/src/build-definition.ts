@@ -1,4 +1,4 @@
-import type { ComponentDefinition } from '@pk2/core'
+import type { ComponentDefinition } from '@praxis-kit/runtime'
 
 export function buildDefinition(name: string, tag: string): ComponentDefinition {
   return {

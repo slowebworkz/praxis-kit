@@ -1,4 +1,4 @@
-import type { Diagnostic, MetadataMap } from '@pk2/pipeline'
+import type { Diagnostic, MetadataMap } from '@praxis-kit/pipeline'
 
 export interface PassResult<TContext> {
   context?: Partial<TContext>

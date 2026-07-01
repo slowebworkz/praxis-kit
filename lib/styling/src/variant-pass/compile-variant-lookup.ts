@@ -1,4 +1,4 @@
-import type { DefaultMap } from '@pk2/pipeline'
+import type { DefaultMap } from '@praxis-kit/pipeline'
 import { iterate } from '@praxis-kit/primitive'
 import type { CompoundVariant, VariantConfig } from './variant-pass'
 

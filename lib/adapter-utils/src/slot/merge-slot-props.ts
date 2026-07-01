@@ -1,5 +1,5 @@
-import type { AnyRecord } from '@pk2/pipeline'
-import { iterate, EVENT_HANDLER_RE, isFunction  } from '@praxis-kit/primitive'
+import type { AnyRecord } from '@praxis-kit/pipeline'
+import { iterate, EVENT_HANDLER_RE, isFunction } from '@praxis-kit/primitive'
 import type { PropMergePolicy } from './policies'
 import { policyHandlers } from './policies'
 

@@ -1,4 +1,4 @@
-import type { NodeId, SlotName } from '@pk2/pipeline'
+import type { NodeId, SlotName } from '@praxis-kit/pipeline'
 
 interface BaseNodeInput {
   id: NodeId

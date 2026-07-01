@@ -1,4 +1,4 @@
-import type { ComponentIdentity } from '@pk2/core'
+import type { ComponentIdentity } from '@praxis-kit/runtime'
 import type {
   AnyRecord,
   CapabilityMap,
@@ -7,8 +7,8 @@ import type {
   SlotName,
   VariantMap,
   MergeStrategy,
-} from '@pk2/pipeline'
-import { isObject } from '@pk2/pipeline'
+} from '@praxis-kit/pipeline'
+import { isObject } from '@praxis-kit/pipeline'
 import { iterate } from '@praxis-kit/primitive'
 import type { CompilerContext } from './types'
 

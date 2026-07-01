@@ -1,5 +1,5 @@
-import type { ComponentContext } from '@pk2/core'
-import type { SlotName, VariantMap } from '@pk2/pipeline'
+import type { ComponentContext } from '@praxis-kit/runtime'
+import type { SlotName, VariantMap } from '@praxis-kit/pipeline'
 
 export interface CompilerContext extends ComponentContext {
   slots?: readonly SlotName[]

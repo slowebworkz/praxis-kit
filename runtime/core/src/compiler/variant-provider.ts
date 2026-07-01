@@ -1,4 +1,4 @@
-import type { Pass, PipelineProvider, VariantMap } from '@pk2/pipeline'
+import type { Pass, PipelineProvider, VariantMap } from '@praxis-kit/pipeline'
 import type { CompilerContext } from './types'
 import { contributeVariants } from './passes'
 

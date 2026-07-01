@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { MergeStrategy } from '@pk2/pipeline'
+import type { MergeStrategy } from '@praxis-kit/pipeline'
 import type { Pass, Plugin, PipelineOptions } from './types'
 import { createPipeline } from './create-pipeline'
 
