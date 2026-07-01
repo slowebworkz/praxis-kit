@@ -493,19 +493,6 @@ importers:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
-  backends/lit:
-    dependencies:
-      '@pk2/core':
-        specifier: workspace:*
-        version: link:../../runtime/core
-      '@pk2/pipeline':
-        specifier: workspace:*
-        version: link:../../lib/pipeline
-    devDependencies:
-      lit:
-        specifier: 'catalog:'
-        version: 3.3.3
-
   backends/preact:
     dependencies:
       '@pk2/backend-utils':
@@ -550,35 +537,6 @@ importers:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.1)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
 
-  backends/solid:
-    dependencies:
-      '@pk2/backend-utils':
-        specifier: workspace:*
-        version: link:../../lib/backend-utils
-      '@pk2/core':
-        specifier: workspace:*
-        version: link:../../runtime/core
-      '@pk2/pipeline':
-        specifier: workspace:*
-        version: link:../../lib/pipeline
-    devDependencies:
-      solid-js:
-        specifier: 'catalog:'
-        version: 1.9.13
-
-  backends/svelte:
-    dependencies:
-      '@pk2/core':
-        specifier: workspace:*
-        version: link:../../runtime/core
-      '@pk2/pipeline':
-        specifier: workspace:*
-        version: link:../../lib/pipeline
-    devDependencies:
-      svelte:
-        specifier: 'catalog:'
-        version: 5.56.3(@typescript-eslint/types@8.60.0)
-
   backends/vue:
     dependencies:
       '@pk2/backend-utils':
@@ -597,18 +555,6 @@ importers:
       vue:
         specifier: 'catalog:'
         version: 3.5.38(typescript@6.0.3)
-
-  backends/web:
-    dependencies:
-      '@pk2/core':
-        specifier: workspace:*
-        version: link:../../runtime/core
-      '@pk2/pipeline':
-        specifier: workspace:*
-        version: link:../../lib/pipeline
-      '@praxis-kit/primitive':
-        specifier: workspace:*
-        version: link:../../lib/primitive
 
   examples/lit:
     dependencies:
