@@ -7,12 +7,4 @@ export type {
   NormalizedChildRule,
 } from '@praxis-kit/primitive/types'
 
-type IndexSet = ReadonlySet<number>
-type IndexMap = ReadonlyMap<number, IndexSet>
-
-type ChildRuleIndex = Record<'forward' | 'reverse', IndexMap>
-
-/** Internal matching layer — not part of the public API surface. */
-export type MatchMatrix = Readonly<{
-  childToRules: ChildRuleIndex
-}>
+export type { MatchMatrix } from '@praxis-kit/contract/types'

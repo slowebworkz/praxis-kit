@@ -1,3 +1,4 @@
+export type { AriaEngine } from './aria-engine'
 export type { AriaContext } from './aria-context'
 export type { AriaFix, AriaFixResult } from './aria-fix'
 export type {

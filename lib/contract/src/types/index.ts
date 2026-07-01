@@ -33,3 +33,4 @@ export type {
   NormalizedChildRule,
 } from './child-rule'
 export type { AriaPlan } from './aria-plan'
+export type { HtmlContractMap } from './html-contract-map'

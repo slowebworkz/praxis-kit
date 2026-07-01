@@ -1,3 +1,5 @@
+import { isObject as _isObject } from '@praxis-kit/primitive'
+
 export function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+  return _isObject(value, true)
 }

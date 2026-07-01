@@ -82,3 +82,5 @@ export interface PolymorphicGenerics<
 export type VariantsOf<T extends PolymorphicGenerics> = T['variants']
 export type RecipeOf<T extends PolymorphicGenerics> = T['preset']
 export type AllowedOf<T extends PolymorphicGenerics> = T['allowed']
+export type DefaultOf<T extends PolymorphicGenerics> = T['default']
+export type PropsOf<T extends PolymorphicGenerics> = T['props']

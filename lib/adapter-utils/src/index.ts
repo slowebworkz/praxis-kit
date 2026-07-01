@@ -5,6 +5,8 @@ export type {
   TypedRuntime,
   WithChildRules,
 } from './types'
+export { invariant, invariantDefined } from './invariant'
+export { applyDisplayName } from './apply-display-name'
 export { applyFilter } from './apply-filter'
 export { applyPropNormalizers } from './apply-prop-normalizers'
 export { defineContractComponent } from './define-component'

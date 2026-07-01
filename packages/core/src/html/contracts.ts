@@ -1,4 +1,5 @@
 import type { ChildRuleInput, EnforcementOptions } from '../types'
+import type { HtmlContractMap } from '@praxis-kit/contract/types'
 import { isTag } from '@praxis-kit/primitive/guards/children'
 import { isNumber, isObject, isString } from '@praxis-kit/primitive'
 import { landmarkNameAdvisory, landmarkRoleRule, requireAccessibleName } from './aria-rules'
@@ -296,7 +297,7 @@ const CONTRACT_GROUPS = [
   [['thead', 'tbody', 'tfoot'], tableBodyContract],
 ] as const
 
-export type HtmlContractMap = Record<string, EnforcementOptions>
+export type { HtmlContractMap } from '@praxis-kit/contract/types'
 
 function contractMap(
   groups: readonly (readonly [readonly string[], EnforcementOptions])[],
