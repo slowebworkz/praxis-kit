@@ -29,6 +29,8 @@ export type {
   ChildRuleInput,
   ChildRuleMatch,
   ChildRulePosition,
+  ChildViolation,
+  ChildViolationKind,
   MatchMatrix,
   NormalizedChildRule,
 } from './child-rule'
