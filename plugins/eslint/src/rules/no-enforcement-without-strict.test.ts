@@ -15,14 +15,14 @@ tester.run('no-enforcement-without-strict', noEnforcementWithoutStrict, {
     // no enforcement at all
     `createContractComponent({ tag: 'div' })`,
 
-    // enforcement with strict and children
-    `createContractComponent({ tag: 'div', enforcement: { strict: 'warn', children: [{ name: 'X', match: () => true, cardinality: { min: 1 } }] } })`,
+    // enforcement with diagnostics and children
+    `createContractComponent({ tag: 'div', enforcement: { diagnostics: warnDiagnostics, children: [{ name: 'X', match: () => true, cardinality: { min: 1 } }] } })`,
 
-    // enforcement with strict and aria
-    `createContractComponent({ tag: 'nav', enforcement: { strict: 'throw', aria: [] } })`,
+    // enforcement with diagnostics and aria
+    `createContractComponent({ tag: 'nav', enforcement: { diagnostics: throwDiagnostics, aria: [] } })`,
 
-    // enforcement with strict only (no children/aria)
-    `createContractComponent({ tag: 'div', enforcement: { strict: 'warn' } })`,
+    // enforcement with diagnostics only (no children/aria)
+    `createContractComponent({ tag: 'div', enforcement: { diagnostics: warnDiagnostics } })`,
 
     // empty children array — no meaningful enforcement, strict not required
     `createContractComponent({ tag: 'div', enforcement: { children: [] } })`,
