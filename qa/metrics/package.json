@@ -5,15 +5,19 @@
   "type": "module",
   "description": "Metrics collection, snapshotting, and reporting for the praxis-kit monorepo",
   "scripts": {
-    "collect": "node --experimental-strip-types scripts/collect.ts",
-    "report": "node --experimental-strip-types scripts/report.ts",
-    "assert": "node --experimental-strip-types scripts/assert.ts",
-    "metrics": "node --experimental-strip-types scripts/collect.ts && node --experimental-strip-types scripts/report.ts",
+    "collect": "tsx scripts/collect.ts",
+    "report": "tsx scripts/report.ts",
+    "assert": "tsx scripts/assert.ts",
+    "metrics": "tsx scripts/collect.ts && tsx scripts/report.ts",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@praxis-kit/primitive": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "catalog:",
     "ts-morph": "catalog:",
+    "tsx": "catalog:",
     "type-fest": "catalog:"
   }
 }

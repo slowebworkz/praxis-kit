@@ -2,7 +2,7 @@
  * Collects metrics from all data sources and writes snapshots/metrics.json.
  *
  * Sources:
- *   Bundles     — lib/tree-shaking-tests/snapshots/gzip.json
+ *   Bundles     — qa/tree-shaking-tests/snapshots/gzip.json
  *   Architecture — .repo-state/dependency-graph.json + exports.json
  *   Complexity   — ts-morph walk of lib/ and packages/core source files
  *
@@ -25,7 +25,7 @@ async function readJson<T>(path: string): Promise<T> {
 // ── Bundles ───────────────────────────────────────────────────────────────────
 
 const gzipRaw = await readJson<GzipSnapshot>(
-  join(root, 'lib/tree-shaking-tests/snapshots/gzip.json'),
+  join(root, 'qa/tree-shaking-tests/snapshots/gzip.json'),
 )
 
 const bundles: Record<string, number> = {}

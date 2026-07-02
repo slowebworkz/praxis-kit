@@ -3,7 +3,7 @@
  *   - Architecture violations must be zero
  *   - Public API export count must not grow unexpectedly (warns only)
  *
- * Bundle size regression is already gated by lib/tree-shaking-tests/scripts/gzip.ts.
+ * Bundle size regression is already gated by qa/tree-shaking-tests/scripts/gzip.ts.
  * Complexity growth is reported but not gated (informational).
  *
  * Exits 1 if hard gates fail; exits 0 with warnings for soft gates.
