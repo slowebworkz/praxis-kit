@@ -1,5 +1,5 @@
-import type { ComponentDefinition } from '@praxis-kit/runtime'
-import { resolveDefinition } from '@praxis-kit/runtime'
+import type { ComponentDefinition } from '../types'
+import { resolveDefinition } from '../resolve-definition'
 import { isObject, createPipeline, executePipeline } from '@praxis-kit/pipeline'
 import type { AnyRecord, PipelineNode, Plugin } from '@praxis-kit/pipeline'
 import { createHash } from 'node:crypto'

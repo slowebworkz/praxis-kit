@@ -1,4 +1,4 @@
-import type { MergeStrategy } from '@praxis-kit/pipeline'
+import type { MergeStrategy } from './types/merge-strategy'
 import { describe, expect, it } from 'vitest'
 import { createPipeline } from './create-pipeline'
 import { executePipeline } from './execute-pipeline'

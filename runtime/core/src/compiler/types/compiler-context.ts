@@ -1,4 +1,4 @@
-import type { ComponentContext } from '@praxis-kit/runtime'
+import type { ComponentContext } from '../../types'
 import type { SlotName, VariantMap } from '@praxis-kit/pipeline'
 
 export interface CompilerContext extends ComponentContext {

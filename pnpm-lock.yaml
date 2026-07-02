@@ -771,9 +771,6 @@ importers:
       '@praxis-kit/pipeline':
         specifier: workspace:*
         version: link:../pipeline
-      '@praxis-kit/primitive':
-        specifier: workspace:*
-        version: link:../primitive
       type-fest:
         specifier: 'catalog:'
         version: 5.7.0

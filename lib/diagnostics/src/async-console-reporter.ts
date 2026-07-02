@@ -1,4 +1,3 @@
-import { iterate } from '@praxis-kit/primitive'
 import type { Diagnostic } from './diagnostic'
 import { formatDiagnostic } from './formatter'
 import type { DiagnosticReporter } from './reporter'
@@ -15,9 +14,9 @@ export class AsyncConsoleReporter implements DiagnosticReporter {
       this.scheduled = true
       queueMicrotask(() => {
         this.scheduled = false
-        iterate.forEachSet(this.pending, (msg) => {
+        for (const msg of this.pending) {
           console.warn(msg)
-        })
+        }
         this.pending.clear()
       })
     }

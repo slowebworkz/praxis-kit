@@ -1,4 +1,4 @@
-import type { ComponentIdentity } from '@praxis-kit/runtime'
+import type { ComponentIdentity } from '../types'
 import type {
   AnyRecord,
   CapabilityMap,
