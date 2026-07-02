@@ -240,6 +240,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../lib/diagnostics
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -268,6 +271,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../lib/diagnostics
       '@praxis-kit/pipeline':
         specifier: workspace:*
         version: link:../../lib/pipeline
@@ -311,6 +317,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../lib/diagnostics
       '@praxis-kit/pipeline':
         specifier: workspace:*
         version: link:../../lib/pipeline
@@ -363,6 +372,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../lib/diagnostics
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -397,6 +409,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../lib/diagnostics
       '@sveltejs/vite-plugin-svelte':
         specifier: 'catalog:'
         version: 7.1.2(svelte@5.56.3(@typescript-eslint/types@8.60.0))(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.1)(jiti@2.7.0))
@@ -434,6 +449,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../lib/diagnostics
       '@praxis-kit/pipeline':
         specifier: workspace:*
         version: link:../../lib/pipeline
@@ -483,6 +501,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../lib/diagnostics
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1
@@ -697,6 +718,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
       '@praxis-kit/pipeline':
         specifier: workspace:*
         version: link:../pipeline
@@ -888,6 +912,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../lib/diagnostics
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive

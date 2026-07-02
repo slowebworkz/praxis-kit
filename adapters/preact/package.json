@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/runtime": "workspace:*",
     "@praxis-kit/pipeline": "workspace:*",

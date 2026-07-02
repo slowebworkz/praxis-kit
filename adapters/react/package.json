@@ -37,6 +37,7 @@
     "@axe-core/playwright": "catalog:",
     "@playwright/experimental-ct-react": "catalog:",
     "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/playwright": "workspace:*",
     "@vitejs/plugin-react": "catalog:",
     "@types/react": "catalog:",
