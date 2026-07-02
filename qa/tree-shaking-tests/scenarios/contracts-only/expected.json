@@ -6,10 +6,9 @@
     "adapters/react/src"
   ],
   "mustExclude": [
-    "lib/styling/src",
     "adapters/vue/src",
     "adapters/solid/src",
     "adapters/preact/src",
-    "packages/tailwind/src"
+    "lib/tailwind/src"
   ]
 }

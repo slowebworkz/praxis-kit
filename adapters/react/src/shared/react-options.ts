@@ -40,7 +40,7 @@ export type ReactFactoryOptions<
    * Receives `runtime.options.variantKeys` as a convenience if needed.
    */
   filterProps?: (key: string, variantKeys: ReadonlySet<string>) => boolean
-  /** Pre-compiled artifact from `@pk2/compiler`. When provided, replaces the stub
+  /** Pre-compiled artifact from `@praxis-kit/runtime`'s compiler. When provided, replaces the stub
    *  definition and enables the precomputed variant lookup fast path. */
   artifact?: CompiledArtifact
 }

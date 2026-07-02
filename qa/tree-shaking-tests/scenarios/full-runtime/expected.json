@@ -1,7 +1,7 @@
 {
   "mustInclude": [
     "lib/primitive/src",
-    "domains/style/src",
+    "lib/styling/src",
     "lib/contract/src/aria",
     "lib/contract/src/children",
     "adapters/react/src"
@@ -10,6 +10,6 @@
     "adapters/vue/src",
     "adapters/solid/src",
     "adapters/preact/src",
-    "packages/tailwind/src"
+    "lib/tailwind/src"
   ]
 }

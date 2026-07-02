@@ -1,12 +1,12 @@
 {
-  "mustInclude": ["engine/pipeline/src"],
+  "mustInclude": ["lib/pipeline/src"],
   "mustExclude": [
-    "runtime/compiler/src",
+    "runtime/core/src/compiler",
     "adapters/react/src",
     "adapters/vue/src",
     "adapters/solid/src",
     "adapters/preact/src",
-    "domains/style/src",
-    "plugins/tailwind/src"
+    "lib/styling/src/variant-pass",
+    "lib/tailwind/src"
   ]
 }

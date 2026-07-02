@@ -33,6 +33,18 @@ const workspaceAlias: Record<string, string> = {
   '@praxis-kit/core/primitive': join(root, 'packages/core/src/primitive.ts'),
   '@praxis-kit/core/contract': join(root, 'packages/core/src/contract.ts'),
   '@praxis-kit/core/styling': join(root, 'packages/core/src/styling.ts'),
+  '@praxis-kit/primitive/types/primitives': join(
+    root,
+    'lib/primitive/src/types/primitives/index.ts',
+  ),
+  '@praxis-kit/primitive/types': join(root, 'lib/primitive/src/types/index.ts'),
+  '@praxis-kit/primitive/guards/children': join(root, 'lib/primitive/src/guards/children/index.ts'),
+  '@praxis-kit/primitive/guards/aria': join(root, 'lib/primitive/src/guards/aria/index.ts'),
+  '@praxis-kit/primitive/constants/aria': join(root, 'lib/primitive/src/constants/aria/index.ts'),
+  '@praxis-kit/primitive/constants/primitive': join(
+    root,
+    'lib/primitive/src/constants/primitive/index.ts',
+  ),
   '@praxis-kit/primitive': join(root, 'lib/primitive/src/index.ts'),
   '@praxis-kit/styling': join(root, 'lib/styling/src/index.ts'),
   '@praxis-kit/contract': join(root, 'lib/contract/src/index.ts'),
