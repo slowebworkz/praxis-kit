@@ -4,6 +4,6 @@ export type {
   EmptyRecord,
   NonEmptyArray,
   VariantConditionValue,
-} from '@praxis-kit/shared/types'
+} from '@praxis-kit/primitive/types'
 
-export type { TagMap } from '@praxis-kit/shared/types/primitives'
+export type { TagMap } from '@praxis-kit/primitive/types/primitives'

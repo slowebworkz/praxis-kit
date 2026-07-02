@@ -1,13 +1,13 @@
 import { defineConfig } from 'tsup'
 
-const adapterNoExternal = ['@praxis-kit/adapter-utils', '@praxis-kit/core']
+const adapterNoExternal = [
+  '@praxis-kit/adapter-utils',
+  '@praxis-kit/core',
+  '@praxis-kit/diagnostics',
+]
 
-// @praxis-kit/shared is only linked under packages/kit/node_modules, not under
-// adapters/*/node_modules. esbuild resolves from the source file's directory, so
-// it can't find shared via normal module resolution. Aliases (resolved from CWD =
-// packages/kit/) redirect it to source so esbuild can bundle it correctly.
 const sharedAlias = {
-  '@praxis-kit/shared': '../../packages/shared/src',
+  '@praxis-kit/primitive': '../../lib/primitive/src',
 }
 
 export default [
@@ -108,16 +108,16 @@ export default [
 
   // Tailwind
   defineConfig({
-    entry: { 'tailwind/index': '../../packages/tailwind/src/index.ts' },
+    entry: { 'tailwind/index': '../../lib/tailwind/src/index.ts' },
     format: ['esm'],
     dts: true,
     tsconfig: '../../tsconfig.base.json',
-    noExternal: [...adapterNoExternal, '@praxis-kit/shared', '@praxis-kit/primitive'],
+    noExternal: [...adapterNoExternal, '@praxis-kit/primitive'],
   }),
 
   // ESLint plugin — @typescript-eslint/utils stays external (peer dep of consumers)
   defineConfig({
-    entry: { 'eslint/index': '../../packages/eslint-plugin/src/index.ts' },
+    entry: { 'eslint/index': '../../plugins/eslint/src/index.ts' },
     format: ['esm'],
     dts: true,
     tsconfig: '../../tsconfig.base.json',
@@ -125,7 +125,7 @@ export default [
 
   // TypeScript language service plugin — CJS required for tsserver loading
   defineConfig({
-    entry: { 'ts-plugin/index': '../../packages/ts-plugin/src/index.ts' },
+    entry: { 'ts-plugin/index': '../../plugins/typescript/src/index.ts' },
     format: ['cjs'],
     dts: true,
     tsconfig: 'tsconfig.build-ts-plugin.json',
@@ -134,7 +134,7 @@ export default [
 
   // Vite plugin
   defineConfig({
-    entry: { 'vite-plugin/index': '../../packages/vite-plugin/src/index.ts' },
+    entry: { 'vite-plugin/index': '../../plugins/vite/src/index.ts' },
     format: ['esm'],
     dts: true,
     tsconfig: '../../tsconfig.base.json',
@@ -142,7 +142,7 @@ export default [
 
   // Codemod CLI — shebang banner required for bin execution
   defineConfig({
-    entry: { 'codemod/index': '../../packages/codemod/src/index.ts' },
+    entry: { 'codemod/index': '../../tooling/codemod/src/index.ts' },
     format: ['esm'],
     dts: true,
     tsconfig: 'tsconfig.build-codemod.json',

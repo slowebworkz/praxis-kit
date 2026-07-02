@@ -1,0 +1,11 @@
+export { hasRole } from './has-role'
+export { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './is-aria-attribute'
+export {
+  getConditionalImplicitRole,
+  getInputImplicitRole,
+  isStandaloneTag,
+  isStrongImplicitRole,
+} from './is-aria-role'
+export { isInvalid } from './is-invalid'
+export { isKnownAriaRole } from './is-known-aria-role'
+export type { KnownAriaRole } from './is-known-aria-role'

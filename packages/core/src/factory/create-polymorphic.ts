@@ -20,11 +20,11 @@ import type {
   RecipeOf,
   PropsOf,
   ResolvedFactoryOptions,
-  StrictMode,
   VariantMap,
   VariantsOf,
 } from '../types'
 import { resolveFactoryOptions, validateFactoryOptions, validateRenderProps } from '../options'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 import { assertPluginShape, guardPipeline } from './plugin-invariants'
 
 declare const process: { env: { NODE_ENV: string } }
@@ -36,7 +36,7 @@ const NOOP_CLASS_PIPELINE: ClassPipelineFn = (_tag, _props, className) =>
 function resolveClassPipeline<TVariants extends VariantMap>(
   options: { styling?: { plugin?: ClassPluginFactory<AnyRecord> | undefined } },
   resolved: ClassPipelineOptions<TVariants>,
-  strict: StrictMode,
+  diagnostics: Diagnostics,
   capabilities?: Capabilities,
 ) {
   const factory = options.styling?.plugin
@@ -46,7 +46,7 @@ function resolveClassPipeline<TVariants extends VariantMap>(
     return { pluginResult: undefined, classPipeline }
   }
 
-  const pluginResult = factory(resolved, strict)
+  const pluginResult = factory(resolved, diagnostics)
   assertPluginShape(pluginResult)
   const classPipeline = guardPipeline(pluginResult.pipeline)
 
@@ -57,6 +57,7 @@ function createRuntimeMethods<G extends PolymorphicGenerics>(
   resolved: ResolvedFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, RecipeOf<G>>,
   classPipeline: ClassPipelineFn,
   engine: AriaEngine | null,
+  renderDiagnostics: Diagnostics,
 ) {
   return {
     resolveTag: makeResolveTag(resolved.defaultTag),
@@ -72,7 +73,7 @@ function createRuntimeMethods<G extends PolymorphicGenerics>(
       recipe?: Extract<keyof RecipeOf<G>, string>,
     ) {
       if (process.env.NODE_ENV !== 'production') {
-        validateRenderProps(resolved, props as AnyRecord, recipe)
+        validateRenderProps(renderDiagnostics, resolved, props as AnyRecord, recipe)
       }
       return classPipeline(tag, props, className, recipe)
     },
@@ -126,13 +127,13 @@ export function createPolymorphic<
           htmlPropNormalizersFn: capabilities.htmlPropNormalizersFn,
         })
       : baseResolved
-  // Construction-time contract check — dev-only (tree-shaken from production) and
-  // further gated on `strict` inside.
-  if (process.env.NODE_ENV !== 'production') validateFactoryOptions(resolved)
+  if (process.env.NODE_ENV !== 'production') {
+    validateFactoryOptions(resolved, resolved.diagnostics)
+  }
   const { pluginResult, classPipeline } = resolveClassPipeline(
     options,
     resolved,
-    resolved.strict,
+    resolved.diagnostics,
     capabilities,
   )
 
@@ -142,12 +143,12 @@ export function createPolymorphic<
   const engine =
     options.enforcement !== undefined && capabilities?.AriaEngine
       ? new capabilities.AriaEngine(
-          resolved.strict,
+          resolved.diagnostics,
           allAriaRules.length ? { rules: allAriaRules } : undefined,
         )
       : null
 
-  const methods = createRuntimeMethods<G>(resolved, classPipeline, engine)
+  const methods = createRuntimeMethods<G>(resolved, classPipeline, engine, resolved.diagnostics)
 
   return createRuntimeObject<G, typeof pluginResult>(
     methods,

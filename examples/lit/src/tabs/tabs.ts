@@ -15,6 +15,7 @@
  *     <example-tabs-content value="b">Panel B</example-tabs-content>
  *   </example-tabs-root>
  */
+import { warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from '@praxis-kit/lit'
 
 // ── Trigger ───────────────────────────────────────────────────────────────────
@@ -26,7 +27,7 @@ export const TabsTrigger = createContractComponent({
   styling: {
     base: 'px-3 py-2 text-sm font-medium border-b-2 border-transparent data-[state=active]:border-blue-600',
   },
-  enforcement: { strict: 'warn' },
+  enforcement: { diagnostics: warnDiagnostics },
 })
 
 // ── Content ───────────────────────────────────────────────────────────────────
@@ -36,7 +37,7 @@ export const TabsContent = createContractComponent({
   name: 'TabsContent',
   defaults: { role: 'tabpanel' },
   styling: { base: 'py-4 text-sm' },
-  enforcement: { strict: 'warn' },
+  enforcement: { diagnostics: warnDiagnostics },
 })
 
 // ── List ──────────────────────────────────────────────────────────────────────
@@ -51,7 +52,7 @@ export const TabsList = createContractComponent({
   defaults: { role: 'tablist' },
   styling: { base: 'inline-flex gap-1 border-b border-gray-200' },
   enforcement: {
-    strict: 'warn',
+    diagnostics: warnDiagnostics,
     children: [{ name: 'TabsTrigger', match: isTabsTrigger, cardinality: { min: 1 } }],
   },
 })
@@ -71,7 +72,7 @@ export const TabsRoot = createContractComponent({
   name: 'TabsRoot',
   styling: { base: 'flex flex-col' },
   enforcement: {
-    strict: 'warn',
+    diagnostics: warnDiagnostics,
     children: [
       { name: 'TabsList', match: isTabsList, cardinality: { min: 1, max: 1 } },
       { name: 'TabsContent', match: isTabsContent, cardinality: { min: 1 } },

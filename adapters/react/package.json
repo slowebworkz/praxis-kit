@@ -37,6 +37,7 @@
     "@axe-core/playwright": "catalog:",
     "@playwright/experimental-ct-react": "catalog:",
     "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/playwright": "workspace:*",
     "@vitejs/plugin-react": "catalog:",
     "@types/react": "catalog:",
@@ -45,7 +46,11 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "vitest": "catalog:",
-    "@praxis-kit/core": "workspace:*"
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/runtime": "workspace:*",
+    "@praxis-kit/pipeline": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "@praxis-kit/styling": "workspace:*"
   },
   "repository": {
     "type": "git",

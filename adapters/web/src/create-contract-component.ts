@@ -141,7 +141,7 @@ function applyHostState(
  *     variants: { intent: { primary: 'btn--primary', ghost: 'btn--ghost' } },
  *     defaults: { intent: 'primary' },
  *   },
- *   enforcement: { strict: 'warn' },
+ *   enforcement: { diagnostics: warnDiagnostics },
  * })
  *
  * customElements.define('praxis-button', Button)
@@ -260,7 +260,7 @@ export function createContractComponent<
     Object.defineProperty(PolymorphicWebElement, 'name', { value: options.name })
   }
 
-  Object.defineProperty(PolymorphicWebElement, 'strict', { value: bundle.strict })
+  Object.defineProperty(PolymorphicWebElement, 'diagnostics', { value: bundle.diagnostics })
 
   registerForSsr(PolymorphicWebElement as unknown as WebContractComponent, looseBundle)
 

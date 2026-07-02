@@ -1,15 +1,22 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import type { NormalizedChildRule, MatchMatrix } from '../types'
 import { RuleValidator } from './rule-validator'
+import {
+  CollectingReporter,
+  Diagnostics,
+  DefaultPolicy,
+  Severity,
+  throwDiagnostics,
+  silentDiagnostics,
+} from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const throwValidator = new RuleValidator('Test', 'throw')
-const warnValidator = new RuleValidator('Test', 'warn')
-const silentValidator = new RuleValidator('Test', false)
+const throwValidator = new RuleValidator('Test', throwDiagnostics)
+const silentValidator = new RuleValidator('Test', silentDiagnostics)
 
 function rule(overrides: Partial<NormalizedChildRule> & { name: string }): NormalizedChildRule {
   return {
@@ -21,10 +28,7 @@ function rule(overrides: Partial<NormalizedChildRule> & { name: string }): Norma
 }
 
 function matrix(byRule: Set<number>[], _childCount = 3): MatchMatrix {
-  const reverse = new Map<number, Set<number>>()
-  for (const [ri, children] of byRule.entries()) {
-    reverse.set(ri, children)
-  }
+  const reverse = new Map(byRule.entries())
   return { childToRules: { forward: new Map(), reverse } }
 }
 
@@ -175,22 +179,24 @@ describe('RuleValidator.validate() — no children', () => {
 // ---------------------------------------------------------------------------
 
 describe('RuleValidator.validate() — StrictMode', () => {
-  it('warns instead of throwing when strict is "warn"', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  it('warns instead of throwing when strict is "warn"', () => {
+    const reporter = new CollectingReporter()
+    const warnValidator = new RuleValidator(
+      'Test',
+      new Diagnostics(
+        reporter,
+        new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
+      ),
+    )
     const r = rule({ name: 'required', cardinality: { kind: 'bounded', min: 1, max: Infinity } })
     const m = matrix([new Set()], 0)
     expect(() => warnValidator.validate([r], m, 0)).not.toThrow()
-    await Promise.resolve()
-    expect(spy).toHaveBeenCalled()
-    spy.mockRestore()
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
   })
 
   it('is silent when strict is false', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const r = rule({ name: 'required', cardinality: { kind: 'bounded', min: 1, max: Infinity } })
     const m = matrix([new Set()], 0)
     expect(() => silentValidator.validate([r], m, 0)).not.toThrow()
-    expect(spy).not.toHaveBeenCalled()
-    spy.mockRestore()
   })
 })

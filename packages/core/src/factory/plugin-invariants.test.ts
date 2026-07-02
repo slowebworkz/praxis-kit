@@ -26,13 +26,13 @@ describe('assertPluginShape', () => {
 
   it('throws when pipeline field is missing', () => {
     expect(() => assertPluginShape({})).toThrow(
-      "Plugin factory return value is missing a 'pipeline' function. Got pipeline: undefined.",
+      "Plugin factory must return an object with a 'pipeline' function. Got: object.",
     )
   })
 
   it('throws when pipeline field is not a function', () => {
     expect(() => assertPluginShape({ pipeline: 'not-a-fn' })).toThrow(
-      "Plugin factory return value is missing a 'pipeline' function. Got pipeline: string.",
+      "Plugin factory must return an object with a 'pipeline' function. Got: object.",
     )
   })
 })

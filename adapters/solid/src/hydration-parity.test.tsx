@@ -9,7 +9,9 @@
 // hydration-parity.dom.test.tsx also asserts for CSR. Parity is maintained by both
 // suites asserting against the same EXPECTED_* constants — divergence fails one side.
 import { describe, it, expect } from 'vitest'
+import { iterate } from '@praxis-kit/primitive'
 import { renderToString } from 'solid-js/web'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from './create-contract-component'
 
 function parseAttributes(html: string): Record<string, string> {
@@ -33,13 +35,13 @@ function parseAttributes(html: string): Record<string, string> {
 
 function normalizeAttrs(attrs: Record<string, string>): Record<string, string> {
   const out: Record<string, string> = {}
-  for (const [k, v] of Object.entries(attrs)) {
+  iterate.forEachEntry(attrs, (k, v) => {
     // Solid's Dynamic SSR appends a trailing space to class attribute values
     // (confirmed: `<Dynamic component="div" class="x" />` → `class="x "`).
     // Normalize with trim + filter so semantic comparison is not affected by
     // the extra whitespace. The CSR path does not produce trailing spaces.
     out[k] = k === 'class' ? v.trim().split(/\s+/).filter(Boolean).sort().join(' ') : v
-  }
+  })
   return out
 }
 
@@ -48,7 +50,7 @@ describe('SSR hydration parity — Solid (server side)', () => {
     const Box = createContractComponent({
       tag: 'div',
       styling: { base: 'box-base' },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
     const html = renderToString(() => <Box />)
     const attrs = normalizeAttrs(parseAttributes(html))
@@ -63,7 +65,7 @@ describe('SSR hydration parity — Solid (server side)', () => {
         variants: { size: { sm: 'box-sm', lg: 'box-lg' } },
         defaults: { size: 'lg' },
       },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
     const html = renderToString(() => <Box />)
     const attrs = normalizeAttrs(parseAttributes(html))
@@ -82,7 +84,7 @@ describe('SSR hydration parity — Solid (server side)', () => {
         defaults: { size: 'sm', intent: 'primary' },
         compounds: [{ size: 'lg', intent: 'ghost', class: 'btn-lg-ghost' }],
       },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
     const html = renderToString(() => <Button size="lg" intent="ghost" />)
     expect(html).toContain('btn-lg-ghost')
@@ -91,19 +93,28 @@ describe('SSR hydration parity — Solid (server side)', () => {
   })
 
   it('ARIA strip: redundant role absent from server-rendered HTML', () => {
-    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({
+      tag: 'nav',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const html = renderToString(() => <Nav role="navigation" />)
     expect(parseAttributes(html)).not.toHaveProperty('role')
   })
 
   it('ARIA strip: invalid aria-* absent from server-rendered HTML', () => {
-    const Button = createContractComponent({ tag: 'button', enforcement: { strict: false } })
+    const Button = createContractComponent({
+      tag: 'button',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const html = renderToString(() => <Button aria-checked="true" />)
     expect(html).not.toContain('aria-checked')
   })
 
   it('as prop override: correct tag in server-rendered HTML', () => {
-    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({
+      tag: 'nav',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const html = renderToString(() => <Nav as="section" />)
     expect(html).toContain('<section')
     expect(html).not.toContain('<nav')

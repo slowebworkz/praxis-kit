@@ -1,0 +1,12 @@
+{
+  "mustInclude": [
+    "runtime/core/src/compiler/compile-component",
+    "runtime/core/src/compiler/variant-provider",
+    "runtime/core/src/compiler/passes"
+  ],
+  "mustExclude": [
+    "adapters/react/src",
+    "lib/styling/src/variant-pass",
+    "lib/tailwind/src"
+  ]
+}

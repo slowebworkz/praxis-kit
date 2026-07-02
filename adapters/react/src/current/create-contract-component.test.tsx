@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { createElement, Fragment, createRef } from 'react'
 import type { RenderCallbackProps } from '../shared'
+import { warnDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
 import { box, useReactDom } from '../shared/test-utils'
 import { createContractComponent } from './create-contract-component'
 
@@ -288,5 +289,171 @@ describe('createContractComponent (current / React 19)', () => {
 
     expect(dom.container.querySelector('section')).toBeTruthy()
     expect(dom.container.querySelector('div')).toBeNull()
+  })
+
+  it('render prop: forwards non-variant DOM props (e.g. data-testid) through callback', () => {
+    const Box = createContractComponent({ tag: 'div' })
+    const received: Record<string, unknown> = {}
+
+    dom.mount(
+      createElement(box(Box), {
+        'data-testid': 'my-box',
+        render: (p: RenderCallbackProps) => {
+          Object.assign(received, p)
+          return createElement('a', p as never)
+        },
+      } as never),
+    )
+
+    expect(received['data-testid']).toBe('my-box')
+  })
+
+  // ── allowedAs enforcement ───────────────────────────────────────────────────
+
+  it('allowedAs: does not warn when as matches the allowed list', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Box = createContractComponent({
+      enforcement: { diagnostics: warnDiagnostics, allowedAs: ['button', 'a'] },
+    })
+
+    dom.mount(createElement(box(Box), { as: 'button' }))
+
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('allowedAs: warns when as does not match the allowed list (strict: warn)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Box = createContractComponent({
+      enforcement: { diagnostics: warnDiagnostics, allowedAs: ['button', 'a'] },
+    })
+
+    dom.mount(createElement(box(Box), { as: 'div' }))
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"div"'))
+    warn.mockRestore()
+  })
+
+  it('allowedAs: throws when as does not match the allowed list (strict: throw)', () => {
+    const Box = createContractComponent({
+      enforcement: { diagnostics: throwDiagnostics, allowedAs: ['button', 'a'] },
+    })
+
+    expect(() => dom.mount(createElement(box(Box), { as: 'div' }))).toThrow(/"div"/)
+  })
+
+  // ── normalize ───────────────────────────────────────────────────────────────
+
+  it('normalize: callback fires and its return value replaces props', () => {
+    const Box = createContractComponent({
+      normalize: (props) => ({ ...props, 'data-normalized': 'yes' }),
+    })
+
+    dom.mount(createElement(box(Box), null))
+
+    expect(dom.container.querySelector('[data-normalized="yes"]')).toBeTruthy()
+  })
+
+  it('normalize: can remove a prop before it reaches the DOM', () => {
+    const Box = createContractComponent({
+      normalize: ({ unwanted: _, ...rest }) => rest,
+    })
+
+    dom.mount(createElement(box(Box), { unwanted: 'bad' } as never))
+
+    expect(dom.container.querySelector('[unwanted]')).toBeNull()
+  })
+
+  // ── HTML prop normalizers ────────────────────────────────────────────────────
+
+  it('prop normalizers: disabled on button adds aria-disabled and data-disabled', () => {
+    const Btn = createContractComponent({ tag: 'button' })
+    dom.mount(createElement(box(Btn), { disabled: true } as never))
+    const el = dom.container.querySelector('button')!
+    expect(el.getAttribute('aria-disabled')).toBe('true')
+    expect(el.getAttribute('data-disabled')).toBe('')
+  })
+
+  it('prop normalizers: does not add aria-disabled when disabled is false', () => {
+    const Btn = createContractComponent({ tag: 'button' })
+    dom.mount(createElement(box(Btn), { disabled: false } as never))
+    const el = dom.container.querySelector('button')!
+    expect(el.getAttribute('aria-disabled')).toBeNull()
+  })
+
+  it('prop normalizers: disabled on non-form element does not add aria-disabled', () => {
+    const Box = createContractComponent({ tag: 'div' })
+    dom.mount(createElement(box(Box), { disabled: true } as never))
+    const el = dom.container.querySelector('div')!
+    expect(el.getAttribute('aria-disabled')).toBeNull()
+  })
+
+  it('prop normalizers: explicit aria-disabled is not overridden', () => {
+    const Btn = createContractComponent({ tag: 'button' })
+    dom.mount(createElement(box(Btn), { disabled: true, 'aria-disabled': 'false' } as never))
+    const el = dom.container.querySelector('button')!
+    expect(el.getAttribute('aria-disabled')).toBe('false')
+  })
+
+  it('prop normalizers: enforcement.props normalizer fires after HTML built-ins', () => {
+    const seenAriaDisabled: Array<string | undefined> = []
+    const Btn = createContractComponent({
+      tag: 'button',
+      enforcement: {
+        props: [
+          (props) => {
+            seenAriaDisabled.push(props['aria-disabled'] as string | undefined)
+            return {}
+          },
+        ],
+      },
+    })
+    dom.mount(createElement(box(Btn), { disabled: true } as never))
+    expect(seenAriaDisabled).toEqual(['true'])
+  })
+
+  it('prop normalizers: enforcement.props normalizer can override built-in', () => {
+    const Btn = createContractComponent({
+      tag: 'button',
+      enforcement: {
+        props: [() => ({ 'aria-disabled': 'false' })],
+      },
+    })
+    dom.mount(createElement(box(Btn), { disabled: true } as never))
+    const el = dom.container.querySelector('button')!
+    expect(el.getAttribute('aria-disabled')).toBe('false')
+  })
+
+  it('prop normalizers: normalize callback sees already-patched props', () => {
+    const seenAriaDisabled: Array<string | undefined> = []
+    const Btn = createContractComponent({
+      tag: 'button',
+      normalize: (props) => {
+        seenAriaDisabled.push(props['aria-disabled'] as string | undefined)
+        return props
+      },
+    })
+    dom.mount(createElement(box(Btn), { disabled: true } as never))
+    expect(seenAriaDisabled).toEqual(['true'])
+  })
+
+  // ── HTML contract uses active tag ────────────────────────────────────────────
+
+  it('html contract: evaluates against the active tag, not the default tag', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    // Picture requires specific children (source*, img); evaluate against 'ul' which has no contract
+    // Using 'ul' as default but rendering as 'picture' — the picture contract should fire
+    const Pic = createContractComponent({ tag: 'ul' })
+
+    // 'picture' requires img as last child; passing a div should trigger a warning
+    dom.mount(createElement(box(Pic), { as: 'picture' }, createElement('div')))
+
+    // Warning expected because <picture> children contract fires for the active 'picture' tag
+    expect(warn).toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 })

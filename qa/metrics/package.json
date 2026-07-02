@@ -1,0 +1,23 @@
+{
+  "name": "@praxis-kit/metrics",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Metrics collection, snapshotting, and reporting for the praxis-kit monorepo",
+  "scripts": {
+    "collect": "tsx scripts/collect.ts",
+    "report": "tsx scripts/report.ts",
+    "assert": "tsx scripts/assert.ts",
+    "metrics": "tsx scripts/collect.ts && tsx scripts/report.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@praxis-kit/primitive": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "ts-morph": "catalog:",
+    "tsx": "catalog:",
+    "type-fest": "catalog:"
+  }
+}

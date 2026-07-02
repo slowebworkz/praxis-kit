@@ -1,5 +1,6 @@
 export * from './aria'
 export * from './children'
+export * from './diagnostics'
 export * from './props'
 export * from './strict'
 export * from './types'

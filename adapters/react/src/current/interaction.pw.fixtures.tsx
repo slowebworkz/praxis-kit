@@ -1,3 +1,4 @@
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from './create-contract-component'
 
 export const Button = createContractComponent({
@@ -10,5 +11,5 @@ export const Button = createContractComponent({
 export const AlertRegion = createContractComponent({
   tag: 'div' as const,
   name: 'AlertRegion',
-  enforcement: { strict: false },
+  enforcement: { diagnostics: silentDiagnostics },
 })

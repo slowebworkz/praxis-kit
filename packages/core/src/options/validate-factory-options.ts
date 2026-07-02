@@ -3,22 +3,14 @@ import type {
   ElementType,
   RecipeMap,
   ResolvedFactoryOptions,
-  StrictMode,
   VariantMap,
 } from '../types'
-
-// Mirrors the StrictBase semantics: silent when off, console.warn on 'warn' /
-// 'async-warn' (construction-time warnings are one-shot, so no deferral needed),
-// throw on 'throw' / true.
-function report(strict: StrictMode, message: string): void {
-  if (strict === false) return
-  const mode = strict === true ? 'throw' : strict
-  if (mode === 'throw') throw new Error(message)
-  console.warn(message)
-}
+import { iterate } from '@praxis-kit/primitive'
+import { ContractDiagnostics } from '@praxis-kit/contract'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 
 /**
- * Construction-time validation of the variant surface, gated on `strict`.
+ * Construction-time validation of the variant surface.
  *
  * A `presets` selection or `defaults` entry that references a variant key — or a
  * value of a key — not declared in `variants` resolves to no class at runtime,
@@ -35,10 +27,8 @@ export function validateFactoryOptions<
   Props extends AnyRecord,
   V extends Readonly<VariantMap>,
   TPreset extends RecipeMap<V>,
->(resolved: ResolvedFactoryOptions<TDefault, Props, V, TPreset>): void {
-  const { strict } = resolved
-  if (strict === false) return
-
+>(resolved: ResolvedFactoryOptions<TDefault, Props, V, TPreset>, diagnostics: Diagnostics): void {
+  if (!diagnostics.active) return
   const name = resolved.displayName ?? 'Component'
   const { variants } = resolved
 
@@ -46,16 +36,14 @@ export function validateFactoryOptions<
   // Typed as `object` so callers pass it without a cast; the single cast to an
   // indexable record is localized here.
   const checkSelection = (label: string, selection: object): void => {
-    const record = selection as AnyRecord
-    for (const dim in record) {
-      const value = record[dim]
+    iterate.forEachEntry(selection as AnyRecord, (dim, value) => {
       // `null`/`undefined` is the "unset" sentinel and is skipped: a selection
       // that doesn't pick a dimension is a missing reference, not a dead one.
       // Only present values are checked against the declared variant states.
-      if (value === undefined || value === null) continue
+      if (value === undefined || value === null) return
       if (!variants || !Object.hasOwn(variants, dim)) {
-        report(strict, `${name}: ${label} references unknown variant "${dim}".`)
-        continue
+        diagnostics.error(ContractDiagnostics.unknownVariantDim(name, label, dim))
+        return
       }
       const states = variants[dim]!
       // CVA keys are always strings, so booleans coerce: `true` → `'true'`.
@@ -63,20 +51,18 @@ export function validateFactoryOptions<
       // validates against `disabled: { true: '...', false: '...' }`.
       const stateKey = String(value)
       if (!Object.hasOwn(states, stateKey)) {
-        report(
-          strict,
-          `${name}: ${label} sets "${dim}" to unknown value "${stateKey}" ` +
-            `(valid: ${Object.keys(states).join(', ')}).`,
+        diagnostics.error(
+          ContractDiagnostics.unknownVariantValue(name, label, dim, stateKey, Object.keys(states)),
         )
       }
-    }
+    })
   }
 
   const { recipeMap } = resolved
   if (recipeMap) {
-    for (const recipeKey in recipeMap) {
-      checkSelection(`preset "${recipeKey}"`, recipeMap[recipeKey]!)
-    }
+    iterate.forEachEntry(recipeMap, (recipeKey, selection) => {
+      checkSelection(`preset "${recipeKey}"`, selection)
+    })
   }
 
   if (resolved.defaultVariants) checkSelection('defaults', resolved.defaultVariants)

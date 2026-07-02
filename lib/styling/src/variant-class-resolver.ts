@@ -1,4 +1,5 @@
 import type { AnyRecord } from './types'
+import { iterate } from '@praxis-kit/primitive'
 
 type CvaFn = (props: AnyRecord) => string
 
@@ -67,15 +68,15 @@ export class VariantClassResolver {
   #createCacheKey(props: AnyRecord, recipe: string): string {
     if (this.#variantKeys !== null) {
       let key = recipe
-      for (const k of this.#variantKeys) {
+      iterate.forEachSet(this.#variantKeys, (k) => {
         if (k in props) key += `|${k}:${VariantClassResolver.#serializeValue(props[k])}`
-      }
+      })
       return key
     }
     let key = recipe
-    for (const k of Object.keys(props).sort()) {
+    iterate.forEach(Object.keys(props).sort(), (k) => {
       key += `|${k}:${VariantClassResolver.#serializeValue(props[k])}`
-    }
+    })
     return key
   }
 

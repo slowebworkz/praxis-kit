@@ -16,7 +16,7 @@ export type RuntimeOptions = Readonly<
   Pick<
     ResolvedFactoryOptions,
     | 'displayName'
-    | 'strict'
+    | 'diagnostics'
     | 'variantKeys'
     | 'childRules'
     | 'normalizeFn'

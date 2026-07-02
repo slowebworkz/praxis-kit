@@ -29,18 +29,22 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "catalog:",
+    "@praxis-kit/primitive": "workspace:*",
     "@playwright/experimental-ct-vue": "catalog:",
     "@playwright/test": "catalog:",
     "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/core": "workspace:*",
     "@praxis-kit/playwright": "workspace:*",
+    "@praxis-kit/runtime": "workspace:*",
+    "@praxis-kit/pipeline": "workspace:*",
     "@vitejs/plugin-vue": "catalog:",
     "@vue/compiler-dom": "catalog:",
     "@vue/server-renderer": "catalog:",
     "@vue/test-utils": "catalog:",
     "jsdom": "catalog:",
     "vitest": "catalog:",
-    "vue": "catalog:",
-    "@praxis-kit/core": "workspace:*"
+    "vue": "catalog:"
   },
   "repository": {
     "type": "git",

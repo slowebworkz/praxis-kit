@@ -11,4 +11,5 @@ export { PROP_MERGE_POLICIES, chainHandlers, mergeClassNames, mergeStyles } from
 export type { PropMergePolicy, MergePolicyHandler } from './policies'
 export { isReactEventKey, isFunction, isPlainObject, isSlottableElement } from './predicates'
 export type { EventHandler, SlotProps, CloneSlotChildFn } from './types'
-export { SlotValidator } from './slot-validator'
+export { SlotValidator } from '@praxis-kit/adapter-utils'
+export { makeRenderAsChild } from './make-render-as-child'

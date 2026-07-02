@@ -14,7 +14,7 @@
     "test:related": "vitest related --run"
   },
   "dependencies": {
-    "@praxis-kit/shared": "workspace:*",
+    "@praxis-kit/pipeline": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",

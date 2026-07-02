@@ -1,0 +1,7 @@
+export { isArray } from './is-array'
+export { isBoolean } from './is-boolean'
+export { isDefined, isUndefined } from './is-defined'
+export { isNull, isNullish } from './is-null'
+export { isFunction } from '../../merge/predicates'
+export { isPlainObject as isRecord } from '../../merge/predicates'
+export { isNumber, isObject, isString } from '../../utils/is-object'

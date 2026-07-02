@@ -1,6 +1,8 @@
-export type { AllowedOf, PolymorphicGenerics, RecipeOf, VariantsOf } from '@praxis-kit/shared/types'
-
-import type { PolymorphicGenerics } from '@praxis-kit/shared/types'
-
-export type DefaultOf<T extends PolymorphicGenerics> = T['default']
-export type PropsOf<T extends PolymorphicGenerics> = T['props']
+export type {
+  AllowedOf,
+  DefaultOf,
+  PolymorphicGenerics,
+  PropsOf,
+  RecipeOf,
+  VariantsOf,
+} from '@praxis-kit/primitive/types'

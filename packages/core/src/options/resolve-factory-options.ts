@@ -11,6 +11,7 @@ import type {
   ResolvedFactoryOptions,
   VariantMap,
 } from '../types'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 
 const EMPTY_VARIANT_KEYS: ReadonlySet<string> = new Set()
 
@@ -58,7 +59,7 @@ export function resolveFactoryOptions<
   // whenDefined spreads satisfy exactOptionalPropertyTypes: { key: undefined } and {} are distinct.
   return Object.freeze({
     defaultTag: (options.tag ?? 'div') as TDefault,
-    strict: enforcement?.strict ?? false,
+    diagnostics: enforcement?.diagnostics ?? silentDiagnostics,
     variantKeys,
     ...whenDefined('displayName', options.name),
     ...whenDefined('defaultProps', options.defaults),

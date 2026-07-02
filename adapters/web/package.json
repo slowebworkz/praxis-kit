@@ -22,10 +22,12 @@
   },
   "sideEffects": false,
   "dependencies": {
+    "@praxis-kit/primitive": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {
     "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
     "jsdom": "catalog:",
     "vitest": "catalog:",
     "@praxis-kit/core": "workspace:*"

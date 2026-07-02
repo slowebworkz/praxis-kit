@@ -1,6 +1,8 @@
 import { beforeEach, afterEach, describe, it, expect } from 'vitest'
-import type { AnyRecord } from '@praxis-kit/core'
+import type { AnyRecord } from '@praxis-kit/pipeline'
+import { iterate } from '@praxis-kit/primitive'
 import type { ConformanceComponent, ConformanceFactoryOptions } from './types'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 
 /**
  * Adapter contract for the hydration parity suite.
@@ -31,17 +33,17 @@ function parseAttributes(html: string): Attributes {
   const child = tpl.content.firstElementChild
   if (!child) return {}
   const out: Attributes = {}
-  for (const { name, value } of child.attributes) {
+  iterate.forEach(iterate.items(child.attributes), ({ name, value }) => {
     out[name] = value
-  }
+  })
   return out
 }
 
 function normalizeAttrs(attrs: Attributes): Attributes {
   const out: Attributes = {}
-  for (const [k, v] of Object.entries(attrs)) {
+  iterate.forEachEntry(attrs, (k, v) => {
     out[k] = k === 'class' ? v.split(' ').sort().join(' ') : v
-  }
+  })
   return out
 }
 
@@ -61,9 +63,9 @@ async function domAttrs<C extends ConformanceComponent>(
 ): Promise<Attributes> {
   const el = await adapter.renderToDOM(comp, props)
   const out: Attributes = {}
-  for (const { name, value } of el.attributes) {
+  iterate.forEach(iterate.items(el.attributes), ({ name, value }) => {
     out[name] = value
-  }
+  })
   return normalizeAttrs(out)
 }
 
@@ -83,7 +85,7 @@ export function hydrationParitySuite<C extends ConformanceComponent = Conformanc
     it('base class matches between server and client', async () => {
       const Box = adapter.createComponent({
         styling: { base: 'box-base' },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       expect(await ssrAttrs(adapter, Box)).toEqual(await domAttrs(adapter, Box))
     })
@@ -94,7 +96,7 @@ export function hydrationParitySuite<C extends ConformanceComponent = Conformanc
           variants: { size: { sm: 'box-sm', lg: 'box-lg' } },
           defaults: { size: 'lg' },
         },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       expect(await ssrAttrs(adapter, Box)).toEqual(await domAttrs(adapter, Box))
     })
@@ -109,7 +111,7 @@ export function hydrationParitySuite<C extends ConformanceComponent = Conformanc
           },
           compounds: [{ size: 'lg', intent: 'ghost', class: 'btn-lg-ghost' }],
         },
-        enforcement: { strict: false },
+        enforcement: { diagnostics: silentDiagnostics },
       })
       const props = { size: 'lg', intent: 'ghost' }
       const s = await ssrAttrs(adapter, Box, props)
@@ -121,7 +123,10 @@ export function hydrationParitySuite<C extends ConformanceComponent = Conformanc
 
   describe('hydration parity — ARIA normalisation', () => {
     it('redundant role absent on both server and client', async () => {
-      const Nav = adapter.createComponent({ tag: 'nav', enforcement: { strict: false } })
+      const Nav = adapter.createComponent({
+        tag: 'nav',
+        enforcement: { diagnostics: silentDiagnostics },
+      })
       const props = { role: 'navigation' }
       const s = await ssrAttrs(adapter, Nav, props)
       const d = await domAttrs(adapter, Nav, props)
@@ -131,7 +136,7 @@ export function hydrationParitySuite<C extends ConformanceComponent = Conformanc
     })
 
     it('non-redundant role present on both server and client', async () => {
-      const Box = adapter.createComponent({ enforcement: { strict: false } })
+      const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
       const props = { role: 'dialog' }
       const s = await ssrAttrs(adapter, Box, props)
       const d = await domAttrs(adapter, Box, props)
@@ -142,7 +147,7 @@ export function hydrationParitySuite<C extends ConformanceComponent = Conformanc
 
   describe('hydration parity — tag and props', () => {
     it('as prop override: tag matches between server and client', async () => {
-      const Box = adapter.createComponent({ enforcement: { strict: false } })
+      const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
       const props = { as: 'section' }
       const serverHtml = await adapter.renderToString(Box, props)
       const clientEl = await adapter.renderToDOM(Box, props)

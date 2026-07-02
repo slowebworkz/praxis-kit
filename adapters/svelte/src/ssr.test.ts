@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { render } from 'svelte/server'
 import { ssrConformanceSuite } from '@praxis-kit/adapter-utils/testing'
 import type { BareFactoryOptions, ConformanceComponent } from '@praxis-kit/adapter-utils/testing'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import Polymorphic from './Polymorphic.svelte'
 import { createContractComponent } from './create-contract-component'
 import type { AnyBuiltRuntime } from './types/built-runtime'
@@ -22,7 +23,10 @@ describe('Polymorphic — SSR (svelte/server render)', () => {
   })
 
   it('strips redundant ARIA role in server-rendered HTML', () => {
-    const bundle = createContractComponent({ tag: 'button', enforcement: { strict: false } })
+    const bundle = createContractComponent({
+      tag: 'button',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const { html } = render(Polymorphic, { props: { bundle, role: 'button' } })
     expect(html).not.toContain('role=')
   })

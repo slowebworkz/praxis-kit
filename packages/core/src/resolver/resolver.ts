@@ -1,5 +1,7 @@
 import { mergeProps, resolveTag } from '@praxis-kit/primitive'
-import { AriaPolicyEngine } from '@praxis-kit/contract'
+import { AriaPolicyEngine, ContractDiagnostics } from '@praxis-kit/contract'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 import type {
   AnyRecord,
   ClassPipelineFn,
@@ -8,25 +10,18 @@ import type {
   ResolveInput,
   ResolveOutput,
   ResolverOptions,
-  StrictMode,
 } from '../types'
 
 export function enforceAllowedAs(
   tag: ElementType,
   allowedAs: readonly ElementType[],
-  strict: StrictMode | undefined,
+  diagnostics: Diagnostics | undefined,
   displayName?: string,
 ): void {
   if (allowedAs.includes(tag)) return
-  const component = displayName ? `<${displayName}>` : 'component'
-  const allowed = allowedAs.map((t) => `"${String(t)}"`).join(', ')
-  const message = `${component}: "as" prop received "${String(tag)}" but only [${allowed}] are allowed.`
-  if (strict === true || strict === 'throw') {
-    throw new Error(message)
-  }
-  if (strict) {
-    console.warn(message)
-  }
+  if (!diagnostics) return
+  const component = displayName ?? String(tag)
+  diagnostics.error(ContractDiagnostics.allowedAsViolation(String(tag), allowedAs, component))
 }
 
 export function createResolverPipeline<
@@ -37,12 +32,12 @@ export function createResolverPipeline<
   resolved: ResolverOptions,
   classPipeline: ClassPipelineFn,
 ): (input: ResolveInput<Props, TSlot, Children>) => ResolveOutput<Props, Children> {
-  const engine = new AriaPolicyEngine(resolved.strict)
+  const engine = new AriaPolicyEngine(resolved.diagnostics ?? silentDiagnostics)
 
   return function resolve(input) {
     const tag = resolveTag(resolved.defaultTag, input.as)
     if (resolved.allowedAs !== undefined && input.as !== undefined) {
-      enforceAllowedAs(tag, resolved.allowedAs, resolved.strict, resolved.displayName)
+      enforceAllowedAs(tag, resolved.allowedAs, resolved.diagnostics, resolved.displayName)
     }
     const merged = mergeProps(resolved.defaultProps, input.props) as Props
     const { props } = engine.validate(tag, merged as IntrinsicProps)

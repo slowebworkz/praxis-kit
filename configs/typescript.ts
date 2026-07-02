@@ -38,7 +38,7 @@ const config = [
         'error',
         {
           prefer: 'type-imports',
-          disallowTypeAnnotations: false,
+          disallowTypeAnnotations: true,
           fixStyle: 'separate-type-imports',
         },
       ],
@@ -53,14 +53,15 @@ const config = [
         projectService: {
           allowDefaultProject: [
             '*.ts',
-            'scripts/*.ts',
             'configs/*.ts',
             'packages/*/eslint.config.ts',
+            'lib/*/eslint.config.ts',
+            'plugins/*/eslint.config.ts',
             'adapters/*/eslint.config.ts',
-            // codemod and ts-plugin have rootDir:src — tsup.config.ts and vitest.config.ts can't be in their tsconfig include
-            'packages/codemod/tsup.config.ts',
-            'packages/codemod/vitest.config.ts',
-            'packages/ts-plugin/tsup.config.ts',
+            // codemod and ts-plugin have rootDir:src — tsup/vitest configs can't be in their tsconfig include
+            'tooling/codemod/tsup.config.ts',
+            'tooling/codemod/vitest.config.ts',
+            'plugins/typescript/tsup.config.ts',
             // Playwright CT config and mount entry live outside the react/vue package tsconfig include
             'adapters/react/playwright-ct.config.ts',
             'adapters/react/playwright/index.tsx',
@@ -68,20 +69,25 @@ const config = [
             'adapters/vue/playwright/index.ts',
             'playwright.workspace.ts',
             'vitest.workspace.ts',
-            // remaining tsup.config.ts files are included in each package's tsconfig — removed from here
-            // lib/contract and lib/styling include vitest.config.ts in their tsconfig — listed explicitly
+            // lib packages whose vitest.config.ts lives outside their tsconfig include
             'lib/adapter-utils/vitest.config.ts',
+            'lib/backend-utils/vitest.config.ts',
             'lib/primitive/vitest.config.ts',
+            'lib/pipeline/vitest.config.ts',
+            'lib/style/vitest.config.ts',
             'examples/*/vite.config.ts',
+            // workspace vitest configs live outside any tsconfig include
+            'runtime/*/vitest.config.ts',
+            'backends/*/vitest.config.ts',
+            'spikes/*/vitest.config.ts',
             // framework-specific scenarios are excluded from the tree-shaking-tests tsconfig
             // (jsxImportSource:react conflicts with Solid/Vue/Preact/Svelte JSX/return types)
-            'lib/tree-shaking-tests/scenarios/solid-minimal/*.ts',
-            'lib/tree-shaking-tests/scenarios/vue-minimal/*.ts',
-            'lib/tree-shaking-tests/scenarios/preact-minimal/*.ts',
-            'lib/tree-shaking-tests/scenarios/svelte-minimal/*.ts',
+            'qa/tree-shaking-tests/scenarios/solid-minimal/*.ts',
+            'qa/tree-shaking-tests/scenarios/vue-minimal/*.ts',
+            'qa/tree-shaking-tests/scenarios/preact-minimal/*.ts',
+            'qa/tree-shaking-tests/scenarios/svelte-minimal/*.ts',
           ],
-          // ~38 files: 2 root *.ts + 1 scripts + 9 configs + 4 pkg eslint configs + 7 adapter eslint configs + 2 lib vitest + 4 tsup/vitest/pw configs + 5 examples/*/vite.config.ts + 2 non-React adapter scenarios + 2 workspace files
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 75,
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 85,
           defaultProject: './tsconfig.base.json',
         },
       },

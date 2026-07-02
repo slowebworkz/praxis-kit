@@ -1,14 +1,20 @@
 import { describe, it, expect, vi } from 'vitest'
 import { createElement, isValidElement } from 'react'
 import type { ReactElement } from 'react'
+import { throwDiagnostics, warnDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
 import { render } from './render'
 import { Slottable } from './slot'
-import { SlotValidator } from './slot/slot-validator'
+import { SlotValidator } from '@praxis-kit/adapter-utils'
 import type { FilterPredicate, Runtime } from './types'
 
 function makeRuntime(overrides?: Partial<Runtime>): Runtime {
   return {
-    options: { defaultTag: 'div', variantKeys: new Set(), displayName: 'Test', strict: 'throw' },
+    options: {
+      defaultTag: 'div',
+      variantKeys: new Set(),
+      displayName: 'Test',
+      diagnostics: throwDiagnostics,
+    },
     resolveTag: (as) => as ?? 'div',
     resolveProps: (props) => props,
     resolveClasses: (_tag, _props, className) =>
@@ -25,7 +31,7 @@ const slotComponent = ({ children }: { children?: unknown }) =>
   createElement('div', { 'data-slot': true }, children as ReactElement)
 
 const noopFilter: FilterPredicate = () => false
-const defaultValidator = new SlotValidator('Test', 'throw')
+const defaultValidator = new SlotValidator('Test', throwDiagnostics, 'React element')
 
 describe('render', () => {
   it('renders the default tag when no as prop is given', () => {
@@ -255,7 +261,12 @@ describe('render', () => {
     const child = createElement('button')
     render({
       runtime: makeRuntime({
-        options: { defaultTag: 'div', variantKeys: new Set(), displayName: 'Test', strict: 'warn' },
+        options: {
+          defaultTag: 'div',
+          variantKeys: new Set(),
+          displayName: 'Test',
+          diagnostics: warnDiagnostics,
+        },
       }),
       props: { asChild: true, children: [child, 'click me'] },
       ref: null,
@@ -263,7 +274,7 @@ describe('render', () => {
       // normalizeChildren strips the text node — child count shrinks from 2 to 1
       normalizeChildren: () => [child],
       filterProps: noopFilter,
-      slotValidator: new SlotValidator('Test', 'warn'),
+      slotValidator: new SlotValidator('Test', warnDiagnostics, 'React element'),
     })
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('discarded 1 non-element child'))
     warnSpy.mockRestore()
@@ -274,14 +285,19 @@ describe('render', () => {
     const child = createElement('button')
     render({
       runtime: makeRuntime({
-        options: { defaultTag: 'div', variantKeys: new Set(), displayName: 'Test', strict: false },
+        options: {
+          defaultTag: 'div',
+          variantKeys: new Set(),
+          displayName: 'Test',
+          diagnostics: silentDiagnostics,
+        },
       }),
       props: { asChild: true, children: [child, 'click me'] },
       ref: null,
       slotComponent,
       normalizeChildren: () => [child],
       filterProps: noopFilter,
-      slotValidator: new SlotValidator('Test', false),
+      slotValidator: new SlotValidator('Test', silentDiagnostics, 'React element'),
     })
     expect(warnSpy).not.toHaveBeenCalled()
     warnSpy.mockRestore()
@@ -295,7 +311,7 @@ describe('render', () => {
           defaultTag: 'div',
           variantKeys: new Set(),
           displayName: 'Test',
-          strict: false,
+          diagnostics: silentDiagnostics,
           normalizeFn: normalize,
         },
       }),

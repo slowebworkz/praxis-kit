@@ -1,0 +1,25 @@
+{
+  "name": "@praxis-kit/runtime",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "@praxis-kit/pipeline": "workspace:*",
+    "@praxis-kit/styling": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "type-fest": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "vitest": "catalog:"
+  }
+}

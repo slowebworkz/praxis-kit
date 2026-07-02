@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { resolveFactoryOptions } from './options'
 import { diagnose } from './diagnose'
+import { throwDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
 
 class Icon {}
 class Label {}
@@ -68,7 +69,7 @@ describe('diagnose', () => {
       ]
       const options = resolveFactoryOptions({
         enforcement: {
-          strict: 'throw',
+          diagnostics: throwDiagnostics,
           aria: [customRule],
         },
       })
@@ -90,7 +91,7 @@ describe('diagnose', () => {
     it('returns children violations when children break a rule', () => {
       const options = resolveFactoryOptions({
         enforcement: {
-          strict: false,
+          diagnostics: silentDiagnostics,
           children: [
             { name: 'icon', match: (c) => c instanceof Icon, cardinality: { min: 1, max: 1 } },
           ],
@@ -104,7 +105,7 @@ describe('diagnose', () => {
     it('reports unexpected child without throwing', () => {
       const options = resolveFactoryOptions({
         enforcement: {
-          strict: 'throw',
+          diagnostics: throwDiagnostics,
           children: [{ name: 'icon', match: (c) => c instanceof Icon }],
         },
       })

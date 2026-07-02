@@ -19,7 +19,17 @@
  *   </example-tabs-root>
  */
 import { createContractComponent } from '@praxis-kit/web'
-import type { StrictMode } from '@praxis-kit/core'
+import { iterate } from '@praxis-kit/primitive'
+import type { DiagnosticInput, Diagnostics } from '@praxis-kit/diagnostics'
+import { DiagnosticCategory, DiagnosticCode, warnDiagnostics } from '@praxis-kit/diagnostics'
+
+function invalidTriggerValue(value: string, fallback: string | null): DiagnosticInput {
+  return {
+    code: DiagnosticCode.InternalError,
+    category: DiagnosticCategory.Contract,
+    message: `[TabsRoot] setActiveValue: "${value}" does not match any trigger. Falling back to "${fallback}".`,
+  }
+}
 
 // Typed base for subclassing praxis components. TypeScript doesn't include CE
 // lifecycle methods on HTMLElement, so we declare them here and cast the praxis
@@ -30,7 +40,7 @@ declare class _PraxisCE extends HTMLElement {
   disconnectedCallback?(): void
   attributeChangedCallback?(_: string, _o: string | null, _n: string | null): void
   static readonly observedAttributes?: readonly string[]
-  static readonly strict?: StrictMode
+  static readonly diagnostics?: Diagnostics
 }
 
 // Guards that match child elements by tag name. Tag-name coupling is a known
@@ -51,7 +61,7 @@ const _Trigger = createContractComponent({
   styling: {
     base: 'px-3 py-2 text-sm font-medium border-b-2 border-transparent data-[state=active]:border-blue-600',
   },
-  enforcement: { strict: 'warn' },
+  enforcement: { diagnostics: warnDiagnostics },
 }) as unknown as typeof _PraxisCE
 
 export class Trigger extends _Trigger {
@@ -84,7 +94,7 @@ export const Content = createContractComponent({
   name: 'TabsContent',
   defaults: { role: 'tabpanel' },
   styling: { base: 'py-4 text-sm' },
-  enforcement: { strict: 'warn' },
+  enforcement: { diagnostics: warnDiagnostics },
 })
 
 // ── List ──────────────────────────────────────────────────────────────────────
@@ -95,7 +105,7 @@ export const List = createContractComponent({
   defaults: { role: 'tablist' },
   styling: { base: 'inline-flex gap-1 border-b border-gray-200' },
   enforcement: {
-    strict: 'warn',
+    diagnostics: warnDiagnostics,
     children: [
       {
         name: 'Trigger',
@@ -113,7 +123,7 @@ const _Root = createContractComponent({
   name: 'TabsRoot',
   styling: { base: 'flex flex-col' },
   enforcement: {
-    strict: 'warn',
+    diagnostics: warnDiagnostics,
     children: [
       {
         name: 'List',
@@ -159,26 +169,22 @@ export class Root extends _Root {
     if (!valid) {
       const fallback = triggers[0]?.getAttribute('value') ?? null
       if (value !== null) {
-        const msg = `[TabsRoot] setActiveValue: "${value}" does not match any trigger. Falling back to "${fallback}".`
-        const strict = _Root.strict
-        if (strict === true || strict === 'throw') throw new Error(msg)
-        else if (strict === 'async-warn') queueMicrotask(() => console.warn(msg))
-        else if (strict) console.warn(msg)
+        _Root.diagnostics?.error(invalidTriggerValue(value, fallback))
       }
       value = fallback
     }
 
     if (value !== null) this.dataset.value = value
 
-    for (const el of triggers) {
+    iterate.forEach(triggers, (el) => {
       const v = el.getAttribute('value')
       ;(el as HTMLElement).dataset.state = v === value ? 'active' : 'inactive'
       el.setAttribute('aria-selected', String(v === value))
-    }
+    })
 
-    for (const el of this.querySelectorAll('example-tabs-content')) {
+    iterate.forEach([...this.querySelectorAll('example-tabs-content')], (el) => {
       ;(el as HTMLElement).hidden = el.getAttribute('value') !== value
-    }
+    })
   }
 
   private _firstTriggerValue(): string | null {

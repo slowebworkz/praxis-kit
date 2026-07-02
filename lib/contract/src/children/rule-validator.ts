@@ -1,12 +1,14 @@
-import type { MatchMatrix, NormalizedChildRule, StrictMode } from '../types'
-import { assertNever } from '@praxis-kit/primitive'
-import { StrictBase } from '../strict'
+import type { MatchMatrix, NormalizedChildRule } from '../types'
+import { assertNever, iterate } from '@praxis-kit/primitive'
+import { InvariantBase } from '../strict'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
+import { ContractDiagnostics } from '../diagnostics'
 
-export class RuleValidator extends StrictBase {
+export class RuleValidator extends InvariantBase {
   readonly #context: string
 
-  constructor(context: string, strict: StrictMode) {
-    super(strict)
+  constructor(context: string, diagnostics: Diagnostics) {
+    super(diagnostics)
     this.#context = context
   }
 
@@ -14,17 +16,17 @@ export class RuleValidator extends StrictBase {
     const firstIndex = 0
     const lastIndex = childCount - 1
 
-    for (const [ri, rule] of rules.entries()) {
+    iterate.forEach(rules, (rule, ri) => {
       // reverse is pre-initialized for every rule index, so .get() is always defined.
       const matches = matrix.childToRules.reverse.get(ri)!
       const matchCount = matches.size
 
       this.#validateCardinality(rule, matchCount)
 
-      if (matchCount === 0) continue
+      if (matchCount === 0) return
 
       this.#validatePositions(rule, matches, firstIndex, lastIndex)
-    }
+    })
   }
 
   #validateCardinality(rule: NormalizedChildRule, matchCount: number): void {
@@ -37,13 +39,12 @@ export class RuleValidator extends StrictBase {
     const { min, max } = cardinality
 
     if (matchCount < min) {
-      this.violate(`${this.#context}: "${name}" requires at least ${min}.`)
-
+      this.violate(ContractDiagnostics.cardinalityMin(name, min, this.#context))
       return
     }
 
     if (matchCount > max) {
-      this.violate(`${this.#context}: "${name}" allows at most ${max}.`)
+      this.violate(ContractDiagnostics.cardinalityMax(name, max, this.#context))
     }
   }
 
@@ -54,13 +55,13 @@ export class RuleValidator extends StrictBase {
     lastIndex: number,
   ): void {
     const { name, position } = rule
-    for (const index of matches) {
+    iterate.forEachSet(matches, (index) => {
       if (RuleValidator.#isValidPosition(index, position, firstIndex, lastIndex)) {
-        continue
+        return
       }
 
-      this.violate(`${this.#context}: "${name}" must be ${position}, got index ${index}`)
-    }
+      this.violate(ContractDiagnostics.positionViolation(name, position, index, this.#context))
+    })
   }
 
   static #isValidPosition(

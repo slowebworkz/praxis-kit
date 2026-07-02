@@ -30,11 +30,15 @@
   },
   "devDependencies": {
     "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/runtime": "workspace:*",
+    "@praxis-kit/pipeline": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
     "jsdom": "catalog:",
     "preact": "catalog:",
     "preact-render-to-string": "catalog:",
-    "vitest": "catalog:",
-    "@praxis-kit/core": "workspace:*"
+    "vitest": "catalog:"
   },
   "repository": {
     "type": "git",

@@ -1,4 +1,4 @@
-export type { ReactFactoryOptions } from './react-options'
+export type { CompiledArtifact, ReactFactoryOptions } from './react-options'
 export type {
   FilterPredicate,
   NormalizeChildren,
@@ -32,7 +32,6 @@ export type {
 } from './types/polymorphic-props'
 export type { RenderCallbackProps } from './types/props'
 export { mergeRefs } from './merge-refs'
-export { buildRuntime } from './build-runtime'
 export { applyDisplayName } from './apply-display-name'
 export * from './slot'
 export { render } from './render'

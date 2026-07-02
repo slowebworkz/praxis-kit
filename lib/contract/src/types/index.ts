@@ -1,4 +1,3 @@
-export type { StrictMode } from './strict-mode'
 export type { IntrinsicProps, PropsWithRole } from './contract-primitives'
 export { hasRole } from './intrinsic-props'
 export type { AriaRole, KnownAriaRole } from './aria-role'
@@ -30,7 +29,10 @@ export type {
   ChildRuleInput,
   ChildRuleMatch,
   ChildRulePosition,
+  ChildViolation,
+  ChildViolationKind,
   MatchMatrix,
   NormalizedChildRule,
 } from './child-rule'
 export type { AriaPlan } from './aria-plan'
+export type { HtmlContractMap } from './html-contract-map'

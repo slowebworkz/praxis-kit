@@ -17,6 +17,7 @@ import type {
   LitFactoryOptions,
   UnknownProps,
 } from './types/index'
+import { iterate } from '@praxis-kit/primitive'
 
 function isObject(value: unknown): value is Record<PropertyKey, unknown> {
   return typeof value === 'object' && value !== null
@@ -111,24 +112,24 @@ function applyHostState(
 
   // Remove pipeline-managed attributes absent from the new state (e.g. a
   // filterProps target that was set last render but is gone this render).
-  for (const key of prevPipelineAttrs) {
+  iterate.forEachSet(prevPipelineAttrs, (key) => {
     if (!Object.hasOwn(state.attributes, key)) {
       host.removeAttribute(key)
     }
-  }
+  })
   prevPipelineAttrs.clear()
 
   // Remove aria-* and role attributes that the ARIA engine stripped this render
   // (e.g. redundant role="navigation" on a <nav>). These are user-set, not
   // pipeline-set, so they're not covered by _pipelineAttrs above.
-  for (const key in incomingProps) {
-    if (!Object.hasOwn(incomingProps, key)) continue
-    if (!key.startsWith('aria-') && key !== 'role') continue
+  iterate.forEachKey(incomingProps, (key) => {
+    if (!Object.hasOwn(incomingProps, key)) return
+    if (!key.startsWith('aria-') && key !== 'role') return
     if (!Object.hasOwn(state.attributes, key)) host.removeAttribute(key)
-  }
+  })
 
-  for (const key in state.attributes) {
-    if (!Object.hasOwn(state.attributes, key)) continue
+  iterate.forEachKey(state.attributes, (key) => {
+    if (!Object.hasOwn(state.attributes, key)) return
     const value = state.attributes[key]
     if (value === undefined || value === null || value === false) {
       host.removeAttribute(key)
@@ -139,7 +140,7 @@ function applyHostState(
       host.setAttribute(key, String(value))
       prevPipelineAttrs.add(key)
     }
-  }
+  })
 }
 
 /**
@@ -199,12 +200,12 @@ export function createContractComponent<
     // attribute so _applyPraxis can read it without a circular class→pipeline→class loop.
     praxisClass: { type: String, attribute: 'praxis-class' },
   }
-  for (const key of variantKeys) {
+  iterate.forEach(variantKeys, (key) => {
     staticProps[key] = { type: String, attribute: key }
-  }
-  for (const key of pluginKeys) {
+  })
+  iterate.forEach(pluginKeys, (key) => {
     staticProps[key] = { type: String, attribute: key }
-  }
+  })
 
   // Typed view of the reactive instance properties that _applyPraxis reads.
   // `declare` emits no JS — Lit's finalize() installs the actual getters/setters
@@ -269,21 +270,21 @@ export function createContractComponent<
       // Start with all current DOM attributes so the ARIA engine sees role,
       // aria-*, and any other pass-through attributes.
       const props: UnknownProps = {}
-      for (const attr of Array.from(this.attributes)) {
+      iterate.forEach(iterate.items(this.attributes), (attr) => {
         if (attr.name !== 'class') props[attr.name] = attr.value
-      }
+      })
 
       // Overlay Lit-managed properties for variant keys — these may differ
       // from raw attribute strings if Lit has type-coerced them.
       props['as'] = self.as
       props['recipe'] = self.recipe
       props['className'] = self.praxisClass
-      for (const key of variantKeys) {
+      iterate.forEach(variantKeys, (key) => {
         // Lit sets removed attributes to null; treat null the same as undefined
         // so CVA falls back to defaultVariants when no explicit value is present.
         const val = self[key as Extract<keyof TVariants, string>]
         if (val != null) props[key] = val
-      }
+      })
 
       applyHostState(this, resolveHostState(looseBundle, props), this._pipelineAttrs, props)
     }

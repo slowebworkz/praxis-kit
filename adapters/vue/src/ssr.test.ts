@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import { h, createSSRApp } from 'vue'
 import type { Component } from 'vue'
 import { renderToString } from '@vue/server-renderer'
@@ -21,7 +22,10 @@ async function ssr(
 
 describe('createContractComponent — SSR (@vue/server-renderer)', () => {
   it('renders to HTML without accessing browser globals', async () => {
-    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({
+      tag: 'nav',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     expect(await ssr(Nav)).toContain('<nav')
   })
 
@@ -29,7 +33,7 @@ describe('createContractComponent — SSR (@vue/server-renderer)', () => {
     const Box = createContractComponent({
       tag: 'div',
       styling: { base: 'box-base' },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
     expect(await ssr(Box)).toContain('box-base')
   })
@@ -37,7 +41,10 @@ describe('createContractComponent — SSR (@vue/server-renderer)', () => {
   it('strips redundant ARIA role — server HTML agrees with what client hydration would produce', async () => {
     // nav has implicit role="navigation"; passing it explicitly is redundant.
     // The engine must strip it on the server so the attribute set matches client hydration.
-    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({
+      tag: 'nav',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const html = await ssr(Nav, { role: 'navigation' })
     expect(html).toContain('<nav')
     expect(html).not.toContain('role=')
@@ -45,7 +52,10 @@ describe('createContractComponent — SSR (@vue/server-renderer)', () => {
 
   it('strips invalid aria-* attribute — server HTML agrees with what client hydration would produce', async () => {
     // aria-checked is not valid on the implicit button role.
-    const Button = createContractComponent({ tag: 'button', enforcement: { strict: false } })
+    const Button = createContractComponent({
+      tag: 'button',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     expect(await ssr(Button, { 'aria-checked': 'true' })).not.toContain('aria-checked')
   })
 
@@ -56,20 +66,26 @@ describe('createContractComponent — SSR (@vue/server-renderer)', () => {
         variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
         defaults: { size: 'lg' },
       },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
     expect(await ssr(Box)).toContain('text-lg')
   })
 
   it('as prop overrides the default tag in server-rendered HTML', async () => {
-    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({
+      tag: 'nav',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const html = await ssr(Nav, { as: 'section' })
     expect(html).toContain('<section')
     expect(html).not.toContain('<nav')
   })
 
   it('asChild renders child element type, not the default tag', async () => {
-    const Nav = createContractComponent({ tag: 'nav', enforcement: { strict: false } })
+    const Nav = createContractComponent({
+      tag: 'nav',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const html = await ssr(Nav, { asChild: true }, () => h('a', { href: '#target' }, 'link'))
     expect(html).toContain('<a ')
     expect(html).toContain('href="#target"')
@@ -80,7 +96,7 @@ describe('createContractComponent — SSR (@vue/server-renderer)', () => {
     const Box = createContractComponent({
       tag: 'div',
       styling: { base: 'slot-cls' },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
     const html = await ssr(Box, { asChild: true }, () => h('span', { class: 'child-cls' }))
     expect(html).toContain('slot-cls')

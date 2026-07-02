@@ -1,6 +1,6 @@
 export { Slot } from './Slot'
 export { Slottable } from './Slottable'
-export { SlotValidator } from './slot-validator'
+export { SlotValidator } from '@praxis-kit/adapter-utils'
 export { isSlottableElement } from './predicates'
 export { SLOT_NAME } from './constants'
 export type { SlottableProps } from './Slottable'

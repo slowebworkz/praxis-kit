@@ -4,7 +4,13 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./types": "./src/types/index.ts",
+    "./types/primitives": "./src/types/primitives/index.ts",
+    "./guards/children": "./src/guards/children/index.ts",
+    "./guards/aria": "./src/guards/aria/index.ts",
+    "./constants/aria": "./src/constants/aria/index.ts",
+    "./constants/primitive": "./src/constants/primitive/index.ts"
   },
   "sideEffects": false,
   "description": "Render primitive: tag resolution, prop merge, slot protocol",

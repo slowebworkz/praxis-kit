@@ -1,5 +1,6 @@
 import type { AnyRecord, ElementType } from '@praxis-kit/core'
 import { applyFilter } from '@praxis-kit/adapter-utils'
+import { iterate } from '@praxis-kit/primitive'
 import type { LooseBundle, UnknownProps, WebContractComponent } from './types/index'
 
 type RegistryEntry = { bundle: LooseBundle }
@@ -17,16 +18,14 @@ function escapeAttr(value: string): string {
 
 function buildAttrString(attributes: AnyRecord): string {
   const parts: string[] = []
-  for (const key in attributes) {
-    if (!Object.hasOwn(attributes, key)) continue
-    const value = attributes[key]
-    if (value === false || value === null || value === undefined) continue
+  iterate.forEachEntry(attributes, (key, value) => {
+    if (value === false || value === null || value === undefined) return
     if (value === true) {
       parts.push(key)
     } else {
       parts.push(`${key}="${escapeAttr(String(value))}"`)
     }
-  }
+  })
   return parts.length > 0 ? ' ' + parts.join(' ') : ''
 }
 

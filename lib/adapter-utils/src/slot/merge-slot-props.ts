@@ -1,16 +1,16 @@
-import { isFunction } from '@praxis-kit/shared/guards/foundational'
-import { EVENT_HANDLER_RE } from '@praxis-kit/shared/constants/primitive'
-import { policyHandlers } from './policies'
+import type { AnyRecord } from '@praxis-kit/pipeline'
+import { iterate, EVENT_HANDLER_RE, isFunction } from '@praxis-kit/primitive'
 import type { PropMergePolicy } from './policies'
+import { policyHandlers } from './policies'
 
-type UnknownProps = Record<string, unknown>
+type UnknownProps = AnyRecord
 
 export function mergeSlotProps(slotProps: UnknownProps, childProps: UnknownProps): UnknownProps {
   const merged: UnknownProps = { ...slotProps }
-  for (const key in childProps) {
-    if (!Object.hasOwn(childProps, key)) continue
+  iterate.forEachKey(childProps, (key) => {
+    if (!Object.hasOwn(childProps, key)) return
     merged[key] = applyMergePolicy(key, slotProps[key], childProps[key])
-  }
+  })
   return merged
 }
 

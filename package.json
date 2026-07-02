@@ -15,14 +15,14 @@
     "bench": "pnpm --filter @praxis-kit/bench bench",
     "bench:render": "pnpm --filter @praxis-kit/bench bench:render",
     "check": "pnpm lint:check && pnpm typecheck && pnpm test",
-    "lint": "eslint . --fix",
-    "lint:check": "eslint .",
+    "lint": "NODE_OPTIONS=--max-old-space-size=8192 eslint . --fix",
+    "lint:check": "NODE_OPTIONS=--max-old-space-size=8192 eslint .",
     "lint:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' | xargs eslint --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "format:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.md' | xargs prettier --write",
     "clean": "rm -rf node_modules packages/**/node_modules packages/**/dist",
-    "prepare": "husky",
+    "prepare": "husky && pnpm --filter @praxis-kit/ts-plugin build",
     "repo-state": "node --experimental-strip-types scripts/generate-repo-state.ts",
     "arch:validate": "depcruise --config .dependency-cruiser.cjs lib packages",
     "analyze:deps": "depcruise --config .dependency-cruiser.cjs lib packages",
@@ -60,7 +60,7 @@
   },
   "packageManager": "pnpm@11.0.4",
   "engines": {
-    "node": ">=24"
+    "node": ">=22"
   },
   "author": "K Huehn <slowebworkz@gmail.com>"
 }

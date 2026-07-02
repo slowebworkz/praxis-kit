@@ -9,6 +9,7 @@
 import { describe, it, expect } from 'vitest'
 import { ssrConformanceSuite } from '@praxis-kit/adapter-utils/testing'
 import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from './create-contract-component'
 import { renderToString } from './render-to-string'
 
@@ -27,13 +28,19 @@ ssrConformanceSuite({
 
 describe('renderToString — Lit-specific', () => {
   it('renders self-closing element when children is empty', () => {
-    const Box = createContractComponent({ tag: 'div', enforcement: { strict: false } })
+    const Box = createContractComponent({
+      tag: 'div',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const html = renderToString(Box)
     expect(html).toBe('<div></div>')
   })
 
   it('includes children in output', () => {
-    const Box = createContractComponent({ tag: 'div', enforcement: { strict: false } })
+    const Box = createContractComponent({
+      tag: 'div',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const html = renderToString(Box, {}, '<span>hello</span>')
     expect(html).toContain('<span>hello</span>')
   })
@@ -45,14 +52,20 @@ describe('renderToString — Lit-specific', () => {
   })
 
   it('escapes double quotes in attribute values', () => {
-    const Box = createContractComponent({ tag: 'div', enforcement: { strict: false } })
+    const Box = createContractComponent({
+      tag: 'div',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const html = renderToString(Box, { 'aria-label': 'Say "hello"' })
     expect(html).toContain('&quot;hello&quot;')
     expect(html).not.toContain('"hello"')
   })
 
   it('omits class attribute when no classes resolve', () => {
-    const Box = createContractComponent({ tag: 'div', enforcement: { strict: false } })
+    const Box = createContractComponent({
+      tag: 'div',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const html = renderToString(Box)
     expect(html).not.toContain('class=')
   })
@@ -61,7 +74,7 @@ describe('renderToString — Lit-specific', () => {
     const Box = createContractComponent({
       tag: 'div',
       styling: { base: 'base' },
-      enforcement: { strict: false },
+      enforcement: { diagnostics: silentDiagnostics },
     })
     expect(renderToString(Box, { class: 'extra' })).toContain('extra')
     expect(renderToString(Box, { className: 'extra' })).toContain('extra')

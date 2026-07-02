@@ -1,0 +1,12 @@
+{
+  "mustInclude": ["lib/pipeline/src"],
+  "mustExclude": [
+    "runtime/core/src/compiler",
+    "adapters/react/src",
+    "adapters/vue/src",
+    "adapters/solid/src",
+    "adapters/preact/src",
+    "lib/styling/src/variant-pass",
+    "lib/tailwind/src"
+  ]
+}

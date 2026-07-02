@@ -2,6 +2,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { render, cleanup } from '@testing-library/svelte'
 import { createRawSnippet } from 'svelte'
+import { silentDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
 import Polymorphic from './Polymorphic.svelte'
 import { createContractComponent } from './create-contract-component'
 
@@ -42,7 +43,10 @@ describe('Polymorphic (Svelte adapter)', () => {
   })
 
   it('strips redundant ARIA role from intrinsic element', () => {
-    const bundle = createContractComponent({ tag: 'button', enforcement: { strict: false } })
+    const bundle = createContractComponent({
+      tag: 'button',
+      enforcement: { diagnostics: silentDiagnostics },
+    })
     const { container } = render(Polymorphic, { bundle, role: 'button' })
     expect(container.querySelector('button')?.getAttribute('role')).toBeNull()
   })
@@ -106,7 +110,10 @@ describe('Polymorphic (Svelte adapter)', () => {
     })
 
     it('throws when as and asChild are both set (strict: throw)', () => {
-      const bundle = createContractComponent({ tag: 'div', enforcement: { strict: 'throw' } })
+      const bundle = createContractComponent({
+        tag: 'div',
+        enforcement: { diagnostics: throwDiagnostics },
+      })
       const children = createRawSnippet<[Record<string, unknown>]>(() => ({
         render: () => '<a>link</a>',
       }))

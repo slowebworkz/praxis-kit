@@ -1,0 +1,55 @@
+{
+  "name": "@praxis-kit/diagnostics",
+  "version": "0.8.0-beta.4",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint . --fix --config eslint.config.ts",
+    "lint:check": "eslint . --config eslint.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "@praxis-kit/pipeline": "workspace:*",
+    "type-fest": "catalog:"
+  },
+  "devDependencies": {
+    "tsup": "catalog:",
+    "vitest": "catalog:"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-kit.git",
+    "directory": "packages/diagnostics"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/packages/diagnostics#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-kit/issues"
+  },
+  "license": "MIT",
+  "author": "K Huehn <slowebworkz@gmail.com>",
+  "description": "Diagnostic policy engine for Praxis Kit — severity, codes, reporters, and structured error collection",
+  "keywords": [
+    "praxis-kit",
+    "diagnostics",
+    "policy",
+    "reporter",
+    "accessibility",
+    "typescript",
+    "framework-agnostic"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

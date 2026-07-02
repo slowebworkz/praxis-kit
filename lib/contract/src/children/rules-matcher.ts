@@ -1,5 +1,5 @@
 import type { MatchMatrix, NormalizedChildRule } from '../types'
-import { isObject } from '@praxis-kit/primitive'
+import { isObject, iterate } from '@praxis-kit/primitive'
 
 /** Reads child.type without assuming a framework — works for React elements and Vue vnodes. */
 function getChildType(child: unknown): unknown | undefined {
@@ -28,8 +28,8 @@ function buildPartialIndex(rules: NormalizedChildRule[]): PartialIndex {
   const duplicateTypes = new Set<unknown>()
   const untypedIndices: number[] = []
 
-  for (let ri = 0; ri < rules.length; ri++) {
-    const t = rules[ri]!.type
+  iterate.forEach(rules, (rule, ri) => {
+    const t = rule!.type
     if (t === undefined) {
       untypedIndices.push(ri)
     } else if (typeIndex.has(t)) {
@@ -37,14 +37,16 @@ function buildPartialIndex(rules: NormalizedChildRule[]): PartialIndex {
     } else {
       typeIndex.set(t, ri)
     }
-  }
+  })
 
   // Demote duplicate-type rules: remove from index, add to linear path.
   if (duplicateTypes.size > 0) {
-    for (const t of duplicateTypes) typeIndex.delete(t)
-    for (let ri = 0; ri < rules.length; ri++) {
-      if (duplicateTypes.has(rules[ri]!.type)) untypedIndices.push(ri)
-    }
+    iterate.forEachSet(duplicateTypes, (t) => {
+      typeIndex.delete(t)
+    })
+    iterate.forEach(rules, (rule, ri) => {
+      if (duplicateTypes.has(rule!.type)) untypedIndices.push(ri)
+    })
   }
 
   return { typeIndex, untypedIndices }
@@ -78,11 +80,11 @@ export class RuleMatcher {
     const unexpectedIndices = new Set<number>()
     const ambiguousIndices = new Set<number>()
 
-    for (let ri = 0; ri < this.#rules.length; ri++) {
+    iterate.forEach(this.#rules, (_, ri) => {
       reverse.set(ri, new Set())
-    }
+    })
 
-    for (const [ci, child] of children.entries()) {
+    iterate.forEach(children, (child, ci) => {
       // Phase 1 — O(1): type dispatch for indexed rules.
       const t = getChildType(child)
       if (t !== undefined) {
@@ -99,8 +101,8 @@ export class RuleMatcher {
       }
 
       // Phase 2 — O(m_untyped): linear scan for predicate-only and demoted rules.
-      for (const ri of this.#untypedIndices) {
-        if (!this.#rules[ri]!.match(child)) continue
+      iterate.forEach(this.#untypedIndices, (ri) => {
+        if (!this.#rules[ri]!.match(child)) return
         let childEntry = forward.get(ci)
         if (!childEntry) {
           childEntry = new Set()
@@ -108,7 +110,7 @@ export class RuleMatcher {
         }
         childEntry.add(ri)
         reverse.get(ri)!.add(ci)
-      }
+      })
 
       // Classify inline — eliminates the need for a second children traversal.
       const entry = forward.get(ci)
@@ -117,7 +119,7 @@ export class RuleMatcher {
       } else if (entry.size > 1) {
         ambiguousIndices.add(ci)
       }
-    }
+    })
 
     return { matrix: { childToRules: { forward, reverse } }, unexpectedIndices, ambiguousIndices }
   }

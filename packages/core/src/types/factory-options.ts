@@ -5,4 +5,4 @@ export type {
   NormalizeFn,
   PropNormalizer,
   StylingOptions,
-} from '@praxis-kit/shared/types'
+} from '@praxis-kit/primitive/types'

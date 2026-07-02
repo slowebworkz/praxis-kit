@@ -1,0 +1,57 @@
+{
+  "name": "@praxis-kit/ts-plugin",
+  "version": "0.8.0-beta.4",
+  "private": true,
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0"
+  },
+  "devDependencies": {
+    "tsup": "catalog:",
+    "typescript": "catalog:"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-kit.git",
+    "directory": "packages/ts-plugin"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/packages/ts-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-kit/issues"
+  },
+  "license": "MIT",
+  "author": "K Huehn <slowebworkz@gmail.com>",
+  "description": "TypeScript language service plugin providing inline Praxis Kit diagnostics in your editor",
+  "keywords": [
+    "praxis-kit",
+    "polymorphic",
+    "ui",
+    "components",
+    "accessibility",
+    "aria",
+    "typescript",
+    "framework-agnostic",
+    "contract",
+    "variants",
+    "typescript",
+    "ts-plugin",
+    "language-service",
+    "diagnostics"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  }
+}

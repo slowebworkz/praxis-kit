@@ -136,8 +136,12 @@ module.exports = {
     {
       name: 'no-circular',
       severity: 'error',
+      comment:
+        'type-only cycles (import type / export type) are erased at compile time and carry ' +
+        'no runtime risk — e.g. recursive tree ADTs like TreeNode. Only flag cycles where ' +
+        'every edge in the loop is a real (value) import.',
       from: {},
-      to: { circular: true },
+      to: { circular: true, viaOnly: { dependencyTypesNot: ['type-only'] } },
     },
 
     // ── orphans ───────────────────────────────────────────────────────────
