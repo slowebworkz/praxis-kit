@@ -12,8 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@pk2/core": "workspace:*",
-    "@pk2/pipeline": "workspace:*",
+    "@praxis-kit/runtime": "workspace:*",
+    "@praxis-kit/pipeline": "workspace:*",
     "@praxis-kit/adapter-utils": "workspace:*",
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/preact": "workspace:*",

@@ -1,4 +1,4 @@
-import type { MergeStrategy } from '@pk2/pipeline'
+import type { MergeStrategy } from '@praxis-kit/pipeline'
 import type { ComponentContext } from './types'
 
 function mergeRecord<T extends object>(previous: T, incoming?: Partial<T>): T {

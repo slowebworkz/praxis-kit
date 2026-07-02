@@ -124,6 +124,7 @@
   "devDependencies": {
     "@praxis-kit/adapter-utils": "workspace:*",
     "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
     "@sveltejs/vite-plugin-svelte": "catalog:",
     "@types/node": "catalog:",

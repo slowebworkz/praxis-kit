@@ -1,4 +1,4 @@
-import type { Diagnostic, NodeId, SlotName } from '@pk2/pipeline'
+import type { Diagnostic, NodeId, SlotName } from '@praxis-kit/pipeline'
 import type { TreeNode } from './tree-node'
 
 export interface TreeContext {

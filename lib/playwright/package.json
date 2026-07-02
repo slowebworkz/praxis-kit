@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "catalog:",
-    "@pk2/pipeline": "workspace:*",
+    "@praxis-kit/pipeline": "workspace:*",
     "@playwright/test": "catalog:",
     "@types/node": "catalog:",
     "typescript": "catalog:"

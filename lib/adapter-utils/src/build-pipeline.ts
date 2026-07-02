@@ -1,5 +1,5 @@
-import type { NodeDecoration } from '@pk2/core'
-import type { NodeId } from '@pk2/pipeline'
+import type { NodeDecoration } from '@praxis-kit/runtime'
+import type { NodeId } from '@praxis-kit/pipeline'
 import type { CompoundRecord, Defaults, PresetRecord, VariantRecord } from './build-variant-config'
 import { buildVariantConfig } from './build-variant-config'
 import type { ClassResolution } from './resolve-classes'

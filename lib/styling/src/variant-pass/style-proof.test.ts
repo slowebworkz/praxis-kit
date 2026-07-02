@@ -1,4 +1,4 @@
-import type { MergeStrategy, Pass } from '@pk2/pipeline'
+import type { MergeStrategy, Pass } from '@praxis-kit/pipeline'
 import { describe, expect, it } from 'vitest'
 import { basePass, focusPass, hoverPass, styleMergeStrategy } from './index'
 import type { StyleContext } from './types'

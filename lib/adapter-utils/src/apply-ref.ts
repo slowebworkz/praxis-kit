@@ -1,5 +1,5 @@
-import type { NodeId } from '@pk2/pipeline'
-import type { NodeDecoration } from '@pk2/core'
+import type { NodeId } from '@praxis-kit/pipeline'
+import type { NodeDecoration } from '@praxis-kit/runtime'
 
 export function applyRef(
   decoration: Record<NodeId, NodeDecoration>,

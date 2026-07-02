@@ -1,4 +1,4 @@
-import type { NodeDecoration } from '@pk2/core'
+import type { NodeDecoration } from '@praxis-kit/runtime'
 
 export function withAttributes(
   dec: NodeDecoration,

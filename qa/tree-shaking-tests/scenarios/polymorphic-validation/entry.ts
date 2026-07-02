@@ -1,6 +1,10 @@
 /**
  * Claim: a component with children enforcement retains ChildrenEvaluator.
  * No Tailwind pipeline, no other framework adapter should appear.
+ *
+ * Known limitation (not asserted here): `lib/styling/src/variant-pass` is
+ * still bundled even though this component declares no `styling` option —
+ * see minimal-polymorphic/entry.ts for details.
  */
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'

@@ -31,6 +31,7 @@
   "devDependencies": {
     "@praxis-kit/primitive": "workspace:*",
     "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
     "@solidjs/testing-library": "catalog:",
     "jsdom": "catalog:",
     "solid-js": "catalog:",

@@ -1,6 +1,6 @@
-import type { Pass } from '@pk2/pipeline'
-import type { VariantConfig } from '@pk2/style'
-import { compileVariantLookup } from '@pk2/style'
+import type { Pass } from '@praxis-kit/pipeline'
+import type { VariantConfig } from '@praxis-kit/styling'
+import { compileVariantLookup } from '@praxis-kit/styling'
 import type { CompilerContext } from './types'
 
 /**

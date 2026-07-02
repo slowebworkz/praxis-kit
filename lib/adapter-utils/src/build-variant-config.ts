@@ -1,5 +1,5 @@
-import type { StringMap } from '@pk2/pipeline'
-import type { CompoundVariant, VariantConfig } from '@pk2/style'
+import type { StringMap } from '@praxis-kit/pipeline'
+import type { CompoundVariant, VariantConfig } from '@praxis-kit/styling'
 import type { ClassName } from '@praxis-kit/core'
 import { iterate } from '@praxis-kit/primitive'
 

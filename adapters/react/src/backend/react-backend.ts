@@ -1,5 +1,5 @@
 import React from 'react'
-import type { Backend, RenderContext, RuntimeContext, TreeNode } from '@pk2/core'
+import type { Backend, RenderContext, RuntimeContext, TreeNode } from '@praxis-kit/runtime'
 import { buildPropsFromDecoration } from './build-props'
 
 function renderNode(node: TreeNode, render: RenderContext): React.ReactElement {

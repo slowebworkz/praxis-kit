@@ -1,4 +1,4 @@
-import type { MergeStrategy } from '@pk2/pipeline'
+import type { MergeStrategy } from '@praxis-kit/pipeline'
 import type { StyleContext } from './types'
 
 export const styleMergeStrategy: MergeStrategy<StyleContext> = {

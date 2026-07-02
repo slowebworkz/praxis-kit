@@ -1,6 +1,10 @@
 import { defineConfig } from 'tsup'
 
-const adapterNoExternal = ['@praxis-kit/adapter-utils', '@praxis-kit/core']
+const adapterNoExternal = [
+  '@praxis-kit/adapter-utils',
+  '@praxis-kit/core',
+  '@praxis-kit/diagnostics',
+]
 
 const sharedAlias = {
   '@praxis-kit/primitive': '../../lib/primitive/src',

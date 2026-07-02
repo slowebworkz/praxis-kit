@@ -28,10 +28,10 @@ import { makeRenderAsChild, SlotValidator } from '../shared/slot'
 import { cloneSlotChild } from './slot/cloneSlotChild'
 import { normalizeChildren } from './normalize-children'
 
-import type { NodeDecoration } from '@pk2/core'
-import { applyAttributes } from '@pk2/core'
-import type { NodeId } from '@pk2/pipeline'
-import { extractDecoration } from '@pk2/react'
+import type { NodeDecoration } from '@praxis-kit/runtime'
+import { applyAttributes } from '@praxis-kit/runtime'
+import type { NodeId } from '@praxis-kit/pipeline'
+import { extractDecoration } from '../backend/extract-decoration'
 
 import type {
   CompoundRecord,

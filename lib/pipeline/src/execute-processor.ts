@@ -1,4 +1,4 @@
-import type { MergeStrategy } from '@pk2/pipeline'
+import type { MergeStrategy } from '@praxis-kit/pipeline'
 import { isPass } from './is-pass'
 import type { Processor } from './types'
 

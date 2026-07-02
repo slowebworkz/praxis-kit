@@ -1,4 +1,4 @@
-import type { Pass, Plugin } from '@pk2/pipeline'
+import type { Pass, Plugin } from '@praxis-kit/pipeline'
 import type { CompilerContext } from './types'
 import { describe, expect, it } from 'vitest'
 import { compileComponent } from './compile-component'

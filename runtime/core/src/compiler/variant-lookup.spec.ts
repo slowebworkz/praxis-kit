@@ -1,4 +1,4 @@
-import type { Pass } from '@pk2/pipeline'
+import type { Pass } from '@praxis-kit/pipeline'
 import type { CompilerContext } from './types'
 import { describe, expect, it } from 'vitest'
 import { compileComponent } from './compile-component'
@@ -131,7 +131,7 @@ describe('variantLookupPass', () => {
 // ─── buildPrecomputedKey ─────────────────────────────────────────────────────
 
 describe('buildPrecomputedKey', async () => {
-  const { buildPrecomputedKey } = await import('@pk2/style')
+  const { buildPrecomputedKey } = await import('@praxis-kit/styling')
 
   it('returns empty string for empty props', () => {
     expect(buildPrecomputedKey({})).toBe('')

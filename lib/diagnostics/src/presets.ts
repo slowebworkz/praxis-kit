@@ -6,6 +6,7 @@ import { ConsoleReporter } from './console-reporter'
 import { Severity } from './severity'
 import type { DiagnosticPolicy } from './policy'
 import type { Diagnostic } from './diagnostic'
+import { formatDiagnostic } from './formatter'
 
 const ignoreAllPolicy: DiagnosticPolicy = {
   resolve(_: Diagnostic) {
@@ -13,10 +14,16 @@ const ignoreAllPolicy: DiagnosticPolicy = {
   },
 }
 
+const warnOnlyReporter = {
+  report(diagnostic: Diagnostic): void {
+    console.warn(formatDiagnostic(diagnostic))
+  },
+}
+
 export const silentDiagnostics = new Diagnostics(nullReporter, ignoreAllPolicy)
 
 export const warnDiagnostics = new Diagnostics(
-  new ConsoleReporter(),
+  warnOnlyReporter,
   new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
 )
 

@@ -1,5 +1,5 @@
-import type { CapabilityMap, Diagnostic, SlotName, VariantMap } from '@pk2/pipeline'
-import type { ComponentDefinition } from '@pk2/core'
+import type { CapabilityMap, Diagnostic, SlotName, VariantMap } from '@praxis-kit/pipeline'
+import type { ComponentDefinition } from '@praxis-kit/runtime'
 
 export interface SourceLocation {
   file: string

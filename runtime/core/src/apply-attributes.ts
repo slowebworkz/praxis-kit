@@ -1,4 +1,4 @@
-import type { NodeId } from '@pk2/pipeline'
+import type { NodeId } from '@praxis-kit/pipeline'
 import type { AttributeMap, NodeDecoration } from './types'
 import { iterate } from '@praxis-kit/primitive'
 

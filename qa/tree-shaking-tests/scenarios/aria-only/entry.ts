@@ -1,6 +1,10 @@
 /**
  * Claim: a component with ARIA enforcement retains AriaPolicyEngine.
  * No Tailwind pipeline, no other framework adapter should appear.
+ *
+ * Known limitation (not asserted here): `lib/styling/src/variant-pass` is
+ * still bundled even though this component declares no `styling` option —
+ * see minimal-polymorphic/entry.ts for details.
  */
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from '@praxis-kit/react'

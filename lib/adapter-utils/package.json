@@ -17,11 +17,11 @@
   },
   "dependencies": {
     "@praxis-kit/primitive": "workspace:*",
-    "@praxis-kit/primitive": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/core": "workspace:*",
-    "@pk2/core": "workspace:*",
-    "@pk2/pipeline": "workspace:*",
-    "@pk2/style": "workspace:*",
+    "@praxis-kit/runtime": "workspace:*",
+    "@praxis-kit/pipeline": "workspace:*",
+    "@praxis-kit/styling": "workspace:*",
     "clsx": "catalog:",
     "type-fest": "catalog:"
   },

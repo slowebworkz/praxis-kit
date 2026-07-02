@@ -1,6 +1,6 @@
 import { Fragment, h } from 'preact'
 import type { VNode } from 'preact'
-import type { Backend, RenderContext, RuntimeContext, TreeNode } from '@pk2/core'
+import type { Backend, RenderContext, RuntimeContext, TreeNode } from '@praxis-kit/runtime'
 import { buildPropsFromDecoration } from './build-props'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

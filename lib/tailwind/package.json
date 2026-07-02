@@ -28,7 +28,6 @@
     "tsup": "catalog:",
     "vitest": "catalog:",
     "@praxis-kit/core": "workspace:*",
-    "@praxis-kit/primitive": "workspace:*",
     "@praxis-kit/primitive": "workspace:*"
   },
   "repository": {

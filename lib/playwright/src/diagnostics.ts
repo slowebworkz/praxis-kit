@@ -1,4 +1,4 @@
-import type { Diagnostic } from '@pk2/pipeline'
+import type { Diagnostic } from '@praxis-kit/pipeline'
 
 export type { Diagnostic }
 

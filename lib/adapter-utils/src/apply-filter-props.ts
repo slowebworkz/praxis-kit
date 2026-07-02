@@ -1,5 +1,5 @@
-import type { NodeId } from '@pk2/pipeline'
-import type { NodeDecoration } from '@pk2/core'
+import type { NodeId } from '@praxis-kit/pipeline'
+import type { NodeDecoration } from '@praxis-kit/runtime'
 import type { FilterPredicate } from './types'
 import { withAttributes } from './decoration-utils'
 

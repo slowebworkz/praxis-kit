@@ -13,7 +13,7 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { AnyRecord } from '@pk2/pipeline'
+import type { AnyRecord } from '@praxis-kit/pipeline'
 
 const pkg = dirname(fileURLToPath(import.meta.url))
 const distDir = join(pkg, '../dist')

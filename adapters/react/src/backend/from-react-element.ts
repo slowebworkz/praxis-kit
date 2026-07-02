@@ -1,7 +1,7 @@
 import { Children, isValidElement } from 'react'
 import type { ReactElement, ReactNode } from 'react'
-import type { NodeId, SlotName } from '@pk2/pipeline'
-import type { NodeDecoration, NodeInput } from '@pk2/core'
+import type { NodeId, SlotName } from '@praxis-kit/pipeline'
+import type { NodeDecoration, NodeInput } from '@praxis-kit/runtime'
 import { extractDecoration } from './extract-decoration'
 
 export interface AccumulatedTree {

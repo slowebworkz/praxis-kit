@@ -21,8 +21,8 @@ describe('enforceAllowedAs()', () => {
     spy.mockRestore()
   })
 
-  it('reports to console.error when warnDiagnostics and tag not allowed', () => {
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+  it('reports to console.warn when warnDiagnostics and tag not allowed', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     enforceAllowedAs('div', ['article', 'section'], warnDiagnostics)
     expect(spy).toHaveBeenCalledOnce()
     expect(spy.mock.calls[0]![0]).toContain('"div"')
@@ -35,7 +35,7 @@ describe('enforceAllowedAs()', () => {
   })
 
   it('includes displayName in message when provided', () => {
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     enforceAllowedAs('div', ['article'], warnDiagnostics, 'Heading')
     expect(spy.mock.calls[0]![0]).toContain('<Heading>')
     spy.mockRestore()

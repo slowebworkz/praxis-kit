@@ -1,4 +1,4 @@
-import type { Pass, PipelineNode } from '@pk2/pipeline'
+import type { Pass, PipelineNode } from '@praxis-kit/pipeline'
 import type { CompilerContext } from './types'
 
 export const completeIdentityPass: Pass<CompilerContext> = {
