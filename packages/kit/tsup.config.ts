@@ -1,4 +1,6 @@
+import { resolve as resolvePath } from 'node:path'
 import { defineConfig } from 'tsup'
+import rootPaths from '../../tsconfig.paths.json'
 
 const adapterNoExternal = [
   '@praxis-kit/adapter-utils',
@@ -10,6 +12,31 @@ const sharedAlias = {
   '@praxis-kit/primitive': '../../lib/primitive/src',
 }
 
+// noExternal only bundles JS; the dts build must separately resolve internal
+// workspace packages or the emitted .d.ts re-exports unpublished package names.
+// tsup overrides baseUrl with "." (resolved against packages/kit), which breaks
+// the workspace paths inherited from the root tsconfig — so the mappings must be
+// passed here explicitly, with absolute values.
+const ROOT = resolvePath(__dirname, '../..')
+
+const dtsPaths: Record<string, string[]> = Object.fromEntries(
+  Object.entries(rootPaths.compilerOptions.paths).map(([key, values]) => [
+    key,
+    values.map((rel) => resolvePath(ROOT, rel)),
+  ]),
+)
+// In the type closure but missing from the root paths file
+dtsPaths['@praxis-kit/runtime'] = [resolvePath(ROOT, 'runtime/core/src/index.ts')]
+dtsPaths['@praxis-kit/runtime/*'] = [resolvePath(ROOT, 'runtime/core/src/*')]
+dtsPaths['@praxis-kit/pipeline'] = [resolvePath(ROOT, 'lib/pipeline/src/index.ts')]
+dtsPaths['@praxis-kit/pipeline/*'] = [resolvePath(ROOT, 'lib/pipeline/src/*')]
+
+// Fresh object per config — tsup mutates the dts options it receives.
+const bundledDts = () => ({
+  resolve: [/^@praxis-kit\//],
+  compilerOptions: { baseUrl: ROOT, paths: dtsPaths },
+})
+
 export default [
   // React — current (index) + legacy entry
   defineConfig({
@@ -18,7 +45,7 @@ export default [
       'react/legacy': '../../adapters/react/src/legacy/index.ts',
     },
     format: ['esm'],
-    dts: true,
+    dts: bundledDts(),
     tsconfig: 'tsconfig.build-react.json',
     noExternal: adapterNoExternal,
     esbuildOptions(options) {
@@ -35,7 +62,7 @@ export default [
   defineConfig({
     entry: { 'preact/index': '../../adapters/preact/src/index.ts' },
     format: ['esm'],
-    dts: true,
+    dts: bundledDts(),
     tsconfig: 'tsconfig.build-preact.json',
     noExternal: adapterNoExternal,
     esbuildOptions(options) {
@@ -47,7 +74,7 @@ export default [
   defineConfig({
     entry: { 'solid/index': '../../adapters/solid/src/index.ts' },
     format: ['esm'],
-    dts: true,
+    dts: bundledDts(),
     tsconfig: 'tsconfig.build-solid.json',
     noExternal: adapterNoExternal,
     esbuildOptions(options) {
@@ -61,7 +88,7 @@ export default [
   defineConfig({
     entry: { 'svelte/index': '../../adapters/svelte/src/index.ts' },
     format: ['esm'],
-    dts: true,
+    dts: bundledDts(),
     tsconfig: 'tsconfig.build-svelte.json',
     noExternal: adapterNoExternal,
     external: ['svelte', 'svelte/*'],
@@ -74,7 +101,7 @@ export default [
   defineConfig({
     entry: { 'vue/index': '../../adapters/vue/src/index.ts' },
     format: ['esm'],
-    dts: true,
+    dts: bundledDts(),
     tsconfig: 'tsconfig.build-base.json',
     noExternal: adapterNoExternal,
     esbuildOptions(options) {
@@ -86,7 +113,7 @@ export default [
   defineConfig({
     entry: { 'lit/index': '../../adapters/lit/src/index.ts' },
     format: ['esm'],
-    dts: true,
+    dts: bundledDts(),
     tsconfig: 'tsconfig.build-base.json',
     noExternal: adapterNoExternal,
     esbuildOptions(options) {
@@ -98,7 +125,7 @@ export default [
   defineConfig({
     entry: { 'web/index': '../../adapters/web/src/index.ts' },
     format: ['esm'],
-    dts: true,
+    dts: bundledDts(),
     tsconfig: 'tsconfig.build-base.json',
     noExternal: adapterNoExternal,
     esbuildOptions(options) {
@@ -110,7 +137,7 @@ export default [
   defineConfig({
     entry: { 'tailwind/index': '../../lib/tailwind/src/index.ts' },
     format: ['esm'],
-    dts: true,
+    dts: bundledDts(),
     tsconfig: '../../tsconfig.base.json',
     noExternal: [...adapterNoExternal, '@praxis-kit/primitive'],
   }),
@@ -119,7 +146,7 @@ export default [
   defineConfig({
     entry: { 'eslint/index': '../../plugins/eslint/src/index.ts' },
     format: ['esm'],
-    dts: true,
+    dts: bundledDts(),
     tsconfig: '../../tsconfig.base.json',
   }),
 
@@ -127,7 +154,7 @@ export default [
   defineConfig({
     entry: { 'ts-plugin/index': '../../plugins/typescript/src/index.ts' },
     format: ['cjs'],
-    dts: true,
+    dts: bundledDts(),
     tsconfig: 'tsconfig.build-ts-plugin.json',
     external: ['typescript'],
   }),
@@ -136,7 +163,7 @@ export default [
   defineConfig({
     entry: { 'vite-plugin/index': '../../plugins/vite/src/index.ts' },
     format: ['esm'],
-    dts: true,
+    dts: bundledDts(),
     tsconfig: '../../tsconfig.base.json',
   }),
 
@@ -144,7 +171,7 @@ export default [
   defineConfig({
     entry: { 'codemod/index': '../../tooling/codemod/src/index.ts' },
     format: ['esm'],
-    dts: true,
+    dts: bundledDts(),
     tsconfig: 'tsconfig.build-codemod.json',
     banner: { js: '#!/usr/bin/env node' },
   }),
@@ -153,7 +180,7 @@ export default [
   defineConfig({
     entry: { 'contract/index': './contract.ts' },
     format: ['esm'],
-    dts: true,
+    dts: bundledDts(),
     tsconfig: 'tsconfig.build-base.json',
     noExternal: adapterNoExternal,
     esbuildOptions(options) {
