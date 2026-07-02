@@ -278,6 +278,61 @@ describe('analyze — diagnostics emitted', () => {
     expect(result[0]!.diagnostic.message).toContain('received 2')
   })
 
+  it('treats {false} and {null} as zero children', () => {
+    const code = `
+      const Button = createPolymorphicComponent({
+        tag: 'button',
+        enforcement: { strict: 'warn', children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
+      })
+      function App() { return <Button>{false}{null}</Button> }
+    `
+    const result = analyze(code, FILE)
+    expect(result).toHaveLength(1)
+    expect(result[0]!.diagnostic.message).toContain('received 0')
+  })
+
+  it('fires when {cond && <El />} certainly misses a min:2 constraint', () => {
+    // Range [0, 1]; totalMin=2 → count.max (1) < totalMin (2) — certainly a violation.
+    const code = `
+      const Banner = createPolymorphicComponent({
+        tag: 'div',
+        enforcement: { strict: 'warn', children: [{ name: 'item', match: (c) => true, cardinality: { min: 2, max: 4 } }] },
+      })
+      function App({ show }: { show: boolean }) {
+        return <Banner>{show && <span />}</Banner>
+      }
+    `
+    const result = analyze(code, FILE)
+    expect(result).toHaveLength(1)
+    expect(result[0]!.diagnostic.message).toContain('2–4 children')
+    expect(result[0]!.diagnostic.message).toContain('received 0–1')
+  })
+
+  it('fires with a range message when a ternary always violates', () => {
+    // Both branches have 2 children; constraint is max 1.
+    const code = `
+      const Button = createPolymorphicComponent({
+        tag: 'button',
+        enforcement: { strict: 'warn', children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
+      })
+      function App({ flag }: { flag: boolean }) {
+        return (
+          <Button>
+            {flag ? (
+              <><span /><span /></>
+            ) : (
+              <><em /><em /></>
+            )}
+          </Button>
+        )
+      }
+    `
+    const result = analyze(code, FILE)
+    expect(result).toHaveLength(1)
+    expect(result[0]!.diagnostic.message).toContain('exactly 1 child')
+    expect(result[0]!.diagnostic.message).toContain('received 2')
+  })
+
   it('reports line and column position', () => {
     const code = `const Button = createPolymorphicComponent({
   tag: 'button',
