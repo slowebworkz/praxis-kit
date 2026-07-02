@@ -3,24 +3,12 @@
   "version": "0.0.0",
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./primitive": {
-      "types": "./dist/primitive.d.ts",
-      "import": "./dist/primitive.js"
-    },
-    "./contract": {
-      "types": "./dist/contract.d.ts",
-      "import": "./dist/contract.js"
-    },
-    "./styling": {
-      "types": "./dist/styling.d.ts",
-      "import": "./dist/styling.js"
-    }
+    ".": "./src/index.ts",
+    "./primitive": "./src/primitive.ts",
+    "./contract": "./src/contract.ts",
+    "./styling": "./src/styling.ts"
   },
-  "types": "./dist/index.d.ts",
+  "types": "./src/index.ts",
   "files": [
     "dist",
     "LICENSE"
