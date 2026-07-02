@@ -1,6 +1,6 @@
 {
   "name": "@praxis-kit/playwright",
-  "version": "3.2.1",
+  "version": "0.0.0",
   "type": "module",
   "description": "Playwright CT helpers for praxis-kit interaction suites — ARIA snapshot assertions, keyboard sequences, axe sweeps, and cardinality console catchers",
   "exports": {
