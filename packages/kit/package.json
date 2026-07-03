@@ -68,7 +68,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "rm -rf dist && tsup",
+    "build": "rm -rf dist && tsup && node scripts/postbuild.mjs",
     "dev": "tsup --watch",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",

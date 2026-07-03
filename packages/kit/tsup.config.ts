@@ -2,11 +2,16 @@ import { resolve as resolvePath } from 'node:path'
 import { defineConfig } from 'tsup'
 import rootPaths from '../../tsconfig.paths.json'
 
-const adapterNoExternal = [
-  '@praxis-kit/adapter-utils',
-  '@praxis-kit/core',
-  '@praxis-kit/diagnostics',
-]
+const adapterNoExternal = ['@praxis-kit/adapter-utils', '@praxis-kit/core']
+
+// Diagnostics must NOT be bundled per entry: its classes have private members,
+// so each inlined copy is nominally distinct at both the type and runtime
+// level (separate `declare class Diagnostics` per d.ts, separate class per JS
+// bundle). Instead it is built once into dist/_shared/diagnostics.* and every
+// other entry imports it externally; scripts/postbuild.mjs rewrites the bare
+// specifier to a relative path so it resolves inside the published package
+// without an exports-map entry.
+const diagnosticsExternal = ['@praxis-kit/diagnostics']
 
 const sharedAlias = {
   '@praxis-kit/primitive': '../../lib/primitive/src',
@@ -32,12 +37,31 @@ dtsPaths['@praxis-kit/pipeline'] = [resolvePath(ROOT, 'lib/pipeline/src/index.ts
 dtsPaths['@praxis-kit/pipeline/*'] = [resolvePath(ROOT, 'lib/pipeline/src/*')]
 
 // Fresh object per config — tsup mutates the dts options it receives.
+// Diagnostics is excluded from resolution so its declaration is imported from
+// the shared chunk rather than duplicated into each entry's d.ts.
 const bundledDts = () => ({
+  resolve: [/^@praxis-kit\/(?!diagnostics$)/],
+  compilerOptions: { baseUrl: ROOT, paths: dtsPaths },
+})
+
+// The shared diagnostics build is the one place that resolves everything,
+// including its own internal deps (@praxis-kit/pipeline).
+const sharedDiagnosticsDts = () => ({
   resolve: [/^@praxis-kit\//],
   compilerOptions: { baseUrl: ROOT, paths: dtsPaths },
 })
 
 export default [
+  // Shared diagnostics chunk — single runtime module + single d.ts declaration
+  // referenced by every other entry via relative specifier (see postbuild.mjs).
+  defineConfig({
+    entry: { '_shared/diagnostics': '../../lib/diagnostics/src/index.ts' },
+    format: ['esm'],
+    dts: sharedDiagnosticsDts(),
+    tsconfig: '../../tsconfig.base.json',
+    noExternal: ['@praxis-kit/pipeline'],
+  }),
+
   // React — current (index) + legacy entry
   defineConfig({
     entry: {
@@ -48,6 +72,7 @@ export default [
     dts: bundledDts(),
     tsconfig: 'tsconfig.build-react.json',
     noExternal: adapterNoExternal,
+    external: diagnosticsExternal,
     esbuildOptions(options) {
       options.alias = {
         ...options.alias,
@@ -65,6 +90,7 @@ export default [
     dts: bundledDts(),
     tsconfig: 'tsconfig.build-preact.json',
     noExternal: adapterNoExternal,
+    external: diagnosticsExternal,
     esbuildOptions(options) {
       options.alias = { ...options.alias, ...sharedAlias }
     },
@@ -77,6 +103,7 @@ export default [
     dts: bundledDts(),
     tsconfig: 'tsconfig.build-solid.json',
     noExternal: adapterNoExternal,
+    external: diagnosticsExternal,
     esbuildOptions(options) {
       options.jsx = 'automatic'
       options.jsxImportSource = 'solid-js'
@@ -91,7 +118,7 @@ export default [
     dts: bundledDts(),
     tsconfig: 'tsconfig.build-svelte.json',
     noExternal: adapterNoExternal,
-    external: ['svelte', 'svelte/*'],
+    external: ['svelte', 'svelte/*', ...diagnosticsExternal],
     esbuildOptions(options) {
       options.alias = { ...options.alias, ...sharedAlias }
     },
@@ -104,6 +131,7 @@ export default [
     dts: bundledDts(),
     tsconfig: 'tsconfig.build-base.json',
     noExternal: adapterNoExternal,
+    external: diagnosticsExternal,
     esbuildOptions(options) {
       options.alias = { ...options.alias, ...sharedAlias }
     },
@@ -116,6 +144,7 @@ export default [
     dts: bundledDts(),
     tsconfig: 'tsconfig.build-base.json',
     noExternal: adapterNoExternal,
+    external: diagnosticsExternal,
     esbuildOptions(options) {
       options.alias = { ...options.alias, ...sharedAlias }
     },
@@ -128,6 +157,7 @@ export default [
     dts: bundledDts(),
     tsconfig: 'tsconfig.build-base.json',
     noExternal: adapterNoExternal,
+    external: diagnosticsExternal,
     esbuildOptions(options) {
       options.alias = { ...options.alias, ...sharedAlias }
     },
@@ -140,6 +170,7 @@ export default [
     dts: bundledDts(),
     tsconfig: '../../tsconfig.base.json',
     noExternal: [...adapterNoExternal, '@praxis-kit/primitive'],
+    external: diagnosticsExternal,
   }),
 
   // ESLint plugin — @typescript-eslint/utils stays external (peer dep of consumers)
@@ -183,6 +214,7 @@ export default [
     dts: bundledDts(),
     tsconfig: 'tsconfig.build-base.json',
     noExternal: adapterNoExternal,
+    external: diagnosticsExternal,
     esbuildOptions(options) {
       options.alias = { ...options.alias, ...sharedAlias }
     },
