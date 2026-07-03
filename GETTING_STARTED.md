@@ -7,29 +7,22 @@ step produces something you can render before the next layer of complexity is in
 
 ## Installation
 
-Pick the adapter for your framework. Every adapter depends on `@praxis-kit/core` — add both:
+`praxis-kit` ships as a single package. Install it once, then import from the subpath for your
+framework:
 
 ```bash
-# React
-pnpm add @praxis-kit/react @praxis-kit/core
+pnpm add praxis-kit
+```
 
-# Vue 3
-pnpm add @praxis-kit/vue @praxis-kit/core
-
-# Solid
-pnpm add @praxis-kit/solid @praxis-kit/core
-
-# Preact
-pnpm add @praxis-kit/preact @praxis-kit/core
-
-# Svelte 5
-pnpm add @praxis-kit/svelte @praxis-kit/core
-
-# Lit
-pnpm add @praxis-kit/lit @praxis-kit/core
-
-# Vanilla Custom Elements (no framework)
-pnpm add @praxis-kit/web @praxis-kit/core
+```ts
+import { createContractComponent } from 'praxis-kit/react' // React 19+
+import { createContractComponent } from 'praxis-kit/react/legacy' // React 18
+import { createContractComponent } from 'praxis-kit/vue' // Vue 3
+import { createContractComponent } from 'praxis-kit/solid' // Solid
+import { createContractComponent } from 'praxis-kit/preact' // Preact
+import { createContractComponent } from 'praxis-kit/svelte' // Svelte 5
+import { createContractComponent } from 'praxis-kit/lit' // Lit
+import { createContractComponent } from 'praxis-kit/web' // Vanilla Custom Elements
 ```
 
 The rest of this guide uses the React adapter. The API is identical across frameworks; only the
@@ -42,7 +35,7 @@ import path changes.
 The minimum required option is `tag`: the HTML element to render.
 
 ```ts
-import { createContractComponent } from '@praxis-kit/react'
+import { createContractComponent } from 'praxis-kit/react'
 
 const Box = createContractComponent({ tag: 'div' })
 ```
@@ -201,7 +194,7 @@ Two strictness levels:
 
 ```tsx
 import { isValidElement } from 'react'
-import { createContractComponent } from '@praxis-kit/react'
+import { createContractComponent } from 'praxis-kit/react'
 import { CardHeader, CardBody } from './card-parts'
 
 const Card = createContractComponent({
@@ -241,26 +234,6 @@ const Card = createContractComponent({
 Use `strict: 'warn'` while developing and switch to `strict: 'throw'` for production contracts. Omit
 `enforcement` entirely to skip all validation — zero runtime cost.
 
-For standard HTML elements, `htmlContracts` from `@praxis-kit/core` provides ready-made rules so you
-don't need to write `match` predicates by hand:
-
-```ts
-import { htmlContracts } from '@praxis-kit/core'
-
-const List = createContractComponent({
-  tag: 'ul',
-  enforcement: htmlContracts.ul, // only li, script, template allowed as direct children
-})
-
-const Details = createContractComponent({
-  tag: 'details',
-  enforcement: htmlContracts.details, // summary (≤1, must be first) + any flow content
-})
-```
-
-`htmlContracts` covers `ul`, `ol`, `table`, `thead`/`tbody`/`tfoot`, `tr`, `colgroup`, `dl`,
-`select`, `optgroup`, `picture`, `figure`, `details`, and `fieldset`.
-
 ---
 
 ## Step 8 — Slot rendering with `asChild`
@@ -286,7 +259,7 @@ Use `Slottable` when the slot child wraps additional content that should receive
 children:
 
 ```tsx
-import { Slottable } from '@praxis-kit/react'
+import { Slottable } from 'praxis-kit/react'
 ;<Button asChild>
   <a href="/dashboard">
     <span aria-hidden>→</span>
@@ -329,22 +302,18 @@ Import from the `/legacy` sub-path. The API is identical — the adapter wraps i
 React 18 compatibility.
 
 ```ts
-import { createContractComponent } from '@praxis-kit/react/legacy'
+import { createContractComponent } from 'praxis-kit/react/legacy'
 ```
 
 ---
 
 ## Tailwind layout-aware classes
 
-`@praxis-kit/tailwind` provides a class pipeline plugin that filters layout utilities based on the
-active layout mode. Install separately:
-
-```bash
-pnpm add @praxis-kit/tailwind
-```
+`praxis-kit/tailwind` provides a class pipeline plugin that filters layout utilities based on the
+active layout mode — no separate install, it ships in the same package:
 
 ```ts
-import { createTailwindPipeline } from '@praxis-kit/tailwind'
+import { createTailwindPipeline } from 'praxis-kit/tailwind'
 
 const Box = createContractComponent({
   tag: 'div',
@@ -388,6 +357,8 @@ pnpm --filter @praxis-kit/example-vue dev
 pnpm --filter @praxis-kit/example-solid dev
 pnpm --filter @praxis-kit/example-preact dev
 pnpm --filter @praxis-kit/example-svelte dev
+pnpm --filter @praxis-kit/example-lit dev
+pnpm --filter @praxis-kit/example-web dev
 ```
 
 ---
