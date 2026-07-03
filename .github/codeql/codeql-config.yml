@@ -1,0 +1,23 @@
+name: Praxis Kit CodeQL Configuration
+
+queries:
+  - uses: security-extended
+
+paths:
+  - packages
+  - adapters
+  - lib
+  - runtime
+  - plugins
+  - tooling
+  - .github/workflows
+
+paths-ignore:
+  - "**/dist/**"
+  - "**/coverage/**"
+  - "**/.turbo/**"
+  - "**/node_modules/**"
+  - "**/*.d.ts"
+  - "**/__snapshots__/**"
+  - "**/fixtures/**"
+  - "**/playwright-report/**"
