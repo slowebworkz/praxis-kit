@@ -1,5 +1,4 @@
-import type { Diagnostic } from './diagnostic'
-import type { DiagnosticReporter } from './reporter'
+import type { Diagnostic, DiagnosticReporter } from './types'
 
 export class CollectingReporter implements DiagnosticReporter {
   private readonly collected: Diagnostic[] = []

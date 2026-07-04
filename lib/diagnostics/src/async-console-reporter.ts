@@ -1,6 +1,5 @@
-import type { Diagnostic } from './diagnostic'
 import { formatDiagnostic } from './formatter'
-import type { DiagnosticReporter } from './reporter'
+import type { Diagnostic, DiagnosticReporter } from './types'
 
 export class AsyncConsoleReporter implements DiagnosticReporter {
   private readonly pending = new Set<string>()

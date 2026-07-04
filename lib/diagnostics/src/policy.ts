@@ -1,4 +1,4 @@
-import type { Diagnostic } from './diagnostic'
+import type { Diagnostic } from './types'
 import { Severity } from './severity'
 
 export enum Enforcement {

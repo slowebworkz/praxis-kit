@@ -1,5 +1,4 @@
-import type { Diagnostic } from './diagnostic'
-import type { DiagnosticReporter } from './reporter'
+import type { Diagnostic, DiagnosticReporter } from './types'
 import { formatDiagnostic } from './formatter'
 import { Severity } from './severity'
 

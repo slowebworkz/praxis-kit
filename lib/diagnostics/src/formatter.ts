@@ -1,4 +1,4 @@
-import type { Diagnostic } from './diagnostic'
+import type { Diagnostic } from './types'
 import { DiagnosticCategory } from './category'
 import { Severity } from './severity'
 
