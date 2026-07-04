@@ -111,7 +111,7 @@ const CHILD_DEEP: AnyRecord = {
 
 // ─── Element fixtures ──────────────────────────────────────────────────────────
 
-const SIMPLE_EL: ReactElement = createElement('div', CHILD_SIMPLE as Record<string, unknown>)
+const SIMPLE_EL: ReactElement = createElement('div', CHILD_SIMPLE as AnyRecord)
 const CLASS_EVENT_EL: ReactElement = createElement('button', {
   className: 'btn--base',
   onClick: noop,

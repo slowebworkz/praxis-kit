@@ -1,4 +1,5 @@
 import type { NodeId } from '@praxis-kit/pipeline'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 export type Listener = (...args: unknown[]) => void
 
@@ -8,7 +9,7 @@ export type StyleValue = string | number
 export type AttributeMap = Record<string, AttributeValue>
 export type StyleMap = Record<string, StyleValue>
 export type ListenerMap = Record<string, Listener>
-export type VariantMap = Record<string, unknown>
+export type VariantMap = AnyRecord
 
 export interface NodeDecoration {
   attributes?: AttributeMap

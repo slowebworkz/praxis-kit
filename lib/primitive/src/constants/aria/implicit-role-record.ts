@@ -1,4 +1,6 @@
-export const IMPLICIT_ROLE_RECORD = {
+import type { AriaRoleName, AriaRoleNames } from './types'
+
+export const IMPLICIT_ROLE_RECORD = Object.freeze({
   // Landmarks
   article: 'article',
   aside: 'complementary',
@@ -34,12 +36,12 @@ export const IMPLICIT_ROLE_RECORD = {
   meter: 'meter',
   output: 'status',
   progress: 'progressbar',
-} as const
+} as const satisfies Readonly<Record<string, AriaRoleName>>)
 
 // Maps input[type=...] to WAI-ARIA 1.2 role per HTML-AAM 1.0.
 // Types absent from this map (e.g. color, date, hidden, file, password) have no
 // corresponding ARIA role.
-export const INPUT_TYPE_ROLE_MAP = {
+export const INPUT_TYPE_ROLE_MAP = Object.freeze({
   checkbox: 'checkbox',
   radio: 'radio',
   range: 'slider',
@@ -53,20 +55,23 @@ export const INPUT_TYPE_ROLE_MAP = {
   submit: 'button',
   reset: 'button',
   image: 'button',
-} as const
+} as const satisfies Readonly<Record<string, AriaRoleName>>)
 
-type Tag = keyof typeof IMPLICIT_ROLE_RECORD
+export type Tag = keyof typeof IMPLICIT_ROLE_RECORD
+export type InputType = keyof typeof INPUT_TYPE_ROLE_MAP
 type ImplicitRole = (typeof IMPLICIT_ROLE_RECORD)[Tag]
 
-export const STRONG_ROLES = [
+export const STRONG_ROLES = Object.freeze([
   'main',
   'navigation',
   'complementary',
   'contentinfo',
   'banner',
-] as const satisfies readonly ImplicitRole[]
+] as const satisfies readonly ImplicitRole[])
 
-export const STANDALONE_ROLES = ['article'] as const satisfies readonly ImplicitRole[]
+export const STANDALONE_ROLES = Object.freeze([
+  'article',
+] as const satisfies readonly ImplicitRole[])
 
-export const STRONG_ROLES_SET: ReadonlySet<string> = new Set(STRONG_ROLES)
-export const STANDALONE_ROLES_SET: ReadonlySet<string> = new Set(STANDALONE_ROLES)
+export const STRONG_ROLES_SET: AriaRoleNames = new Set(STRONG_ROLES)
+export const STANDALONE_ROLES_SET: AriaRoleNames = new Set(STANDALONE_ROLES)

@@ -1,4 +1,6 @@
-export function isObject(value: unknown, excludeArrays: true): value is Record<string, unknown>
+import type { AnyRecord } from '../types/any-record'
+
+export function isObject(value: unknown, excludeArrays: true): value is AnyRecord
 export function isObject(value: unknown, excludeArrays?: false): value is object
 export function isObject(value: unknown, excludeArrays = false): boolean {
   if (value === null || typeof value !== 'object') return false

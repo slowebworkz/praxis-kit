@@ -1,8 +1,13 @@
+import type { AriaAttribute, AriaAttributeRoleMap, AriaRoleName } from './types'
+
 // WAI-ARIA 1.2 — states and properties scoped to specific roles.
 // Attributes absent from this map (and not global) are accepted unconditionally
 // because unknown aria-* attributes may be valid per a future spec revision or
 // a custom role not yet covered here.
-export const ROLE_RESTRICTED_ATTRIBUTES: ReadonlyMap<string, ReadonlySet<string>> = new Map([
+export const ROLE_RESTRICTED_ATTRIBUTES: AriaAttributeRoleMap = new Map<
+  AriaAttribute,
+  ReadonlySet<AriaRoleName>
+>([
   [
     'aria-activedescendant',
     new Set([
