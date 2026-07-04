@@ -1,3 +1,5 @@
+import { isString } from '@praxis-kit/primitive'
+
 export function getTypeName(value: unknown): string {
   if (value === null) return 'null'
   if (value === undefined) return 'undefined'
@@ -10,5 +12,5 @@ export function getTypeName(value: unknown): string {
 
   const name = (value as object).constructor?.name
 
-  return typeof name === 'string' && name !== 'Object' ? name : 'object'
+  return isString(name) && name !== 'Object' ? name : 'object'
 }
