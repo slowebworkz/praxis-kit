@@ -1,6 +1,5 @@
 import type { StyleContext } from './types'
 import { iterate } from '@praxis-kit/primitive'
-import type { AnyRecord } from '@praxis-kit/primitive'
 
 /** Flat compound variant: all keys except `class` are condition key:value pairs. */
 export type CompoundVariant = { readonly class: string | readonly string[] } & Record<
@@ -20,7 +19,10 @@ export interface VariantPass {
   execute(context: Readonly<StyleContext>): { context: { classes: string[] } }
 }
 
-export function createVariantPass(activeProps: AnyRecord, config: VariantConfig): VariantPass {
+export function createVariantPass(
+  activeProps: Record<string, unknown>,
+  config: VariantConfig,
+): VariantPass {
   return {
     name: 'variant',
     execute() {
@@ -28,7 +30,7 @@ export function createVariantPass(activeProps: AnyRecord, config: VariantConfig)
       const presetDefaults =
         preset !== undefined && config.presets?.[preset] !== undefined ? config.presets[preset] : {}
       // Merge order: factory defaults < preset values < explicitly set props
-      const resolved: AnyRecord = {
+      const resolved: Record<string, unknown> = {
         ...config.defaults,
         ...presetDefaults,
         ...activeProps,

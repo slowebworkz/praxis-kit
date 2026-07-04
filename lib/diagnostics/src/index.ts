@@ -1,23 +1,20 @@
 export { DiagnosticCategory } from './category'
 export { DiagnosticCode } from './codes'
+export type { Diagnostic } from './diagnostic'
 export { Diagnostics } from './diagnostics'
 export type { DiagnosticInput } from './diagnostics'
 export { PraxisError } from './error'
 export type { Formatter } from './formatter'
 export { formatDiagnostic } from './formatter'
+export type { SourceLocation, SourcePosition } from './location'
 export { DefaultPolicy, Enforcement } from './policy'
 export type { DefaultPolicyOptions, DiagnosticPolicy } from './policy'
+export type { DiagnosticReporter } from './reporter'
 export type { Err, Ok, Result, ValidationResult } from './result'
 export { err, ok } from './result'
 export { Severity } from './severity'
 export { isAtLeast } from './severity'
-export type {
-  Diagnostic,
-  DiagnosticReporter,
-  DiagnosticSuggestion,
-  SourceLocation,
-  SourcePosition,
-} from './types'
+export type { DiagnosticSuggestion } from './suggestion'
 export { AsyncConsoleReporter } from './async-console-reporter'
 export { CollectingReporter } from './collecting-reporter'
 export { ConsoleReporter } from './console-reporter'

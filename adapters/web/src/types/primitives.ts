@@ -1,7 +1,7 @@
 import type { AnyRecord, EmptyRecord, VariantMap } from '@praxis-kit/core'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 
-export type UnknownProps = AnyRecord
+export type UnknownProps = Record<string, unknown>
 
 /**
  * Constructor type returned by createContractComponent.

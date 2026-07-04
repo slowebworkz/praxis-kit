@@ -1,7 +1,6 @@
 import { Children, isValidElement } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import type { NodeId, SlotName } from '@praxis-kit/pipeline'
-import type { AnyRecord } from '@praxis-kit/primitive'
 import type { NodeDecoration, NodeInput } from '@praxis-kit/runtime'
 import { extractDecoration } from './extract-decoration'
 
@@ -21,11 +20,11 @@ function fromNode(
   variantKeys?: ReadonlySet<string>,
 ): NodeInput | null {
   if (!isValidElement(node)) return null
-  return fromElement(node as ReactElement<AnyRecord>, id, decoration, variantKeys)
+  return fromElement(node as ReactElement<Record<string, unknown>>, id, decoration, variantKeys)
 }
 
 function fromElement(
-  element: ReactElement<AnyRecord>,
+  element: ReactElement<Record<string, unknown>>,
   id: NodeId,
   decoration: Record<NodeId, NodeDecoration>,
   variantKeys?: ReadonlySet<string>,
@@ -56,7 +55,7 @@ export function fromChildren(
 }
 
 export function fromReactElement(
-  element: ReactElement<AnyRecord>,
+  element: ReactElement<Record<string, unknown>>,
   variantKeys?: ReadonlySet<string>,
 ): AccumulatedTree {
   const decoration: Record<NodeId, NodeDecoration> = {}

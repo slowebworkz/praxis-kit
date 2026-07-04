@@ -1,10 +1,8 @@
-import type { AriaRoleNames } from './types'
-
 // All concrete (non-abstract) WAI-ARIA 1.2 roles.
 // Abstract roles (command, composite, input, landmark, range, roletype, section,
 // sectionhead, select, structure, widget, window) are excluded — they are never
 // valid in HTML and the spec forbids their direct use.
-export const KNOWN_ARIA_ROLES = Object.freeze([
+export const KNOWN_ARIA_ROLES = [
   'alert',
   'alertdialog',
   'application',
@@ -86,8 +84,8 @@ export const KNOWN_ARIA_ROLES = Object.freeze([
   'tree',
   'treegrid',
   'treeitem',
-] as const)
+] as const
 
-export const KNOWN_ARIA_ROLES_SET: AriaRoleNames = new Set(KNOWN_ARIA_ROLES)
+export const KNOWN_ARIA_ROLES_SET: ReadonlySet<string> = new Set(KNOWN_ARIA_ROLES)
 
 export type KnownAriaRole = (typeof KNOWN_ARIA_ROLES)[number]

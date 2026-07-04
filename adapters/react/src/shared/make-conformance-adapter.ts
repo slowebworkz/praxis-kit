@@ -6,7 +6,6 @@ import type {
   ChildSpec,
 } from '@praxis-kit/adapter-utils/testing'
 import type { ComponentType, ReactNode } from 'react'
-import type { AnyRecord } from '@praxis-kit/primitive'
 import type { UnknownProps } from './types'
 
 export type ReactConformanceComponent = ComponentType<UnknownProps> & { displayName?: string }
@@ -22,7 +21,7 @@ function toReactNode(c: ChildSpec): ReactNode {
   return createElement(c.tag, (c.props ?? {}) as UnknownProps)
 }
 
-function normalizeClass<T extends AnyRecord>(props: T): T {
+function normalizeClass<T extends Record<string, unknown>>(props: T): T {
   const { class: cls, ...rest } = props
   return (cls !== undefined ? { ...rest, className: cls } : rest) as T
 }
@@ -38,7 +37,7 @@ export function makeReactConformanceAdapter(
       const wrapper = document.createElement('div')
       container.appendChild(wrapper)
       const root = createRoot(wrapper)
-      const doRender = (p: AnyRecord, ch: ChildSpec[]) => {
+      const doRender = (p: Record<string, unknown>, ch: ChildSpec[]) => {
         act(() => {
           root.render(
             createElement(component, normalizeClass(p) as UnknownProps, ...ch.map(toReactNode)),

@@ -1,4 +1,4 @@
-import type { Diagnostic } from './types'
+import type { Diagnostic } from './diagnostic'
 
 export class PraxisError extends Error {
   readonly diagnostic: Diagnostic

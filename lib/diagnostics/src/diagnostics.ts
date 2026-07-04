@@ -1,5 +1,6 @@
+import type { Diagnostic } from './diagnostic'
 import type { DiagnosticPolicy } from './policy'
-import type { Diagnostic, DiagnosticReporter } from './types'
+import type { DiagnosticReporter } from './reporter'
 import { PraxisError } from './error'
 import { DefaultPolicy, Enforcement } from './policy'
 import { Severity } from './severity'

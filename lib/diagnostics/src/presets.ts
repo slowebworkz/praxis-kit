@@ -5,7 +5,7 @@ import { nullReporter } from './null-reporter'
 import { ConsoleReporter } from './console-reporter'
 import { Severity } from './severity'
 import type { DiagnosticPolicy } from './policy'
-import type { Diagnostic } from './types'
+import type { Diagnostic } from './diagnostic'
 import { formatDiagnostic } from './formatter'
 
 const ignoreAllPolicy: DiagnosticPolicy = {

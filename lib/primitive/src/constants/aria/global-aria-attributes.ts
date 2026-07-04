@@ -1,8 +1,6 @@
-import type { AriaAttributes } from './types'
-
 // WAI-ARIA 1.2 §6.6.6 — states and properties inherited by all roles.
 // aria-dropeffect and aria-grabbed are omitted (deprecated since ARIA 1.1).
-export const GLOBAL_ARIA_ATTRIBUTES: AriaAttributes = new Set([
+export const GLOBAL_ARIA_ATTRIBUTES: ReadonlySet<string> = new Set([
   'aria-atomic',
   'aria-busy',
   'aria-controls',

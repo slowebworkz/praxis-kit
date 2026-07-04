@@ -1,6 +1,5 @@
 import { h } from 'vue'
 import type { Slots, VNode } from 'vue'
-import type { AnyRecord } from '@praxis-kit/primitive'
 import type { NodeId } from '@praxis-kit/pipeline'
 import type { ComponentDefinition, NodeDecoration } from '@praxis-kit/runtime'
 import { buildRenderContext, buildTreeContext, renderComponent } from '@praxis-kit/runtime'
@@ -16,6 +15,6 @@ export function renderNormally(
   const rendered = renderComponent(definition, treeCtx, buildRenderContext(decoration), vueBackend)
   if (slots?.default === undefined) return rendered
   // Backend produced h(tag, decorationProps) — rebuild with slot children
-  const { key: _key, ...props } = (rendered.props ?? {}) as AnyRecord
+  const { key: _key, ...props } = (rendered.props ?? {}) as Record<string, unknown>
   return h(tag, props, { default: slots.default })
 }

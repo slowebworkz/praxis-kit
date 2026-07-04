@@ -63,7 +63,8 @@ export function createContractComponent<
   Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
   TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    ClassPluginFactory<AnyRecord> | undefined,
+    | ClassPluginFactory<AnyRecord>
+    | undefined,
   TAllowed extends ElementType = ElementType,
 >(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin, TAllowed>) {
   const resolved = resolveAdapterCommonOptions(options)
@@ -73,7 +74,7 @@ export function createContractComponent<
   const artifact = options.artifact
   const definition = artifact?.definition ?? buildDefinition(displayName, defaultTag)
   const variantKeys = new Set(Object.keys(options.styling?.variants ?? {}))
-  const domDefaults = options.defaults as AnyRecord | undefined
+  const domDefaults = options.defaults as Record<string, unknown> | undefined
   const stylePipeline: StylePipeline | undefined = buildStylePipeline(
     options.styling?.variants as VariantRecord | undefined,
     options.styling?.presets as PresetRecord | undefined,
@@ -85,7 +86,9 @@ export function createContractComponent<
     options.styling?.base !== undefined ? flattenClassName(options.styling.base) : undefined
   const filterFn = options.filterProps as FilterPredicate | undefined
   const allowedAs = options.enforcement?.allowedAs as readonly ElementType[] | undefined
-  const normalizeFn = options.normalize as ((props: AnyRecord) => AnyRecord) | undefined
+  const normalizeFn = options.normalize as
+    | ((props: Record<string, unknown>) => Record<string, unknown>)
+    | undefined
   const enforcementNormalizers = options.enforcement?.props as readonly PropNormalizer[] | undefined
 
   // Wire class plugin: call the factory once at creation time
@@ -139,13 +142,15 @@ export function createContractComponent<
     if (allowedAs !== undefined) enforceAllowedAs(tag, allowedAs, resolved.diagnostics, displayName)
 
     const rawBaseProps =
-      domDefaults !== undefined ? { ...domDefaults, ...ownProps } : (ownProps as AnyRecord)
+      domDefaults !== undefined
+        ? { ...domDefaults, ...ownProps }
+        : (ownProps as Record<string, unknown>)
     const normalizedProps = applyPropNormalizers(tag, rawBaseProps, enforcementNormalizers)
     const baseProps = normalizeFn !== undefined ? normalizeFn(normalizedProps) : normalizedProps
 
     // Extract plugin-owned props before decoration so they don't leak to the DOM
     const pluginProps: AnyRecord = {}
-    const propsForExtraction: AnyRecord =
+    const propsForExtraction: Record<string, unknown> =
       pluginKeys.size > 0
         ? Object.fromEntries(
             Object.entries(baseProps).filter(([k]) => {
@@ -200,7 +205,7 @@ export function createContractComponent<
     if (typeof render === 'function')
       return renderWithCallback(
         render as RenderCallback,
-        (finalDecoration['root']?.attributes ?? {}) as AnyRecord,
+        (finalDecoration['root']?.attributes ?? {}) as Record<string, unknown>,
         className,
         ref,
       )

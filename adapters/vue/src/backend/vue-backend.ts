@@ -1,6 +1,5 @@
 import { Fragment, h } from 'vue'
 import type { VNode } from 'vue'
-import type { AnyRecord } from '@praxis-kit/primitive'
 import type {
   Backend,
   ListenerMap,
@@ -14,8 +13,8 @@ import { buildPropsFromDecoration } from './build-props'
 // Normalize multi-word camelCase handlers to all-lowercase: onKeyDown → onKeydown.
 const MULTI_WORD_EVENT_RE = /^on[A-Z][a-z]+[A-Z]/
 
-function normalizeListenerKeys(listeners: ListenerMap): AnyRecord {
-  const out: AnyRecord = {}
+function normalizeListenerKeys(listeners: ListenerMap): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
   for (const k in listeners) {
     out[MULTI_WORD_EVENT_RE.test(k) ? 'on' + k.slice(2).toLowerCase() : k] = listeners[k]
   }
@@ -33,7 +32,7 @@ function renderNode(node: TreeNode, render: RenderContext, isRoot: boolean): VNo
   const base = buildPropsFromDecoration(isRoot ? '' : node.id, decoration)
   // Override listeners with Vue-normalized keys; strip the key prop at root
   const { key: _key, ...rest } = base
-  const props: AnyRecord = {
+  const props: Record<string, unknown> = {
     ...(isRoot ? {} : { key: node.id }),
     ...rest,
     ...(decoration?.listeners !== undefined ? normalizeListenerKeys(decoration.listeners) : {}),

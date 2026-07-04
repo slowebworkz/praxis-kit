@@ -1,5 +1,4 @@
 import type { ElementType, RecipeMap, VariantMap } from '@praxis-kit/core'
-import type { AnyRecord } from '@praxis-kit/primitive'
 import {
   buildCoreRuntime,
   buildEngines,
@@ -12,7 +11,7 @@ import type { LitFactoryOptions } from './types/index'
 
 function normalizeOptions<
   TDefault extends ElementType,
-  Props extends AnyRecord,
+  Props extends Record<string, unknown>,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants>,
 >(
@@ -26,7 +25,7 @@ function normalizeOptions<
 
 export function buildRuntime<
   TDefault extends ElementType,
-  Props extends AnyRecord,
+  Props extends Record<string, unknown>,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants>,
 >(
