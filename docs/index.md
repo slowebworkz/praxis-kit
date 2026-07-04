@@ -4,15 +4,16 @@ Framework-neutral UI infrastructure with enforceable structural and accessibilit
 
 ## Contents
 
-| Document                                     | What it covers                                      |
-| -------------------------------------------- | --------------------------------------------------- |
-| [Getting started](../GETTING_STARTED.md)     | Installation, first component, quick reference      |
-| [Architecture](../ARCHITECTURE.md)           | Layer model, dependency graph, design decisions     |
-| [Examples](./examples.md)                    | Runnable examples across all adapters               |
-| [Concepts](./concepts.md)                    | Core abstractions: polymorphism, contracts, styling |
-| [Adapter authoring](../ADAPTER_AUTHORING.md) | Building a new framework adapter                    |
-| [Migration](../MIGRATING.md)                 | Breaking-change migration guide                     |
-| [Changelog](../CHANGELOG.md)                 | Release history                                     |
+| Document                                                     | What it covers                                                                   |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| [Getting started](../GETTING_STARTED.md)                     | Installation, first component, quick reference                                   |
+| [Architecture](../ARCHITECTURE.md)                           | Layer model, dependency graph, design decisions                                  |
+| [Examples](./examples.md)                                    | Runnable examples across all adapters                                            |
+| [Concepts](./concepts.md)                                    | Core abstractions: polymorphism, contracts, styling                              |
+| [Adapter authoring](../ADAPTER_AUTHORING.md)                 | Building a new framework adapter                                                 |
+| [Migration](../MIGRATING.md)                                 | Breaking-change migration guide                                                  |
+| [Changelog](../CHANGELOG.md)                                 | Release history                                                                  |
+| [4.0.3 findings](./findings-4.0.3-diagnostics-export-gap.md) | Diagnostics export gap + unfired position rule found during a downstream upgrade |
 
 ## Layer overview
 
