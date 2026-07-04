@@ -1,1 +1,1 @@
-export const SLOT_NAME = 'Slot'
+export const SLOT_NAME = 'Slot' as const
