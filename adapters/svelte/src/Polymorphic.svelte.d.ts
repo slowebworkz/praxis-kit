@@ -1,4 +1,5 @@
 import type { Component, Snippet } from 'svelte'
+import type { AnyRecord } from '@praxis-kit/primitive'
 import type { AnyBuiltRuntime } from './types/built-runtime'
 
 interface PolymorphicProps {
@@ -7,7 +8,7 @@ interface PolymorphicProps {
   asChild?: boolean
   class?: string
   recipe?: string
-  children?: Snippet | Snippet<[Record<string, unknown>]>
+  children?: Snippet | Snippet<[AnyRecord]>
   [key: string]: unknown
 }
 

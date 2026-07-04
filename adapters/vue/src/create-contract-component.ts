@@ -56,8 +56,7 @@ export function createContractComponent<
   Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
   TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+    ClassPluginFactory<AnyRecord> | undefined,
 >(options: VueFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin>) {
   const resolved = resolveAdapterCommonOptions(options)
   const displayName = resolved.name
@@ -65,7 +64,7 @@ export function createContractComponent<
 
   const definition = buildDefinition(displayName, defaultTag)
   const variantKeys = new Set(Object.keys(options.styling?.variants ?? {}))
-  const domDefaults = options.defaults as Record<string, unknown> | undefined
+  const domDefaults = options.defaults as AnyRecord | undefined
   const stylePipeline: StylePipeline | undefined = buildStylePipeline(
     options.styling?.variants as VariantRecord | undefined,
     options.styling?.presets as PresetRecord | undefined,
@@ -77,9 +76,7 @@ export function createContractComponent<
     options.styling?.base !== undefined ? flattenClassName(options.styling.base) : undefined
   const filterFn = options.filterProps as FilterPredicate | undefined
   const allowedAs = options.enforcement?.allowedAs as readonly ElementType[] | undefined
-  const normalizeFn = options.normalize as
-    | ((props: Record<string, unknown>) => Record<string, unknown>)
-    | undefined
+  const normalizeFn = options.normalize as ((props: AnyRecord) => AnyRecord) | undefined
   const enforcementNormalizers = options.enforcement?.props as readonly PropNormalizer[] | undefined
 
   const classPlugin: ClassPlugin<AnyRecord> | undefined =
@@ -128,14 +125,12 @@ export function createContractComponent<
           enforceAllowedAs(tag, allowedAs, resolved.diagnostics, displayName)
 
         const rawBaseProps =
-          domDefaults !== undefined
-            ? { ...domDefaults, ...ownProps }
-            : (ownProps as Record<string, unknown>)
+          domDefaults !== undefined ? { ...domDefaults, ...ownProps } : (ownProps as AnyRecord)
         const normalizedProps = applyPropNormalizers(tag, rawBaseProps, enforcementNormalizers)
         const baseProps = normalizeFn !== undefined ? normalizeFn(normalizedProps) : normalizedProps
 
         const pluginProps: AnyRecord = {}
-        const propsForExtraction: Record<string, unknown> =
+        const propsForExtraction: AnyRecord =
           pluginKeys.size > 0
             ? Object.fromEntries(
                 Object.entries(baseProps).filter(([k]) => {

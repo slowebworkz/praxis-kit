@@ -1,4 +1,5 @@
 import type { ESLint } from 'eslint'
+import type { AnyRecord } from '@praxis-kit/primitive'
 import {
   noDeadCompound,
   noEnforcementWithoutStrict,
@@ -42,7 +43,7 @@ const recommended = {
 } as const
 
 // Assign after construction so the reference is complete.
-;(plugin.configs as Record<string, unknown>)['recommended'] = recommended
+;(plugin.configs as AnyRecord)['recommended'] = recommended
 
 export default plugin
 export { plugin, recommended }

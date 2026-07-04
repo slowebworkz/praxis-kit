@@ -1,4 +1,5 @@
 import type { ClassName, ElementType } from '@praxis-kit/core'
+import type { AnyRecord } from '@praxis-kit/primitive'
 import type { ReactElement } from 'react'
 import type { Simplify } from 'type-fest'
 import type { UnknownProps } from './primitives'
@@ -9,7 +10,7 @@ import type { UnknownProps } from './primitives'
  *
  * Typed loosely to accommodate any element tag the user chooses.
  */
-export type RenderCallbackProps = Readonly<Record<string, unknown>>
+export type RenderCallbackProps = Readonly<AnyRecord>
 
 export type RenderProp = Readonly<{
   render?: ((props: RenderCallbackProps) => ReactElement) | undefined

@@ -1,4 +1,5 @@
 import type { ElementType, RecipeMap, VariantMap } from '@praxis-kit/core'
+import type { AnyRecord } from '@praxis-kit/primitive'
 import {
   buildCoreRuntime,
   buildEngines,
@@ -11,7 +12,7 @@ import type { WebFactoryOptions } from './types/index'
 
 export function buildRuntime<
   TDefault extends ElementType,
-  Props extends Record<string, unknown>,
+  Props extends AnyRecord,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants>,
 >(
