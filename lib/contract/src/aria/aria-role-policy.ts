@@ -7,10 +7,9 @@ import {
   isStrongImplicitRole,
 } from '@praxis-kit/primitive/guards/aria'
 import { IMPLICIT_ROLE_RECORD } from '@praxis-kit/primitive/constants/aria'
+import type { Tag } from '@praxis-kit/primitive/constants/aria'
 
 export { isStandaloneTag, isStrongImplicitRole }
-
-type Tag = keyof typeof IMPLICIT_ROLE_RECORD
 
 // Returns the implicit ARIA role for a tag, optionally informed by props for
 // elements whose role depends on attributes (input[type=...], section, form).
