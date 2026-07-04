@@ -161,6 +161,9 @@ module.exports = {
           'examples/(react|vue)/src/',
           'lib/bundle-analysis/src/',
           'packages/tree-shaking-tests/scenarios/',
+          // Only consumed via the `@praxis-kit/shared/tests` path alias (tsconfig.paths.json)
+          // from adapters/, a workspace root this scan doesn't cruise.
+          'lib/primitive/src/tests/index\\.ts$',
         ],
       },
       to: {},
