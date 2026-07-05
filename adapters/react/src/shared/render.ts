@@ -1,6 +1,7 @@
 import { createElement } from 'react'
 import { jsx } from 'react/jsx-runtime'
 import type { ReactElement, Ref } from 'react'
+import type { Writable } from 'type-fest'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
 import { enforceAllowedAs, getHtmlChildrenEvaluator } from '@praxis-kit/core'
 import { isKnownAriaRole } from '@praxis-kit/core/primitive'
@@ -38,18 +39,12 @@ function buildRenderState(
   className: string,
   children: unknown,
 ): ResolvedRenderState {
-  const state: {
-    tag: ElementType
-    directives: RenderDirectives
-    props: ResolvedProps
-    className: string
-    children?: unknown
-  } = { tag, directives, props, className }
+  const state: Writable<ResolvedRenderState> = { tag, directives, props, className }
   if (children !== undefined) state.children = children
   return state
 }
 
-function resolveRenderState(
+function prepareRenderState(
   runtime: Runtime,
   props: KnownProps,
   filterProps: FilterPredicate,
@@ -66,12 +61,15 @@ function resolveRenderState(
     )
   }
   const mergedProps = runtime.resolveProps(rest)
-  const baseProps = runtime.options.normalizeFn
-    ? runtime.options.normalizeFn(mergedProps)
-    : mergedProps
   const htmlNormalizers = runtime.options.htmlPropNormalizersFn?.(tag)
-  const normalizedProps = htmlNormalizers?.length
-    ? htmlNormalizers.reduce((acc, fn) => ({ ...acc, ...fn(acc) }), baseProps)
+  const baseProps = htmlNormalizers?.length
+    ? htmlNormalizers.reduce((acc, fn) => ({ ...acc, ...fn(acc) }), mergedProps)
+    : mergedProps
+  // HTML built-ins run first so enforcement.props normalizers (composed into normalizeFn, see
+  // lib/primitive's composeNormalizers) and the caller's `normalize` option can see and override
+  // their output — matching the order the hand-rolled adapters enforce via applyPropNormalizers.
+  const normalizedProps = runtime.options.normalizeFn
+    ? runtime.options.normalizeFn(baseProps)
     : baseProps
   const resolvedClass = runtime.resolveClasses(tag, normalizedProps, className, recipe)
   const filteredProps = applyFilter(normalizedProps, filterProps, runtime.options.variantKeys)
@@ -198,16 +196,16 @@ export function render<TProps extends KnownProps>({
   slotValidator,
   childrenEvaluator,
 }: RenderInput<TProps>): ReactElement {
-  const state = resolveRenderState(runtime, props, filterProps)
+  const state = prepareRenderState(runtime, props, filterProps)
 
   // Lazy — normalizeChildren is called at most once per render, with the result
   // shared between the children evaluator and slot resolution.
   let cached: ReactElement[] | undefined
-  const once = (): ReactElement[] => (cached ??= normalizeChildren(state.children))
+  const getNormalizedChildren = (): ReactElement[] => (cached ??= normalizeChildren(state.children))
 
   if (process.env.NODE_ENV !== 'production') {
-    childrenEvaluator?.evaluate(once())
-    getHtmlChildrenEvaluator(state.tag)?.evaluate(once())
+    childrenEvaluator?.evaluate(getNormalizedChildren())
+    getHtmlChildrenEvaluator(state.tag)?.evaluate(getNormalizedChildren())
   }
 
   // Render-prop path — caller receives resolved props directly; no Slot, no cloneElement.
@@ -215,7 +213,13 @@ export function render<TProps extends KnownProps>({
     return props.render({ ...state.props, className: state.className, ref })
   }
 
-  const slotResult = tryRenderAsChild(state, ref, slotComponent, once, slotValidator)
+  const slotResult = tryRenderAsChild(
+    state,
+    ref,
+    slotComponent,
+    getNormalizedChildren,
+    slotValidator,
+  )
 
   return slotResult ?? renderIntrinsic(state, ref, runtime)
 }

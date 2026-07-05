@@ -21,7 +21,8 @@ export type {
   TagResolver,
   TypedRuntime,
 } from './types/runtime'
-export type { BuiltChildrenEvaluator, BuiltRuntime, WithChildRules } from './types/built-runtime'
+export type { BuiltRuntime } from './types/built-runtime'
+export type { BuiltChildrenEvaluator, WithChildRules } from '@praxis-kit/adapter-utils'
 export type { NormalizedOptions } from './types/normalized-options'
 export type {
   ElementRef,

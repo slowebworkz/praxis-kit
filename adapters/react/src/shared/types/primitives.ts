@@ -1,5 +1,5 @@
-import type { ComponentType, ReactElement } from 'react'
 import type { AnyRecord } from '@praxis-kit/primitive'
+import type { ComponentType, ReactElement } from 'react'
 
 export type UnknownProps = AnyRecord
 export type SlotComponent = ComponentType<UnknownProps>
