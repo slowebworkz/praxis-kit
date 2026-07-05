@@ -7,6 +7,7 @@ export default defineWorkspace([
   './lib/adapter-utils/vitest.config.ts',
   './packages/core/vitest.config.ts',
   './lib/tailwind/vitest.config.ts',
+  './lib/pipeline-kit/vitest.config.ts',
   './adapters/react/vitest.config.ts',
   './adapters/vue/vitest.config.ts',
   './adapters/preact/vitest.config.ts',
