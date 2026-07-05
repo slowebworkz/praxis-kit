@@ -1,4 +1,7 @@
+import type { IntrinsicProps } from '@praxis-kit/primitive/types/primitives'
+
 export type {
+  AriaEngine,
   AriaContext,
   AriaFix,
   AriaFixResult,
@@ -12,4 +15,7 @@ export type {
   RemoveAttributeFixKind,
   Severity,
   ValidResult,
-} from '@praxis-kit/primitive/types'
+} from '@praxis-kit/primitive'
+
+/** Result of running props through the ARIA policy engine. */
+export type AriaPipelineResult = { props: IntrinsicProps }

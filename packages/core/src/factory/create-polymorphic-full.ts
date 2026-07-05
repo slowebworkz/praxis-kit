@@ -12,8 +12,7 @@ import type {
   RecipeMap,
   VariantMap,
 } from '../types'
-import { HTML_ARIA_RULES } from '../html/aria-rules'
-import { getHtmlPropNormalizers } from '../html/prop-normalizers'
+import { HTML_ARIA_RULES, getHtmlPropNormalizers } from '../html'
 
 const FULL_CAPABILITIES = {
   createClassPipeline,
@@ -28,8 +27,7 @@ export function createPolymorphic<
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
   TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+    ClassPluginFactory<AnyRecord> | undefined,
 >(
   options: FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> = {},
 ): PolymorphicRuntime<

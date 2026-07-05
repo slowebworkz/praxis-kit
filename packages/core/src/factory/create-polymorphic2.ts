@@ -5,7 +5,10 @@ import { definePipeline } from '@praxis-kit/pipeline-kit'
 import type { PipelineFactory } from '@praxis-kit/pipeline-kit'
 import type {
   AnyRecord,
+  AriaPipelineResult,
+  AriaRule,
   ClassName,
+  ClassPipelineArgs,
   ClassPipelineOptions,
   ClassPluginFactory,
   ElementType,
@@ -15,45 +18,41 @@ import type {
   PluginInstance,
   PolymorphicRuntime,
   RecipeMap,
-  ResolvedFactoryOptions,
+  RenderPipeline,
+  ResolvedFactoryShape,
   VariantMap,
 } from '../types'
 import { resolveFactoryOptions, validateFactoryOptions, validateRenderProps } from '../options'
-import { HTML_ARIA_RULES } from '../html/aria-rules'
-import { getHtmlPropNormalizers } from '../html/prop-normalizers'
+import { HTML_ARIA_RULES } from '../html'
+import { getHtmlPropNormalizers } from '../html'
 import { assertPluginShape, guardPipeline } from './plugin-invariants'
 
 declare const process: { env: { NODE_ENV: string } }
 
-// Same runtime as create-polymorphic-full.ts, rebuilt so every render-time mechanism (tag,
-// props, classes, aria) is an explicit `createXPipeline(resolved) => Pipeline` — the
-// PipelineFactory shape from @praxis-kit/pipeline-kit — instead of the class pipeline alone
-// following that template and the rest being inlined ad hoc. Each is wrapped in `definePipeline`
-// so it also picks up the same free memoization-by-resolved-identity that the class pipeline
-// already got from createClassPipeline.
+// Each render-time concern (tag, props, classes, aria) is expressed as a PipelineFactory from
+// @praxis-kit/pipeline-kit, so every stage shares the same memoization and composition model —
+// none is inlined ad hoc, and none needs a bespoke construction path of its own.
 
-type AnyResolved = ResolvedFactoryOptions<ElementType, AnyRecord, VariantMap, RecipeMap<VariantMap>>
+const createTagPipeline: RenderPipeline<[ElementType | undefined], ElementType> = (resolved) =>
+  makeResolveTag(resolved.defaultTag)
 
-const createTagPipeline: PipelineFactory<AnyResolved, [ElementType | undefined], ElementType> = (
-  resolved,
-) => makeResolveTag(resolved.defaultTag)
-
-const createPropsPipeline: PipelineFactory<AnyResolved, [AnyRecord], AnyRecord> =
-  (resolved) => (props) =>
-    mergeProps(resolved.defaultProps, props)
+const createPropsPipeline: RenderPipeline<[AnyRecord], AnyRecord> = (resolved) => (props) =>
+  mergeProps(resolved.defaultProps, props)
 
 const createStylingClassPipeline: PipelineFactory<
   ClassPipelineOptions<VariantMap>,
-  [ElementType, AnyRecord, ClassName | undefined, string | undefined],
+  ClassPipelineArgs,
   string
 > = (resolved) => createClassPipeline(resolved)
 
-const createAriaPipeline: PipelineFactory<
-  AnyResolved,
-  [ElementType, IntrinsicProps],
-  { props: IntrinsicProps }
-> = (resolved) => {
-  const rules = [...new Set([...HTML_ARIA_RULES, ...(resolved.ariaRules ?? [])])]
+function resolveAriaRules(resolved: ResolvedFactoryShape): readonly AriaRule[] {
+  return [...new Set([...HTML_ARIA_RULES, ...(resolved.ariaRules ?? [])])]
+}
+
+const createAriaPipeline: RenderPipeline<[ElementType, IntrinsicProps], AriaPipelineResult> = (
+  resolved,
+) => {
+  const rules = resolveAriaRules(resolved)
   const engine = new AriaPolicyEngine(resolved.diagnostics, rules.length ? { rules } : undefined)
   return (tag, props) => engine.validate(tag, props)
 }
@@ -70,7 +69,7 @@ function resolveAriaPassthrough<P extends IntrinsicProps>(_tag: ElementType, pro
 function resolveClassPlugin(
   factory: ClassPluginFactory<AnyRecord> | undefined,
   resolved: ClassPipelineOptions<VariantMap>,
-  diagnostics: AnyResolved['diagnostics'],
+  diagnostics: ResolvedFactoryShape['diagnostics'],
 ) {
   if (!factory) return { pluginResult: undefined, classPipeline: memoizedClassPipeline(resolved) }
 
@@ -100,7 +99,7 @@ export function createPolymorphic2<
   const resolved = Object.freeze({ ...baseResolved, htmlPropNormalizersFn: getHtmlPropNormalizers })
   // Cast to the module-level pipelines' shared, non-generic resolved shape — same relationship
   // as createClassPipeline's ClassPipelineOptions<VariantMap> accepting any concrete VariantMap.
-  const anyResolved = resolved as unknown as AnyResolved
+  const anyResolved = resolved as unknown as ResolvedFactoryShape
 
   if (process.env.NODE_ENV !== 'production') {
     validateFactoryOptions(resolved, resolved.diagnostics)
