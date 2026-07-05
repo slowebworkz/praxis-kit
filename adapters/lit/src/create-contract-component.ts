@@ -1,7 +1,7 @@
 import { LitElement, html } from 'lit'
 import type {
+  AnyClassPluginFactory,
   AnyRecord,
-  ClassPluginFactory,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
@@ -168,9 +168,7 @@ export function createContractComponent<
   TProps extends UnknownProps = EmptyRecord,
   TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<TVariants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 >(
   options: LitFactoryOptions<TDefault, TProps, TVariants, TPreset, TPlugin>,
 ): LitContractComponent<TVariants, ExtractPluginProps<TPlugin>> {

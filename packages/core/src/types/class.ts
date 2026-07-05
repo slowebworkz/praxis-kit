@@ -1,4 +1,4 @@
-import type { AnyRecord, ClassName, ElementType } from '@praxis-kit/primitive'
+import type { AnyRecord, ClassName, ClassPlugin, ElementType } from '@praxis-kit/primitive'
 
 /**
  * Computes the final CSS class string for a rendered element.
@@ -51,3 +51,16 @@ export type {
   CVADefaults,
   CVAVariants,
 } from '@praxis-kit/primitive'
+
+export type {
+  AnyClassPluginFactory,
+  ClassPlugin,
+  ClassPluginFactory,
+  ExtractPluginProps,
+  OwnedPropKeys,
+  PluginInstance,
+} from '@praxis-kit/primitive'
+
+/** `ClassPlugin` with its plugin-owned-props generic erased — the resolved-instance
+ *  counterpart to `AnyClassPluginFactory`. */
+export type AnyClassPlugin = ClassPlugin<AnyRecord> | undefined

@@ -1,6 +1,6 @@
 import type {
+  AnyClassPluginFactory,
   AnyRecord,
-  ClassPluginFactory,
   ElementType,
   EmptyRecord,
   FactoryOptions,
@@ -25,9 +25,7 @@ export type LitFactoryOptions<
   TProps extends AnyRecord = EmptyRecord,
   TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<TVariants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 > = FactoryOptions<TDefault, TProps, TVariants, TPreset, TPlugin> & {
   readonly filterProps?: FilterPredicate
 }

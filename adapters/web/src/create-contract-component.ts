@@ -1,6 +1,6 @@
 import type {
+  AnyClassPluginFactory,
   AnyRecord,
-  ClassPluginFactory,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
@@ -159,9 +159,7 @@ export function createContractComponent<
   TProps extends UnknownProps = EmptyRecord,
   TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<TVariants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 >(
   options: WebFactoryOptions<TDefault, TProps, TVariants, TPreset, TPlugin>,
 ): WebContractComponent<TVariants, ExtractPluginProps<TPlugin>> {

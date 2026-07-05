@@ -4,13 +4,13 @@ import { createClassPipeline } from '@praxis-kit/styling'
 import { definePipeline } from '@praxis-kit/pipeline-kit'
 import type { PipelineFactory } from '@praxis-kit/pipeline-kit'
 import type {
+  AnyClassPluginFactory,
   AnyRecord,
   AriaPipelineResult,
   AriaRule,
   ClassName,
   ClassPipelineArgs,
   ClassPipelineOptions,
-  ClassPluginFactory,
   ElementType,
   EmptyRecord,
   FactoryOptions,
@@ -46,7 +46,7 @@ const createStylingClassPipeline: PipelineFactory<
 > = (resolved) => createClassPipeline(resolved)
 
 function resolveAriaRules(resolved: ResolvedFactoryShape): readonly AriaRule[] {
-  return [...new Set([...HTML_ARIA_RULES, ...(resolved.ariaRules ?? [])])]
+  return [...new Set<AriaRule>([...HTML_ARIA_RULES, ...(resolved.ariaRules ?? [])])]
 }
 
 const createAriaPipeline: RenderPipeline<[ElementType, IntrinsicProps], AriaPipelineResult> = (
@@ -67,7 +67,7 @@ function resolveAriaPassthrough<P extends IntrinsicProps>(_tag: ElementType, pro
 }
 
 function resolveClassPlugin(
-  factory: ClassPluginFactory<AnyRecord> | undefined,
+  factory: AnyClassPluginFactory,
   resolved: ClassPipelineOptions<VariantMap>,
   diagnostics: ResolvedFactoryShape['diagnostics'],
 ) {
@@ -83,8 +83,7 @@ export function createPolymorphic2<
   Props extends AnyRecord,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    ClassPluginFactory<AnyRecord> | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 >(
   options: FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> = {},
 ): PolymorphicRuntime<
@@ -106,7 +105,7 @@ export function createPolymorphic2<
   }
 
   const { pluginResult, classPipeline } = resolveClassPlugin(
-    options.styling?.plugin as ClassPluginFactory<AnyRecord> | undefined,
+    options.styling?.plugin as AnyClassPluginFactory,
     anyResolved,
     resolved.diagnostics,
   )

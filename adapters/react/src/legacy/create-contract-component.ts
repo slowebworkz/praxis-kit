@@ -5,8 +5,9 @@ import {
   resolveAdapterCommonOptions,
 } from '@praxis-kit/adapter-utils'
 import type {
+  AnyClassPlugin,
+  AnyClassPluginFactory,
   AnyRecord,
-  ClassPlugin,
   ClassPipelineOptions,
   ClassPluginFactory,
   ElementType,
@@ -62,8 +63,7 @@ export function createContractComponent<
   Props extends UnknownProps = EmptyRecord,
   Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    ClassPluginFactory<AnyRecord> | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
   TAllowed extends ElementType = ElementType,
 >(options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin, TAllowed>) {
   const resolved = resolveAdapterCommonOptions(options)
@@ -89,7 +89,7 @@ export function createContractComponent<
   const enforcementNormalizers = options.enforcement?.props as readonly PropNormalizer[] | undefined
 
   // Wire class plugin: call the factory once at creation time
-  const classPlugin: ClassPlugin<AnyRecord> | undefined =
+  const classPlugin: AnyClassPlugin =
     options.styling?.plugin !== undefined
       ? (options.styling.plugin as ClassPluginFactory<AnyRecord>)(
           options.styling as unknown as ClassPipelineOptions,

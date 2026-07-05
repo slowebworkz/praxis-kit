@@ -9,12 +9,17 @@ export type ClassPluginFactory<TProps extends AnyRecord = EmptyRecord> = <V exte
   diagnostics: Diagnostics,
 ) => ClassPlugin<TProps>
 
-export type ExtractPluginProps<TPlugin extends ClassPluginFactory<AnyRecord> | undefined> =
+/** `ClassPluginFactory` with its plugin-owned-props generic erased — the common form used
+ *  wherever a factory's concrete plugin-props shape isn't tracked (factory generics,
+ *  capability wiring). */
+export type AnyClassPluginFactory = ClassPluginFactory<AnyRecord> | undefined
+
+export type ExtractPluginProps<TPlugin extends AnyClassPluginFactory> =
   TPlugin extends ClassPluginFactory<infer T>
     ? string extends keyof T
       ? EmptyRecord
       : T
     : EmptyRecord
 
-export type PluginInstance<TPlugin extends ClassPluginFactory<AnyRecord> | undefined> =
+export type PluginInstance<TPlugin extends AnyClassPluginFactory> =
   TPlugin extends ClassPluginFactory<infer TProps> ? ClassPlugin<TProps> : undefined

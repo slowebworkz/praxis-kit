@@ -1,5 +1,6 @@
 import { makeResolveTag, mergeProps } from '@praxis-kit/primitive'
 import type {
+  AnyClassPluginFactory,
   AnyRecord,
   AriaEngine,
   Capabilities,
@@ -7,7 +8,6 @@ import type {
   ClassPipelineFn,
   ClassPipelineOptions,
   ClassPlugin,
-  ClassPluginFactory,
   DefaultOf,
   ElementType,
   EmptyRecord,
@@ -34,7 +34,7 @@ const NOOP_CLASS_PIPELINE: ClassPipelineFn = (_tag, _props, className) =>
   Array.isArray(className) ? className.join(' ') : (className ?? '')
 
 function resolveClassPipeline<TVariants extends VariantMap>(
-  options: { styling?: { plugin?: ClassPluginFactory<AnyRecord> | undefined } },
+  options: { styling?: { plugin?: AnyClassPluginFactory } },
   resolved: ClassPipelineOptions<TVariants>,
   diagnostics: Diagnostics,
   capabilities?: Capabilities,
@@ -104,9 +104,7 @@ export function createPolymorphic<
   Props extends AnyRecord,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 >(
   options: FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> = {},
   capabilities?: Capabilities,

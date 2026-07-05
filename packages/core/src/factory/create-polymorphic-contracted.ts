@@ -1,8 +1,8 @@
 import { AriaPolicyEngine } from '@praxis-kit/contract'
 import { createPolymorphic as _createPolymorphic } from './create-polymorphic'
 import type {
+  AnyClassPluginFactory,
   AnyRecord,
-  ClassPluginFactory,
   ElementType,
   EmptyRecord,
   FactoryOptions,
@@ -26,9 +26,7 @@ export function createContractedPolymorphic<
   Props extends AnyRecord,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 >(
   options: FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> = {},
 ): PolymorphicRuntime<

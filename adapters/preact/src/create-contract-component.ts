@@ -19,8 +19,9 @@ import type {
   VariantRecord,
 } from '@praxis-kit/adapter-utils'
 import type {
+  AnyClassPlugin,
+  AnyClassPluginFactory,
   AnyRecord,
-  ClassPlugin,
   ClassPipelineOptions,
   ClassPluginFactory,
   ElementType,
@@ -58,8 +59,7 @@ export function createContractComponent<
   Props extends UnknownProps = EmptyRecord,
   Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    ClassPluginFactory<AnyRecord> | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 >(options: PreactFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin>) {
   const resolved = resolveAdapterCommonOptions(options)
   const displayName = resolved.name
@@ -82,7 +82,7 @@ export function createContractComponent<
   const normalizeFn = options.normalize as ((props: AnyRecord) => AnyRecord) | undefined
   const enforcementNormalizers = options.enforcement?.props as readonly PropNormalizer[] | undefined
 
-  const classPlugin: ClassPlugin<AnyRecord> | undefined =
+  const classPlugin: AnyClassPlugin =
     options.styling?.plugin !== undefined
       ? (options.styling.plugin as ClassPluginFactory<AnyRecord>)(
           options.styling as unknown as ClassPipelineOptions,

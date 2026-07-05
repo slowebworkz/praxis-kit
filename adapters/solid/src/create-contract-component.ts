@@ -1,6 +1,5 @@
 import type {
-  AnyRecord,
-  ClassPluginFactory,
+  AnyClassPluginFactory,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
@@ -20,9 +19,7 @@ export function createContractComponent<
   Props extends UnknownProps = EmptyRecord,
   Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 >(options: SolidFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin>) {
   const bundle = buildRuntime(options as SolidFactoryOptions<TDefault, Props, Variants, TPreset>)
 
