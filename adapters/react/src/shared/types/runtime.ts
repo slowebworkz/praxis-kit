@@ -23,6 +23,7 @@ export type RuntimeOptions = Readonly<
     | 'allowedAs'
     | 'normalizeFn'
     | 'htmlPropNormalizersFn'
+    | 'htmlChildrenEvaluatorFn'
   >
 >
 

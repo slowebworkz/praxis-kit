@@ -1,9 +1,17 @@
+/**
+ * Shared React rendering pipeline.
+ *
+ * All React primitives (both the React 19 and React 18 adapters) render through this module.
+ * Props are normalized into a `ResolvedRenderState`, optionally validated in development, then
+ * dispatched to one of three render paths: render callback, Slot (`asChild`), or intrinsic
+ * element.
+ */
 import { createElement } from 'react'
 import { jsx } from 'react/jsx-runtime'
 import type { ReactElement, Ref } from 'react'
 import type { Writable } from 'type-fest'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
-import { enforceAllowedAs, getHtmlChildrenEvaluator } from '@praxis-kit/core'
+import { enforceAllowedAs } from '@praxis-kit/core'
 import { isKnownAriaRole } from '@praxis-kit/core/primitive'
 import { applyFilter } from '@praxis-kit/adapter-utils'
 import type { SlotValidator } from './slot'
@@ -22,16 +30,6 @@ import type {
 
 declare const process: { env: { NODE_ENV: string } }
 
-function buildDirectives(
-  as: ElementType | undefined,
-  asChild: boolean | undefined,
-): RenderDirectives {
-  return {
-    ...(as !== undefined && { as }),
-    ...(asChild !== undefined && { asChild }),
-  }
-}
-
 function buildRenderState(
   tag: ElementType,
   directives: RenderDirectives,
@@ -44,6 +42,12 @@ function buildRenderState(
   return state
 }
 
+/**
+ * Resolves the component's render state.
+ *
+ * Applies tag resolution, prop normalization, class resolution, filtering, and render
+ * directives, producing the canonical state consumed by every render path.
+ */
 function prepareRenderState(
   runtime: Runtime,
   props: KnownProps,
@@ -73,7 +77,11 @@ function prepareRenderState(
     : baseProps
   const resolvedClass = runtime.resolveClasses(tag, normalizedProps, className, recipe)
   const filteredProps = applyFilter(normalizedProps, filterProps, runtime.options.variantKeys)
-  return buildRenderState(tag, buildDirectives(as, asChild), filteredProps, resolvedClass, children)
+  const directives: RenderDirectives = {
+    ...(as !== undefined && { as }),
+    ...(asChild !== undefined && { asChild }),
+  }
+  return buildRenderState(tag, directives, filteredProps, resolvedClass, children)
 }
 
 function warnDiscardedChildren(
@@ -198,14 +206,14 @@ export function render<TProps extends KnownProps>({
 }: RenderInput<TProps>): ReactElement {
   const state = prepareRenderState(runtime, props, filterProps)
 
-  // Lazy — normalizeChildren is called at most once per render, with the result
-  // shared between the children evaluator and slot resolution.
+  // Memoized on first access. Child normalization is shared between development
+  // validation and Slot rendering so it runs at most once per render.
   let cached: ReactElement[] | undefined
   const getNormalizedChildren = (): ReactElement[] => (cached ??= normalizeChildren(state.children))
 
   if (process.env.NODE_ENV !== 'production') {
     childrenEvaluator?.evaluate(getNormalizedChildren())
-    getHtmlChildrenEvaluator(state.tag)?.evaluate(getNormalizedChildren())
+    runtime.options.htmlChildrenEvaluatorFn?.(state.tag)?.evaluate(getNormalizedChildren())
   }
 
   // Render-prop path — caller receives resolved props directly; no Slot, no cloneElement.

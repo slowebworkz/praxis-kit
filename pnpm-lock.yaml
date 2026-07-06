@@ -574,6 +574,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../lib/diagnostics
       '@praxis-kit/react':
         specifier: workspace:*
         version: link:../../adapters/react

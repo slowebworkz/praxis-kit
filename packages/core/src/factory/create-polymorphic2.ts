@@ -3,6 +3,7 @@ import { AriaPolicyEngine } from '@praxis-kit/contract'
 import { createClassPipeline } from '@praxis-kit/styling'
 import { definePipeline } from '@praxis-kit/pipeline-kit'
 import type { PipelineFactory } from '@praxis-kit/pipeline-kit'
+import type { ChildrenEvaluator } from '../children'
 import type {
   AnyClassPluginFactory,
   AnyRecord,
@@ -17,6 +18,7 @@ import type {
   IntrinsicProps,
   PluginInstance,
   PolymorphicRuntime,
+  PropNormalizer,
   RecipeMap,
   RenderPipeline,
   ResolvedFactoryShape,
@@ -24,20 +26,38 @@ import type {
 } from '../types'
 import { resolveFactoryOptions, validateFactoryOptions, validateRenderProps } from '../options'
 import { HTML_ARIA_RULES } from '../html'
-import { getHtmlPropNormalizers } from '../html'
+import { getHtmlPropNormalizers, getHtmlChildrenEvaluator } from '../html'
 import { assertPluginShape, guardPipeline } from './plugin-invariants'
 
 declare const process: { env: { NODE_ENV: string } }
 
-// Each render-time concern (tag, props, classes, aria) is expressed as a PipelineFactory from
-// @praxis-kit/pipeline-kit, so every stage shares the same memoization and composition model —
-// none is inlined ad hoc, and none needs a bespoke construction path of its own.
+// Each render-time concern (tag, props, HTML prop normalizers, classes, aria) is expressed as a
+// PipelineFactory from @praxis-kit/pipeline-kit, so every stage shares the same memoization and
+// composition model — none is inlined ad hoc, and none needs a bespoke construction path of its
+// own.
 
 const createTagPipeline: RenderPipeline<[ElementType | undefined], ElementType> = (resolved) =>
   makeResolveTag(resolved.defaultTag)
 
 const createPropsPipeline: RenderPipeline<[AnyRecord], AnyRecord> = (resolved) => (props) =>
   mergeProps(resolved.defaultProps, props)
+
+// getHtmlPropNormalizers is a static, tag-keyed lookup — it has no dependency on `resolved` at
+// all (the chart's own legend notes ①②③ are keyed by tag, not by a component's resolved config,
+// so there's nothing to memoize per-component the way createClassPipeline resolves variants
+// once). It's still built through the same PipelineFactory + definePipeline template as every
+// other segment, for consistency, rather than being handed out as a bare module reference.
+const createHtmlPropNormalizersPipeline: RenderPipeline<
+  [tag: unknown],
+  readonly PropNormalizer[] | undefined
+> = () => getHtmlPropNormalizers
+
+// getHtmlChildrenEvaluator is the same shape as getHtmlPropNormalizers — a static, tag-keyed
+// lookup with no dependency on `resolved`. Built through the same template for consistency.
+const createHtmlChildrenEvaluatorPipeline: RenderPipeline<
+  [tag: unknown],
+  ChildrenEvaluator | undefined
+> = () => getHtmlChildrenEvaluator
 
 const createStylingClassPipeline: PipelineFactory<
   ClassPipelineOptions<VariantMap>,
@@ -59,6 +79,8 @@ const createAriaPipeline: RenderPipeline<[ElementType, IntrinsicProps], AriaPipe
 
 const memoizedTagPipeline = definePipeline(createTagPipeline)
 const memoizedPropsPipeline = definePipeline(createPropsPipeline)
+const memoizedHtmlPropNormalizersPipeline = definePipeline(createHtmlPropNormalizersPipeline)
+const memoizedHtmlChildrenEvaluatorPipeline = definePipeline(createHtmlChildrenEvaluatorPipeline)
 const memoizedClassPipeline = definePipeline(createStylingClassPipeline)
 const memoizedAriaPipeline = definePipeline(createAriaPipeline)
 
@@ -95,9 +117,14 @@ export function createPolymorphic2<
   PluginInstance<TPlugin>
 > {
   const baseResolved = resolveFactoryOptions(options)
-  const resolved = Object.freeze({ ...baseResolved, htmlPropNormalizersFn: getHtmlPropNormalizers })
   // Cast to the module-level pipelines' shared, non-generic resolved shape — same relationship
   // as createClassPipeline's ClassPipelineOptions<VariantMap> accepting any concrete VariantMap.
+  const anyBaseResolved = baseResolved as unknown as ResolvedFactoryShape
+  const resolved = Object.freeze({
+    ...baseResolved,
+    htmlPropNormalizersFn: memoizedHtmlPropNormalizersPipeline(anyBaseResolved),
+    htmlChildrenEvaluatorFn: memoizedHtmlChildrenEvaluatorPipeline(anyBaseResolved),
+  })
   const anyResolved = resolved as unknown as ResolvedFactoryShape
 
   if (process.env.NODE_ENV !== 'production') {
