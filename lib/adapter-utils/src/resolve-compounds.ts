@@ -1,7 +1,7 @@
 import type { CompoundRecord } from './build-variant-config'
 import { flattenClassName } from './build-variant-config'
 import { iterate } from '@praxis-kit/primitive'
-import type { AnyRecord } from '@praxis-kit/pipeline'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 function matchesCompound(active: AnyRecord, compound: CompoundRecord): boolean {
   const { class: _, ...conditions } = compound

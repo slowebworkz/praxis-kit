@@ -1,17 +1,20 @@
 import type { UnknownRecord } from 'type-fest'
 import type { Pipeline, Arguments } from '../core/types'
 
-/** The constraint every resolved pipeline config must satisfy. `UnknownRecord` rather than a
- *  bare `object`, matching how resolved options are always a keyed record throughout the
- *  codebase — e.g. resolveFactoryOptions's `Object.freeze(...)` return value. */
+/**
+ * The shape of a resolved pipeline configuration.
+ *
+ * Resolved configurations are immutable records produced by an options
+ * resolution step and are suitable for identity-based caching.
+ */
 export type ResolvedConfig = UnknownRecord
 
-/** The shape every createXPipeline factory in the codebase already conforms to — build once
- *  from resolved config, return a Pipeline. createClassPipeline, createResolverPipeline, and a
- *  future createTagPipeline each satisfy this structurally; none needs to call through a shared
- *  runtime wrapper to "be" one. Named so the contract is checkable
- *  (`const createTagPipeline: PipelineFactory<TagOptions, ...> = (resolved) => ...`) instead of
- *  implicit and only recognizable by eyeballing each factory's signature by hand. */
+/**
+ * A factory that builds a pipeline from a resolved configuration.
+ *
+ * Pipeline factories separate configuration resolution from pipeline
+ * construction, allowing the resulting pipeline to be cached and reused.
+ */
 export type PipelineFactory<TResolved extends ResolvedConfig, TArgs extends Arguments, TOutput> = (
   resolved: TResolved,
 ) => Pipeline<TArgs, TOutput>

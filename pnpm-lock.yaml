@@ -776,9 +776,9 @@ importers:
 
   lib/diagnostics:
     dependencies:
-      '@praxis-kit/pipeline':
+      '@praxis-kit/primitive':
         specifier: workspace:*
-        version: link:../pipeline
+        version: link:../primitive
       type-fest:
         specifier: 'catalog:'
         version: 5.7.0
@@ -1169,6 +1169,9 @@ importers:
       '@praxis-kit/preact':
         specifier: workspace:*
         version: link:../../adapters/preact
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
       '@praxis-kit/react':
         specifier: workspace:*
         version: link:../../adapters/react

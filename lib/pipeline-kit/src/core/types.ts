@@ -1,17 +1,29 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Basic Types
+// Foundational Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** A tuple of positional arguments. */
-export type Arguments = readonly unknown[]
+/** A fixed-length tuple of values. */
+export type Tuple = readonly unknown[]
 
-/** Any callable function. */
+/**
+ * A tuple of positional arguments accepted by a function.
+ */
+export type Arguments = Tuple
+
+/**
+ * Any callable function.
+ */
 export type AnyFunction<TArgs extends Arguments = Arguments, TReturn = unknown> = (
   ...args: TArgs
 ) => TReturn
 
+/**
+ * A function that accepts exactly one argument.
+ */
+export type UnaryFunction<TInput, TOutput> = AnyFunction<[TInput], TOutput>
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Intermediate Types
+// Pipeline Types
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -24,38 +36,34 @@ export type AnyFunction<TArgs extends Arguments = Arguments, TReturn = unknown> 
 export type Pipeline<TArgs extends Arguments, TOutput> = AnyFunction<TArgs, TOutput>
 
 /**
- * A tuple of pipelines that all accept the same argument list while preserving
- * each pipeline's individual output type.
+ * A unary pipeline stage.
  *
- * This allows a fixed-length collection of pipelines to retain its per-index
- * type information, much like `Promise.all()` preserves the resolved type of
- * each promise in a tuple.
+ * Pipeline stages are primarily used during composition, where each stage
+ * consumes the output of the previous pipeline.
  */
-export type PipelineTuple<TArgs extends Arguments, TOutputs extends Arguments> = {
+export type PipelineStage<TInput, TOutput> = UnaryFunction<TInput, TOutput>
+
+/**
+ * A tuple of pipelines that all accept the same argument list while preserving
+ * the output type at each corresponding index.
+ *
+ * Similar to how `Promise.all()` preserves the resolved type of each promise in
+ * a tuple.
+ */
+export type PipelineTuple<TArgs extends Arguments, TOutputs extends Tuple> = {
   [K in keyof TOutputs]: Pipeline<TArgs, TOutputs[K]>
 }
 
-/** A function that accepts exactly one argument. */
-export type UnaryFunction<TInput, TOutput> = AnyFunction<[TInput], TOutput>
+// ─────────────────────────────────────────────────────────────────────────────
+// Type Utilities
+// ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * A pipeline that accepts exactly one input value.
- *
- * Unary pipelines are primarily used when composing pipelines, where each stage
- * consumes the output of the previous stage.
+ * Extracts the positional argument tuple accepted by a pipeline.
  */
-export type PipelineStage<TInput, TOutput> = Pipeline<[TInput], TOutput>
-
-/**
- * Extracts the tuple of positional arguments accepted by a pipeline.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PipelineInput<T extends Pipeline<any, any>> = Parameters<T>
+export type PipelineInput<T> = T extends Pipeline<infer TArgs, unknown> ? TArgs : never
 
 /**
  * Extracts the value produced by a pipeline.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PipelineOutput<T extends Pipeline<any, any>> = ReturnType<T>
-
-export type Tuple = readonly unknown[]
+export type PipelineOutput<T> = T extends Pipeline<Arguments, infer TOutput> ? TOutput : never

@@ -7,7 +7,7 @@ import type {
   StyleValue,
   VariantMap,
 } from '@praxis-kit/runtime'
-import type { AnyRecord } from '@praxis-kit/pipeline'
+import type { AnyRecord } from '@praxis-kit/primitive'
 import { isNumber, isObject, isString, iterate, isFunction } from '@praxis-kit/primitive'
 
 type DecorationCollectionKey = 'attributes' | 'styles' | 'listeners' | 'variants'

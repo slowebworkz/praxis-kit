@@ -1,11 +1,12 @@
 import type { ComponentDefinition } from '../types'
 import { resolveDefinition } from '../resolve-definition'
 import { isObject, createPipeline, executePipeline } from '@praxis-kit/pipeline'
-import type { AnyRecord, PipelineNode, Plugin } from '@praxis-kit/pipeline'
+import type { PipelineNode, Plugin } from '@praxis-kit/pipeline'
 import { createHash } from 'node:crypto'
 import { compilerMergeStrategy } from './compiler-merge-strategy'
 import type { CompiledComponentArtifact, CompilerContext } from './types'
 import { iterate } from '@praxis-kit/primitive'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 const emptyContext = (): CompilerContext => ({
   identity: {},

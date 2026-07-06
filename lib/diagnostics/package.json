@@ -21,7 +21,7 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@praxis-kit/pipeline": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {
