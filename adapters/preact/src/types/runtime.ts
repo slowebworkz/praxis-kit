@@ -20,8 +20,10 @@ export type RuntimeOptions = Readonly<
     | 'diagnostics'
     | 'variantKeys'
     | 'childRules'
+    | 'allowedAs'
     | 'normalizeFn'
     | 'htmlPropNormalizersFn'
+    | 'htmlChildrenEvaluatorFn'
   >
 >
 
