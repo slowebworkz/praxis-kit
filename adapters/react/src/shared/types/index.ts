@@ -37,4 +37,11 @@ export type {
   TagResolver,
   TypedRuntime,
 } from './runtime'
+export type {
+  CloneInput,
+  GetChildRef,
+  NormalizedRef,
+  PossibleRef,
+  ReactWarningGetter,
+} from './refs'
 export type { BuiltChildrenEvaluator, WithChildRules } from '@praxis-kit/adapter-utils'

@@ -2,8 +2,7 @@ import { beforeEach, afterEach } from 'vitest'
 import { createElement, act } from 'react'
 import type { ComponentType, ReactElement } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { UnknownProps } from './types'
-import type { PolymorphicComponent } from './types/polymorphic-props'
+import type { PolymorphicComponent, UnknownProps } from './types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function box(comp: PolymorphicComponent<any>): ComponentType<UnknownProps> {
