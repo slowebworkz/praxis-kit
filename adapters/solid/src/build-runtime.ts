@@ -8,12 +8,8 @@ import type {
   VariantMap,
   VariantsOf,
 } from '@praxis-kit/core'
-import {
-  buildCoreRuntime,
-  buildEngines,
-  composeFilter,
-  resolveAdapterCommonOptions,
-} from '@praxis-kit/adapter-utils'
+import { buildEngines, composeFilter, resolveAdapterCommonOptions } from '@praxis-kit/adapter-utils'
+import { buildCoreRuntime } from './build-core-runtime'
 import type { SolidFactoryOptions } from './solid-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
 import type { NormalizedOptions } from './types/normalized-options'

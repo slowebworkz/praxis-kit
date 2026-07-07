@@ -1,13 +1,18 @@
+import { applyFilter } from '@praxis-kit/adapter-utils'
+import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
+import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
+import { isString } from '@praxis-kit/primitive'
 import { createEffect, createMemo, splitProps } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
-import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
-import { isKnownAriaRole } from '@praxis-kit/core'
-import { applyFilter } from '@praxis-kit/adapter-utils'
-import type { ResolvedProps, SolidElement, UnknownProps } from './types/primitives'
-import type { KnownProps } from './types/props'
-import type { RenderInput } from './types/render'
-import type { Runtime } from './types/runtime'
-import type { SlotValidator } from './slot/slot-validator'
+import type { SlotValidator } from './slot'
+import type {
+  KnownProps,
+  RenderInput,
+  ResolvedProps,
+  Runtime,
+  SolidElement,
+  UnknownProps,
+} from './types'
 
 declare const process: { env: { NODE_ENV: string } }
 
@@ -58,7 +63,7 @@ function resolveDomProps(
   elementProps: IntrinsicProps,
   runtime: Runtime,
 ): UnknownProps {
-  return typeof tag === 'string'
+  return isString(tag)
     ? (runtime.resolveAria(tag, elementProps).props as UnknownProps)
     : (elementProps as UnknownProps)
 }
@@ -115,9 +120,23 @@ export function render<TProps extends KnownProps>({
     applyFilter(normalizedProps(), filterProps, runtime.options.variantKeys),
   )
 
+  const { allowedAs } = runtime.options
+  if (allowedAs !== undefined) {
+    // createEffect so enforcement re-runs reactively when tag() changes.
+    createEffect(() =>
+      enforceAllowedAs(tag(), allowedAs, runtime.options.diagnostics, runtime.options.displayName),
+    )
+  }
+
   // createEffect so validation re-runs reactively when known.children changes.
   if (process.env.NODE_ENV !== 'production' && childrenEvaluator) {
     createEffect(() => childrenEvaluator.evaluate(toChildArray(known.children)))
+  }
+
+  if (process.env.NODE_ENV !== 'production') {
+    createEffect(() =>
+      runtime.options.htmlChildrenEvaluatorFn?.(tag())?.evaluate(toChildArray(known.children)),
+    )
   }
 
   const slotResult = tryRenderAsChild(known, filteredProps, resolvedClass, slotValidator)
