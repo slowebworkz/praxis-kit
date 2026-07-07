@@ -1,26 +1,28 @@
-import { LitElement, html } from 'lit'
+import { applyFilter } from '@praxis-kit/adapter-utils'
 import type {
   AnyClassPluginFactory,
-  AnyRecord,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { applyFilter } from '@praxis-kit/adapter-utils'
+import { enforceAllowedAs } from '@praxis-kit/core'
+import { iterate } from '@praxis-kit/primitive'
+import { LitElement, html } from 'lit'
 import { buildRuntime } from './build-runtime'
 import { registerForSsr } from './render-to-string'
 import type {
   LitContractComponent,
-  LooseBundle,
   LitFactoryOptions,
+  LooseBundle,
+  ResolvedAttributes,
   UnknownProps,
-} from './types/index'
-import { iterate } from '@praxis-kit/primitive'
+} from './types'
+import { isObject as _isObject } from '@praxis-kit/primitive'
 
 function isObject(value: unknown): value is Record<PropertyKey, unknown> {
-  return typeof value === 'object' && value !== null
+  return _isObject(value)
 }
 
 function isLooseBundle(arg: unknown): arg is LooseBundle {
@@ -64,9 +66,17 @@ function toLooseBundle(bundle: unknown): LooseBundle {
 function resolveHostState(
   bundle: LooseBundle,
   props: UnknownProps,
-): { className: string; attributes: AnyRecord } {
+): { className: string; attributes: ResolvedAttributes } {
   const { as, className, recipe, ...rest } = props
   const tag = bundle.runtime.resolveTag(as as ElementType | undefined)
+  if (bundle.runtime.options.allowedAs !== undefined) {
+    enforceAllowedAs(
+      tag,
+      bundle.runtime.options.allowedAs,
+      bundle.runtime.options.diagnostics,
+      bundle.runtime.options.displayName,
+    )
+  }
   const mergedProps = bundle.runtime.resolveProps(rest)
   const baseProps = bundle.runtime.options.normalizeFn
     ? bundle.runtime.options.normalizeFn(mergedProps)
@@ -269,7 +279,11 @@ export function createContractComponent<
       // aria-*, and any other pass-through attributes.
       const props: UnknownProps = {}
       iterate.forEach(iterate.items(this.attributes), (attr) => {
-        if (attr.name !== 'class') props[attr.name] = attr.value
+        if (attr.name === 'class') return
+        // `disabled` is an HTML boolean attribute — presence means true regardless
+        // of value (even disabled="false"), matching native <button disabled> semantics.
+        // Read as a raw string otherwise, disabledProps would see '' and treat it as falsy.
+        props[attr.name] = attr.name === 'disabled' ? true : attr.value
       })
 
       // Overlay Lit-managed properties for variant keys — these may differ
@@ -288,9 +302,12 @@ export function createContractComponent<
     }
 
     override render() {
+      const children = Array.from(this.childNodes)
       if (bundle.childrenEvaluator) {
-        bundle.childrenEvaluator.evaluate(Array.from(this.childNodes))
+        bundle.childrenEvaluator.evaluate(children)
       }
+      const tag = bundle.runtime.resolveTag(this._self.as as ElementType | undefined)
+      bundle.runtime.options.htmlChildrenEvaluatorFn?.(tag)?.evaluate(children)
       return html`<slot></slot>`
     }
   }
