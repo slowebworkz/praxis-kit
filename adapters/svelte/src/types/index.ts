@@ -1,5 +1,12 @@
-export type { UnknownProps, ResolvedProps, FilterPredicate } from './primitives'
-export type { AsProp, PolymorphicPropsBase, KnownProps } from './props'
+export type {
+  UnknownProps,
+  ResolvedProps,
+  ResolvedAttributes,
+  StyleValue,
+  StyleObject,
+  FilterPredicate,
+} from './primitives'
+export type { AsProp, PolymorphicComponentProps, PolymorphicPropsBase, KnownProps } from './props'
 export type {
   RuntimeOptions,
   TagResolver,

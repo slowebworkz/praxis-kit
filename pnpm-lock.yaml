@@ -395,6 +395,9 @@ importers:
 
   adapters/svelte:
     dependencies:
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
