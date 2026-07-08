@@ -1,4 +1,4 @@
-import { iterate, isNull, isNumber, isString  } from '@praxis-kit/primitive'
+import { iterate, isNull, isNumber, isString } from '@praxis-kit/primitive'
 import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-kit/primitive'
 import { InvariantBase } from '../strict'
 import type { Diagnostics } from '@praxis-kit/diagnostics'

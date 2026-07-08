@@ -28,7 +28,9 @@
       "@praxis-kit/diagnostics": ["./lib/diagnostics/src/index.ts"],
       "@praxis-kit/pipeline-kit": ["./lib/pipeline-kit/src/index.ts"],
       "@praxis-kit/pipeline-kit/core": ["./lib/pipeline-kit/src/core/index.ts"],
-      "@praxis-kit/pipeline-kit/factory": ["./lib/pipeline-kit/src/factory/index.ts"],
+      "@praxis-kit/pipeline-kit/factory": [
+        "./lib/pipeline-kit/src/factory/index.ts"
+      ],
       "@praxis-kit/tailwind": ["./lib/tailwind/src/index.ts"],
       "@praxis-kit/lit": ["./adapters/lit/src/index.ts"],
       "@praxis-kit/web": ["./adapters/web/src/index.ts"]
