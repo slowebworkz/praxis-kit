@@ -10,6 +10,7 @@ import {
   AsyncConsoleReporter,
 } from '@praxis-kit/diagnostics'
 
+import type { layoutKeys } from './layout-keys'
 import type { LayoutProps } from './types/layout'
 
 function makeAsyncWarnDiagnostics(): Diagnostics {
@@ -22,7 +23,7 @@ function makeAsyncWarnDiagnostics(): Diagnostics {
 function resolve(
   plugin: ReturnType<typeof createTailwindPipeline>,
   className = '',
-  layoutProps: LayoutProps = {},
+  layoutProps: LayoutProps<typeof layoutKeys> = {},
 ) {
   return plugin.pipeline('div', layoutProps, className, undefined)
 }

@@ -1,11 +1,15 @@
+import type { LAYOUT_FAMILY_MAP} from './constants';
 import { LAYOUT_OWNED_KEYS } from './constants'
+import type { layoutKeys } from './layout-keys'
 import type { ClassifiedToken, ClassToken, LayoutFamily, LayoutKey } from './types'
 import { iterate } from '@praxis-kit/primitive'
 
 const CONDITIONALS = {
   '[&.flex': 'flex',
   '[&.grid': 'grid',
-} as const satisfies Readonly<Record<string, Exclude<LayoutFamily, 'none'>>>
+} as const satisfies Readonly<
+  Record<string, Exclude<LayoutFamily<typeof LAYOUT_FAMILY_MAP>, 'none'>>
+>
 
 export class ClassClassifier {
   static #getBaseUtility(token: string): string {
@@ -30,7 +34,7 @@ export class ClassClassifier {
     if (LAYOUT_OWNED_KEYS.has(base)) {
       return {
         kind: 'layout',
-        value: base as LayoutKey,
+        value: base as LayoutKey<typeof layoutKeys>,
         raw: token,
       }
     }

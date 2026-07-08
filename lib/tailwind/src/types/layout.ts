@@ -1,13 +1,26 @@
 import type { Simplify } from 'type-fest'
-import type { LAYOUT_FAMILY_MAP } from '../constants'
-import type { layoutKeys } from '../layout-keys'
+import type { StringMap } from '@praxis-kit/primitive'
 
-export type LayoutKey = (typeof layoutKeys)[number]
+// Element type of a tuple, e.g. ['flex', 'grid'] -> 'flex' | 'grid'.
+type TupleValues<T extends readonly unknown[]> = T[number]
 
-// Derived from LAYOUT_FAMILY_MAP values — stays in sync with the runtime map automatically.
-export type LayoutFamily = (typeof LAYOUT_FAMILY_MAP)[LayoutKey]
+// Value type of an object/record, e.g. { a: 'x', b: 'y' } -> 'x' | 'y'.
+// Distinct from TupleValues: `keyof` on a tuple also includes numeric
+// indices, "length", and array methods, so T[keyof T] on a tuple is far
+// wider than T[number] and must not be used for tuples.
+type ValueOf<T> = T[keyof T]
 
-export type LayoutMode = LayoutKey | 'none'
+// Generic over the concrete `layoutKeys` tuple so this stays derivable from
+// the single source of truth (layout-keys.ts) without this types module
+// importing it directly. Callers pass `typeof layoutKeys` as T.
+export type LayoutKey<T extends readonly string[]> = TupleValues<T>
+
+// Generic over the concrete LAYOUT_FAMILY_MAP object (constants.ts), not over
+// the LayoutKey tuple — family values ('flex' | 'grid' | 'none') come from
+// the map's values, not from its keys.
+export type LayoutFamily<M extends StringMap<string>> = ValueOf<M>
+
+export type LayoutMode<T extends readonly string[]> = LayoutKey<T> | 'none'
 
 // Exactly one key of K set to `true`, the rest forbidden (`never`) — the
 // mutual-exclusion shape, derived from K so it tracks LayoutKey as the single
@@ -24,4 +37,5 @@ type ExclusiveTrueProp<K extends PropertyKey> = {
  * At most one key may be `true`. Passing multiple is a compile-time error; the
  * runtime also warns and lets the first key in declaration order take precedence.
  */
-export type LayoutProps = ExclusiveTrueProp<LayoutKey> | Partial<Record<LayoutKey, never>>
+export type LayoutProps<T extends readonly string[]> =
+  ExclusiveTrueProp<LayoutKey<T>> | Partial<Record<LayoutKey<T>, never>>

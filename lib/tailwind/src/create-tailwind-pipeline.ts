@@ -41,8 +41,11 @@ function normalizeVariantValue(value: VariantValue): string {
   return value.join(' ')
 }
 
-function resolveLayout(diagnostics: Diagnostics, props: LayoutProps & AnyRecord): LayoutMode {
-  const active: LayoutKey[] = []
+function resolveLayout(
+  diagnostics: Diagnostics,
+  props: LayoutProps<typeof layoutKeys> & AnyRecord,
+): LayoutMode<typeof layoutKeys> {
+  const active: LayoutKey<typeof layoutKeys>[] = []
   iterate.forEach(layoutKeys, (key) => {
     if (props[key]) active.push(key)
   })
@@ -177,7 +180,7 @@ function warnDeadVariants<V extends VariantMap>(
 export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   options: ClassPipelineOptions<V>,
   diagnostics: Diagnostics,
-): ClassPlugin<LayoutProps> {
+): ClassPlugin<LayoutProps<typeof layoutKeys>> {
   const pipeline = createClassPipeline(options)
   const compoundDims = compoundDimensions(getCompoundVariants(options))
 

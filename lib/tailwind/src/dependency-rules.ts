@@ -1,6 +1,10 @@
+import type { LAYOUT_FAMILY_MAP } from './constants'
 import type { LayoutFamily } from './types/layout'
 
-export type DependencyRules = Record<Exclude<LayoutFamily, 'none'>, readonly RegExp[]>
+export type DependencyRules = Record<
+  Exclude<LayoutFamily<typeof LAYOUT_FAMILY_MAP>, 'none'>,
+  readonly RegExp[]
+>
 
 // Stripping is RESEMBLANCE-based, by design. A class is stripped under a
 // conflicting layout mode because its name matches one of these prefixes, NOT

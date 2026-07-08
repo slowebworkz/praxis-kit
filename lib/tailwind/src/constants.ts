@@ -1,6 +1,7 @@
 import type { OwnedPropKeys } from '@praxis-kit/core'
 
 import { layoutKeys } from './layout-keys'
+import type { LayoutKey } from './types/layout'
 
 export const LAYOUT_OWNED_KEYS: OwnedPropKeys = new Set(layoutKeys)
 
@@ -19,6 +20,7 @@ export const LAYOUT_FAMILY_MAP = {
   'flow-root': 'none',
   'list-item': 'none',
   table: 'none',
+  'inline-table': 'none',
   'table-caption': 'none',
   'table-cell': 'none',
   'table-column': 'none',
@@ -27,7 +29,7 @@ export const LAYOUT_FAMILY_MAP = {
   'table-header-group': 'none',
   'table-row-group': 'none',
   'table-row': 'none',
-} as const satisfies Record<(typeof layoutKeys)[number], 'flex' | 'grid' | 'none'>
+} as const satisfies Record<LayoutKey<typeof layoutKeys>, 'flex' | 'grid' | 'none'>
 
 export const EMPTY_SET: ReadonlySet<string> = new Set<string>()
 

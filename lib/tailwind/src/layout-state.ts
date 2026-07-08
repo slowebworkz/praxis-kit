@@ -1,4 +1,5 @@
 import { LAYOUT_FAMILY_MAP } from './constants'
+import type { layoutKeys } from './layout-keys'
 import type { LayoutFamily, LayoutMode } from './types/layout'
 
 /**
@@ -13,20 +14,20 @@ import type { LayoutFamily, LayoutMode } from './types/layout'
  * The evaluator uses family — not mode — for utility and gap filtering.
  */
 export class LayoutState {
-  readonly #mode: LayoutMode
-  readonly #family: LayoutFamily
+  readonly #mode: LayoutMode<typeof layoutKeys>
+  readonly #family: LayoutFamily<typeof LAYOUT_FAMILY_MAP>
 
-  constructor(mode: LayoutMode) {
+  constructor(mode: LayoutMode<typeof layoutKeys>) {
     this.#mode = mode
     this.#family = mode === 'none' ? 'none' : LAYOUT_FAMILY_MAP[mode]
     Object.freeze(this)
   }
 
-  get mode(): LayoutMode {
+  get mode(): LayoutMode<typeof layoutKeys> {
     return this.#mode
   }
 
-  get family(): LayoutFamily {
+  get family(): LayoutFamily<typeof LAYOUT_FAMILY_MAP> {
     return this.#family
   }
 }

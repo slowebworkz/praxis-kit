@@ -1,0 +1,17 @@
+/*
+ * `createTailwindPipeline` assembles display-mode classes (flex, inline-flex,
+ * grid, hidden, etc.) at runtime from boolean props — they never appear as a
+ * literal string anywhere in scanned source, so Tailwind v4's content
+ * detection never generates their CSS on its own.
+ *
+ * `@source inline(...)` forces Tailwind to generate these utilities
+ * regardless of what its scanner finds. Import this file alongside
+ * `tailwindcss` itself in your app's main CSS entry point:
+ *
+ *   @import "tailwindcss";
+ *   @import "@praxis-kit/tailwind/safelist.css";
+ *
+ * Keep this list in sync with `layout-keys.ts` — enforced by
+ * `tailwind-safelist.test.ts`.
+ */
+@source inline("flex inline-flex grid inline-grid block inline-block inline hidden contents flow-root list-item table inline-table table-caption table-cell table-column table-column-group table-footer-group table-header-group table-row-group table-row");
