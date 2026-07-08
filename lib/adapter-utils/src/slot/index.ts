@@ -1,3 +1,4 @@
+export { SlotValidator } from './slot-validator'
 export { mergeSlotProps } from './merge-slot-props'
 export {
   PROP_MERGE_POLICIES,

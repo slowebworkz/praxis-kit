@@ -2,10 +2,10 @@ import type { AnyRecord, ElementType } from '@praxis-kit/core'
 import { enforceAllowedAs } from '@praxis-kit/core'
 import { iterate } from '@praxis-kit/primitive'
 
-import { applyFilter } from './apply-filter'
+import { applyFilter } from '../props'
 
 import type { Diagnostics } from '@praxis-kit/diagnostics'
-import type { FilterPredicate } from './types'
+import type { FilterPredicate } from '../types'
 
 // Minimal structural shape the SSR renderer needs — matches every non-VDOM adapter's
 // LooseRuntime (Lit, Web) without requiring them to import a shared generic type.
@@ -45,7 +45,7 @@ function buildAttrString(attributes: AnyRecord): string {
       parts.push(`${key}="${escapeAttr(String(value))}"`)
     }
   })
-  return parts.length > 0 ? ' ' + parts.join(' ') : ''
+  return parts.length > 0 ? ` ${parts.join(' ')}` : ''
 }
 
 /**

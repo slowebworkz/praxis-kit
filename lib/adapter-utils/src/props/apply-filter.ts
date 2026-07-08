@@ -1,4 +1,4 @@
-import type { FilterPredicate } from './types'
+import type { FilterPredicate } from '../types'
 import type { AnyRecord } from '@praxis-kit/core'
 import { iterate } from '@praxis-kit/primitive'
 

@@ -9,7 +9,7 @@ import type {
   createPolymorphic,
 } from '@praxis-kit/core'
 import type { Simplify } from 'type-fest'
-import type { SlotValidator } from './slot-validator'
+import type { SlotValidator } from './slot/slot-validator'
 import type { WithChildRules } from '@praxis-kit/primitive/types'
 
 export type FilterPredicate = (key: string, variantKeys: ReadonlySet<string>) => boolean
