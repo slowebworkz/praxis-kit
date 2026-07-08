@@ -1,8 +1,8 @@
 import { isObject } from '../utils/is-object'
 import { EVENT_HANDLER_RE } from './constants'
-import type { AnyRecord } from '../types'
+import type { AnyFunction, AnyRecord } from '../types'
 
-export function isFunction(value: unknown): value is (...args: unknown[]) => unknown {
+export function isFunction(value: unknown): value is AnyFunction {
   return typeof value === 'function'
 }
 
