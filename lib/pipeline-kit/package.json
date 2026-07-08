@@ -1,0 +1,54 @@
+{
+  "name": "@praxis-kit/pipeline-kit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./core": "./src/core/index.ts",
+    "./factory": "./src/factory/index.ts"
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint . --fix --config eslint.config.ts",
+    "lint:check": "eslint . --config eslint.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "type-fest": "catalog:"
+  },
+  "devDependencies": {
+    "tsup": "catalog:",
+    "vitest": "catalog:"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-kit.git",
+    "directory": "lib/pipeline-kit"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-kit/tree/main/lib/pipeline-kit#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-kit/issues"
+  },
+  "license": "MIT",
+  "author": "K Huehn <slowebworkz@gmail.com>",
+  "description": "Generic pipeline building block for Praxis Kit — a shared, agnostic Pipeline shape and one optional resolved-config construction pattern, reused by concrete pipelines across the codebase",
+  "keywords": [
+    "praxis-kit",
+    "pipeline",
+    "composition",
+    "typescript",
+    "framework-agnostic"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

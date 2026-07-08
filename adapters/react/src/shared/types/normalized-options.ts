@@ -15,7 +15,7 @@ export type NormalizedOptions<G extends PolymorphicGenerics> = ReactFactoryOptio
   VariantsOf<G>,
   RecipeOf<G>
 > & {
-  readonly slotComponent: SlotComponent
   readonly name: string
   readonly diagnostics: Diagnostics
+  readonly slotComponent: SlotComponent
 }

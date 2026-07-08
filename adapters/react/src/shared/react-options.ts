@@ -1,6 +1,5 @@
 import type {
-  AnyRecord,
-  ClassPluginFactory,
+  AnyClassPluginFactory,
   ElementType as CoreElementType,
   EmptyRecord,
   FactoryOptions,
@@ -27,9 +26,7 @@ export type ReactFactoryOptions<
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
   TAllowed extends CoreElementType = CoreElementType,
 > = FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin, TAllowed> & {
   /** Component used to render the asChild slot. Defaults to the built-in Slot. */

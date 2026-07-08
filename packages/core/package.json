@@ -26,6 +26,7 @@
   "dependencies": {
     "@praxis-kit/contract": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/pipeline-kit": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {

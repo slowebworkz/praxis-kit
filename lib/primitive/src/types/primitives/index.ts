@@ -1,9 +1,11 @@
 import type { AnyRecord, EmptyRecord, StringMap } from '../any-record'
+import type { AnyFunction } from '../any-function'
 import type { ElementType } from '../element-type'
 import type { IntrinsicTag } from '../intrinsic-tag'
 import type { KnownAriaRole } from '../../constants'
 
 export type { AnyRecord, EmptyRecord, StringMap }
+export type { AnyFunction }
 export type { ElementType }
 export type { IntrinsicTag }
 export type { KnownAriaRole }

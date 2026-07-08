@@ -2,7 +2,7 @@ import type { ChildrenEvaluator, ElementType } from '@praxis-kit/core'
 import type { ReactElement, Ref } from 'react'
 import type { SlotValidator } from '../slot'
 import type { FilterPredicate, NormalizeChildren, ResolvedProps, SlotComponent } from './primitives'
-import type { AsProp, AsChildProp, KnownProps } from './props'
+import type { AsChildProp, AsProp, KnownProps } from './props'
 import type { Runtime } from './runtime'
 
 export type RenderDirectives = Readonly<AsProp & AsChildProp>

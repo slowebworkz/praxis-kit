@@ -1,9 +1,5 @@
-import type { AnyRecord, ElementType } from '@praxis-kit/core'
-import { applyFilter } from '@praxis-kit/adapter-utils'
-import { iterate } from '@praxis-kit/primitive'
-import type { LitContractComponent, LooseBundle, UnknownProps } from './types/index'
-
-type RegistryEntry = { bundle: LooseBundle }
+import { renderBundleToString } from '@praxis-kit/adapter-utils'
+import type { LitContractComponent, LooseBundle, RegistryEntry, UnknownProps } from './types'
 
 // LitContractComponent is a constructor (object) — WeakMap key works directly.
 const ssrRegistry = new WeakMap<LitContractComponent, RegistryEntry>()
@@ -11,23 +7,6 @@ const ssrRegistry = new WeakMap<LitContractComponent, RegistryEntry>()
 /** Called by createContractComponent to enable renderToString for a class. */
 export function registerForSsr(cls: LitContractComponent, bundle: LooseBundle): void {
   ssrRegistry.set(cls, { bundle })
-}
-
-function escapeAttr(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
-}
-
-function buildAttrString(attributes: AnyRecord): string {
-  const parts: string[] = []
-  iterate.forEachEntry(attributes, (key, value) => {
-    if (value === false || value === null || value === undefined) return
-    if (value === true) {
-      parts.push(key)
-    } else {
-      parts.push(`${key}="${escapeAttr(String(value))}"`)
-    }
-  })
-  return parts.length > 0 ? ' ' + parts.join(' ') : ''
 }
 
 /**
@@ -59,29 +38,5 @@ export function renderToString(
     )
   }
 
-  const { bundle } = entry
-  const { as, className, recipe, class: classAttr, ...rest } = props
-
-  const tag = bundle.runtime.resolveTag(as as ElementType | undefined)
-  const mergedProps = bundle.runtime.resolveProps(rest)
-  const resolvedClass = bundle.runtime.resolveClasses(
-    tag,
-    mergedProps,
-    // Accept both React-style className and HTML-native class
-    (className as string | undefined) ?? (classAttr as string | undefined),
-    recipe as string | undefined,
-  )
-
-  const ariaResult = bundle.runtime.resolveAria(tag, mergedProps)
-  const filtered = applyFilter(
-    ariaResult.props,
-    bundle.filterProps,
-    bundle.runtime.options.variantKeys,
-  )
-
-  // resolvedClass wins — spread filtered first so the pipeline output always takes precedence.
-  const attrs: AnyRecord = { ...filtered, class: resolvedClass || undefined }
-  const attrStr = buildAttrString(attrs)
-
-  return `<${tag}${attrStr}>${innerHTML}</${tag}>`
+  return renderBundleToString(entry.bundle, props, innerHTML)
 }

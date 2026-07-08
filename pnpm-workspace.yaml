@@ -4,7 +4,6 @@ packages:
   - "adapters/*"
   - "examples/*"
   - "runtime/*"
-  - "backends/*"
   - "plugins/*"
   - "tooling/*"
   - "qa/*"

@@ -1,112 +1,55 @@
 {
-  "generated": "2026-07-02T17:55:01.604Z",
+  "generated": "2026-07-08T06:38:51.967Z",
   "bundles": {
-    "full-runtime": 13108,
-    "contracts-only": 12947,
-    "polymorphic-validation": 12895,
-    "aria-only": 12874,
-    "minimal-polymorphic": 12814,
-    "react-minimal": 12814,
-    "solid-minimal": 12750,
-    "preact-minimal": 12632,
-    "vue-minimal": 12582,
-    "svelte-minimal": 11948,
-    "pk2-compiler-with-variants": 1943,
-    "pk2-compiler-minimal": 1839,
-    "primitive-direct": 1714,
+    "full-runtime": 15317,
+    "contracts-only": 15149,
+    "polymorphic-validation": 15110,
+    "aria-only": 15088,
+    "minimal-polymorphic": 15026,
+    "react-minimal": 15026,
+    "preact-minimal": 14919,
+    "vue-minimal": 14346,
+    "solid-minimal": 13873,
+    "svelte-minimal": 13005,
+    "pk2-compiler-with-variants": 1944,
+    "pk2-compiler-minimal": 1837,
     "pk2-engine-only": 1127
   },
   "architecture": {
     "status": "WARNINGS",
     "violations": 0,
     "exports": {
-      "@praxis-ui/codemod": {
-        "values": 0,
-        "types": 0
-      },
-      "@praxis-ui/core": {
-        "values": 35,
-        "types": 69
-      },
-      "@praxis-ui/eslint-plugin": {
-        "values": 10,
-        "types": 0
-      },
-      "@praxis-ui/lit": {
-        "values": 2,
-        "types": 2
-      },
-      "@praxis-ui/playwright": {
-        "values": 26,
-        "types": 3
-      },
-      "@praxis-ui/preact": {
-        "values": 2,
-        "types": 5
-      },
-      "@praxis-ui/react": {
-        "values": 6,
-        "types": 0
-      },
-      "@praxis-ui/shared": {
-        "values": 43,
-        "types": 81
-      },
-      "@praxis-ui/solid": {
-        "values": 1,
-        "types": 4
-      },
-      "@praxis-ui/svelte": {
-        "values": 1,
-        "types": 5
-      },
-      "@praxis-ui/tailwind": {
-        "values": 6,
-        "types": 10
-      },
-      "@praxis-ui/ts-plugin": {
-        "values": 0,
-        "types": 0
-      },
-      "@praxis-ui/vite-plugin": {
-        "values": 15,
-        "types": 7
-      },
-      "@praxis-ui/vue": {
-        "values": 2,
-        "types": 5
-      },
-      "@praxis-ui/web": {
-        "values": 2,
-        "types": 2
+      "@praxis-kit/core": {
+        "values": 64,
+        "types": 91
       }
     }
   },
   "complexity": {
     "lib/primitive": {
-      "files": 111,
+      "files": 126,
       "functions": 77,
-      "loc": 1572
+      "loc": 1640
     },
     "lib/contract": {
-      "files": 39,
-      "functions": 105,
-      "loc": 1802
+      "files": 38,
+      "functions": 99,
+      "loc": 1771
     },
     "lib/styling": {
       "files": 20,
       "functions": 24,
-      "loc": 503
+      "loc": 501
     },
     "lib/adapter-utils": {
-      "files": 33,
-      "functions": 45,
-      "loc": 1801
+      "files": 34,
+      "functions": 47,
+      "loc": 1936
     },
     "packages/core": {
-      "files": 40,
-      "functions": 38,
-      "loc": 1296
+      "files": 31,
+      "functions": 40,
+      "loc": 1184
     }
   }
 }

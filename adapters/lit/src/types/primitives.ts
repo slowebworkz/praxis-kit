@@ -8,6 +8,10 @@ export type PolymorphicElement<G extends PolymorphicGenerics> = HTMLElement &
 
 export type UnknownProps = AnyRecord
 
+// Resolved DOM attribute values about to be serialized (render-to-string.ts) or
+// applied to a host element (applyHostState in create-contract-component.ts).
+export type ResolvedAttributes = AnyRecord
+
 /**
  * Constructor type returned by createContractComponent.
  *

@@ -1,14 +1,12 @@
-import type { ClassName, EmptyRecord, TagMap, AnyRecord  } from '../primitives'
-import type { ClassPluginFactory } from '../class'
+import type { ClassName, EmptyRecord, TagMap } from '../primitives'
+import type { AnyClassPluginFactory } from '../class'
 import type { CompoundVariant } from '../variants/compound'
 import type { DefaultVariants, RecipeMap, VariantMap } from '../variants'
 
 export type StylingOptions<
   V extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<V> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 > = {
   readonly base?: ClassName
   readonly variants?: V

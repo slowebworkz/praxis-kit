@@ -326,6 +326,39 @@ describe('render', () => {
     expect((el.props as Record<string, unknown>)['data-normalized']).toBe('yes')
   })
 
+  it('runs HTML built-in normalizers before normalizeFn, letting normalizeFn see and override their output', () => {
+    const seen: unknown[] = []
+    const htmlNormalizer = (props: Record<string, unknown>) => ({
+      ...props,
+      'aria-disabled': 'true',
+    })
+    const normalize = vi.fn((props: Record<string, unknown>) => {
+      seen.push(props['aria-disabled'])
+      return { ...props, 'aria-disabled': 'overridden' }
+    })
+    const el = render({
+      runtime: makeRuntime({
+        options: {
+          defaultTag: 'div',
+          variantKeys: new Set(),
+          displayName: 'Test',
+          diagnostics: silentDiagnostics,
+          normalizeFn: normalize,
+          htmlPropNormalizersFn: () => [htmlNormalizer],
+        },
+      }),
+      props: {},
+      ref: null,
+      slotComponent,
+      normalizeChildren: noopNormalize,
+      filterProps: noopFilter,
+      slotValidator: defaultValidator,
+    })
+    // normalizeFn observed the HTML normalizer's output, then overrode it.
+    expect(seen).toEqual(['true'])
+    expect((el.props as Record<string, unknown>)['aria-disabled']).toBe('overridden')
+  })
+
   it('normalizeFn is not called when absent', () => {
     expect(() =>
       render({

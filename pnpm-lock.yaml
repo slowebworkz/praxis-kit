@@ -279,15 +279,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
-      '@praxis-kit/pipeline':
-        specifier: workspace:*
-        version: link:../../lib/pipeline
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
-      '@praxis-kit/runtime':
-        specifier: workspace:*
-        version: link:../../runtime/core
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1
@@ -401,6 +395,9 @@ importers:
 
   adapters/svelte:
     dependencies:
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
@@ -457,18 +454,12 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
-      '@praxis-kit/pipeline':
-        specifier: workspace:*
-        version: link:../../lib/pipeline
       '@praxis-kit/playwright':
         specifier: workspace:*
         version: link:../../lib/playwright
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
-      '@praxis-kit/runtime':
-        specifier: workspace:*
-        version: link:../../runtime/core
       '@vitejs/plugin-vue':
         specifier: 'catalog:'
         version: 6.0.7(vite@8.1.3(@types/node@25.9.4)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.5))(vue@3.5.39(typescript@6.0.3))
@@ -574,6 +565,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../lib/diagnostics
       '@praxis-kit/react':
         specifier: workspace:*
         version: link:../../adapters/react
@@ -773,9 +767,9 @@ importers:
 
   lib/diagnostics:
     dependencies:
-      '@praxis-kit/pipeline':
+      '@praxis-kit/primitive':
         specifier: workspace:*
-        version: link:../pipeline
+        version: link:../primitive
       type-fest:
         specifier: 'catalog:'
         version: 5.7.0
@@ -789,6 +783,19 @@ importers:
 
   lib/pipeline:
     devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.9(@types/node@25.9.4)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.1.3(@types/node@25.9.4)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.5))
+
+  lib/pipeline-kit:
+    dependencies:
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.7.0
+    devDependencies:
+      tsup:
+        specifier: 'catalog:'
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(tsx@4.22.5)(typescript@6.0.3)
       vitest:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.4)(@vitest/ui@4.1.9)(jsdom@29.1.1)(vite@8.1.3(@types/node@25.9.4)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.5))
@@ -879,6 +886,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/pipeline-kit':
+        specifier: workspace:*
+        version: link:../../lib/pipeline-kit
       type-fest:
         specifier: 'catalog:'
         version: 5.7.0
@@ -1150,6 +1160,9 @@ importers:
       '@praxis-kit/preact':
         specifier: workspace:*
         version: link:../../adapters/preact
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
       '@praxis-kit/react':
         specifier: workspace:*
         version: link:../../adapters/react

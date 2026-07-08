@@ -1,5 +1,7 @@
 export { SLOT_NAME } from './constants'
 export { cloneWithProps } from './clone'
+export { composeRefs, getElementRef, getPropsRef, hasWarningGetter } from './compose-refs'
+export { makeCloneSlotChild } from './make-clone-slot-child'
 export { invariant, invariantDefined } from './invariant'
 export { applySlot } from './applySlot'
 export { Slottable } from './Slottable'

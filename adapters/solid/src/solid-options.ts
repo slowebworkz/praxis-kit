@@ -1,6 +1,5 @@
 import type {
-  AnyRecord,
-  ClassPluginFactory,
+  AnyClassPluginFactory,
   ElementType as CoreElementType,
   EmptyRecord,
   FactoryOptions,
@@ -14,9 +13,7 @@ export type SolidFactoryOptions<
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 > = FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> & {
   /**
    * Return true for any prop key that should be consumed but not forwarded to the DOM.

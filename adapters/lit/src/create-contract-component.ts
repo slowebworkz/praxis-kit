@@ -1,147 +1,17 @@
-import { LitElement, html } from 'lit'
+import { diffAndApplyAttributes, resolveHostState, toLooseBundle } from '@praxis-kit/adapter-utils'
 import type {
-  AnyRecord,
-  ClassPluginFactory,
+  AnyClassPluginFactory,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { applyFilter } from '@praxis-kit/adapter-utils'
+import { iterate } from '@praxis-kit/primitive'
+import { LitElement, html } from 'lit'
 import { buildRuntime } from './build-runtime'
 import { registerForSsr } from './render-to-string'
-import type {
-  LitContractComponent,
-  LooseBundle,
-  LitFactoryOptions,
-  UnknownProps,
-} from './types/index'
-import { iterate } from '@praxis-kit/primitive'
-
-function isObject(value: unknown): value is Record<PropertyKey, unknown> {
-  return typeof value === 'object' && value !== null
-}
-
-function isLooseBundle(arg: unknown): arg is LooseBundle {
-  if (!isObject(arg)) return false
-
-  const { runtime, filterProps, childrenEvaluator } = arg
-  if (!isObject(runtime)) return false
-  if (!isObject(runtime['options'])) return false
-  if (
-    typeof runtime['resolveTag'] !== 'function' ||
-    typeof runtime['resolveProps'] !== 'function' ||
-    typeof runtime['resolveClasses'] !== 'function' ||
-    typeof runtime['resolveAria'] !== 'function'
-  )
-    return false
-
-  if (typeof filterProps !== 'function') return false
-
-  if (
-    childrenEvaluator !== undefined &&
-    (!isObject(childrenEvaluator) || typeof childrenEvaluator['evaluate'] !== 'function')
-  )
-    return false
-
-  return true
-}
-
-function toLooseBundle(bundle: unknown): LooseBundle {
-  if (!isLooseBundle(bundle)) {
-    throw new Error('[createContractComponent] buildRuntime returned an unexpected shape.')
-  }
-  return bundle
-}
-
-/**
- * Pure: resolves the class string and filtered attribute map from current props.
- *
- * Separating resolution from DOM mutation makes this logic testable without a
- * real DOM and keeps applyHostState as a simple write-only function.
- */
-function resolveHostState(
-  bundle: LooseBundle,
-  props: UnknownProps,
-): { className: string; attributes: AnyRecord } {
-  const { as, className, recipe, ...rest } = props
-  const tag = bundle.runtime.resolveTag(as as ElementType | undefined)
-  const mergedProps = bundle.runtime.resolveProps(rest)
-  const baseProps = bundle.runtime.options.normalizeFn
-    ? bundle.runtime.options.normalizeFn(mergedProps)
-    : mergedProps
-  const htmlNormalizers = bundle.runtime.options.htmlPropNormalizersFn?.(tag)
-  const normalizedProps = htmlNormalizers?.length
-    ? htmlNormalizers.reduce((acc, fn) => ({ ...acc, ...fn(acc) }), baseProps)
-    : baseProps
-  const resolvedClass = bundle.runtime.resolveClasses(
-    tag,
-    normalizedProps,
-    className as string | undefined,
-    recipe as string | undefined,
-  )
-  const ariaResult = bundle.runtime.resolveAria(tag, normalizedProps)
-  const attributes = applyFilter(
-    ariaResult.props,
-    bundle.filterProps,
-    bundle.runtime.options.variantKeys,
-  )
-  return { className: resolvedClass, attributes }
-}
-
-/**
- * Applies resolved state to the host element.
- *
- * `prevPipelineAttrs` tracks which attribute keys the pipeline set in the
- * previous render. Any key present there but absent from the new state is
- * explicitly removed, preventing stale pipeline-managed attributes from
- * accumulating across renders.
- *
- * Variant keys are intentionally excluded — removing them triggers Lit's
- * attributeChangedCallback which resets the reactive property to null and
- * schedules another update, creating a feedback loop.
- */
-function applyHostState(
-  host: LitElement,
-  state: ReturnType<typeof resolveHostState>,
-  prevPipelineAttrs: Set<string>,
-  incomingProps: UnknownProps,
-): void {
-  host.className = state.className
-
-  // Remove pipeline-managed attributes absent from the new state (e.g. a
-  // filterProps target that was set last render but is gone this render).
-  iterate.forEachSet(prevPipelineAttrs, (key) => {
-    if (!Object.hasOwn(state.attributes, key)) {
-      host.removeAttribute(key)
-    }
-  })
-  prevPipelineAttrs.clear()
-
-  // Remove aria-* and role attributes that the ARIA engine stripped this render
-  // (e.g. redundant role="navigation" on a <nav>). These are user-set, not
-  // pipeline-set, so they're not covered by _pipelineAttrs above.
-  iterate.forEachKey(incomingProps, (key) => {
-    if (!Object.hasOwn(incomingProps, key)) return
-    if (!key.startsWith('aria-') && key !== 'role') return
-    if (!Object.hasOwn(state.attributes, key)) host.removeAttribute(key)
-  })
-
-  iterate.forEachKey(state.attributes, (key) => {
-    if (!Object.hasOwn(state.attributes, key)) return
-    const value = state.attributes[key]
-    if (value === undefined || value === null || value === false) {
-      host.removeAttribute(key)
-    } else if (value === true) {
-      host.setAttribute(key, '')
-      prevPipelineAttrs.add(key)
-    } else {
-      host.setAttribute(key, String(value))
-      prevPipelineAttrs.add(key)
-    }
-  })
-}
+import type { LitContractComponent, LitFactoryOptions, UnknownProps } from './types'
 
 /**
  * Creates a Lit custom element class with praxis-kit contracts applied.
@@ -168,9 +38,7 @@ export function createContractComponent<
   TProps extends UnknownProps = EmptyRecord,
   TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<TVariants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 >(
   options: LitFactoryOptions<TDefault, TProps, TVariants, TPreset, TPlugin>,
 ): LitContractComponent<TVariants, ExtractPluginProps<TPlugin>> {
@@ -271,7 +139,11 @@ export function createContractComponent<
       // aria-*, and any other pass-through attributes.
       const props: UnknownProps = {}
       iterate.forEach(iterate.items(this.attributes), (attr) => {
-        if (attr.name !== 'class') props[attr.name] = attr.value
+        if (attr.name === 'class') return
+        // `disabled` is an HTML boolean attribute — presence means true regardless
+        // of value (even disabled="false"), matching native <button disabled> semantics.
+        // Read as a raw string otherwise, disabledProps would see '' and treat it as falsy.
+        props[attr.name] = attr.name === 'disabled' ? true : attr.value
       })
 
       // Overlay Lit-managed properties for variant keys — these may differ
@@ -286,13 +158,16 @@ export function createContractComponent<
         if (val != null) props[key] = val
       })
 
-      applyHostState(this, resolveHostState(looseBundle, props), this._pipelineAttrs, props)
+      diffAndApplyAttributes(this, resolveHostState(looseBundle, props), this._pipelineAttrs, props)
     }
 
     override render() {
+      const children = Array.from(this.childNodes)
       if (bundle.childrenEvaluator) {
-        bundle.childrenEvaluator.evaluate(Array.from(this.childNodes))
+        bundle.childrenEvaluator.evaluate(children)
       }
+      const tag = bundle.runtime.resolveTag(this._self.as as ElementType | undefined)
+      bundle.runtime.options.htmlChildrenEvaluatorFn?.(tag)?.evaluate(children)
       return html`<slot></slot>`
     }
   }

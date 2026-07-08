@@ -1,4 +1,4 @@
-import type { AnyRecord } from '@praxis-kit/pipeline'
+import type { AnyRecord } from '@praxis-kit/primitive'
 import type { DiagnosticCategory } from './category'
 import type { DiagnosticCode } from './codes'
 import type { Severity } from './severity'

@@ -1,6 +1,5 @@
 import type {
-  AnyRecord,
-  ClassPluginFactory,
+  AnyClassPluginFactory,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
@@ -22,9 +21,7 @@ export function createContractComponent<
   Props extends UnknownProps = EmptyRecord,
   Variants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
   TOptions extends WithChildRules = SvelteFactoryOptions<
     TDefault,
     Props & ExtractPluginProps<TPlugin>,

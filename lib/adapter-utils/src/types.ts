@@ -6,10 +6,10 @@ import type {
   RecipeOf,
   PropsOf,
   VariantsOf,
-  createPolymorphic,
+  createPolymorphic2,
 } from '@praxis-kit/core'
 import type { Simplify } from 'type-fest'
-import type { SlotValidator } from './slot-validator'
+import type { SlotValidator } from './slot/slot-validator'
 import type { WithChildRules } from '@praxis-kit/primitive/types'
 
 export type FilterPredicate = (key: string, variantKeys: ReadonlySet<string>) => boolean
@@ -26,7 +26,7 @@ export type BuiltChildrenEvaluator<TOptions extends WithChildRules> = TOptions e
 // Identical to the per-adapter TypedRuntime definitions — lifted here so adapters
 // and new adapter authors can reference the canonical definition.
 export type TypedRuntime<G extends PolymorphicGenerics> = ReturnType<
-  typeof createPolymorphic<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, RecipeOf<G>>
+  typeof createPolymorphic2<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, RecipeOf<G>>
 >
 
 // The common fields every adapter's BuiltRuntime must include. Framework-specific

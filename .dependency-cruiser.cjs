@@ -38,6 +38,15 @@ module.exports = {
       from: { path: '^lib/adapter-utils/' },
       to: { path: '^packages/(react|vue|preact|solid|svelte)/' },
     },
+    {
+      name: 'pipeline-kit-core-no-factory',
+      severity: 'error',
+      comment:
+        'lib/pipeline-kit/src/core is the agnostic Pipeline shape — must not depend on the ' +
+        'resolved-config construction pattern in src/factory, which is one optional consumer of it',
+      from: { path: '^lib/pipeline-kit/src/core/' },
+      to: { path: '^lib/pipeline-kit/src/factory/' },
+    },
 
     // ── framework leakage ──────────────────────────────────────────────────
     {

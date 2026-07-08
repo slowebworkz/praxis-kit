@@ -1,6 +1,5 @@
 import type {
-  AnyRecord,
-  ClassPluginFactory,
+  AnyClassPluginFactory,
   ElementType,
   EmptyRecord,
   FactoryOptions,
@@ -16,9 +15,7 @@ export type VueFactoryOptions<
   Props extends UnknownProps,
   Variants extends Readonly<VariantMap>,
   TPreset extends RecipeMap<Variants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 > = FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> & {
   /**
    * Return true for any prop key that should be consumed but not forwarded to

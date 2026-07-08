@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import type { ClassValue } from 'clsx'
-import { isPlainObject as isRecord } from '@praxis-kit/primitive'
+import { isPlainObject as isRecord, isObject } from '@praxis-kit/primitive'
 
 export const PROP_MERGE_POLICIES = ['chain', 'concat', 'shallow-merge', 'child-wins'] as const
 export type PropMergePolicy = (typeof PROP_MERGE_POLICIES)[number]
@@ -12,14 +12,7 @@ export function chainHandlers(childHandler: EventHandler, slotHandler: EventHand
   return (...args) => {
     childHandler(...args)
     const event = args[0]
-    if (
-      !(
-        typeof event === 'object' &&
-        event !== null &&
-        'defaultPrevented' in event &&
-        event.defaultPrevented
-      )
-    ) {
+    if (!(isObject(event) && 'defaultPrevented' in event && event.defaultPrevented)) {
       slotHandler(...args)
     }
   }

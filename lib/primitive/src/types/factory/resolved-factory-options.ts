@@ -3,7 +3,7 @@ import type { AriaRule } from '../aria-rule'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 import type { NormalizeFn } from './factory-options'
 import type { PropNormalizer } from './prop-normalizer'
-import type { ChildRuleInput } from '../contracts'
+import type { ChildRuleInput, ChildrenEvaluator } from '../contracts'
 import type { CompoundVariant } from '../variants/compound'
 import type { DefaultVariants, RecipeMap, VariantMap } from '../variants'
 
@@ -26,6 +26,7 @@ export type ResolvedFactoryOptions<
   readonly variantKeys: ReadonlySet<string>
   readonly normalizeFn?: NormalizeFn<Props>
   readonly htmlPropNormalizersFn?: (tag: unknown) => readonly PropNormalizer[] | undefined
+  readonly htmlChildrenEvaluatorFn?: (tag: unknown) => ChildrenEvaluator | undefined
   readonly childRules?: readonly ChildRuleInput[]
   readonly ariaRules?: readonly AriaRule[]
   readonly allowedAs?: readonly ElementType[]

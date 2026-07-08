@@ -1,12 +1,13 @@
 import type { RequireAtLeastOne, Simplify } from 'type-fest'
 import type { EmptyRecord, NonEmptyArray } from '../../primitives'
-import type { VariantKey, VariantMap, VariantValue } from '..'
+import type { VariantKey } from '../variant-key'
+import type { VariantMap } from '../variant-map'
+import type { VariantValue } from '../variant-value'
 
 type RequireAtLeastOneIfNotEmpty<T> = keyof T extends never ? EmptyRecord : RequireAtLeastOne<T>
 
 type CompoundVariantConditionValue<V extends VariantMap, K extends keyof V> =
-  | VariantKey<V, K>
-  | NonEmptyArray<VariantKey<V, K>>
+  VariantKey<V, K> | NonEmptyArray<VariantKey<V, K>>
 
 type CompoundVariantConditions<V extends VariantMap> = Simplify<{
   [K in keyof V]: CompoundVariantConditionValue<V, K>

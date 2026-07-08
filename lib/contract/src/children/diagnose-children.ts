@@ -1,4 +1,4 @@
-import type { ChildRuleInput, MatchMatrix, NormalizedChildRule, ChildViolation  } from '../types'
+import type { ChildRuleInput, MatchMatrix, NormalizedChildRule, ChildViolation } from '../types'
 import { iterate } from '@praxis-kit/primitive'
 import { normalizeChildRule } from './normalize-child-rule'
 import { RuleMatcher } from './rules-matcher'

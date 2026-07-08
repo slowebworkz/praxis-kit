@@ -8,7 +8,7 @@ import type {
   PropsOf,
   ResolvedFactoryOptions,
   VariantsOf,
-  createPolymorphic,
+  createPolymorphic2,
 } from '@praxis-kit/core'
 import type { ResolvedProps, UnknownProps } from './primitives'
 
@@ -20,8 +20,10 @@ export type RuntimeOptions = Readonly<
     | 'diagnostics'
     | 'variantKeys'
     | 'childRules'
+    | 'allowedAs'
     | 'normalizeFn'
     | 'htmlPropNormalizersFn'
+    | 'htmlChildrenEvaluatorFn'
   >
 >
 
@@ -56,5 +58,5 @@ export type Runtime = Readonly<
 >
 
 export type TypedRuntime<G extends PolymorphicGenerics> = ReturnType<
-  typeof createPolymorphic<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, RecipeOf<G>>
+  typeof createPolymorphic2<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, RecipeOf<G>>
 >

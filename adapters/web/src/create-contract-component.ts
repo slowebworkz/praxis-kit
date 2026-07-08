@@ -1,131 +1,15 @@
 import type {
-  AnyRecord,
-  ClassPluginFactory,
+  AnyClassPluginFactory,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { applyFilter } from '@praxis-kit/adapter-utils'
+import { diffAndApplyAttributes, resolveHostState, toLooseBundle } from '@praxis-kit/adapter-utils'
 import { buildRuntime } from './build-runtime'
 import { registerForSsr } from './render-to-string'
-import type {
-  LooseBundle,
-  WebContractComponent,
-  WebFactoryOptions,
-  UnknownProps,
-} from './types/index'
-
-function isObject(value: unknown): value is Record<PropertyKey, unknown> {
-  return typeof value === 'object' && value !== null
-}
-
-function isLooseBundle(arg: unknown): arg is LooseBundle {
-  if (!isObject(arg)) return false
-
-  const { runtime, filterProps, childrenEvaluator } = arg
-  if (!isObject(runtime)) return false
-  if (!isObject(runtime['options'])) return false
-  if (
-    typeof runtime['resolveTag'] !== 'function' ||
-    typeof runtime['resolveProps'] !== 'function' ||
-    typeof runtime['resolveClasses'] !== 'function' ||
-    typeof runtime['resolveAria'] !== 'function'
-  )
-    return false
-
-  if (typeof filterProps !== 'function') return false
-
-  if (
-    childrenEvaluator !== undefined &&
-    (!isObject(childrenEvaluator) || typeof childrenEvaluator['evaluate'] !== 'function')
-  )
-    return false
-
-  return true
-}
-
-function toLooseBundle(bundle: unknown): LooseBundle {
-  if (!isLooseBundle(bundle)) {
-    throw new Error('[createContractComponent] buildRuntime returned an unexpected shape.')
-  }
-  return bundle
-}
-
-function resolveHostState(
-  bundle: LooseBundle,
-  props: UnknownProps,
-): { className: string; attributes: AnyRecord } {
-  const { as, className, recipe, ...rest } = props
-  const tag = bundle.runtime.resolveTag(as as ElementType | undefined)
-  const mergedProps = bundle.runtime.resolveProps(rest)
-  const baseProps = bundle.runtime.options.normalizeFn
-    ? bundle.runtime.options.normalizeFn(mergedProps)
-    : mergedProps
-  const htmlNormalizers = bundle.runtime.options.htmlPropNormalizersFn?.(tag)
-  const normalizedProps = htmlNormalizers?.length
-    ? htmlNormalizers.reduce((acc, fn) => ({ ...acc, ...fn(acc) }), baseProps)
-    : baseProps
-  const resolvedClass = bundle.runtime.resolveClasses(
-    tag,
-    normalizedProps,
-    className as string | undefined,
-    recipe as string | undefined,
-  )
-  const ariaResult = bundle.runtime.resolveAria(tag, normalizedProps)
-  const attributes = applyFilter(
-    ariaResult.props,
-    bundle.filterProps,
-    bundle.runtime.options.variantKeys,
-  )
-  return { className: resolvedClass, attributes }
-}
-
-/**
- * Applies resolved state to the host element.
- *
- * `prevPipelineAttrs` tracks attribute keys the pipeline set last run so stale
- * ones are removed when they disappear from the resolved output.
- *
- * Variant key attributes are intentionally never removed here — in a vanilla
- * custom element they are plain DOM attributes the consumer manages; removing
- * them from the pipeline side would cause a double-remove bug.
- */
-function applyHostState(
-  host: HTMLElement,
-  state: ReturnType<typeof resolveHostState>,
-  prevPipelineAttrs: Set<string>,
-  incomingProps: UnknownProps,
-): void {
-  host.className = state.className
-
-  for (const key of prevPipelineAttrs) {
-    if (!Object.hasOwn(state.attributes, key)) host.removeAttribute(key)
-  }
-  prevPipelineAttrs.clear()
-
-  // Remove aria-* and role attributes the ARIA engine stripped this run.
-  for (const key in incomingProps) {
-    if (!Object.hasOwn(incomingProps, key)) continue
-    if (!key.startsWith('aria-') && key !== 'role') continue
-    if (!Object.hasOwn(state.attributes, key)) host.removeAttribute(key)
-  }
-
-  for (const key in state.attributes) {
-    if (!Object.hasOwn(state.attributes, key)) continue
-    const value = state.attributes[key]
-    if (value === undefined || value === null || value === false) {
-      host.removeAttribute(key)
-    } else if (value === true) {
-      host.setAttribute(key, '')
-      prevPipelineAttrs.add(key)
-    } else {
-      host.setAttribute(key, String(value))
-      prevPipelineAttrs.add(key)
-    }
-  }
-}
+import type { WebContractComponent, WebFactoryOptions, UnknownProps } from './types/index'
 
 /**
  * Creates a plain `HTMLElement` subclass with praxis-kit contracts applied.
@@ -159,9 +43,7 @@ export function createContractComponent<
   TProps extends UnknownProps = EmptyRecord,
   TVariants extends Readonly<VariantMap> = Readonly<EmptyRecord>,
   TPreset extends RecipeMap<TVariants> = Readonly<EmptyRecord>,
-  TPlugin extends ClassPluginFactory<AnyRecord> | undefined =
-    | ClassPluginFactory<AnyRecord>
-    | undefined,
+  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 >(
   options: WebFactoryOptions<TDefault, TProps, TVariants, TPreset, TPlugin>,
 ): WebContractComponent<TVariants, ExtractPluginProps<TPlugin>> {
@@ -222,10 +104,18 @@ export function createContractComponent<
 
     private _applyPraxis(): void {
       const self = this._self
+      const {
+        childrenEvaluator,
+        runtime: { options, resolveTag },
+      } = bundle
 
-      if (bundle.childrenEvaluator) {
-        bundle.childrenEvaluator.evaluate(Array.from(this.childNodes))
+      const tag = resolveTag(self.as as ElementType | undefined)
+      const children = Array.from(this.childNodes)
+
+      if (childrenEvaluator) {
+        childrenEvaluator.evaluate(children)
       }
+      options.htmlChildrenEvaluatorFn?.(tag)?.evaluate(children)
 
       // Skip 'class' (pipeline output) and all observedAttributes. Observed attrs
       // are either read as camelCase below (variant keys, as, praxis-class) or
@@ -238,7 +128,10 @@ export function createContractComponent<
       const props: UnknownProps = {}
       for (const attr of Array.from(this.attributes)) {
         if (attr.name === 'class' || observedSet.has(attr.name)) continue
-        props[attr.name] = attr.value
+        // `disabled` is an HTML boolean attribute — presence means true regardless
+        // of value (even disabled="false"), matching native <button disabled> semantics.
+        // Read as a raw string otherwise, disabledProps would see '' and treat it as falsy.
+        props[attr.name] = attr.name === 'disabled' ? true : attr.value
       }
 
       // Overlay the typed view of praxis-owned attributes; attribute values are
@@ -252,7 +145,7 @@ export function createContractComponent<
         if (val != null) props[key] = val
       }
 
-      applyHostState(this, resolveHostState(looseBundle, props), this._pipelineAttrs, props)
+      diffAndApplyAttributes(this, resolveHostState(looseBundle, props), this._pipelineAttrs, props)
     }
   }
 

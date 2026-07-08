@@ -1,7 +1,7 @@
 import type { ChildrenEvaluator, ElementType } from '@praxis-kit/core'
 import type { Slots } from 'vue'
 import type { SlotValidator } from '../slot'
-import type { FilterPredicate, ResolvedProps, UnknownProps } from './primitives'
+import type { ResolvedProps } from './primitives'
 import type { AsProp, AsChildProp } from './props'
 import type { Runtime } from './runtime'
 
@@ -16,10 +16,8 @@ export type ResolvedRenderState = Readonly<{
 
 export type RenderInput = Readonly<{
   runtime: Runtime
-  attrs: Readonly<UnknownProps>
+  state: ResolvedRenderState
   slots: Slots
-  filterProps: FilterPredicate
   slotValidator: SlotValidator
   childrenEvaluator?: ChildrenEvaluator
-  resolvedState?: ResolvedRenderState
 }>

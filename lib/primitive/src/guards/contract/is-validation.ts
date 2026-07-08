@@ -1,6 +1,6 @@
 import type { ValidationResult, ValidationViolation } from '../../types'
 import { isArray } from '../foundational/is-array'
-import { isRecord, isString  } from '../foundational'
+import { isRecord, isString } from '../foundational'
 
 export function isValidationViolation(value: unknown): value is ValidationViolation {
   if (!isRecord(value)) return false

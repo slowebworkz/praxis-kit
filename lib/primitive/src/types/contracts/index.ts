@@ -1,4 +1,5 @@
 export type { Cardinality, CardinalityInput } from './cardinality'
+export type { ChildrenEvaluator } from './children-evaluator'
 export type { ChildRuleInput } from './child-rule-input'
 export type { ChildRuleMatch } from './child-rule-match'
 export type { ChildRulePosition } from './child-rule-position'

@@ -10,6 +10,7 @@
     { "path": "./packages/core" },
     { "path": "./packages/kit" },
     { "path": "./lib/diagnostics" },
+    { "path": "./lib/pipeline-kit" },
     { "path": "./lib/tailwind" },
     { "path": "./plugins/eslint" },
     { "path": "./plugins/typescript" },
