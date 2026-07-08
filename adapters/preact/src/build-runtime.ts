@@ -1,4 +1,9 @@
-import { buildEngines, composeFilter, resolveAdapterCommonOptions } from '@praxis-kit/adapter-utils'
+import {
+  buildCoreRuntime,
+  buildEngines,
+  composeFilter,
+  resolveAdapterCommonOptions,
+} from '@praxis-kit/adapter-utils'
 import type {
   DefaultOf,
   ElementType,
@@ -9,7 +14,6 @@ import type {
   VariantMap,
   VariantsOf,
 } from '@praxis-kit/core'
-import { buildCoreRuntime } from './build-core-runtime'
 import { normalizeChildren } from './normalize-children'
 import type { PreactFactoryOptions } from './preact-options'
 import { Slot, SlotValidator } from './slot'

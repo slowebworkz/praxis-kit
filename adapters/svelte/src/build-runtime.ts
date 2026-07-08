@@ -9,12 +9,12 @@ import type {
   VariantsOf,
 } from '@praxis-kit/core'
 import {
+  buildCoreRuntime,
   buildEngines,
   composeFilter,
   resolveAdapterCommonOptions,
   SlotValidator,
 } from '@praxis-kit/adapter-utils'
-import { buildCoreRuntime } from './build-core-runtime'
 import type { SvelteFactoryOptions } from './svelte-options'
 import type { BuiltRuntime, WithChildRules } from './types/built-runtime'
 import type { NormalizedOptions } from './types/normalized-options'

@@ -1,4 +1,5 @@
 import {
+  buildCoreRuntime,
   buildEngines,
   composeFilter,
   resolveAdapterCommonOptions,
@@ -14,7 +15,6 @@ import type {
   VariantMap,
   VariantsOf,
 } from '@praxis-kit/core'
-import { buildCoreRuntime } from './build-core-runtime'
 import type { BuiltRuntime, NormalizedOptions, UnknownProps } from './types'
 import type { VueFactoryOptions } from './vue-options'
 
