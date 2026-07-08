@@ -6,130 +6,10 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { enforceAllowedAs } from '@praxis-kit/core'
-import { applyFilter } from '@praxis-kit/adapter-utils'
-import { isObject as _isObject } from '@praxis-kit/primitive'
+import { diffAndApplyAttributes, resolveHostState, toLooseBundle } from '@praxis-kit/adapter-utils'
 import { buildRuntime } from './build-runtime'
 import { registerForSsr } from './render-to-string'
-import type {
-  LooseBundle,
-  ResolvedAttributes,
-  WebContractComponent,
-  WebFactoryOptions,
-  UnknownProps,
-} from './types/index'
-
-function isObject(value: unknown): value is Record<PropertyKey, unknown> {
-  return _isObject(value)
-}
-
-function isLooseBundle(arg: unknown): arg is LooseBundle {
-  if (!isObject(arg)) return false
-
-  const { runtime, filterProps, childrenEvaluator } = arg
-  if (!isObject(runtime)) return false
-  if (!isObject(runtime['options'])) return false
-  if (
-    typeof runtime['resolveTag'] !== 'function' ||
-    typeof runtime['resolveProps'] !== 'function' ||
-    typeof runtime['resolveClasses'] !== 'function' ||
-    typeof runtime['resolveAria'] !== 'function'
-  )
-    return false
-
-  if (typeof filterProps !== 'function') return false
-
-  if (
-    childrenEvaluator !== undefined &&
-    (!isObject(childrenEvaluator) || typeof childrenEvaluator['evaluate'] !== 'function')
-  )
-    return false
-
-  return true
-}
-
-function toLooseBundle(bundle: unknown): LooseBundle {
-  if (!isLooseBundle(bundle)) {
-    throw new Error('[createContractComponent] buildRuntime returned an unexpected shape.')
-  }
-  return bundle
-}
-
-function resolveHostState(
-  bundle: LooseBundle,
-  props: UnknownProps,
-): { className: string; attributes: ResolvedAttributes } {
-  const { as, className, recipe, ...rest } = props
-  const {
-    runtime: { options, resolveAria, resolveClasses, resolveProps, resolveTag },
-  } = bundle
-
-  const tag = resolveTag(as as ElementType | undefined)
-  if (options.allowedAs !== undefined) {
-    enforceAllowedAs(tag, options.allowedAs, options.diagnostics, options.displayName)
-  }
-  const mergedProps = resolveProps(rest)
-  const baseProps =
-    typeof options.normalizeFn === 'function' ? options.normalizeFn(mergedProps) : mergedProps
-  const htmlNormalizers = options.htmlPropNormalizersFn?.(tag)
-  const normalizedProps = htmlNormalizers?.length
-    ? htmlNormalizers.reduce((acc, fn) => ({ ...acc, ...fn(acc) }), baseProps)
-    : baseProps
-  const resolvedClass = resolveClasses(
-    tag,
-    normalizedProps,
-    className as string | undefined,
-    recipe as string | undefined,
-  )
-  const ariaResult = resolveAria(tag, normalizedProps)
-  const attributes = applyFilter(ariaResult.props, bundle.filterProps, options.variantKeys)
-  return { className: resolvedClass, attributes }
-}
-
-/**
- * Applies resolved state to the host element.
- *
- * `prevPipelineAttrs` tracks attribute keys the pipeline set last run so stale
- * ones are removed when they disappear from the resolved output.
- *
- * Variant key attributes are intentionally never removed here — in a vanilla
- * custom element they are plain DOM attributes the consumer manages; removing
- * them from the pipeline side would cause a double-remove bug.
- */
-function applyHostState(
-  host: HTMLElement,
-  state: ReturnType<typeof resolveHostState>,
-  prevPipelineAttrs: Set<string>,
-  incomingProps: UnknownProps,
-): void {
-  host.className = state.className
-
-  for (const key of prevPipelineAttrs) {
-    if (!Object.hasOwn(state.attributes, key)) host.removeAttribute(key)
-  }
-  prevPipelineAttrs.clear()
-
-  // Remove aria-* and role attributes the ARIA engine stripped this run.
-  for (const key in incomingProps) {
-    if (!Object.hasOwn(incomingProps, key)) continue
-    if (!key.startsWith('aria-') && key !== 'role') continue
-    if (!Object.hasOwn(state.attributes, key)) host.removeAttribute(key)
-  }
-
-  for (const key in state.attributes) {
-    if (!Object.hasOwn(state.attributes, key)) continue
-    const value = state.attributes[key]
-    if (value === undefined || value === null || value === false) {
-      host.removeAttribute(key)
-    } else if (value === true) {
-      host.setAttribute(key, '')
-      prevPipelineAttrs.add(key)
-    } else {
-      host.setAttribute(key, String(value))
-      prevPipelineAttrs.add(key)
-    }
-  }
-}
+import type { WebContractComponent, WebFactoryOptions, UnknownProps } from './types/index'
 
 /**
  * Creates a plain `HTMLElement` subclass with praxis-kit contracts applied.
@@ -265,7 +145,7 @@ export function createContractComponent<
         if (val != null) props[key] = val
       }
 
-      applyHostState(this, resolveHostState(looseBundle, props), this._pipelineAttrs, props)
+      diffAndApplyAttributes(this, resolveHostState(looseBundle, props), this._pipelineAttrs, props)
     }
   }
 

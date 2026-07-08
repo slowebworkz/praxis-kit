@@ -73,28 +73,28 @@ export function renderBundleToString(
     enforceAllowedAs(tag, options.allowedAs, options.diagnostics, options.displayName)
   }
   const mergedProps = resolveProps(rest)
-  const resolvedProps =
+  const normalizedProps =
     typeof options.normalizeFn === 'function' ? options.normalizeFn(mergedProps) : mergedProps
 
   // Object.assign into a running copy rather than reduce()'s ({ ...acc, ...fn(acc) })
   // — that allocates two extra objects per normalizer on top of the accumulator.
   const htmlNormalizers = options.htmlPropNormalizersFn?.(tag)
-  const normalizedProps = { ...resolvedProps }
+  const finalProps = { ...normalizedProps }
   if (htmlNormalizers) {
     for (const normalize of htmlNormalizers) {
-      Object.assign(normalizedProps, normalize(normalizedProps))
+      Object.assign(finalProps, normalize(finalProps))
     }
   }
 
   const resolvedClass = resolveClasses(
     tag,
-    normalizedProps,
+    finalProps,
     // Accept both React-style className and HTML-native class
     (className as string | undefined) ?? (classAttr as string | undefined),
     recipe as string | undefined,
   )
 
-  const ariaResult = resolveAria(tag, normalizedProps)
+  const ariaResult = resolveAria(tag, finalProps)
   const filtered = applyFilter(ariaResult.props, filterProps, options.variantKeys)
 
   // Runtime-generated class always wins over any pipeline-filtered `class` prop.
