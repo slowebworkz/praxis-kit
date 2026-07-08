@@ -39,6 +39,7 @@
       "types": "./dist/tailwind/index.d.ts",
       "import": "./dist/tailwind/index.js"
     },
+    "./tailwind.css": "./dist/tailwind/safelist.css",
     "./eslint": {
       "types": "./dist/eslint/index.d.ts",
       "import": "./dist/eslint/index.js"

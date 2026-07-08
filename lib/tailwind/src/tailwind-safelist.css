@@ -5,11 +5,14 @@
  * detection never generates their CSS on its own.
  *
  * `@source inline(...)` forces Tailwind to generate these utilities
- * regardless of what its scanner finds. Import this file alongside
- * `tailwindcss` itself in your app's main CSS entry point:
+ * regardless of what its scanner finds. This file is copied verbatim into
+ * `praxis-kit`'s published dist (see packages/kit/scripts/postbuild.mjs) and
+ * exposed as the `praxis-kit/tailwind.css` subpath — `@praxis-kit/tailwind`
+ * itself is a private, unpublished workspace package. Import it alongside
+ * `tailwindcss` in your app's main CSS entry point:
  *
  *   @import "tailwindcss";
- *   @import "@praxis-kit/tailwind/safelist.css";
+ *   @import "praxis-kit/tailwind.css";
  *
  * Keep this list in sync with `layout-keys.ts` — enforced by
  * `tailwind-safelist.test.ts`.

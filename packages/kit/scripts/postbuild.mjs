@@ -9,13 +9,25 @@
 //    in both the d.ts and JS output. Duplicates mean some entry bundled its
 //    own copy again, which silently breaks cross-entry assignability.
 
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const DIST = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
+const ROOT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..')
+const DIST = join(ROOT_DIR, 'dist')
 const SHARED = join(DIST, '_shared', 'diagnostics.js')
 const SPECIFIER = '@praxis-kit/diagnostics'
+
+// tsup only bundles JS/d.ts — the Tailwind v4 safelist is a plain CSS file
+// consumed directly by Tailwind's `@source inline(...)` directive, so it must
+// be copied into dist verbatim. Without this, the `./tailwind.css` export in
+// package.json resolves to a file the build never produced.
+mkdirSync(join(DIST, 'tailwind'), { recursive: true })
+copyFileSync(
+  join(ROOT_DIR, '..', '..', 'lib', 'tailwind', 'src', 'tailwind-safelist.css'),
+  join(DIST, 'tailwind', 'safelist.css'),
+)
+console.log('postbuild: copied tailwind safelist.css into dist/tailwind/')
 
 const files = readdirSync(DIST, { recursive: true })
   .map((f) => join(DIST, String(f)))

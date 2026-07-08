@@ -12,6 +12,13 @@
  *   // tailwind.config.js
  *   export default { content: ['./src/**', './praxis-tokens.json'] }
  *
+ * This is a Tailwind v3-style `content`-array mechanism: v4 does not scan
+ * `tailwind.config.js` unless the app explicitly adds `@config` to its CSS,
+ * which is not the standard v4 setup. On v4, display classes (flex, grid,
+ * inline-block, etc.) are not covered by this manifest at all — those are
+ * runtime-assembled and require importing `praxis-kit/tailwind.css` instead
+ * (see lib/tailwind/src/tailwind-safelist.css).
+ *
  * The JSON schema is intentionally stable and human-readable:
  *
  *   {

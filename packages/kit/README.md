@@ -17,6 +17,7 @@ pnpm add praxis-kit
 | `praxis-kit/lit`                       | `adapters/lit`              | Lit adapter                                                  |
 | `praxis-kit/web`                       | `adapters/web`              | Vanilla Custom Elements adapter                              |
 | `praxis-kit/tailwind`                  | `lib/tailwind`              | Layout-aware Tailwind class pipeline                         |
+| `praxis-kit/tailwind.css`              | `lib/tailwind`              | Tailwind v4 safelist for runtime-assembled display classes   |
 | `praxis-kit/contract`                  | `contract.ts` (this folder) | Framework-agnostic contracts, prop normalizers, shared types |
 | `praxis-kit/eslint`                    | `plugins/eslint`            | ESLint rules                                                 |
 | `praxis-kit/ts-plugin`                 | `plugins/typescript`        | TS language-service plugin (CJS)                             |

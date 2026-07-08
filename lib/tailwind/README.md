@@ -71,6 +71,20 @@ conflicting utilities based on the active family:
 Do not pass display classes as literal strings in `base`, `variants`, or `className` — the pipeline
 will warn (when `strict` is enabled) and strip them in favour of the prop-controlled value.
 
+### Tailwind v4 setup (required)
+
+Display classes are assembled at runtime from boolean props, so they never appear as a literal
+string anywhere Tailwind's content scanner can find them — under Tailwind v4, their CSS is never
+generated unless you explicitly safelist them. Import the safelist alongside `tailwindcss` itself in
+your app's main CSS entry point:
+
+```css
+@import 'tailwindcss';
+@import 'praxis-kit/tailwind.css';
+```
+
+Without this import, props like `<Button inline-block>` will not produce any `display` CSS.
+
 ---
 
 ## Exports
