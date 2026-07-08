@@ -3,17 +3,17 @@
 // pressure, React reconciliation, or JSX transform overhead — those require
 // a render-level bench (pipeline.bench.ts, not yet implemented).
 import { bench, describe } from 'vitest'
-import { createPolymorphic } from '@praxis-kit/core'
+import { createPolymorphic2 } from '@praxis-kit/core'
 import { cva } from 'class-variance-authority'
 import type { AnyRecord } from '@praxis-kit/core'
 
 // Runtimes are created once at module load so factory cost is excluded.
-const noVariantRuntime = createPolymorphic({
+const noVariantRuntime = createPolymorphic2({
   tag: 'div',
   styling: { base: 'box' },
 })
 
-const variantRuntime = createPolymorphic({
+const variantRuntime = createPolymorphic2({
   tag: 'button',
   styling: {
     base: 'btn',
@@ -55,7 +55,7 @@ const NONCE_VARIANTS: Record<string, string> = Object.fromEntries(
   Array.from({ length: 1200 }, (_, i) => [String(i), `n-${i}`]),
 )
 
-const coldCacheRuntime = createPolymorphic({
+const coldCacheRuntime = createPolymorphic2({
   tag: 'button',
   styling: {
     base: 'btn',
@@ -120,7 +120,7 @@ const TWO_HUNDRED_COMPOUNDS: any[] = Array.from({ length: 200 }, (_, i) => ({
   class: `compound-${i}`,
 }))
 
-const largeCompoundRuntime = createPolymorphic({
+const largeCompoundRuntime = createPolymorphic2({
   tag: 'button',
   styling: {
     base: 'btn',

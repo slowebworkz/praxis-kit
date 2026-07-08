@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-08T06:02:45.210Z",
+  "generated": "2026-07-08T06:38:51.967Z",
   "bundles": {
     "full-runtime": 15317,
     "contracts-only": 15149,
@@ -13,7 +13,6 @@
     "svelte-minimal": 13005,
     "pk2-compiler-with-variants": 1944,
     "pk2-compiler-minimal": 1837,
-    "primitive-direct": 1712,
     "pk2-engine-only": 1127
   },
   "architecture": {
@@ -48,9 +47,9 @@
       "loc": 1936
     },
     "packages/core": {
-      "files": 35,
-      "functions": 50,
-      "loc": 1436
+      "files": 31,
+      "functions": 40,
+      "loc": 1184
     }
   }
 }

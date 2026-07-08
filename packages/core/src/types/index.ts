@@ -20,7 +20,6 @@ export type {
   VariantValue,
 } from '@praxis-kit/primitive'
 export type * from './aria'
-export type { Capabilities } from './capabilities'
 export type * from './class'
 export type * from './contract'
 export type {

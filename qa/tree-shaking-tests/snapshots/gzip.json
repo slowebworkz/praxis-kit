@@ -26,9 +26,6 @@
   "preact-minimal": {
     "gzip": 14919
   },
-  "primitive-direct": {
-    "gzip": 1712
-  },
   "react-minimal": {
     "gzip": 15026
   },
