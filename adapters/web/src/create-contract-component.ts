@@ -1,24 +1,26 @@
 import type {
   AnyClassPluginFactory,
-  AnyRecord,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
+import { enforceAllowedAs } from '@praxis-kit/core'
 import { applyFilter } from '@praxis-kit/adapter-utils'
+import { isObject as _isObject } from '@praxis-kit/primitive'
 import { buildRuntime } from './build-runtime'
 import { registerForSsr } from './render-to-string'
 import type {
   LooseBundle,
+  ResolvedAttributes,
   WebContractComponent,
   WebFactoryOptions,
   UnknownProps,
 } from './types/index'
 
 function isObject(value: unknown): value is Record<PropertyKey, unknown> {
-  return typeof value === 'object' && value !== null
+  return _isObject(value)
 }
 
 function isLooseBundle(arg: unknown): arg is LooseBundle {
@@ -56,29 +58,31 @@ function toLooseBundle(bundle: unknown): LooseBundle {
 function resolveHostState(
   bundle: LooseBundle,
   props: UnknownProps,
-): { className: string; attributes: AnyRecord } {
+): { className: string; attributes: ResolvedAttributes } {
   const { as, className, recipe, ...rest } = props
-  const tag = bundle.runtime.resolveTag(as as ElementType | undefined)
-  const mergedProps = bundle.runtime.resolveProps(rest)
-  const baseProps = bundle.runtime.options.normalizeFn
-    ? bundle.runtime.options.normalizeFn(mergedProps)
-    : mergedProps
-  const htmlNormalizers = bundle.runtime.options.htmlPropNormalizersFn?.(tag)
+  const {
+    runtime: { options, resolveAria, resolveClasses, resolveProps, resolveTag },
+  } = bundle
+
+  const tag = resolveTag(as as ElementType | undefined)
+  if (options.allowedAs !== undefined) {
+    enforceAllowedAs(tag, options.allowedAs, options.diagnostics, options.displayName)
+  }
+  const mergedProps = resolveProps(rest)
+  const baseProps =
+    typeof options.normalizeFn === 'function' ? options.normalizeFn(mergedProps) : mergedProps
+  const htmlNormalizers = options.htmlPropNormalizersFn?.(tag)
   const normalizedProps = htmlNormalizers?.length
     ? htmlNormalizers.reduce((acc, fn) => ({ ...acc, ...fn(acc) }), baseProps)
     : baseProps
-  const resolvedClass = bundle.runtime.resolveClasses(
+  const resolvedClass = resolveClasses(
     tag,
     normalizedProps,
     className as string | undefined,
     recipe as string | undefined,
   )
-  const ariaResult = bundle.runtime.resolveAria(tag, normalizedProps)
-  const attributes = applyFilter(
-    ariaResult.props,
-    bundle.filterProps,
-    bundle.runtime.options.variantKeys,
-  )
+  const ariaResult = resolveAria(tag, normalizedProps)
+  const attributes = applyFilter(ariaResult.props, bundle.filterProps, options.variantKeys)
   return { className: resolvedClass, attributes }
 }
 
@@ -220,10 +224,18 @@ export function createContractComponent<
 
     private _applyPraxis(): void {
       const self = this._self
+      const {
+        childrenEvaluator,
+        runtime: { options, resolveTag },
+      } = bundle
 
-      if (bundle.childrenEvaluator) {
-        bundle.childrenEvaluator.evaluate(Array.from(this.childNodes))
+      const tag = resolveTag(self.as as ElementType | undefined)
+      const children = Array.from(this.childNodes)
+
+      if (childrenEvaluator) {
+        childrenEvaluator.evaluate(children)
       }
+      options.htmlChildrenEvaluatorFn?.(tag)?.evaluate(children)
 
       // Skip 'class' (pipeline output) and all observedAttributes. Observed attrs
       // are either read as camelCase below (variant keys, as, praxis-class) or
@@ -236,7 +248,10 @@ export function createContractComponent<
       const props: UnknownProps = {}
       for (const attr of Array.from(this.attributes)) {
         if (attr.name === 'class' || observedSet.has(attr.name)) continue
-        props[attr.name] = attr.value
+        // `disabled` is an HTML boolean attribute — presence means true regardless
+        // of value (even disabled="false"), matching native <button disabled> semantics.
+        // Read as a raw string otherwise, disabledProps would see '' and treat it as falsy.
+        props[attr.name] = attr.name === 'disabled' ? true : attr.value
       }
 
       // Overlay the typed view of praxis-owned attributes; attribute values are

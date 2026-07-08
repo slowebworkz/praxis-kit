@@ -15,3 +15,6 @@ export type LooseBundle = {
   readonly filterProps: FilterPredicate
   readonly childrenEvaluator?: ChildrenEvaluator
 }
+
+// SSR registry entry — wraps a LooseBundle for lookup by component class in render-to-string.ts.
+export type RegistryEntry = { bundle: LooseBundle }

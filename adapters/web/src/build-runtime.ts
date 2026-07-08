@@ -1,12 +1,8 @@
 import type { ElementType, RecipeMap, VariantMap } from '@praxis-kit/core'
 import type { AnyRecord } from '@praxis-kit/primitive'
-import {
-  buildCoreRuntime,
-  buildEngines,
-  composeFilter,
-  resolveAdapterCommonOptions,
-} from '@praxis-kit/adapter-utils'
+import { buildEngines, composeFilter, resolveAdapterCommonOptions } from '@praxis-kit/adapter-utils'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
+import { buildCoreRuntime } from './build-core-runtime'
 import type { BuiltRuntime, NormalizedOptions, RuntimeG } from './types/index'
 import type { WebFactoryOptions } from './types/index'
 

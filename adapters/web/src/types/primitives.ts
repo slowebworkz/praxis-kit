@@ -3,6 +3,11 @@ import type { Diagnostics } from '@praxis-kit/diagnostics'
 
 export type UnknownProps = AnyRecord
 
+// Resolved DOM attribute values built for spreading onto the host element (applyHostState
+// in create-contract-component.ts) or serializing to a string (render-to-string.ts) —
+// distinct role from UnknownProps (arbitrary input props) even though the shape is identical.
+export type ResolvedAttributes = AnyRecord
+
 /**
  * Constructor type returned by createContractComponent.
  *
