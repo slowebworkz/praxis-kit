@@ -1,19 +1,21 @@
 import type { ChildRuleInput, EnforcementOptions } from '../types'
 import type { HtmlContractMap } from '@praxis-kit/contract/types'
-import { isTag } from '@praxis-kit/primitive/guards/children'
+import { getTag, isTag } from '@praxis-kit/primitive/guards/children'
 import { isNumber, isObject, isString } from '@praxis-kit/primitive'
 import { landmarkNameAdvisory, landmarkRoleRule, requireAccessibleName } from './aria-rules'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
 
-// Matches any element whose tag is NOT in the blocked set, plus component children
-// (whose `type` is a function/class rather than a string). Used as the open-content
-// catch-all alongside a constrained singleton child (e.g. figcaption, summary, legend).
+// Matches any element whose resolved semantic tag is not in the blocked set.
+// Uses getTag() so Praxis components resolve through COMPONENT_DEFAULT_TAG
+// exactly as isTag() does, preventing semantic components like Figure.Caption
+// from being treated as generic open content.
 function isOpenContent(...blockedTags: string[]): (child: unknown) => child is { type: unknown } {
   const set = new Set(blockedTags)
-  return (child: unknown): child is { type: unknown } =>
-    isObject(child) &&
-    'type' in child &&
-    (!isString((child as { type: unknown }).type) || !set.has((child as { type: string }).type))
+  return (child: unknown): child is { type: unknown } => {
+    if (!isObject(child) || !('type' in child)) return false
+    const tag = getTag(child)
+    return tag === undefined || !set.has(tag)
+  }
 }
 
 // ─── Shared rule fragments ────────────────────────────────────────────────────

@@ -35,6 +35,7 @@ import {
 } from './contracts'
 import { landmarkNameAdvisory } from './aria-rules'
 import { iterate } from '@praxis-kit/primitive'
+import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/primitive/guards/children'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -44,6 +45,14 @@ function el(tag: string) {
 
 function componentEl() {
   return { type: () => null }
+}
+
+// A praxis-kit-wrapped component resolving to a given semantic tag, e.g. the
+// `Figure.Caption` sub-component resolving to `figcaption`.
+function taggedComponentEl(defaultTag: string) {
+  function Component() {}
+  Object.assign(Component, { [COMPONENT_DEFAULT_TAG]: defaultTag })
+  return { type: Component, props: {} }
 }
 
 function check(contract: EnforcementOptions, children: unknown[]) {
@@ -265,6 +274,15 @@ describe('figureContract', () => {
       ]),
     )
   })
+
+  // Regression: isOpenContent previously matched any component child regardless of
+  // its resolved tag, so a Figure.Caption-style wrapper matched both the 'caption'
+  // and 'content' rules simultaneously, producing a spurious ambiguous-child result.
+  describe('regressions', () => {
+    it('resolves a component wrapping figcaption as the caption only, not ambiguous content', () => {
+      expect(check(figureContract, [taggedComponentEl('figcaption'), el('img')])).toEqual([])
+    })
+  })
 })
 
 // ─── detailsContract ──────────────────────────────────────────────────────────
@@ -340,6 +358,19 @@ describe('audioContract / videoContract', () => {
 
   it('audioContract and videoContract are the same object', () => {
     expect(audioContract).toBe(videoContract)
+  })
+
+  // Regression: isOpenContent previously matched any component child regardless of
+  // its resolved tag, so an Audio.Source/Video.Source-style wrapper matched both the
+  // 'source' and 'content' rules simultaneously, producing a spurious ambiguous-child result.
+  describe('regressions', () => {
+    it('resolves a component wrapping source as the source only, not ambiguous content', () => {
+      expect(check(audioContract, [taggedComponentEl('source')])).toEqual([])
+    })
+
+    it('resolves a component wrapping track as the track only, not ambiguous content', () => {
+      expect(check(audioContract, [taggedComponentEl('track')])).toEqual([])
+    })
   })
 })
 
