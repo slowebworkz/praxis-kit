@@ -27,6 +27,7 @@
  *   }
  */
 import { iterate } from '@praxis-kit/primitive'
+import { layoutKeys } from '@praxis-kit/tailwind'
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import ts from 'typescript'
@@ -168,10 +169,20 @@ function mergeTokens(
   }
 }
 
-/** Builds a DesignTokenManifest from the accumulated per-component token maps, including a flat sorted `allClasses` union. */
+/**
+ * Builds a DesignTokenManifest from the accumulated per-component token maps,
+ * including a flat sorted `allClasses` union.
+ *
+ * `allClasses` always includes every `layoutKeys` display value (`flex`,
+ * `inline-flex`, `grid`, `hidden`, etc.) even when no scanned component uses
+ * them literally. Those classes are only ever assembled at runtime by
+ * `createTailwindPipeline` from boolean props, so they never appear as a
+ * string literal for Tailwind's content scanner (or this manifest) to find
+ * on its own — without this, Tailwind silently drops their generated CSS.
+ */
 export function buildManifest(allTokens: Map<string, ComponentTokens>): DesignTokenManifest {
   const components: Record<string, ComponentTokens> = {}
-  const seen = new Set<string>()
+  const seen = new Set<string>(layoutKeys)
 
   iterate.forEach(allTokens, ([name, tokens]) => {
     components[name] = tokens

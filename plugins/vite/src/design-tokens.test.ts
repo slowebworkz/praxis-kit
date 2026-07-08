@@ -1,3 +1,4 @@
+import { layoutKeys } from '@praxis-kit/tailwind'
 import { describe, expect, it } from 'vitest'
 import { buildManifest, collectFileTokens } from './design-tokens'
 import { parseSource } from './ast'
@@ -87,10 +88,10 @@ describe('collectFileTokens', () => {
 // ─── buildManifest ────────────────────────────────────────────────────────────
 
 describe('buildManifest', () => {
-  it('produces an empty manifest for empty input', () => {
+  it('produces an empty component map for empty input, but still safelists layout classes', () => {
     const manifest = buildManifest(new Map())
     expect(manifest.components).toEqual({})
-    expect(manifest.allClasses).toEqual([])
+    expect(manifest.allClasses).toEqual([...layoutKeys].sort())
   })
 
   it('unions all class parts in allClasses', () => {

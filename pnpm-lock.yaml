@@ -1034,6 +1034,9 @@ importers:
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
+      '@praxis-kit/tailwind':
+        specifier: workspace:*
+        version: link:../../lib/tailwind
       tsup:
         specifier: 'catalog:'
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(tsx@4.22.5)(typescript@6.0.3)
