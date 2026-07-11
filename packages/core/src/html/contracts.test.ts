@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import type { AriaContext, EnforcementOptions } from '../types'
 import { ChildrenEvaluator, diagnoseChildren } from '../children'
 import { throwDiagnostics } from '@praxis-kit/diagnostics'
+import { getHtmlChildrenEvaluator } from './evaluators'
 import {
   audioContract,
   colgroupContract,
@@ -56,7 +57,10 @@ function taggedComponentEl(defaultTag: string) {
 }
 
 function check(contract: EnforcementOptions, children: unknown[]) {
-  return diagnoseChildren(contract.children!, children)
+  return diagnoseChildren(contract.children!, children, 'Component', {
+    exclusiveChildren: contract.exclusiveChildren,
+    allowText: contract.allowText,
+  })
 }
 
 // ─── listContract ─────────────────────────────────────────────────────────────
@@ -436,15 +440,50 @@ describe('voidContract', () => {
     expect(voidContract.children).toEqual([])
   })
 
+  it('closes the set and disallows text', () => {
+    expect(voidContract.exclusiveChildren).toBe(true)
+    expect(voidContract.allowText).toBe(false)
+  })
+
   it('rejects any child via ChildrenEvaluator', () => {
     // diagnoseChildren short-circuits when rules is empty; ChildrenEvaluator enforces correctly.
-    // Void semantics require exclusiveChildren + allowText:false explicitly — an empty rule
-    // array alone is open-by-default and would otherwise allow any unmatched child through.
     const ev = new ChildrenEvaluator(voidContract.children!, throwDiagnostics, 'VoidElement', {
-      exclusiveChildren: true,
-      allowText: false,
+      exclusiveChildren: voidContract.exclusiveChildren,
+      allowText: voidContract.allowText,
     })
     expect(() => ev.evaluate([el('span')])).toThrow()
+    expect(() => ev.evaluate(['stray text'])).toThrow()
+  })
+})
+
+// ─── getHtmlChildrenEvaluator — regression: void tags must be live-enforced ───
+
+describe('getHtmlChildrenEvaluator', () => {
+  // getHtmlChildrenEvaluator wires htmlDiagnostics = warnDiagnostics (contracts default to
+  // warn, not throw — see the htmlContracts doc comment), so violations report via
+  // console.warn rather than throwing; assert on the report, not on evaluate() throwing.
+  it('returns a defined evaluator for a void tag and rejects a child through it', () => {
+    // Previously, buildEvaluatorMap() gated construction on children?.length, so an
+    // empty-rule contract like voidContract never actually built a live evaluator here
+    // — void-element rejection was only exercised by directly constructing
+    // ChildrenEvaluator in a unit test, never through this real runtime lookup path.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const ev = getHtmlChildrenEvaluator('img')
+    expect(ev).toBeDefined()
+    ev!.evaluate([el('span')])
+    expect(warn).toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('returns a defined evaluator for a text-only tag and allows text but rejects elements', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const ev = getHtmlChildrenEvaluator('title')
+    expect(ev).toBeDefined()
+    ev!.evaluate(['hello'])
+    expect(warn).not.toHaveBeenCalled()
+    ev!.evaluate([el('span')])
+    expect(warn).toHaveBeenCalled()
+    warn.mockRestore()
   })
 })
 

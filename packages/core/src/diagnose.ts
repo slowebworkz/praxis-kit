@@ -31,7 +31,10 @@ export function diagnose(
     aria = AriaPolicyEngine.evaluate(tag, props as IntrinsicProps).violations
   }
 
-  const childViolations = diagnoseChildren(options.childRules ?? [], children ?? [])
+  const childViolations = diagnoseChildren(options.childRules ?? [], children ?? [], 'Component', {
+    exclusiveChildren: options.exclusiveChildren,
+    allowText: options.allowText,
+  })
 
   return { classes, aria, children: childViolations }
 }
