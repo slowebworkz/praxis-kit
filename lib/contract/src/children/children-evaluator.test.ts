@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import type { ChildRuleInput } from '../types'
-import { ChildrenEvaluator } from './children-evaluator'
+import { ChildrenEvaluator  } from './children-evaluator'
+import type {ChildrenEvaluatorOptions} from './children-evaluator';
 import { throwDiagnostics } from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
@@ -48,8 +49,12 @@ const bodyRule: ChildRuleInput = {
   cardinality: { min: 1, max: 3 },
 }
 
-function makeEvaluator(rules: ChildRuleInput[], context = 'Test') {
-  return new ChildrenEvaluator(rules, throwDiagnostics, context)
+function makeEvaluator(
+  rules: ChildRuleInput[],
+  context = 'Test',
+  options?: ChildrenEvaluatorOptions,
+) {
+  return new ChildrenEvaluator(rules, throwDiagnostics, context, options)
 }
 
 // ---------------------------------------------------------------------------
@@ -163,20 +168,101 @@ describe('ChildrenEvaluator.evaluate() — valid children', () => {
 // evaluate() — unexpected children
 // ---------------------------------------------------------------------------
 
-describe('ChildrenEvaluator.evaluate() — unexpected child', () => {
+describe('ChildrenEvaluator.evaluate() — unexpected child (exclusiveChildren: true)', () => {
   it('throws when a child matches no rule', () => {
-    const ev = makeEvaluator([flexRule])
+    const ev = makeEvaluator([flexRule], 'Test', { exclusiveChildren: true })
     expect(() => ev.evaluate([gridEl])).toThrow()
   })
 
   it('error message names the context', () => {
-    const ev = new ChildrenEvaluator([flexRule], throwDiagnostics, 'MyComponent')
+    const ev = new ChildrenEvaluator([flexRule], throwDiagnostics, 'MyComponent', {
+      exclusiveChildren: true,
+    })
     expect(() => ev.evaluate([gridEl])).toThrow(/MyComponent/)
   })
 
   it('error message identifies the element type', () => {
-    const ev = makeEvaluator([flexRule])
+    const ev = makeEvaluator([flexRule], 'Test', { exclusiveChildren: true })
     expect(() => ev.evaluate([gridEl])).toThrow(/Grid/)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// evaluate() — open-by-default (no exclusiveChildren)
+// ---------------------------------------------------------------------------
+
+describe('ChildrenEvaluator.evaluate() — open by default', () => {
+  it('allows a non-text child matching no rule when exclusiveChildren is unset', () => {
+    const ev = makeEvaluator([flexRule])
+    expect(() => ev.evaluate([gridEl])).not.toThrow()
+  })
+
+  it('allows a non-text child matching no rule when exclusiveChildren is explicitly false', () => {
+    const ev = makeEvaluator([flexRule], 'Test', { exclusiveChildren: false })
+    expect(() => ev.evaluate([gridEl])).not.toThrow()
+  })
+
+  it('a required rule (cardinality.min) does not forbid other unlisted children', () => {
+    const requiredHeader: ChildRuleInput = {
+      name: 'header',
+      match: (c) => c instanceof Header,
+      cardinality: { min: 1 },
+    }
+    const ev = makeEvaluator([requiredHeader])
+    expect(() => ev.evaluate([headerEl, gridEl, flexEl])).not.toThrow()
+  })
+
+  it('still enforces cardinality.min for the declared rule even when open', () => {
+    const requiredHeader: ChildRuleInput = {
+      name: 'header',
+      match: (c) => c instanceof Header,
+      cardinality: { min: 1 },
+    }
+    const ev = makeEvaluator([requiredHeader])
+    expect(() => ev.evaluate([gridEl])).toThrow(/header/)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// evaluate() — text-node handling (allowText)
+// ---------------------------------------------------------------------------
+
+describe('ChildrenEvaluator.evaluate() — text-node handling', () => {
+  it('allows string children by default even with exclusiveChildren: true', () => {
+    const ev = makeEvaluator([flexRule], 'Test', { exclusiveChildren: true })
+    expect(() => ev.evaluate(['Save', flexEl])).not.toThrow()
+  })
+
+  it('allows number children by default even with exclusiveChildren: true', () => {
+    const ev = makeEvaluator([flexRule], 'Test', { exclusiveChildren: true })
+    expect(() => ev.evaluate([42, flexEl])).not.toThrow()
+  })
+
+  it('rejects string children when allowText is false, even in open mode', () => {
+    const ev = makeEvaluator([flexRule], 'Test', { allowText: false })
+    expect(() => ev.evaluate(['Save'])).toThrow()
+  })
+
+  it('rejects number children when allowText is false, even in open mode', () => {
+    const ev = makeEvaluator([flexRule], 'Test', { allowText: false })
+    expect(() => ev.evaluate([7])).toThrow()
+  })
+
+  it('still allows non-text unlisted children when allowText is false but exclusiveChildren is unset', () => {
+    const ev = makeEvaluator([flexRule], 'Test', { allowText: false })
+    expect(() => ev.evaluate([gridEl])).not.toThrow()
+  })
+
+  it('rejects everything — text and elements — with exclusiveChildren: true and allowText: false', () => {
+    const ev = makeEvaluator([], 'Test', { exclusiveChildren: true, allowText: false })
+    expect(() => ev.evaluate(['Save'])).toThrow()
+    expect(() => ev.evaluate([gridEl])).toThrow()
+  })
+
+  it('allows only text with exclusiveChildren: true and no rules (allowText default true)', () => {
+    const ev = makeEvaluator([], 'Test', { exclusiveChildren: true })
+    expect(() => ev.evaluate(['Save'])).not.toThrow()
+    expect(() => ev.evaluate([gridEl])).toThrow()
   })
 })
 

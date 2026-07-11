@@ -31,6 +31,7 @@ export function buildRuntime<
     normalized.diagnostics,
     enforcement?.children,
     normalized.name,
+    { exclusiveChildren: enforcement?.exclusiveChildren, allowText: enforcement?.allowText },
   )
   const filterProps = composeFilter(ownedKeys, customFilter)
 

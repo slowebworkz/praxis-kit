@@ -438,7 +438,12 @@ describe('voidContract', () => {
 
   it('rejects any child via ChildrenEvaluator', () => {
     // diagnoseChildren short-circuits when rules is empty; ChildrenEvaluator enforces correctly.
-    const ev = new ChildrenEvaluator(voidContract.children!, throwDiagnostics, 'VoidElement')
+    // Void semantics require exclusiveChildren + allowText:false explicitly — an empty rule
+    // array alone is open-by-default and would otherwise allow any unmatched child through.
+    const ev = new ChildrenEvaluator(voidContract.children!, throwDiagnostics, 'VoidElement', {
+      exclusiveChildren: true,
+      allowText: false,
+    })
     expect(() => ev.evaluate([el('span')])).toThrow()
   })
 })
