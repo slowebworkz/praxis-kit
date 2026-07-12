@@ -147,6 +147,8 @@
     "@praxis-kit/primitive": "workspace:*",
     "@praxis-kit/vite-plugin": "workspace:*",
     "@sveltejs/vite-plugin-svelte": "catalog:",
+    "esbuild": "^0.28.1",
+    "esbuild-plugin-solid": "^0.6.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
