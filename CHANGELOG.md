@@ -2,6 +2,40 @@
 
 ## [Unreleased]
 
+### BREAKING — `enforcement.children` is now open by default (`@praxis-kit/contract`)
+
+A rule in `enforcement.children` is a cardinality **constraint**, not an allow-list. Previously, any
+non-empty `children` array silently rejected every child that didn't match a listed rule — including
+plain text — as a side effect of declaring even one optional or required rule:
+
+```ts
+createContractComponent({
+  tag: 'div',
+  enforcement: {
+    children: [{ name: 'Header', match: isHeader, cardinality: { min: 1 } }],
+  },
+})
+// Before: <Comp><Header /><Footer /></Comp> → "unexpected child" on Footer, and on any text node.
+// After:  <Comp><Header /><Footer /></Comp> → passes. Header is required; everything else is allowed.
+```
+
+Two new orthogonal `EnforcementOptions` flags restore the previous behavior as an explicit opt-in:
+
+- `exclusiveChildren: true` — closes the set: only children matching a listed rule (or text, per
+  `allowText`) are valid; anything else is rejected. This is what the old default behaved like.
+- `allowText: false` — rejects text/number children regardless of mode. Default is `true`: text is
+  always valid unless explicitly disallowed.
+
+**Migration:** any component relying on the implicit closed-set rejection — "only these children,
+nothing else" — needs `exclusiveChildren: true` added to its `enforcement` block to keep that
+behavior. Built-in `htmlContracts`/`widgetContracts` (`@praxis-kit/core`) have already been updated;
+author-defined components have not.
+
+Also fixes a latent bug: both live `ChildrenEvaluator` construction sites (the adapter runtime and
+`getHtmlChildrenEvaluator`) gated construction on `children?.length`, so an empty rule array (the
+void-element pattern) never actually built a live evaluator — void-element rejection was previously
+only exercised by isolated unit tests, not enforced at runtime.
+
 ### Preset / default variant validation (`@praxis-kit/core`)
 
 `createContractComponent` now validates the variant surface at construction time: a
