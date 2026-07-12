@@ -61,6 +61,24 @@
       "import": "./dist/contract/index.js"
     }
   },
+  "typesVersions": {
+    "*": {
+      "react": ["./dist/react/index.d.ts"],
+      "react/legacy": ["./dist/react/legacy.d.ts"],
+      "preact": ["./dist/preact/index.d.ts"],
+      "solid": ["./dist/solid/index.d.ts"],
+      "svelte": ["./dist/svelte/index.d.ts"],
+      "vue": ["./dist/vue/index.d.ts"],
+      "lit": ["./dist/lit/index.d.ts"],
+      "web": ["./dist/web/index.d.ts"],
+      "tailwind": ["./dist/tailwind/index.d.ts"],
+      "eslint": ["./dist/eslint/index.d.ts"],
+      "ts-plugin": ["./dist/ts-plugin/index.d.cts"],
+      "vite-plugin": ["./dist/vite-plugin/index.d.ts"],
+      "codemod": ["./dist/codemod/index.d.ts"],
+      "contract": ["./dist/contract/index.d.ts"]
+    }
+  },
   "bin": {
     "praxis-codemod": "./dist/codemod/index.js"
   },
