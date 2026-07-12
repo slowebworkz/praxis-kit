@@ -96,16 +96,65 @@ describe('diagnoseChildren', () => {
     })
   })
 
-  describe('unexpected', () => {
+  describe('unexpected (exclusiveChildren: true)', () => {
     it('reports violation for a child that matches no rule', () => {
-      const violations = diagnoseChildren([flexRule], [flexEl, gridEl])
+      const violations = diagnoseChildren([flexRule], [flexEl, gridEl], 'Component', {
+        exclusiveChildren: true,
+      })
       const v = violations.find((x) => x.kind === 'unexpected')
       expect(v).toMatchObject({ kind: 'unexpected', childIndex: 1 })
     })
 
     it('includes the child type name in the message', () => {
-      const violations = diagnoseChildren([flexRule], [gridEl])
+      const violations = diagnoseChildren([flexRule], [gridEl], 'Component', {
+        exclusiveChildren: true,
+      })
       expect(violations[0]?.message).toContain('Grid')
+    })
+  })
+
+  describe('open by default (no exclusiveChildren)', () => {
+    it('does not report a violation for a non-text child matching no rule', () => {
+      const violations = diagnoseChildren([flexRule], [flexEl, gridEl])
+      expect(violations.find((x) => x.kind === 'unexpected')).toBeUndefined()
+    })
+
+    it('a required rule does not forbid other unlisted children', () => {
+      const required: ChildRuleInput = {
+        name: 'flex',
+        match: (c) => c instanceof Flex,
+        cardinality: { min: 1 },
+      }
+      const violations = diagnoseChildren([required], [flexEl, gridEl])
+      expect(violations).toEqual([])
+    })
+  })
+
+  describe('text-node handling (allowText)', () => {
+    it('allows string children by default even with exclusiveChildren: true', () => {
+      const violations = diagnoseChildren([flexRule], ['hello', flexEl], 'Component', {
+        exclusiveChildren: true,
+      })
+      expect(violations.find((x) => x.kind === 'unexpected')).toBeUndefined()
+    })
+
+    it('rejects string children when allowText is false, even in open mode', () => {
+      const violations = diagnoseChildren([flexRule], ['hello'], 'Component', {
+        allowText: false,
+      })
+      expect(violations.find((x) => x.kind === 'unexpected')).toMatchObject({
+        kind: 'unexpected',
+        childIndex: 0,
+      })
+    })
+
+    it('returns empty for empty rules when exclusiveChildren is unset (fast path)', () => {
+      expect(diagnoseChildren([], ['hello', flexEl])).toEqual([])
+    })
+
+    it('rejects elements against an empty rule list when exclusiveChildren is true', () => {
+      const violations = diagnoseChildren([], [flexEl], 'Component', { exclusiveChildren: true })
+      expect(violations).toMatchObject([{ kind: 'unexpected' }])
     })
   })
 
@@ -138,7 +187,9 @@ describe('diagnoseChildren', () => {
       match: (c) => c instanceof Flex,
       cardinality: { min: 1, max: 1 },
     }
-    const violations = diagnoseChildren([required], [gridEl])
+    const violations = diagnoseChildren([required], [gridEl], 'Component', {
+      exclusiveChildren: true,
+    })
     const kinds = violations.map((v) => v.kind)
     expect(kinds).toContain('cardinality-min')
     expect(kinds).toContain('unexpected')

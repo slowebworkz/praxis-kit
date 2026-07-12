@@ -7,9 +7,15 @@ const htmlDiagnostics = warnDiagnostics
 
 function buildEvaluatorMap(): ReadonlyMap<string, ChildrenEvaluator> {
   const map = new Map<string, ChildrenEvaluator>()
-  iterate.forEachEntry(htmlContracts, (tag, { children }) => {
-    if (children?.length) {
-      map.set(tag, new ChildrenEvaluator(children, htmlDiagnostics, `<${tag}>`))
+  iterate.forEachEntry(htmlContracts, (tag, { children, exclusiveChildren, allowText }) => {
+    if (children?.length || exclusiveChildren || allowText === false) {
+      map.set(
+        tag,
+        new ChildrenEvaluator(children ?? [], htmlDiagnostics, `<${tag}>`, {
+          exclusiveChildren,
+          allowText,
+        }),
+      )
     }
   })
   return map

@@ -28,6 +28,8 @@ export type ResolvedFactoryOptions<
   readonly htmlPropNormalizersFn?: (tag: unknown) => readonly PropNormalizer[] | undefined
   readonly htmlChildrenEvaluatorFn?: (tag: unknown) => ChildrenEvaluator | undefined
   readonly childRules?: readonly ChildRuleInput[]
+  readonly exclusiveChildren?: boolean
+  readonly allowText?: boolean
   readonly ariaRules?: readonly AriaRule[]
   readonly allowedAs?: readonly ElementType[]
   readonly precomputedClasses?: Readonly<Record<string, string>>

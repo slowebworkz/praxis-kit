@@ -1,7 +1,7 @@
 import type { ChildRuleInput, EnforcementOptions } from '../types'
 import type { HtmlContractMap } from '@praxis-kit/contract/types'
 import { getTag, isTag } from '@praxis-kit/primitive/guards/children'
-import { isNumber, isObject, isString } from '@praxis-kit/primitive'
+import { isObject } from '@praxis-kit/primitive'
 import { landmarkNameAdvisory, landmarkRoleRule, requireAccessibleName } from './aria-rules'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
 
@@ -31,8 +31,18 @@ function firstOptional(name: string, tag: string): ChildRuleInput {
   return { name, match: isTag(tag), cardinality: { max: 1 }, position: 'first' }
 }
 
-function contract(children: readonly ChildRuleInput[]): EnforcementOptions {
-  return { diagnostics: warnDiagnostics, children }
+function contract(
+  children: readonly ChildRuleInput[],
+  options?: Pick<EnforcementOptions, 'exclusiveChildren' | 'allowText'>,
+): EnforcementOptions {
+  return { diagnostics: warnDiagnostics, children, ...options }
+}
+
+// Most built-in contracts below enumerate the complete valid content model for their
+// tag, so they close the set — anything not listed is rejected, matching the HTML spec's
+// content model rather than the library's open-by-default authoring convenience.
+function closedContract(children: readonly ChildRuleInput[]): EnforcementOptions {
+  return contract(children, { exclusiveChildren: true })
 }
 
 function ariaContract(aria: NonNullable<EnforcementOptions['aria']>): EnforcementOptions {
@@ -78,7 +88,9 @@ const LANDMARK_TAGS = ['article', 'aside', 'footer', 'header', 'main', 'nav'] as
 /**
  * `<ul>`, `<ol>`, `<menu>` — direct children must be `<li>`, `<script>`, or `<template>`.
  */
-export const listContract = contract([{ name: 'list-item', match: isTag('li', ...METADATA_TAGS) }])
+export const listContract = closedContract([
+  { name: 'list-item', match: isTag('li', ...METADATA_TAGS) },
+])
 
 /**
  * `<table>` — valid direct children per HTML5 content model.
@@ -86,7 +98,7 @@ export const listContract = contract([{ name: 'list-item', match: isTag('li', ..
  * Section ordering (caption → colgroup → thead → tbody → tfoot) is not enforced: the
  * engine only supports `position: 'first' | 'last'`, not inter-rule sequence constraints.
  */
-export const tableContract = contract([
+export const tableContract = closedContract([
   firstOptional('caption', 'caption'),
   { name: 'colgroup', match: isTag('colgroup') },
   { name: 'thead', match: isTag('thead'), cardinality: { max: 1 } },
@@ -98,27 +110,29 @@ export const tableContract = contract([
 /**
  * `<thead>`, `<tbody>`, `<tfoot>` — direct children must be `<tr>`, `<script>`, or `<template>`.
  */
-export const tableBodyContract = contract([
+export const tableBodyContract = closedContract([
   { name: 'table-row', match: isTag('tr', ...METADATA_TAGS) },
 ])
 
 /**
  * `<tr>` — direct children must be `<td>`, `<th>`, `<script>`, or `<template>`.
  */
-export const tableRowContract = contract([
+export const tableRowContract = closedContract([
   { name: 'table-cell', match: isTag('td', 'th', ...METADATA_TAGS) },
 ])
 
 /**
  * `<colgroup>` — direct children must be `<col>` or `<template>`.
  */
-export const colgroupContract = contract([{ name: 'column', match: isTag('col', 'template') }])
+export const colgroupContract = closedContract([
+  { name: 'column', match: isTag('col', 'template') },
+])
 
 /**
  * `<dl>` — direct children must be `<dt>`, `<dd>`, `<div>` (as group wrapper),
  * `<script>`, or `<template>`.
  */
-export const dlContract = contract([
+export const dlContract = closedContract([
   { name: 'term', match: isTag('dt') },
   { name: 'description', match: isTag('dd') },
   { name: 'group', match: isTag('div') },
@@ -129,21 +143,21 @@ export const dlContract = contract([
  * `<select>` — direct children must be `<option>`, `<optgroup>`, `<hr>`, `<script>`,
  * or `<template>`.
  */
-export const selectContract = contract([
+export const selectContract = closedContract([
   { name: 'option', match: isTag('option', 'optgroup', 'hr', ...METADATA_TAGS) },
 ])
 
 /**
  * `<optgroup>` — direct children must be `<option>`, `<script>`, or `<template>`.
  */
-export const optgroupContract = contract([
+export const optgroupContract = closedContract([
   { name: 'option', match: isTag('option', ...METADATA_TAGS) },
 ])
 
 /**
  * `<datalist>` — direct children must be `<option>`, `<script>`, or `<template>`.
  */
-export const datalistContract = contract([
+export const datalistContract = closedContract([
   { name: 'option', match: isTag('option', ...METADATA_TAGS) },
 ])
 
@@ -151,7 +165,7 @@ export const datalistContract = contract([
  * `<picture>` — any number of `<source>` elements followed by exactly one `<img>`.
  * `<img>` must be last; `<source>` elements after `<img>` are ignored by browsers.
  */
-export const pictureContract = contract([
+export const pictureContract = closedContract([
   { name: 'source', match: isTag('source', ...METADATA_TAGS) },
   { name: 'image', match: isTag('img'), cardinality: { min: 1, max: 1 }, position: 'last' },
 ])
@@ -192,7 +206,7 @@ export const videoContract = mediaContract
 /**
  * `<head>` — metadata content only.
  */
-export const headContract = contract([
+export const headContract = closedContract([
   {
     name: 'metadata',
     match: isTag('base', 'link', 'meta', 'noscript', 'script', 'style', 'template', 'title'),
@@ -202,27 +216,23 @@ export const headContract = contract([
 /**
  * `<html>` — one `<head>` and one `<body>`.
  */
-export const htmlContract = contract([
+export const htmlContract = closedContract([
   { name: 'head', match: isTag('head'), cardinality: { min: 1, max: 1 }, position: 'first' },
   { name: 'body', match: isTag('body'), cardinality: { min: 1, max: 1 } },
 ])
 
 /**
- * Void elements — the HTML spec forbids any children. An empty rule set means every
- * child is flagged as unexpected.
+ * Void elements — the HTML spec forbids any children, including text.
  */
-export const voidContract = contract([])
+export const voidContract = contract([], { exclusiveChildren: true, allowText: false })
 
 /**
  * Raw text (`<script>`, `<style>`), escapable raw text (`<textarea>`, `<title>`), and
- * `<option>` — only text nodes (strings or numbers) are permitted as children.
+ * `<option>` — only text nodes (strings or numbers) are permitted as children. No
+ * explicit rule is needed: `exclusiveChildren` rejects every element (nothing matches
+ * the empty rule list) while `allowText` stays at its default `true`.
  */
-export const textOnlyContract = contract([
-  {
-    name: 'text',
-    match: (child: unknown): child is string | number => isString(child) || isNumber(child),
-  },
-])
+export const textOnlyContract = contract([], { exclusiveChildren: true })
 
 // ─── Landmark role contract ───────────────────────────────────────────────────
 

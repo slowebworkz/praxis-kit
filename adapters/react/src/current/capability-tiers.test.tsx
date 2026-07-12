@@ -235,6 +235,7 @@ describe('Tier 4 — children enforcement', () => {
       tag: 'div',
       styling: { base: 'group' },
       enforcement: {
+        exclusiveChildren: true,
         children: [
           {
             name: 'Span',
@@ -298,6 +299,7 @@ describe('Tier 5 — all capabilities combined', () => {
       },
       filterProps: (key, variantKeys) => variantKeys.has(key),
       enforcement: {
+        exclusiveChildren: true,
         children: [
           {
             name: 'Anchor',

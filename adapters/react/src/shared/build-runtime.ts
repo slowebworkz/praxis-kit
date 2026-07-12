@@ -60,6 +60,10 @@ export function buildRuntime<
     normalized.diagnostics,
     normalized.enforcement?.children,
     normalized.name,
+    {
+      exclusiveChildren: normalized.enforcement?.exclusiveChildren,
+      allowText: normalized.enforcement?.allowText,
+    },
   )
   const filterProps = composeFilter(ownedKeys, normalized.filterProps)
   const slotValidator = new SlotValidator(normalized.name, normalized.diagnostics, 'React element')

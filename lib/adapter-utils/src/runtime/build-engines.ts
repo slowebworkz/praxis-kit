@@ -6,12 +6,24 @@ export type RuntimeEngines = {
   childrenEvaluator?: ChildrenEvaluator
 }
 
+export type BuildEnginesChildrenOptions = {
+  readonly exclusiveChildren?: boolean | undefined
+  readonly allowText?: boolean | undefined
+}
+
 export function buildEngines(
   diagnostics: Diagnostics,
   childRules?: readonly ChildRuleInput[],
   context?: string,
+  childrenOptions?: BuildEnginesChildrenOptions,
 ): RuntimeEngines {
-  return childRules?.length
-    ? { childrenEvaluator: new ChildrenEvaluator(childRules, diagnostics, context) }
+  const { exclusiveChildren, allowText } = childrenOptions ?? {}
+  return childRules?.length || exclusiveChildren || allowText === false
+    ? {
+        childrenEvaluator: new ChildrenEvaluator(childRules ?? [], diagnostics, context, {
+          exclusiveChildren,
+          allowText,
+        }),
+      }
     : {}
 }

@@ -222,6 +222,7 @@ describe('createContractComponent (Solid adapter)', () => {
       createContractComponent({
         tag: 'div',
         enforcement: {
+          exclusiveChildren: true,
           children: [
             { name: 'Button', match: (c): c is Element => (c as Element)?.tagName === 'BUTTON' },
           ],

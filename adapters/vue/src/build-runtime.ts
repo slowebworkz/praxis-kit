@@ -44,7 +44,10 @@ export function buildRuntime<
 
   const { diagnostics, enforcement, filterProps: userFilter, name } = normalized
 
-  const { childrenEvaluator } = buildEngines(diagnostics, enforcement?.children, name)
+  const { childrenEvaluator } = buildEngines(diagnostics, enforcement?.children, name, {
+    exclusiveChildren: enforcement?.exclusiveChildren,
+    allowText: enforcement?.allowText,
+  })
   const filterProps = composeFilter(ownedKeys, userFilter)
   const slotValidator = new SlotValidator(name, diagnostics, 'VNode')
 

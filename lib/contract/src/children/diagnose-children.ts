@@ -1,9 +1,16 @@
 import type { ChildRuleInput, MatchMatrix, NormalizedChildRule, ChildViolation } from '../types'
-import { iterate } from '@praxis-kit/primitive'
+import { isNumber, isString, iterate } from '@praxis-kit/primitive'
 import { normalizeChildRule } from './normalize-child-rule'
 import { RuleMatcher } from './rules-matcher'
 import { getTypeName } from './get-type-name'
 import { ContractDiagnostics } from '../diagnostics'
+
+const isTextLike = (child: unknown): boolean => isString(child) || isNumber(child)
+
+export type DiagnoseChildrenOptions = {
+  readonly exclusiveChildren?: boolean | undefined
+  readonly allowText?: boolean | undefined
+}
 
 function addCardinalityViolations(
   violations: ChildViolation[],
@@ -98,14 +105,27 @@ export function diagnoseChildren(
   rules: readonly ChildRuleInput[],
   children: unknown[],
   context = 'Component',
+  options: DiagnoseChildrenOptions = {},
 ): ChildViolation[] {
-  if (rules.length === 0) return []
+  const { exclusiveChildren = false, allowText = true } = options
+  // With no rules and nothing to close/disallow, every child trivially passes.
+  if (rules.length === 0 && !exclusiveChildren && allowText) return []
 
   const violations: ChildViolation[] = []
 
   const normalized = rules.map(normalizeChildRule)
-  const { matrix, unexpectedIndices, ambiguousIndices } = new RuleMatcher(normalized).match(
-    children,
+  const {
+    matrix,
+    unexpectedIndices: rawUnexpectedIndices,
+    ambiguousIndices,
+  } = new RuleMatcher(normalized).match(children)
+
+  // A child matching zero rules is only a violation when the relevant mode says so:
+  // text-like children need allowText === false, everything else needs exclusiveChildren.
+  const unexpectedIndices = new Set(
+    [...rawUnexpectedIndices].filter((ci) =>
+      isTextLike(children[ci]) ? allowText === false : exclusiveChildren,
+    ),
   )
 
   const firstIndex = 0

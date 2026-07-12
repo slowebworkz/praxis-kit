@@ -106,6 +106,7 @@ export const List = createContractComponent({
   styling: { base: 'inline-flex gap-1 border-b border-gray-200' },
   enforcement: {
     diagnostics: warnDiagnostics,
+    exclusiveChildren: true,
     children: [
       {
         name: 'Trigger',
@@ -124,6 +125,7 @@ const _Root = createContractComponent({
   styling: { base: 'flex flex-col' },
   enforcement: {
     diagnostics: warnDiagnostics,
+    exclusiveChildren: true,
     children: [
       {
         name: 'List',

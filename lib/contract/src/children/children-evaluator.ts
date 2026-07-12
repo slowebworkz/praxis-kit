@@ -1,5 +1,5 @@
 import type { ChildRuleInput, NormalizedChildRule } from '../types'
-import { iterate } from '@praxis-kit/primitive'
+import { isNumber, isString, iterate } from '@praxis-kit/primitive'
 import { InvariantBase } from '../strict'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 import { ContractDiagnostics } from '../diagnostics'
@@ -8,18 +8,43 @@ import { normalizeChildRule } from './normalize-child-rule'
 import { RuleMatcher } from './rules-matcher'
 import { RuleValidator } from './rule-validator'
 
+const isTextLike = (child: unknown): boolean => isString(child) || isNumber(child)
+
+export type ChildrenEvaluatorOptions = {
+  /**
+   * When true, only children matching a rule (or text, per `allowText`) are
+   * valid — anything else is rejected. Default: false (open — children not
+   * matching any rule are allowed).
+   */
+  readonly exclusiveChildren?: boolean | undefined
+  /**
+   * When false, text/number child nodes are rejected regardless of
+   * exclusiveChildren or any listed rule. Default: true.
+   */
+  readonly allowText?: boolean | undefined
+}
+
 export class ChildrenEvaluator extends InvariantBase {
   readonly #context: string
   readonly #rules: NormalizedChildRule[]
   readonly #ruleNames: readonly string[]
   readonly #matcher: RuleMatcher
   readonly #ruleValidator: RuleValidator
+  readonly #exclusiveChildren: boolean
+  readonly #allowText: boolean
 
-  constructor(rules: readonly ChildRuleInput[], diagnostics: Diagnostics, context = 'Component') {
+  constructor(
+    rules: readonly ChildRuleInput[],
+    diagnostics: Diagnostics,
+    context = 'Component',
+    options: ChildrenEvaluatorOptions = {},
+  ) {
     super(diagnostics)
     this.#context = context
     this.#rules = rules.map((r) => normalizeChildRule(r))
     this.#ruleNames = this.#rules.map((r) => r.name)
+    this.#exclusiveChildren = options.exclusiveChildren ?? false
+    this.#allowText = options.allowText ?? true
 
     iterate.forEach(this.#rules, (rule) => {
       const { name, position, cardinality } = rule
@@ -42,8 +67,20 @@ export class ChildrenEvaluator extends InvariantBase {
   evaluate(children: unknown[]): void {
     // When no diagnostic would be reported, skip the full match/validate cycle.
     if (!this.active) return
-    const { matrix, unexpectedIndices, ambiguousIndices } = this.#matcher.match(children)
+    const {
+      matrix,
+      unexpectedIndices: rawUnexpectedIndices,
+      ambiguousIndices,
+    } = this.#matcher.match(children)
     this.#ruleValidator.validate(this.#rules, matrix, children.length)
+
+    // A child matching zero rules is only a violation when the relevant mode says so:
+    // text-like children need allowText === false, everything else needs exclusiveChildren.
+    const unexpectedIndices = new Set(
+      [...rawUnexpectedIndices].filter((ci) =>
+        isTextLike(children[ci]) ? this.#allowText === false : this.#exclusiveChildren,
+      ),
+    )
 
     if (unexpectedIndices.size === 0 && ambiguousIndices.size === 0) return
 

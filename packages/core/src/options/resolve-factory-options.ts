@@ -66,6 +66,8 @@ export function resolveFactoryOptions<
     ...whenDefined('normalizeFn', composedNormalizeFn),
     ...whenDefined('ariaRules', enforcement?.aria),
     ...whenDefined('childRules', enforcement?.children),
+    ...whenDefined('exclusiveChildren', enforcement?.exclusiveChildren),
+    ...whenDefined('allowText', enforcement?.allowText),
     ...whenDefined('allowedAs', enforcement?.allowedAs),
     ...whenDefined('precomputedClasses', styling?.precomputedClasses),
   })

@@ -106,6 +106,7 @@ describe('diagnose', () => {
       const options = resolveFactoryOptions({
         enforcement: {
           diagnostics: throwDiagnostics,
+          exclusiveChildren: true,
           children: [{ name: 'icon', match: (c) => c instanceof Icon }],
         },
       })
