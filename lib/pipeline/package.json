@@ -12,7 +12,9 @@
     "test": "vitest run",
     "test:related": "vitest run --changed"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@praxis-kit/primitive": "workspace:*"
+  },
   "devDependencies": {
     "vitest": "catalog:"
   }
