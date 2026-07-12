@@ -46,7 +46,9 @@ export function analyzeJsxSites(
     // 1. Cardinality diagnostics — fire only when the count range is certainly outside bounds.
     if (count !== undefined) {
       const c = byName.get(tagName)
-      if (c && (count.max < c.totalMin || count.min > c.totalMax)) {
+      // "Too many" only applies when the component closes its children set — enforcement.children
+      // is open-by-default, so extra unmatched children are otherwise allowed regardless of totalMax.
+      if (c && (count.max < c.totalMin || (c.exclusiveChildren && count.min > c.totalMax))) {
         const { line, character } = getPos()
         diagnostics.push({
           diagnostic: ViteDiagnostics.cardinalityViolation(
@@ -245,9 +247,9 @@ export function diagnoseUsages(
 
     if (count === undefined) return // unknowable (e.g. .map(), variable reference)
 
-    const { totalMin, totalMax, name } = constraint
+    const { totalMin, totalMax, name, exclusiveChildren } = constraint
 
-    if (count.max < totalMin || count.min > totalMax) {
+    if (count.max < totalMin || (exclusiveChildren && count.min > totalMax)) {
       const { line, character } = source.getLineAndCharacterOfPosition(node.getStart(source))
       diagnostics.push({
         diagnostic: ViteDiagnostics.cardinalityViolation(

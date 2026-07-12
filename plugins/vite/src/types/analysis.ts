@@ -29,6 +29,13 @@ export type ComponentConstraint = {
   defaultTag?: string
   /** True when `enforcement.aria` is a non-empty array literal in the factory call. */
   hasAriaRules: boolean
+  /**
+   * True when `enforcement.exclusiveChildren` is statically `true` in the factory call.
+   * Only when this is true does an "over the max" child count constitute a real
+   * violation — enforcement.children is open-by-default, so extra unmatched children
+   * are otherwise allowed regardless of `totalMax`.
+   */
+  exclusiveChildren: boolean
 }
 
 /**

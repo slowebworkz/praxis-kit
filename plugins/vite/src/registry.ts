@@ -62,10 +62,14 @@ export class ConstraintRegistry {
         const constraint = this.resolveConstraint(fileId, tagName)
         if (!constraint) return
 
-        const { totalMin, totalMax, name } = constraint
+        const { totalMin, totalMax, name, exclusiveChildren } = constraint
         const { min, max } = count
-        // Only fire when the count range is certainly outside the required bounds.
-        if (max >= totalMin && min <= totalMax) return
+        // Only fire when the count range is certainly outside the required bounds. "Too many"
+        // only applies when the component closes its children set — enforcement.children is
+        // open-by-default, so extra unmatched children are otherwise allowed regardless of totalMax.
+        const tooFew = max < totalMin
+        const tooMany = exclusiveChildren && min > totalMax
+        if (!tooFew && !tooMany) return
 
         result.push({
           fileId,

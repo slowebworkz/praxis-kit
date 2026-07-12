@@ -1,6 +1,7 @@
 import ts from 'typescript'
 import {
   asArray,
+  asBooleanLiteral,
   asObject,
   asPositiveInt,
   firstObjectArg,
@@ -99,6 +100,9 @@ function processVariableStatement(
     const ariaArr = asArray(ariaNode)
     const hasAriaRules = ariaArr !== undefined && ariaArr.elements.length > 0
 
+    const exclusiveChildrenNode = enfObj ? getProperty(enfObj, 'exclusiveChildren') : undefined
+    const exclusiveChildren = asBooleanLiteral(exclusiveChildrenNode) ?? false
+
     const childrenProp = enfObj ? getProperty(enfObj, 'children') : undefined
     const childrenArr = asArray(childrenProp)
 
@@ -111,8 +115,9 @@ function processVariableStatement(
     }
 
     // Collect the constraint even when there are no children rules, if the component
-    // has a default tag or ARIA rules — needed for the ARIA as-override check.
-    if (rules.length === 0 && !hasAriaRules && !defaultTag) return
+    // has a default tag, ARIA rules, or exclusiveChildren (an empty rule set + exclusive
+    // is itself a real static bound — it means zero children are ever valid).
+    if (rules.length === 0 && !hasAriaRules && !defaultTag && !exclusiveChildren) return
 
     let totalMin = 0
     let totalMax = 0
@@ -132,6 +137,7 @@ function processVariableStatement(
       totalMax,
       ...(defaultTag !== undefined && { defaultTag }),
       hasAriaRules,
+      exclusiveChildren,
     })
   })
 }

@@ -44,6 +44,14 @@ export function asPositiveInt(node: ts.Node | undefined): number | undefined {
   return undefined
 }
 
+/** Extracts a boolean literal (`true`/`false` keyword) from a node, or undefined. */
+export function asBooleanLiteral(node: ts.Node | undefined): boolean | undefined {
+  if (!node) return undefined
+  if (node.kind === ts.SyntaxKind.TrueKeyword) return true
+  if (node.kind === ts.SyntaxKind.FalseKeyword) return false
+  return undefined
+}
+
 /** Returns true if the call expression's callee matches one of the given names. */
 export function isFactoryCall(call: ts.CallExpression, names: ReadonlySet<string>): boolean {
   const { expression } = call

@@ -110,7 +110,7 @@ describe('analyze — diagnostics emitted', () => {
     const code = `
       const Button = createPolymorphicComponent({
         tag: 'button',
-        enforcement: { strict: 'warn', children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
+        enforcement: { strict: 'warn', exclusiveChildren: true, children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
       })
       function App() {
         return (
@@ -148,7 +148,7 @@ describe('analyze — diagnostics emitted', () => {
     const code = `
       const Button = createPolymorphicComponent({
         tag: 'button',
-        enforcement: { strict: 'warn', children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
+        enforcement: { strict: 'warn', exclusiveChildren: true, children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
       })
       function App() { return <Button><span /><span /></Button> }
     `
@@ -161,7 +161,7 @@ describe('analyze — diagnostics emitted', () => {
     const code = `
       const Button = createPolymorphicComponent({
         tag: 'button',
-        enforcement: { strict: 'warn', children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
+        enforcement: { strict: 'warn', exclusiveChildren: true, children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
       })
       function App() {
         return (
@@ -180,7 +180,7 @@ describe('analyze — diagnostics emitted', () => {
     const code = `
       const Button = createContractComponent({
         tag: 'button',
-        enforcement: { strict: 'warn', children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
+        enforcement: { strict: 'warn', exclusiveChildren: true, children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
       })
       function App() { return <Button><span /><span /></Button> }
     `
@@ -192,7 +192,7 @@ describe('analyze — diagnostics emitted', () => {
     const code = `
       const Button = myFactory({
         tag: 'button',
-        enforcement: { strict: 'warn', children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
+        enforcement: { strict: 'warn', exclusiveChildren: true, children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
       })
       function App() { return <Button><span /><span /></Button> }
     `
@@ -208,7 +208,7 @@ describe('analyze — diagnostics emitted', () => {
     const code = `
       const Button = createPolymorphicComponent({
         tag: 'button',
-        enforcement: { strict: 'warn', children: [
+        enforcement: { strict: 'warn', exclusiveChildren: true, children: [
           { name: 'icon', match: (c) => true, cardinality: { min: 0, max: 1 } },
           { name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } },
         ]},
@@ -258,7 +258,7 @@ describe('analyze — diagnostics emitted', () => {
     const code = `
       const Button = createPolymorphicComponent({
         tag: 'button',
-        enforcement: { strict: 'warn', children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
+        enforcement: { strict: 'warn', exclusiveChildren: true, children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
       })
       function App({ flag }: { flag: boolean }) {
         return (
@@ -313,7 +313,7 @@ describe('analyze — diagnostics emitted', () => {
     const code = `
       const Button = createPolymorphicComponent({
         tag: 'button',
-        enforcement: { strict: 'warn', children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
+        enforcement: { strict: 'warn', exclusiveChildren: true, children: [{ name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
       })
       function App({ flag }: { flag: boolean }) {
         return (
@@ -336,7 +336,7 @@ describe('analyze — diagnostics emitted', () => {
   it('reports line and column position', () => {
     const code = `const Button = createPolymorphicComponent({
   tag: 'button',
-  enforcement: { strict: 'warn', children: [{ name: 'l', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
+  enforcement: { strict: 'warn', exclusiveChildren: true, children: [{ name: 'l', match: (c) => true, cardinality: { min: 1, max: 1 } }] },
 })
 function App() {
   return <Button><span /><span /></Button>
