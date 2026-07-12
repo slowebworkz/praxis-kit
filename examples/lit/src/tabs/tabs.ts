@@ -53,6 +53,7 @@ export const TabsList = createContractComponent({
   styling: { base: 'inline-flex gap-1 border-b border-gray-200' },
   enforcement: {
     diagnostics: warnDiagnostics,
+    exclusiveChildren: true,
     children: [{ name: 'TabsTrigger', match: isTabsTrigger, cardinality: { min: 1 } }],
   },
 })
@@ -73,6 +74,7 @@ export const TabsRoot = createContractComponent({
   styling: { base: 'flex flex-col' },
   enforcement: {
     diagnostics: warnDiagnostics,
+    exclusiveChildren: true,
     children: [
       { name: 'TabsList', match: isTabsList, cardinality: { min: 1, max: 1 } },
       { name: 'TabsContent', match: isTabsContent, cardinality: { min: 1 } },

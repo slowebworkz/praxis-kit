@@ -10,6 +10,7 @@ export const ButtonGroup = createContractComponent({
   styling: { base: 'inline-flex items-center gap-2' },
   enforcement: {
     diagnostics: warnDiagnostics,
+    exclusiveChildren: true,
     children: [
       {
         name: 'Button',
