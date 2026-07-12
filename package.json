@@ -15,6 +15,7 @@
     "bench": "pnpm --filter @praxis-kit/bench bench",
     "bench:render": "pnpm --filter @praxis-kit/bench bench:render",
     "check": "pnpm lint:check && pnpm typecheck && pnpm test",
+    "verify": "tsx scripts/build-pipeline.ts",
     "lint": "NODE_OPTIONS=--max-old-space-size=8192 eslint . --fix",
     "lint:check": "NODE_OPTIONS=--max-old-space-size=8192 eslint .",
     "lint:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' | xargs eslint --fix",
@@ -39,6 +40,7 @@
   "devDependencies": {
     "@ast-grep/cli": "catalog:",
     "@eslint/js": "catalog:",
+    "@praxis-kit/pipeline": "workspace:*",
     "@types/node": "catalog:",
     "@vitest/ui": "catalog:",
     "dependency-cruiser": "catalog:",
@@ -54,6 +56,7 @@
     "prettier": "catalog:",
     "publint": "^0.3.21",
     "ts-morph": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",
     "vitest": "catalog:"

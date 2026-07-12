@@ -178,6 +178,9 @@ importers:
       '@eslint/js':
         specifier: 'catalog:'
         version: 10.0.1(eslint@10.7.0(jiti@2.7.0))
+      '@praxis-kit/pipeline':
+        specifier: workspace:*
+        version: link:lib/pipeline
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.5
@@ -223,6 +226,9 @@ importers:
       ts-morph:
         specifier: 'catalog:'
         version: 28.0.0
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.0
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
