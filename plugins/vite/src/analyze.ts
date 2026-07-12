@@ -1,3 +1,4 @@
+import { extname } from 'node:path'
 import { parseSource } from './ast'
 import { collectConstraints } from './collect'
 import { DEFAULT_CALLEE_NAMES, JSX_EXTS } from './constants'
@@ -15,15 +16,22 @@ import type { Diagnostic, PluginOptions } from './types'
  *   are skipped — their child count is unknowable at build time.
  * - Named const declarations: `export const X = factory(...)` and destructured
  *   patterns are not collected; cross-file analysis is future work.
+ *
+ * @example
+ * ```ts
+ * const diagnostics = analyze(source, 'Button.tsx', { severity: 'error' })
+ * ```
  */
 export function analyze(code: string, filename: string, options?: PluginOptions): Diagnostic[] {
-  const ext = filename.split('.').pop() ?? ''
+  const ext = extname(filename).slice(1)
   if (!JSX_EXTS.has(ext)) return []
 
   const calleeNames = new Set(options?.calleeNames ?? DEFAULT_CALLEE_NAMES)
   const severity = options?.severity ?? 'warning'
 
   const source = parseSource(filename, code)
+
   const constraints = collectConstraints(source, calleeNames)
+
   return diagnoseUsages(source, constraints, severity)
 }

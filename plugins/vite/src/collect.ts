@@ -3,7 +3,7 @@ import {
   asArray,
   asBooleanLiteral,
   asObject,
-  asPositiveInt,
+  asNonNegativeInt,
   firstObjectArg,
   getProperty,
   isFactoryCall,
@@ -30,8 +30,8 @@ function extractBound(element: ts.Expression): StaticBound | undefined {
   if (cardObj) {
     const minNode = getProperty(cardObj, 'min')
     const maxNode = getProperty(cardObj, 'max')
-    const min = asPositiveInt(minNode) ?? 0
-    const max = asPositiveInt(maxNode)
+    const min = asNonNegativeInt(minNode) ?? 0
+    const max = asNonNegativeInt(maxNode)
 
     if (min === 0 && max === undefined) {
       cardinality = { kind: 'unbounded' }
