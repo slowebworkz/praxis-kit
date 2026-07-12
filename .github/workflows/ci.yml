@@ -33,11 +33,9 @@ jobs:
       # examples/* depend on praxis-kit/<adapter> (packages/kit's published subpaths),
       # which only exist once packages/kit is built — pnpm check (lint/typecheck/test)
       # runs before the general "Build" step below, so build it explicitly first.
-      - name: Build praxis-kit
-        run: pnpm --filter praxis-kit build
-
-      - name: Check
-        run: pnpm check
+      # scripts/build-pipeline.ts encodes this ordering once for both CI and local use.
+      - name: Verify
+        run: pnpm verify
 
       - name: Build
         run: pnpm build
