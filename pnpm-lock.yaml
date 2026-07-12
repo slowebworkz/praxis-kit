@@ -142,8 +142,8 @@ catalogs:
       specifier: ^4.22.5
       version: 4.22.5
     type-fest:
-      specifier: ^5.7.0
-      version: 5.7.0
+      specifier: ^5.8.0
+      version: 5.8.0
     typescript:
       specifier: ^6.0.3
       version: 6.0.3
@@ -237,7 +237,7 @@ importers:
     dependencies:
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
@@ -268,7 +268,7 @@ importers:
         version: 2.1.1
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
@@ -302,7 +302,7 @@ importers:
         version: 2.1.1
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       '@axe-core/playwright':
         specifier: 'catalog:'
@@ -363,7 +363,7 @@ importers:
         version: 2.1.1
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
@@ -403,7 +403,7 @@ importers:
         version: 2.1.1
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
@@ -434,7 +434,7 @@ importers:
     dependencies:
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       '@axe-core/playwright':
         specifier: 'catalog:'
@@ -489,7 +489,7 @@ importers:
         version: link:../../lib/primitive
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
@@ -737,7 +737,7 @@ importers:
         version: 2.1.1
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -759,7 +759,7 @@ importers:
         version: link:../primitive
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       vitest:
         specifier: 'catalog:'
@@ -772,7 +772,7 @@ importers:
         version: link:../primitive
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       tsup:
         specifier: 'catalog:'
@@ -791,7 +791,7 @@ importers:
     dependencies:
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       tsup:
         specifier: 'catalog:'
@@ -825,7 +825,7 @@ importers:
         version: 2.1.1
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       vitest:
         specifier: 'catalog:'
@@ -847,7 +847,7 @@ importers:
         version: 2.1.1
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       vitest:
         specifier: 'catalog:'
@@ -863,7 +863,7 @@ importers:
         version: link:../diagnostics
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       '@praxis-kit/core':
         specifier: workspace:*
@@ -891,7 +891,7 @@ importers:
         version: link:../../lib/pipeline-kit
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       '@praxis-kit/primitive':
         specifier: workspace:*
@@ -916,7 +916,7 @@ importers:
         version: 10.6.0(jiti@2.7.0)
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
@@ -1150,7 +1150,7 @@ importers:
         version: 4.22.5
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
 
   qa/tree-shaking-tests:
     devDependencies:
@@ -1216,7 +1216,7 @@ importers:
         version: link:../../lib/styling
       type-fest:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.8.0
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -4442,8 +4442,8 @@ packages:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
     engines: {node: '>= 0.8.0'}
 
-  type-fest@5.7.0:
-    resolution: {integrity: sha512-1URUxUqfHFM1c+zfSPsa3gnkO7Aq21qyH75SIduNYz4SzY964rn1X2vCMQaHSHhktiw+0kPa2iyb6PUpXqB6Vg==}
+  type-fest@5.8.0:
+    resolution: {integrity: sha512-YGYEVz3Fm5iy/AybuA0oyNFq7H4CgQNfRp/qfe8nurE1kuCeNm3/vfm9X4Mtl+qLyaKJUh5xrFZwogr41SMjYA==}
     engines: {node: '>=20'}
 
   typescript-eslint@8.60.0:
@@ -8008,7 +8008,7 @@ snapshots:
     dependencies:
       prelude-ls: 1.2.1
 
-  type-fest@5.7.0:
+  type-fest@5.8.0:
     dependencies:
       tagged-tag: 1.0.0
 
