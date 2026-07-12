@@ -66,6 +66,7 @@ const List = createContractComponent({
   styling: { base: 'relative inline-flex gap-1 border-b border-gray-200' },
   enforcement: {
     diagnostics: warnDiagnostics,
+    exclusiveChildren: true,
     children: [
       { name: 'Tabs.Trigger', match: isType(Trigger), cardinality: { min: 1 } },
       { name: 'Tabs.Indicator', match: isType(Indicator), cardinality: { max: 1 } },
@@ -103,6 +104,7 @@ const RootContract = createContractComponent({
   styling: { base: 'flex flex-col' },
   enforcement: {
     diagnostics: warnDiagnostics,
+    exclusiveChildren: true,
     children: [
       { name: 'Tabs.List', match: isType(List), cardinality: { min: 1, max: 1 } },
       { name: 'Tabs.Content', match: isType(Content), cardinality: { min: 1 } },
