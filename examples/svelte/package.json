@@ -13,8 +13,7 @@
   },
   "dependencies": {
     "@praxis-kit/core": "workspace:*",
-    "@praxis-kit/svelte": "workspace:*",
-    "@praxis-kit/tailwind": "workspace:*"
+    "praxis-kit": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "catalog:",

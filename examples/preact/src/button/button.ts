@@ -1,4 +1,4 @@
-import { createContractComponent } from '@praxis-kit/preact'
+import { createContractComponent } from 'praxis-kit/preact'
 
 type ButtonProps = { loading?: boolean }
 

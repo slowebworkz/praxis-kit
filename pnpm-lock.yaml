@@ -512,12 +512,12 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@praxis-kit/lit':
-        specifier: workspace:*
-        version: link:../../adapters/lit
       '@praxis-kit/tailwind':
         specifier: workspace:*
         version: link:../../lib/tailwind
+      praxis-kit:
+        specifier: workspace:*
+        version: link:../../packages/kit
     devDependencies:
       jsdom:
         specifier: 'catalog:'
@@ -534,12 +534,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@praxis-kit/preact':
+      praxis-kit:
         specifier: workspace:*
-        version: link:../../adapters/preact
-      '@praxis-kit/tailwind':
-        specifier: workspace:*
-        version: link:../../lib/tailwind
+        version: link:../../packages/kit
     devDependencies:
       '@preact/preset-vite':
         specifier: 'catalog:'
@@ -565,15 +562,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@praxis-kit/diagnostics':
+      praxis-kit:
         specifier: workspace:*
-        version: link:../../lib/diagnostics
-      '@praxis-kit/react':
-        specifier: workspace:*
-        version: link:../../adapters/react
-      '@praxis-kit/tailwind':
-        specifier: workspace:*
-        version: link:../../lib/tailwind
+        version: link:../../packages/kit
     devDependencies:
       '@types/react':
         specifier: 'catalog:'
@@ -605,12 +596,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@praxis-kit/solid':
+      praxis-kit:
         specifier: workspace:*
-        version: link:../../adapters/solid
-      '@praxis-kit/tailwind':
-        specifier: workspace:*
-        version: link:../../lib/tailwind
+        version: link:../../packages/kit
     devDependencies:
       '@solidjs/testing-library':
         specifier: 'catalog:'
@@ -636,12 +624,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@praxis-kit/svelte':
+      praxis-kit:
         specifier: workspace:*
-        version: link:../../adapters/svelte
-      '@praxis-kit/tailwind':
-        specifier: workspace:*
-        version: link:../../lib/tailwind
+        version: link:../../packages/kit
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: 'catalog:'
@@ -667,12 +652,9 @@ importers:
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@praxis-kit/tailwind':
+      praxis-kit:
         specifier: workspace:*
-        version: link:../../lib/tailwind
-      '@praxis-kit/vue':
-        specifier: workspace:*
-        version: link:../../adapters/vue
+        version: link:../../packages/kit
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: 'catalog:'
@@ -701,9 +683,9 @@ importers:
       '@praxis-kit/tailwind':
         specifier: workspace:*
         version: link:../../lib/tailwind
-      '@praxis-kit/web':
+      praxis-kit:
         specifier: workspace:*
-        version: link:../../adapters/web
+        version: link:../../packages/kit
     devDependencies:
       jsdom:
         specifier: 'catalog:'

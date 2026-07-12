@@ -1,7 +1,6 @@
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
-import { warnDiagnostics } from '@praxis-kit/diagnostics'
-import { createContractComponent } from '@praxis-kit/react'
+import { createContractComponent } from 'praxis-kit/react'
 import { Button } from '../button/button'
 
 export const ButtonGroup = createContractComponent({
@@ -9,7 +8,7 @@ export const ButtonGroup = createContractComponent({
   name: 'ButtonGroup',
   styling: { base: 'inline-flex items-center gap-2' },
   enforcement: {
-    diagnostics: warnDiagnostics,
+    diagnostics: 'warn',
     exclusiveChildren: true,
     children: [
       {

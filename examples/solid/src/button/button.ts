@@ -1,4 +1,4 @@
-import { createContractComponent } from '@praxis-kit/solid'
+import { createContractComponent } from 'praxis-kit/solid'
 
 type ButtonProps = { loading?: boolean }
 

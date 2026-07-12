@@ -29,6 +29,17 @@ copyFileSync(
 )
 console.log('postbuild: copied tailwind safelist.css into dist/tailwind/')
 
+// tsup only bundles the compiled svelte/index.js entry — Polymorphic.svelte is
+// consumed as raw .svelte source by the Svelte compiler at the *consumer's*
+// build time, matching how @praxis-kit/svelte itself re-exports it, so it must
+// be copied into dist verbatim rather than compiled.
+mkdirSync(join(DIST, 'svelte'), { recursive: true })
+copyFileSync(
+  join(ROOT_DIR, '..', '..', 'adapters', 'svelte', 'src', 'Polymorphic.svelte'),
+  join(DIST, 'svelte', 'Polymorphic.svelte'),
+)
+console.log('postbuild: copied Polymorphic.svelte into dist/svelte/')
+
 const files = readdirSync(DIST, { recursive: true })
   .map((f) => join(DIST, String(f)))
   .filter((f) => /\.(js|cjs|mjs|d\.ts|d\.cts|d\.mts)$/.test(f))

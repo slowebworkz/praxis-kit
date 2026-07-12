@@ -13,8 +13,7 @@
   },
   "dependencies": {
     "@praxis-kit/core": "workspace:*",
-    "@praxis-kit/preact": "workspace:*",
-    "@praxis-kit/tailwind": "workspace:*"
+    "praxis-kit": "workspace:*"
   },
   "devDependencies": {
     "@preact/preset-vite": "catalog:",

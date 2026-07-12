@@ -13,8 +13,7 @@
   },
   "dependencies": {
     "@praxis-kit/core": "workspace:*",
-    "@praxis-kit/solid": "workspace:*",
-    "@praxis-kit/tailwind": "workspace:*"
+    "praxis-kit": "workspace:*"
   },
   "devDependencies": {
     "@solidjs/testing-library": "catalog:",
