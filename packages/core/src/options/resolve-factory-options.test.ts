@@ -62,6 +62,14 @@ describe('resolveFactoryOptions() — provided options', () => {
     ).toBe(silentDiagnostics)
   })
 
+  it.each([
+    ['warn', warnDiagnostics],
+    ['throw', throwDiagnostics],
+    ['silent', silentDiagnostics],
+  ] as const)('resolves the "%s" preset name to its Diagnostics instance', (mode, preset) => {
+    expect(resolveFactoryOptions({ enforcement: { diagnostics: mode } }).diagnostics).toBe(preset)
+  })
+
   it('includes baseClassName when provided', () => {
     expect(resolveFactoryOptions({ styling: { base: 'rounded' } }).baseClassName).toBe('rounded')
   })

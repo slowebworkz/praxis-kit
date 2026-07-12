@@ -1,9 +1,9 @@
-import type { Diagnostics } from '@praxis-kit/diagnostics'
-import { throwDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
+import type { Diagnostics, DiagnosticsMode } from '@praxis-kit/diagnostics'
+import { throwDiagnostics, silentDiagnostics, resolveDiagnostics } from '@praxis-kit/diagnostics'
 
 type OptionsShape = Readonly<{
   name?: string
-  enforcement?: { diagnostics?: Diagnostics }
+  enforcement?: { diagnostics?: Diagnostics | DiagnosticsMode }
 }>
 
 /** The two fields every adapter's `NormalizedOptions` must supply. */
@@ -35,7 +35,7 @@ export function resolveAdapterCommonOptions(
 ): AdapterDefaults {
   return {
     name: options.name ?? defaultName,
-    diagnostics: options.enforcement?.diagnostics ?? defaultDiagnostics,
+    diagnostics: resolveDiagnostics(options.enforcement?.diagnostics, defaultDiagnostics),
   }
 }
 

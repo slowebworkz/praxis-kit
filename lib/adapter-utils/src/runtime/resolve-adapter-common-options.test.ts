@@ -59,4 +59,14 @@ describe('resolveAdapterCommonOptions — diagnostics resolution', () => {
       expect(resolveAdapterCommonOptions({ enforcement: { diagnostics: d } }).diagnostics).toBe(d)
     },
   )
+
+  it.each([
+    ['warn', warnDiagnostics],
+    ['throw', throwDiagnostics],
+    ['silent', silentDiagnostics],
+  ] as const)('resolves the "%s" preset name to its Diagnostics instance', (mode, preset) => {
+    expect(resolveAdapterCommonOptions({ enforcement: { diagnostics: mode } }).diagnostics).toBe(
+      preset,
+    )
+  })
 })

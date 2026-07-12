@@ -2,10 +2,15 @@ import type { ElementType } from '../primitives'
 import type { AriaRule } from '../aria-rule'
 import type { ChildRuleInput } from '../contracts'
 import type { PropNormalizer } from './prop-normalizer'
-import type { Diagnostics } from '@praxis-kit/diagnostics'
+import type { Diagnostics, DiagnosticsMode } from '@praxis-kit/diagnostics'
 
 export type EnforcementOptions<TAllowed extends ElementType = ElementType> = {
-  readonly diagnostics?: Diagnostics
+  /**
+   * Accepts a preset name (`'warn'`, `'throw'`, `'silent'`) or a full `Diagnostics`
+   * instance for custom reporting/policy. The string form needs no import from
+   * `@praxis-kit/diagnostics`.
+   */
+  readonly diagnostics?: Diagnostics | DiagnosticsMode
   readonly aria?: readonly AriaRule[]
   readonly children?: readonly ChildRuleInput[]
   /**
