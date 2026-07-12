@@ -1,4 +1,4 @@
-import { createContractComponent } from '@praxis-kit/web'
+import { createContractComponent } from 'praxis-kit/web'
 import type { EmptyRecord } from '@praxis-kit/core'
 
 const variants = {

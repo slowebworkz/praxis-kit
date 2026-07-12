@@ -30,6 +30,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # examples/* depend on praxis-kit/<adapter> (packages/kit's published subpaths),
+      # which only exist once packages/kit is built — pnpm check (lint/typecheck/test)
+      # runs before the general "Build" step below, so build it explicitly first.
+      - name: Build praxis-kit
+        run: pnpm --filter praxis-kit build
+
       - name: Check
         run: pnpm check
 

@@ -18,10 +18,10 @@
  *     <example-tabs-content value="b">Panel B</example-tabs-content>
  *   </example-tabs-root>
  */
-import { createContractComponent } from '@praxis-kit/web'
+import { createContractComponent } from 'praxis-kit/web'
 import { iterate } from '@praxis-kit/primitive'
 import type { DiagnosticInput, Diagnostics } from '@praxis-kit/diagnostics'
-import { DiagnosticCategory, DiagnosticCode, warnDiagnostics } from '@praxis-kit/diagnostics'
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 
 function invalidTriggerValue(value: string, fallback: string | null): DiagnosticInput {
   return {
@@ -61,7 +61,7 @@ const _Trigger = createContractComponent({
   styling: {
     base: 'px-3 py-2 text-sm font-medium border-b-2 border-transparent data-[state=active]:border-blue-600',
   },
-  enforcement: { diagnostics: warnDiagnostics },
+  enforcement: { diagnostics: 'warn' },
 }) as unknown as typeof _PraxisCE
 
 export class Trigger extends _Trigger {
@@ -94,7 +94,7 @@ export const Content = createContractComponent({
   name: 'TabsContent',
   defaults: { role: 'tabpanel' },
   styling: { base: 'py-4 text-sm' },
-  enforcement: { diagnostics: warnDiagnostics },
+  enforcement: { diagnostics: 'warn' },
 })
 
 // ── List ──────────────────────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ export const List = createContractComponent({
   defaults: { role: 'tablist' },
   styling: { base: 'inline-flex gap-1 border-b border-gray-200' },
   enforcement: {
-    diagnostics: warnDiagnostics,
+    diagnostics: 'warn',
     exclusiveChildren: true,
     children: [
       {
@@ -124,7 +124,7 @@ const _Root = createContractComponent({
   name: 'TabsRoot',
   styling: { base: 'flex flex-col' },
   enforcement: {
-    diagnostics: warnDiagnostics,
+    diagnostics: 'warn',
     exclusiveChildren: true,
     children: [
       {

@@ -1,4 +1,4 @@
-import { createContractComponent } from '@praxis-kit/vue'
+import { createContractComponent } from 'praxis-kit/vue'
 import type { EmptyRecord } from '@praxis-kit/core'
 
 export const Link = createContractComponent<'a', EmptyRecord, EmptyRecord>({

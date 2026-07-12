@@ -13,9 +13,7 @@
   },
   "dependencies": {
     "@praxis-kit/core": "workspace:*",
-    "@praxis-kit/diagnostics": "workspace:*",
-    "@praxis-kit/react": "workspace:*",
-    "@praxis-kit/tailwind": "workspace:*"
+    "praxis-kit": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "catalog:",

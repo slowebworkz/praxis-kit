@@ -6,7 +6,7 @@
  */
 import { createSignal, Show } from 'solid-js'
 import type { JSX, Component } from 'solid-js'
-import { createContractComponent } from '@praxis-kit/solid'
+import { createContractComponent } from 'praxis-kit/solid'
 import { TabsContext, useTabs } from './context'
 import { tabId, panelId } from './utils'
 

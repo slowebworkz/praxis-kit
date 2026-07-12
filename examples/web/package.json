@@ -13,7 +13,7 @@
   "dependencies": {
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/tailwind": "workspace:*",
-    "@praxis-kit/web": "workspace:*"
+    "praxis-kit": "workspace:*"
   },
   "devDependencies": {
     "jsdom": "catalog:",

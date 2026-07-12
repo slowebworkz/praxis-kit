@@ -25,8 +25,7 @@
 import { useId, useState } from 'react'
 import type { ReactElement } from 'react'
 
-import { warnDiagnostics } from '@praxis-kit/diagnostics'
-import { createContractComponent } from '@praxis-kit/react'
+import { createContractComponent } from 'praxis-kit/react'
 
 import { TabsContext, useTabs } from './context'
 import type { RootProps, TriggerProps, ContentProps } from './types'
@@ -88,7 +87,7 @@ const List = createContractComponent({
   defaults: { role: 'tablist' },
   styling: { base: 'relative inline-flex gap-1 border-b border-gray-200' },
   enforcement: {
-    diagnostics: warnDiagnostics,
+    diagnostics: 'warn',
     exclusiveChildren: true,
     children: [
       { name: 'Tabs.Trigger', match: isType(Trigger), cardinality: { min: 1 } },
@@ -127,7 +126,7 @@ const RootContract = createContractComponent({
   name: 'TabsRoot',
   styling: { base: 'flex flex-col' },
   enforcement: {
-    diagnostics: warnDiagnostics,
+    diagnostics: 'warn',
     exclusiveChildren: true,
     children: [
       { name: 'Tabs.List', match: isType(List), cardinality: { min: 1, max: 1 } },

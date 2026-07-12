@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createElement, act } from 'react'
 import type { ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createContractComponent } from '@praxis-kit/react'
+import { createContractComponent } from 'praxis-kit/react'
 import type { AnyRecord } from '@praxis-kit/core'
 
 // Minimal picture compound. The built-in html contract for <picture> requires:

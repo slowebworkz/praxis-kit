@@ -13,8 +13,7 @@
   },
   "dependencies": {
     "@praxis-kit/core": "workspace:*",
-    "@praxis-kit/tailwind": "workspace:*",
-    "@praxis-kit/vue": "workspace:*"
+    "praxis-kit": "workspace:*"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "catalog:",

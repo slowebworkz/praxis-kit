@@ -1,6 +1,6 @@
-import { createContractComponent } from '@praxis-kit/svelte'
+import { createContractComponent } from 'praxis-kit/svelte'
 import type { EmptyRecord } from '@praxis-kit/core'
-import { createTailwindPipeline } from '@praxis-kit/tailwind'
+import { createTailwindPipeline } from 'praxis-kit/tailwind'
 
 const variants = {
   direction: { row: 'flex-row', col: 'flex-col' },

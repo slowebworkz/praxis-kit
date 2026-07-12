@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@praxis-kit/core": "workspace:*",
-    "@praxis-kit/lit": "workspace:*",
-    "@praxis-kit/tailwind": "workspace:*"
+    "@praxis-kit/tailwind": "workspace:*",
+    "praxis-kit": "workspace:*"
   },
   "devDependencies": {
     "jsdom": "catalog:",

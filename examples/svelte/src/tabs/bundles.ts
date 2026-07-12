@@ -1,4 +1,4 @@
-import { createContractComponent } from '@praxis-kit/svelte'
+import { createContractComponent } from 'praxis-kit/svelte'
 
 export const triggerBundle = createContractComponent({
   tag: 'button' as const,
