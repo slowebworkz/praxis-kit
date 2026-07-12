@@ -66,20 +66,48 @@
   },
   "typesVersions": {
     "*": {
-      "react": ["./dist/react/index.d.ts"],
-      "react/legacy": ["./dist/react/legacy.d.ts"],
-      "preact": ["./dist/preact/index.d.ts"],
-      "solid": ["./dist/solid/index.d.ts"],
-      "svelte": ["./dist/svelte/index.d.ts"],
-      "vue": ["./dist/vue/index.d.ts"],
-      "lit": ["./dist/lit/index.d.ts"],
-      "web": ["./dist/web/index.d.ts"],
-      "tailwind": ["./dist/tailwind/index.d.ts"],
-      "eslint": ["./dist/eslint/index.d.ts"],
-      "ts-plugin": ["./dist/ts-plugin/index.d.cts"],
-      "vite-plugin": ["./dist/vite-plugin/index.d.ts"],
-      "codemod": ["./dist/codemod/index.d.ts"],
-      "contract": ["./dist/contract/index.d.ts"]
+      "react": [
+        "./dist/react/index.d.ts"
+      ],
+      "react/legacy": [
+        "./dist/react/legacy.d.ts"
+      ],
+      "preact": [
+        "./dist/preact/index.d.ts"
+      ],
+      "solid": [
+        "./dist/solid/index.d.ts"
+      ],
+      "svelte": [
+        "./dist/svelte/index.d.ts"
+      ],
+      "vue": [
+        "./dist/vue/index.d.ts"
+      ],
+      "lit": [
+        "./dist/lit/index.d.ts"
+      ],
+      "web": [
+        "./dist/web/index.d.ts"
+      ],
+      "tailwind": [
+        "./dist/tailwind/index.d.ts"
+      ],
+      "eslint": [
+        "./dist/eslint/index.d.ts"
+      ],
+      "ts-plugin": [
+        "./dist/ts-plugin/index.d.cts"
+      ],
+      "vite-plugin": [
+        "./dist/vite-plugin/index.d.ts"
+      ],
+      "codemod": [
+        "./dist/codemod/index.d.ts"
+      ],
+      "contract": [
+        "./dist/contract/index.d.ts"
+      ]
     }
   },
   "bin": {
@@ -90,7 +118,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "rm -rf dist && tsup && node scripts/postbuild.mjs",
+    "build": "rm -rf dist && tsup && tsx scripts/postbuild.ts",
     "dev": "tsup --watch",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
@@ -147,6 +175,7 @@
     "@praxis-kit/adapter-utils": "workspace:*",
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/pipeline": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
     "@praxis-kit/vite-plugin": "workspace:*",
     "@sveltejs/vite-plugin-svelte": "catalog:",
@@ -164,6 +193,7 @@
     "svelte": "catalog:",
     "ts-morph": "catalog:",
     "tsup": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vue": "catalog:"

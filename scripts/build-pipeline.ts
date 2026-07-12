@@ -17,8 +17,8 @@
  * change module resolution. tsx handles bundler-style resolution directly.
  */
 
-import { executePipeline, shallowObjectMerge, startPipeline } from '@praxis-kit/pipeline'
-import { shellPass } from '@praxis-kit/pipeline/node'
+import { shallowObjectMerge, startPipeline } from '@praxis-kit/pipeline'
+import { runPipeline, shellPass } from '@praxis-kit/pipeline/node'
 
 type Context = Record<string, never>
 
@@ -39,9 +39,4 @@ const pipeline = startPipeline<Context>({
   .then(check)
   .build()
 
-try {
-  await executePipeline(pipeline, {})
-} catch (error) {
-  console.error(error instanceof Error ? error.message : error)
-  process.exit(1)
-}
+await runPipeline(pipeline, {})

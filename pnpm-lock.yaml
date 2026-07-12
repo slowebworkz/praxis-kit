@@ -919,6 +919,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/pipeline':
+        specifier: workspace:*
+        version: link:../../lib/pipeline
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -970,6 +973,9 @@ importers:
       tsup:
         specifier: 'catalog:'
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.17)(tsx@4.23.0)(typescript@6.0.3)
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.0
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -1197,6 +1203,9 @@ importers:
       react:
         specifier: 'catalog:'
         version: 19.2.7
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.0
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
