@@ -1,5 +1,6 @@
 import { resolve as resolvePath } from 'node:path'
 import { defineConfig } from 'tsup'
+import { solidPlugin } from 'esbuild-plugin-solid'
 import rootPaths from '../../tsconfig.paths.json'
 
 const adapterNoExternal = ['@praxis-kit/adapter-utils', '@praxis-kit/core']
@@ -96,7 +97,10 @@ export default [
     },
   }),
 
-  // Solid — custom JSX transform required
+  // Solid — custom JSX transform required. Solid doesn't support the React-style
+  // automatic-runtime protocol esbuild's built-in JSX handling expects; babel-preset-solid
+  // (via esbuild-plugin-solid, the same tool vite-plugin-solid wraps) compiles .tsx to Solid's
+  // reactive DOM-expression output instead.
   defineConfig({
     entry: { 'solid/index': '../../adapters/solid/src/index.ts' },
     format: ['esm'],
@@ -104,9 +108,8 @@ export default [
     tsconfig: 'tsconfig.build-solid.json',
     noExternal: adapterNoExternal,
     external: diagnosticsExternal,
+    esbuildPlugins: [solidPlugin()],
     esbuildOptions(options) {
-      options.jsx = 'automatic'
-      options.jsxImportSource = 'solid-js'
       options.alias = { ...options.alias, ...sharedAlias }
     },
   }),
