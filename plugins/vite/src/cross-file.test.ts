@@ -138,6 +138,7 @@ describe('ConstraintRegistry', () => {
         totalMin: 1,
         totalMax: 1,
         hasAriaRules: false,
+        exclusiveChildren: false,
       },
     ])
     registry.registerImports('/abs/app.tsx', new Map([['Button', '/abs/button.tsx']]))
@@ -169,6 +170,7 @@ describe('ConstraintRegistry', () => {
         totalMin: 1,
         totalMax: 1,
         hasAriaRules: false,
+        exclusiveChildren: false,
       },
     ])
     expect(registry.resolveConstraint('/abs/app.tsx', 'Button')).toBeUndefined()
@@ -212,7 +214,7 @@ describe('ConstraintRegistry.diagnostics', () => {
   const BUTTON_SRC = `
     export const Button = createContractComponent({
       tag: 'button',
-      enforcement: { strict: 'warn', children: [
+      enforcement: { strict: 'warn', exclusiveChildren: true, children: [
         { name: 'label', match: (c) => true, cardinality: { min: 1, max: 1 } },
       ]},
     })

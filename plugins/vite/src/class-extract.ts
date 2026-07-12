@@ -15,30 +15,33 @@
  * - `styling.compounds` contains non-literal conditions or class values
  * - The total number of combinations exceeds MAX_COMBINATIONS
  * - The styling object already has a `precomputedClasses` property
+ *
+ * @example
+ * Before:
+ * ```ts
+ * styling: {
+ *   variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
+ * }
+ * ```
+ * After:
+ * ```ts
+ * styling: {
+ *   variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
+ *   precomputedClasses: {
+ *     '__none__:': '',
+ *     '__none__:size:s:sm': 'text-sm',
+ *     '__none__:size:s:lg': 'text-lg',
+ *   },
+ * }
+ * ```
  */
 import ts from 'typescript'
 import { asArray, asObject, firstObjectArg, getProperty, isFactoryCall, walk } from './ast'
 import { iterate } from '@praxis-kit/primitive'
+import type { CompoundEntry, DefaultMap, StylingConfig, VariantMap } from './types'
 
 // Cap to keep injected code size reasonable.
 const MAX_COMBINATIONS = 512
-
-// ─── Internal types ───────────────────────────────────────────────────────────
-
-type VariantValues = Record<string, string | string[]>
-type VariantMap = Record<string, VariantValues>
-type DefaultMap = Record<string, string>
-
-type CompoundEntry = {
-  conditions: Record<string, string | string[]>
-  cls: string | string[]
-}
-
-type StylingConfig = {
-  variantMap: VariantMap
-  defaults: DefaultMap
-  compounds: CompoundEntry[]
-}
 
 // ─── AST extraction ───────────────────────────────────────────────────────────
 
@@ -178,11 +181,11 @@ export function enumerateCombinations(
   })
   if (!totalUnderMaxLimit) return null
 
-  function rec(remaining: string[]): Array<Record<string, string>> {
+  function enumerateRecursive(remaining: string[]): Array<Record<string, string>> {
     if (remaining.length === 0) return [{}]
     const first = remaining[0] as string
     const rest = remaining.slice(1)
-    const restCombos = rec(rest)
+    const restCombos = enumerateRecursive(rest)
     const valueKeys = Object.keys(variantMap[first]!)
     const out: Array<Record<string, string>> = []
     iterate.forEach(restCombos, (combo) => {
@@ -194,7 +197,7 @@ export function enumerateCombinations(
     return out
   }
 
-  return rec(keys)
+  return enumerateRecursive(keys)
 }
 
 // ─── Cache key ────────────────────────────────────────────────────────────────
