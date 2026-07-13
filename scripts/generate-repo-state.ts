@@ -2,7 +2,7 @@
  * generate-repo-state.ts
  *
  * Generates architecture manifests for the praxis-kit monorepo into .repo-state/.
- * Run: node --experimental-strip-types scripts/generate-repo-state.ts
+ * Run: tsx scripts/generate-repo-state.ts
  *
  * Outputs:
  *   .repo-state/packages.json          — package graph and inter-package dependencies
@@ -12,6 +12,11 @@
  *   .repo-state/runtime-graph.json     — documented execution phase order
  *   .repo-state/adapters.json          — adapter inventory
  *   .repo-state/architecture-hash.json — deterministic hash for architectural diff detection
+ *
+ * Steps run as a sequential @praxis-kit/pipeline pass chain (see "main" below):
+ * each pass reads what earlier passes wrote into the shared context, mirroring
+ * the manifests' own dependency order (packages → exports/contracts/adapters →
+ * hash) instead of a flat sequence of top-level statements.
  */
 
 import { createHash } from 'node:crypto'
@@ -20,6 +25,10 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Project, SyntaxKind } from 'ts-morph'
+
+import { shallowObjectMerge, startPipeline } from '@praxis-kit/pipeline'
+import { runPipeline } from '@praxis-kit/pipeline/node'
+import type { Pass } from '@praxis-kit/pipeline'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
@@ -421,61 +430,141 @@ function buildAdaptersMap(packages: PackageMeta[]) {
 
 // ── main ──────────────────────────────────────────────────────────────────────
 
-const generated = new Date().toISOString()
-const packages = discoverPackages()
+interface Context {
+  readonly generated?: string
+  readonly packages?: PackageMeta[]
+  readonly pkgGraph?: ReturnType<typeof buildPackageGraph>
+  readonly exportsMap?: ReturnType<typeof analyzeExports>
+  readonly contracts?: ReturnType<typeof extractContracts>
+  readonly depGraph?: ReturnType<typeof buildDependencyGraph>
+}
 
-console.log(`Generating repo state for ${packages.length} packages…`)
-
-const pkgGraph = buildPackageGraph(packages)
-write('packages.json', { generated, ...pkgGraph })
-console.log('  ✓ packages.json')
-
-const exportsMap = analyzeExports(packages)
-write('exports.json', { generated, ...exportsMap })
-console.log('  ✓ exports.json')
-
-const contracts = extractContracts(packages)
-write('contracts.json', { generated, ...contracts })
-console.log('  ✓ contracts.json')
-
-const depGraph = buildDependencyGraph()
-write('dependency-graph.json', { generated, ...depGraph })
-console.log(`  ✓ dependency-graph.json  [${depGraph.status}]`)
-
-const runtimeGraph = buildRuntimeGraph()
-write('runtime-graph.json', { generated, ...runtimeGraph })
-console.log('  ✓ runtime-graph.json')
-
-const adaptersMap = buildAdaptersMap(packages)
-write('adapters.json', { generated, ...adaptersMap })
-console.log('  ✓ adapters.json')
-
-const hashInput = JSON.stringify({ pkgGraph, exportsMap, contracts, depGraph })
-write('architecture-hash.json', {
-  generated,
-  hash: sha256(hashInput),
-  components: {
-    packages: sha256(JSON.stringify(pkgGraph)),
-    exports: sha256(JSON.stringify(exportsMap)),
-    contracts: sha256(JSON.stringify(contracts)),
-    dependencyGraph: sha256(JSON.stringify(depGraph)),
+const discoverPackagesPass: Pass<Context> = {
+  name: 'discover-packages',
+  execute() {
+    const packages = discoverPackages()
+    console.log(`Generating repo state for ${packages.length} packages…`)
+    return { context: { generated: new Date().toISOString(), packages } }
   },
+}
+
+const buildPackageGraphPass: Pass<Context> = {
+  name: 'build-package-graph',
+  execute(context) {
+    const pkgGraph = buildPackageGraph(context.packages ?? [])
+    write('packages.json', { generated: context.generated, ...pkgGraph })
+    console.log('  ✓ packages.json')
+    return { context: { pkgGraph } }
+  },
+}
+
+const analyzeExportsPass: Pass<Context> = {
+  name: 'analyze-exports',
+  execute(context) {
+    const exportsMap = analyzeExports(context.packages ?? [])
+    write('exports.json', { generated: context.generated, ...exportsMap })
+    console.log('  ✓ exports.json')
+    return { context: { exportsMap } }
+  },
+}
+
+const extractContractsPass: Pass<Context> = {
+  name: 'extract-contracts',
+  execute(context) {
+    const contracts = extractContracts(context.packages ?? [])
+    write('contracts.json', { generated: context.generated, ...contracts })
+    console.log('  ✓ contracts.json')
+    return { context: { contracts } }
+  },
+}
+
+const buildDependencyGraphPass: Pass<Context> = {
+  name: 'build-dependency-graph',
+  execute(context) {
+    const depGraph = buildDependencyGraph()
+    write('dependency-graph.json', { generated: context.generated, ...depGraph })
+    console.log(`  ✓ dependency-graph.json  [${depGraph.status}]`)
+    return { context: { depGraph } }
+  },
+}
+
+const buildRuntimeGraphPass: Pass<Context> = {
+  name: 'build-runtime-graph',
+  execute(context) {
+    const runtimeGraph = buildRuntimeGraph()
+    write('runtime-graph.json', { generated: context.generated, ...runtimeGraph })
+    console.log('  ✓ runtime-graph.json')
+    return {}
+  },
+}
+
+const buildAdaptersMapPass: Pass<Context> = {
+  name: 'build-adapters-map',
+  execute(context) {
+    const adaptersMap = buildAdaptersMap(context.packages ?? [])
+    write('adapters.json', { generated: context.generated, ...adaptersMap })
+    console.log('  ✓ adapters.json')
+    return {}
+  },
+}
+
+const writeArchitectureHashPass: Pass<Context> = {
+  name: 'write-architecture-hash',
+  execute(context) {
+    const { generated, pkgGraph, exportsMap, contracts, depGraph } = context
+    const hashInput = JSON.stringify({ pkgGraph, exportsMap, contracts, depGraph })
+    write('architecture-hash.json', {
+      generated,
+      hash: sha256(hashInput),
+      components: {
+        packages: sha256(JSON.stringify(pkgGraph)),
+        exports: sha256(JSON.stringify(exportsMap)),
+        contracts: sha256(JSON.stringify(contracts)),
+        dependencyGraph: sha256(JSON.stringify(depGraph)),
+      },
+    })
+    console.log('  ✓ architecture-hash.json')
+    return {}
+  },
+}
+
+const summarizePass: Pass<Context> = {
+  name: 'summarize',
+  execute(context) {
+    const { pkgGraph, depGraph } = context
+
+    if (pkgGraph && pkgGraph.cycles.length > 0) {
+      console.error(`\n⚠  ${pkgGraph.cycles.length} dependency cycle(s) detected:`)
+      for (const cycle of pkgGraph.cycles) console.error('   ' + cycle.join(' → '))
+    }
+
+    if (depGraph?.status === 'VIOLATIONS') {
+      console.error(`\n✗  ${depGraph.violations.length} architectural violation(s):`)
+      for (const v of depGraph.violations) {
+        console.error(`   [${v.rule.severity}] ${v.rule.name}:  ${v.from}  →  ${v.to}`)
+      }
+      process.exit(1)
+    }
+    return {}
+  },
+}
+
+const pipeline = startPipeline<Context>({
+  name: 'generate-repo-state',
+  strategy: 'sequential',
+  merge: shallowObjectMerge,
 })
-console.log('  ✓ architecture-hash.json')
+  .then(discoverPackagesPass)
+  .then(buildPackageGraphPass)
+  .then(analyzeExportsPass)
+  .then(extractContractsPass)
+  .then(buildDependencyGraphPass)
+  .then(buildRuntimeGraphPass)
+  .then(buildAdaptersMapPass)
+  .then(writeArchitectureHashPass)
+  .then(summarizePass)
+  .build()
 
-// ── summary ───────────────────────────────────────────────────────────────────
-
-if (pkgGraph.cycles.length > 0) {
-  console.error(`\n⚠  ${pkgGraph.cycles.length} dependency cycle(s) detected:`)
-  for (const cycle of pkgGraph.cycles) console.error('   ' + cycle.join(' → '))
-}
-
-if (depGraph.status === 'VIOLATIONS') {
-  console.error(`\n✗  ${depGraph.violations.length} architectural violation(s):`)
-  for (const v of depGraph.violations) {
-    console.error(`   [${v.rule.severity}] ${v.rule.name}:  ${v.from}  →  ${v.to}`)
-  }
-  process.exit(1)
-}
+await runPipeline(pipeline, {})
 
 console.log('\n✓  .repo-state/ written')

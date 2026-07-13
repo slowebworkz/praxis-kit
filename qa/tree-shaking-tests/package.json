@@ -8,7 +8,7 @@
     "report": "node --experimental-strip-types scripts/report.ts",
     "assert": "node --experimental-strip-types scripts/assert.ts",
     "gzip": "node --experimental-strip-types scripts/gzip.ts",
-    "test": "pnpm build && pnpm assert && pnpm gzip",
+    "test": "tsx scripts/pipeline.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
@@ -27,6 +27,7 @@
     "@types/react": "catalog:",
     "esbuild": "^0.28.1",
     "react": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "tsx": "catalog:"
   }
 }
