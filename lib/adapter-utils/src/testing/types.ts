@@ -1,4 +1,10 @@
-import type { AnyRecord, FactoryOptions, VariantMap } from '@praxis-kit/core'
+import type {
+  AnyRecord,
+  ChildRuleContext,
+  FactoryOptions,
+  Rule,
+  VariantMap,
+} from '@praxis-kit/core'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 
 /**
@@ -46,7 +52,7 @@ export type ConformanceFactoryOptions = {
     children?: ReadonlyArray<{
       name: string
       match: (c: unknown) => c is unknown
-      cardinality?: { min?: number; max?: number }
+      cardinality?: Rule<{ min?: number; max?: number }, ChildRuleContext>
     }>
   }
 }
@@ -111,5 +117,13 @@ export type ConformanceAdapter<C extends ConformanceComponent = ConformanceCompo
      * Informational — wire hydrationParitySuite separately in a jsdom-environment test file.
      */
     hydration?: boolean
+    /**
+     * true if this adapter's render path passes a `ChildRuleContext` (resolved
+     * tag/props) into `childrenEvaluator.evaluate()`, so a `dynamic(...)`
+     * child-rule cardinality (e.g. varying by the resolved `as` tag) is
+     * actually resolved rather than throwing for lack of context.
+     * Unset (default false) — opt in per adapter as each is wired.
+     */
+    dynamicChildRules?: boolean
   }
 }

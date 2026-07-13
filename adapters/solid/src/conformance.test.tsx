@@ -77,7 +77,7 @@ const adapter: ConformanceAdapter<SolidConformanceComponent> = {
   setup: () => {},
   cleanup: () => cleanup(),
   createRef: () => ({ current: null }),
-  capabilities: { asChild: false },
+  capabilities: { asChild: false, dynamicChildRules: true },
 }
 
 conformanceSuite(adapter)

@@ -128,9 +128,16 @@ export function render<TProps extends KnownProps>({
     )
   }
 
-  // createEffect so validation re-runs reactively when known.children changes.
+  // createEffect so validation re-runs reactively when known.children or tag() changes —
+  // tag() is read here (not just inside childrenEvaluator) so a dynamic(...) cardinality
+  // rule that varies by `as` re-resolves whenever the resolved tag changes.
   if (process.env.NODE_ENV !== 'production' && childrenEvaluator) {
-    createEffect(() => childrenEvaluator.evaluate(toChildArray(known.children)))
+    createEffect(() =>
+      childrenEvaluator.evaluate(toChildArray(known.children), {
+        tag: tag(),
+        props: normalizedProps(),
+      }),
+    )
   }
 
   if (process.env.NODE_ENV !== 'production') {
