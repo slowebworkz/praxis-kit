@@ -100,7 +100,6 @@ export class ChildrenEvaluator extends InvariantBase {
     if (!this.active) return
 
     const { rules, matcher } = this.#resolveRules(context)
-    const ruleNames = rules.map((r) => r.name)
 
     const {
       matrix,
@@ -127,7 +126,7 @@ export class ChildrenEvaluator extends InvariantBase {
         this.violate(ContractDiagnostics.unexpectedChild(typeName, ci, this.#context))
       } else {
         const matches = matrix.childToRules.forward.get(ci)!
-        const names = [...matches].map((ri) => ruleNames[ri] ?? `#${ri}`)
+        const names = [...matches].map((ri) => rules[ri]?.name ?? `#${ri}`)
         this.violate(ContractDiagnostics.ambiguousChild(typeName, ci, names, this.#context))
       }
     })
