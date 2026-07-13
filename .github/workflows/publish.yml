@@ -29,8 +29,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Only packages/kit is published; it compiles directly from workspace
+      # packages' TypeScript source (via tsup), not their dist/ output, so a
+      # full `pnpm build` isn't needed here — and is actively wrong, since
+      # examples/* depend on praxis-kit/<adapter> (packages/kit's published
+      # subpaths), which don't exist until packages/kit itself is built. A
+      # full `pnpm build` typechecks examples/* first and fails. The repo-wide
+      # check already gates every merge to main via ci.yml's `pnpm verify`.
       - name: Build
-        run: pnpm build
+        run: pnpm --filter ./packages/kit build
 
       - name: Configure npm auth
         run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
