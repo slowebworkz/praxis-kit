@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## v5.0.0 — Open-by-Default Contracts & HTML5 Structural Enforcement
 
 ### BREAKING — `enforcement.children` is now open by default (`@praxis-kit/contract`)
 
