@@ -106,16 +106,8 @@ export function createContractComponent<
       const self = this._self
       const {
         childrenEvaluator,
-        runtime: { options, resolveTag },
+        runtime: { options },
       } = bundle
-
-      const tag = resolveTag(self.as as ElementType | undefined)
-      const children = Array.from(this.childNodes)
-
-      if (childrenEvaluator) {
-        childrenEvaluator.evaluate(children)
-      }
-      options.htmlChildrenEvaluatorFn?.(tag)?.evaluate(children)
 
       // Skip 'class' (pipeline output) and all observedAttributes. Observed attrs
       // are either read as camelCase below (variant keys, as, praxis-class) or
@@ -145,7 +137,18 @@ export function createContractComponent<
         if (val != null) props[key] = val
       }
 
-      diffAndApplyAttributes(this, resolveHostState(looseBundle, props), this._pipelineAttrs, props)
+      const hostState = resolveHostState(looseBundle, props)
+      const children = Array.from(this.childNodes)
+
+      if (childrenEvaluator) {
+        childrenEvaluator.evaluate(children, {
+          tag: hostState.tag,
+          props: hostState.normalizedProps,
+        })
+      }
+      options.htmlChildrenEvaluatorFn?.(hostState.tag)?.evaluate(children)
+
+      diffAndApplyAttributes(this, hostState, this._pipelineAttrs, props)
     }
   }
 

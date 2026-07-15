@@ -1,4 +1,9 @@
-import { diffAndApplyAttributes, resolveHostState, toLooseBundle } from '@praxis-kit/adapter-utils'
+import {
+  diffAndApplyAttributes,
+  resolveHostState,
+  resolveTagAndNormalizedProps,
+  toLooseBundle,
+} from '@praxis-kit/adapter-utils'
 import type {
   AnyClassPluginFactory,
   ElementType,
@@ -132,11 +137,12 @@ export function createContractComponent<
       return this as unknown as InstanceProps
     }
 
-    private _applyPraxis() {
+    // Start with all current DOM attributes so the ARIA engine sees role,
+    // aria-*, and any other pass-through attributes. Shared by render() and
+    // _applyPraxis(), which run at different points in the same update cycle
+    // and can't share a local variable.
+    private _buildProps(): UnknownProps {
       const self = this._self
-
-      // Start with all current DOM attributes so the ARIA engine sees role,
-      // aria-*, and any other pass-through attributes.
       const props: UnknownProps = {}
       iterate.forEach(iterate.items(this.attributes), (attr) => {
         if (attr.name === 'class') return
@@ -157,16 +163,20 @@ export function createContractComponent<
         const val = self[key as Extract<keyof TVariants, string>]
         if (val != null) props[key] = val
       })
+      return props
+    }
 
+    private _applyPraxis() {
+      const props = this._buildProps()
       diffAndApplyAttributes(this, resolveHostState(looseBundle, props), this._pipelineAttrs, props)
     }
 
     override render() {
       const children = Array.from(this.childNodes)
+      const { tag, normalizedProps } = resolveTagAndNormalizedProps(looseBundle, this._buildProps())
       if (bundle.childrenEvaluator) {
-        bundle.childrenEvaluator.evaluate(children)
+        bundle.childrenEvaluator.evaluate(children, { tag, props: normalizedProps })
       }
-      const tag = bundle.runtime.resolveTag(this._self.as as ElementType | undefined)
       bundle.runtime.options.htmlChildrenEvaluatorFn?.(tag)?.evaluate(children)
       return html`<slot></slot>`
     }
