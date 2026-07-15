@@ -1,5 +1,68 @@
 # Changelog
 
+## v6.0.0 — Dynamic Child-Cardinality Rules & Complete Layout-Mode Stripping
+
+### `dynamic(...)` child-cardinality rules (`@praxis-kit/contract`)
+
+`enforcement.children` cardinality rules can now depend on the resolved render context instead of
+being fixed at declaration time:
+
+```ts
+createContractComponent({
+  tag: 'div',
+  enforcement: {
+    children: [
+      {
+        name: 'Item',
+        match: isItem,
+        cardinality: dynamic((ctx) =>
+          ctx.tag === 'ul' || ctx.tag === 'ol' ? { min: 1 } : { max: 0 },
+        ),
+      },
+    ],
+  },
+})
+```
+
+`ChildrenEvaluator.evaluate(children, context?)` now accepts an optional `{ tag, props }` context to
+resolve `dynamic(...)` rules against. Every adapter (Solid, React, Preact, Vue, Lit, Web, Svelte)
+passes this context on every render — a `dynamic(...)` rule with no context supplied emits a dev
+diagnostic rather than silently resolving incorrectly.
+
+Built on a new generic `Rule<T, C>` primitive (`@praxis-kit/primitive`) underlying child-rule
+cardinality resolution.
+
+### BREAKING — `@praxis-kit/tailwind` `'none'` mode now strips all layout-dependent utilities
+
+v5.0.0 introduced `'none'` mode (neither `flex` nor `grid` set) stripping layout-dependent classes,
+but the implementation only covered flex-family and grid-family utility prefixes. Utilities valid in
+both flex and grid — `items-*`, `justify-*`, `content-*`, `self-*`, `order*`, `place-*` — and
+grid-only `justify-items-*`/`justify-self-*` fell through unstripped:
+
+```tsx
+// Before: items-start survived unconditionally, regardless of mode.
+// After:  none mode strips it, same as flex-*/grid-*.
+<Box className="items-start justify-items-start rounded" /> // → "rounded"
+```
+
+`items-start` (and the rest of this set) now behaves exactly like `flex-col`/`grid-cols-2` already
+did: present only when the matching `flex`/`grid` prop is set, or always-present for the truly
+shared subset when _either_ is set. Any component whose Tailwind classes assumed these survived
+unconditionally should verify output after upgrading.
+
+### BREAKING — `LayoutMode` renamed to `ResolvedLayout` (`@praxis-kit/tailwind`)
+
+`'none'` is the absence of a resolved layout, not a layout itself, so the type is renamed to match:
+
+```ts
+// Before
+import type { LayoutMode } from 'praxis-kit/tailwind'
+// After
+import type { ResolvedLayout } from 'praxis-kit/tailwind'
+```
+
+No runtime behavior change — update the import name.
+
 ## v5.0.0 — Open-by-Default Contracts & HTML5 Structural Enforcement
 
 ### BREAKING — `enforcement.children` is now open by default (`@praxis-kit/contract`)
