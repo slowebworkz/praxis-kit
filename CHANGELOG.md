@@ -1,5 +1,23 @@
 # Changelog
 
+## v6.1.0 — Caching Primitives (`@praxis-kit/primitive`)
+
+Three general-purpose caching utilities, extracted from patterns that were previously hand-rolled in
+multiple places:
+
+- `lazy(factory)` — lazily initializes a value; the factory runs exactly once on first access
+  (including when it returns a falsy value), and every subsequent call returns the cached result.
+  Adopted by the React render pipeline (`adapters/react`) and the vite diagnostics pass
+  (`plugins/vite`), replacing hand-rolled `??=` caches.
+- `memoize(fn)` — memoizes a pure, single-argument function in an unbounded `Map`, keyed by
+  SameValueZero equality.
+- `LRUCache` — a bounded cache that evicts the least-recently-used entry once `maxSize` is exceeded.
+  Consolidates LRU eviction logic that was previously duplicated across `AriaPolicyEngine#planCache`
+  (`@praxis-kit/contract`), `StaticClassResolver`, and `VariantClassResolver`
+  (`@praxis-kit/styling`), all three of which now use it directly.
+
+No breaking changes.
+
 ## v6.0.0 — Dynamic Child-Cardinality Rules & Complete Layout-Mode Stripping
 
 ### `dynamic(...)` child-cardinality rules (`@praxis-kit/contract`)
