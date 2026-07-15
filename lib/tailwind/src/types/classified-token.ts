@@ -10,15 +10,25 @@ type Token<TKind extends string, TData extends object = EmptyRecord> = {
   raw: string
 } & TData
 
-export type LayoutToken = Token<'layout', { value: LayoutKey<typeof layoutKeys> }>
-export type ConditionalToken = Token<
-  'conditional',
-  { requires: Exclude<LayoutFamily<typeof LAYOUT_FAMILY_MAP>, 'none'> }
->
-export type GapToken = Token<'gap'>
-export type SharedToken = Token<'shared'>
-export type UtilityToken = Token<'utility', { base: string }>
+// Value type of an object/record, e.g. { a: 'x', b: 'y' } -> 'x' | 'y'.
+type ValueOf<T> = T[keyof T]
 
-export type ClassifiedToken = Simplify<
-  LayoutToken | ConditionalToken | GapToken | SharedToken | UtilityToken
->
+type TokenData = {
+  layout: { value: LayoutKey<typeof layoutKeys> }
+  conditional: { requires: Exclude<LayoutFamily<typeof LAYOUT_FAMILY_MAP>, 'none'> }
+  gap: EmptyRecord
+  shared: EmptyRecord
+  utility: { base: string }
+}
+
+type TokenMap = {
+  [K in keyof TokenData]: Token<K, TokenData[K]>
+}
+
+export type LayoutToken = TokenMap['layout']
+export type ConditionalToken = TokenMap['conditional']
+export type GapToken = TokenMap['gap']
+export type SharedToken = TokenMap['shared']
+export type UtilityToken = TokenMap['utility']
+
+export type ClassifiedToken = Simplify<ValueOf<TokenMap>>
