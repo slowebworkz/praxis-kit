@@ -28,10 +28,19 @@ export default defineConfig({
           { find: '@praxis-kit/react', replacement: resolve('src/index.ts') },
 
           // @praxis-kit/core sub-entries
-          { find: '@praxis-kit/core/primitive', replacement: resolve('../core/src/primitive.ts') },
-          { find: '@praxis-kit/core/contract', replacement: resolve('../core/src/contract.ts') },
-          { find: '@praxis-kit/core/styling', replacement: resolve('../core/src/styling.ts') },
-          { find: '@praxis-kit/core', replacement: resolve('../core/src/index.ts') },
+          {
+            find: '@praxis-kit/core/primitive',
+            replacement: resolve('../../packages/core/src/primitive.ts'),
+          },
+          {
+            find: '@praxis-kit/core/contract',
+            replacement: resolve('../../packages/core/src/contract.ts'),
+          },
+          {
+            find: '@praxis-kit/core/styling',
+            replacement: resolve('../../packages/core/src/styling.ts'),
+          },
+          { find: '@praxis-kit/core', replacement: resolve('../../packages/core/src/index.ts') },
 
           // @praxis-kit/primitive sub-entries (directories with index.ts)
           { find: /^@praxis-kit\/primitive\/(.+)$/, replacement: `${sharedRoot}/$1/index.ts` },
