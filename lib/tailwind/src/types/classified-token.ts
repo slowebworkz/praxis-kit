@@ -2,16 +2,13 @@ import type { LayoutFamily, LayoutKey } from './layout'
 import type { LAYOUT_FAMILY_MAP } from '../constants'
 import type { layoutKeys } from '../layout-keys'
 import type { EmptyRecord } from '@praxis-kit/primitive'
-import type { Simplify } from 'type-fest'
+import type { Simplify, ValueOf } from 'type-fest'
 export type ClassToken = string
 
 type Token<TKind extends string, TData extends object = EmptyRecord> = {
   kind: TKind
   raw: string
 } & TData
-
-// Value type of an object/record, e.g. { a: 'x', b: 'y' } -> 'x' | 'y'.
-type ValueOf<T> = T[keyof T]
 
 type TokenData = {
   layout: { value: LayoutKey<typeof layoutKeys> }

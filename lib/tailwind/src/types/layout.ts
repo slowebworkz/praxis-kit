@@ -1,41 +1,38 @@
-import type { Simplify } from 'type-fest'
+import type { Simplify, ValueOf } from 'type-fest'
 import type { StringMap } from '@praxis-kit/primitive'
 
-// Element type of a tuple, e.g. ['flex', 'grid'] -> 'flex' | 'grid'.
+// Produces the union of values from a tuple.
+// Unlike `ValueOf`, tuples must use `T[number]` because `keyof` also includes
+// array properties such as `length` and methods.
 type TupleValues<T extends readonly unknown[]> = T[number]
 
-// Value type of an object/record, e.g. { a: 'x', b: 'y' } -> 'x' | 'y'.
-// Distinct from TupleValues: `keyof` on a tuple also includes numeric
-// indices, "length", and array methods, so T[keyof T] on a tuple is far
-// wider than T[number] and must not be used for tuples.
-type ValueOf<T> = T[keyof T]
-
-// Generic over the concrete `layoutKeys` tuple so this stays derivable from
-// the single source of truth (layout-keys.ts) without this types module
-// importing it directly. Callers pass `typeof layoutKeys` as T.
+// Union of valid layout identifiers derived from the canonical `layoutKeys`
+// tuple. Consumers pass `typeof layoutKeys` to keep this module decoupled from
+// the runtime definition.
 export type LayoutKey<T extends readonly string[]> = TupleValues<T>
 
-// Generic over the concrete LAYOUT_FAMILY_MAP object (constants.ts), not over
-// the LayoutKey tuple — family values ('flex' | 'grid' | 'none') come from
-// the map's values, not from its keys.
+// Union of layout families derived from the values of `LAYOUT_FAMILY_MAP`.
+// This is intentionally based on the map's values rather than its keys.
 export type LayoutFamily<M extends StringMap<string>> = ValueOf<M>
 
-export type LayoutMode<T extends readonly string[]> = LayoutKey<T> | 'none'
+// The resolved layout after shorthand props have been evaluated.
+export type ResolvedLayout<T extends readonly string[]> = LayoutKey<T> | 'none'
 
-// Exactly one key of K set to `true`, the rest forbidden (`never`) — the
-// mutual-exclusion shape, derived from K so it tracks LayoutKey as the single
-// source of truth. `Simplify` flattens each member's intersection for clean
-// hover; it must stay INSIDE the mapped type — wrapping the outer union
-// collapses the members and breaks the exclusivity.
+// Produces a mutually exclusive object where exactly one property is `true`
+// and all other properties are forbidden (`never`).
+//
+// `Simplify` is applied to each union member individually to improve editor
+// hovers. Applying it to the outer union would collapse the exclusivity.
 type ExclusiveTrueProp<K extends PropertyKey> = {
   [P in K]: Simplify<Record<P, true> & Partial<Record<Exclude<K, P>, never>>>
 }[K]
 
 /**
- * Mutually exclusive display shorthand props.
+ * Mutually exclusive layout shorthand props.
  *
- * At most one key may be `true`. Passing multiple is a compile-time error; the
- * runtime also warns and lets the first key in declaration order take precedence.
+ * Exactly one layout prop may be `true`, or none at all. Multiple `true`
+ * props produce a compile-time error. If invalid props reach runtime, the
+ * resolver warns and uses the first declared layout.
  */
 export type LayoutProps<T extends readonly string[]> =
   ExclusiveTrueProp<LayoutKey<T>> | Partial<Record<LayoutKey<T>, never>>
