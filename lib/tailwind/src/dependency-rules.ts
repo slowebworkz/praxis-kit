@@ -15,5 +15,15 @@ export type DependencyRules = Record<
 // name custom classes after these prefixes if they must survive a mode switch.
 export const defaultDependencyRules: DependencyRules = {
   flex: [/^flex-/, /^grow/, /^shrink/, /^basis-/],
-  grid: [/^grid-/, /^col-/, /^row-/, /^auto-cols-/, /^auto-rows-/],
+  grid: [
+    /^grid-/,
+    /^col-/,
+    /^row-/,
+    /^auto-cols-/,
+    /^auto-rows-/,
+    // justify-items/-self are no-ops on flex containers per the CSS box
+    // alignment spec (flex items ignore them), so treat as grid-only.
+    /^justify-items-/,
+    /^justify-self-/,
+  ],
 } as const

@@ -7,7 +7,15 @@ import { LayoutState } from './layout-state'
 
 const rules: DependencyRules = {
   flex: [/^flex-/, /^grow/, /^shrink/, /^basis-/],
-  grid: [/^grid-/, /^col-/, /^row-/, /^auto-cols-/, /^auto-rows-/],
+  grid: [
+    /^grid-/,
+    /^col-/,
+    /^row-/,
+    /^auto-cols-/,
+    /^auto-rows-/,
+    /^justify-items-/,
+    /^justify-self-/,
+  ],
 }
 
 const ev = new DependencyEvaluator(rules)
@@ -106,6 +114,29 @@ describe('DependencyEvaluator — grid-dependent utilities', () => {
     it(`blocks ${label} when mode is flex`, () => {
       expect(ev.evaluate(t, flexState)).toBe(false)
     })
+
+    it(`blocks ${label} when mode is none`, () => {
+      expect(ev.evaluate(t, noneState)).toBe(false)
+    })
+  }
+
+  for (const [label, base] of [
+    ['justify-items-start', 'justify-items-start'],
+    ['justify-self-center', 'justify-self-center'],
+  ] as const) {
+    const t = tok({ kind: 'utility', base, raw: base })
+
+    it(`passes ${label} when mode is grid (grid-only, no-op on flex)`, () => {
+      expect(ev.evaluate(t, gridState)).toBe(true)
+    })
+
+    it(`blocks ${label} when mode is flex`, () => {
+      expect(ev.evaluate(t, flexState)).toBe(false)
+    })
+
+    it(`blocks ${label} when mode is none`, () => {
+      expect(ev.evaluate(t, noneState)).toBe(false)
+    })
   }
 })
 
@@ -123,6 +154,25 @@ describe('DependencyEvaluator — gap tokens', () => {
   it('passes gap when mode is flex', () => expect(ev.evaluate(gap, flexState)).toBe(true))
   it('passes gap when mode is grid', () => expect(ev.evaluate(gap, gridState)).toBe(true))
   it('blocks gap when mode is none', () => expect(ev.evaluate(gap, noneState)).toBe(false))
+})
+
+describe('DependencyEvaluator — shared (flex-or-grid) tokens', () => {
+  for (const raw of [
+    'items-start',
+    'justify-center',
+    'content-start',
+    'self-end',
+    'order-1',
+    'place-content-center',
+    'place-items-center',
+    'place-self-stretch',
+  ]) {
+    const t = tok({ kind: 'shared', raw })
+
+    it(`passes ${raw} when mode is flex`, () => expect(ev.evaluate(t, flexState)).toBe(true))
+    it(`passes ${raw} when mode is grid`, () => expect(ev.evaluate(t, gridState)).toBe(true))
+    it(`blocks ${raw} when mode is none`, () => expect(ev.evaluate(t, noneState)).toBe(false))
+  }
 })
 
 describe('DependencyEvaluator — custom rules', () => {

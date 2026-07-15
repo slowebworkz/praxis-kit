@@ -4,6 +4,7 @@ export type {
   ConditionalToken,
   GapToken,
   LayoutToken,
+  SharedToken,
   UtilityToken,
 } from './classified-token'
 export type { LayoutFamily, LayoutKey, LayoutMode, LayoutProps } from './layout'

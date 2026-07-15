@@ -15,6 +15,7 @@ const grid: ClassifiedToken = { kind: 'layout', value: 'grid', raw: 'grid' }
 const rounded: ClassifiedToken = { kind: 'utility', base: 'rounded', raw: 'rounded' }
 const p4: ClassifiedToken = { kind: 'utility', base: 'p-4', raw: 'p-4' }
 const gap4: ClassifiedToken = { kind: 'gap', raw: 'gap-4' }
+const itemsStart: ClassifiedToken = { kind: 'shared', raw: 'items-start' }
 const conditional: ClassifiedToken = {
   kind: 'conditional',
   requires: 'flex',
@@ -53,6 +54,10 @@ describe('ClassBuilder — normal group tokens', () => {
 
   it('emits gap tokens', () => {
     expect(build([gap4])).toBe('gap-4')
+  })
+
+  it('emits shared tokens', () => {
+    expect(build([itemsStart])).toBe('items-start')
   })
 
   it('emits conditional tokens', () => {

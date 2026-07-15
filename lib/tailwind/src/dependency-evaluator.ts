@@ -27,7 +27,8 @@ export class DependencyEvaluator {
         )
       }
 
-      case 'gap': {
+      case 'gap':
+      case 'shared': {
         return state.family !== 'none'
       }
 
