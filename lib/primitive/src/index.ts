@@ -1,6 +1,6 @@
 export type * from './types'
 export * from './tag'
-export { isEventKey, isFunction, isPlainObject } from './merge'
+export { isEventKey } from './merge'
 export { EVENT_HANDLER_RE } from './merge'
 export { dynamic, isDynamicRule, resolveRule, RULE_BRAND } from './rule'
 export * from './utils'

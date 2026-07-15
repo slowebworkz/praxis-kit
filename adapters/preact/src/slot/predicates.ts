@@ -2,7 +2,7 @@ import { isValidElement } from 'preact'
 import type { VNode } from 'preact'
 import type { AnyVNode } from '../types'
 import { EVENT_HANDLER_RE } from './constants'
-import { isFunction, isPlainObject as isRecord } from '@praxis-kit/primitive'
+import { isFunction, isRecord } from '@praxis-kit/primitive'
 import { Slottable } from './Slottable'
 import type { SlottableProps } from './Slottable'
 
