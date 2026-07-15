@@ -853,6 +853,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics
+      '@praxis-kit/pipeline-kit':
+        specifier: workspace:*
+        version: link:../pipeline-kit
       type-fest:
         specifier: 'catalog:'
         version: 5.8.0

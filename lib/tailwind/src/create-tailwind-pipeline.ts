@@ -1,4 +1,17 @@
 import { cn, createClassPipeline } from '@praxis-kit/core'
+import { ConsoleReporter, DefaultPolicy, Diagnostics, Severity } from '@praxis-kit/diagnostics'
+import { composePipelines } from '@praxis-kit/pipeline-kit'
+import { isString, iterate } from '@praxis-kit/primitive'
+
+import { ClassBuilder } from './class-builder'
+import { ClassClassifier } from './class-classifier'
+import { COMPOUND_META_KEYS, EMPTY_SET, LAYOUT_OWNED_KEYS } from './constants'
+import { DependencyEvaluator } from './dependency-evaluator'
+import { defaultDependencyRules } from './dependency-rules'
+import { TailwindDiagnostics } from './diagnostics'
+import { layoutKeys } from './layout-keys'
+import { LayoutState } from './layout-state'
+
 import type {
   AnyRecord,
   ClassPipelineOptions,
@@ -6,21 +19,18 @@ import type {
   VariantMap,
   VariantValue,
 } from '@praxis-kit/core'
+import type { Pipeline, PipelineStage } from '@praxis-kit/pipeline-kit'
 
-import { ClassBuilder } from './class-builder'
-import { ClassClassifier } from './class-classifier'
-import { defaultDependencyRules } from './dependency-rules'
-import { DependencyEvaluator } from './dependency-evaluator'
-import { LayoutState } from './layout-state'
-import { layoutKeys } from './layout-keys'
-import { COMPOUND_META_KEYS, EMPTY_SET, LAYOUT_OWNED_KEYS } from './constants'
-import type { ClassifiedToken } from './types/classified-token'
-import type { LayoutKey, LayoutMode, LayoutProps, CompoundVariant, VariantSelection } from './types'
-import { isString } from '@praxis-kit/primitive'
-import { iterate } from '@praxis-kit/primitive'
-import { ConsoleReporter, Diagnostics, DefaultPolicy, Severity } from '@praxis-kit/diagnostics'
-import { TailwindDiagnostics } from './diagnostics'
-
+import type {
+  ClassifiedToken,
+  CompoundVariant,
+  LayoutKey,
+  LayoutMode,
+  LayoutProps,
+  TailwindPipelineArgs,
+  TailwindPipelineContext,
+  VariantSelection,
+} from './types'
 declare const process: { env: { NODE_ENV: string } }
 const DEV = process.env.NODE_ENV !== 'production'
 
@@ -181,29 +191,61 @@ export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   options: ClassPipelineOptions<V>,
   diagnostics: Diagnostics,
 ): ClassPlugin<LayoutProps<typeof layoutKeys>> {
-  const pipeline = createClassPipeline(options)
+  const innerPipeline = createClassPipeline(options)
   const compoundDims = compoundDimensions(getCompoundVariants(options))
+
+  // Steps 1-4 + 6 of the original sequence: resolves layout mode (firing the
+  // devDiagnostics conflict warning, unchanged in position), delegates to the
+  // styling pipeline, classifies + filters tokens. Everything the later stages
+  // need lives on the returned context so neither stage below re-derives it —
+  // re-deriving would double-fire devDiagnostics and double-run innerPipeline.
+  const resolveLayoutContext: Pipeline<TailwindPipelineArgs, TailwindPipelineContext> = (
+    tag,
+    props,
+    className,
+    recipe,
+  ) => {
+    // devDiagnostics fires regardless of strict — conflict is always a misconfiguration.
+    const mode = resolveLayout(devDiagnostics, props)
+    const resolvedClasses = innerPipeline(tag, props, className, recipe)
+    const tokens = classifyTokens(resolvedClasses)
+    const state = new LayoutState(mode)
+    const filtered = tokens.filter((token) => evaluator.evaluate(token, state))
+
+    return { mode, state, filtered, tokens, props, recipe }
+  }
+
+  // Steps 7-8: build the final string from the already-filtered tokens.
+  const buildClassString: PipelineStage<TailwindPipelineContext, string> = (ctx) => {
+    const built = builder.build(ctx.filtered)
+    if (ctx.mode === 'none') return built
+    return ctx.filtered.some((t) => t.kind === 'layout' && t.value === ctx.mode)
+      ? built
+      : cn(ctx.mode, built)
+  }
+
+  // Step 5: dev-only diagnostics, run against the same context as buildClassString
+  // rather than re-deriving it. A side effect, kept explicit as one rather than
+  // forced through allPipelines' result-collecting shape for a value we'd discard.
+  const emitDiagnosticsFromContext: PipelineStage<TailwindPipelineContext, void> = (ctx) => {
+    if (!DEV) return
+    warnReservedLayoutLiterals(diagnostics, ctx.tokens)
+    warnDeadVariants(diagnostics, options, compoundDims, ctx.props, ctx.recipe, ctx.state)
+  }
+
+  const combined: PipelineStage<TailwindPipelineContext, string> = (ctx) => {
+    const built = buildClassString(ctx)
+    emitDiagnosticsFromContext(ctx)
+    return built
+  }
+
+  const mainPipeline = composePipelines(resolveLayoutContext, combined)
 
   return {
     ownedKeys: LAYOUT_OWNED_KEYS,
 
     pipeline(tag, props, className, recipe) {
-      // devDiagnostics fires regardless of strict — conflict is always a misconfiguration.
-      const mode = resolveLayout(devDiagnostics, props)
-      const raw = pipeline(tag, props, className, recipe)
-      const tokens = classifyTokens(raw)
-      const state = new LayoutState(mode)
-
-      if (DEV) {
-        warnReservedLayoutLiterals(diagnostics, tokens)
-        warnDeadVariants(diagnostics, options, compoundDims, props, recipe, state)
-      }
-
-      const filtered = tokens.filter((token) => evaluator.evaluate(token, state))
-      const built = builder.build(filtered)
-
-      if (mode === 'none') return built
-      return filtered.some((t) => t.kind === 'layout' && t.value === mode) ? built : cn(mode, built)
+      return mainPipeline(tag, props, className, recipe)
     },
   }
 }
