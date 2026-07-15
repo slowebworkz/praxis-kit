@@ -32,10 +32,17 @@ function buildRenderState(
   tag: ElementType,
   directives: RenderDirectives,
   props: ResolvedProps,
+  normalizedProps: ResolvedProps,
   className: string,
   children: unknown,
 ): ResolvedRenderState {
-  const state: Writable<ResolvedRenderState> = { tag, directives, props, className }
+  const state: Writable<ResolvedRenderState> = {
+    tag,
+    directives,
+    props,
+    normalizedProps,
+    className,
+  }
   if (children !== undefined) state.children = children
   return state
 }
@@ -78,7 +85,7 @@ function prepareRenderState(
     ...(as !== undefined && { as }),
     ...(asChild !== undefined && { asChild }),
   }
-  return buildRenderState(tag, directives, filteredProps, resolvedClass, children)
+  return buildRenderState(tag, directives, filteredProps, normalizedProps, resolvedClass, children)
 }
 
 function warnDiscardedChildren(
@@ -210,7 +217,10 @@ export function render<TProps extends KnownProps>({
     (normalizedChildren ??= normalizeChildren(state.children))
 
   if (process.env.NODE_ENV !== 'production') {
-    childrenEvaluator?.evaluate(getNormalizedChildren())
+    childrenEvaluator?.evaluate(getNormalizedChildren(), {
+      tag: state.tag,
+      props: state.normalizedProps,
+    })
     runtime.options.htmlChildrenEvaluatorFn?.(state.tag)?.evaluate(getNormalizedChildren())
   }
 
