@@ -12,6 +12,10 @@ export type ResolvedRenderState = Readonly<{
   directives: RenderDirectives
   className: string
   props: ResolvedProps
+  // Pre-filter props (post prop-normalization, before applyFilter/variantKeys
+  // stripping) — exposed for childrenEvaluator's dynamic(...) rule context, which
+  // needs the full normalized view, not the DOM-bound subset in `props`.
+  normalizedProps: ResolvedProps
 }>
 
 export type RenderInput = Readonly<{
