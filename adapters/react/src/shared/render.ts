@@ -8,14 +8,18 @@
  */
 import { createElement } from 'react'
 import { jsx } from 'react/jsx-runtime'
+
+import { applyFilter } from '@praxis-kit/adapter-utils'
+import { enforceAllowedAs } from '@praxis-kit/core'
+import { isKnownAriaRole } from '@praxis-kit/core/primitive'
+import { lazy } from '@praxis-kit/primitive'
+
+import { isSlottableElement } from './slot'
+
 import type { ReactElement, Ref } from 'react'
 import type { Writable } from 'type-fest'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
-import { enforceAllowedAs } from '@praxis-kit/core'
-import { isKnownAriaRole } from '@praxis-kit/core/primitive'
-import { applyFilter } from '@praxis-kit/adapter-utils'
 import type { SlotValidator } from './slot'
-import { isSlottableElement } from './slot'
 import type {
   SlotComponent,
   Runtime,
@@ -213,10 +217,9 @@ export function render<TProps extends KnownProps>({
 }: RenderInput<TProps>): ReactElement {
   const state = prepareRenderState(runtime, props, filterProps)
 
-  // Memoized on first access. Child normalization is shared between development
+  // Lazily computed on first access. Child normalization is shared between development
   // validation and Slot rendering so it runs at most once per render.
-  let cached: ReactElement[] | undefined
-  const getNormalizedChildren = (): ReactElement[] => (cached ??= normalizeChildren(state.children))
+  const getNormalizedChildren = lazy(() => normalizeChildren(state.children))
 
   if (process.env.NODE_ENV !== 'production') {
     childrenEvaluator?.evaluate(getNormalizedChildren(), {

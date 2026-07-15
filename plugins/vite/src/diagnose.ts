@@ -1,7 +1,7 @@
 import ts from 'typescript'
 import { walkEach } from './ast'
 import type { ChildCount, ComponentConstraint, Diagnostic, PendingUsage, Severity } from './types'
-import { iterate } from '@praxis-kit/primitive'
+import { iterate, lazy } from '@praxis-kit/primitive'
 import { ViteDiagnostics } from './vite-diagnostics'
 
 /**
@@ -40,8 +40,7 @@ export function analyzeJsxSites(
     if (!tagName) return
 
     // Lazy — computed once and shared across all three checks if needed.
-    let pos: ts.LineAndCharacter | undefined
-    const getPos = () => (pos ??= source.getLineAndCharacterOfPosition(node.getStart(source)))
+    const getPos = lazy(() => source.getLineAndCharacterOfPosition(node.getStart(source)))
 
     // 1. Cardinality diagnostics — fire only when the count range is certainly outside bounds.
     if (count !== undefined) {

@@ -1,6 +1,8 @@
+import { LRUCache } from '@praxis-kit/primitive'
+
 export class StaticClassResolver {
   readonly #baseClass: string
-  readonly #cache = new Map<string, string>()
+  readonly #cache = new LRUCache<string, string>(200)
   readonly #resolveTag: (tag: string) => string
 
   constructor(
@@ -25,21 +27,10 @@ export class StaticClassResolver {
     if (typeof tag !== 'string' || skipTagMap) return this.#baseClass
 
     const cached = this.#cache.get(tag)
-    if (cached !== undefined) {
-      // Promote to MRU: delete + re-add moves key to Map insertion-order tail.
-      this.#cache.delete(tag)
-      this.#cache.set(tag, cached)
-      return cached
-    }
+    if (cached !== undefined) return cached
 
     const result = this.#resolveTag(tag)
     this.#cache.set(tag, result)
-
-    if (this.#cache.size > 200) {
-      const lru = this.#cache.keys().next().value
-      if (lru !== undefined) this.#cache.delete(lru)
-    }
-
     return result
   }
 }
