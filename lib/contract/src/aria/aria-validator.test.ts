@@ -682,6 +682,42 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
     expect(violations).toHaveLength(0)
   })
 
+  it('does not replay a stale plan when a custom rule depends on a prop outside the cache key', () => {
+    // Regression test: #createPlanKey only encodes tag/role/type/alt/aria-*, so a custom
+    // rule inspecting e.g. `href` would previously have its first-render outcome cached
+    // and blindly replayed for every subsequent element sharing the same (tag, role) —
+    // even though `href` differed and was never itself part of the key.
+    const stripDangerousHref = (ctx: { props: Record<string, unknown> }) => {
+      const href = ctx.props.href
+      if (typeof href !== 'string' || !href.startsWith('javascript:'))
+        return [{ valid: true as const }]
+      return [
+        {
+          valid: false as const,
+          severity: 'error' as const,
+          message: 'dangerous href stripped',
+          fixable: true as const,
+          fix: {
+            kind: 'removeAttribute:href' as const,
+            apply: ({ props }: { props: Record<string, unknown> }) => ({
+              applied: true as const,
+              next: Object.fromEntries(Object.entries(props).filter(([k]) => k !== 'href')),
+              previous: props,
+            }),
+          },
+        },
+      ]
+    }
+    const v = new AriaPolicyEngine(silentDiagnostics, { rules: [stripDangerousHref] })
+
+    // Same tag, no explicit role, no aria-* — identical cache key under the old scheme.
+    const first = v.validate('nav', { href: 'javascript:alert(1)' } as never)
+    expect(first.props).not.toHaveProperty('href')
+
+    const second = v.validate('nav', { href: 'https://example.com' } as never)
+    expect(second.props).toHaveProperty('href', 'https://example.com')
+  })
+
   it('applies fixes from two custom rules respecting priority order', () => {
     const log: string[] = []
     const ruleHigh = () => [

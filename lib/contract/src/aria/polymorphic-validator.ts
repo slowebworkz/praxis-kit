@@ -187,12 +187,12 @@ export class AriaPolicyEngine extends InvariantBase {
     })
   }
 
-  // Cache key covers only the aria-relevant subset of props (tag + role + aria-* attrs).
-  // Non-aria props (className, onClick, etc.) do not affect ARIA decisions and are excluded
-  // so cache hits survive re-renders that only change non-aria props.
-  // Note: #extraRules are NOT included in the key — each engine instance has its own Map,
-  // so two engines with different rules never share cache entries. If caching ever becomes
-  // static/shared, rule identity would need to be folded into the key.
+  // Cache key covers only the aria-relevant subset of props (tag + role + aria-* attrs) —
+  // exactly what the built-in pipeline reads. Non-aria props (className, onClick, etc.) do
+  // not affect built-in ARIA decisions and are excluded so cache hits survive re-renders
+  // that only change non-aria props. This key is unsound for #extraRules, which may read
+  // arbitrary props outside this set — callers must not use it when #extraRules is non-empty
+  // (see validate(), which bypasses the cache entirely in that case).
   static #createPlanKey(tag: AnyTag, props: IntrinsicProps): string | null {
     if (!isIntrinsicTag(tag)) return null
     const parts: string[] = [tag]
@@ -245,7 +245,11 @@ export class AriaPolicyEngine extends InvariantBase {
   }
 
   validate(tag: AnyTag, props: IntrinsicProps): ValidationResult {
-    const key = AriaPolicyEngine.#createPlanKey(tag, props)
+    // Custom `enforcement.aria` rules (#extraRules) may read arbitrary props that
+    // #createPlanKey doesn't encode (it only covers what the built-in pipeline reads).
+    // Caching their results under that key would replay stale outcomes for props the
+    // key is blind to, so bypass the plan cache entirely whenever extra rules are present.
+    const key = this.#extraRules.length > 0 ? null : AriaPolicyEngine.#createPlanKey(tag, props)
 
     if (!isNull(key)) {
       const cached = this.#planCache.get(key)
