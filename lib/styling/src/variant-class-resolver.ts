@@ -1,5 +1,5 @@
 import type { AnyRecord } from './types'
-import { iterate } from '@praxis-kit/primitive'
+import { iterate, LRUCache } from '@praxis-kit/primitive'
 
 type CvaFn = (props: AnyRecord) => string
 
@@ -8,7 +8,7 @@ export class VariantClassResolver {
   readonly #recipeMap: Readonly<Record<string, AnyRecord>>
   readonly #variantKeys: ReadonlySet<string> | null
   readonly #precomputedClasses: Readonly<Record<string, string>> | null
-  readonly #cache = new Map<string, string>()
+  readonly #cache = new LRUCache<string, string>(1000)
 
   constructor(
     cvaFn: CvaFn | null,
@@ -34,21 +34,10 @@ export class VariantClassResolver {
     }
 
     const cached = this.#cache.get(cacheKey)
-    if (cached !== undefined) {
-      // Promote to MRU: delete + re-add moves key to Map insertion-order tail.
-      this.#cache.delete(cacheKey)
-      this.#cache.set(cacheKey, cached)
-      return cached
-    }
+    if (cached !== undefined) return cached
 
     const result = this.#compute(props, recipe)
     this.#cache.set(cacheKey, result)
-
-    if (this.#cache.size > 1000) {
-      const lru = this.#cache.keys().next().value
-      if (lru !== undefined) this.#cache.delete(lru)
-    }
-
     return result
   }
 

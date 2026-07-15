@@ -1,8 +1,12 @@
-import { iterate, isNull, isNumber, isString } from '@praxis-kit/primitive'
-import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-kit/primitive'
-import { InvariantBase } from '../strict'
-import type { Diagnostics } from '@praxis-kit/diagnostics'
+import { isNull, isNumber, isString, iterate, LRUCache } from '@praxis-kit/primitive'
+
 import { AriaDiagnostics, HtmlDiagnostics } from '../diagnostics'
+import { InvariantBase } from '../strict'
+import { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attribute-policy'
+import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
+
+import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-kit/primitive'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 import type {
   AriaContext,
   AriaFix,
@@ -16,9 +20,6 @@ import type {
   ValidationResult,
   ValidationViolation,
 } from '../types'
-import { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attribute-policy'
-import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
-
 export { isInvalid } from '@praxis-kit/primitive'
 
 type AriaValueType =
@@ -44,8 +45,7 @@ function omitProp<T extends Readonly<AnyRecord>, K extends keyof T>(obj: T, key:
 
 export class AriaPolicyEngine extends InvariantBase {
   readonly #extraRules: readonly AriaRule[]
-  readonly #planCache = new Map<string, AriaPlan>()
-  static readonly #MAX_CACHE = 100
+  readonly #planCache = new LRUCache<string, AriaPlan>(100)
   // Memoized AriaFix objects keyed by attribute name — the ARIA attribute set is
   // finite so this Map is bounded and avoids recreating closures on every cache miss.
   static readonly #removeAttributeFixCache = new Map<string, AriaFix>()
@@ -250,9 +250,6 @@ export class AriaPolicyEngine extends InvariantBase {
     if (!isNull(key)) {
       const cached = this.#planCache.get(key)
       if (cached !== undefined) {
-        // Promote to MRU: delete + re-add moves key to Map insertion-order tail.
-        this.#planCache.delete(key)
-        this.#planCache.set(key, cached)
         if (cached.violations.length > 0) this.report(cached.violations as ValidationViolation[])
         return {
           props: AriaPolicyEngine.#applyPlan(props, cached.removals, cached.updates),
@@ -274,10 +271,6 @@ export class AriaPolicyEngine extends InvariantBase {
       )
       const plan: AriaPlan = { removals, updates, violations: result.violations }
       this.#planCache.set(key, plan)
-      if (this.#planCache.size > AriaPolicyEngine.#MAX_CACHE) {
-        const lru = this.#planCache.keys().next().value
-        if (lru !== undefined) this.#planCache.delete(lru)
-      }
     }
 
     return result
