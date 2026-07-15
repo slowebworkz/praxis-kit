@@ -81,6 +81,7 @@ export function prepareRenderState(
       ...(asChild !== undefined && { asChild }),
     },
     props: filteredProps,
+    normalizedProps,
     className,
   }
 }
@@ -145,7 +146,7 @@ export function render({
   const { vnodes: children, discarded } = normalizeChildren(slots)
 
   if (process.env.NODE_ENV !== 'production') {
-    childrenEvaluator?.evaluate(children)
+    childrenEvaluator?.evaluate(children, { tag: state.tag, props: state.normalizedProps })
     runtime.options.htmlChildrenEvaluatorFn?.(state.tag)?.evaluate(children)
   }
 

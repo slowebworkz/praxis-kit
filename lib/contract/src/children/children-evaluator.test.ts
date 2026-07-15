@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import type { ChildRuleInput } from '../types'
-import { ChildrenEvaluator  } from './children-evaluator'
-import type {ChildrenEvaluatorOptions} from './children-evaluator';
+import type { ChildRuleContext, ChildRuleInput } from '../types'
+import { ChildrenEvaluator } from './children-evaluator'
+import type { ChildrenEvaluatorOptions } from './children-evaluator'
 import { throwDiagnostics } from '@praxis-kit/diagnostics'
+import { dynamic } from '@praxis-kit/primitive'
 
 // ---------------------------------------------------------------------------
 // Helpers — plain class instances
@@ -349,5 +350,67 @@ describe('ChildrenEvaluator.evaluate() — position violations', () => {
   it('passes when "last" child is correctly placed', () => {
     const ev = makeEvaluator([bodyRule, footerRule])
     expect(() => ev.evaluate([bodyEl, footerEl])).not.toThrow()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// evaluate() — dynamic(...) cardinality
+// ---------------------------------------------------------------------------
+
+describe('ChildrenEvaluator.evaluate() — dynamic(...) cardinality', () => {
+  // Mirrors the `as`-prop forcing example: a component whose `as` resolves to
+  // 'section' requires exactly one Header, but resolves to a plain 'div' allows
+  // any number (including zero).
+  const headerRuleByTag: ChildRuleInput = {
+    name: 'header',
+    match: (c) => c instanceof Header,
+    cardinality: dynamic((ctx: ChildRuleContext) =>
+      ctx.tag === 'section' ? { min: 1, max: 1 } : { min: 0 },
+    ),
+  }
+
+  it('throws when context is omitted and a rule has a dynamic cardinality', () => {
+    const ev = makeEvaluator([headerRuleByTag])
+    expect(() => ev.evaluate([headerEl, headerEl])).toThrow(RangeError)
+  })
+
+  it('resolves against the given context: section requires exactly one Header', () => {
+    const ev = makeEvaluator([headerRuleByTag])
+    const sectionCtx: ChildRuleContext = { tag: 'section', props: {} }
+    expect(() => ev.evaluate([headerEl], sectionCtx)).not.toThrow()
+    expect(() => ev.evaluate([headerEl, headerEl], sectionCtx)).toThrow(/header/)
+    expect(() => ev.evaluate([], sectionCtx)).toThrow(/header/)
+  })
+
+  it('resolves against the given context: div allows any number of Headers', () => {
+    const ev = makeEvaluator([headerRuleByTag])
+    const divCtx: ChildRuleContext = { tag: 'div', props: {} }
+    expect(() => ev.evaluate([], divCtx)).not.toThrow()
+    expect(() => ev.evaluate([headerEl, headerEl, headerEl], divCtx)).not.toThrow()
+  })
+
+  it('re-resolves per call — the same evaluator instance honors a changed context', () => {
+    const ev = makeEvaluator([headerRuleByTag])
+    expect(() => ev.evaluate([], { tag: 'div', props: {} })).not.toThrow()
+    expect(() => ev.evaluate([], { tag: 'section', props: {} })).toThrow(/header/)
+  })
+
+  it('mixes cleanly with static rules — static rules stay cached, dynamic ones re-resolve', () => {
+    const ev = makeEvaluator([headerRuleByTag, footerRule])
+    const sectionCtx: ChildRuleContext = { tag: 'section', props: {} }
+    // header: exactly one (dynamic, section); footer: position="last" (static)
+    expect(() => ev.evaluate([headerEl, footerEl], sectionCtx)).not.toThrow()
+    expect(() => ev.evaluate([footerEl, headerEl], sectionCtx)).toThrow(/footer/)
+  })
+
+  it('still runs the position/cardinality invariant check against the resolved value', () => {
+    const contradictory: ChildRuleInput = {
+      name: 'header',
+      match: (c) => c instanceof Header,
+      position: 'first',
+      cardinality: dynamic(() => ({ max: 2 })),
+    }
+    const ev = makeEvaluator([contradictory])
+    expect(() => ev.evaluate([headerEl], { tag: 'section', props: {} })).toThrow(RangeError)
   })
 })

@@ -4,6 +4,7 @@ import type { ChildViolationKind } from '@praxis-kit/primitive/types'
 export type {
   Cardinality,
   CardinalityInput,
+  ChildRuleContext,
   ChildRuleInput,
   ChildRuleMatch,
   ChildRulePosition,

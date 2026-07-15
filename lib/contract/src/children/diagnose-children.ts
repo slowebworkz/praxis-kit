@@ -1,5 +1,11 @@
-import type { ChildRuleInput, MatchMatrix, NormalizedChildRule, ChildViolation } from '../types'
-import { isNumber, isString, iterate } from '@praxis-kit/primitive'
+import type {
+  ChildRuleContext,
+  ChildRuleInput,
+  MatchMatrix,
+  NormalizedChildRule,
+  ChildViolation,
+} from '../types'
+import { isDynamicRule, isNumber, isString, iterate, resolveRule } from '@praxis-kit/primitive'
 import { normalizeChildRule } from './normalize-child-rule'
 import { RuleMatcher } from './rules-matcher'
 import { getTypeName } from './get-type-name'
@@ -106,6 +112,7 @@ export function diagnoseChildren(
   children: unknown[],
   context = 'Component',
   options: DiagnoseChildrenOptions = {},
+  ruleContext?: ChildRuleContext,
 ): ChildViolation[] {
   const { exclusiveChildren = false, allowText = true } = options
   // With no rules and nothing to close/disallow, every child trivially passes.
@@ -113,7 +120,19 @@ export function diagnoseChildren(
 
   const violations: ChildViolation[] = []
 
-  const normalized = rules.map(normalizeChildRule)
+  const normalized = rules.map((rule) => {
+    if (!isDynamicRule(rule.cardinality)) {
+      // Safe: not a DynamicRule, so cardinality is already a plain CardinalityInput
+      // (or undefined) — normalizeChildRule's expected shape.
+      return normalizeChildRule(rule as unknown as Parameters<typeof normalizeChildRule>[0])
+    }
+    if (ruleContext === undefined) {
+      throw new RangeError(
+        `diagnoseChildren [${context}]: rule "${rule.name}" has a dynamic(...) cardinality — a ruleContext argument is required to resolve it.`,
+      )
+    }
+    return normalizeChildRule({ ...rule, cardinality: resolveRule(rule.cardinality, ruleContext) })
+  })
   const {
     matrix,
     unexpectedIndices: rawUnexpectedIndices,

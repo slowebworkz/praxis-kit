@@ -129,7 +129,7 @@
     $effect(() => {
       if (process.env.NODE_ENV === 'production' || !hostEl) return
       const childArray = Array.from(hostEl.childNodes)
-      bundle.childrenEvaluator?.evaluate(childArray)
+      bundle.childrenEvaluator?.evaluate(childArray, { tag, props: normalizedProps })
       bundle.runtime.options.htmlChildrenEvaluatorFn?.(tag)?.evaluate(childArray)
     })
   }

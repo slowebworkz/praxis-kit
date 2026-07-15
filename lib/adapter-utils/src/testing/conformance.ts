@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import type { ConformanceAdapter, ConformanceComponent } from './types'
 import { throwDiagnostics, warnDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
+import { dynamic } from '@praxis-kit/primitive'
 export type {
   BareFactoryOptions,
   ChildSpec,
@@ -18,6 +19,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
     asChild: true,
     tagPolymorphism: true,
     domPropFiltering: true,
+    dynamicChildRules: false,
     ...adapter.capabilities,
   }
 
@@ -405,6 +407,46 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       warnSpy.mockRestore()
     })
   })
+
+  // ── dynamic(...) child rule cardinality ─────────────────────────────────────────
+
+  if (caps.dynamicChildRules)
+    describe('conformance — dynamic(...) child rule cardinality', () => {
+      // Mirrors the forcing example for context-aware child enforcement: a
+      // component whose `as` resolves to 'section' requires at least one Item,
+      // but resolved to a plain 'div' makes Items optional.
+      const dynamicCardinalityOptions = {
+        enforcement: {
+          diagnostics: throwDiagnostics,
+          children: [
+            {
+              name: 'Item',
+              match: (c: unknown): c is unknown => !!c || !c,
+              cardinality: dynamic((ctx: { tag: unknown }) =>
+                ctx.tag === 'section' ? { min: 1 } : { min: 0 },
+              ),
+            },
+          ],
+        },
+      }
+
+      it('requires at least one child when the resolved tag is "section"', () => {
+        const Group = adapter.createComponent(dynamicCardinalityOptions)
+        expect(() => adapter.render(Group, { as: 'section' }, [])).toThrow()
+        expect(() => adapter.render(Group, { as: 'section' }, [{ tag: 'span' }])).not.toThrow()
+      })
+
+      it('allows zero children when the resolved tag is "div"', () => {
+        const Group = adapter.createComponent(dynamicCardinalityOptions)
+        expect(() => adapter.render(Group, { as: 'div' }, [])).not.toThrow()
+      })
+
+      it('re-resolves on rerender when the tag changes', () => {
+        const Group = adapter.createComponent(dynamicCardinalityOptions)
+        const result = adapter.render(Group, { as: 'div' }, [])
+        expect(() => result.rerender({ as: 'section' }, [])).toThrow()
+      })
+    })
 
   // ── reactivity ────────────────────────────────────────────────────────────────
 

@@ -26,6 +26,7 @@ export type {
 export type {
   Cardinality,
   CardinalityInput,
+  ChildRuleContext,
   ChildRuleInput,
   ChildRuleMatch,
   ChildRulePosition,

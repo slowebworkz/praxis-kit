@@ -4,6 +4,7 @@ export {
   isLooseBundle,
   toLooseBundle,
   resolveHostState,
+  resolveTagAndNormalizedProps,
   diffAndApplyAttributes,
 } from './host-state'
-export type { HostState } from './host-state'
+export type { HostState, NormalizedTagAndProps } from './host-state'

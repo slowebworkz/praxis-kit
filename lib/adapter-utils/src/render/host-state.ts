@@ -44,24 +44,37 @@ export function toLooseBundle(bundle: unknown): SsrBundle {
   return bundle
 }
 
-export type HostState = { className: string; attributes: AnyRecord }
+export type HostState = {
+  className: string
+  attributes: AnyRecord
+  tag: ElementType
+  // Pre-filter props (post prop-normalization, before the ARIA engine's
+  // resolveAria/applyFilter narrowing) — exposed for childrenEvaluator's
+  // dynamic(...) rule context, which needs the full normalized view, not the
+  // filtered `attributes` subset.
+  normalizedProps: AnyRecord
+}
+
+export type NormalizedTagAndProps = { tag: ElementType; normalizedProps: AnyRecord }
 
 /**
- * Pure: resolves the class string and filtered attribute map from current props.
- * Shared between Lit and Web — same pipeline, only the surrounding element
- * lifecycle (how `props` gets built, when this gets called) differs per adapter.
+ * Pure and side-effect-free (no enforceAllowedAs diagnostic): resolves the tag
+ * and normalized props for the current attributes, nothing more.
  *
- * Separating resolution from DOM mutation keeps this testable without a real
- * DOM and keeps diffAndApplyAttributes a simple write-only function.
+ * Exported separately from resolveHostState so a caller that only needs
+ * tag/normalizedProps — e.g. Lit's render(), which runs before _applyPraxis()'s
+ * full resolveHostState() call in the same update cycle and has nothing to
+ * reuse yet — doesn't have to trigger resolveClasses/resolveAria/applyFilter,
+ * and critically doesn't double-fire enforceAllowedAs's warning.
  */
-export function resolveHostState(bundle: SsrBundle, props: AnyRecord): HostState {
-  const { as, className, recipe, ...rest } = props
-  const { options, resolveAria, resolveClasses, resolveProps, resolveTag } = bundle.runtime
+export function resolveTagAndNormalizedProps(
+  bundle: SsrBundle,
+  props: AnyRecord,
+): NormalizedTagAndProps {
+  const { as, className: _className, recipe: _recipe, ...rest } = props
+  const { options, resolveProps, resolveTag } = bundle.runtime
 
   const tag = resolveTag(as as ElementType | undefined)
-  if (options.allowedAs !== undefined) {
-    enforceAllowedAs(tag, options.allowedAs, options.diagnostics, options.displayName)
-  }
   const mergedProps = resolveProps(rest)
   const normalizedProps =
     typeof options.normalizeFn === 'function' ? options.normalizeFn(mergedProps) : mergedProps
@@ -74,6 +87,26 @@ export function resolveHostState(bundle: SsrBundle, props: AnyRecord): HostState
     }
   }
 
+  return { tag, normalizedProps: finalProps }
+}
+
+/**
+ * Pure: resolves the class string and filtered attribute map from current props.
+ * Shared between Lit and Web — same pipeline, only the surrounding element
+ * lifecycle (how `props` gets built, when this gets called) differs per adapter.
+ *
+ * Separating resolution from DOM mutation keeps this testable without a real
+ * DOM and keeps diffAndApplyAttributes a simple write-only function.
+ */
+export function resolveHostState(bundle: SsrBundle, props: AnyRecord): HostState {
+  const { className, recipe } = props
+  const { options, resolveAria, resolveClasses } = bundle.runtime
+  const { tag, normalizedProps: finalProps } = resolveTagAndNormalizedProps(bundle, props)
+
+  if (options.allowedAs !== undefined) {
+    enforceAllowedAs(tag, options.allowedAs, options.diagnostics, options.displayName)
+  }
+
   const resolvedClass = resolveClasses(
     tag,
     finalProps,
@@ -82,7 +115,7 @@ export function resolveHostState(bundle: SsrBundle, props: AnyRecord): HostState
   )
   const ariaResult = resolveAria(tag, finalProps)
   const attributes = applyFilter(ariaResult.props, bundle.filterProps, options.variantKeys)
-  return { className: resolvedClass, attributes }
+  return { className: resolvedClass, attributes, tag, normalizedProps: finalProps }
 }
 
 /**
