@@ -102,6 +102,35 @@ describe('ClassClassifier — gap tokens', () => {
   })
 })
 
+describe('ClassClassifier — shared (flex-or-grid) tokens', () => {
+  it.each([
+    'order-1',
+    'order-first',
+    'justify-center',
+    'justify-between',
+    'content-start',
+    'items-start',
+    'items-center',
+    'self-end',
+    'place-content-center',
+    'place-items-center',
+    'place-self-stretch',
+  ])('classifies "%s" as shared', (token) => {
+    expect(c.classify(token)).toEqual({ kind: 'shared', raw: token })
+  })
+
+  it('classifies "hover:items-start" as shared (prefix stripped)', () => {
+    expect(c.classify('hover:items-start')).toEqual({ kind: 'shared', raw: 'hover:items-start' })
+  })
+
+  it.each(['justify-items-start', 'justify-self-center'])(
+    'classifies "%s" as utility, not shared (grid-only)',
+    (token) => {
+      expect(c.classify(token)).toEqual({ kind: 'utility', base: token, raw: token })
+    },
+  )
+})
+
 describe('ClassClassifier — conditional tokens', () => {
   it('classifies "[&.flex]:flex-col" as conditional requires flex', () => {
     expect(c.classify('[&.flex]:flex-col')).toEqual({

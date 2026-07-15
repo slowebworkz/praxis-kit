@@ -16,6 +16,9 @@ export type ConditionalToken = Token<
   { requires: Exclude<LayoutFamily<typeof LAYOUT_FAMILY_MAP>, 'none'> }
 >
 export type GapToken = Token<'gap'>
+export type SharedToken = Token<'shared'>
 export type UtilityToken = Token<'utility', { base: string }>
 
-export type ClassifiedToken = Simplify<LayoutToken | ConditionalToken | GapToken | UtilityToken>
+export type ClassifiedToken = Simplify<
+  LayoutToken | ConditionalToken | GapToken | SharedToken | UtilityToken
+>

@@ -541,6 +541,29 @@ describe('createTailwindPipeline — baseClassName layout stripping', () => {
     expect(cls).toMatch(/\bgap-4\b/)
     expect(cls).toMatch(/\brounded\b/)
   })
+
+  it('strips flex-or-grid-shared and grid-only classes from baseClassName when no layout is active', () => {
+    const pipeline = createTailwindPipeline(
+      { baseClassName: 'items-start justify-items-start justify-center rounded' },
+      silentDiagnostics,
+    )
+    const cls = resolve(pipeline)
+    expect(cls).not.toMatch(/\bitems-start\b/)
+    expect(cls).not.toMatch(/\bjustify-items-start\b/)
+    expect(cls).not.toMatch(/\bjustify-center\b/)
+    expect(cls).toMatch(/\brounded\b/)
+  })
+
+  it('preserves shared alignment classes but strips grid-only ones when flex is active', () => {
+    const pipeline = createTailwindPipeline(
+      { baseClassName: 'items-start justify-items-start rounded' },
+      silentDiagnostics,
+    )
+    const cls = resolve(pipeline, '', { flex: true })
+    expect(cls).toMatch(/\bitems-start\b/)
+    expect(cls).not.toMatch(/\bjustify-items-start\b/)
+    expect(cls).toMatch(/\brounded\b/)
+  })
 })
 
 describe('createTailwindPipeline — async-warn mode', () => {

@@ -1,4 +1,4 @@
-import type { LAYOUT_FAMILY_MAP} from './constants';
+import type { LAYOUT_FAMILY_MAP } from './constants'
 import { LAYOUT_OWNED_KEYS } from './constants'
 import type { layoutKeys } from './layout-keys'
 import type { ClassifiedToken, ClassToken, LayoutFamily, LayoutKey } from './types'
@@ -10,6 +10,26 @@ const CONDITIONALS = {
 } as const satisfies Readonly<
   Record<string, Exclude<LayoutFamily<typeof LAYOUT_FAMILY_MAP>, 'none'>>
 >
+
+// Utilities that only have an effect inside a flex OR grid container, but
+// aren't specific to either family: justify-content, align-items/self,
+// align-content, order, and the place-* shorthands all apply to both flex
+// and grid per the Tailwind docs. Like gap, these should survive when either
+// family is active and be stripped when neither is.
+//
+// justify-items-/justify-self- are excluded — they're grid-only (no-ops on
+// flex containers per the CSS box alignment spec) and handled by
+// dependency-rules.ts instead.
+const SHARED_PREFIXES: readonly RegExp[] = [
+  /^order/,
+  /^justify-(?!items-|self-)/,
+  /^content-/,
+  /^items-/,
+  /^self-/,
+  /^place-content-/,
+  /^place-items-/,
+  /^place-self-/,
+]
 
 export class ClassClassifier {
   static #getBaseUtility(token: string): string {
@@ -53,15 +73,14 @@ export class ClassClassifier {
     )
     if (conditional !== null) return conditional
 
-    return base === 'gap' || base.startsWith('gap-')
-      ? {
-          kind: 'gap',
-          raw: token,
-        }
-      : {
-          kind: 'utility',
-          base,
-          raw: token,
-        }
+    if (base === 'gap' || base.startsWith('gap-')) {
+      return { kind: 'gap', raw: token }
+    }
+
+    if (SHARED_PREFIXES.some((rule) => rule.test(base))) {
+      return { kind: 'shared', raw: token }
+    }
+
+    return { kind: 'utility', base, raw: token }
   }
 }
