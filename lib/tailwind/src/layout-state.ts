@@ -1,6 +1,6 @@
 import { LAYOUT_FAMILY_MAP } from './constants'
 import type { layoutKeys } from './layout-keys'
-import type { LayoutFamily, LayoutMode } from './types/layout'
+import type { LayoutFamily, ResolvedLayout } from './types/layout'
 
 /**
  * The resolved display mode for a single render.
@@ -14,16 +14,16 @@ import type { LayoutFamily, LayoutMode } from './types/layout'
  * The evaluator uses family — not mode — for utility and gap filtering.
  */
 export class LayoutState {
-  readonly #mode: LayoutMode<typeof layoutKeys>
+  readonly #mode: ResolvedLayout<typeof layoutKeys>
   readonly #family: LayoutFamily<typeof LAYOUT_FAMILY_MAP>
 
-  constructor(mode: LayoutMode<typeof layoutKeys>) {
+  constructor(mode: ResolvedLayout<typeof layoutKeys>) {
     this.#mode = mode
     this.#family = mode === 'none' ? 'none' : LAYOUT_FAMILY_MAP[mode]
     Object.freeze(this)
   }
 
-  get mode(): LayoutMode<typeof layoutKeys> {
+  get mode(): ResolvedLayout<typeof layoutKeys> {
     return this.#mode
   }
 

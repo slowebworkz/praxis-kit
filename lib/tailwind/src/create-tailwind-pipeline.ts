@@ -25,8 +25,8 @@ import type {
   ClassifiedToken,
   CompoundVariant,
   LayoutKey,
-  LayoutMode,
   LayoutProps,
+  ResolvedLayout,
   TailwindPipelineArgs,
   TailwindPipelineContext,
   VariantSelection,
@@ -54,7 +54,7 @@ function normalizeVariantValue(value: VariantValue): string {
 function resolveLayout(
   diagnostics: Diagnostics,
   props: LayoutProps<typeof layoutKeys> & AnyRecord,
-): LayoutMode<typeof layoutKeys> {
+): ResolvedLayout<typeof layoutKeys> {
   const active: LayoutKey<typeof layoutKeys>[] = []
   iterate.forEach(layoutKeys, (key) => {
     if (props[key]) active.push(key)
