@@ -24,7 +24,7 @@ import type {
 } from '../types'
 export { isInvalid } from '@praxis-kit/primitive'
 
-const VALID = [{ valid: true }] as const
+const NO_VIOLATIONS = [{ valid: true }] as const
 
 function isIntrinsicTag(tag: AnyTag): tag is IntrinsicTag {
   return isString(tag)
@@ -78,16 +78,27 @@ export class AriaPolicyEngine extends InvariantBase {
       isNonNull(implicitRole) || (isString(props.role) && (props.role as string).length > 0)
     if (!hasRole) return { proceed: false, result: { props, violations: [] } }
 
+    // Normalizing an empty role only strips `role` and emits its own warning — it must not
+    // short-circuit the rest of validation. An element with role="" and an implicit role (e.g.
+    // <footer role="" aria-autocomplete="all">) still has aria-* attributes worth checking; a
+    // bare `return` here previously skipped that pipeline entirely for the render that
+    // introduced the empty role, letting invalid aria-* values through unvalidated.
     const normalized = AriaPolicyEngine.#normalizeEmptyRole(tag, props)
-    if (normalized.normalized) return { proceed: false, result: normalized.result }
+    // normalized.result.props is typed as the broader AnyRecord (ValidationResult's shape) but
+    // is always `props` with `role` stripped, which still satisfies IntrinsicProps (role is
+    // optional there).
+    const workingProps = normalized.normalized ? (normalized.result.props as IntrinsicProps) : props
+    const preExistingViolations = normalized.normalized ? normalized.result.violations : []
 
-    const effectiveRole = props.role ?? implicitRole
+    const effectiveRole = workingProps.role ?? implicitRole
     return {
       proceed: true,
       tag,
       implicitRole,
       effectiveRole,
-      context: { tag, props, implicitRole, effectiveRole },
+      props: workingProps,
+      preExistingViolations,
+      context: { tag, props: workingProps, implicitRole, effectiveRole },
     }
   }
 
@@ -146,13 +157,19 @@ export class AriaPolicyEngine extends InvariantBase {
     const derived = AriaPolicyEngine.#deriveContext(tag, props)
     if (!derived.proceed) return derived.result
 
-    const { tag: narrowedTag, implicitRole, context } = derived
+    const {
+      tag: narrowedTag,
+      implicitRole,
+      context,
+      props: workingProps,
+      preExistingViolations,
+    } = derived
     const { violations, fixes } = AriaPolicyEngine.#runRules(
       AriaPolicyEngine.#getRules(context),
       context,
     )
-    const next = AriaPolicyEngine.#applyFixes(narrowedTag, implicitRole, props, fixes)
-    return { props: next, violations }
+    const next = AriaPolicyEngine.#applyFixes(narrowedTag, implicitRole, workingProps, fixes)
+    return { props: next, violations: [...preExistingViolations, ...violations] }
   }
 
   static #evaluateWithRules(
@@ -163,13 +180,19 @@ export class AriaPolicyEngine extends InvariantBase {
     const derived = AriaPolicyEngine.#deriveContext(tag, props)
     if (!derived.proceed) return derived.result
 
-    const { tag: narrowedTag, implicitRole, context } = derived
+    const {
+      tag: narrowedTag,
+      implicitRole,
+      context,
+      props: workingProps,
+      preExistingViolations,
+    } = derived
     const { violations, fixes } = AriaPolicyEngine.#runRules(
       [...AriaPolicyEngine.#getRules(context), ...extraRules],
       context,
     )
-    const next = AriaPolicyEngine.#applyFixes(narrowedTag, implicitRole, props, fixes)
-    return { props: next, violations }
+    const next = AriaPolicyEngine.#applyFixes(narrowedTag, implicitRole, workingProps, fixes)
+    return { props: next, violations: [...preExistingViolations, ...violations] }
   }
 
   report(violations: ReadonlyArray<ValidationViolation>): void {
@@ -378,7 +401,7 @@ export class AriaPolicyEngine extends InvariantBase {
     implicitRole,
   }: AriaContext): readonly AriaResult[] {
     const role = props.role
-    if (!implicitRole || !role || role === implicitRole) return VALID
+    if (!implicitRole || !role || role === implicitRole) return NO_VIOLATIONS
 
     if (isStrongImplicitRole(tag) && role === 'region') {
       return [
@@ -392,12 +415,12 @@ export class AriaPolicyEngine extends InvariantBase {
       ]
     }
 
-    return VALID
+    return NO_VIOLATIONS
   }
 
   static #checkRedundantRole({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] {
     const role = props.role
-    if (!implicitRole || !role || role !== implicitRole) return VALID
+    if (!implicitRole || !role || role !== implicitRole) return NO_VIOLATIONS
 
     return [
       {
@@ -412,8 +435,8 @@ export class AriaPolicyEngine extends InvariantBase {
 
   static #checkStandaloneRegion({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] {
     const role = props.role
-    if (role !== 'region') return VALID
-    if (!isStandaloneTag(tag)) return VALID
+    if (role !== 'region') return NO_VIOLATIONS
+    if (!isStandaloneTag(tag)) return NO_VIOLATIONS
 
     return [
       {
@@ -432,7 +455,7 @@ export class AriaPolicyEngine extends InvariantBase {
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
     // Presentational elements have no semantic role — defer entirely to #checkPresentationalAriaAttributes.
-    if (effectiveRole === 'none' || effectiveRole === 'presentation') return VALID
+    if (effectiveRole === 'none' || effectiveRole === 'presentation') return NO_VIOLATIONS
     const results: AriaResult[] = []
 
     iterate.forEachEntry(props, (key) => {
@@ -566,7 +589,7 @@ export class AriaPolicyEngine extends InvariantBase {
 
   static #checkAriaAttributeValues({ props, effectiveRole }: AriaContext): readonly AriaResult[] {
     // Presentational elements have no ARIA semantics — all attrs handled elsewhere.
-    if (effectiveRole === 'none' || effectiveRole === 'presentation') return VALID
+    if (effectiveRole === 'none' || effectiveRole === 'presentation') return NO_VIOLATIONS
     const results: AriaResult[] = []
     iterate.forEachEntry(props, (key, value) => {
       if (!key.startsWith('aria-')) return
@@ -605,13 +628,13 @@ export class AriaPolicyEngine extends InvariantBase {
     props,
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
-    if (effectiveRole === 'none' || effectiveRole === 'presentation') return VALID
+    if (effectiveRole === 'none' || effectiveRole === 'presentation') return NO_VIOLATIONS
     const implicitLevel = AriaPolicyEngine.#HEADING_IMPLICIT_LEVELS.get(tag)
-    if (!isNonNull(implicitLevel)) return VALID
+    if (!isNonNull(implicitLevel)) return NO_VIOLATIONS
     const raw = props['aria-level']
-    if (!isNonNull(raw)) return VALID
+    if (!isNonNull(raw)) return NO_VIOLATIONS
     const n = typeof raw === 'number' ? raw : typeof raw === 'string' ? parseInt(raw, 10) : NaN
-    if (!Number.isFinite(n) || n !== implicitLevel) return VALID
+    if (!Number.isFinite(n) || n !== implicitLevel) return NO_VIOLATIONS
     return [
       {
         valid: false,
@@ -637,10 +660,11 @@ export class AriaPolicyEngine extends InvariantBase {
     props,
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
-    if (!effectiveRole || !AriaPolicyEngine.#NAME_REQUIRED_ROLES.has(effectiveRole)) return VALID
-    if ('aria-label' in props || 'aria-labelledby' in props) return VALID
+    if (!effectiveRole || !AriaPolicyEngine.#NAME_REQUIRED_ROLES.has(effectiveRole))
+      return NO_VIOLATIONS
+    if ('aria-label' in props || 'aria-labelledby' in props) return NO_VIOLATIONS
     // Native <img> elements can satisfy the name requirement with a non-empty alt attribute.
-    if (tag === 'img' && typeof props.alt === 'string' && props.alt.length > 0) return VALID
+    if (tag === 'img' && typeof props.alt === 'string' && props.alt.length > 0) return NO_VIOLATIONS
     return [
       {
         valid: false,
@@ -665,9 +689,9 @@ export class AriaPolicyEngine extends InvariantBase {
     props,
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
-    if (!effectiveRole) return VALID
+    if (!effectiveRole) return NO_VIOLATIONS
     const required = AriaPolicyEngine.#REQUIRED_PROPERTIES.get(effectiveRole)
-    if (!isNonNull(required)) return VALID
+    if (!isNonNull(required)) return NO_VIOLATIONS
     const results: AriaResult[] = []
     iterate.forEach(required, (attr) => {
       if (attr in props) return
@@ -693,7 +717,7 @@ export class AriaPolicyEngine extends InvariantBase {
 
   // WAI-ARIA 1.2 §6.6: aria-hidden="true" must not be placed on focusable elements.
   static #checkAriaHiddenOnFocusable({ tag, props }: AriaContext): readonly AriaResult[] {
-    if (props['aria-hidden'] !== 'true' && props['aria-hidden'] !== true) return VALID
+    if (props['aria-hidden'] !== 'true' && props['aria-hidden'] !== true) return NO_VIOLATIONS
     const isInteractive = AriaPolicyEngine.#INTERACTIVE_TAGS.has(tag)
     if (!isInteractive) {
       const tabindex = props.tabindex
@@ -703,7 +727,7 @@ export class AriaPolicyEngine extends InvariantBase {
           : typeof tabindex === 'string'
             ? parseInt(tabindex, 10)
             : NaN
-      if (!Number.isFinite(n) || n < 0) return VALID
+      if (!Number.isFinite(n) || n < 0) return NO_VIOLATIONS
     }
     return [
       {
@@ -723,7 +747,7 @@ export class AriaPolicyEngine extends InvariantBase {
     props,
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
-    if (effectiveRole !== 'none' && effectiveRole !== 'presentation') return VALID
+    if (effectiveRole !== 'none' && effectiveRole !== 'presentation') return NO_VIOLATIONS
     const results: AriaResult[] = []
     iterate.forEachEntry(props, (key) => {
       if (!key.startsWith('aria-')) return
@@ -751,10 +775,15 @@ export class AriaPolicyEngine extends InvariantBase {
   ])
 
   static #checkMissingLiveRegion({ effectiveRole, props }: AriaContext): readonly AriaResult[] {
-    if (!effectiveRole) return VALID
+    if (!effectiveRole) return NO_VIOLATIONS
     const impliedLive = AriaPolicyEngine.#LIVE_REGION_ROLES.get(effectiveRole)
-    if (!impliedLive) return VALID
-    if ('aria-live' in props) return VALID
+    if (!impliedLive) return NO_VIOLATIONS
+    // `props` is the pre-fix snapshot every rule in this pass evaluates against (see #pipeline),
+    // so this only sees that the *key* is present, not whether its value is valid. An invalid
+    // aria-live value (caught separately by #checkAriaAttributeValues, which strips it) still
+    // counts as "present" here and suppresses injection for this pass — the correct value gets
+    // injected on the next validate() call, once the invalid value is actually gone from props.
+    if ('aria-live' in props) return NO_VIOLATIONS
 
     const injectLive: AriaFix = {
       kind: `injectLive:${effectiveRole}`,
@@ -777,8 +806,9 @@ export class AriaPolicyEngine extends InvariantBase {
   }
 
   static #checkMissingAtomic({ effectiveRole, props }: AriaContext): readonly AriaResult[] {
-    if (!effectiveRole || !AriaPolicyEngine.#LIVE_REGION_ROLES.has(effectiveRole)) return VALID
-    if ('aria-atomic' in props) return VALID
+    if (!effectiveRole || !AriaPolicyEngine.#LIVE_REGION_ROLES.has(effectiveRole))
+      return NO_VIOLATIONS
+    if ('aria-atomic' in props) return NO_VIOLATIONS
 
     return [
       {
@@ -806,8 +836,8 @@ export class AriaPolicyEngine extends InvariantBase {
 
   static #checkInvalidAriaRelevant({ props }: AriaContext): readonly AriaResult[] {
     const relevant = props['aria-relevant']
-    if (relevant === undefined) return VALID
-    if (typeof relevant !== 'string') return VALID
+    if (relevant === undefined) return NO_VIOLATIONS
+    if (typeof relevant !== 'string') return NO_VIOLATIONS
 
     const tokens = relevant.trim().split(/\s+/)
     const invalid = tokens.filter((t) => !AriaPolicyEngine.#VALID_RELEVANT_TOKENS.has(t))
@@ -838,6 +868,6 @@ export class AriaPolicyEngine extends InvariantBase {
       ]
     }
 
-    return VALID
+    return NO_VIOLATIONS
   }
 }
