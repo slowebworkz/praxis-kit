@@ -12,7 +12,12 @@ import type { FilterPredicate } from '../types'
 export type SsrRuntime = {
   resolveTag(as?: ElementType): ElementType
   resolveProps(props: AnyRecord): AnyRecord
-  resolveClasses(tag: ElementType, props: AnyRecord, className?: string, recipe?: string): string
+  resolveClasses(
+    tag: ElementType,
+    props: AnyRecord,
+    className?: string,
+    recipe?: string,
+  ): string | undefined
   resolveAria<P extends AnyRecord>(tag: ElementType, props: P): { props: P }
   options: {
     readonly allowedAs?: readonly ElementType[]

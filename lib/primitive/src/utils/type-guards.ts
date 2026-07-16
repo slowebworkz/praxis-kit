@@ -1,4 +1,4 @@
-import type { AnyRecord } from '../types/any-record'
+import type { AnyFunction, AnyRecord } from '../types'
 
 export function isObject(value: unknown, excludeArrays: true): value is AnyRecord
 export function isObject(value: unknown, excludeArrays?: false): value is object
@@ -13,4 +13,15 @@ export function isString(value: unknown): value is string {
 
 export function isNumber(value: unknown): value is number {
   return typeof value === 'number'
+}
+
+export function isFunction(value: unknown): value is AnyFunction {
+  return typeof value === 'function'
+}
+
+export function isPlainObject(value: unknown): value is AnyRecord {
+  if (!isObject(value, true)) return false
+  const proto = Object.getPrototypeOf(value)
+  // null-prototype objects (Object.create(null)) are also plain objects.
+  return proto === Object.prototype || proto === null
 }

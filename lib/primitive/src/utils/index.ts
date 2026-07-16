@@ -1,6 +1,5 @@
 export { assertNever } from './assert-never'
 export { cn } from './cn'
-export { isObject, isString, isNumber } from './is-object'
 export { iterate, items } from './iterate'
 export { lazy } from './lazy'
 export { LRUCache } from './lru-cache'

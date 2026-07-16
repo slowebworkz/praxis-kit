@@ -2,4 +2,4 @@ export { COMPONENT_DEFAULT_TAG, COMPONENT_ID, createComponentId } from './compon
 export type { WithComponentId } from './component-id'
 export { isComponent, getComponentId, hasComponentId } from './is-component'
 export type { ComponentChild } from './is-component'
-export { isTag, getTag } from './is-tag'
+export { isTag, getTag, isFlowContent } from './is-tag'

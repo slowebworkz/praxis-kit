@@ -1,5 +1,4 @@
-import { isObject } from '../../utils/is-object'
-import { isString } from '../foundational'
+import { isObject, isString, isNumber } from '../foundational'
 import { COMPONENT_DEFAULT_TAG } from './component-id'
 
 function getAsProp(child: unknown): string | undefined {
@@ -60,4 +59,18 @@ export function isTag(
   const set = new Set(tags as string[])
   const tag = getTag(child)
   return tag !== undefined && set.has(tag)
+}
+
+/**
+ * Checks whether a vnode is flow content per the HTML content model: text nodes
+ * (string/number) always qualify, and elements/components qualify unless their
+ * resolved tag is in the blocked set.
+ */
+export function isFlowContent(...blockedTags: readonly string[]): (child: unknown) => boolean {
+  const set = new Set(blockedTags)
+  return (child: unknown): boolean => {
+    if (isString(child) || isNumber(child)) return true
+    const tag = getTag(child)
+    return tag === undefined || !set.has(tag)
+  }
 }

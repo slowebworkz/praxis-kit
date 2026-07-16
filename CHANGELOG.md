@@ -1,5 +1,39 @@
 # Changelog
 
+## v6.1.1 — ARIA Cache Correctness, Public Guards, Empty Class Attributes
+
+### ARIA plan cache blind spot for custom rules (`@praxis-kit/contract`)
+
+`AriaPolicyEngine`'s plan cache key only encoded `tag`/`role`/`type`/`alt`/`aria-*` — exactly what
+the built-in rule pipeline reads. A custom `enforcement.aria` rule inspecting any other prop (e.g.
+`href`) could have its first-render outcome cached and blindly replayed against later elements
+sharing the same key, regardless of the prop the rule actually depended on. Custom rules can now
+declare `readsProps: readonly string[]` to opt back into caching — those props get folded into the
+key; rules that omit it safely bypass the cache instead of risking a stale replay.
+
+Also fixed several `isNull`/`!isNull` checks in the ARIA validator that only excluded strict `null`,
+letting `undefined` (the actual "absent" value for optional fields and `Map#get` misses) slip
+through unrejected — most notably causing `role=""` on a tag with an implicit role (e.g.
+`<footer role="" aria-autocomplete="all">`) to skip the entire aria-* attribute pipeline for that
+render.
+
+### Public `praxis-kit/guards` export
+
+`isObject`, `isString`, `isTag`, `getTag`, and `isFlowContent` are now reachable from a new
+`praxis-kit/guards` subpath, so consumers authoring custom `enforcement.children`/`enforcement.aria`
+rules don't need to hand-roll praxis-kit's own symbol-aware tag resolution.
+
+### Empty `class`/`className` attribute
+
+`resolveClasses()` returned `''` whenever no base, variant, or caller classes resolved, and every
+adapter wrote that unconditionally onto the host element — producing `<div class>` / `class=""`
+instead of omitting the attribute. Fixed across React, Preact, Vue, Svelte, Solid, Lit, and Web,
+including a Lit/Web-specific fix (the DOM `className` property setter stringifies `undefined` rather
+than omitting it) and a Vue-specific fix (its SSR renderer and client-side patcher previously
+disagreed on how to handle `class: undefined`).
+
+No breaking changes.
+
 ## v6.1.0 — Caching Primitives (`@praxis-kit/primitive`)
 
 Three general-purpose caching utilities, extracted from patterns that were previously hand-rolled in

@@ -1,41 +1,41 @@
 {
   "aria-only": {
-    "gzip": 15088
+    "gzip": 15816
   },
   "contracts-only": {
-    "gzip": 15149
+    "gzip": 15884
   },
   "full-runtime": {
-    "gzip": 15317
+    "gzip": 16043
   },
   "minimal-polymorphic": {
-    "gzip": 15026
+    "gzip": 15781
   },
   "pk2-compiler-minimal": {
-    "gzip": 1837
+    "gzip": 1835
   },
   "pk2-compiler-with-variants": {
-    "gzip": 1944
+    "gzip": 1945
   },
   "pk2-engine-only": {
     "gzip": 1127
   },
   "polymorphic-validation": {
-    "gzip": 15110
+    "gzip": 15837
   },
   "preact-minimal": {
-    "gzip": 14919
+    "gzip": 15615
   },
   "react-minimal": {
-    "gzip": 15026
+    "gzip": 15781
   },
   "solid-minimal": {
-    "gzip": 13873
+    "gzip": 14563
   },
   "svelte-minimal": {
-    "gzip": 13005
+    "gzip": 13691
   },
   "vue-minimal": {
-    "gzip": 14346
+    "gzip": 15049
   }
 }

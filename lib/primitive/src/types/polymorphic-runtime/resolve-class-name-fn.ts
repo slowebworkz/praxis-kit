@@ -5,4 +5,4 @@ export type ResolveClassNameFn<Props extends AnyRecord, TSlot extends string = n
   props: Props,
   className?: ClassName,
   recipe?: TSlot,
-) => string
+) => string | undefined

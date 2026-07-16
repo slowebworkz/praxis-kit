@@ -50,7 +50,7 @@
 
   function buildDomProps(
     props: UnknownProps,
-    classStr: string,
+    classStr: string | undefined,
     tag: ElementType,
   ): ResolvedAttributes {
     const { role, style, ...r } = normalizeEventKeys(props)
@@ -67,7 +67,7 @@
     return bundle.runtime.resolveAria(tag, ep).props as ResolvedAttributes
   }
 
-  function buildSlotProps(props: UnknownProps, classStr: string): UnknownProps {
+  function buildSlotProps(props: UnknownProps, classStr: string | undefined): UnknownProps {
     const { role, ...r } = props
     return {
       ...r,

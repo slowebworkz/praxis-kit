@@ -86,11 +86,14 @@ export function prepareRenderState(
   }
 }
 
-function buildElementProps(props: AnyRecord, className: string): AnyRecord {
+function buildElementProps(props: AnyRecord, className: string | undefined): AnyRecord {
   const { role, ...rest } = props
   return {
     ...normalizeListenerKeys(rest),
-    class: className,
+    // Vue's SSR renderer and its client-side patcher disagree on `class: undefined` — SSR's
+    // normalizeClass turns it into '' and still emits class="", while the client patcher
+    // removes the attribute outright. Omitting the key entirely keeps both paths consistent.
+    ...(className !== undefined && { class: className }),
     ...(isKnownAriaRole(role) && { role }),
   }
 }
@@ -122,7 +125,10 @@ function tryRenderAsChild(
 
   if (discarded > 0) validator.warnDiscardedChildren(discarded)
 
-  const attrs = { ...pickAttributes(state.props), class: state.className }
+  const attrs = {
+    ...pickAttributes(state.props),
+    ...(state.className !== undefined && { class: state.className }),
+  }
 
   const slottable = extractSlottable(children)
   if (slottable) return slottable.rebuild(cloneVNode(slottable.child, attrs))

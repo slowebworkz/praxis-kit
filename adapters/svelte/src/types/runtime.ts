@@ -40,7 +40,7 @@ export type ClassResolver = Readonly<{
     props: ResolvedProps,
     className?: ClassName,
     recipe?: string,
-  ): string
+  ): string | undefined
 }>
 
 export type AriaResolver = Readonly<{

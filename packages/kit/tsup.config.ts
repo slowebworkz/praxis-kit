@@ -222,4 +222,17 @@ export default [
       options.alias = { ...options.alias, ...sharedAlias }
     },
   }),
+
+  // Guards — tag resolution and base type guards, for consumers authoring custom
+  // enforcement.aria / enforcement.children rules.
+  defineConfig({
+    entry: { 'guards/index': './guards.ts' },
+    format: ['esm'],
+    dts: bundledDts(),
+    tsconfig: 'tsconfig.build-base.json',
+    noExternal: ['@praxis-kit/primitive'],
+    esbuildOptions(options) {
+      options.alias = { ...options.alias, ...sharedAlias }
+    },
+  }),
 ]

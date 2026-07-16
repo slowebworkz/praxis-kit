@@ -1,5 +1,5 @@
 import { EVENT_HANDLER_RE } from './constants'
-import { isFunction, isPlainObject as isRecord } from '@praxis-kit/primitive'
+import { isFunction, isRecord } from '@praxis-kit/primitive'
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
 import { Slottable } from './Slottable'

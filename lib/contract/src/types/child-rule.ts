@@ -1,5 +1,5 @@
 import type { DiagnosticInput } from '@praxis-kit/diagnostics'
-import type { ChildViolationKind } from '@praxis-kit/primitive/types'
+import type { ChildViolationKind } from '@praxis-kit/primitive'
 
 export type {
   Cardinality,
@@ -10,7 +10,7 @@ export type {
   ChildRulePosition,
   ChildViolationKind,
   NormalizedChildRule,
-} from '@praxis-kit/primitive/types'
+} from '@praxis-kit/primitive'
 
 export type ChildViolation = {
   kind: ChildViolationKind

@@ -62,7 +62,7 @@ const createHtmlChildrenEvaluatorPipeline: RenderPipeline<
 const createStylingClassPipeline: PipelineFactory<
   ClassPipelineOptions<VariantMap>,
   ClassPipelineArgs,
-  string
+  string | undefined
 > = (resolved) => createClassPipeline(resolved)
 
 function resolveAriaRules(resolved: ResolvedFactoryShape): readonly AriaRule[] {
@@ -150,7 +150,11 @@ export function createPolymorphic2<
       if (process.env.NODE_ENV !== 'production') {
         validateRenderProps(resolved.diagnostics, resolved, props, recipe)
       }
-      return classPipeline(tag, props, className, recipe)
+      // An empty string here would render as a bare `class` (or `class=""`) attribute on the
+      // host element instead of omitting it — normalize to undefined so every adapter's "no
+      // class attribute" path (JSX omission, Svelte's set_attribute, Lit/Web's removeAttribute)
+      // is the one that fires, regardless of which styling plugin produced the empty result.
+      return classPipeline(tag, props, className, recipe) || undefined
     },
 
     resolveAria<P extends IntrinsicProps>(tag: ElementType, props: P) {
