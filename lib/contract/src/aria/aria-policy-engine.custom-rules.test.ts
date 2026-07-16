@@ -2,6 +2,18 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { AriaPolicyEngine } from './polymorphic-validator'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
+import { isString } from '@praxis-kit/primitive'
+import type { AnyRecord } from '@praxis-kit/primitive'
+
+// A naive `href.startsWith('javascript:')` check is an incomplete URL scheme check: browsers
+// strip whitespace (tabs, newlines, etc.) from anywhere in a URL before parsing its scheme and
+// treat scheme names case-insensitively, so `java\tscript:`, `\njavascript:`, and `JAVASCRIPT:`
+// all still resolve to the javascript: scheme despite failing a naive startsWith check. Strip
+// whitespace and lowercase before comparing.
+function hasDangerousScheme(href: string): boolean {
+  const normalized = href.replace(/\s+/g, '').toLowerCase()
+  return normalized.startsWith('javascript:')
+}
 
 // ---------------------------------------------------------------------------
 // AriaPolicyEngine — custom rules via constructor options
@@ -31,7 +43,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
         fixable: true as const,
         fix: {
           kind: 'removeAttribute:data-custom' as const,
-          apply: ({ props }: { props: Record<string, unknown> }) =>
+          apply: ({ props }: { props: AnyRecord }) =>
             'data-custom' in props
               ? {
                   applied: true as const,
@@ -100,10 +112,9 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
     // rule inspecting e.g. `href` would previously have its first-render outcome cached
     // and blindly replayed for every subsequent element sharing the same (tag, role) —
     // even though `href` differed and was never itself part of the key.
-    const stripDangerousHref = (ctx: { props: Record<string, unknown> }) => {
+    const stripDangerousHref = (ctx: { props: AnyRecord }) => {
       const href = ctx.props.href
-      if (typeof href !== 'string' || !href.startsWith('javascript:'))
-        return [{ valid: true as const }]
+      if (!isString(href) || !hasDangerousScheme(href)) return [{ valid: true as const }]
       return [
         {
           valid: false as const,
@@ -112,7 +123,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
           fixable: true as const,
           fix: {
             kind: 'removeAttribute:href' as const,
-            apply: ({ props }: { props: Record<string, unknown> }) => ({
+            apply: ({ props }: { props: AnyRecord }) => ({
               applied: true as const,
               next: Object.fromEntries(Object.entries(props).filter(([k]) => k !== 'href')),
               previous: props,
@@ -137,11 +148,10 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
     // case, but repeated (tag, role, href) combinations hit the cache.
     const calls = vi.fn()
     const stripDangerousHref = Object.assign(
-      (ctx: { props: Record<string, unknown> }) => {
+      (ctx: { props: AnyRecord }) => {
         calls()
         const href = ctx.props.href
-        if (typeof href !== 'string' || !href.startsWith('javascript:'))
-          return [{ valid: true as const }]
+        if (!isString(href) || !hasDangerousScheme(href)) return [{ valid: true as const }]
         return [
           {
             valid: false as const,
@@ -150,7 +160,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
             fixable: true as const,
             fix: {
               kind: 'removeAttribute:href' as const,
-              apply: ({ props }: { props: Record<string, unknown> }) => ({
+              apply: ({ props }: { props: AnyRecord }) => ({
                 applied: true as const,
                 next: Object.fromEntries(Object.entries(props).filter(([k]) => k !== 'href')),
                 previous: props,
@@ -186,7 +196,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
         fix: {
           kind: 'removeAttribute:data-high' as const,
           priority: 0,
-          apply: ({ props }: { props: Record<string, unknown> }) => {
+          apply: ({ props }: { props: AnyRecord }) => {
             log.push('high')
             return 'data-high' in props
               ? {
@@ -210,7 +220,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
         fix: {
           kind: 'removeAttribute:data-low' as const,
           priority: 10,
-          apply: ({ props }: { props: Record<string, unknown> }) => {
+          apply: ({ props }: { props: AnyRecord }) => {
             log.push('low')
             return 'data-low' in props
               ? {
