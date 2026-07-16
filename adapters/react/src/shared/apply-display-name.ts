@@ -1,4 +1,4 @@
-import { COMPONENT_ID } from '@praxis-kit/primitive/guards/children'
+import { COMPONENT_ID } from '@praxis-kit/primitive'
 
 export function applyDisplayName(component: object, name: string | undefined): void {
   const displayName = name ?? 'PolymorphicComponent'

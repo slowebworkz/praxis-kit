@@ -7,7 +7,7 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/primitive/guards/children'
+import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/primitive'
 import { applyDisplayName } from './apply-display-name'
 import { buildRuntime } from './build-runtime'
 import { render } from './render'

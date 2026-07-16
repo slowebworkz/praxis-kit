@@ -35,8 +35,7 @@ import {
   widgetContracts,
 } from './contracts'
 import { landmarkNameAdvisory } from './aria-rules'
-import { iterate } from '@praxis-kit/primitive'
-import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/primitive/guards/children'
+import { iterate, COMPONENT_DEFAULT_TAG } from '@praxis-kit/primitive'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

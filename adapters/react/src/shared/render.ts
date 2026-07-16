@@ -10,8 +10,7 @@ import { createElement } from 'react'
 import { jsx } from 'react/jsx-runtime'
 
 import { applyFilter } from '@praxis-kit/adapter-utils'
-import { enforceAllowedAs } from '@praxis-kit/core'
-import { isKnownAriaRole } from '@praxis-kit/core/primitive'
+import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
 import { lazy } from '@praxis-kit/primitive'
 
 import { isSlottableElement } from './slot'
