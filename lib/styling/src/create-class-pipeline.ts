@@ -32,9 +32,11 @@ export function createClassPipeline<TVariants extends VariantMap = VariantMap>(
     const variantClasses = variantResolver.resolve({ props, recipe })
     // Fast path: no caller className — both resolver results are already cached strings.
     if (!className)
-      return staticClasses && variantClasses
-        ? `${staticClasses} ${variantClasses}`
-        : staticClasses || variantClasses
+      return (
+        (staticClasses && variantClasses
+          ? `${staticClasses} ${variantClasses}`
+          : staticClasses || variantClasses) || undefined
+      )
     return cn(staticClasses, variantClasses, className)
   }
 }

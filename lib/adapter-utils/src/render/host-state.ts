@@ -45,7 +45,7 @@ export function toLooseBundle(bundle: unknown): SsrBundle {
 }
 
 export type HostState = {
-  className: string
+  className: string | undefined
   attributes: AnyRecord
   tag: ElementType
   // Pre-filter props (post prop-normalization, before the ARIA engine's
@@ -140,7 +140,14 @@ export function diffAndApplyAttributes(
   const hasOwn = Object.hasOwn
   const attrs = state.attributes
 
-  host.className = state.className
+  // The className setter always stringifies its argument (assigning `undefined` would
+  // literally set class="undefined"), unlike setAttribute/removeAttribute — so an absent
+  // class must go through removeAttribute, not through the property setter.
+  if (state.className) {
+    host.className = state.className
+  } else {
+    host.removeAttribute('class')
+  }
 
   // Remove pipeline-managed attributes absent from the new state (e.g. a
   // filterProps target that was set last run but is gone this run).

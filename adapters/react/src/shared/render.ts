@@ -39,7 +39,7 @@ function buildRenderState(
   directives: RenderDirectives,
   props: ResolvedProps,
   normalizedProps: ResolvedProps,
-  className: string,
+  className: string | undefined,
   children: unknown,
 ): ResolvedRenderState {
   const state: Writable<ResolvedRenderState> = {
@@ -177,7 +177,7 @@ function tryRenderAsChild(
 
 function buildElementProps(
   props: ResolvedProps,
-  className: string,
+  className: string | undefined,
   ref: Ref<unknown> | null,
   children: unknown,
 ): IntrinsicProps {

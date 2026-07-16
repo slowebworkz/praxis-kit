@@ -12,9 +12,12 @@ describe('class pipeline — baseClassName', () => {
     expect(resolve(pipeline)).toContain('rounded-lg')
   })
 
-  it('returns empty string when no baseClassName and no className', () => {
+  it('returns undefined (not an empty string) when no baseClassName and no className', () => {
+    // An empty string here would render as a bare `class` (or `class=""`) attribute on the
+    // host element instead of omitting it entirely — see resolveClasses in
+    // create-class-pipeline.ts.
     const pipeline = createClassPipeline({})
-    expect(resolve(pipeline)).toBe('')
+    expect(resolve(pipeline)).toBeUndefined()
   })
 
   it('joins baseClassName and className', () => {

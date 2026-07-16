@@ -207,7 +207,7 @@ export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   ) => {
     // devDiagnostics fires regardless of strict — conflict is always a misconfiguration.
     const mode = resolveLayout(devDiagnostics, props)
-    const resolvedClasses = innerPipeline(tag, props, className, recipe)
+    const resolvedClasses = innerPipeline(tag, props, className, recipe) ?? ''
     const tokens = classifyTokens(resolvedClasses)
     const state = new LayoutState(mode)
     const filtered = tokens.filter((token) => evaluator.evaluate(token, state))

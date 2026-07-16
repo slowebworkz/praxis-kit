@@ -24,6 +24,6 @@ export type ResolveInput<
 export type ResolveOutput<Props extends AnyRecord = AnyRecord, Children = unknown> = {
   tag: ElementType
   props: Props
-  className: ClassName
+  className: ClassName | undefined
   children?: Children
 }

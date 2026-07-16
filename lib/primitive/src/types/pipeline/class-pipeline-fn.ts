@@ -5,4 +5,4 @@ export type ClassPipelineFn = (
   props: AnyRecord,
   className?: ClassName,
   recipe?: string,
-) => string
+) => string | undefined

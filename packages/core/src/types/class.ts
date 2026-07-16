@@ -22,7 +22,7 @@ export type ClassPipelineFn = (
   props: AnyRecord,
   className?: ClassName,
   recipe?: string,
-) => string
+) => string | undefined
 
 /** Argument tuple for a resolved class pipeline call: rendered tag, merged props, optional
  *  caller class override, optional preset key. */

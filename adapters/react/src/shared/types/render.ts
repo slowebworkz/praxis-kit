@@ -11,7 +11,7 @@ export type ResolvedRenderState = Readonly<{
   tag: ElementType
   directives: RenderDirectives
   children?: unknown
-  className: string
+  className: string | undefined
   props: ResolvedProps
   // Pre-filter props (post prop-normalization, before applyFilter/variantKeys
   // stripping) — exposed for childrenEvaluator's dynamic(...) rule context, which

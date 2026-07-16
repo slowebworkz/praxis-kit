@@ -27,7 +27,7 @@ function toChildArray(children: unknown): unknown[] {
 
 function buildElementProps(
   props: ResolvedProps,
-  classStr: string,
+  classStr: string | undefined,
   ref: unknown,
   children: unknown,
 ): IntrinsicProps {
@@ -44,7 +44,11 @@ function buildElementProps(
 // Slot props handed to the render function: fully resolved DOM props + class.
 // ref is included so the render fn can forward it to the actual DOM element.
 // children is excluded — the render fn decides its own children.
-function buildSlotProps(props: ResolvedProps, classStr: string, ref: unknown): UnknownProps {
+function buildSlotProps(
+  props: ResolvedProps,
+  classStr: string | undefined,
+  ref: unknown,
+): UnknownProps {
   const { role, ...rest } = props
   return {
     ...rest,
@@ -71,7 +75,7 @@ function resolveDomProps(
 function tryRenderAsChild(
   known: KnownProps,
   filteredProps: () => ResolvedProps,
-  resolvedClass: () => string,
+  resolvedClass: () => string | undefined,
   slotValidator: SlotValidator,
 ): SolidElement | null {
   if (!known.asChild) return null
