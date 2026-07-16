@@ -1,5 +1,36 @@
 # Changelog
 
+## v6.2.0 — Enforcement Defaults Now Actually Enforce, Public ARIA Rule Types
+
+### ⚠️ Behavior change: `allowedAs` and custom `aria` rules now throw by default
+
+`resolveFactoryOptions` re-derived the diagnostics default from scratch instead of using the
+adapter-resolved default (`throwDiagnostics` for React/Vue/Preact/Solid/Svelte, `silentDiagnostics`
+for Lit/Web), silently falling back to `silentDiagnostics` whenever a component omitted
+`enforcement.diagnostics`. This meant `enforcement.allowedAs` and any custom `enforcement.aria` rule
+produced **zero** feedback — no throw, no console output at all — unless a component explicitly set
+`enforcement.diagnostics`.
+
+This is now fixed: the adapter-resolved default reaches `resolveFactoryOptions` correctly, so
+components using `allowedAs` and/or a custom `aria` rule without an explicit `diagnostics` override
+will go from silent to throwing on `severity: 'error'` violations under the
+React/Vue/Preact/Solid/Svelte default (Lit/Web remain silent by default, matching their documented
+`silentDiagnostics` default).
+
+**This is the documented default finally taking effect, not a new stricter mode** — but if your
+components rely on `allowedAs` or a custom `aria` rule and don't set `enforcement.diagnostics`
+explicitly, upgrading may surface throws where there were previously none. Add
+`enforcement.diagnostics: 'warn'` (or `'silent'`) to any component where you want to keep the
+previous non-throwing behavior while you audit.
+
+### Public ARIA rule types (`praxis-kit/contract`)
+
+`AriaRule` and its supporting types (`AriaContext`, `AriaResult`, `AriaInvalidResult`, `AriaFix`,
+`AriaFixResult`, `FixKind`, `Severity`, etc.) are now exported from `praxis-kit/contract`.
+Previously these types existed and were used internally by `EnforcementOptions.aria`, but weren't
+reachable by consumers — a custom `enforcement.aria` rule had to be written as a plain
+object/function literal and rely on structural typing instead of a named import.
+
 ## v6.1.1 — ARIA Cache Correctness, Public Guards, Empty Class Attributes
 
 ### ARIA plan cache blind spot for custom rules (`@praxis-kit/contract`)
