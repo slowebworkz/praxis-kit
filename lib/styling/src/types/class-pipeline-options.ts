@@ -6,7 +6,7 @@ import type {
   RecipeTarget,
   StyleOptions,
   TagMapOptions,
-} from '@praxis-kit/primitive/types'
+} from '@praxis-kit/primitive'
 
 export type {
   BaseClassOptions,

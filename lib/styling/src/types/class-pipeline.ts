@@ -1,1 +1,1 @@
-export type { ClassPipelineFn } from '@praxis-kit/primitive/types'
+export type { ClassPipelineFn } from '@praxis-kit/primitive'

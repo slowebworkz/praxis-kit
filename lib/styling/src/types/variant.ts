@@ -6,4 +6,4 @@ export type {
   VariantProps,
   VariantSelection,
   VariantValue,
-} from '@praxis-kit/primitive/types'
+} from '@praxis-kit/primitive'

@@ -1,13 +1,12 @@
-import type { IntrinsicTag } from '@praxis-kit/primitive/types'
+import type { IntrinsicTag, Tag } from '@praxis-kit/primitive'
 import type { IntrinsicProps } from '../types'
 import {
   getConditionalImplicitRole,
   getInputImplicitRole,
   isStandaloneTag,
   isStrongImplicitRole,
-} from '@praxis-kit/primitive/guards/aria'
-import { IMPLICIT_ROLE_RECORD } from '@praxis-kit/primitive/constants/aria'
-import type { Tag } from '@praxis-kit/primitive/constants/aria'
+  IMPLICIT_ROLE_RECORD,
+} from '@praxis-kit/primitive'
 
 export { isStandaloneTag, isStrongImplicitRole }
 

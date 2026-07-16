@@ -1,12 +1,8 @@
-import type {
-  IntrinsicTag,
-  ValidationResult,
-  ValidationViolation,
-} from '@praxis-kit/primitive/types'
+import type { IntrinsicTag, ValidationResult, ValidationViolation } from '@praxis-kit/primitive'
 import type { AriaContext } from './aria'
 import type { IntrinsicProps } from './contract-primitives'
 
-export type { ValidationResult, ValidationViolation } from '@praxis-kit/primitive/types'
+export type { ValidationResult, ValidationViolation } from '@praxis-kit/primitive'
 
 export type NormalizationResult =
   { normalized: false } | { normalized: true; result: ValidationResult }

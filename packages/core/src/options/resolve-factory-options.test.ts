@@ -70,6 +70,26 @@ describe('resolveFactoryOptions() — provided options', () => {
     expect(resolveFactoryOptions({ enforcement: { diagnostics: mode } }).diagnostics).toBe(preset)
   })
 
+  // Adapters resolve their own diagnostics default (throwDiagnostics for most, silentDiagnostics
+  // for Lit/Web) via resolveAdapterCommonOptions and spread it onto the options object as a
+  // top-level `diagnostics` field before calling createPolymorphic2. Without this, that
+  // adapter-resolved default was silently discarded in favor of a hardcoded silentDiagnostics
+  // fallback here, leaving allowedAs/aria enforcement silent by default everywhere.
+  it('uses the adapter-resolved top-level diagnostics when enforcement.diagnostics is unset', () => {
+    expect(resolveFactoryOptions({ diagnostics: throwDiagnostics }).diagnostics).toBe(
+      throwDiagnostics,
+    )
+  })
+
+  it('prefers enforcement.diagnostics over the adapter-resolved top-level diagnostics', () => {
+    expect(
+      resolveFactoryOptions({
+        diagnostics: throwDiagnostics,
+        enforcement: { diagnostics: warnDiagnostics },
+      }).diagnostics,
+    ).toBe(warnDiagnostics)
+  })
+
   it('includes baseClassName when provided', () => {
     expect(resolveFactoryOptions({ styling: { base: 'rounded' } }).baseClassName).toBe('rounded')
   })

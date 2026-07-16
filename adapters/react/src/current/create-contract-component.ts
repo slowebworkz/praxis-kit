@@ -7,7 +7,7 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/primitive/guards/children'
+import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/primitive'
 import type { Ref } from 'react'
 import type { PolymorphicComponent, ReactFactoryOptions, UnknownProps } from '../shared'
 import { applyDisplayName, render } from '../shared'

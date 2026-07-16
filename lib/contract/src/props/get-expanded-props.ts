@@ -1,4 +1,4 @@
-import type { PropNormalizer } from '@praxis-kit/primitive/types'
+import type { PropNormalizer } from '@praxis-kit/primitive'
 
 export const expandedProps: PropNormalizer = ({
   expanded,

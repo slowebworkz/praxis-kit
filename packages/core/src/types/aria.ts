@@ -1,4 +1,4 @@
-import type { IntrinsicProps } from '@praxis-kit/primitive/types/primitives'
+import type { IntrinsicProps } from '@praxis-kit/primitive'
 
 export type {
   AriaEngine,

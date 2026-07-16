@@ -3,7 +3,6 @@ export type {
   ClassName,
   EmptyRecord,
   NonEmptyArray,
+  TagMap,
   VariantConditionValue,
-} from '@praxis-kit/primitive/types'
-
-export type { TagMap } from '@praxis-kit/primitive/types/primitives'
+} from '@praxis-kit/primitive'
