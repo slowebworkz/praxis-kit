@@ -1,3 +1,4 @@
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 import type { AnyRecord, ElementType, EmptyRecord, IntrinsicProps } from '../primitives'
 import type { RecipeMap, VariantMap } from '../variants'
 import type { AnyClassPluginFactory } from '../class'
@@ -34,4 +35,9 @@ export type FactoryOptions<
   readonly normalize?: NormalizeFn<NoInfer<Props>>
   readonly styling?: StylingOptions<V, TPreset, TPlugin>
   readonly enforcement?: EnforcementOptions<TAllowed>
+  /**
+   * Adapter-resolved diagnostics default, spread in by `resolveAdapterCommonOptions`. Not meant to
+   * be set directly by component authors — use `enforcement.diagnostics` to override per component.
+   */
+  readonly diagnostics?: Diagnostics
 }

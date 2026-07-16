@@ -53,7 +53,10 @@ export function resolveFactoryOptions<
   // whenDefined spreads satisfy exactOptionalPropertyTypes: { key: undefined } and {} are distinct.
   return Object.freeze({
     defaultTag: (options.tag ?? 'div') as TDefault,
-    diagnostics: resolveDiagnostics(enforcement?.diagnostics, silentDiagnostics),
+    diagnostics: resolveDiagnostics(
+      enforcement?.diagnostics,
+      options.diagnostics ?? silentDiagnostics,
+    ),
     variantKeys,
     ...whenDefined('displayName', options.name),
     ...whenDefined('defaultProps', options.defaults),

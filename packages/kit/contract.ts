@@ -26,3 +26,18 @@ export {
   selectedContract,
   mergeContracts,
 } from '@praxis-kit/core/contract'
+export type {
+  AriaContext,
+  AriaFix,
+  AriaFixResult,
+  AriaPhase,
+  AriaResult,
+  AriaRule,
+  FixKind,
+  RemoveAttributeFixKind,
+  InvalidResult,
+  InvalidWithFix,
+  InvalidWithoutFix,
+  Severity,
+  ValidResult,
+} from '@praxis-kit/core/contract'

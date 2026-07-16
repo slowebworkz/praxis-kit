@@ -3,6 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { createElement, Fragment, createRef } from 'react'
 import type { RenderCallbackProps } from '../shared'
 import { warnDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
+import type { AriaRule } from '@praxis-kit/core/contract'
 import { box, useReactDom } from '../shared/test-utils'
 import { createContractComponent } from './create-contract-component'
 
@@ -340,6 +341,34 @@ describe('createContractComponent (current / React 19)', () => {
     })
 
     expect(() => dom.mount(createElement(box(Box), { as: 'div' }))).toThrow(/"div"/)
+  })
+
+  // React's adapter default is throwDiagnostics (resolveAdapterCommonOptions), so omitting
+  // enforcement.diagnostics entirely must behave the same as explicitly setting throwDiagnostics —
+  // not silently accept the violation.
+  it('allowedAs: throws by default (no enforcement.diagnostics override) when as does not match', () => {
+    const Box = createContractComponent({
+      enforcement: { allowedAs: ['button', 'a'] },
+    })
+
+    expect(() => dom.mount(createElement(box(Box), { as: 'div' }))).toThrow(/"div"/)
+  })
+
+  // ── custom aria rule enforcement ────────────────────────────────────────────
+
+  it('aria: throws by default (no enforcement.diagnostics override) on a severity: "error" violation', () => {
+    const rejectRoleButton: AriaRule = ({ props }) =>
+      props.role === 'button'
+        ? [{ valid: false, severity: 'error', fixable: false, message: 'role=button not allowed' }]
+        : [{ valid: true }]
+    // eslint-disable-next-line @praxis-kit/no-enforcement-without-strict -- intentionally omitted: this test verifies the adapter's default (unset diagnostics) throws.
+    const Box = createContractComponent({
+      enforcement: { aria: [rejectRoleButton] },
+    })
+
+    expect(() => dom.mount(createElement(box(Box), { role: 'button' } as never))).toThrow(
+      /role=button not allowed/,
+    )
   })
 
   // ── normalize ───────────────────────────────────────────────────────────────
