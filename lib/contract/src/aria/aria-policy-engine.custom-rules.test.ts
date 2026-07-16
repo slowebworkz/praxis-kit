@@ -5,14 +5,21 @@ import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import { isString } from '@praxis-kit/primitive'
 import type { AnyRecord } from '@praxis-kit/primitive'
 
-// A naive `href.startsWith('javascript:')` check is an incomplete URL scheme check: browsers
-// strip whitespace (tabs, newlines, etc.) from anywhere in a URL before parsing its scheme and
-// treat scheme names case-insensitively, so `java\tscript:`, `\njavascript:`, and `JAVASCRIPT:`
-// all still resolve to the javascript: scheme despite failing a naive startsWith check. Strip
-// whitespace and lowercase before comparing.
+// A hand-rolled scheme check (startsWith, regex, or manual whitespace/case normalization) is
+// inherently incomplete — it has to independently reproduce every quirk of URL scheme parsing
+// (embedded whitespace stripping, case-insensitivity, etc.) to be safe, and is easy to get subtly
+// wrong. Delegating to the URL parser itself closes every such gap at once: it's the same parser
+// browsers use to decide the scheme, so there's nothing left to bypass.
 function hasDangerousScheme(href: string): boolean {
-  const normalized = href.replace(/\s+/g, '').toLowerCase()
-  return normalized.startsWith('javascript:')
+  try {
+    // `.protocol` is spec-guaranteed lowercase already, but the explicit toLowerCase() keeps
+    // the case-insensitivity of this check visible in the code itself rather than resting on
+    // an unstated assumption about URL's normalization behavior.
+    return new URL(href).protocol.toLowerCase() === 'javascript:'
+  } catch {
+    // Not a parseable absolute URL (e.g. a relative path) — cannot be a javascript: URL.
+    return false
+  }
 }
 
 // ---------------------------------------------------------------------------
