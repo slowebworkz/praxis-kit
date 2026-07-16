@@ -1,6 +1,6 @@
 export { isArray } from './is-array'
 export { isBoolean } from './is-boolean'
 export { isDefined, isUndefined } from './is-defined'
-export { isNull, isNullish } from './is-null'
+export { isNull, isNonNull, isNullish } from './is-null'
 export { isFunction, isNumber, isObject, isString } from '../../utils/type-guards'
 export { isPlainObject as isRecord } from '../../utils/type-guards'

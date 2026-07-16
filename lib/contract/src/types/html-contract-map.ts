@@ -1,3 +1,3 @@
-import type { EnforcementOptions } from '@praxis-kit/primitive/types'
+import type { EnforcementOptions, StringMap } from '@praxis-kit/primitive'
 
-export type HtmlContractMap = Record<string, EnforcementOptions>
+export type HtmlContractMap = StringMap<EnforcementOptions>

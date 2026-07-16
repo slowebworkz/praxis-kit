@@ -11,6 +11,5 @@ export type {
   FixKind,
   RemoveAttributeFixKind,
   Severity,
-} from '@praxis-kit/primitive/types'
-
-export type { ValidResult } from '@praxis-kit/primitive/types'
+  ValidResult,
+} from '@praxis-kit/primitive'

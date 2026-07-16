@@ -1,18 +1,20 @@
-import { isNull, isNumber, isString, iterate, LRUCache } from '@praxis-kit/primitive'
+import { isNonNull, isNull, isNumber, isString, iterate, LRUCache } from '@praxis-kit/primitive'
 
 import { AriaDiagnostics, HtmlDiagnostics } from '../diagnostics'
 import { InvariantBase } from '../strict'
 import { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attribute-policy'
 import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
 
-import type { AnyRecord, ElementType, IntrinsicTag } from '@praxis-kit/primitive'
+import type { AnyRecord, IntrinsicTag } from '@praxis-kit/primitive'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 import type {
+  AnyTag,
   AriaContext,
   AriaFix,
   AriaPlan,
   AriaResult,
   AriaRule,
+  AriaValueType,
   EvaluationContext,
   IntrinsicProps,
   NormalizationResult,
@@ -22,17 +24,7 @@ import type {
 } from '../types'
 export { isInvalid } from '@praxis-kit/primitive'
 
-type AriaValueType =
-  | { kind: 'boolean' }
-  | { kind: 'tristate' }
-  | { kind: 'number' }
-  | { kind: 'integer'; min?: number; max?: number }
-  | { kind: 'enum'; values: ReadonlySet<string> }
-
 const VALID = [{ valid: true }] as const
-
-// Broader than ElementType: accepts component functions so adapters can pass the `as` prop directly.
-type AnyTag = ElementType | ((...args: unknown[]) => unknown)
 
 function isIntrinsicTag(tag: AnyTag): tag is IntrinsicTag {
   return isString(tag)
@@ -83,7 +75,7 @@ export class AriaPolicyEngine extends InvariantBase {
     // Proceed when the element has an implicit role (native semantics) or a non-empty explicit
     // role (author-supplied semantics). Elements with neither have no ARIA semantics to validate.
     const hasRole =
-      implicitRole != null || (isString(props.role) && (props.role as string).length > 0)
+      isNonNull(implicitRole) || (isString(props.role) && (props.role as string).length > 0)
     if (!hasRole) return { proceed: false, result: { props, violations: [] } }
 
     const normalized = AriaPolicyEngine.#normalizeEmptyRole(tag, props)
@@ -116,8 +108,9 @@ export class AriaPolicyEngine extends InvariantBase {
         } = context
         const { message, attribute, severity } = result
         const resolvedMessage = message ?? result.diagnostic?.message
-        const fallbackDiag =
-          resolvedMessage == null ? AriaDiagnostics.invalidRole(role, tag) : undefined
+        const fallbackDiag = isNonNull(resolvedMessage)
+          ? undefined
+          : AriaDiagnostics.invalidRole(role, tag)
         violations.push({
           message: resolvedMessage ?? fallbackDiag!.message,
           tag,
@@ -125,8 +118,8 @@ export class AriaPolicyEngine extends InvariantBase {
           attribute,
           severity,
           phase: 'evaluate',
-          ...(result.diagnostic != null && { diagnostic: result.diagnostic }),
-          ...(fallbackDiag != null && { diagnostic: fallbackDiag }),
+          ...(isNonNull(result.diagnostic) && { diagnostic: result.diagnostic }),
+          ...(isNonNull(fallbackDiag) && { diagnostic: fallbackDiag }),
         })
         if (result.fixable) fixes.push(result.fix)
       })
@@ -141,7 +134,7 @@ export class AriaPolicyEngine extends InvariantBase {
     // an explicit role prop — e.g. <output> implicitly has role=status).
     if (
       AriaPolicyEngine.#hasRole(context.props) ||
-      (context.effectiveRole != null &&
+      (isNonNull(context.effectiveRole) &&
         AriaPolicyEngine.#LIVE_REGION_ROLES.has(context.effectiveRole))
     ) {
       return AriaPolicyEngine.#pipeline
@@ -190,9 +183,9 @@ export class AriaPolicyEngine extends InvariantBase {
   // Cache key covers only the aria-relevant subset of props (tag + role + aria-* attrs) —
   // exactly what the built-in pipeline reads. Non-aria props (className, onClick, etc.) do
   // not affect built-in ARIA decisions and are excluded so cache hits survive re-renders
-  // that only change non-aria props. This key is unsound for #extraRules, which may read
-  // arbitrary props outside this set — callers must not use it when #extraRules is non-empty
-  // (see validate(), which bypasses the cache entirely in that case).
+  // that only change non-aria props. This key alone is unsound for #extraRules, which may
+  // read arbitrary props outside this set — validate() extends it with #extraRulesKeySuffix,
+  // or bypasses the cache, to account for that.
   static #createPlanKey(tag: AnyTag, props: IntrinsicProps): string | null {
     if (!isIntrinsicTag(tag)) return null
     const parts: string[] = [tag]
@@ -210,6 +203,27 @@ export class AriaPolicyEngine extends InvariantBase {
     })
     if (ariaEntries.length > 0) parts.push(...ariaEntries.sort())
     return parts.join('|')
+  }
+
+  // Extends the base cache key with the props each extra rule declares it reads (`readsProps`).
+  // Returns null — meaning "don't cache" — if any extra rule omits `readsProps` (it may read
+  // arbitrary props the key can't account for) or if a declared prop's value isn't a primitive
+  // (object/array identity isn't stably representable in a string key).
+  static #extraRulesKeySuffix(
+    extraRules: readonly AriaRule[],
+    props: IntrinsicProps,
+  ): string | null {
+    const parts: string[] = []
+    for (const rule of extraRules) {
+      const readsProps = rule.readsProps
+      if (!isNonNull(readsProps)) return null
+      for (const propKey of readsProps) {
+        const v = (props as AnyRecord)[propKey]
+        if (v !== undefined && !isString(v) && !isNumber(v) && typeof v !== 'boolean') return null
+        parts.push(`x:${propKey}:${String(v)}`)
+      }
+    }
+    return parts.sort().join('|')
   }
 
   static #computePlan(
@@ -246,10 +260,16 @@ export class AriaPolicyEngine extends InvariantBase {
 
   validate(tag: AnyTag, props: IntrinsicProps): ValidationResult {
     // Custom `enforcement.aria` rules (#extraRules) may read arbitrary props that
-    // #createPlanKey doesn't encode (it only covers what the built-in pipeline reads).
-    // Caching their results under that key would replay stale outcomes for props the
-    // key is blind to, so bypass the plan cache entirely whenever extra rules are present.
-    const key = this.#extraRules.length > 0 ? null : AriaPolicyEngine.#createPlanKey(tag, props)
+    // #createPlanKey doesn't encode (it only covers what the built-in pipeline reads). A rule
+    // that declares `readsProps` opts back into caching — its declared props get folded into
+    // the key. Any extra rule without `readsProps` is assumed unsafe to cache and bypasses the
+    // plan cache entirely for this validate() call.
+    const baseKey = AriaPolicyEngine.#createPlanKey(tag, props)
+    let key: string | null = baseKey
+    if (this.#extraRules.length > 0) {
+      const suffix = AriaPolicyEngine.#extraRulesKeySuffix(this.#extraRules, props)
+      key = isNonNull(baseKey) && isNonNull(suffix) ? `${baseKey}|${suffix}` : null
+    }
 
     if (!isNull(key)) {
       const cached = this.#planCache.get(key)
@@ -551,7 +571,7 @@ export class AriaPolicyEngine extends InvariantBase {
     iterate.forEachEntry(props, (key, value) => {
       if (!key.startsWith('aria-')) return
       const type = AriaPolicyEngine.#ARIA_VALUE_TYPES.get(key)
-      if (type == null) return
+      if (!isNonNull(type)) return
       if (AriaPolicyEngine.#isValidAriaValue(value, type)) return
       results.push({
         valid: false,
@@ -587,9 +607,9 @@ export class AriaPolicyEngine extends InvariantBase {
   }: AriaContext): readonly AriaResult[] {
     if (effectiveRole === 'none' || effectiveRole === 'presentation') return VALID
     const implicitLevel = AriaPolicyEngine.#HEADING_IMPLICIT_LEVELS.get(tag)
-    if (implicitLevel == null) return VALID
+    if (!isNonNull(implicitLevel)) return VALID
     const raw = props['aria-level']
-    if (raw == null) return VALID
+    if (!isNonNull(raw)) return VALID
     const n = typeof raw === 'number' ? raw : typeof raw === 'string' ? parseInt(raw, 10) : NaN
     if (!Number.isFinite(n) || n !== implicitLevel) return VALID
     return [
@@ -647,7 +667,7 @@ export class AriaPolicyEngine extends InvariantBase {
   }: AriaContext): readonly AriaResult[] {
     if (!effectiveRole) return VALID
     const required = AriaPolicyEngine.#REQUIRED_PROPERTIES.get(effectiveRole)
-    if (required == null) return VALID
+    if (!isNonNull(required)) return VALID
     const results: AriaResult[] = []
     iterate.forEach(required, (attr) => {
       if (attr in props) return
