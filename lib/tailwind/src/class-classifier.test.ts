@@ -1,104 +1,60 @@
 import { describe, expect, it } from 'vitest'
 
 import { ClassClassifier } from './class-classifier'
+import type { layoutKeys } from './layout-keys'
+import type { LayoutKey } from './types'
 
 import { iterate } from '@praxis-kit/primitive'
 
 const c = new ClassClassifier()
 
+function expectLayout(token: string, value: LayoutKey<typeof layoutKeys>) {
+  expect(c.classify(token)).toEqual({ kind: 'layout', value, raw: token })
+}
+
+function expectGap(token: string) {
+  expect(c.classify(token)).toEqual({ kind: 'gap', raw: token })
+}
+
+function expectShared(token: string) {
+  expect(c.classify(token)).toEqual({ kind: 'shared', raw: token })
+}
+
+function expectConditional(token: string, requires: 'flex' | 'grid') {
+  expect(c.classify(token)).toEqual({ kind: 'conditional', requires, raw: token })
+}
+
+function expectUtility(token: string, base: string = token) {
+  expect(c.classify(token)).toEqual({ kind: 'utility', base, raw: token })
+}
+
 describe('ClassClassifier — layout tokens', () => {
-  it('classifies "flex" as layout flex', () => {
-    expect(c.classify('flex')).toEqual({ kind: 'layout', value: 'flex', raw: 'flex' })
-  })
-
-  it('classifies "inline-flex" as layout inline-flex', () => {
-    expect(c.classify('inline-flex')).toEqual({
-      kind: 'layout',
-      value: 'inline-flex',
-      raw: 'inline-flex',
-    })
-  })
-
-  it('classifies "grid" as layout grid', () => {
-    expect(c.classify('grid')).toEqual({ kind: 'layout', value: 'grid', raw: 'grid' })
-  })
-
-  it('classifies "inline-grid" as layout inline-grid', () => {
-    expect(c.classify('inline-grid')).toEqual({
-      kind: 'layout',
-      value: 'inline-grid',
-      raw: 'inline-grid',
-    })
-  })
-
-  it('classifies "block" as layout block', () => {
-    expect(c.classify('block')).toEqual({ kind: 'layout', value: 'block', raw: 'block' })
-  })
-
-  it('classifies "inline-block" as layout inline-block', () => {
-    expect(c.classify('inline-block')).toEqual({
-      kind: 'layout',
-      value: 'inline-block',
-      raw: 'inline-block',
-    })
-  })
-
-  it('classifies "inline" as layout inline', () => {
-    expect(c.classify('inline')).toEqual({ kind: 'layout', value: 'inline', raw: 'inline' })
-  })
-
-  it('classifies "hidden" as layout hidden', () => {
-    expect(c.classify('hidden')).toEqual({ kind: 'layout', value: 'hidden', raw: 'hidden' })
-  })
-
-  it('classifies "contents" as layout contents', () => {
-    expect(c.classify('contents')).toEqual({ kind: 'layout', value: 'contents', raw: 'contents' })
-  })
-
-  it('classifies "flow-root" as layout flow-root', () => {
-    expect(c.classify('flow-root')).toEqual({
-      kind: 'layout',
-      value: 'flow-root',
-      raw: 'flow-root',
-    })
-  })
-
-  it('classifies "hover:flex" as layout flex (prefix stripped)', () => {
-    expect(c.classify('hover:flex')).toEqual({ kind: 'layout', value: 'flex', raw: 'hover:flex' })
-  })
-
-  it('classifies "sm:grid" as layout grid (prefix stripped)', () => {
-    expect(c.classify('sm:grid')).toEqual({ kind: 'layout', value: 'grid', raw: 'sm:grid' })
-  })
-
-  it('classifies "sm:hover:inline-flex" as layout inline-flex (stacked prefixes)', () => {
-    expect(c.classify('sm:hover:inline-flex')).toEqual({
-      kind: 'layout',
-      value: 'inline-flex',
-      raw: 'sm:hover:inline-flex',
-    })
+  it.each<[string, LayoutKey<typeof layoutKeys>]>([
+    ['flex', 'flex'],
+    ['inline-flex', 'inline-flex'],
+    ['grid', 'grid'],
+    ['inline-grid', 'inline-grid'],
+    ['block', 'block'],
+    ['inline-block', 'inline-block'],
+    ['inline', 'inline'],
+    ['hidden', 'hidden'],
+    ['contents', 'contents'],
+    ['flow-root', 'flow-root'],
+    ['hover:flex', 'flex'],
+    ['sm:grid', 'grid'],
+    ['sm:hover:inline-flex', 'inline-flex'],
+  ])('classifies "%s" as layout %s', (token, value) => {
+    expectLayout(token, value)
   })
 })
 
 describe('ClassClassifier — gap tokens', () => {
-  it('classifies "gap" as gap', () => {
-    expect(c.classify('gap')).toEqual({ kind: 'gap', raw: 'gap' })
-  })
-
-  it('classifies "gap-4" as gap', () => {
-    expect(c.classify('gap-4')).toEqual({ kind: 'gap', raw: 'gap-4' })
-  })
-
-  it('classifies "gap-x-2" as gap', () => {
-    expect(c.classify('gap-x-2')).toEqual({ kind: 'gap', raw: 'gap-x-2' })
-  })
-
-  it('classifies "hover:gap-4" as gap (prefix stripped)', () => {
-    expect(c.classify('hover:gap-4')).toEqual({ kind: 'gap', raw: 'hover:gap-4' })
+  it.each(['gap', 'gap-4', 'gap-x-2', 'hover:gap-4'])('classifies "%s" as gap', (token) => {
+    expectGap(token)
   })
 
   it('does not classify "gapfoo" as gap (no hyphen separator)', () => {
-    expect(c.classify('gapfoo')).toEqual({ kind: 'utility', base: 'gapfoo', raw: 'gapfoo' })
+    expectUtility('gapfoo')
   })
 })
 
@@ -115,93 +71,133 @@ describe('ClassClassifier — shared (flex-or-grid) tokens', () => {
     'place-content-center',
     'place-items-center',
     'place-self-stretch',
+    'hover:items-start',
   ])('classifies "%s" as shared', (token) => {
-    expect(c.classify(token)).toEqual({ kind: 'shared', raw: token })
-  })
-
-  it('classifies "hover:items-start" as shared (prefix stripped)', () => {
-    expect(c.classify('hover:items-start')).toEqual({ kind: 'shared', raw: 'hover:items-start' })
+    expectShared(token)
   })
 
   it.each(['justify-items-start', 'justify-self-center'])(
     'classifies "%s" as utility, not shared (grid-only)',
     (token) => {
-      expect(c.classify(token)).toEqual({ kind: 'utility', base: token, raw: token })
+      expectUtility(token)
+    },
+  )
+
+  it.each(["content-['<']", "content-['>']", 'content-none'])(
+    'classifies "%s" as utility, not shared (CSS content property, not flex/grid content-*)',
+    (token) => {
+      expectUtility(token)
+    },
+  )
+
+  it.each(["before:content-['<']", "after:content-['>']"])(
+    'classifies "%s" as utility with prefix stripped (pseudo-element content)',
+    (token) => {
+      expectUtility(token, token.slice(token.indexOf(':') + 1))
     },
   )
 })
 
 describe('ClassClassifier — conditional tokens', () => {
-  it('classifies "[&.flex]:flex-col" as conditional requires flex', () => {
-    expect(c.classify('[&.flex]:flex-col')).toEqual({
-      kind: 'conditional',
-      requires: 'flex',
-      raw: '[&.flex]:flex-col',
-    })
-  })
-
-  it('classifies "[&.flex]:items-center" as conditional requires flex', () => {
-    expect(c.classify('[&.flex]:items-center')).toEqual({
-      kind: 'conditional',
-      requires: 'flex',
-      raw: '[&.flex]:items-center',
-    })
-  })
-
-  it('classifies "[&.grid]:grid-cols-3" as conditional requires grid', () => {
-    expect(c.classify('[&.grid]:grid-cols-3')).toEqual({
-      kind: 'conditional',
-      requires: 'grid',
-      raw: '[&.grid]:grid-cols-3',
-    })
+  it.each<[string, 'flex' | 'grid']>([
+    ['[&.flex]:flex-col', 'flex'],
+    ['[&.flex]:items-center', 'flex'],
+    ['[&.grid]:grid-cols-3', 'grid'],
+  ])('classifies "%s" as conditional requires %s', (token, requires) => {
+    expectConditional(token, requires)
   })
 })
 
 describe('ClassClassifier — utility tokens', () => {
-  it('classifies "rounded" as utility', () => {
-    expect(c.classify('rounded')).toEqual({ kind: 'utility', base: 'rounded', raw: 'rounded' })
+  it.each([
+    ['rounded', 'rounded'],
+    ['flex-col', 'flex-col'],
+    ['grid-cols-3', 'grid-cols-3'],
+    ['grow', 'grow'],
+    ['hover:flex-col', 'flex-col'],
+    ['data-[orientation=horizontal]:flex-row', 'flex-row'],
+    ['data-[foo:bar]:grid-cols-3', 'grid-cols-3'],
+    ['[&>div]:flex-row', 'flex-row'],
+  ])('classifies "%s" as utility with base "%s"', (token, base) => {
+    expectUtility(token, base)
+  })
+})
+
+describe('ClassClassifier — advanced pattern reference (Advanced-Tailwind-Patterns.md)', () => {
+  it.each([
+    // Arbitrary child selectors
+    ['[&>h2]:text-2xl', 'text-2xl'],
+    ['[&>h2]:font-bold', 'font-bold'],
+    ['[&_a]:underline', 'underline'],
+    ['[&_img]:rounded-lg', 'rounded-lg'],
+    // :has() selectors — inner colons stay inside bracket depth
+    ['[&:has(>img)]:p-0', 'p-0'],
+    ['[&:has(footer)]:pb-0', 'pb-0'],
+    ['[&:has(input:checked)]:bg-green-100', 'bg-green-100'],
+    ['[body:has(dialog[open])_&]:blur-sm', 'blur-sm'],
+    // Named groups
+    ['group-hover/sidebar:bg-black', 'bg-black'],
+    ['group-hover/navitem:text-white', 'text-white'],
+    // Arbitrary group selectors
+    ['group-[.is-selected]:font-bold', 'font-bold'],
+    // Data attribute variants
+    ['data-[state=open]:opacity-100', 'opacity-100'],
+    ['data-[selected]:font-bold', 'font-bold'],
+    ['data-[loading=true]:animate-pulse', 'animate-pulse'],
+    // ARIA variants
+    ['aria-selected:bg-blue-500', 'bg-blue-500'],
+    ['aria-expanded:rotate-180', 'rotate-180'],
+    ['aria-disabled:opacity-50', 'opacity-50'],
+    // Container queries
+    ['@lg:grid-cols-3', 'grid-cols-3'],
+    ['@max-md:flex-col', 'flex-col'],
+    // Parent-to-child composition
+    ['[&>*]:rounded-lg', 'rounded-lg'],
+    ['[&>*]:p-4', 'p-4'],
+    ['[&>*:not(:last-child)]:border-b', 'border-b'],
+    ['[&>section+section]:mt-8', 'mt-8'],
+    // Deep descendant matching
+    ['[&_svg]:size-4', 'size-4'],
+    ['[&_svg_path]:fill-current', 'fill-current'],
+    ['[&_button:hover]:bg-red-500', 'bg-red-500'],
+    // Full arbitrary selectors
+    ['[&>article:nth-child(odd):has(img)_.title]:text-red-500', 'text-red-500'],
+  ])('classifies "%s" as utility with base "%s"', (token, base) => {
+    expectUtility(token, base)
   })
 
-  it('classifies "flex-col" as utility (not layout)', () => {
-    expect(c.classify('flex-col')).toEqual({ kind: 'utility', base: 'flex-col', raw: 'flex-col' })
+  it.each<[string, LayoutKey<typeof layoutKeys>]>([
+    // Arbitrary group selectors
+    ['group-[.active]:block', 'block'],
+    // Arbitrary peer selectors — colon inside brackets ignored
+    ['peer-[:nth-of-type(3)_&]:block', 'block'],
+    // Arbitrary breakpoints
+    ['min-[712px]:block', 'block'],
+    ['max-[887px]:hidden', 'hidden'],
+    ['min-[420px]:max-[900px]:flex', 'flex'],
+  ])('classifies "%s" as layout %s', (token, value) => {
+    expectLayout(token, value)
   })
 
-  it('classifies "grid-cols-3" as utility', () => {
-    expect(c.classify('grid-cols-3')).toEqual({
-      kind: 'utility',
-      base: 'grid-cols-3',
-      raw: 'grid-cols-3',
-    })
+  it('classifies "@container" as utility (no separator, base is full token)', () => {
+    expectUtility('@container')
   })
 
-  it('classifies "grow" as utility', () => {
-    expect(c.classify('grow')).toEqual({ kind: 'utility', base: 'grow', raw: 'grow' })
-  })
-
-  it('classifies "hover:flex-col" as utility with base "flex-col"', () => {
-    expect(c.classify('hover:flex-col')).toEqual({
-      kind: 'utility',
-      base: 'flex-col',
-      raw: 'hover:flex-col',
-    })
-  })
-
-  it('classifies "data-[orientation=horizontal]:flex-row" as utility (brackets protect colon)', () => {
-    const result = c.classify('data-[orientation=horizontal]:flex-row')
-    expect(result.kind).toBe('utility')
-    expect((result as { base: string }).base).toBe('flex-row')
-  })
-
-  it('classifies "data-[foo:bar]:grid-cols-3" as utility (colon inside brackets not a separator)', () => {
-    const result = c.classify('data-[foo:bar]:grid-cols-3')
-    expect(result.kind).toBe('utility')
-    expect((result as { base: string }).base).toBe('grid-cols-3')
-  })
-
-  it('classifies "[&>div]:flex-row" as utility with base "flex-row"', () => {
-    const result = c.classify('[&>div]:flex-row')
-    expect(result.kind).toBe('utility')
-    expect((result as { base: string }).base).toBe('flex-row')
+  it.each([
+    // CSS variables as values — no top-level colon, base is full token
+    'w-[--sidebar-width]',
+    'h-[--header-height]',
+    'bg-[--surface]',
+    // Arbitrary CSS properties — colon fully enclosed in brackets
+    '[mask-image:linear-gradient(...)]',
+    '[scrollbar-gutter:stable]',
+    '[text-wrap:balance]',
+    '[container-type:inline-size]',
+    // Container units — no colon at all
+    'w-[50cqw]',
+    'h-[25cqh]',
+  ])('classifies "%s" as utility with base equal to the full token', (token) => {
+    expectUtility(token)
   })
 })
 
