@@ -3,13 +3,12 @@ import { LAYOUT_OWNED_KEYS } from './constants'
 import type { layoutKeys } from './layout-keys'
 import type { ClassifiedToken, ClassToken, LayoutFamily, LayoutKey } from './types'
 import { iterate } from '@praxis-kit/primitive'
+import type { StringMap } from '@praxis-kit/primitive'
 
 const CONDITIONALS = {
   '[&.flex': 'flex',
   '[&.grid': 'grid',
-} as const satisfies Readonly<
-  Record<string, Exclude<LayoutFamily<typeof LAYOUT_FAMILY_MAP>, 'none'>>
->
+} as const satisfies Readonly<StringMap<Exclude<LayoutFamily<typeof LAYOUT_FAMILY_MAP>, 'none'>>>
 
 // Utilities that only have an effect inside a flex OR grid container, but
 // aren't specific to either family: justify-content, align-items/self,
@@ -20,10 +19,16 @@ const CONDITIONALS = {
 // justify-items-/justify-self- are excluded — they're grid-only (no-ops on
 // flex containers per the CSS box alignment spec) and handled by
 // dependency-rules.ts instead.
+//
+// content- is enumerated rather than an open `/^content-/` prefix: the CSS
+// content property (`content-['<']`, `content-none`, etc., used via
+// before:/after:) is base-shaped identically to the flex/grid content-*
+// alignment family after variant-prefix stripping, but is valid on any
+// element regardless of display mode and must never be treated as shared.
 const SHARED_PREFIXES: readonly RegExp[] = [
   /^order/,
   /^justify-(?!items-|self-)/,
-  /^content-/,
+  /^content-(normal|center|start|end|between|around|evenly|stretch)$/,
   /^items-/,
   /^self-/,
   /^place-content-/,
