@@ -37,7 +37,7 @@ const config = [
 
           policies: [
             {
-              from: [{ type: 'core' }],
+              from: [{ element: { type: 'core' } }],
               disallow: [
                 {
                   dependency: {
