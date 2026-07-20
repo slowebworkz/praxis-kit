@@ -6,11 +6,13 @@ import { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attri
 import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
 import { REQUIRED_ARIA_PROPERTIES } from './spec/roles/required-properties'
 import { NAME_REQUIRED_ROLES } from './spec/roles/name-required'
-import { LIVE_REGION_ROLES } from './spec/roles/live-region'
+import { ATOMIC_REQUIREMENTS, LIVE_REGION_ROLES } from './spec/roles/live-region'
 import { ARIA_VALUE_TYPES } from './spec/attributes/aria-value-types'
 import { VALID_RELEVANT_TOKENS } from './spec/attributes/aria-relevant-tokens'
 import { HEADING_IMPLICIT_LEVELS } from './spec/elements/heading-implicit-levels'
 import { INTERACTIVE_TAGS } from './spec/elements/interactive-tags'
+import { checkRequiredAttributes } from './spec/validators/required-properties-validator'
+import type { RoleAttributeRequirements } from './spec/types'
 
 import type { AnyRecord, IntrinsicTag } from '@praxis-kit/primitive'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
@@ -615,25 +617,13 @@ export class AriaPolicyEngine extends InvariantBase {
     ]
   }
 
-  static #checkRequiredAriaProperties({
-    props,
-    effectiveRole,
-  }: AriaContext): readonly AriaResult[] {
-    if (!effectiveRole) return NO_VIOLATIONS
-    const required = REQUIRED_ARIA_PROPERTIES[effectiveRole]
-    if (!isNonNull(required)) return NO_VIOLATIONS
-    const results: AriaResult[] = []
-    iterate.forEach(required, (attr) => {
-      if (attr in props) return
-      results.push({
-        valid: false,
-        fixable: false,
-        severity: 'warning',
-        attribute: attr,
-        diagnostic: AriaDiagnostics.requiredProperty(attr, effectiveRole),
-      })
-    })
-    return results
+  static readonly #requiredAriaPropertiesRule: RoleAttributeRequirements = {
+    attributesByRole: REQUIRED_ARIA_PROPERTIES,
+    diagnosticFor: (attribute, role) => AriaDiagnostics.requiredProperty(attribute, role),
+  }
+
+  static #checkRequiredAriaProperties(context: AriaContext): readonly AriaResult[] {
+    return checkRequiredAttributes(AriaPolicyEngine.#requiredAriaPropertiesRule, context)
   }
 
   // WAI-ARIA 1.2 §6.6: aria-hidden="true" must not be placed on focusable elements.
@@ -718,18 +708,13 @@ export class AriaPolicyEngine extends InvariantBase {
     ]
   }
 
-  static #checkMissingAtomic({ effectiveRole, props }: AriaContext): readonly AriaResult[] {
-    if (!effectiveRole || !LIVE_REGION_ROLES.has(effectiveRole)) return NO_VIOLATIONS
-    if ('aria-atomic' in props) return NO_VIOLATIONS
+  static readonly #missingAtomicRule: RoleAttributeRequirements = {
+    attributesByRole: ATOMIC_REQUIREMENTS,
+    diagnosticFor: (_attribute, role) => AriaDiagnostics.missingAtomic(role),
+  }
 
-    return [
-      {
-        valid: false,
-        fixable: false,
-        severity: 'warning',
-        diagnostic: AriaDiagnostics.missingAtomic(effectiveRole),
-      },
-    ]
+  static #checkMissingAtomic(context: AriaContext): readonly AriaResult[] {
+    return checkRequiredAttributes(AriaPolicyEngine.#missingAtomicRule, context)
   }
 
   // Custom fix rules passed via `options.rules` must be pure functions of (tag, props) — the cache
