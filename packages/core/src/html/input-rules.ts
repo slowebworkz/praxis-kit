@@ -1,17 +1,15 @@
 import type { AriaContext, AriaResult, AriaRule } from '../types'
 import { HtmlDiagnostics, InputAccessibilityDiagnostics } from '@praxis-kit/contract'
-import { HTML_INPUT_TYPES } from './spec/elements/input'
-import {
-  INPUT_ATTRIBUTE_TYPE_POLICIES,
-  type InputAttributeTypePolicy,
-} from './spec/attributes/input'
+import { HTML_INPUT_TYPES } from './spec/vocabulary/input'
+import type { AttributeTypePolicy } from './spec/types'
+import { inputElementSpec } from './spec/elements/input'
 import { createInputAttributeTypeRule } from './spec/validators/attribute-type-validator'
 
 const policyByAttribute = new Map(
-  INPUT_ATTRIBUTE_TYPE_POLICIES.map((policy) => [policy.attribute, policy] as const),
+  (inputElementSpec.attributes ?? []).map((policy) => [policy.attribute, policy] as const),
 )
 
-function policyFor(attribute: string): InputAttributeTypePolicy {
+function policyFor(attribute: string): AttributeTypePolicy {
   const policy = policyByAttribute.get(attribute)
   if (!policy) throw new Error(`no input attribute policy registered for "${attribute}"`)
   return policy

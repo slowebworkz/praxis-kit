@@ -24,9 +24,18 @@ export type RolePolicy =
       readonly resolve: (context: RolePolicyContext) => readonly string[]
     }
 
+// "This attribute only applies when the element's discriminator prop (e.g. `type`) is one of
+// `allowedTypes`" — the fact behind input's checked/maxLength/min/etc. policies. Named generically
+// since the shape isn't input-specific, even though input is its only consumer so far.
+export interface AttributeTypePolicy {
+  readonly attribute: string
+  readonly allowedTypes: readonly string[]
+}
+
 export interface HtmlElementSpec {
   readonly tag: string
   readonly allowedRoles?: RolePolicy
+  readonly attributes?: readonly AttributeTypePolicy[]
 }
 
 export function resolveAllowedRoles(

@@ -1,7 +1,7 @@
 import type { AnyRecord } from '@praxis-kit/primitive'
 import type { AriaContext, AriaFix, AriaResult, AriaRule } from '../../../types'
 import { HtmlDiagnostics } from '@praxis-kit/contract'
-import type { InputAttributeTypePolicy } from '../attributes/input'
+import type { AttributeTypePolicy } from '../types'
 
 const DEFAULT_INPUT_TYPE = 'text'
 
@@ -21,13 +21,13 @@ function removeAttributeFix(attribute: string): AriaFix {
   }
 }
 
-// Generic validator: turns an `InputAttributeTypePolicy` fact ("this attribute only applies to
-// these input types") into a scoped, cache-friendly `AriaRule`, so adding a new policy entry never
+// Generic validator: turns an `AttributeTypePolicy` fact ("this attribute only applies to these
+// input types") into a scoped, cache-friendly `AriaRule`, so adding a new policy entry never
 // requires writing another predicate.
 export function createInputAttributeTypeRule({
   attribute,
   allowedTypes,
-}: InputAttributeTypePolicy): AriaRule {
+}: AttributeTypePolicy): AriaRule {
   const rule = ({ tag, props }: AriaContext): readonly AriaResult[] => {
     if (tag !== 'input' || !(attribute in props)) return []
     const type = typeof props.type === 'string' ? props.type : DEFAULT_INPUT_TYPE
