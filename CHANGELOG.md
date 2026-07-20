@@ -1,5 +1,50 @@
 # Changelog
 
+## v6.2.3 — Built-in `<input>` HTML/ARIA/Accessibility Rules
+
+### New: implicit `<input>` semantic rule library
+
+`HTML_ARIA_RULES` now includes a first per-element rule library for `<input>` — no consumer opt-in
+required, it applies to any component resolving to `<input>` the same way the existing landmark-role
+rules already do implicitly.
+
+- **Attribute-vs-type facts**: `checked` (checkbox/radio only), `multiple` (email/file only),
+  `maxLength`/`minLength`/`pattern` (text-entry types only), `min`/`max`/`step` (numeric/date types
+  only), `accept`/`capture` (file only) — each warns and offers an automatic fix that removes the
+  now-meaningless attribute.
+- **Unsupported `type` detection**: a misspelled or made-up `type` value (e.g. `type="phone"`)
+  silently falls back to `type="text"` per spec; this is now flagged as a likely typo.
+- **Accessible-name advisories**: warns when an `<input>` has no accessible name, including the
+  specific case where only a `placeholder` is present (placeholder text isn't a substitute for a
+  label).
+- **Password `autoComplete`**: warns when `type="password"` has no `current-password`/
+  `new-password` autocomplete hint.
+- **`required` + `readOnly` conflict**: warns on the combination, since a read-only field can never
+  satisfy `required` validation interactively.
+
+### New: general allowed-roles check (`roleNotPermittedRule`)
+
+Explicit `role` overrides are now validated against a documented allowed-roles table (per the
+WAI-ARIA "ARIA in HTML" recommendation) across native elements — not just the existing
+redundant-role and landmark-role-override checks. Covers common elements (`a`, `button`, `select`,
+headings, lists, `table`, `dialog`, `fieldset`, `img`, and `<input>` per `type`); elements with
+context-dependent allowed roles this engine can't determine from a single element (e.g. `<td>`
+inside a `role="grid"` ancestor) are intentionally left unmodeled rather than guessed.
+
+### Diagnostic catalog rework
+
+Each diagnostic now carries its own fixed severity — rules read `diagnostic.severity` instead of
+re-deciding warn-vs-error at each call site. `DiagnosticCode` documents reserved numeric ranges per
+category, with `<input>`-specific HTML facts moved to a nested `HtmlDiagnostics.input` namespace
+(one code per attribute) and a new `InputAccessibilityDiagnostics` catalog for the best-practice
+advisories above.
+
+### Known limitation
+
+The `roleNotPermittedRule` allowed-roles table was authored from well-established fragments of the
+WAI-ARIA "ARIA in HTML" spec, not generated from it mechanically — treat it as a solid starting
+point rather than an exhaustive, spec-verified reference.
+
 ## v6.2.0 — Enforcement Defaults Now Actually Enforce, Public ARIA Rule Types
 
 ### ⚠️ Behavior change: `allowedAs` and custom `aria` rules now throw by default
