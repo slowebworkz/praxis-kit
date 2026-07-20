@@ -1,3 +1,6 @@
+import type { HtmlElementSpec } from '../types'
+import { ALLOWED_INPUT_ROLES } from '../roles/input'
+
 // WHATWG HTML §4.10.5 vocabulary for `<input type>`, grouped by shared behavior. These groupings
 // are the specification fact that attribute policies (`../attributes/input.ts`) and role policies
 // (`../roles/input.ts`) key off of, so they live here rather than being redefined per consumer.
@@ -31,3 +34,10 @@ export const HTML_INPUT_TYPES: ReadonlySet<string> = new Set([
   'reset',
   'image',
 ])
+
+// `input`'s roles are keyed by `type` (an enum-like discriminator), with "text" as the fallback
+// when `type` is absent — the same default the HTML spec gives an omitted `type` attribute.
+export const inputElementSpec: HtmlElementSpec = {
+  tag: 'input',
+  allowedRoles: { kind: 'byProp', prop: 'type', map: ALLOWED_INPUT_ROLES, fallback: 'text' },
+}

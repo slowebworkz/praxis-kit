@@ -1,8 +1,10 @@
 import type { AriaContext, AriaFix, AriaResult, AriaRule } from '../types'
 import { HtmlDiagnostics } from '@praxis-kit/contract'
-import { ALLOWED_INPUT_ROLES } from './spec/roles/input'
-import { IMG_NAMED_ROLES } from './spec/roles/img'
-import { ALLOWED_TABLE_ROLES } from './spec/roles/table'
+import type { HtmlElementSpec } from './spec/types'
+import { resolveAllowedRoles } from './spec/types'
+import { inputElementSpec } from './spec/elements/input'
+import { imgElementSpec } from './spec/elements/img'
+import { tableElementSpec } from './spec/elements/table'
 
 // The WAI-ARIA "ARIA in HTML" recommendation restricts which explicit `role` values a native
 // element may take, beyond its own implicit role. `undefined` here means "not modeled" — either
@@ -88,20 +90,21 @@ const ALLOWED_ROLES: Readonly<Record<string, readonly string[]>> = {
   fieldset: ['none', 'presentation', 'radiogroup'],
 }
 
+// Tags whose allowed-roles fact is expressed as a spec/elements/*.ts `HtmlElementSpec` rather
+// than a flat entry in `ALLOWED_ROLES` — currently the ones with prop-conditional or non-trivial
+// policies. Tags not in this map fall back to the plain `ALLOWED_ROLES` lookup.
+const ELEMENT_SPECS: Readonly<Record<string, HtmlElementSpec>> = {
+  input: inputElementSpec,
+  img: imgElementSpec,
+  table: tableElementSpec,
+}
+
 function getAllowedRoles(
   tag: string,
   props: Readonly<Record<string, unknown>>,
 ): readonly string[] | undefined {
-  if (tag === 'input') {
-    const type = typeof props.type === 'string' ? props.type : 'text'
-    return ALLOWED_INPUT_ROLES[type]
-  }
-  if (tag === 'img') {
-    return props.alt === '' ? [] : IMG_NAMED_ROLES
-  }
-  if (tag === 'table') {
-    return ALLOWED_TABLE_ROLES
-  }
+  const spec = ELEMENT_SPECS[tag]
+  if (spec) return resolveAllowedRoles(spec, props)
   return ALLOWED_ROLES[tag]
 }
 
