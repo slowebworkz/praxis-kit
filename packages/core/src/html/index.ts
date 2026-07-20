@@ -7,6 +7,24 @@ export {
   landmarkNameAdvisory,
   requireAccessibleName,
 } from './aria-rules'
+export { roleNotPermittedRule } from './role-restrictions'
+export {
+  INPUT_RULES,
+  supportedInputTypeRule,
+  checkedRequiresCheckableTypeRule,
+  multipleRequiresSupportedTypeRule,
+  maxLengthRequiresTextTypeRule,
+  minLengthRequiresTextTypeRule,
+  patternRequiresTextTypeRule,
+  minRequiresNumericTypeRule,
+  maxRequiresNumericTypeRule,
+  stepRequiresNumericTypeRule,
+  acceptRequiresFileTypeRule,
+  captureRequiresFileTypeRule,
+  inputAccessibleNameRule,
+  passwordAutocompleteRule,
+  requiredReadOnlyConflictRule,
+} from './input-rules'
 export {
   listContract,
   tableContract,

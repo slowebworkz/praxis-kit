@@ -61,7 +61,7 @@ export class AriaPolicyEngine extends InvariantBase {
             tag,
             role: '',
             attribute: undefined,
-            severity: 'warning',
+            severity: d.severity,
             phase: 'evaluate',
           },
         ],
@@ -404,13 +404,14 @@ export class AriaPolicyEngine extends InvariantBase {
     if (!implicitRole || !role || role === implicitRole) return NO_VIOLATIONS
 
     if (isStrongImplicitRole(tag) && role === 'region') {
+      const diagnostic = HtmlDiagnostics.implicitRoleOverride(tag, implicitRole, role)
       return [
         {
           valid: false,
           fixable: true,
-          severity: 'error',
+          severity: diagnostic.severity,
           fix: AriaPolicyEngine.#removeRole,
-          diagnostic: HtmlDiagnostics.implicitRoleOverride(tag, implicitRole, role),
+          diagnostic,
         },
       ]
     }
@@ -422,13 +423,14 @@ export class AriaPolicyEngine extends InvariantBase {
     const role = props.role
     if (!implicitRole || !role || role !== implicitRole) return NO_VIOLATIONS
 
+    const diagnostic = HtmlDiagnostics.implicitRoleRedundant(tag, implicitRole)
     return [
       {
         valid: false,
         fixable: true,
-        severity: 'warning',
+        severity: diagnostic.severity,
         fix: AriaPolicyEngine.#removeRole,
-        diagnostic: HtmlDiagnostics.implicitRoleRedundant(tag, implicitRole),
+        diagnostic,
       },
     ]
   }
@@ -438,13 +440,14 @@ export class AriaPolicyEngine extends InvariantBase {
     if (role !== 'region') return NO_VIOLATIONS
     if (!isStandaloneTag(tag)) return NO_VIOLATIONS
 
+    const diagnostic = HtmlDiagnostics.standaloneRegionOverride(tag, implicitRole ?? tag)
     return [
       {
         valid: false,
         fixable: true,
-        severity: 'error',
+        severity: diagnostic.severity,
         fix: AriaPolicyEngine.#removeRole,
-        diagnostic: HtmlDiagnostics.standaloneRegionOverride(tag, implicitRole ?? tag),
+        diagnostic,
       },
     ]
   }

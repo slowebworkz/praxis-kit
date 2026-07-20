@@ -1,5 +1,7 @@
 import type { AriaContext, AriaFix, AriaResult, AriaRule } from '../types'
 import { AriaDiagnostics, HtmlDiagnostics } from '@praxis-kit/contract'
+import { INPUT_RULES } from './input-rules'
+import { roleNotPermittedRule } from './role-restrictions'
 
 const LANDMARK_TAG_SET = new Set(['article', 'aside', 'footer', 'header', 'main', 'nav'])
 
@@ -17,13 +19,14 @@ export function landmarkRoleRule({ tag, props, implicitRole }: AriaContext): rea
   const role = props.role
   // role === implicitRole is already caught by the built-in #checkRedundantRole (warns, removes).
   if (!role || role === implicitRole) return []
+  const diagnostic = HtmlDiagnostics.landmarkRoleOverride(tag, implicitRole, role)
   return [
     {
       valid: false,
       fixable: true,
-      severity: 'error',
+      severity: diagnostic.severity,
       fix: removeLandmarkRoleOverride,
-      diagnostic: HtmlDiagnostics.landmarkRoleOverride(tag, implicitRole, role),
+      diagnostic,
     },
   ]
 }
@@ -55,4 +58,9 @@ export function landmarkNameAdvisory(ctx: AriaContext): readonly AriaResult[] {
   return requireAccessibleName(ctx)
 }
 
-export const HTML_ARIA_RULES: readonly AriaRule[] = [landmarkRoleRule, landmarkNameAdvisory]
+export const HTML_ARIA_RULES: readonly AriaRule[] = [
+  landmarkRoleRule,
+  landmarkNameAdvisory,
+  roleNotPermittedRule,
+  ...INPUT_RULES,
+]
