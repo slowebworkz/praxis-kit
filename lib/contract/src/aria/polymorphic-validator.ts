@@ -4,6 +4,7 @@ import { AriaDiagnostics, HtmlDiagnostics } from '../diagnostics'
 import { InvariantBase } from '../strict'
 import { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attribute-policy'
 import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
+import { REQUIRED_ARIA_PROPERTIES } from './spec/roles/required-properties'
 
 import type { AnyRecord, IntrinsicTag } from '@praxis-kit/primitive'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
@@ -678,22 +679,12 @@ export class AriaPolicyEngine extends InvariantBase {
     ]
   }
 
-  // WAI-ARIA 1.2 required states and properties, keyed by role.
-  // Source: https://www.w3.org/TR/wai-aria-1.2/#requiredState
-  static readonly #REQUIRED_PROPERTIES: ReadonlyMap<string, readonly string[]> = new Map([
-    ['combobox', ['aria-expanded']],
-    ['option', ['aria-selected']],
-    ['slider', ['aria-valuenow']],
-    ['scrollbar', ['aria-controls', 'aria-valuenow']],
-    ['spinbutton', ['aria-valuenow']],
-  ])
-
   static #checkRequiredAriaProperties({
     props,
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
     if (!effectiveRole) return NO_VIOLATIONS
-    const required = AriaPolicyEngine.#REQUIRED_PROPERTIES.get(effectiveRole)
+    const required = REQUIRED_ARIA_PROPERTIES[effectiveRole]
     if (!isNonNull(required)) return NO_VIOLATIONS
     const results: AriaResult[] = []
     iterate.forEach(required, (attr) => {
