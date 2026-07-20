@@ -66,6 +66,10 @@
     "./guards": {
       "types": "./dist/guards/index.d.ts",
       "import": "./dist/guards/index.js"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "import": "./dist/utils/index.js"
     }
   },
   "typesVersions": {
@@ -114,6 +118,9 @@
       ],
       "guards": [
         "./dist/guards/index.d.ts"
+      ],
+      "utils": [
+        "./dist/utils/index.d.ts"
       ]
     }
   },

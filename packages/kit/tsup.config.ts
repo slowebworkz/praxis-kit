@@ -235,4 +235,16 @@ export default [
       options.alias = { ...options.alias, ...sharedAlias }
     },
   }),
+
+  // Utils — general-purpose helpers (e.g. memoize) for consumers.
+  defineConfig({
+    entry: { 'utils/index': './utils.ts' },
+    format: ['esm'],
+    dts: bundledDts(),
+    tsconfig: 'tsconfig.build-base.json',
+    noExternal: ['@praxis-kit/primitive'],
+    esbuildOptions(options) {
+      options.alias = { ...options.alias, ...sharedAlias }
+    },
+  }),
 ]
