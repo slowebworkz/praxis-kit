@@ -35,7 +35,7 @@ const config = [
         {
           default: 'allow',
 
-          rules: [
+          policies: [
             {
               from: [{ type: 'core' }],
               disallow: [
