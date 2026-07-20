@@ -32,7 +32,7 @@ export const supportedInputTypeRule: AriaRule = Object.assign(
       },
     ]
   },
-  { readsProps: ['type'] as const },
+  { readsProps: ['type'] as const, tags: ['input'] as const },
 )
 
 export const checkedRequiresCheckableTypeRule = createInputAttributeTypeRule(policyFor('checked'))
@@ -70,7 +70,10 @@ export const inputAccessibleNameRule: AriaRule = Object.assign(
       : InputAccessibilityDiagnostics.missingAccessibleName()
     return [{ valid: false, fixable: false, severity: diagnostic.severity, diagnostic }]
   },
-  { readsProps: ['type', 'aria-label', 'aria-labelledby', 'placeholder'] as const },
+  {
+    readsProps: ['type', 'aria-label', 'aria-labelledby', 'placeholder'] as const,
+    tags: ['input'] as const,
+  },
 )
 
 const PASSWORD_AUTOCOMPLETE_VALUES = ['current-password', 'new-password'] as const
@@ -84,7 +87,7 @@ export const passwordAutocompleteRule: AriaRule = Object.assign(
     const diagnostic = InputAccessibilityDiagnostics.passwordMissingAutocomplete()
     return [{ valid: false, fixable: false, severity: diagnostic.severity, diagnostic }]
   },
-  { readsProps: ['type', 'autoComplete'] as const },
+  { readsProps: ['type', 'autoComplete'] as const, tags: ['input'] as const },
 )
 
 // Legal HTML (readOnly wins — the field is never editable, so `required` can never be satisfied

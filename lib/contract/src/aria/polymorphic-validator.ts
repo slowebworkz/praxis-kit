@@ -117,6 +117,10 @@ export class AriaPolicyEngine extends InvariantBase {
     const fixes: AriaFix[] = []
 
     iterate.forEach(rules, (rule) => {
+      // A rule that declares `tags` can only ever produce a result for those tags — skip calling
+      // it at all for any other tag, rather than paying for the call just to hit its own internal
+      // `if (tag !== ...) return []` early return.
+      if (isNonNull(rule.tags) && !rule.tags.includes(context.tag)) return
       iterate.forEach(rule(context), (result) => {
         if (result.valid) return
 

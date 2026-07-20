@@ -13,5 +13,5 @@ export function createMutuallyExclusiveRule({
     const diagnostic = createDiagnostic()
     return [{ valid: false, fixable: false, severity: diagnostic.severity, diagnostic }]
   }
-  return Object.assign(rule, { readsProps: conflictingProps })
+  return Object.assign(rule, { readsProps: conflictingProps, tags: ['input'] as const })
 }
