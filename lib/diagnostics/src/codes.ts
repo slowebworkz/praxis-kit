@@ -1,3 +1,14 @@
+// Ranges:
+// 1000–1999  Component composition & contracts
+// 2000–2999  ARIA
+// 3000–3999  HTML semantics (3000–3099 general, 3100–3199 <input>, later element
+//            families get their own reserved block — e.g. 3200 <button>, 3300 <img>)
+// 4000–4999  Rendering
+// 5000–5999  Static linting
+// 6000–6999  CSS / Tailwind
+// 7000–7999  Plugin API
+// 8000–8999  Accessibility guidance (best practice, not spec validity)
+// 9000–9999  Internal
 export enum DiagnosticCode {
   // Composition / children
   MissingRequiredChild = 'COMP1001',
@@ -32,7 +43,7 @@ export enum DiagnosticCode {
   AriaInvalidAttributeValue = 'ARIA2013',
   AriaRedundantLevelAttribute = 'ARIA2014',
 
-  // HTML
+  // HTML — general (3000–3099)
   InvalidHeadingHierarchy = 'HTML3001',
   HtmlEmptyRole = 'HTML3002',
   HtmlImplicitRoleRedundant = 'HTML3003',
@@ -40,6 +51,26 @@ export enum DiagnosticCode {
   HtmlStandaloneRegionOverride = 'HTML3005',
   HtmlLandmarkRoleOverride = 'HTML3006',
   HtmlInvalidChild = 'HTML3007',
+  HtmlRoleNotPermitted = 'HTML3008',
+
+  // HTML — <input> (3100–3199)
+  HtmlInputUnsupportedType = 'HTML3101',
+  HtmlInputCheckedIgnoredForType = 'HTML3102',
+  HtmlInputMultipleIgnoredForType = 'HTML3103',
+  HtmlInputMaxLengthIgnoredForType = 'HTML3104',
+  HtmlInputMinLengthIgnoredForType = 'HTML3105',
+  HtmlInputPatternIgnoredForType = 'HTML3106',
+  HtmlInputMinIgnoredForType = 'HTML3107',
+  HtmlInputMaxIgnoredForType = 'HTML3108',
+  HtmlInputStepIgnoredForType = 'HTML3109',
+  HtmlInputAcceptIgnoredForType = 'HTML3110',
+  HtmlInputCaptureIgnoredForType = 'HTML3111',
+
+  // Accessibility (best-practice advisories, not HTML/ARIA validity facts)
+  A11yInputMissingAccessibleName = 'A11Y8100',
+  A11yInputPlaceholderNotLabel = 'A11Y8101',
+  A11yInputPasswordAutocomplete = 'A11Y8102',
+  A11yInputRequiredReadOnlyConflict = 'A11Y8103',
 
   // Rendering
   InvalidRenderingTarget = 'RENDER4001',
