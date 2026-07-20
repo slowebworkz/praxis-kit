@@ -1,6 +1,7 @@
 import type { AriaContext, AriaFix, AriaResult, AriaRule } from '../types'
 import { HtmlDiagnostics } from '@praxis-kit/contract'
 import { ALLOWED_INPUT_ROLES } from './spec/roles/input'
+import { IMG_NAMED_ROLES } from './spec/roles/img'
 import { ALLOWED_TABLE_ROLES } from './spec/roles/table'
 
 // The WAI-ARIA "ARIA in HTML" recommendation restricts which explicit `role` values a native
@@ -86,25 +87,6 @@ const ALLOWED_ROLES: Readonly<Record<string, readonly string[]>> = {
   dialog: ['alertdialog'],
   fieldset: ['none', 'presentation', 'radiogroup'],
 }
-
-// `img`'s allowed roles depend on `alt`, not just the tag — decorative images (`alt=""`) permit
-// no explicit role at all, while a named/unnamed-but-present image permits a fairly large set.
-const IMG_NAMED_ROLES = [
-  'button',
-  'checkbox',
-  'link',
-  'menuitem',
-  'menuitemcheckbox',
-  'menuitemradio',
-  'option',
-  'progressbar',
-  'scrollbar',
-  'separator',
-  'slider',
-  'switch',
-  'tab',
-  'treeitem',
-]
 
 function getAllowedRoles(
   tag: string,
