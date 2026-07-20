@@ -55,7 +55,7 @@ module.exports = {
       comment: 'core must remain framework-agnostic — no React imports allowed',
       from: { path: '^packages/core/' },
       to: {
-        dependencyTypes: ['npm', 'npm-dev', 'npm-peer'],
+        dependencyTypes: ['npm', 'npm-dev', 'npm-peer', 'npm-no-pkg', 'unknown'],
         path: '^(react|react-dom|@radix-ui/)',
       },
     },
@@ -64,7 +64,7 @@ module.exports = {
       severity: 'error',
       comment: 'core must remain framework-agnostic — no Vue imports allowed',
       from: { path: '^packages/core/' },
-      to: { dependencyTypes: ['npm', 'npm-dev', 'npm-peer'], path: '^(vue|@vue/)' },
+      to: { dependencyTypes: ['npm', 'npm-dev', 'npm-peer', 'npm-no-pkg', 'unknown'], path: '^(vue|@vue/)' },
     },
     {
       name: 'lib-primitive-no-frameworks',
@@ -72,7 +72,7 @@ module.exports = {
       comment: 'lib/primitive must have zero framework dependencies',
       from: { path: '^lib/primitive/' },
       to: {
-        dependencyTypes: ['npm', 'npm-dev', 'npm-peer'],
+        dependencyTypes: ['npm', 'npm-dev', 'npm-peer', 'npm-no-pkg', 'unknown'],
         path: '^(react|react-dom|vue|@vue/|preact|solid-js|svelte)',
       },
     },
@@ -82,7 +82,7 @@ module.exports = {
       comment: 'lib/contract must remain renderer-neutral — no framework npm deps',
       from: { path: '^lib/contract/' },
       to: {
-        dependencyTypes: ['npm', 'npm-dev', 'npm-peer'],
+        dependencyTypes: ['npm', 'npm-dev', 'npm-peer', 'npm-no-pkg', 'unknown'],
         path: '^(react|react-dom|vue|@vue/|preact|solid-js|svelte)',
       },
     },
@@ -92,7 +92,7 @@ module.exports = {
       comment: 'lib/styling must not depend on framework packages',
       from: { path: '^lib/styling/' },
       to: {
-        dependencyTypes: ['npm', 'npm-dev', 'npm-peer'],
+        dependencyTypes: ['npm', 'npm-dev', 'npm-peer', 'npm-no-pkg', 'unknown'],
         path: '^(react|react-dom|vue|@vue/|preact|solid-js|svelte)',
       },
     },
@@ -116,13 +116,13 @@ module.exports = {
       name: 'react-no-vue-pkg',
       severity: 'error',
       from: { path: '^packages/react/' },
-      to: { dependencyTypes: ['npm', 'npm-dev', 'npm-peer'], path: '^(vue|@vue/)' },
+      to: { dependencyTypes: ['npm', 'npm-dev', 'npm-peer', 'npm-no-pkg', 'unknown'], path: '^(vue|@vue/)' },
     },
     {
       name: 'vue-no-react-pkg',
       severity: 'error',
       from: { path: '^packages/vue/' },
-      to: { dependencyTypes: ['npm', 'npm-dev', 'npm-peer'], path: '^(react|react-dom)' },
+      to: { dependencyTypes: ['npm', 'npm-dev', 'npm-peer', 'npm-no-pkg', 'unknown'], path: '^(react|react-dom)' },
     },
 
     // ── dependency direction ───────────────────────────────────────────────
