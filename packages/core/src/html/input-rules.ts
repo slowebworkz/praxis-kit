@@ -2,17 +2,19 @@ import type { AriaContext, AriaResult, AriaRule } from '../types'
 import { HtmlDiagnostics, InputAccessibilityDiagnostics } from '@praxis-kit/contract'
 import { HTML_INPUT_TYPES } from './spec/vocabulary/input'
 import type { AttributeTypePolicy } from './spec/types'
-import { inputElementSpec } from './spec/elements/input'
+import { INPUT_ATTRIBUTE_TYPE_POLICIES, type InputAttributeName } from './spec/attributes/input'
+import { REQUIRED_READONLY_CONFLICT } from './spec/constraints/input'
 import { createInputAttributeTypeRule } from './spec/validators/attribute-type-validator'
+import { createMutuallyExclusiveRule } from './spec/validators/mutually-exclusive-validator'
 
-const policyByAttribute = new Map(
-  (inputElementSpec.attributes ?? []).map((policy) => [policy.attribute, policy] as const),
-)
+// A `Record` keyed by the attribute-name literal union (not a `Map`) so a typo'd attribute name
+// is a compile error at the call site below, rather than a lookup that can return `undefined`.
+const policyByAttribute = Object.fromEntries(
+  INPUT_ATTRIBUTE_TYPE_POLICIES.map((policy) => [policy.attribute, policy]),
+) as unknown as Record<InputAttributeName, AttributeTypePolicy>
 
-function policyFor(attribute: string): AttributeTypePolicy {
-  const policy = policyByAttribute.get(attribute)
-  if (!policy) throw new Error(`no input attribute policy registered for "${attribute}"`)
-  return policy
+function policyFor(attribute: InputAttributeName): AttributeTypePolicy {
+  return policyByAttribute[attribute]
 }
 
 export const supportedInputTypeRule: AriaRule = Object.assign(
@@ -88,14 +90,7 @@ export const passwordAutocompleteRule: AriaRule = Object.assign(
 // Legal HTML (readOnly wins — the field is never editable, so `required` can never be satisfied
 // interactively) but almost always an unintended combination. Not auto-fixable: removing either
 // attribute would be guessing which one the author meant.
-export const requiredReadOnlyConflictRule: AriaRule = Object.assign(
-  ({ tag, props }: AriaContext): readonly AriaResult[] => {
-    if (tag !== 'input' || !props.required || !props.readOnly) return []
-    const diagnostic = InputAccessibilityDiagnostics.requiredReadOnlyConflict()
-    return [{ valid: false, fixable: false, severity: diagnostic.severity, diagnostic }]
-  },
-  { readsProps: ['required', 'readOnly'] as const },
-)
+export const requiredReadOnlyConflictRule = createMutuallyExclusiveRule(REQUIRED_READONLY_CONFLICT)
 
 // Not "ARIA rules" — the first half are HTML/ARIA-in-HTML validity facts, the second half are
 // accessibility best-practice advisories. Neither is ARIA-specific.
