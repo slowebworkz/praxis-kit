@@ -1,4 +1,5 @@
 export { AriaDiagnostics } from './aria'
 export { ContractDiagnostics } from './contract'
 export { HtmlDiagnostics } from './html'
+export { InputAccessibilityDiagnostics } from './input-accessibility'
 export { SlotDiagnostics } from './slot'
