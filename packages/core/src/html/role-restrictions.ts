@@ -1,6 +1,7 @@
 import type { AriaContext, AriaFix, AriaResult, AriaRule } from '../types'
 import { HtmlDiagnostics } from '@praxis-kit/contract'
 import { ALLOWED_INPUT_ROLES } from './spec/roles/input'
+import { ALLOWED_TABLE_ROLES } from './spec/roles/table'
 
 // The WAI-ARIA "ARIA in HTML" recommendation restricts which explicit `role` values a native
 // element may take, beyond its own implicit role. `undefined` here means "not modeled" — either
@@ -82,7 +83,6 @@ const ALLOWED_ROLES: Readonly<Record<string, readonly string[]>> = {
     'tab',
     'treeitem',
   ],
-  table: ['grid', 'treegrid'],
   dialog: ['alertdialog'],
   fieldset: ['none', 'presentation', 'radiogroup'],
 }
@@ -116,6 +116,9 @@ function getAllowedRoles(
   }
   if (tag === 'img') {
     return props.alt === '' ? [] : IMG_NAMED_ROLES
+  }
+  if (tag === 'table') {
+    return ALLOWED_TABLE_ROLES
   }
   return ALLOWED_ROLES[tag]
 }
