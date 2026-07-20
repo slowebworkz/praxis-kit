@@ -1,79 +1,21 @@
-import type { AnyRecord } from '@praxis-kit/primitive'
-import type { AriaContext, AriaFix, AriaResult, AriaRule } from '../types'
+import type { AriaContext, AriaResult, AriaRule } from '../types'
 import { HtmlDiagnostics, InputAccessibilityDiagnostics } from '@praxis-kit/contract'
+import { HTML_INPUT_TYPES } from './spec/elements/input'
+import {
+  INPUT_ATTRIBUTE_TYPE_POLICIES,
+  type InputAttributeTypePolicy,
+} from './spec/attributes/input'
+import { createInputAttributeTypeRule } from './spec/validators/attribute-type-validator'
 
-// HTML-AAM / WHATWG facts about `<input>`: these attributes only do something for a subset of
-// `type` values. They typecheck and render fine for any type (React/the DOM don't reject them),
-// so nothing else in the pipeline catches a `<input type="checkbox" maxLength={10}>`-shaped bug.
-// The default `type` when the attribute is absent is "text" per the HTML spec.
-const DEFAULT_INPUT_TYPE = 'text'
+const policyByAttribute = new Map(
+  INPUT_ATTRIBUTE_TYPE_POLICIES.map((policy) => [policy.attribute, policy] as const),
+)
 
-function omit<T extends AnyRecord>(props: T, key: string): T {
-  const next = { ...props } as AnyRecord
-  delete next[key]
-  return next as T
+function policyFor(attribute: string): InputAttributeTypePolicy {
+  const policy = policyByAttribute.get(attribute)
+  if (!policy) throw new Error(`no input attribute policy registered for "${attribute}"`)
+  return policy
 }
-
-function removeAttributeFix(attribute: string): AriaFix {
-  return {
-    kind: `removeAttribute:${attribute}` as const,
-    apply: ({ props }) => {
-      if (!(attribute in props)) return { applied: false, next: props }
-      return { applied: true, next: omit(props, attribute), previous: props }
-    },
-  }
-}
-
-// Declarative "attribute only valid for these input types" fact, generated into a scoped,
-// cache-friendly `AriaRule`. See PRAXIS-KIT-FINDINGS.md #12 for the request this answers.
-function inputAttributeRequiresType(attribute: string, allowedTypes: readonly string[]): AriaRule {
-  const rule = ({ tag, props }: AriaContext): readonly AriaResult[] => {
-    if (tag !== 'input' || !(attribute in props)) return []
-    const type = typeof props.type === 'string' ? props.type : DEFAULT_INPUT_TYPE
-    if (allowedTypes.includes(type)) return []
-    const diagnostic = HtmlDiagnostics.input.attributeIgnoredForType(attribute, type, allowedTypes)
-    return [
-      {
-        valid: false,
-        fixable: true,
-        severity: diagnostic.severity,
-        fix: removeAttributeFix(attribute),
-        diagnostic,
-      },
-    ]
-  }
-  return Object.assign(rule, { readsProps: ['type', attribute] as const })
-}
-
-const TEXT_INPUT_TYPES = ['text', 'search', 'url', 'tel', 'email', 'password'] as const
-const NUMERIC_INPUT_TYPES = [
-  'number',
-  'range',
-  'date',
-  'month',
-  'week',
-  'time',
-  'datetime-local',
-] as const
-
-// Every input type defined by the WHATWG HTML spec (§4.10.5). A `type` outside this set isn't
-// invalid HTML — the spec requires browsers to silently fall back to `type="text"` — but it's
-// almost always a typo (e.g. "date-time", "phone") that this repo's consumers won't notice
-// because the input keeps rendering and accepting text. A `Set` here expresses "is this type a
-// member of the spec's vocabulary" — the actual question being asked — rather than an array scan.
-const HTML_INPUT_TYPES: ReadonlySet<string> = new Set([
-  ...TEXT_INPUT_TYPES,
-  ...NUMERIC_INPUT_TYPES,
-  'checkbox',
-  'radio',
-  'file',
-  'color',
-  'hidden',
-  'button',
-  'submit',
-  'reset',
-  'image',
-])
 
 export const supportedInputTypeRule: AriaRule = Object.assign(
   ({ tag, props }: AriaContext): readonly AriaResult[] => {
@@ -93,37 +35,25 @@ export const supportedInputTypeRule: AriaRule = Object.assign(
   { readsProps: ['type'] as const },
 )
 
-export const checkedRequiresCheckableTypeRule = inputAttributeRequiresType('checked', [
-  'checkbox',
-  'radio',
-])
+export const checkedRequiresCheckableTypeRule = createInputAttributeTypeRule(policyFor('checked'))
 
-export const multipleRequiresSupportedTypeRule = inputAttributeRequiresType('multiple', [
-  'email',
-  'file',
-])
+export const multipleRequiresSupportedTypeRule = createInputAttributeTypeRule(policyFor('multiple'))
 
-export const maxLengthRequiresTextTypeRule = inputAttributeRequiresType(
-  'maxLength',
-  TEXT_INPUT_TYPES,
-)
+export const maxLengthRequiresTextTypeRule = createInputAttributeTypeRule(policyFor('maxLength'))
 
-export const minLengthRequiresTextTypeRule = inputAttributeRequiresType(
-  'minLength',
-  TEXT_INPUT_TYPES,
-)
+export const minLengthRequiresTextTypeRule = createInputAttributeTypeRule(policyFor('minLength'))
 
-export const patternRequiresTextTypeRule = inputAttributeRequiresType('pattern', TEXT_INPUT_TYPES)
+export const patternRequiresTextTypeRule = createInputAttributeTypeRule(policyFor('pattern'))
 
-export const minRequiresNumericTypeRule = inputAttributeRequiresType('min', NUMERIC_INPUT_TYPES)
+export const minRequiresNumericTypeRule = createInputAttributeTypeRule(policyFor('min'))
 
-export const maxRequiresNumericTypeRule = inputAttributeRequiresType('max', NUMERIC_INPUT_TYPES)
+export const maxRequiresNumericTypeRule = createInputAttributeTypeRule(policyFor('max'))
 
-export const stepRequiresNumericTypeRule = inputAttributeRequiresType('step', NUMERIC_INPUT_TYPES)
+export const stepRequiresNumericTypeRule = createInputAttributeTypeRule(policyFor('step'))
 
-export const acceptRequiresFileTypeRule = inputAttributeRequiresType('accept', ['file'])
+export const acceptRequiresFileTypeRule = createInputAttributeTypeRule(policyFor('accept'))
 
-export const captureRequiresFileTypeRule = inputAttributeRequiresType('capture', ['file'])
+export const captureRequiresFileTypeRule = createInputAttributeTypeRule(policyFor('capture'))
 
 // ─── Layer 2: accessibility best practices (legal HTML, still worth flagging) ────────────────
 

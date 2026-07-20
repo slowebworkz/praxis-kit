@@ -1,0 +1,57 @@
+// `<input>`'s allowed explicit `role` values depend on `type`. Keyed by the same type strings as
+// `INPUT_TYPE_ROLE_MAP` (see `lib/primitive/src/constants/aria/implicit-role-record.ts`) plus
+// `hidden`, which has no implicit role but is well-established as permitting no explicit role
+// either (it's never in the a11y tree). Types with no entry here (color, date, datetime-local,
+// month, week, time, file, password) are intentionally left unmodeled rather than guessed.
+export const ALLOWED_INPUT_ROLES: Readonly<Record<string, readonly string[]>> = {
+  checkbox: ['menuitemcheckbox', 'option', 'switch', 'button'],
+  radio: ['menuitemradio'],
+  range: [],
+  number: [],
+  search: ['combobox'],
+  text: ['combobox', 'searchbox', 'spinbutton'],
+  email: ['combobox'],
+  tel: ['combobox'],
+  url: ['combobox'],
+  button: [
+    'link',
+    'menuitem',
+    'menuitemcheckbox',
+    'menuitemradio',
+    'option',
+    'radio',
+    'switch',
+    'tab',
+  ],
+  submit: [
+    'link',
+    'menuitem',
+    'menuitemcheckbox',
+    'menuitemradio',
+    'option',
+    'radio',
+    'switch',
+    'tab',
+  ],
+  reset: [
+    'link',
+    'menuitem',
+    'menuitemcheckbox',
+    'menuitemradio',
+    'option',
+    'radio',
+    'switch',
+    'tab',
+  ],
+  image: [
+    'link',
+    'menuitem',
+    'menuitemcheckbox',
+    'menuitemradio',
+    'option',
+    'radio',
+    'switch',
+    'tab',
+  ],
+  hidden: [],
+}
