@@ -5,6 +5,12 @@ import { InvariantBase } from '../strict'
 import { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attribute-policy'
 import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
 import { REQUIRED_ARIA_PROPERTIES } from './spec/roles/required-properties'
+import { NAME_REQUIRED_ROLES } from './spec/roles/name-required'
+import { LIVE_REGION_ROLES } from './spec/roles/live-region'
+import { ARIA_VALUE_TYPES } from './spec/attributes/aria-value-types'
+import { VALID_RELEVANT_TOKENS } from './spec/attributes/aria-relevant-tokens'
+import { HEADING_IMPLICIT_LEVELS } from './spec/elements/heading-implicit-levels'
+import { INTERACTIVE_TAGS } from './spec/elements/interactive-tags'
 
 import type { AnyRecord, IntrinsicTag } from '@praxis-kit/primitive'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
@@ -146,8 +152,7 @@ export class AriaPolicyEngine extends InvariantBase {
     // an explicit role prop — e.g. <output> implicitly has role=status).
     if (
       AriaPolicyEngine.#hasRole(context.props) ||
-      (isNonNull(context.effectiveRole) &&
-        AriaPolicyEngine.#LIVE_REGION_ROLES.has(context.effectiveRole))
+      (isNonNull(context.effectiveRole) && LIVE_REGION_ROLES.has(context.effectiveRole))
     ) {
       return AriaPolicyEngine.#pipeline
     }
@@ -482,63 +487,6 @@ export class AriaPolicyEngine extends InvariantBase {
 
   // ─── ARIA attribute value validation ──────────────────────────────────────
 
-  // Accepted value shapes for typed ARIA attributes.
-  // Attributes not in this map are unconstrained (arbitrary string values permitted).
-  static readonly #ARIA_VALUE_TYPES: ReadonlyMap<string, AriaValueType> = new Map([
-    // Boolean (true | false)
-    ['aria-atomic', { kind: 'boolean' }],
-    ['aria-busy', { kind: 'boolean' }],
-    ['aria-disabled', { kind: 'boolean' }],
-    ['aria-expanded', { kind: 'boolean' }],
-    ['aria-hidden', { kind: 'boolean' }],
-    ['aria-modal', { kind: 'boolean' }],
-    ['aria-multiline', { kind: 'boolean' }],
-    ['aria-multiselectable', { kind: 'boolean' }],
-    ['aria-readonly', { kind: 'boolean' }],
-    ['aria-required', { kind: 'boolean' }],
-    ['aria-selected', { kind: 'boolean' }],
-    // Tristate (true | false | mixed)
-    ['aria-checked', { kind: 'tristate' }],
-    ['aria-pressed', { kind: 'tristate' }],
-    // Numeric (any finite number)
-    ['aria-valuenow', { kind: 'number' }],
-    ['aria-valuemin', { kind: 'number' }],
-    ['aria-valuemax', { kind: 'number' }],
-    // Integer with optional range
-    ['aria-level', { kind: 'integer', min: 1, max: 6 }],
-    ['aria-posinset', { kind: 'integer', min: 1 }],
-    ['aria-setsize', { kind: 'integer', min: -1 }],
-    ['aria-rowcount', { kind: 'integer', min: -1 }],
-    ['aria-colcount', { kind: 'integer', min: -1 }],
-    ['aria-rowindex', { kind: 'integer', min: 1 }],
-    ['aria-colindex', { kind: 'integer', min: 1 }],
-    ['aria-rowspan', { kind: 'integer', min: 0 }],
-    ['aria-colspan', { kind: 'integer', min: 0 }],
-    // Enum (specific allowed tokens)
-    ['aria-autocomplete', { kind: 'enum', values: new Set(['inline', 'list', 'both', 'none']) }],
-    [
-      'aria-current',
-      {
-        kind: 'enum',
-        values: new Set(['page', 'step', 'location', 'date', 'time', 'true', 'false']),
-      },
-    ],
-    [
-      'aria-haspopup',
-      {
-        kind: 'enum',
-        values: new Set(['false', 'true', 'menu', 'listbox', 'tree', 'grid', 'dialog']),
-      },
-    ],
-    ['aria-invalid', { kind: 'enum', values: new Set(['grammar', 'false', 'spelling', 'true']) }],
-    ['aria-live', { kind: 'enum', values: new Set(['assertive', 'off', 'polite']) }],
-    [
-      'aria-orientation',
-      { kind: 'enum', values: new Set(['horizontal', 'vertical', 'undefined']) },
-    ],
-    ['aria-sort', { kind: 'enum', values: new Set(['ascending', 'descending', 'none', 'other']) }],
-  ])
-
   static #isValidAriaValue(value: unknown, type: AriaValueType): boolean {
     switch (type.kind) {
       case 'boolean':
@@ -597,7 +545,7 @@ export class AriaPolicyEngine extends InvariantBase {
     const results: AriaResult[] = []
     iterate.forEachEntry(props, (key, value) => {
       if (!key.startsWith('aria-')) return
-      const type = AriaPolicyEngine.#ARIA_VALUE_TYPES.get(key)
+      const type = ARIA_VALUE_TYPES.get(key)
       if (!isNonNull(type)) return
       if (AriaPolicyEngine.#isValidAriaValue(value, type)) return
       results.push({
@@ -618,22 +566,13 @@ export class AriaPolicyEngine extends InvariantBase {
 
   // ─── Heading implicit level ────────────────────────────────────────────────
 
-  static readonly #HEADING_IMPLICIT_LEVELS: ReadonlyMap<string, number> = new Map([
-    ['h1', 1],
-    ['h2', 2],
-    ['h3', 3],
-    ['h4', 4],
-    ['h5', 5],
-    ['h6', 6],
-  ])
-
   static #checkRedundantAriaLevel({
     tag,
     props,
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
     if (effectiveRole === 'none' || effectiveRole === 'presentation') return NO_VIOLATIONS
-    const implicitLevel = AriaPolicyEngine.#HEADING_IMPLICIT_LEVELS.get(tag)
+    const implicitLevel = HEADING_IMPLICIT_LEVELS.get(tag)
     if (!isNonNull(implicitLevel)) return NO_VIOLATIONS
     const raw = props['aria-level']
     if (!isNonNull(raw)) return NO_VIOLATIONS
@@ -653,19 +592,12 @@ export class AriaPolicyEngine extends InvariantBase {
 
   // ─── Name-required roles ───────────────────────────────────────────────────
 
-  // Roles that always require an accessible name per WAI-ARIA APG.
-  // Dialog and landmark names are enforced via contracts (ariaContract) rather than
-  // the built-in pipeline so consumers can opt in; img is built in because role=img
-  // on any element (including bare <img>) is definitionally useless without a name.
-  static readonly #NAME_REQUIRED_ROLES: ReadonlySet<string> = new Set(['img'])
-
   static #checkNameRequiredRoles({
     tag,
     props,
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
-    if (!effectiveRole || !AriaPolicyEngine.#NAME_REQUIRED_ROLES.has(effectiveRole))
-      return NO_VIOLATIONS
+    if (!effectiveRole || !NAME_REQUIRED_ROLES.has(effectiveRole)) return NO_VIOLATIONS
     if ('aria-label' in props || 'aria-labelledby' in props) return NO_VIOLATIONS
     // Native <img> elements can satisfy the name requirement with a non-empty alt attribute.
     if (tag === 'img' && typeof props.alt === 'string' && props.alt.length > 0) return NO_VIOLATIONS
@@ -700,19 +632,10 @@ export class AriaPolicyEngine extends InvariantBase {
     return results
   }
 
-  // Natively interactive HTML elements — always keyboard-reachable unless explicitly disabled.
-  static readonly #INTERACTIVE_TAGS: ReadonlySet<string> = new Set([
-    'a',
-    'button',
-    'input',
-    'select',
-    'textarea',
-  ])
-
   // WAI-ARIA 1.2 §6.6: aria-hidden="true" must not be placed on focusable elements.
   static #checkAriaHiddenOnFocusable({ tag, props }: AriaContext): readonly AriaResult[] {
     if (props['aria-hidden'] !== 'true' && props['aria-hidden'] !== true) return NO_VIOLATIONS
-    const isInteractive = AriaPolicyEngine.#INTERACTIVE_TAGS.has(tag)
+    const isInteractive = INTERACTIVE_TAGS.has(tag)
     if (!isInteractive) {
       const tabindex = props.tabindex
       const n =
@@ -760,17 +683,9 @@ export class AriaPolicyEngine extends InvariantBase {
     return results
   }
 
-  // WAI-ARIA live region roles and their implied aria-live politeness values.
-  static readonly #LIVE_REGION_ROLES: ReadonlyMap<string, string> = new Map([
-    ['alert', 'assertive'],
-    ['status', 'polite'],
-    ['log', 'polite'],
-    ['timer', 'off'],
-  ])
-
   static #checkMissingLiveRegion({ effectiveRole, props }: AriaContext): readonly AriaResult[] {
     if (!effectiveRole) return NO_VIOLATIONS
-    const impliedLive = AriaPolicyEngine.#LIVE_REGION_ROLES.get(effectiveRole)
+    const impliedLive = LIVE_REGION_ROLES.get(effectiveRole)
     if (!impliedLive) return NO_VIOLATIONS
     // `props` is the pre-fix snapshot every rule in this pass evaluates against (see #pipeline),
     // so this only sees that the *key* is present, not whether its value is valid. An invalid
@@ -800,8 +715,7 @@ export class AriaPolicyEngine extends InvariantBase {
   }
 
   static #checkMissingAtomic({ effectiveRole, props }: AriaContext): readonly AriaResult[] {
-    if (!effectiveRole || !AriaPolicyEngine.#LIVE_REGION_ROLES.has(effectiveRole))
-      return NO_VIOLATIONS
+    if (!effectiveRole || !LIVE_REGION_ROLES.has(effectiveRole)) return NO_VIOLATIONS
     if ('aria-atomic' in props) return NO_VIOLATIONS
 
     return [
@@ -813,8 +727,6 @@ export class AriaPolicyEngine extends InvariantBase {
       },
     ]
   }
-
-  static readonly #VALID_RELEVANT_TOKENS = new Set(['additions', 'removals', 'text', 'all'])
 
   // Custom fix rules passed via `options.rules` must be pure functions of (tag, props) — the cache
   // replays stored fixes against new prop objects, so fixes that close over external state will
@@ -834,7 +746,7 @@ export class AriaPolicyEngine extends InvariantBase {
     if (typeof relevant !== 'string') return NO_VIOLATIONS
 
     const tokens = relevant.trim().split(/\s+/)
-    const invalid = tokens.filter((t) => !AriaPolicyEngine.#VALID_RELEVANT_TOKENS.has(t))
+    const invalid = tokens.filter((t) => !VALID_RELEVANT_TOKENS.has(t))
     if (invalid.length > 0) {
       return [
         {
