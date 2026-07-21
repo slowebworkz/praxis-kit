@@ -5,7 +5,9 @@ import { ChildrenEvaluator, diagnoseChildren } from '../children'
 import { throwDiagnostics } from '@praxis-kit/diagnostics'
 import { getHtmlChildrenEvaluator } from './evaluators'
 import {
+  anchorContract,
   audioContract,
+  buttonContract,
   colgroupContract,
   datalistContract,
   detailsContract,
@@ -16,12 +18,15 @@ import {
   headContract,
   htmlContract,
   htmlContracts,
+  labelContract,
   landmarkContract,
   listboxContract,
   listContract,
   menubarContract,
   menuContract,
+  objectContract,
   optgroupContract,
+  pContract,
   pictureContract,
   radiogroupContract,
   selectContract,
@@ -344,6 +349,101 @@ describe('fieldsetContract', () => {
   })
 })
 
+// ─── objectContract ───────────────────────────────────────────────────────────
+
+describe('objectContract', () => {
+  it('accepts params followed by flow content', () => {
+    expect(check(objectContract, [el('param'), el('param'), el('img')])).toEqual([])
+  })
+
+  it('accepts flow content with no params', () => {
+    expect(check(objectContract, [el('img')])).toEqual([])
+  })
+
+  it('accepts a component element as content', () => {
+    expect(check(objectContract, [componentEl()])).toEqual([])
+  })
+})
+
+// ─── buttonContract / anchorContract ──────────────────────────────────────────
+
+describe('buttonContract', () => {
+  it('accepts non-interactive content', () => {
+    expect(check(buttonContract, [el('span'), el('img')])).toEqual([])
+  })
+
+  it('accepts a component element as content', () => {
+    expect(check(buttonContract, [componentEl()])).toEqual([])
+  })
+
+  it.each(['a', 'button', 'input', 'select', 'textarea', 'label'])(
+    'rejects nested interactive content: %s',
+    (tag) => {
+      expect(check(buttonContract, [el(tag)])).toMatchObject([{ kind: 'unexpected' }])
+    },
+  )
+})
+
+describe('anchorContract', () => {
+  it('accepts non-interactive content', () => {
+    expect(check(anchorContract, [el('span'), el('img')])).toEqual([])
+  })
+
+  it.each(['a', 'button', 'input', 'select', 'textarea', 'label'])(
+    'rejects nested interactive content: %s',
+    (tag) => {
+      expect(check(anchorContract, [el(tag)])).toMatchObject([{ kind: 'unexpected' }])
+    },
+  )
+})
+
+// ─── labelContract ────────────────────────────────────────────────────────────
+
+describe('labelContract', () => {
+  it('accepts a single labelable control alongside text', () => {
+    expect(check(labelContract, [el('input')])).toEqual([])
+  })
+
+  it('accepts no control at all', () => {
+    expect(check(labelContract, [el('span')])).toEqual([])
+  })
+
+  it.each(['button', 'input', 'meter', 'output', 'progress', 'select', 'textarea'])(
+    'accepts %s as the labelable control',
+    (tag) => {
+      expect(check(labelContract, [el(tag)])).toEqual([])
+    },
+  )
+
+  it('rejects more than one labelable control', () => {
+    const v = check(labelContract, [el('input'), el('select')])
+    expect(v).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'cardinality-max', ruleName: 'control' }),
+      ]),
+    )
+  })
+})
+
+// ─── pContract ─────────────────────────────────────────────────────────────────
+
+describe('pContract', () => {
+  it('accepts phrasing content', () => {
+    expect(check(pContract, [el('span'), el('a'), el('img')])).toEqual([])
+  })
+
+  it('accepts a component element as content', () => {
+    expect(check(pContract, [componentEl()])).toEqual([])
+  })
+
+  it.each(['div', 'ul', 'ol', 'table', 'blockquote', 'section', 'h1', 'p', 'hr', 'form'])(
+    'rejects block-level content: %s',
+    (tag) => {
+      expect(check(pContract, [el(tag)])).toMatchObject([{ kind: 'unexpected' }])
+    },
+  )
+})
+
 // ─── mediaContract (audio/video) ──────────────────────────────────────────────
 
 describe('audioContract / videoContract', () => {
@@ -586,6 +686,11 @@ describe('htmlContracts', () => {
     expect(htmlContracts['figure']).toBe(figureContract)
     expect(htmlContracts['details']).toBe(detailsContract)
     expect(htmlContracts['fieldset']).toBe(fieldsetContract)
+    expect(htmlContracts['object']).toBe(objectContract)
+    expect(htmlContracts['button']).toBe(buttonContract)
+    expect(htmlContracts['a']).toBe(anchorContract)
+    expect(htmlContracts['label']).toBe(labelContract)
+    expect(htmlContracts['p']).toBe(pContract)
     expect(htmlContracts['head']).toBe(headContract)
     expect(htmlContracts['html']).toBe(htmlContract)
   })

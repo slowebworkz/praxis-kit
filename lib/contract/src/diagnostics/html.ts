@@ -24,6 +24,10 @@ const ATTRIBUTE_IGNORED_CODES: Readonly<Record<string, DiagnosticCode>> = {
   step: DiagnosticCode.HtmlInputStepIgnoredForType,
   accept: DiagnosticCode.HtmlInputAcceptIgnoredForType,
   capture: DiagnosticCode.HtmlInputCaptureIgnoredForType,
+  size: DiagnosticCode.HtmlInputSizeIgnoredForType,
+  alt: DiagnosticCode.HtmlInputAltIgnoredForType,
+  height: DiagnosticCode.HtmlInputHeightIgnoredForType,
+  width: DiagnosticCode.HtmlInputWidthIgnoredForType,
 }
 
 export const HtmlDiagnostics = {

@@ -11,9 +11,9 @@ import { createMutuallyExclusiveRule } from './spec/validators/mutually-exclusiv
 // is a compile error at the call site below, rather than a lookup that can return `undefined`.
 const policyByAttribute = Object.fromEntries(
   INPUT_ATTRIBUTE_TYPE_POLICIES.map((policy) => [policy.attribute, policy]),
-) as unknown as Record<InputAttributeName, AttributeTypePolicy>
+) as unknown as Record<InputAttributeName, AttributeTypePolicy<InputAttributeName>>
 
-function policyFor(attribute: InputAttributeName): AttributeTypePolicy {
+function policyFor(attribute: InputAttributeName): AttributeTypePolicy<InputAttributeName> {
   return policyByAttribute[attribute]
 }
 
@@ -54,6 +54,14 @@ export const stepRequiresNumericTypeRule = createInputAttributeTypeRule(policyFo
 export const acceptRequiresFileTypeRule = createInputAttributeTypeRule(policyFor('accept'))
 
 export const captureRequiresFileTypeRule = createInputAttributeTypeRule(policyFor('capture'))
+
+export const sizeRequiresTextTypeRule = createInputAttributeTypeRule(policyFor('size'))
+
+export const altRequiresImageTypeRule = createInputAttributeTypeRule(policyFor('alt'))
+
+export const heightRequiresImageTypeRule = createInputAttributeTypeRule(policyFor('height'))
+
+export const widthRequiresImageTypeRule = createInputAttributeTypeRule(policyFor('width'))
 
 // ─── Layer 2: accessibility best practices (legal HTML, still worth flagging) ────────────────
 
@@ -109,6 +117,10 @@ export const INPUT_RULES: readonly AriaRule[] = [
   stepRequiresNumericTypeRule,
   acceptRequiresFileTypeRule,
   captureRequiresFileTypeRule,
+  sizeRequiresTextTypeRule,
+  altRequiresImageTypeRule,
+  heightRequiresImageTypeRule,
+  widthRequiresImageTypeRule,
   inputAccessibleNameRule,
   passwordAutocompleteRule,
   requiredReadOnlyConflictRule,

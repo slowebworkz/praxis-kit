@@ -20,6 +20,10 @@ export const INPUT_ATTRIBUTE_TYPE_POLICIES = [
   { attribute: 'step', allowedTypes: NUMERIC_INPUT_TYPES },
   { attribute: 'accept', allowedTypes: ['file'] },
   { attribute: 'capture', allowedTypes: ['file'] },
+  { attribute: 'size', allowedTypes: TEXT_INPUT_TYPES },
+  { attribute: 'alt', allowedTypes: ['image'] },
+  { attribute: 'height', allowedTypes: ['image'] },
+  { attribute: 'width', allowedTypes: ['image'] },
 ] as const satisfies readonly AttributeTypePolicy[]
 
 export type InputAttributeName = (typeof INPUT_ATTRIBUTE_TYPE_POLICIES)[number]['attribute']

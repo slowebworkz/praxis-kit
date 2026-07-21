@@ -65,6 +65,10 @@ export enum DiagnosticCode {
   HtmlInputStepIgnoredForType = 'HTML3109',
   HtmlInputAcceptIgnoredForType = 'HTML3110',
   HtmlInputCaptureIgnoredForType = 'HTML3111',
+  HtmlInputSizeIgnoredForType = 'HTML3112',
+  HtmlInputAltIgnoredForType = 'HTML3113',
+  HtmlInputHeightIgnoredForType = 'HTML3114',
+  HtmlInputWidthIgnoredForType = 'HTML3115',
 
   // Accessibility (best-practice advisories, not HTML/ARIA validity facts)
   A11yInputMissingAccessibleName = 'A11Y8100',
