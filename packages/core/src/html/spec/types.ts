@@ -1,68 +1,164 @@
+import type { Simplify } from 'type-fest'
+import type { AnyRecord, StringMap } from '@praxis-kit/primitive'
 import type { DiagnosticInput } from '@praxis-kit/diagnostics'
-import type { Severity } from '../../types'
+import type { AriaRole, Severity } from '../../types'
 
-// Phase 2 of the semantic spec engine: a declarative shape for "what roles may this element take,"
-// general enough to cover the three shapes discovered while extracting input/img/table:
-//   - fixed:  the allowed set never varies (table: always ['grid', 'treegrid'])
-//   - byProp: the allowed set is looked up by a single prop's string value, with a fallback when
-//             the prop is absent (input: keyed by `type`, default "text")
-//   - dynamic: the allowed set depends on props in a way a lookup table can't express (img: keyed
-//             by whether `alt` is the empty string, not by an enum value)
-// `undefined` from `resolveAllowedRoles` means "not modeled" — see `ALLOWED_ROLES`'s doc comment
-// in `role-restrictions.ts` for what that means to callers.
-export interface RolePolicyContext {
-  readonly props: Readonly<Record<string, unknown>>
+/**
+ * Context supplied to dynamic role resolvers.
+ *
+ * Wraps the element's properties so additional context can be introduced in the
+ * future without changing the resolver function signature.
+ */
+export interface RolePolicyContext<TProps extends AnyRecord = AnyRecord> {
+  readonly props: Readonly<TProps>
 }
 
-export type RolePolicy =
-  | { readonly kind: 'fixed'; readonly roles: readonly string[] }
-  | {
-      readonly kind: 'byProp'
-      readonly prop: string
-      readonly map: Readonly<Record<string, readonly string[]>>
-      readonly fallback: string
-    }
-  | {
-      readonly kind: 'dynamic'
-      readonly resolve: (context: RolePolicyContext) => readonly string[]
-    }
-
-// "This attribute only applies when the element's discriminator prop (e.g. `type`) is one of
-// `allowedTypes`" — the fact behind input's checked/maxLength/min/etc. policies. Named generically
-// since the shape isn't input-specific, even though input is its only consumer so far.
-export interface AttributeTypePolicy {
-  readonly attribute: string
-  readonly allowedTypes: readonly string[]
+/**
+ * Describes how the set of valid ARIA roles for an HTML element is determined.
+ *
+ * Most elements fall into one of three categories:
+ *
+ * - `fixed` — the allowed roles never vary (for example, `<table>`).
+ * - `byProp` — the allowed roles are selected by a discriminator property such as
+ *   `<input type="...">`.
+ * - `dynamic` — the allowed roles depend on arbitrary element state that cannot be
+ *   represented as a simple lookup table.
+ */
+export interface FixedRolePolicy<TRole extends string = AriaRole> {
+  readonly kind: 'fixed'
+  readonly roles: readonly TRole[]
 }
 
-// Diagnostic factories in `@praxis-kit/contract` return a `DiagnosticInput` plus a concrete
-// `severity` (see e.g. `InputAccessibilityDiagnostics`'s local `Fact` type) — this is that shape,
-// named for reuse by any spec-table policy that needs to hand back a diagnostic.
+export interface PropRolePolicy<TProp extends string = string, TRole extends string = AriaRole> {
+  readonly kind: 'byProp'
+  readonly prop: TProp
+  readonly map: Readonly<StringMap<readonly TRole[]>>
+  readonly fallback: string
+}
+
+export interface DynamicRolePolicy<TRole extends string = AriaRole> {
+  readonly kind: 'dynamic'
+  readonly resolve: (context: RolePolicyContext) => readonly TRole[]
+}
+
+export type RolePolicy<TProp extends string = string, TRole extends string = AriaRole> =
+  FixedRolePolicy<TRole> | PropRolePolicy<TProp, TRole> | DynamicRolePolicy<TRole>
+
+/**
+ * Declares that an attribute is only valid when an element's discriminator value
+ * belongs to a particular vocabulary.
+ *
+ * For example, `<input maxLength>` is only valid for text-like input types, while
+ * `<input accept>` is only valid for `type="file"`.
+ *
+ * The generic parameters constrain the attribute-name and discriminator
+ * vocabularies so element-specific specs retain literal type safety.
+ */
+export interface AttributeTypePolicy<
+  TAttribute extends string = string,
+  TType extends string = string,
+> {
+  readonly attribute: TAttribute
+  readonly allowedTypes: readonly TType[]
+}
+
+/**
+ * The diagnostic shape returned by semantic specification tables.
+ *
+ * Extends `DiagnosticInput` with a concrete severity so validators can emit
+ * diagnostics without supplying severity separately.
+ */
 export interface AriaDiagnosticFact extends DiagnosticInput {
   readonly severity: Severity
 }
 
-// "These two props are mutually exclusive" — e.g. `required` + `readOnly` on `<input>`, a
-// combination that's legal HTML but never satisfiable through user interaction. The diagnostic
-// stays a caller-supplied factory (rather than a generic message built from the prop names)
-// because existing wording like "readOnly wins" is specific enough that a templated message would
-// read worse than the handwritten one it replaces.
+/**
+ * Declares a pair of properties that must not appear together.
+ *
+ * The diagnostic remains caller-supplied so each policy can explain the conflict
+ * using domain-specific wording instead of a generic message.
+ */
 export interface MutuallyExclusivePolicy {
   readonly props: readonly [string, string]
   readonly diagnostic: () => AriaDiagnosticFact
 }
 
-export interface HtmlElementSpec {
-  readonly tag: string
-  readonly allowedRoles?: RolePolicy
-  readonly attributes?: readonly AttributeTypePolicy[]
-  readonly mutuallyExclusive?: readonly MutuallyExclusivePolicy[]
+/**
+ * Identifies the HTML element described by a semantic specification.
+ */
+export interface HtmlElementBase<TTag extends string = string> {
+  readonly tag: TTag
+}
+
+/**
+ * Capability indicating that an element constrains its permitted ARIA roles.
+ */
+export interface HasAllowedRoles<TProp extends string = string, TRole extends string = AriaRole> {
+  readonly allowedRoles: RolePolicy<TProp, TRole>
+}
+
+/**
+ * Capability indicating that an element places type-dependent restrictions on
+ * one or more attributes.
+ */
+export interface HasAttributePolicies<
+  TAttribute extends string = string,
+  TType extends string = string,
+> {
+  readonly attributes: readonly AttributeTypePolicy<TAttribute, TType>[]
+}
+
+/**
+ * Capability indicating that an element defines mutually exclusive property
+ * combinations.
+ */
+export interface HasMutuallyExclusivePolicies {
+  readonly mutuallyExclusive: readonly MutuallyExclusivePolicy[]
+}
+
+/**
+ * Declarative semantic description of an HTML element.
+ *
+ * Each capability is optional because only the semantics modeled by Praxis Kit
+ * need to be present. Consumers depend only on the capabilities they require
+ * rather than the entire specification.
+ *
+ * `Simplify` is used purely to improve editor tooltips by flattening the
+ * composed intersection into a single object shape.
+ */
+export type HtmlElementSpec<
+  TTag extends string = string,
+  TAttribute extends string = string,
+  TType extends string = string,
+  TProp extends string = string,
+  TRole extends string = AriaRole,
+> = Simplify<
+  HtmlElementBase<TTag> &
+    Partial<HasAllowedRoles<TProp, TRole>> &
+    Partial<HasAttributePolicies<TAttribute, TType>> &
+    Partial<HasMutuallyExclusivePolicies>
+>
+
+/**
+ * Creates a property-discriminated role policy.
+ *
+ * The fallback discriminator is constrained to the keys of `map`, preventing
+ * specifications from referring to a non-existent fallback entry. The role
+ * vocabulary is inferred from `map`, preserving literal role types instead of
+ * widening them to `AriaRole`.
+ */
+export function definePropRolePolicy<
+  TProp extends string,
+  TRole extends string,
+  TMap extends StringMap<readonly TRole[]>,
+>(prop: TProp, map: TMap, fallback: keyof TMap & string): RolePolicy<TProp, TRole> {
+  return { kind: 'byProp', prop, map, fallback }
 }
 
 export function resolveAllowedRoles(
   spec: HtmlElementSpec,
-  props: Readonly<Record<string, unknown>>,
-): readonly string[] | undefined {
+  props: Readonly<AnyRecord>,
+): readonly AriaRole[] | undefined {
   const policy = spec.allowedRoles
   if (!policy) return undefined
   switch (policy.kind) {

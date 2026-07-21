@@ -2,6 +2,7 @@ import type { AnyRecord } from '@praxis-kit/primitive'
 import type { AriaContext, AriaFix, AriaResult, AriaRule } from '../../../types'
 import { HtmlDiagnostics } from '@praxis-kit/contract'
 import type { AttributeTypePolicy } from '../types'
+import type { InputAttributeName } from '../attributes/input'
 
 const DEFAULT_INPUT_TYPE = 'text'
 
@@ -27,7 +28,7 @@ function removeAttributeFix(attribute: string): AriaFix {
 export function createInputAttributeTypeRule({
   attribute,
   allowedTypes,
-}: AttributeTypePolicy): AriaRule {
+}: AttributeTypePolicy<InputAttributeName>): AriaRule {
   const rule = ({ tag, props }: AriaContext): readonly AriaResult[] => {
     if (tag !== 'input' || !(attribute in props)) return []
     const type = typeof props.type === 'string' ? props.type : DEFAULT_INPUT_TYPE

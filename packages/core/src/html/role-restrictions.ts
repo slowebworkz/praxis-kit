@@ -1,4 +1,4 @@
-import type { AriaContext, AriaFix, AriaResult, AriaRule } from '../types'
+import type { AriaContext, AriaFix, AriaResult, AriaRole, AriaRule } from '../types'
 import { HtmlDiagnostics } from '@praxis-kit/contract'
 import type { HtmlElementSpec } from './spec/types'
 import { resolveAllowedRoles } from './spec/types'
@@ -15,7 +15,7 @@ import { tableElementSpec } from './spec/elements/table'
 // This table should be cross-checked against the current W3C ARIA-in-HTML spec before being
 // treated as exhaustive — it was authored from well-established fragments of that spec, not
 // generated from it mechanically.
-const ALLOWED_ROLES: Readonly<Record<string, readonly string[]>> = {
+const ALLOWED_ROLES: Readonly<Record<string, readonly AriaRole[]>> = {
   article: ['application', 'document', 'feed', 'main', 'none', 'presentation', 'region'],
   aside: ['feed', 'none', 'presentation', 'region', 'search'],
   footer: ['group', 'none', 'presentation'],
@@ -102,7 +102,7 @@ const ELEMENT_SPECS: Readonly<Record<string, HtmlElementSpec>> = {
 function getAllowedRoles(
   tag: string,
   props: Readonly<Record<string, unknown>>,
-): readonly string[] | undefined {
+): readonly AriaRole[] | undefined {
   const spec = ELEMENT_SPECS[tag]
   if (spec) return resolveAllowedRoles(spec, props)
   return ALLOWED_ROLES[tag]

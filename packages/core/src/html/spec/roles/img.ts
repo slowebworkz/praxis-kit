@@ -1,6 +1,8 @@
+import type { AriaRole } from '../../../types'
+
 // `<img>`'s allowed roles depend on `alt`, not just the tag — decorative images (`alt=""`) permit
 // no explicit role at all, while a named/unnamed-but-present image permits this fairly large set.
-export const IMG_NAMED_ROLES: readonly string[] = [
+export const IMG_NAMED_ROLES: readonly AriaRole[] = [
   'button',
   'checkbox',
   'link',
