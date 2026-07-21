@@ -136,6 +136,35 @@ describe('resolveFactoryOptions() — normalize', () => {
 })
 
 // ---------------------------------------------------------------------------
+// enforcement.aria / enforcement.rules
+// ---------------------------------------------------------------------------
+
+describe('resolveFactoryOptions() — enforcement.aria / enforcement.rules', () => {
+  const ruleA = () => []
+  const ruleB = () => []
+
+  it('omits ariaRules when neither aria nor rules is provided', () => {
+    expect(resolveFactoryOptions({})).not.toHaveProperty('ariaRules')
+  })
+
+  it('maps enforcement.aria to ariaRules', () => {
+    expect(resolveFactoryOptions({ enforcement: { aria: [ruleA] } }).ariaRules).toEqual([ruleA])
+  })
+
+  it('maps enforcement.rules to ariaRules when aria is absent', () => {
+    expect(resolveFactoryOptions({ enforcement: { rules: [ruleB] } }).ariaRules).toEqual([ruleB])
+  })
+
+  it('merges enforcement.aria and enforcement.rules into one ariaRules list', () => {
+    // Both buckets are evaluated through the same AriaPolicyEngine — rules exists only so a
+    // rule with no relationship to ARIA doesn't have to sit under the `aria` name.
+    expect(
+      resolveFactoryOptions({ enforcement: { aria: [ruleA], rules: [ruleB] } }).ariaRules,
+    ).toEqual([ruleA, ruleB])
+  })
+})
+
+// ---------------------------------------------------------------------------
 // Result is frozen
 // ---------------------------------------------------------------------------
 

@@ -1,6 +1,7 @@
 import type {
   AnyClassPluginFactory,
   AnyRecord,
+  AriaRule,
   ElementType,
   EmptyRecord,
   FactoryOptions,
@@ -36,6 +37,19 @@ function whenDefined<K extends PropertyKey, V>(
   return value === undefined ? {} : ({ [key]: value } as Record<K, V>)
 }
 
+// `enforcement.rules` exists purely so a rule with no relationship to ARIA (an HTML fact, a
+// security check) doesn't have to sit under the misleadingly-named `aria` bucket to get
+// AriaPolicyEngine's fix/cache machinery — both buckets run through the same engine, so they're
+// merged into one rule set here rather than kept as two separate concepts downstream.
+function mergeAriaRules(
+  aria: readonly AriaRule[] | undefined,
+  rules: readonly AriaRule[] | undefined,
+): readonly AriaRule[] | undefined {
+  if (!aria?.length) return rules
+  if (!rules?.length) return aria
+  return [...aria, ...rules]
+}
+
 export function resolveFactoryOptions<
   TDefault extends ElementType,
   Props extends AnyRecord,
@@ -67,7 +81,7 @@ export function resolveFactoryOptions<
     ...whenDefined('defaultVariants', styling?.defaults),
     ...whenDefined('compoundVariants', styling?.compounds),
     ...whenDefined('normalizeFn', composedNormalizeFn),
-    ...whenDefined('ariaRules', enforcement?.aria),
+    ...whenDefined('ariaRules', mergeAriaRules(enforcement?.aria, enforcement?.rules)),
     ...whenDefined('childRules', enforcement?.children),
     ...whenDefined('exclusiveChildren', enforcement?.exclusiveChildren),
     ...whenDefined('allowText', enforcement?.allowText),

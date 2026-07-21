@@ -16,31 +16,33 @@ import type { RenderCallbackProps } from './props'
 import type { UnknownProps } from './primitives'
 
 /**
- * Maps a polymorphic element type to the instance type exposed through `ref`.
+ * Resolves the instance type exposed through `ref` for a polymorphic
+ * element.
  *
- * Intrinsic HTML elements resolve to their corresponding DOM element type;
- * custom React components currently fall back to `unknown`.
+ * Intrinsic HTML elements map to their corresponding DOM element type;
+ * custom React components currently resolve to `unknown`.
  */
 export type ElementRef<T extends ElementType> = T extends IntrinsicTag
   ? HTMLElementTagNameMap[T]
   : unknown
 
 /**
- * React's intrinsic JSX props for a given element.
+ * React's intrinsic JSX props for an element type.
  *
- * Custom components intentionally fall back to `UnknownProps`; the component's
- * own prop model defines their accepted props instead.
+ * Custom components intentionally resolve to `UnknownProps`; their own
+ * prop definitions determine the accepted props.
  */
 type IntrinsicJSXProps<T extends ElementType> = T extends IntrinsicTag
   ? JSX.IntrinsicElements[T]
   : UnknownProps
 
 /**
- * Removes index signatures while preserving explicitly named properties.
+ * Removes index signatures while preserving explicitly declared
+ * properties.
  *
- * This prevents generic fallback constraints such as `Record<string, unknown>`
- * from collapsing `keyof T` to `string`, which would cause
- * `Omit<IntrinsicJSXProps<T>, keyof ...>` to remove every intrinsic prop.
+ * Prevents broad index signatures (for example `Record<string, unknown>`)
+ * from causing `keyof T` to become `string`, which would otherwise erase
+ * every intrinsic prop during `Omit`.
  */
 type StripIndexSignature<T> = {
   [K in keyof T as string extends K ? never : K]: T[K]
@@ -55,19 +57,17 @@ type ComponentVariants<G extends PolymorphicGenerics> = StripIndexSignature<
 >
 
 /**
- * Props owned by the component itself.
+ * Props defined by the component itself.
  *
- * These take precedence over intrinsic HTML props when names overlap.
+ * These override intrinsic JSX props with the same name.
  */
 type OwnedProps<G extends PolymorphicGenerics> = ComponentProps<G> & ComponentVariants<G>
 
 /**
- * Polymorphic rendering controls.
+ * Props that control how the component renders.
  *
- * These describe *how* the component renders rather than the data it owns.
- *
- * `children` and `asChild` are intentionally omitted so each render mode
- * can provide its own stricter contract.
+ * `children` and `asChild` are intentionally omitted so each render
+ * strategy can define its own contract.
  */
 type PolymorphicControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = {
   /**
@@ -91,17 +91,17 @@ type PolymorphicControlProps<G extends PolymorphicGenerics, TAs extends ElementT
 }
 
 /**
- * Complete set of props owned by the component.
+ * All props reserved by the polymorphic component.
  *
- * Used primarily as the exclusion list when inheriting intrinsic JSX props.
+ * Used primarily to exclude conflicting intrinsic JSX props.
  */
 type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = OwnedProps<G> &
   PolymorphicControlProps<G, TAs>
 
 /**
- * Intrinsic JSX props after removing every prop owned by the component.
+ * Intrinsic JSX props after removing every reserved component prop.
  *
- * Component props always win over intrinsic props with the same name.
+ * Component-defined props always take precedence.
  */
 type IntrinsicPropsWithoutOwned<G extends PolymorphicGenerics, TAs extends ElementType> = Omit<
   IntrinsicJSXProps<TAs>,
@@ -109,10 +109,9 @@ type IntrinsicPropsWithoutOwned<G extends PolymorphicGenerics, TAs extends Eleme
 >
 
 /**
- * Base props shared by every render mode.
+ * Props shared by every rendering strategy.
  *
- * Render modes contribute only their discriminants (`asChild`, `render`,
- * `children`, etc.).
+ * Each render mode contributes only its discriminating props.
  */
 type BaseProps<G extends PolymorphicGenerics, TAs extends ElementType> = IntrinsicPropsWithoutOwned<
   G,
@@ -139,12 +138,9 @@ type SlotRenderMode = {
 }
 
 /**
- * Render callback.
+ * Render callback mode.
  *
- * The callback receives fully resolved props (classes, refs, filtered props)
- * and is responsible for rendering the target element.
- *
- * This provides the flexibility of `asChild` without `cloneElement`.
+ * Receives the fully resolved props and returns the rendered element.
  */
 type CallbackRenderMode = {
   render: (props: RenderCallbackProps) => ReactElement
@@ -183,11 +179,11 @@ export type PolymorphicWithRender<
 /**
  * A polymorphic React component.
  *
- * Overloads form a discriminated union:
+ * Overloads provide three rendering strategies:
  *
- * • `render`   → render callback
- * • `asChild`  → Slot rendering
- * • otherwise  → normal rendering
+ * - `render`   — render callback
+ * - `asChild`  — slot rendering
+ * - default    — standard polymorphic rendering
  */
 export type PolymorphicComponent<G extends PolymorphicGenerics> = {
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicWithRender<G, TAs>): ReactElement
@@ -195,6 +191,17 @@ export type PolymorphicComponent<G extends PolymorphicGenerics> = {
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicWithAsChild<G, TAs>): ReactElement
 
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicProps<G, TAs>): ReactElement
+
+  /**
+   * Non-generic fallback overload used for type extraction.
+   *
+   * TypeScript resolves conditional types such as
+   * `React.ComponentProps<typeof Component>` against only the final
+   * overload. Anchoring that overload to the default element preserves
+   * correct prop inference for tools such as Storybook and
+   * `React.ComponentProps`.
+   */
+  (props: PolymorphicProps<G, DefaultOf<G>>): ReactElement
 
   displayName?: string
 }

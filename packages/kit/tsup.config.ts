@@ -236,6 +236,21 @@ export default [
     },
   }),
 
+  // HTML rule library — the built-in per-tag HTML/ARIA-fact rules merged automatically into
+  // every component's enforcement.aria pipeline, exported for consumers to reference, compose
+  // around, or discover.
+  defineConfig({
+    entry: { 'html/index': './html.ts' },
+    format: ['esm'],
+    dts: bundledDts(),
+    tsconfig: 'tsconfig.build-base.json',
+    noExternal: adapterNoExternal,
+    external: diagnosticsExternal,
+    esbuildOptions(options) {
+      options.alias = { ...options.alias, ...sharedAlias }
+    },
+  }),
+
   // Utils — general-purpose helpers (e.g. memoize) for consumers.
   defineConfig({
     entry: { 'utils/index': './utils.ts' },

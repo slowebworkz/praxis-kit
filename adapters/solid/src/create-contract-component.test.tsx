@@ -237,3 +237,26 @@ describe('createContractComponent (Solid adapter)', () => {
     ).toThrow()
   })
 })
+
+// Regression coverage for a divergence between JSX's own attribute checking and a direct
+// prop-type extraction (the mechanism a tool like Storybook uses to type `args`/`argTypes` — via
+// `Parameters<typeof Component>[0]`, since Solid has no built-in `ComponentProps` helper).
+// TypeScript resolves a conditional/inferred type against an overloaded call signature using
+// only its last member, and the only overload was generic with no call site to infer `TAs`
+// from — so a native attribute like `disabled` used to vanish from the extracted type even
+// though it worked fine directly in JSX.
+describe('extracted prop type — extraction outside JSX', () => {
+  const Button = createContractComponent({ tag: 'button', name: 'Button' })
+  void Button
+  type ButtonProps = Parameters<typeof Button>[0]
+
+  it('includes a native attribute of the default element (disabled)', () => {
+    const props: ButtonProps = { disabled: true }
+    void props
+  })
+
+  it('includes an intrinsic attribute alongside disabled (type)', () => {
+    const props: ButtonProps = { disabled: true, type: 'submit' }
+    void props
+  })
+})

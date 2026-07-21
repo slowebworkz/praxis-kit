@@ -4,3 +4,4 @@
 // in-house, rather than hand-rolling it against `COMPONENT_DEFAULT_TAG` themselves.
 export { isObject, isString } from '@praxis-kit/primitive'
 export { isTag, getTag, isFlowContent } from '@praxis-kit/primitive'
+export type { TagChild, FlowContentChild } from '@praxis-kit/primitive'

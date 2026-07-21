@@ -3,7 +3,7 @@ import { isNonNull, isNull, isNumber, isString, iterate, LRUCache } from '@praxi
 import { AriaDiagnostics, HtmlDiagnostics } from '../diagnostics'
 import { InvariantBase } from '../strict'
 import { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attribute-policy'
-import { getImplicitRole, isStandaloneTag, isStrongImplicitRole } from './aria-role-policy'
+import { getImplicitRole, hasStandaloneRole, isStrongImplicitRole } from './aria-role-policy'
 import { REQUIRED_ARIA_PROPERTIES } from './spec/roles/required-properties'
 import { NAME_REQUIRED_ROLES } from './spec/roles/name-required'
 import { ATOMIC_REQUIREMENTS, LIVE_REGION_ROLES } from './spec/roles/live-region'
@@ -81,11 +81,12 @@ export class AriaPolicyEngine extends InvariantBase {
   static #deriveContext(tag: AnyTag, props: IntrinsicProps): EvaluationContext {
     if (!isIntrinsicTag(tag)) return { proceed: false, result: { props, violations: [] } }
     const implicitRole = getImplicitRole(tag, props)
-    // Proceed when the element has an implicit role (native semantics) or a non-empty explicit
-    // role (author-supplied semantics). Elements with neither have no ARIA semantics to validate.
+    // hasRole marks whether the element has native or author-supplied ARIA semantics (implicit
+    // role, or a non-empty explicit role). It gates only the built-in role-semantic rule tiers
+    // (see #getRules) — it must not gate the whole context, since a consumer's own #extraRules
+    // may have nothing to do with roles and should still run for every element.
     const hasRole =
       isNonNull(implicitRole) || (isString(props.role) && (props.role as string).length > 0)
-    if (!hasRole) return { proceed: false, result: { props, violations: [] } }
 
     // Normalizing an empty role only strips `role` and emits its own warning — it must not
     // short-circuit the rest of validation. An element with role="" and an implicit role (e.g.
@@ -105,6 +106,7 @@ export class AriaPolicyEngine extends InvariantBase {
       tag,
       implicitRole,
       effectiveRole,
+      hasRole,
       props: workingProps,
       preExistingViolations,
       context: { tag, props: workingProps, implicitRole, effectiveRole },
@@ -168,6 +170,9 @@ export class AriaPolicyEngine extends InvariantBase {
   static evaluate(tag: AnyTag, props: IntrinsicProps): ValidationResult {
     const derived = AriaPolicyEngine.#deriveContext(tag, props)
     if (!derived.proceed) return derived.result
+    // No extra rules and no role semantics — nothing to evaluate.
+    if (!derived.hasRole)
+      return { props: derived.props, violations: [...derived.preExistingViolations] }
 
     const {
       tag: narrowedTag,
@@ -199,10 +204,14 @@ export class AriaPolicyEngine extends InvariantBase {
       props: workingProps,
       preExistingViolations,
     } = derived
-    const { violations, fixes } = AriaPolicyEngine.#runRules(
-      [...AriaPolicyEngine.#getRules(context), ...extraRules],
-      context,
-    )
+    // Built-in role-semantic rules are meaningless without a role and stay gated on hasRole, but
+    // a consumer's own extraRules may have no relationship to roles at all (an attribute-type
+    // fact, a security check) — they must always run, regardless of whether this element has any
+    // ARIA semantics.
+    const rules = derived.hasRole
+      ? [...AriaPolicyEngine.#getRules(context), ...extraRules]
+      : extraRules
+    const { violations, fixes } = AriaPolicyEngine.#runRules(rules, context)
     const next = AriaPolicyEngine.#applyFixes(narrowedTag, implicitRole, workingProps, fixes)
     return { props: next, violations: [...preExistingViolations, ...violations] }
   }
@@ -450,7 +459,7 @@ export class AriaPolicyEngine extends InvariantBase {
   static #checkStandaloneRegion({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] {
     const role = props.role
     if (role !== 'region') return NO_VIOLATIONS
-    if (!isStandaloneTag(tag)) return NO_VIOLATIONS
+    if (!hasStandaloneRole(tag)) return NO_VIOLATIONS
 
     const diagnostic = HtmlDiagnostics.standaloneRegionOverride(tag, implicitRole ?? tag)
     return [

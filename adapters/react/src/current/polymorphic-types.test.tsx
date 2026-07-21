@@ -12,7 +12,7 @@
  */
 import { describe, it } from 'vitest'
 import { createRef } from 'react'
-import type { MouseEvent } from 'react'
+import type { ComponentProps, MouseEvent } from 'react'
 import { createContractComponent } from './create-contract-component'
 import { Slottable } from '../shared'
 import type { EmptyRecord, PolymorphicGenerics } from '@praxis-kit/core'
@@ -227,6 +227,34 @@ describe('Slottable — type contract', () => {
 
   it('Slottable accepts any ReactNode as children', () => {
     const _el = <Slottable>{'text'}</Slottable>
+    void _el
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Regression coverage for a divergence between JSX's own attribute checking and a direct
+// `ComponentProps<typeof Component>` extraction (the mechanism Storybook's `Meta`/`StoryObj`
+// helpers use internally to type `args`/`argTypes`). `<Button disabled>` always typechecked as
+// JSX; `ComponentProps<typeof Button>` did not include `disabled` as a known key, because
+// TypeScript resolves a conditional type against an overloaded call signature using only its
+// last member, and every prior overload was generic with no call site to infer `TAs` from.
+describe('ComponentProps<typeof Component> — extraction outside JSX', () => {
+  type ButtonProps = ComponentProps<typeof Button>
+
+  it('includes a native attribute of the default element (disabled)', () => {
+    const props: ButtonProps = { disabled: true }
+    void props
+  })
+
+  it('includes a component-owned prop alongside native attributes', () => {
+    const props: ButtonProps = { disabled: true, type: 'submit' }
+    void props
+  })
+
+  it('accepts a spread of the extracted props back into JSX, including "key"', () => {
+    const args: ButtonProps = { disabled: true }
+    const _el = <Button key="a" {...args} />
     void _el
   })
 })

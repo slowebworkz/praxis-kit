@@ -59,5 +59,16 @@ export type PolymorphicProps<
 
 export type PolymorphicComponent<G extends PolymorphicGenerics> = {
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicProps<G, TAs>): JSX.Element
+
+  /**
+   * Non-generic fallback overload used for type extraction.
+   *
+   * TypeScript resolves conditional types such as
+   * `ComponentProps<typeof Component>` against only the final overload.
+   * Anchoring that overload to the default element preserves correct prop
+   * inference for tools such as Storybook and `ComponentProps`.
+   */
+  (props: PolymorphicProps<G, DefaultOf<G>>): JSX.Element
+
   displayName?: string
 }

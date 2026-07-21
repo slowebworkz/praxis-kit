@@ -3,7 +3,7 @@ export { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './is-aria-at
 export {
   getConditionalImplicitRole,
   getInputImplicitRole,
-  isStandaloneTag,
+  hasStandaloneRole,
   isStrongImplicitRole,
 } from './is-aria-role'
 export { isInvalid } from './is-invalid'

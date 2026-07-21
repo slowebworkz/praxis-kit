@@ -57,5 +57,16 @@ export type PolymorphicWithAsChild<
 export type PolymorphicComponent<G extends PolymorphicGenerics> = {
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicWithAsChild<G, TAs>): AnyVNode
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicProps<G, TAs>): AnyVNode
+
+  /**
+   * Non-generic fallback overload used for type extraction.
+   *
+   * TypeScript resolves conditional types such as
+   * `ComponentProps<typeof Component>` against only the final overload.
+   * Anchoring that overload to the default element preserves correct prop
+   * inference for tools such as Storybook and `ComponentProps`.
+   */
+  (props: PolymorphicProps<G, DefaultOf<G>>): AnyVNode
+
   displayName?: string
 }

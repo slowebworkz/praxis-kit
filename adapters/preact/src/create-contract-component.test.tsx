@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { h, Fragment, createRef } from 'preact'
 import { render } from 'preact'
-import type { ComponentType } from 'preact'
+import type { ComponentType, ComponentProps } from 'preact'
 import { silentDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
 import type { AnyVNode, UnknownProps } from './types'
 import { createContractComponent } from './create-contract-component'
@@ -240,5 +240,27 @@ describe('createContractComponent (Preact adapter)', () => {
     })
 
     expect(() => mount(h(box(Group), null, h('span', null)))).toThrow()
+  })
+})
+
+// Regression coverage for a divergence between JSX's own attribute checking and a direct
+// `ComponentProps<typeof Component>` extraction (the mechanism Storybook's `Meta`/`StoryObj`
+// helpers use internally to type `args`/`argTypes`). TypeScript resolves a conditional type
+// against an overloaded call signature using only its last member, and every prior overload was
+// generic with no call site to infer `TAs` from — so a native attribute like `disabled` used to
+// vanish from the extracted type even though it worked fine directly in JSX.
+describe('ComponentProps<typeof Component> — extraction outside JSX', () => {
+  const Button = createContractComponent({ tag: 'button', name: 'Button' })
+  void Button
+  type ButtonProps = ComponentProps<typeof Button>
+
+  it('includes a native attribute of the default element (disabled)', () => {
+    const props: ButtonProps = { disabled: true }
+    void props
+  })
+
+  it('includes an intrinsic attribute alongside disabled (type)', () => {
+    const props: ButtonProps = { disabled: true, type: 'submit' }
+    void props
   })
 })
