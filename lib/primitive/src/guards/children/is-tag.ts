@@ -38,7 +38,7 @@ export function getTag(child: unknown): string | undefined {
  */
 // Vnode shape proved by the predicate: has a type field (value unspecified —
 // the resolved tag name, not the JS type, is what isTag() verifies).
-type TagChild = { type: unknown }
+export type TagChild = { type: unknown }
 
 export function isTag(
   tag: string,
@@ -62,13 +62,25 @@ export function isTag(
 }
 
 /**
+ * A vnode (or text node) that qualifies as flow content: text nodes
+ * (string/number) always qualify, and elements/components qualify unless
+ * their resolved tag is blocked — see `isFlowContent`.
+ */
+export type FlowContentChild = string | number | TagChild
+
+/**
  * Checks whether a vnode is flow content per the HTML content model: text nodes
  * (string/number) always qualify, and elements/components qualify unless their
  * resolved tag is in the blocked set.
+ *
+ * Returns a type guard (not a plain boolean predicate) so it can be used
+ * directly as a `ChildRuleInput.match`, which requires the narrowed type.
  */
-export function isFlowContent(...blockedTags: readonly string[]): (child: unknown) => boolean {
+export function isFlowContent(
+  ...blockedTags: readonly string[]
+): (child: unknown) => child is FlowContentChild {
   const set = new Set(blockedTags)
-  return (child: unknown): boolean => {
+  return (child: unknown): child is FlowContentChild => {
     if (isString(child) || isNumber(child)) return true
     const tag = getTag(child)
     return tag === undefined || !set.has(tag)

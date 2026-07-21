@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { COMPONENT_DEFAULT_TAG } from './component-id'
-import { getTag, isTag } from './is-tag'
+import { getTag, isFlowContent, isTag } from './is-tag'
+import type { ChildRuleInput } from '../../types/contracts'
 
 function nativeVnode(tag: string, props: Record<string, unknown> = {}) {
   return { type: tag, props }
@@ -179,5 +180,52 @@ describe('isTag', () => {
       Object.assign(Component, { [duplicateSymbol]: 'source' })
       expect(isTag('source')({ type: Component, props: {} })).toBe(true)
     })
+  })
+})
+
+// ── isFlowContent ────────────────────────────────────────────────────────────
+
+describe('isFlowContent', () => {
+  it('accepts text nodes (string/number) regardless of blocked tags', () => {
+    const flow = isFlowContent('script', 'style')
+    expect(flow('hello')).toBe(true)
+    expect(flow(42)).toBe(true)
+  })
+
+  it('accepts a native element whose tag is not blocked', () => {
+    const flow = isFlowContent('script', 'style')
+    expect(flow(nativeVnode('div'))).toBe(true)
+  })
+
+  it('rejects a native element whose tag is blocked', () => {
+    const flow = isFlowContent('script', 'style')
+    expect(flow(nativeVnode('script'))).toBe(false)
+  })
+
+  it('resolves a praxis-kit component via its default tag', () => {
+    const flow = isFlowContent('script')
+    expect(flow(componentVnode('style'))).toBe(true)
+    expect(flow(componentVnode('script'))).toBe(false)
+  })
+
+  it('resolves a praxis-kit component via its "as" override', () => {
+    const flow = isFlowContent('script')
+    expect(flow(componentVnode('div', { as: 'script' }))).toBe(false)
+  })
+
+  it('accepts a child with no resolvable tag (e.g. null)', () => {
+    const flow = isFlowContent('script')
+    expect(flow(null)).toBe(true)
+  })
+
+  // Regression: isFlowContent used to return a plain boolean predicate, which does not satisfy
+  // ChildRuleMatch's `(child: T) => child is U` type-predicate requirement — passing it directly
+  // as a ChildRuleInput.match failed to typecheck. Compiling this rule at all is the assertion.
+  it('satisfies ChildRuleInput.match without a wrapper', () => {
+    const rule: ChildRuleInput = {
+      name: 'flow-only',
+      match: isFlowContent('script', 'style'),
+    }
+    expect(rule.match('text')).toBe(true)
   })
 })
