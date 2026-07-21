@@ -67,6 +67,10 @@
       "types": "./dist/guards/index.d.ts",
       "import": "./dist/guards/index.js"
     },
+    "./html": {
+      "types": "./dist/html/index.d.ts",
+      "import": "./dist/html/index.js"
+    },
     "./utils": {
       "types": "./dist/utils/index.d.ts",
       "import": "./dist/utils/index.js"
@@ -118,6 +122,9 @@
       ],
       "guards": [
         "./dist/guards/index.d.ts"
+      ],
+      "html": [
+        "./dist/html/index.d.ts"
       ],
       "utils": [
         "./dist/utils/index.d.ts"
