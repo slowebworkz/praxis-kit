@@ -1,6 +1,21 @@
 import { describe, expect, it, vi } from 'vitest'
-import { silentDiagnostics } from '@praxis-kit/diagnostics'
+import {
+  CollectingReporter,
+  DefaultPolicy,
+  Diagnostics,
+  Severity,
+  silentDiagnostics,
+} from '@praxis-kit/diagnostics'
 import { createPolymorphic2 } from './create-polymorphic2'
+
+function makeCollecting() {
+  const reporter = new CollectingReporter()
+  const diagnostics = new Diagnostics(
+    reporter,
+    new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
+  )
+  return { reporter, diagnostics }
+}
 
 // Contract tests for the pipeline-based PolymorphicRuntime.
 //
@@ -77,6 +92,68 @@ describe('createPolymorphic2 — resolveAria()', () => {
     // aria-checked is not valid on role="button"
     const result = runtime.resolveAria('button', { 'aria-checked': 'true' })
     expect(result.props).not.toHaveProperty('aria-checked')
+  })
+
+  // enforcement.rules exists for rules with no relationship to ARIA (e.g. a dangerous-URL-scheme
+  // security guard) that still need AriaPolicyEngine's fix machinery, without having to sit under
+  // the misleadingly-named `aria` bucket to get it.
+  it('runs an enforcement.rules fix for a roleless tag (no relationship to ARIA)', () => {
+    const stripDataUnsafe = Object.assign(
+      (ctx: { props: Record<string, unknown> }) => {
+        if (!('data-unsafe' in ctx.props)) return [{ valid: true as const }]
+        return [
+          {
+            valid: false as const,
+            severity: 'error' as const,
+            fixable: true as const,
+            fix: {
+              kind: 'removeAttribute:data-unsafe' as const,
+              apply: ({ props }: { props: Record<string, unknown> }) => {
+                const { 'data-unsafe': _omit, ...rest } = props
+                return { applied: true as const, next: rest, previous: props }
+              },
+            },
+          },
+        ]
+      },
+      { readsProps: ['data-unsafe'] as const },
+    )
+    // 'span' has no implicit role and no explicit role prop — the exact "roleless" case
+    // enforcement.rules must still run for (see finding #14).
+    const runtime = createPolymorphic2({
+      tag: 'span',
+      enforcement: { diagnostics: silentDiagnostics, rules: [stripDataUnsafe] },
+    })
+    const result = runtime.resolveAria('span', { 'data-unsafe': 'x' })
+    expect(result.props).not.toHaveProperty('data-unsafe')
+  })
+
+  it('merges enforcement.aria and enforcement.rules — both run', () => {
+    const failAria = () => [
+      {
+        valid: false as const,
+        severity: 'warning' as const,
+        fixable: false as const,
+        message: 'A',
+      },
+    ]
+    const failRule = () => [
+      {
+        valid: false as const,
+        severity: 'warning' as const,
+        fixable: false as const,
+        message: 'B',
+      },
+    ]
+    const { reporter, diagnostics } = makeCollecting()
+    const runtime = createPolymorphic2({
+      tag: 'button',
+      enforcement: { diagnostics, aria: [failAria], rules: [failRule] },
+    })
+    runtime.resolveAria('button', {})
+    const messages = reporter.diagnostics.map((d) => d.message)
+    expect(messages).toContain('A')
+    expect(messages).toContain('B')
   })
 })
 

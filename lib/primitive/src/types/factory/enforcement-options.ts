@@ -12,6 +12,16 @@ export type EnforcementOptions<TAllowed extends ElementType = ElementType> = {
    */
   readonly diagnostics?: Diagnostics | DiagnosticsMode
   readonly aria?: readonly AriaRule[]
+  /**
+   * Rules that need `AriaPolicyEngine`'s fix-application/caching machinery
+   * (`AriaRule`'s `readsProps`, fixable `AriaFix` results) but have no
+   * relationship to ARIA semantics — an HTML fact or a security check like a
+   * dangerous-URL-scheme guard, for example. Evaluated together with `aria`
+   * (both run through the same engine, merged into one rule set) — this is a
+   * separate bucket purely so a non-ARIA rule doesn't have to sit under the
+   * misleading `aria` name to get the machinery it needs.
+   */
+  readonly rules?: readonly AriaRule[]
   readonly children?: readonly ChildRuleInput[]
   /**
    * When true, only children matching a `children` rule (or text, per `allowText`)
