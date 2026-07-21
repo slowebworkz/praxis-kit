@@ -14,22 +14,25 @@ const removeLandmarkRoleOverride: AriaFix = {
   },
 }
 
-export function landmarkRoleRule({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] {
-  if (!LANDMARK_TAG_SET.has(tag) || !implicitRole) return []
-  const role = props.role
-  // role === implicitRole is already caught by the built-in #checkRedundantRole (warns, removes).
-  if (!role || role === implicitRole) return []
-  const diagnostic = HtmlDiagnostics.landmarkRoleOverride(tag, implicitRole, role)
-  return [
-    {
-      valid: false,
-      fixable: true,
-      severity: diagnostic.severity,
-      fix: removeLandmarkRoleOverride,
-      diagnostic,
-    },
-  ]
-}
+export const landmarkRoleRule: AriaRule = Object.assign(
+  ({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] => {
+    if (!LANDMARK_TAG_SET.has(tag) || !implicitRole) return []
+    const role = props.role
+    // role === implicitRole is already caught by the built-in #checkRedundantRole (warns, removes).
+    if (!role || role === implicitRole) return []
+    const diagnostic = HtmlDiagnostics.landmarkRoleOverride(tag, implicitRole, role)
+    return [
+      {
+        valid: false,
+        fixable: true,
+        severity: diagnostic.severity,
+        fix: removeLandmarkRoleOverride,
+        diagnostic,
+      },
+    ]
+  },
+  { tags: [...LANDMARK_TAG_SET] as const },
+)
 
 // WAI-ARIA APG — elements that must have an accessible name to be usable by
 // assistive technology. The check fires when neither aria-label nor aria-labelledby
@@ -53,10 +56,13 @@ export function requireAccessibleName({ tag, props }: AriaContext): readonly Ari
 // WAI-ARIA APG: https://www.w3.org/WAI/ARIA/apg/practices/landmark-regions/
 const NAMED_LANDMARK_TAGS = new Set(['nav', 'aside'])
 
-export function landmarkNameAdvisory(ctx: AriaContext): readonly AriaResult[] {
-  if (!ctx.implicitRole || !NAMED_LANDMARK_TAGS.has(ctx.tag)) return []
-  return requireAccessibleName(ctx)
-}
+export const landmarkNameAdvisory: AriaRule = Object.assign(
+  (ctx: AriaContext): readonly AriaResult[] => {
+    if (!ctx.implicitRole || !NAMED_LANDMARK_TAGS.has(ctx.tag)) return []
+    return requireAccessibleName(ctx)
+  },
+  { tags: [...NAMED_LANDMARK_TAGS] as const },
+)
 
 export const HTML_ARIA_RULES: readonly AriaRule[] = [
   landmarkRoleRule,

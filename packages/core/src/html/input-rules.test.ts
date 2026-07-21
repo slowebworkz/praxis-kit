@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest'
 import type { AriaContext } from '../types'
 import {
   acceptRequiresFileTypeRule,
+  altRequiresImageTypeRule,
   captureRequiresFileTypeRule,
   checkedRequiresCheckableTypeRule,
+  heightRequiresImageTypeRule,
   inputAccessibleNameRule,
   maxLengthRequiresTextTypeRule,
   maxRequiresNumericTypeRule,
@@ -14,8 +16,10 @@ import {
   passwordAutocompleteRule,
   patternRequiresTextTypeRule,
   requiredReadOnlyConflictRule,
+  sizeRequiresTextTypeRule,
   stepRequiresNumericTypeRule,
   supportedInputTypeRule,
+  widthRequiresImageTypeRule,
   INPUT_RULES,
 } from './input-rules'
 
@@ -159,6 +163,54 @@ describe('captureRequiresFileTypeRule', () => {
   })
 })
 
+describe('sizeRequiresTextTypeRule', () => {
+  it('allows size on type="text"', () => {
+    expect(sizeRequiresTextTypeRule(ctx({ type: 'text', size: 20 }))).toEqual([])
+  })
+
+  it('allows size on the default (omitted) type', () => {
+    expect(sizeRequiresTextTypeRule(ctx({ size: 20 }))).toEqual([])
+  })
+
+  it('flags size on type="checkbox"', () => {
+    const [result] = sizeRequiresTextTypeRule(ctx({ type: 'checkbox', size: 20 }))
+    expect(result).toMatchObject({ valid: false, severity: 'warning' })
+  })
+})
+
+describe('altRequiresImageTypeRule', () => {
+  it('allows alt on type="image"', () => {
+    expect(altRequiresImageTypeRule(ctx({ type: 'image', alt: 'Submit' }))).toEqual([])
+  })
+
+  it('flags alt on the default (omitted) type', () => {
+    const [result] = altRequiresImageTypeRule(ctx({ alt: 'Submit' }))
+    expect(result).toMatchObject({ valid: false, severity: 'warning' })
+  })
+})
+
+describe('heightRequiresImageTypeRule', () => {
+  it('allows height on type="image"', () => {
+    expect(heightRequiresImageTypeRule(ctx({ type: 'image', height: 40 }))).toEqual([])
+  })
+
+  it('flags height on type="checkbox"', () => {
+    const [result] = heightRequiresImageTypeRule(ctx({ type: 'checkbox', height: 40 }))
+    expect(result).toMatchObject({ valid: false, severity: 'warning' })
+  })
+})
+
+describe('widthRequiresImageTypeRule', () => {
+  it('allows width on type="image"', () => {
+    expect(widthRequiresImageTypeRule(ctx({ type: 'image', width: 100 }))).toEqual([])
+  })
+
+  it('flags width on type="checkbox"', () => {
+    const [result] = widthRequiresImageTypeRule(ctx({ type: 'checkbox', width: 100 }))
+    expect(result).toMatchObject({ valid: false, severity: 'warning' })
+  })
+})
+
 describe('supportedInputTypeRule', () => {
   it('allows every real HTML5 input type', () => {
     const realTypes = [
@@ -257,7 +309,7 @@ describe('requiredReadOnlyConflictRule', () => {
 })
 
 describe('INPUT_RULES', () => {
-  it('bundles all fourteen rules', () => {
-    expect(INPUT_RULES).toHaveLength(14)
+  it('bundles all eighteen rules', () => {
+    expect(INPUT_RULES).toHaveLength(18)
   })
 })

@@ -189,6 +189,103 @@ export const detailsContract = firstChildContract('summary', 'summary')
 export const fieldsetContract = firstChildContract('legend', 'legend')
 
 /**
+ * `<object>` — zero or more `<param>` elements followed by transparent flow content.
+ * Ordering (all `<param>`s before other content) is not enforced: same limitation as
+ * `tableContract`'s section ordering — the engine only supports `position: 'first' | 'last'`,
+ * not "every match of rule A precedes every match of rule B."
+ */
+export const objectContract = contract([
+  { name: 'param', match: isTag('param') },
+  { name: 'content', match: isOpenContent('param') },
+])
+
+// Elements the HTML Living Standard classifies as interactive content, for the purpose of
+// `<button>`/`<a>`'s "must not contain interactive content" restriction. This engine validates
+// direct children only, not full descendant trees, so `<button><span><a/></span></button>`
+// is not caught — only interactive content nested directly inside `<button>`/`<a>` is.
+const INTERACTIVE_CONTENT_TAGS = ['a', 'button', 'input', 'select', 'textarea', 'label'] as const
+
+/**
+ * `<button>` — must not directly contain interactive content (`<a>`, another `<button>`,
+ * `<input>`, `<select>`, `<textarea>`, or `<label>`) per the HTML5 spec.
+ */
+export const buttonContract = closedContract([
+  { name: 'content', match: isOpenContent(...INTERACTIVE_CONTENT_TAGS) },
+])
+
+/**
+ * `<a>` — same interactive-content restriction as `<button>`: must not directly contain
+ * `<a>`, `<button>`, `<input>`, `<select>`, `<textarea>`, or `<label>`.
+ */
+export const anchorContract = closedContract([
+  { name: 'content', match: isOpenContent(...INTERACTIVE_CONTENT_TAGS) },
+])
+
+// Form controls a `<label>` may associate with. `input[type="hidden"]` is technically excluded
+// by the spec (a hidden input isn't labelable) but isn't distinguished here — an unusual enough
+// edge case that over-flagging it isn't worth a props-aware matcher.
+const LABELABLE_TAGS = [
+  'button',
+  'input',
+  'meter',
+  'output',
+  'progress',
+  'select',
+  'textarea',
+] as const
+
+/**
+ * `<label>` — at most one labelable form control descendant (`<button>`, `<input>`, `<meter>`,
+ * `<output>`, `<progress>`, `<select>`, `<textarea>`); any other phrasing content permitted.
+ */
+export const labelContract = contract([
+  { name: 'control', match: isTag(...LABELABLE_TAGS), cardinality: { max: 1 } },
+])
+
+// Common block-level elements a browser will force-close a `<p>` for — the actual mistake this
+// contract exists to catch. Deliberately a blocklist rather than an exhaustive phrasing-content
+// allowlist: phrasing content is a long category (30+ elements) that's easy to under-specify,
+// where a missing entry produces a false-positive rejection of legitimate inline content: worse
+// than this blocklist's converse risk of missing an obscure block-level element.
+const P_BLOCKED_TAGS = [
+  'address',
+  'article',
+  'aside',
+  'blockquote',
+  'details',
+  'dialog',
+  'div',
+  'dl',
+  'fieldset',
+  'figure',
+  'footer',
+  'form',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'header',
+  'hr',
+  'main',
+  'nav',
+  'ol',
+  'p',
+  'pre',
+  'section',
+  'table',
+  'ul',
+] as const
+
+/**
+ * `<p>` — phrasing content only; common block-level elements are rejected (see `P_BLOCKED_TAGS`).
+ */
+export const pContract = closedContract([
+  { name: 'content', match: isOpenContent(...P_BLOCKED_TAGS) },
+])
+
+/**
  * `<audio>` and `<video>` — zero or more `<source>`/`<track>`/`<script>`/`<template>` elements
  * plus fallback flow content (any element that is not one of the above).
  */
@@ -350,6 +447,12 @@ export const htmlContracts: HtmlContractMap = {
   details: detailsContract,
   fieldset: fieldsetContract,
   dialog: dialogContract,
+  object: objectContract,
+
+  button: buttonContract,
+  a: anchorContract,
+  label: labelContract,
+  p: pContract,
 
   head: headContract,
   html: htmlContract,

@@ -247,4 +247,28 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
     // high-priority (0) runs before low-priority (10) regardless of rule declaration order
     expect(log).toEqual(['high', 'low'])
   })
+
+  it('skips calling a custom rule entirely for a tag not in its declared tags', () => {
+    // A rule that declares `tags` can only ever produce a result for those tags — the engine
+    // should never invoke it for any other tag, rather than relying on the rule's own internal
+    // early return.
+    const calls = vi.fn()
+    const inputOnlyRule = Object.assign(
+      () => {
+        calls()
+        return [{ valid: true as const }]
+      },
+      { tags: ['input'] as const },
+    )
+    const v = new AriaPolicyEngine(silentDiagnostics, { rules: [inputOnlyRule] })
+
+    v.validate('nav', {})
+    expect(calls).not.toHaveBeenCalled()
+
+    // `type: 'checkbox'` gives <input> an implicit role (`checkbox`), so it reaches the rules
+    // pipeline — a bare `<input>` with no type/role has no implicit role and short-circuits
+    // before any rule (including this one) is ever invoked.
+    v.validate('input', { type: 'checkbox' } as never)
+    expect(calls).toHaveBeenCalledTimes(1)
+  })
 })
