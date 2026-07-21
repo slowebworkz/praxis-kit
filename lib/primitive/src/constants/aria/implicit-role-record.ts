@@ -1,4 +1,5 @@
 import type { AriaRoleName, AriaRoleNames } from './types'
+import type { StringMap } from '@praxis-kit/primitive'
 
 export const IMPLICIT_ROLE_RECORD = Object.freeze({
   // Landmarks
@@ -36,7 +37,7 @@ export const IMPLICIT_ROLE_RECORD = Object.freeze({
   meter: 'meter',
   output: 'status',
   progress: 'progressbar',
-} as const satisfies Readonly<Record<string, AriaRoleName>>)
+} as const satisfies Readonly<StringMap<AriaRoleName>>)
 
 // Maps input[type=...] to WAI-ARIA 1.2 role per HTML-AAM 1.0.
 // Types absent from this map (e.g. color, date, hidden, file, password) have no
@@ -55,7 +56,7 @@ export const INPUT_TYPE_ROLE_MAP = Object.freeze({
   submit: 'button',
   reset: 'button',
   image: 'button',
-} as const satisfies Readonly<Record<string, AriaRoleName>>)
+} as const satisfies Readonly<StringMap<AriaRoleName>>)
 
 export type Tag = keyof typeof IMPLICIT_ROLE_RECORD
 export type InputType = keyof typeof INPUT_TYPE_ROLE_MAP

@@ -92,19 +92,55 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
     expect(msgs).toContain('B')
   })
 
-  it('skips extra rules for a tag with no implicit role', () => {
+  it('still runs extra rules for a tag with no implicit role', () => {
+    // div has no implicit role and no explicit role — the built-in role-semantic pipeline is
+    // meaningless here and stays gated, but a consumer's own extra rule may have nothing to do
+    // with roles at all and must still run.
     const customRule = () => [
       {
         valid: false as const,
         severity: 'warning' as const,
-        message: 'should not fire',
+        message: 'should fire',
         fixable: false as const,
       },
     ]
     const v = new AriaPolicyEngine(silentDiagnostics, { rules: [customRule] })
-    // div has no implicit role — engine short-circuits before rules run
     const { violations } = v.validate('div', {})
-    expect(violations.every((v) => v.message !== 'should not fire')).toBe(true)
+    expect(violations.some((v) => v.message === 'should fire')).toBe(true)
+  })
+
+  it('runs a custom rule for input types with no implicit role (color, date, file, password, ...)', () => {
+    // Direct repro from the original bug report: <input type="color" aria-label="Swatch" />
+    // has no implicit role and no explicit role prop, so a design system's own type-validation
+    // rule (with no relationship to ARIA roles at all) must still be given the chance to run.
+    const supportedTypeRule = (ctx: { props: AnyRecord }) => {
+      const type = ctx.props.type
+      if (type !== 'color') return [{ valid: true as const }]
+      return [
+        {
+          valid: false as const,
+          severity: 'warning' as const,
+          message: 'unsupported input type',
+          fixable: false as const,
+        },
+      ]
+    }
+    const v = new AriaPolicyEngine(silentDiagnostics, { rules: [supportedTypeRule] })
+    const { violations } = v.validate('input', {
+      type: 'color',
+      'aria-label': 'Swatch',
+    } as never)
+    expect(violations.some((v) => v.message === 'unsupported input type')).toBe(true)
+  })
+
+  it('does not run the built-in role-semantic pipeline for a roleless element, even with extra rules present', () => {
+    // aria-checked is invalid for every role, but a roleless element has nothing for the
+    // built-in pipeline to validate against — it must stay silent about it, exactly as before
+    // this fix, while the unrelated extra rule still fires.
+    const customRule = () => [{ valid: true as const }]
+    const v = new AriaPolicyEngine(silentDiagnostics, { rules: [customRule] })
+    const { violations } = v.validate('input', { type: 'color', 'aria-checked': 'true' } as never)
+    expect(violations).toHaveLength(0)
   })
 
   it('custom rule returning valid results adds no violation', () => {
@@ -265,9 +301,6 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
     v.validate('nav', {})
     expect(calls).not.toHaveBeenCalled()
 
-    // `type: 'checkbox'` gives <input> an implicit role (`checkbox`), so it reaches the rules
-    // pipeline — a bare `<input>` with no type/role has no implicit role and short-circuits
-    // before any rule (including this one) is ever invoked.
     v.validate('input', { type: 'checkbox' } as never)
     expect(calls).toHaveBeenCalledTimes(1)
   })

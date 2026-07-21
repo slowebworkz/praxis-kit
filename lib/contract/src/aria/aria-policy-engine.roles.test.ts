@@ -413,6 +413,58 @@ describe('validate() — input implicit roles via type attribute', () => {
     // Radio also doesn't allow aria-pressed — violation should appear (not a stale checkbox cache hit)
     expect(violations.some((v) => v.attribute === 'aria-pressed')).toBe(true)
   })
+
+  it('treats input[type=text] with a list attribute as combobox, not textbox', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'text',
+      list: 'options',
+      'aria-expanded': 'false',
+    })
+    // aria-expanded is required (not merely valid) for combobox — no violation confirms the
+    // engine resolved role=combobox, since aria-expanded isn't a recognized attribute for textbox.
+    expect(violations).toHaveLength(0)
+  })
+
+  it('does not flag role="textbox" as redundant on input[type=text list=...] (implicit role is combobox)', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('input', { type: 'text', list: 'options', role: 'textbox' })
+    // role="textbox" is a legitimate override of the *actual* implicit role (combobox) back to
+    // textbox-like behavior — flagging it redundant would incorrectly auto-strip it.
+    expect(reporter.diagnostics).toHaveLength(0)
+  })
+
+  it('still flags role="textbox" as redundant on input[type=text] with no list', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('input', { type: 'text', role: 'textbox' })
+    expect(reporter.diagnostics.length).toBeGreaterThan(0)
+  })
+
+  for (const type of ['search', 'tel', 'url', 'email']) {
+    it(`treats input[type=${type}] with a list attribute as combobox`, () => {
+      const { violations } = makeValidator(silentDiagnostics).validate('input', {
+        type,
+        list: 'options',
+        role: 'textbox',
+      })
+      expect(violations.some((v) => v.message.includes('redundant'))).toBe(false)
+    })
+  }
+
+  for (const type of ['checkbox', 'radio', 'range', 'number']) {
+    it(`ignores list on input[type=${type}] (combobox override only applies to text-like types)`, () => {
+      const { engine } = makeCollecting()
+      // combobox requires aria-expanded; if list wrongly promoted these types to combobox, this
+      // would produce a "missing aria-expanded" violation. It must not.
+      const { violations } = engine.validate('input', { type, list: 'options' })
+      expect(violations.some((v) => v.message.includes('aria-expanded'))).toBe(false)
+    })
+  }
+
+  it('ignores an empty-string list attribute the same as a present one (still combobox)', () => {
+    const { reporter, engine } = makeCollecting()
+    engine.validate('input', { type: 'text', list: '', role: 'textbox' })
+    expect(reporter.diagnostics).toHaveLength(0)
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -434,6 +486,24 @@ describe('validate() — section conditional landmark (role: region when named)'
       'aria-checked': 'true',
     })
     // No implicit role → no processing → no false positives
+    expect(violations).toHaveLength(0)
+  })
+
+  it('treats whitespace-only aria-label as unnamed (no implicit region role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('section', {
+      'aria-label': '   ',
+      'aria-checked': 'true',
+    })
+    // A whitespace-only label is not an accessible name — section stays roleless, so
+    // aria-checked (invalid for region) must not be flagged either.
+    expect(violations).toHaveLength(0)
+  })
+
+  it('treats whitespace-only aria-labelledby as unnamed (no implicit region role)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('section', {
+      'aria-labelledby': '   ',
+      'aria-checked': 'true',
+    })
     expect(violations).toHaveLength(0)
   })
 

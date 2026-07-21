@@ -18,7 +18,7 @@ export {
   isAriaAttributeValidForRole,
   isGlobalAriaAttribute,
   getImplicitRole,
-  isStandaloneTag,
+  hasStandaloneRole,
   isStrongImplicitRole,
   KNOWN_ARIA_ROLES,
   isKnownAriaRole,
