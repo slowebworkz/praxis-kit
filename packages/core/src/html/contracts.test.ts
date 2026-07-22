@@ -39,13 +39,17 @@ import {
   voidContract,
   widgetContracts,
 } from './contracts'
-import { landmarkNameAdvisory } from './aria-rules'
+import { landmarkAccessibleNameRule } from './aria-rules'
 import { iterate, COMPONENT_DEFAULT_TAG } from '@praxis-kit/primitive'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function el(tag: string) {
   return { type: tag }
+}
+
+function elWithProps(tag: string, props: Record<string, unknown>) {
+  return { type: tag, props }
 }
 
 function componentEl() {
@@ -423,6 +427,67 @@ describe('labelContract', () => {
       ]),
     )
   })
+
+  it('does not count input[type="hidden"] as a labelable control', () => {
+    expect(check(labelContract, [elWithProps('input', { type: 'hidden' })])).toEqual([])
+  })
+
+  it('still counts a visible input alongside a hidden one as more than one control', () => {
+    const v = check(labelContract, [
+      elWithProps('input', { type: 'hidden' }),
+      elWithProps('input', { type: 'text' }),
+    ])
+    expect(v).toEqual([])
+  })
+
+  it('rejects two labelable controls even when one is hidden and one is not', () => {
+    const v = check(labelContract, [
+      elWithProps('input', { type: 'text' }),
+      el('select'),
+      elWithProps('input', { type: 'hidden' }),
+    ])
+    expect(v).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'cardinality-max', ruleName: 'control' }),
+      ]),
+    )
+  })
+
+  it('rejects a nested label', () => {
+    const v = check(labelContract, [el('label')])
+    expect(v).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'cardinality-max', ruleName: 'nested-label' }),
+      ]),
+    )
+  })
+
+  it('rejects a nested label alongside a valid control', () => {
+    const v = check(labelContract, [el('input'), el('label')])
+    expect(v).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'cardinality-max', ruleName: 'nested-label' }),
+      ]),
+    )
+  })
+
+  it.each(['a', 'details', 'embed', 'iframe'])('rejects other interactive content: %s', (tag) => {
+    const v = check(labelContract, [el(tag)])
+    expect(v).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'cardinality-max', ruleName: 'other-interactive-content' }),
+      ]),
+    )
+  })
+
+  it('rejects other interactive content alongside a valid control', () => {
+    const v = check(labelContract, [el('input'), el('a')])
+    expect(v).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'cardinality-max', ruleName: 'other-interactive-content' }),
+      ]),
+    )
+  })
 })
 
 // ─── pContract ─────────────────────────────────────────────────────────────────
@@ -696,9 +761,9 @@ describe('htmlContracts', () => {
   })
 })
 
-// ─── landmarkNameAdvisory ─────────────────────────────────────────────────────
+// ─── landmarkAccessibleNameRule ─────────────────────────────────────────────────────
 
-describe('landmarkNameAdvisory', () => {
+describe('landmarkAccessibleNameRule', () => {
   function ctx(
     tag: string,
     props: Record<string, unknown>,
@@ -708,44 +773,46 @@ describe('landmarkNameAdvisory', () => {
   }
 
   it('warns on <nav> without accessible name', () => {
-    const results = landmarkNameAdvisory(ctx('nav', {}, 'navigation'))
+    const results = landmarkAccessibleNameRule(ctx('nav', {}, 'navigation'))
     expect(results).toMatchObject([{ valid: false, severity: 'warning' }])
   })
 
   it('warns on <aside> without accessible name', () => {
-    const results = landmarkNameAdvisory(ctx('aside', {}, 'complementary'))
+    const results = landmarkAccessibleNameRule(ctx('aside', {}, 'complementary'))
     expect(results).toMatchObject([{ valid: false, severity: 'warning' }])
   })
 
   it('returns empty when nav has aria-label', () => {
-    expect(landmarkNameAdvisory(ctx('nav', { 'aria-label': 'Main' }, 'navigation'))).toEqual([])
+    expect(landmarkAccessibleNameRule(ctx('nav', { 'aria-label': 'Main' }, 'navigation'))).toEqual(
+      [],
+    )
   })
 
   it('returns empty when aside has aria-labelledby', () => {
     expect(
-      landmarkNameAdvisory(ctx('aside', { 'aria-labelledby': 'id-x' }, 'complementary')),
+      landmarkAccessibleNameRule(ctx('aside', { 'aria-labelledby': 'id-x' }, 'complementary')),
     ).toEqual([])
   })
 
   it('does not fire for <main> (single instance per page)', () => {
-    expect(landmarkNameAdvisory(ctx('main', {}, 'main'))).toEqual([])
+    expect(landmarkAccessibleNameRule(ctx('main', {}, 'main'))).toEqual([])
   })
 
   it('does not fire for <header> without a name', () => {
-    expect(landmarkNameAdvisory(ctx('header', {}, 'banner'))).toEqual([])
+    expect(landmarkAccessibleNameRule(ctx('header', {}, 'banner'))).toEqual([])
   })
 
   it('does not fire for <footer> without a name', () => {
-    expect(landmarkNameAdvisory(ctx('footer', {}, 'contentinfo'))).toEqual([])
+    expect(landmarkAccessibleNameRule(ctx('footer', {}, 'contentinfo'))).toEqual([])
   })
 
   it('does not fire when implicitRole is undefined', () => {
     // nav without an implicit role (e.g. engine short-circuit scenario)
-    expect(landmarkNameAdvisory(ctx('nav', {}, undefined))).toEqual([])
+    expect(landmarkAccessibleNameRule(ctx('nav', {}, undefined))).toEqual([])
   })
 
-  it('landmarkContract exposes landmarkNameAdvisory as second aria rule', () => {
-    expect(landmarkContract.aria![1]).toBe(landmarkNameAdvisory)
+  it('landmarkContract exposes landmarkAccessibleNameRule as second aria rule', () => {
+    expect(landmarkContract.aria![1]).toBe(landmarkAccessibleNameRule)
   })
 })
 

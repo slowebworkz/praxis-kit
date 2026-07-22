@@ -1,9 +1,23 @@
 import type { AriaContext, AriaFix, AriaResult, AriaRule } from '../types'
+import type { HtmlTags } from './contracts/types'
 import { AriaDiagnostics, HtmlDiagnostics } from '@praxis-kit/contract'
+import { LANDMARK_TAGS } from './contracts/categories'
 import { INPUT_RULES } from './input-rules'
 import { roleNotPermittedRule } from './role-restrictions'
 
-const LANDMARK_TAG_SET = new Set(['article', 'aside', 'footer', 'header', 'main', 'nav'])
+// Attaches the `tags` an `AriaRule` applies to, so `AriaPolicyEngine` can skip calling it
+// for any other tag instead of paying for a call it would just no-op on internally.
+function defineAriaRule(
+  tags: HtmlTags,
+  rule: (context: AriaContext) => readonly AriaResult[],
+): AriaRule {
+  return Object.assign(rule, { tags })
+}
+
+// Typed as `ReadonlySet<string>`, not the narrower literal union `new Set(LANDMARK_TAGS)`
+// would otherwise infer: `.has(tag)` below is checked against `AriaContext['tag']`
+// (`IntrinsicTag`, every known HTML tag), which is wider than the landmark literals.
+const LANDMARK_TAG_SET: ReadonlySet<string> = new Set(LANDMARK_TAGS)
 
 const removeLandmarkRoleOverride: AriaFix = {
   kind: 'removeRole',
@@ -14,10 +28,11 @@ const removeLandmarkRoleOverride: AriaFix = {
   },
 }
 
-export const landmarkRoleRule: AriaRule = Object.assign(
+export const landmarkRoleRule = defineAriaRule(
+  LANDMARK_TAGS,
   ({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] => {
     if (!LANDMARK_TAG_SET.has(tag) || !implicitRole) return []
-    const role = props.role
+    const { role } = props
     // role === implicitRole is already caught by the built-in #checkRedundantRole (warns, removes).
     if (!role || role === implicitRole) return []
     const diagnostic = HtmlDiagnostics.landmarkRoleOverride(tag, implicitRole, role)
@@ -31,7 +46,6 @@ export const landmarkRoleRule: AriaRule = Object.assign(
       },
     ]
   },
-  { tags: [...LANDMARK_TAG_SET] as const },
 )
 
 // WAI-ARIA APG — elements that must have an accessible name to be usable by
@@ -54,19 +68,20 @@ export function requireAccessibleName({ tag, props }: AriaContext): readonly Ari
 // main content, sidebar) and each instance must have a unique accessible name so that
 // screen reader users can distinguish them from the landmarks list.
 // WAI-ARIA APG: https://www.w3.org/WAI/ARIA/apg/practices/landmark-regions/
-const NAMED_LANDMARK_TAGS = new Set(['nav', 'aside'])
+const NAMED_LANDMARK_TAGS = ['nav', 'aside'] as const satisfies HtmlTags
+const NAMED_LANDMARK_TAG_SET: ReadonlySet<string> = new Set(NAMED_LANDMARK_TAGS)
 
-export const landmarkNameAdvisory: AriaRule = Object.assign(
+export const landmarkAccessibleNameRule = defineAriaRule(
+  NAMED_LANDMARK_TAGS,
   (ctx: AriaContext): readonly AriaResult[] => {
-    if (!ctx.implicitRole || !NAMED_LANDMARK_TAGS.has(ctx.tag)) return []
+    if (!ctx.implicitRole || !NAMED_LANDMARK_TAG_SET.has(ctx.tag)) return []
     return requireAccessibleName(ctx)
   },
-  { tags: [...NAMED_LANDMARK_TAGS] as const },
 )
 
 export const HTML_ARIA_RULES: readonly AriaRule[] = [
   landmarkRoleRule,
-  landmarkNameAdvisory,
+  landmarkAccessibleNameRule,
   roleNotPermittedRule,
   ...INPUT_RULES,
 ]
