@@ -4,7 +4,7 @@ export { getHtmlPropNormalizers } from './prop-normalizers'
 export {
   HTML_ARIA_RULES,
   landmarkRoleRule,
-  landmarkNameAdvisory,
+  landmarkAccessibleNameRule,
   requireAccessibleName,
 } from './aria-rules'
 export { roleNotPermittedRule } from './role-restrictions'

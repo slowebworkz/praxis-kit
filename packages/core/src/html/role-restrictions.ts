@@ -88,6 +88,10 @@ const ALLOWED_ROLES: Readonly<Record<string, readonly AriaRole[]>> = {
   ],
   dialog: ['alertdialog'],
   fieldset: ['none', 'presentation', 'radiogroup'],
+  // `<label>` has no implicit role and no documented alternates — its native labeling
+  // semantics (control association, accessible-name contribution) aren't reproducible via
+  // ARIA, so any explicit `role` should be avoided rather than substituted.
+  label: [],
 }
 
 // Tags whose allowed-roles fact is expressed as a spec/elements/*.ts `HtmlElementSpec` rather

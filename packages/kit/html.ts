@@ -10,7 +10,7 @@
 export {
   HTML_ARIA_RULES,
   landmarkRoleRule,
-  landmarkNameAdvisory,
+  landmarkAccessibleNameRule,
   requireAccessibleName,
   roleNotPermittedRule,
   INPUT_RULES,

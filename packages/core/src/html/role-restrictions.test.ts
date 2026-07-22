@@ -60,4 +60,13 @@ describe('roleNotPermittedRule', () => {
   it('allows a documented alternate role on a named image', () => {
     expect(roleNotPermittedRule(ctx('img', { alt: 'A cat', role: 'button' }, 'img'))).toEqual([])
   })
+
+  it('flags any explicit role on label — native labeling semantics have no ARIA equivalent', () => {
+    const [result] = roleNotPermittedRule(ctx('label', { role: 'presentation' }, undefined))
+    expect(result).toMatchObject({ valid: false, severity: 'error', fixable: true })
+  })
+
+  it('is a no-op for label with no role', () => {
+    expect(roleNotPermittedRule(ctx('label', {}, undefined))).toEqual([])
+  })
 })
