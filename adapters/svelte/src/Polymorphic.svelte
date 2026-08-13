@@ -65,7 +65,6 @@
     props: UnknownProps,
     classStr: string | undefined,
     tag: ElementType,
-    normalizedProps: UnknownProps,
   ): ResolvedAttributes {
     const { role, style, ...r } = normalizeEventKeys(props)
     const styleStr = isObject(style, true)
@@ -78,8 +77,7 @@
     }
     if (isKnownAriaRole(role)) ep.role = role
     if (!isString(tag)) return ep as ResolvedAttributes
-    return bundle.runtime.resolveAria(tag, ep, normalizedProps as IntrinsicProps)
-      .props as ResolvedAttributes
+    return bundle.runtime.resolveAria(tag, ep).props as ResolvedAttributes
   }
 
   // Unlike buildDomProps above, this intentionally skips normalizeEventKeys and style
@@ -131,7 +129,7 @@
   const filteredProps = $derived(
     applyFilter(normalizedProps, bundle.filterProps, bundle.runtime.options.variantKeys),
   )
-  const domProps = $derived(buildDomProps(filteredProps, resolvedClass, tag, normalizedProps))
+  const domProps = $derived(buildDomProps(filteredProps, resolvedClass, tag))
 
   // Resolves whether to render as child slot; also enforces as+asChild mutual exclusion.
   const useAsChild = $derived.by(() => {

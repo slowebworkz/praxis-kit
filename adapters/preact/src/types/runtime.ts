@@ -60,11 +60,7 @@ export type ClassResolver = Readonly<{
  * Applies runtime ARIA normalization.
  */
 export type AriaResolver = Readonly<{
-  resolveAria<P extends IntrinsicProps>(
-    tag: ElementType,
-    props: P,
-    extraProps?: IntrinsicProps,
-  ): { props: P }
+  resolveAria<P extends IntrinsicProps>(tag: ElementType, props: P): { props: P }
 }>
 
 /**
