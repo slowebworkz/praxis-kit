@@ -1,0 +1,23 @@
+node_modules/
+.pnpm-store/
+dist/
+*.tsbuildinfo
+lib/**/*.d.ts
+lib/**/*.d.ts.map
+lib/**/*.js.map
+.DS_Store
+.env
+.env.local
+coverage/
+pnpm-debug.log*
+**/.playwright/
+**/playwright/.cache/
+
+# Local-only Claude guidance — kept out of the repo intentionally.
+CLAUDE.md
+
+# .vscode and CLAUDE.md are excluded by the global gitignore; re-include the
+# shared editor tasks so the git workflow is versioned with the repo.
+!.vscode/
+.vscode/*
+!.vscode/tasks.json

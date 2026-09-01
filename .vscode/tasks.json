@@ -1,0 +1,136 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Git: require clean tree",
+      "detail": "Fails if the working tree or index has uncommitted changes. Used as a guard by other tasks.",
+      "type": "shell",
+      "command": "git diff --quiet && git diff --cached --quiet || { echo 'Working tree has uncommitted changes — commit or stash first.'; exit 1; }",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true,
+        "close": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: fetch",
+      "detail": "Fetch all remotes and prune deleted remote-tracking branches.",
+      "type": "shell",
+      "command": "git fetch --all --prune",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true,
+        "close": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: switch develop",
+      "detail": "Guard a clean tree, then switch to the integration branch (develop).",
+      "type": "shell",
+      "command": "git diff --quiet && git diff --cached --quiet || { echo 'Working tree has uncommitted changes — commit or stash first.'; exit 1; }; git switch develop",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true,
+        "close": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: reset main to origin",
+      "detail": "DESTRUCTIVE: fetches, switches to main and hard-resets it to origin/main. Any local commits on main are discarded.",
+      "type": "shell",
+      "command": "git switch main && git fetch --all --prune && echo 'Hard-resetting main to origin/main — local commits on main will be lost.' && git reset --hard origin/main",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true,
+        "close": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: reset develop to origin",
+      "detail": "DESTRUCTIVE: fetches, switches to develop and hard-resets it to origin/develop. Any local commits on develop are discarded.",
+      "type": "shell",
+      "command": "git switch develop && git fetch --all --prune && echo 'Hard-resetting develop to origin/develop — local commits on develop will be lost.' && git reset --hard origin/develop",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true,
+        "close": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: prune gone branches",
+      "detail": "Deletes only local branches that are both merged into main and whose upstream is [gone].",
+      "type": "shell",
+      "command": "git for-each-ref --merged=main --format='%(refname:short)%09%(upstream:track)' refs/heads | awk -F '\\t' '$2 == \"[gone]\" {print $1}' | while IFS= read -r branch; do [ -n \"$branch\" ] && git branch -d \"$branch\"; done",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true,
+        "close": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: sync repository",
+      "detail": "Require a clean tree, fetch, hard-reset both main and develop to their origins, prune gone branches, and end on develop.",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Git: require clean tree",
+        "Git: fetch",
+        "Git: reset main to origin",
+        "Git: reset develop to origin",
+        "Git: prune gone branches"
+      ],
+      "presentation": {
+        "reveal": "never",
+        "close": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}
