@@ -58,7 +58,7 @@ catalog:
   husky: ^9.1.7
 
   jiti: ^2.7.0
-  jscpd: ^4.2.4
+  jscpd: ^5.0.16
   jsdom: ^29.0.0
   publint: ^0.3.24
 
