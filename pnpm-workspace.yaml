@@ -59,7 +59,7 @@ catalog:
 
   jiti: ^2.7.0
   jscpd: ^4.2.4
-  jsdom: ^29.0.0
+  jsdom: ^30.0.1
   publint: ^0.3.24
 
   # Lit
