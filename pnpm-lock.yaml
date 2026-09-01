@@ -67,7 +67,7 @@ catalogs:
       specifier: ^4.23.13
       version: 4.23.13
     type-fest:
-      specifier: ^5.9.0
+      specifier: ^5.8.0
       version: 5.9.0
     typescript-eslint:
       specifier: 8.68.0
