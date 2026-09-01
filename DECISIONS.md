@@ -2,6 +2,27 @@
 
 ## Open
 
+### `lib/pipeline` — context merge semantics (next architectural decision)
+
+`PassResult.context` is typed `Partial<TContext>` today. That is a fine _starting_ shape, but it is
+not a decision about what "merge" means — it just defers it. Resolve this before implementing
+`Pipeline`, because the executor's correctness (and especially any future `parallel` strategy)
+depends on it.
+
+Invariant to carry forward regardless of outcome:
+
+> A `Pass` never owns the pipeline's context. It produces a patch; the executor owns context
+> accumulation. `Pass` → `PassResult` → { context patch → Merge → accumulated Context; diagnostics
+> → accumulation; metadata → tooling, never merged into context }.
+
+Questions to answer with code + tests:
+
+- Shallow replace per top-level key, or per-domain merge strategies (diagnostics, contracts,
+  variants, slots may each want different semantics)?
+- Is merge order-independent? `parallel` execution is only correct if it is.
+- Where does the boundary sit between context (data required to execute the pipeline) and metadata
+  (information about execution)? Metadata must not become a back door for pipeline state.
+
 ### `runtime/*` — deferred
 
 `../pk` has a separate `runtime/*` glob with one package, `@praxis-kit/runtime` (`runtime/core`):
@@ -41,8 +62,10 @@ already pared back: `jsdom` dropped from root, `type-fest` under review).
 Vitest 4 deprecates the standalone `vitest.workspace.ts` that `../pk` uses. `vitest.config.ts` at
 the root declares a `test.projects` glob over
 `{lib,packages,adapters,plugins,tooling,qa,examples}/*/vitest.config.ts`; each package owns its own
-config. Inert until the first package with tests. `configs/vitest.base.ts` (shared `defineLibConfig`
-/ `defineJsdomConfig` helpers) is still deferred — it lands with that package.
+config. `configs/vitest.base.ts` (shared `defineLibConfig(name, overrides?)`) is ported too, as of
+the first package (`lib/pipeline`) — collapsed to one function with `environment` etc. passed
+through `overrides` rather than `../pk`'s separate `defineJsdomConfig`; `include` is enforced last
+as policy.
 
 ### ESLint: ported from `../pk`, minus the in-repo plugin
 
@@ -51,7 +74,7 @@ Two pieces are left out until the packages they need exist:
 
 - the `@praxis-kit` ESLint plugin import and the self-validation block that runs its rules over
   `packages|adapters|examples/*/src` — needs `plugins/eslint`.
-- `configs/praxis-plugin.ts` and `configs/vitest.base.ts`.
+- `configs/praxis-plugin.ts`.
 
 `configs/architecture.ts`'s `boundaries/elements` patterns are copied verbatim; they match nothing
 (and so enforce nothing) until those package dirs land.

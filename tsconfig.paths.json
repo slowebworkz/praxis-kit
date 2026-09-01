@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
-    "paths": {}
+    "paths": {
+      "@praxis-kit/pipeline": ["./lib/pipeline/src"],
+      "@praxis-kit/pipeline/*": ["./lib/pipeline/src/*"]
+    }
   }
 }
