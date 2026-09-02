@@ -36,6 +36,35 @@ already pared back: `jsdom` dropped from root, `type-fest` under review).
 
 ## Resolved
 
+### `lib/primitive` — port scope and review outcomes
+
+Ported ~verbatim from `../pk` (156 src files, 7 export subpaths). Kept as **one package** — the
+boundaries ("framework-neutral primitives + semantic machinery for every adapter") are coherent;
+splitting into `primitive-core`/`-types`/`-guards`/… waits for real independent consumers.
+
+Changes made during the port review:
+
+- **`WithChildRules`** tightened — `enforcement.children` is `readonly ChildRuleInput[]`, not
+  `readonly unknown[]`. Documented as the deliberately-minimal structural upper bound / inference
+  wildcard; the real "is children enforcement active" narrowing is downstream
+  (`WithChildrenEnforcement`).
+- **`wrapMethodForDetection.restore()` bug fixed** — it always `delete`d the property, discarding a
+  pre-existing own-property override. Now captures the original descriptor and restores it, falling
+  back to `delete` only when there was none.
+- **ARIA tables documented as a partial model.** `IMPLICIT_ROLE_RECORD` carries a 4-kind taxonomy
+  (static / attribute-dependent / context-dependent / state-dependent) and the rule that only
+  *static* roles belong in it. `STRONG_ROLES` is flagged standards-sensitive — a heuristic that
+  needs an HTML-AAM / ARIA-in-HTML citation pass and dedicated conformance tests before it is
+  canonical; do not widen it without both. Tracked in `.vscode/MIGRATION.md`.
+- **`createObservable`** — no per-listener `try/catch` is deliberate (a throwing listener is the
+  adapter's bug to surface); documented + tested.
+- **Complexity watches** (comments in the code, no change yet): `ResolvedFactoryOptions` — split
+  into `Resolved{Rendering,Styling,Enforcement,…}Options` before adding a new concern, not append
+  fields; `iterate.ts` — keep to genuinely shared primitives.
+- **Root barrel stays broad but subpaths are the direction.** `src/index.ts` re-exports everything;
+  `./types`, `./guards/aria`, `./constants/aria`, etc. exist so consumers can express narrow
+  intent. Push new consumers to subpaths as the package grows.
+
 ### Type organization: `src/types/` folder + barrel is the package default
 
 `../pk` used a `src/types/` folder with grouped files and an `index.ts` barrel in 16 of 17
@@ -74,6 +103,12 @@ Reviewed the ported surface and changed it rather than freezing `../pk`'s shape:
   option. A location-aware key stays a future option.
 - **Dropped the `type-fest` dependency** — `DiagnosticInput` uses built-in `Omit<Diagnostic,
   'severity'>` instead of `Except`. No other repo code used `type-fest`.
+- **`AnyRecord` is imported from `@praxis-kit/primitive`.** `primitive` is the single source of
+  truth for `AnyRecord`/`StringMap`; `primitive` also imports the `Diagnostics` type from here, so
+  this forms a package cycle — but a **type-only** one, fully erased at build time, so it is
+  accepted rather than duplicating the primitives. `@praxis-kit/primitive: workspace:*` is a
+  declared dependency of `lib/diagnostics`. (Reconsider if a shared leaf package for such
+  primitives is ever created, which would break the cycle cleanly.)
 
 ### `lib/diagnostics` — `Diagnostic.context` vs `.metadata`
 
