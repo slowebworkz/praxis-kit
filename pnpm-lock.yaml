@@ -21,6 +21,9 @@ catalogs:
     '@vitest/ui':
       specifier: ^4.1.11
       version: 4.1.11
+    clsx:
+      specifier: ^2.1.1
+      version: 2.1.1
     dependency-cruiser:
       specifier: ^18.2.0
       version: 18.2.0
@@ -162,12 +165,32 @@ importers:
         version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
 
   lib/diagnostics:
+    dependencies:
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../primitive
     devDependencies:
       vitest:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
 
   lib/pipeline:
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
+
+  lib/primitive:
+    dependencies:
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
+      clsx:
+        specifier: 'catalog:'
+        version: 2.1.1
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.9.0
     devDependencies:
       vitest:
         specifier: 'catalog:'
@@ -1217,6 +1240,10 @@ packages:
   cli-table3@0.6.5:
     resolution: {integrity: sha512-+W/5efTR7y5HRD7gACw9yQjqMVvEMLBHmboM/kPWam+H+Hmyrgjh6YncVKK122YZkXrLudzTuAukUw9FnMf7IQ==}
     engines: {node: 10.* || >= 12.*}
+
+  clsx@2.1.1:
+    resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
+    engines: {node: '>=6'}
 
   code-block-writer@13.0.3:
     resolution: {integrity: sha512-Oofo0pq3IKnsFtuHqSF7TqBfr71aeyZDVJ0HpmqB7FBM2qEigL0iPONSCZSO9pE9dZTAxANe5XHG9Uy0YMv8cg==}
@@ -3483,6 +3510,8 @@ snapshots:
       string-width: 4.2.3
     optionalDependencies:
       '@colors/colors': 1.5.0
+
+  clsx@2.1.1: {}
 
   code-block-writer@13.0.3: {}
 
