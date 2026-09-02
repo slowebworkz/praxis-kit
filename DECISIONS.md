@@ -2,27 +2,6 @@
 
 ## Open
 
-### `lib/pipeline` — context merge semantics (next architectural decision)
-
-`PassResult.context` is typed `Partial<TContext>` today. That is a fine _starting_ shape, but it is
-not a decision about what "merge" means — it just defers it. Resolve this before implementing
-`Pipeline`, because the executor's correctness (and especially any future `parallel` strategy)
-depends on it.
-
-Invariant to carry forward regardless of outcome:
-
-> A `Pass` never owns the pipeline's context. It produces a patch; the executor owns context
-> accumulation. `Pass` → `PassResult` → { context patch → Merge → accumulated Context; diagnostics
-> → accumulation; metadata → tooling, never merged into context }.
-
-Questions to answer with code + tests:
-
-- Shallow replace per top-level key, or per-domain merge strategies (diagnostics, contracts,
-  variants, slots may each want different semantics)?
-- Is merge order-independent? `parallel` execution is only correct if it is.
-- Where does the boundary sit between context (data required to execute the pipeline) and metadata
-  (information about execution)? Metadata must not become a back door for pipeline state.
-
 ### `runtime/*` — deferred
 
 `../pk` has a separate `runtime/*` glob with one package, `@praxis-kit/runtime` (`runtime/core`):
@@ -56,6 +35,29 @@ question applies to `jsdom` and `type-fest` once test/config packages exist that
 already pared back: `jsdom` dropped from root, `type-fest` under review).
 
 ## Resolved
+
+### `lib/pipeline` — context merge is shallow top-level replace
+
+`mergeContext(accumulated, patch)` is `{ ...accumulated, ...patch }`: each key present on a
+`PassResult.context` patch replaces that key's value wholesale; absent keys are untouched. No deep
+or per-domain merge.
+
+Why:
+
+- It is the honest match for `PassResult.context`'s `Partial<TContext>` type — a shallow patch,
+  merged shallowly. Deep merge would make the type and the runtime disagree.
+- Order-independent under one stateable rule: two passes in the same parallel group must not write
+  the same key. `detectConflicts` enforces that for the future parallel executor. Deep merge has no
+  such rule — write order silently changes the result.
+- `diagnostics` and `metadata` live outside `context` and accumulate separately, which absorbs most
+  of the "different domains need different merge semantics" pressure.
+- Smallest thing that unblocks `Pipeline`. When a concrete in-`context` domain needs concat or
+  recursive merge, a strategy map can be added with shallow replace as the default — backward
+  compatible.
+
+Invariant carried forward: a `Pass` never owns the pipeline's context. It produces a patch; the
+executor owns accumulation. `Pass` → `PassResult` → { context patch → `mergeContext` → accumulated
+context; diagnostics → accumulation; metadata → tooling, never merged into context }.
 
 ### Vitest: root `vitest.config.ts` with `test.projects` (not `vitest.workspace.ts`)
 
