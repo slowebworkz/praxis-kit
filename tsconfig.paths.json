@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "paths": {
+      "@praxis-kit/contract-props": ["./lib/contract-props/src"],
+      "@praxis-kit/contract-props/*": ["./lib/contract-props/src/*"],
       "@praxis-kit/diagnostics": ["./lib/diagnostics/src"],
       "@praxis-kit/diagnostics/*": ["./lib/diagnostics/src/*"],
       "@praxis-kit/pipeline": ["./lib/pipeline/src"],
