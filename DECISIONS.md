@@ -36,6 +36,74 @@ already pared back: `jsdom` dropped from root, `type-fest` under review).
 
 ## Resolved
 
+### Type organization: `src/types/` folder + barrel is the package default
+
+`../pk` used a `src/types/` folder with grouped files and an `index.ts` barrel in 16 of 17
+packages; a single `src/types.ts` was one exception (`lib/diagnostics`, 47 lines). This repo
+standardizes on the folder everywhere — mixed conventions across ~26 packages cost more than one
+directory, and the folder scales without churn (a new type is a new file, not a growing monolith).
+
+Two carve-outs:
+
+1. **Co-locate a type with its behavior module when it has one.** `Severity` lives in
+   `severity.ts`, `DiagnosticPolicy` in `policy.ts`, `DiagnosticCode` in `codes.ts`. `types/` holds
+   only pure-data shapes with no natural home module — wire/descriptor types.
+2. **A lone `types.ts` is acceptable only for a genuinely tiny package** — one cohesive group, no
+   growth path. Promote to `types/` at the first second group.
+
+`lib/pipeline` already conforms. `lib/diagnostics` was promoted from `types.ts` to
+`types/{diagnostic,reporter}.ts` + barrel as part of its port.
+
+### `lib/diagnostics` — API changes made during the port
+
+Reviewed the ported surface and changed it rather than freezing `../pk`'s shape:
+
+- **The policy owns enforcement; reporters only report.** `Diagnostics.report` checks the policy
+  first — `Ignore` drops, `Throw` raises a `PraxisError` inline, only `Report` reaches the
+  reporter. `ThrowingReporter` was **removed** (dead — a reporter never got the chance to throw).
+  "Strict mode" is a policy with `throwThreshold: Severity.Error`, not a reporter.
+- **Facade covers all five severities**: `debug` / `info` / `warn` / `error` / `fatal`. `../pk` had
+  only `warn`/`error`/`info` despite `Severity.Debug`/`Fatal` existing.
+- **`active` → `warnActive`.** It only ever meant "a `Warning` would not be ignored" — a cheap gate
+  for skipping warning-level validation work, not a general "diagnostics on" flag. Renamed so the
+  name matches the semantics.
+- **`DefaultPolicy` validates `throwThreshold >= reportThreshold`** (`RangeError` otherwise) — a
+  throw band below the report band is always a misconfiguration.
+- **`AsyncConsoleReporter` dedups on the formatted string**, deliberately — it is a console-UX
+  helper, not a lossless channel. Documented on the class; `CollectingReporter` is the lossless
+  option. A location-aware key stays a future option.
+- **Dropped the `type-fest` dependency** — `DiagnosticInput` uses built-in `Omit<Diagnostic,
+  'severity'>` instead of `Except`. No other repo code used `type-fest`.
+
+### `lib/diagnostics` — `Diagnostic.context` vs `.metadata`
+
+Both are `Record<string, unknown>` bags today, and left to drift they become the same thing. The
+intended split, documented on the types in `types.ts`:
+
+- **`context`** — data a *reader* needs to understand the diagnostic; the values a formatter
+  interpolates into `rationale`/`message` (offending prop name, expected vs actual child, ARIA
+  token). Human-oriented.
+- **`metadata`** — data a *consumer* keys off (build plugin, editor integration, telemetry); never
+  rendered to a person. Machine-oriented.
+
+Direction (from the README): grow structured `context` fields so formatters derive messages
+instead of callers pre-formatting them — but **add no field to either bag without a concrete
+consumer**.
+
+### `lib/diagnostics` — `HTML`/`ARIA` are spec validity; `Accessibility` is guidance
+
+The `DiagnosticCategory` taxonomy keeps a deliberate split, mirrored by the code ranges in
+`codes.ts`:
+
+- **`HTML` (`HTML3xxx`) / `ARIA` (`ARIA2xxx`)** — spec compliance. The markup or ARIA usage is
+  *invalid* per the HTML standard or the ARIA spec. A fact.
+- **`Accessibility` (`A11Y8xxx`)** — best-practice guidance. The usage is spec-valid but
+  inadvisable. Advisory.
+
+A rule goes in `Accessibility` **only when it is not** an `HTML`/`ARIA` validity fact. This lets
+consumers treat the two classes differently (e.g. fail a build on validity errors, only warn on
+guidance). Documented on the enum itself in `category.ts`; do not let new codes blur the line.
+
 ### Versioning: `0.x` until usable, then `v1.0.0`
 
 Every package stays on `0.y.z` until `@praxis-kit/kit` can be installed and used to build a real
