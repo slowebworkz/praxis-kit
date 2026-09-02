@@ -19,8 +19,10 @@ Built in phases (see `DECISIONS.md` and the Phase 1 plan):
    executor. See `DECISIONS.md`.
 3. **Pipeline** — recursive `Pass | Pipeline` nodes; `runPipeline` executes one sequentially (a
    barrier between nodes) and returns a `RunResult` — the accumulated context plus every diagnostic
-   and metadata entry. Always async; a sync fast path is deferred. ← _here_
-4. Named pipelines — `normalize` / `enrich` / `validate` / `emit` phases.
+   and metadata entry. Always async; a sync fast path is deferred.
+4. **Phased pipelines** — `phasedPipeline(name, { normalize, enrich, validate, emit })` builds an
+   ordinary `Pipeline` whose top-level nodes are those phases (in `PIPELINE_PHASES` order) as
+   nested sub-pipelines. Pure composition — no new execution semantics. ← _here_
 5. Execution strategies — `sequential` (barriers) vs `parallel` (merge after completion); parallel
    depends on the merge model being order-independent.
 
@@ -37,6 +39,8 @@ Plugin injection (third-party pass contribution) is deferred to its own commit �
 | `mergeContext`, `mergeResults`, `detectConflicts` | Shallow context-patch merge + conflict check  |
 | `Pipeline`, `PipelineNode`                        | Recursive tree of passes                       |
 | `runPipeline`, `RunResult`                        | Sequential executor + its accumulated outcome  |
+| `phasedPipeline`, `PIPELINE_PHASES`               | Build a pipeline from `normalize`/`enrich`/…    |
+| `PipelinePhase`, `PhaseNodes`                     | Phase name union + per-phase node lists         |
 
 Development: `pnpm --filter @praxis-kit/pipeline test`,
 `pnpm --filter @praxis-kit/pipeline typecheck`.
