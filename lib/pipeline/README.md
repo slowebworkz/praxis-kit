@@ -22,9 +22,11 @@ Built in phases (see `DECISIONS.md` and the Phase 1 plan):
    and metadata entry. Always async; a sync fast path is deferred.
 4. **Phased pipelines** — `phasedPipeline(name, { normalize, enrich, validate, emit })` builds an
    ordinary `Pipeline` whose top-level nodes are those phases (in `PIPELINE_PHASES` order) as
-   nested sub-pipelines. Pure composition — no new execution semantics. ← _here_
-5. Execution strategies — `sequential` (barriers) vs `parallel` (merge after completion); parallel
-   depends on the merge model being order-independent.
+   nested sub-pipelines. Pure composition — no new execution semantics.
+5. **Execution strategies** — `Pipeline.strategy` is `sequential` (default; a barrier between
+   nodes) or `parallel` (every node runs against the same input, patches merged after). Set per
+   pipeline, so a tree can mix strategies. A `parallel` pipeline whose nodes write the same context
+   key throws `ParallelConflictError`. ← _here_
 
 Plugin injection (third-party pass contribution) is deferred to its own commit — see `DECISIONS.md`.
 
@@ -36,9 +38,11 @@ Plugin injection (third-party pass contribution) is deferred to its own commit �
 | `PassResult`                                      | `{ context?, diagnostics?, metadata? }`       |
 | `Diagnostic`                                      | A single problem a pass reports               |
 | `MaybePromise`, `MetadataMap`, `PipelineStrategy` | Shared primitives                            |
-| `mergeContext`, `mergeResults`, `detectConflicts` | Shallow context-patch merge + conflict check  |
-| `Pipeline`, `PipelineNode`                        | Recursive tree of passes                       |
-| `runPipeline`, `RunResult`                        | Sequential executor + its accumulated outcome  |
+| `mergeContext`, `mergeResults`                    | Shallow context-patch merge                    |
+| `shallowDiff`, `detectConflicts`                  | Identity diff + overlapping-write check         |
+| `Pipeline`, `PipelineNode`                        | Recursive tree of passes (+ `strategy`)         |
+| `runPipeline`, `RunResult`                        | Executor + its accumulated outcome             |
+| `ParallelConflictError`                           | Thrown when parallel nodes write the same key   |
 | `phasedPipeline`, `PIPELINE_PHASES`               | Build a pipeline from `normalize`/`enrich`/…    |
 | `PipelinePhase`, `PhaseNodes`                     | Phase name union + per-phase node lists         |
 

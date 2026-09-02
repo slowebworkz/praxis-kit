@@ -36,6 +36,45 @@ already pared back: `jsdom` dropped from root, `type-fest` under review).
 
 ## Resolved
 
+### Versioning: `0.x` until usable, then `v1.0.0`
+
+Every package stays on `0.y.z` until `@praxis-kit/kit` can be installed and used to build a real
+component with contract enforcement working through at least one framework adapter and the
+standalone runtime. That milestone is `v1.0.0` — the first git tag, cut on `main`.
+
+- Pre-1.0, breaking changes are expected and do not force a major; Changesets moves `0.y.z`.
+- The old repo's version numbers are **not** carried over (`../pk` had drifted to root `4.0.0` and
+  `@praxis-kit/kit` `7.8.1` with no changeset config). This repo starts at `0.0.0` and Changesets
+  owns every bump from the first publishable package.
+- No `v0.x` tags unless a real pre-release is cut; no version badge in `README.md` before `v1.0.0`.
+
+Migration status and the full "where version numbers live" checklist are tracked in
+`.vscode/MIGRATION.md` (uncommitted).
+
+### `lib/pipeline` — execution strategy is per-pipeline; parallel conflicts throw
+
+`Pipeline.strategy` is `'sequential'` (default when omitted) or `'parallel'`, set on each pipeline
+so a tree can mix them. `runPipeline` reduces every node — `Pass` or nested `Pipeline` — to the
+same `{ patch, diagnostics, metadata }` outcome, then folds those outcomes per strategy:
+
+- **sequential** — a barrier between nodes; each node sees the previous node's merged context.
+- **parallel** — every node runs against the same input (`Promise.all`); patches are checked with
+  `detectConflicts` and merged. Diagnostics and metadata still accumulate in node order so the
+  result is deterministic.
+
+**A parallel key conflict throws `ParallelConflictError`, it is not a diagnostic.** Two concurrent
+nodes writing the same key with no ordering between them is a pipeline *authoring* bug — there is
+no correct merged value to pick. Diagnostics are for invalid *input*, not invalid pipelines. Fail
+fast, name the pipeline and the keys.
+
+A nested pipeline running as a parallel node contributes `shallowDiff(input, itsResult)` — it saw
+the same input a sibling pass saw, and `mergeContext` keeps untouched keys by reference, so the
+diff is exact for untouched keys and conservative (flags a change) for a key reassigned to an
+equal-but-new value.
+
+Still deliberately **not** built: a synchronous fast path for all-sync pipelines, and any
+`concurrency` limit on `parallel` (all nodes fire at once).
+
 ### `lib/pipeline` — phases are composition sugar, not an execution mode
 
 `phasedPipeline(name, phases)` builds a plain `Pipeline` whose top-level nodes are the canonical
