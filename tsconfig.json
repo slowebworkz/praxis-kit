@@ -1,4 +1,4 @@
 {
   "files": [],
-  "references": [{ "path": "./lib/pipeline" }]
+  "references": [{ "path": "./lib/diagnostics" }, { "path": "./lib/pipeline" }]
 }
