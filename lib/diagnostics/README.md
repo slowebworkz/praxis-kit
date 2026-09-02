@@ -13,9 +13,7 @@ Private workspace package, bundled into whichever `praxis-kit` entries need it. 
 class is meant to keep a single nominal identity across entry points once the published package
 exists — construction stays internal, the _type_ is re-exported where callers need to name it.
 
-> Ported from `../pk` mostly verbatim. Adaptations: `types/diagnostic.ts` inlines `AnyRecord` (a
-> `Record<string, unknown>`) instead of importing it from `@praxis-kit/primitive`, not ported yet
-> (restore the import when `lib/primitive` lands); the old single `types.ts` was promoted to a
+> Ported from `../pk` mostly verbatim. Adaptations: the old single `types.ts` was promoted to a
 > `types/` folder + barrel (repo default — see `DECISIONS.md`); `ThrowingReporter` was removed
 > (dead — the policy owns throwing); `debug()` / `fatal()` added for severity-facade symmetry;
 > `active` renamed `warnActive`; `DefaultPolicy` now validates its thresholds.
@@ -55,5 +53,8 @@ exists — construction stays internal, the _type_ is re-exported where callers 
 - `DiagnosticInput` is the write-side shape (`Diagnostic` minus `severity`). Planned direction:
   grow structured `context` fields so formatters derive messages instead of callers pre-formatting
   them — do not add fields without a concrete consumer.
+- `context`/`metadata` are typed via `@praxis-kit/primitive`'s `AnyRecord`. `primitive` also
+  imports the `Diagnostics` type from here — a **type-only** package cycle, erased at build, that
+  is accepted to keep one source of truth for the primitive types (see `DECISIONS.md`).
 
 Development: `pnpm --filter @praxis-kit/diagnostics test`, `pnpm --filter @praxis-kit/diagnostics typecheck`.

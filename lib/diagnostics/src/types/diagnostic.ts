@@ -1,8 +1,11 @@
 import type { DiagnosticCategory } from '../category'
 import type { DiagnosticCode } from '../codes'
 import type { Severity } from '../severity'
-
-type AnyRecord = Record<string, unknown>
+// `AnyRecord`/`StringMap` are the single source of truth in `@praxis-kit/primitive`.
+// `primitive` also imports the `Diagnostics` type from here, so this is a package
+// cycle — but a type-only one, erased at build time. Accepted rather than
+// duplicating the primitives. See DECISIONS.md.
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 /** Data a *reader* needs to understand this diagnostic — the values a formatter
  *  would interpolate into `rationale`/`message` (the offending prop name, the
