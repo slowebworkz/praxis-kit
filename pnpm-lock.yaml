@@ -161,6 +161,12 @@ importers:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
 
+  lib/diagnostics:
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
+
   lib/pipeline:
     devDependencies:
       vitest:
