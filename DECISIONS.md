@@ -36,6 +36,23 @@ already pared back: `jsdom` dropped from root, `type-fest` under review).
 
 ## Resolved
 
+### `lib/pipeline` — phases are composition sugar, not an execution mode
+
+`phasedPipeline(name, phases)` builds a plain `Pipeline` whose top-level nodes are the canonical
+phases — `normalize`, `enrich`, `validate`, `emit` (`PIPELINE_PHASES`, always that order) — as
+nested sub-pipelines, one per non-empty phase. It runs through `runPipeline` with zero special
+casing.
+
+- **No new runtime.** A phase is a nested `Pipeline` named after the phase; the executor already
+  handles nesting. The only thing `phasedPipeline` adds is the fixed order and the phase names.
+- **Empty phases are dropped**, not run as empty sub-pipelines, so the tree reflects the work that
+  exists.
+- **The names carry no semantics here.** `validate` is not wired to fail-on-diagnostic; `emit` is
+  not special. The pipeline package assigns meaning only to *order*. Consumers (the compiler, the
+  runtime) attach the behaviour.
+- Naming each phase sub-pipeline means a `RunResult`'s diagnostics and any tree-walking tooling can
+  attribute work to a phase without a separate phase concept in the executor.
+
 ### `lib/pipeline` — sequential executor is `runPipeline`, always async, returning `RunResult`
 
 `runPipeline(pipeline, input)` walks `pipeline.nodes` in order with a barrier between each: a leaf
