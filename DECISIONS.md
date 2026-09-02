@@ -36,6 +36,25 @@ already pared back: `jsdom` dropped from root, `type-fest` under review).
 
 ## Resolved
 
+### `lib/pipeline` — sequential executor is `runPipeline`, always async, returning `RunResult`
+
+`runPipeline(pipeline, input)` walks `pipeline.nodes` in order with a barrier between each: a leaf
+`Pass` is `execute`d and its patch folded in via `mergeContext`; a nested `Pipeline` runs in place
+and its whole outcome is folded into the parent's accumulation.
+
+- **`RunResult` is not `PassResult`.** `PassResult` is a *patch* one pass proposes
+  (`context?: Partial<TContext>`); `RunResult` is the fully accumulated state the executor owns —
+  final `context: TContext`, and the concrete `diagnostics` / `metadata` collected across the run.
+  A pass never sees a `RunResult`. This is the "execution result vs accumulated context" boundary.
+- **Always returns a `Promise`.** A node may be an async pass (`MaybePromise`), so the executor
+  awaits every node. A synchronous fast path for all-sync runtime pipelines is a later performance
+  concern — not built until benchmarks justify it.
+- **Diagnostics concatenate** in run order. **Metadata shallow-merges** in run order (last key
+  wins); passes that must not collide namespace their keys. Metadata is never merged into
+  `context`.
+- Nesting is structural: a node is a `Pipeline` when it has `nodes`, else a `Pass`. No base class,
+  no `kind` tag.
+
 ### `lib/pipeline` — context merge is shallow top-level replace
 
 `mergeContext(accumulated, patch)` is `{ ...accumulated, ...patch }`: each key present on a
