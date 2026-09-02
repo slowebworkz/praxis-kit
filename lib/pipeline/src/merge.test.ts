@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { detectConflicts, mergeContext, mergeResults } from './merge'
+import { detectConflicts, mergeContext, mergeResults, shallowDiff } from './merge'
 
 interface Ctx {
   tag: string
@@ -53,6 +53,22 @@ describe('mergeResults', () => {
   it('handles results with no context patch', () => {
     const out = mergeResults(base, [{}, { context: { count: 7 } }, {}])
     expect(out.count).toBe(7)
+  })
+})
+
+describe('shallowDiff', () => {
+  it('returns only the keys whose value changed by identity', () => {
+    const after = mergeContext(base, { count: 5 })
+    expect(shallowDiff(base, after)).toEqual({ count: 5 })
+  })
+
+  it('is empty when nothing changed', () => {
+    expect(shallowDiff(base, mergeContext(base, {}))).toEqual({})
+  })
+
+  it('reports a key reassigned to an equal-but-new reference (conservative)', () => {
+    const after = { ...base, meta: { a: 1 } }
+    expect(shallowDiff(base, after)).toEqual({ meta: { a: 1 } })
   })
 })
 

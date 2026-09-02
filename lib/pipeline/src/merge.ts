@@ -34,10 +34,29 @@ export function mergeResults<TContext>(
   return context
 }
 
-/** Keys written by more than one patch. For the future parallel executor: when
- *  several passes run against the same input context, overlapping writes make
- *  the merged result order-dependent, which breaks the parallel contract. An
- *  empty array means the patches are safe to merge in any order. */
+/** The shallow patch that turns `before` into `after`: every key whose value
+ *  changed by `!==` (identity). Used to recover a nested pipeline's
+ *  contribution when it runs as one node of a parallel group — `mergeContext`
+ *  preserves the reference of every untouched key, so an identity diff is exact
+ *  for keys the pipeline left alone and conservative (reports a change) for a
+ *  key reassigned to an equal-but-new value. */
+export function shallowDiff<TContext>(
+  before: TContext,
+  after: TContext,
+): Partial<TContext> {
+  const patch: Partial<TContext> = {}
+  const keys = Object.keys(after as Record<string, unknown>) as (keyof TContext)[]
+  for (const key of keys) {
+    if (after[key] !== before[key]) patch[key] = after[key]
+  }
+  return patch
+}
+
+/** Keys written by more than one patch. The parallel executor runs every node
+ *  against the same input context, so overlapping writes would make the merged
+ *  result order-dependent — it treats a non-empty result as a fatal pipeline
+ *  authoring error. An empty array means the patches are safe to merge in any
+ *  order. */
 export function detectConflicts<TContext>(
   patches: readonly (Partial<TContext> | undefined)[],
 ): (keyof TContext)[] {
