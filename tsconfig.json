@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    { "path": "./lib/contract-props" },
     { "path": "./lib/diagnostics" },
     { "path": "./lib/pipeline" },
     { "path": "./lib/primitive" }
