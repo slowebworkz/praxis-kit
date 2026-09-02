@@ -31,12 +31,12 @@ export function phasedPipeline<TContext>(
   name: string,
   phases: PhaseNodes<TContext>,
 ): Pipeline<TContext> {
-  const nodes = PIPELINE_PHASES.filter(
-    (phase) => (phases[phase]?.length ?? 0) > 0,
-  ).map<Pipeline<TContext>>((phase) => ({
-    name: phase,
-    nodes: phases[phase] as readonly PipelineNode<TContext>[],
-  }))
+  const nodes: Pipeline<TContext>[] = []
+  for (const phase of PIPELINE_PHASES) {
+    const phaseNodes = phases[phase]
+    if (!phaseNodes?.length) continue
+    nodes.push({ name: phase, nodes: phaseNodes })
+  }
 
   return { name, nodes }
 }
