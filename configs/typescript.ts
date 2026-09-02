@@ -69,12 +69,8 @@ const config = [
             'adapters/vue/playwright/index.ts',
             'playwright.workspace.ts',
             'vitest.workspace.ts',
-            // lib packages whose vitest.config.ts lives outside their tsconfig include
-            'lib/adapter-utils/vitest.config.ts',
-            'lib/backend-utils/vitest.config.ts',
-            'lib/primitive/vitest.config.ts',
-            'lib/pipeline/vitest.config.ts',
-            'lib/style/vitest.config.ts',
+            // every lib package's vitest.config.ts lives outside its `include: ["src"]` tsconfig
+            'lib/*/vitest.config.ts',
             'examples/*/vite.config.ts',
             // workspace vitest configs live outside any tsconfig include
             'runtime/*/vitest.config.ts',

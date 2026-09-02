@@ -1,4 +1,8 @@
 {
   "files": [],
-  "references": [{ "path": "./lib/diagnostics" }, { "path": "./lib/pipeline" }]
+  "references": [
+    { "path": "./lib/diagnostics" },
+    { "path": "./lib/pipeline" },
+    { "path": "./lib/primitive" }
+  ]
 }
