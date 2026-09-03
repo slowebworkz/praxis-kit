@@ -55,6 +55,21 @@ emitting it would be redundant. Revisit when core wires the normalizers in; if M
 some props it lands as a deliberate change with a visible diff in
 `props/normalizers.test.ts`, which currently pins Model A across all eight.
 
+### `lib/contract` — `aria-level` value range (`max: 6`)
+
+`aria/spec/attributes/aria-value-types.ts` types `aria-level` as `{ kind: 'integer', min: 1,
+max: 6 }`, ported from `../pk`, which has a test asserting `aria-level="7"` warns. WAI-ARIA
+actually defines `aria-level` as `min 1` with **no maximum** — `1–6` is the HTML heading range
+(`h1`–`h6`) and `aria-level` also applies to `treeitem`, `row`, `listitem`, etc. with no cap.
+
+Options: (a) keep the global `max: 6` as ported — simplest, catches the common heading typo, but
+technically over-strict for non-heading roles; (b) drop to `{ min: 1 }` and enforce the `1–6`
+range only for heading elements / `role="heading"` (a heading-scoped rule, alongside the existing
+`redundantAriaLevel` check). Would change the ported `aria-level="7"` engine test.
+
+Deferred to the ARIA-engine slice (3b), where the value-checking rule and its tests are ported
+and the heading-scoped path can be added in the same change.
+
 ## Resolved
 
 ### `lib/primitive` — port scope and review outcomes
