@@ -87,6 +87,63 @@ it. The engine orchestrates: derive context → select policy → run rules → 
 apply fixes → return. When several existing rules next need to change together, that is the
 moment to extract them outward too.
 
+### `lib/contract` — port scope and review outcomes
+
+Ported from `../pk` in seven PRs (#9–#15), each reviewed on landing, kept as **one package**
+(`@praxis-kit/contract`) — the boundary ("the contract runtime: ARIA engine, structural child
+rules, `InvariantBase` severity routing, plus the contract-specific diagnostics/types/prop
+normalizers every adapter and `packages/core` consume") is coherent. Depends on
+`@praxis-kit/{primitive,diagnostics}` and `type-fest`; `primitive` is the single ARIA/child
+vocabulary and this package only interprets it.
+
+Slices: `src/types/` → `src/diagnostics/` + `src/props/` → `src/aria/spec/` + policy →
+`src/aria/` `AriaPolicyEngine` + tests → `src/strict/` → a focusability/numeric correctness pass
+→ `src/children/`.
+
+Changes made during the port (beyond the dedicated entries above for the false-state model,
+`aria-level`, and the "engine orchestrates" convention):
+
+- **`types/aria/aria-role.ts`** reduced to a re-export of `primitive`'s `AriaRole` (`../pk`
+  redefined it identically). Same "keep `@praxis-kit/contract` a complete surface" reasoning
+  keeps the `isInvalid` re-export from `./aria` even though it is a bare `primitive` predicate.
+- **`InvariantBase.active` → `warnActive`**, tracking the identical rename in `lib/diagnostics`.
+  One consequence: `ChildrenEvaluator.evaluate()`'s cheap early-return gate is now visibly
+  Warning-scoped, while child violations are Error severity — a hand-built "report errors, ignore
+  warnings" policy would over-skip. Every non-silent `DefaultPolicy` preset reports Warning, so
+  it is latent; commented at the call site, tracked in `.vscode/MIGRATION.md`.
+- **`polymorphic-validator.ts` → `aria-policy-engine.ts`**, `aria-policy-engine.helpers.ts` →
+  `.test-helpers.ts` — the file names now match the class and the `aria-policy-engine.*.test.ts`
+  suite; the helper name marks it test-only.
+- **`INTERACTIVE_TAGS` → `NATIVE_INTERACTIVE_TAGS`** and its comment no longer claims the members
+  are "always keyboard-reachable"; a real **`isPotentiallyFocusable(tag, props)`**
+  (`aria/spec/elements/focusable.ts`, prop-aware: `href`, `type="hidden"`, `disabled`,
+  `tabindex`, `contenteditable`) replaced the bare tag-set check in `#checkAriaHiddenOnFocusable`.
+  Documented as tabbability, not raw focusability (`tabindex="-1"` deliberately excluded).
+- **Strict ARIA numeric parsing** — `strictNumeric()` (whole string must be numeric; `""` is not
+  `0`) replaced `parseFloat`/`parseInt` in `#isValidAriaValue` and `#checkRedundantAriaLevel`.
+- Normative ARIA tables carry `// Source:` provenance lines; `REQUIRED_ARIA_PROPERTIES` and
+  `NAME_REQUIRED_ROLES` are marked intentionally partial; `HtmlDiagnostics.input`
+  `attributeIgnoredForType` takes a typed `InputIgnoredAttribute` key (no runtime throw);
+  `ContractDiagnostics` message grammar normalized to `component:`.
+- **Children: the `position="first"|"last"` ⇒ `max=1` invariant moved into `normalizeChildRule`.**
+  `../pk` checked it in a `ChildrenEvaluator` helper (`checkPositionCardinalityInvariant`) that
+  ran on the static rules only when no dynamic rule existed, and separately on resolved dynamic
+  rules — so a contradictory *static* positional rule slipped through whenever the evaluator also
+  held a dynamic rule, and `diagnoseChildren` never checked at all. Normalizing is where a
+  structurally-impossible rule is a bad rule, so the throw lives there now and both APIs inherit
+  it; the evaluator helper is deleted. Regression tests added for the static+dynamic case and for
+  `diagnoseChildren` parity.
+- Documented in `rules-matcher.ts`: a rule with a unique `type` matches on `child.type` alone —
+  its `match` predicate is not called on the fast path (a `match` that needs to narrow further
+  must omit `type` or share it).
+
+Open follow-ups (all in `.vscode/MIGRATION.md`): the `warnActive`-scope gate above; a roleless
+focusable element (`<div tabindex="0" aria-hidden>`) is skipped because `AriaPolicyEngine.evaluate`
+short-circuits on `!hasRole`; the name-required check treats `'aria-label' in props` as
+sufficient (`<img aria-label="">` passes) — only matters if `NAME_REQUIRED_ROLES` grows; a
+`role="img"` element still needs the missing-`alt` HTML fact handled separately; a typed
+`primitive` implicit-role lookup would drop the one `tag as Tag` cast in `getImplicitRole`.
+
 ### `lib/primitive` — port scope and review outcomes
 
 Ported ~verbatim from `../pk` (156 src files, 7 export subpaths). Kept as **one package** — the
