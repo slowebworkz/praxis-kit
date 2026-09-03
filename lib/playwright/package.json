@@ -1,0 +1,28 @@
+{
+  "name": "@praxis-kit/playwright",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "description": "Playwright CT helpers for praxis-kit interaction suites — ARIA snapshot assertions, keyboard sequences, axe sweeps, and cardinality console catchers",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "@axe-core/playwright": "catalog:",
+    "@praxis-kit/pipeline": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "catalog:",
+    "@types/node": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.60.0"
+  }
+}
