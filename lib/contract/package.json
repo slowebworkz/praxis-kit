@@ -8,7 +8,7 @@
     "./types": "./src/types/index.ts"
   },
   "sideEffects": false,
-  "description": "Framework-neutral contract types and validation infrastructure (ARIA engine, children validator, strict mode land incrementally)",
+  "description": "Framework-neutral contract validation, diagnostics, and prop normalization",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
