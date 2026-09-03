@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./primitive": "./src/primitive.ts",
+    "./contract": "./src/contract.ts",
     "./styling": "./src/styling.ts"
   },
   "sideEffects": false,
