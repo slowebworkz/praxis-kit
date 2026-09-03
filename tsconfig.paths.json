@@ -12,7 +12,9 @@
       "@praxis-kit/pipeline-kit": ["./lib/pipeline-kit/src"],
       "@praxis-kit/pipeline-kit/*": ["./lib/pipeline-kit/src/*"],
       "@praxis-kit/primitive": ["./lib/primitive/src"],
-      "@praxis-kit/primitive/*": ["./lib/primitive/src/*"]
+      "@praxis-kit/primitive/*": ["./lib/primitive/src/*"],
+      "@praxis-kit/styling": ["./lib/styling/src"],
+      "@praxis-kit/styling/*": ["./lib/styling/src/*"]
     }
   }
 }
