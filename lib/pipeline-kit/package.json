@@ -1,0 +1,24 @@
+{
+  "name": "@praxis-kit/pipeline-kit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./core": "./src/core/index.ts",
+    "./factory": "./src/factory/index.ts"
+  },
+  "sideEffects": false,
+  "description": "Generic pipeline building block — a shared callable `Pipeline` shape plus compose/all/any and a memoized resolved-config factory pattern, reused by concrete pipelines across the workspace",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "type-fest": "catalog:"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
+}
