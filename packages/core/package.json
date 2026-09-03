@@ -1,0 +1,27 @@
+{
+  "name": "@praxis-kit/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./primitive": "./src/primitive.ts",
+    "./styling": "./src/styling.ts"
+  },
+  "sideEffects": false,
+  "description": "Framework-neutral enforcement: tag resolution, prop merge, variant class generation, children + ARIA policy",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "@praxis-kit/contract": "workspace:*",
+    "@praxis-kit/pipeline-kit": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "@praxis-kit/styling": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
+}
