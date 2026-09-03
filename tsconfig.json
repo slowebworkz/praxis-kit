@@ -6,6 +6,7 @@
     { "path": "./lib/contract-props" },
     { "path": "./lib/diagnostics" },
     { "path": "./lib/pipeline" },
+    { "path": "./lib/playwright" },
     { "path": "./lib/pipeline-kit" },
     { "path": "./lib/primitive" },
     { "path": "./lib/runtime" },
