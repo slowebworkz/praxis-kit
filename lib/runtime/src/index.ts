@@ -1,4 +1,5 @@
 export type * from './types'
+export type { NodeId, SlotName } from './pipeline-compat'
 export { componentMergeStrategy } from './merge-context'
 export { isCompleteIdentity, resolveDefinition } from './resolve-definition'
 export { applyAttributes } from './apply-attributes'
