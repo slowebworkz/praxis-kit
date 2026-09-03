@@ -256,6 +256,80 @@ is framework-neutral, so its semantic test matrix should match react's):
 duplication is healthy; the shared layer is `@praxis-kit/adapter-utils` (semantic), not an
 abstraction over the React/Preact element APIs.
 
+### `adapters/vue` — port scope and adaptations
+
+Third framework adapter, first non-React-family one — a real fidelity test of the neutral core.
+`defineComponent` + `setup()` returning a render function; `h()` render calls (no JSX); children
+arrive as Vue `Slots`, not a `children` prop. Flat `src/`. ~840 src LOC, 13 vitest files /
+196 tests + a Playwright-CT interaction suite (`.vue` SFC fixtures, `test:pw`).
+
+- **`exports`:** `.` only. `peer: vue >=3.4`.
+- **deps:** the five workspace `@praxis-kit/*` + `type-fest` → `dependencies` (`../pk` had them in
+  dev). devDeps: `vue`, `@vue/{server-renderer,test-utils,compiler-dom}`, `@vitejs/plugin-vue`,
+  `@playwright/experimental-ct-vue`, `@praxis-kit/playwright`, `jsdom`, `vitest`, `@types/node`.
+- **No `configs/tsconfig.vue.json`** — Vue needs no `jsx` compiler option; `tsconfig.json` extends
+  `tsconfig.base.json` directly and `src/shims-vue.d.ts` covers `*.vue` imports.
+- **No per-package `eslint.config.ts`** (root lint). `.vue` fixture files aren't linted (no Vue
+  ESLint plugin in the repo config) — only reached by the CT suite.
+- `vitest.config.ts` → `defineJsdomConfig('vue')` (the `../pk` `exclude: ['**/*.pw.spec.ts']` is
+  redundant — the shared include is `*.test.ts` only).
+- `playwright-ct.config.ts` tidied to match react's (explicit `@praxis-kit/*` → source aliases,
+  since the CT bundler doesn't read tsconfig paths); `ctPort: 3102`.
+
+**Vue-specific behaviour that is already correct** (no fix needed, unlike the react/preact
+review findings):
+
+- `normalizeChildren(slots)` filters `slots.default()` output with `isVNode` and reports a
+  `discarded` count. No raw-length-vs-filtered bug: Vue's slot output is the already-rendered
+  vnode list — `v-if="false"` is a *comment vnode* (passes `isVNode`, kept, seen by the
+  evaluator), text is a *text vnode* (kept). A nested array is counted as discarded, not
+  flattened. +2 `normalize-children.test.ts` cases pin this.
+- `onElementRef` in `create-contract-component.ts` already tracks `boundElement` (Vue re-invokes
+  a vnode's function-ref on every patch, not just mount/unmount) and clears `cleanup` before
+  rebinding — so same-element re-invocation is a no-op and a throwing registration leaves no
+  stale cleanup. The react/preact "defensive clear" fix is already present here in a stronger
+  form.
+
+**Conformance evidence added:** a user's `ref` on `<Box>` resolves to the *component instance*
+in Vue, not the host element — `onElement` is the adapter's contract for the real DOM node, so
+`on-element.spike.test.ts` gained the full matrix in its place: host element across an `as`
+override and the `asChild` path, cleanup-before-replacement, cleanup-exactly-once on unmount,
+`void`-returning `onElement`, throwing `onElement` on a replacement.
+
+**Second review pass — three contract decisions resolved + a real bug fixed** (`../pk`'s Vue
+adapter had these; 209 → 219 tests):
+
+- **VNode classification for the asChild target.** `normalizeChildren`'s "only element nodes"
+  comment was wrong — `isVNode` also passes Text / Comment / Fragment. The asChild path now
+  narrows the child list to element/component vnodes via `isElementVNode` (`slot/predicates.ts`)
+  before picking the single clone target — mirroring how react/preact narrow their normalized
+  list back to elements. A Comment (`v-if="false"`) sibling is ignored silently; a dropped Text
+  sibling warns.
+- **asChild prop merging aligned with the other adapters.** `../pk` forwarded only
+  string/number/boolean attributes onto the cloned child — `@click`, `:style`, object props were
+  silently dropped. Now the wrapper's resolved props (listeners, `style`, `class`, `role`, the
+  `onElement` ref) are handed to `cloneVNode`, whose `mergeProps` chains `onXxx` handlers,
+  concatenates `class`, and shallow-merges `style` — the same policy as `mergeSlotProps` in
+  `@praxis-kit/adapter-utils` (react/preact Slot). Tests pin chained-onClick and merged-style.
+- **`normalizeListenerKey` fixed.** `../pk` lowercased the whole event name (`onKeyDown` →
+  `onkeydown`), which only "worked" via the DOM IDL property, not Vue's event system, and broke
+  `Once`/`Passive`/`Capture` modifiers entirely. Now it collapses the event name to a single
+  leading capital (`onKeyDown` → `onKeydown` → Vue `hyphenate` → `keydown`) and preserves the
+  modifier suffix. New `event-normalization.test.ts` matrix: `onClick` / `onKeyDown` /
+  `onPointerDown` / `onMouseEnter` / `onBeforeInput` bind to the right DOM event on the intrinsic
+  and asChild paths; `onClickCapture` keeps its capture option.
+- **Conformance `rerender` is now a real update.** `../pk`'s Vue conformance adapter did
+  `unmount()` + `mount()`, so the perf/isolation suites never observed a Vue *update*. Rewritten
+  to raw `render(h(Component, props), container)` (a second `render()` patches, like the Preact
+  adapter), so `rerender` exercises the update path.
+- **Reactivity proof:** `computed(prepareRenderState)` — an unrelated parent update does not
+  re-run the resolution pipeline (deps unchanged); a real prop change does. +2 tests.
+
+**Follow-up:** the `RenderResult.rerender` contract (`lib/adapter-utils`) is sync `void`; Vue's
+`@vue/test-utils` updates are async. The raw-`render()` conformance adapter sidesteps this, but a
+future `rerender` that returns `void | Promise<void>` would let all adapters use their idiomatic
+test driver.
+
 ### `lib/styling` — dropped the `variant-pass` "proof path"
 
 `../pk/lib/styling/src/variant-pass/` carried three demo passes (`basePass`/`hoverPass`/`focusPass`,

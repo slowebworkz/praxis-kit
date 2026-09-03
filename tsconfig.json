@@ -3,6 +3,7 @@
   "references": [
     { "path": "./adapters/preact" },
     { "path": "./adapters/react" },
+    { "path": "./adapters/vue" },
     { "path": "./lib/adapter-utils" },
     { "path": "./lib/contract" },
     { "path": "./lib/contract-props" },
