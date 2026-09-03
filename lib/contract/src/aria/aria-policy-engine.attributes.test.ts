@@ -227,11 +227,35 @@ describe('validate() — aria-hidden="true" on focusable elements', () => {
     expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(true)
   })
 
-  it('reports a violation for aria-hidden on <a>', () => {
+  it('reports a violation for aria-hidden on <a href> (focusable)', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('a', {
+      href: '/somewhere',
       'aria-hidden': 'true',
     })
     expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(true)
+  })
+
+  it('does not flag aria-hidden on a bare <a> with no href (not focusable)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('a', {
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(false)
+  })
+
+  it('does not flag aria-hidden on <input type="hidden"> (not focusable)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', {
+      type: 'hidden',
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(false)
+  })
+
+  it('does not flag aria-hidden on a disabled <button> (removed from tab order)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('button', {
+      disabled: true,
+      'aria-hidden': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-hidden')).toBe(false)
   })
 
   it('does not flag aria-hidden on non-interactive <div>', () => {

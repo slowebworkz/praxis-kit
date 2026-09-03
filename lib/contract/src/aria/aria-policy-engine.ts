@@ -10,7 +10,7 @@ import { ATOMIC_REQUIREMENTS, LIVE_REGION_ROLES } from './spec/roles/live-region
 import { ARIA_VALUE_TYPES } from './spec/attributes/aria-value-types'
 import { VALID_RELEVANT_TOKENS } from './spec/attributes/aria-relevant-tokens'
 import { HEADING_IMPLICIT_LEVELS } from './spec/elements/heading-implicit-levels'
-import { NATIVE_INTERACTIVE_TAGS } from './spec/elements/interactive-tags'
+import { isPotentiallyFocusable } from './spec/elements/focusable'
 import { checkRequiredAttributes } from './spec/validators/required-properties-validator'
 import type { RoleAttributeRequirements } from './spec/types'
 
@@ -47,6 +47,18 @@ function isIntrinsicTag(tag: AnyTag): tag is IntrinsicTag {
 function omitProp<T extends Readonly<AnyRecord>, K extends keyof T>(obj: T, key: K): Omit<T, K> {
   const { [key]: _, ...rest } = obj
   return rest as Omit<T, K>
+}
+
+// Strict numeric coercion for ARIA attribute values. Unlike `parseFloat`/`parseInt`, the whole
+// string must be a number — `"12abc"` is rejected, not read as `12` — and an empty / whitespace
+// string is rejected rather than coerced to `0` the way `Number("")` would.
+function strictNumeric(value: unknown): number | undefined {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  if (trimmed === '') return undefined
+  const n = Number(trimmed)
+  return Number.isFinite(n) ? n : undefined
 }
 
 export class AriaPolicyEngine extends InvariantBase {
@@ -566,16 +578,11 @@ export class AriaPolicyEngine extends InvariantBase {
           value === true ||
           value === false
         )
-      case 'number': {
-        if (typeof value === 'number') return Number.isFinite(value)
-        if (typeof value !== 'string') return false
-        const n = parseFloat(value)
-        return Number.isFinite(n)
-      }
+      case 'number':
+        return strictNumeric(value) !== undefined
       case 'integer': {
-        const n =
-          typeof value === 'number' ? value : typeof value === 'string' ? parseInt(value, 10) : NaN
-        if (!Number.isFinite(n) || !Number.isInteger(n)) return false
+        const n = strictNumeric(value)
+        if (n === undefined || !Number.isInteger(n)) return false
         if (type.min !== undefined && n < type.min) return false
         if (type.max !== undefined && n > type.max) return false
         return true
@@ -643,8 +650,8 @@ export class AriaPolicyEngine extends InvariantBase {
     if (!isNonNull(implicitLevel)) return NO_VIOLATIONS
     const raw = props['aria-level']
     if (!isNonNull(raw)) return NO_VIOLATIONS
-    const n = typeof raw === 'number' ? raw : typeof raw === 'string' ? parseInt(raw, 10) : NaN
-    if (!Number.isFinite(n) || n !== implicitLevel) return NO_VIOLATIONS
+    const n = strictNumeric(raw)
+    if (n === undefined || n !== implicitLevel) return NO_VIOLATIONS
     return [
       {
         valid: false,
@@ -688,26 +695,12 @@ export class AriaPolicyEngine extends InvariantBase {
   }
 
   // WAI-ARIA 1.2 §6.6: aria-hidden="true" must not be placed on focusable elements.
-  //
-  // Focusability is approximated as "tag is in NATIVE_INTERACTIVE_TAGS, or has tabindex >= 0".
-  // That over-reports for the prop-dependent cases the tag set can't see on its own — a bare
-  // `<a>` with no href, `<input type="hidden">`, a `disabled` control — and under-reports a
-  // non-native element made focusable only by `contenteditable`. Tightening this to a real
-  // `isPotentiallyFocusable(tag, props)` is tracked (it changes ported test expectations —
-  // `../pk` deliberately flags any `<a aria-hidden>`). See .vscode/MIGRATION.md.
+  // Focusability is prop-aware (`isPotentiallyFocusable`): a bare `<a>`/`<area>` with no href,
+  // an `<input type="hidden">`, and a `disabled` form control are not focusable; `tabindex >= 0`
+  // or `contenteditable` makes any element focusable.
   static #checkAriaHiddenOnFocusable({ tag, props }: AriaContext): readonly AriaResult[] {
     if (props['aria-hidden'] !== 'true' && props['aria-hidden'] !== true) return NO_VIOLATIONS
-    const isInteractive = NATIVE_INTERACTIVE_TAGS.has(tag)
-    if (!isInteractive) {
-      const tabindex = props.tabindex
-      const n =
-        typeof tabindex === 'number'
-          ? tabindex
-          : typeof tabindex === 'string'
-            ? parseInt(tabindex, 10)
-            : NaN
-      if (!Number.isFinite(n) || n < 0) return NO_VIOLATIONS
-    }
+    if (!isPotentiallyFocusable(tag, props)) return NO_VIOLATIONS
     return [
       {
         valid: false,
