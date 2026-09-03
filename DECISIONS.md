@@ -203,6 +203,59 @@ into, and the warning is a real diagnostic, not silent loss. +3 `render.test.ts`
 discard, falsy-conditional no-warn, bare-text → `assertSingleChild`). **Follow-up:** mirror the
 edge cases in `interaction.pw.spec.tsx` once the CT job runs in CI.
 
+### `adapters/preact` — port scope and adaptations
+
+Second framework adapter. Flatter than react — Preact has one component model, so no
+`current/legacy/shared` split: everything is at `src/` (its own copy of `slot/`, `render.tsx`,
+`build-runtime`, `create-contract-component` — it does **not** depend on `@praxis-kit/react`).
+~1150 src LOC, 9 vitest files / 162 tests. No Playwright-CT suite in `../pk` (none added).
+
+- **`exports`:** `.` only (Preact 10 is a single target). `peer: preact >=10.11`.
+- **deps:** the five workspace `@praxis-kit/*` it imports + `type-fest` → `dependencies`
+  (`../pk` had them in `devDependencies`); `clsx` was listed but unused — dropped. No
+  `@praxis-kit/runtime` (unlike react — preact doesn't import it). devDeps: `preact`,
+  `preact-render-to-string`, `jsdom`, `vitest`, `@types/node`.
+- **No per-package `eslint.config.ts`** (root lint), same as react. `import-x/no-duplicates`
+  fixes on 3 `../pk` files (`conformance.test`, `create-contract-component.test`,
+  `types/polymorphic-props`) that its per-package lint had missed.
+- `vitest.config.ts` → `defineJsdomConfig('preact')`.
+
+**Brought to parity with post-review react** (same fixes, applied here proactively):
+
+- `normalize-children.ts` now **keeps non-empty text/number** (`../pk`'s preact version filtered
+  to elements only — so its child evaluators never saw text, unlike react's, a real
+  cross-adapter contract-enforcement divergence). Added `NormalizedChild = AnyVNode | string |
+  number`; the asChild/Slot path filters back to elements via `getSlotChildren`. +
+  `normalize-children.test.ts` (was missing).
+- `render.tsx` `warnDiscardedChildren` — same raw-vs-filtered baseline bug as react (spurious
+  warnings on `{cond && <X/>}` / `null` / whitespace); same fix + zero-guard. +2 asChild
+  discard tests.
+- `create-contract-component.ts` — added the defensive `cleanupRef` clear-before-re-invoke that
+  react's `current/` has; `on-element.spike.test.tsx` gained the same lifecycle matrix
+  (replacement / exactly-once / void return / throwing registration).
+
+**Review — conformance evidence** (the point of the preact adapter is to prove the architecture
+is framework-neutral, so its semantic test matrix should match react's):
+
+- **Nested-children boundary pinned.** `normalizeChildren` is deliberately one level deep (not a
+  `Children.toArray`): a nested array (`{[<A/>, [<B/>, <C/>]]}`) is discarded, a nested Fragment
+  is one opaque element (not flattened). Preact still renders nested structures correctly on the
+  intrinsic path — normalization only governs what the contract evaluators and the asChild
+  single-child check see. +3 `normalize-children.test.ts` cases.
+- **Ref chain pinned** for every target kind: intrinsic default, `as` override, `as={forwardRef
+  component}` (ref reaches the component-forwarded element), `asChild` (ref → slotted child),
+  element replacement (ref moves), unmount (ref → null). +4 `create-contract-component.test.tsx`
+  cases.
+- **Follow-up:** these (nested children, the ref matrix, polymorphic `as`, ARIA normalization)
+  belong in the shared `conformanceSuite` (`lib/adapter-utils/src/testing/`) so every adapter
+  runs one matrix rather than each re-deriving it; react's `normalize-children.test` should gain
+  the matching nested-children cases when that consolidation happens.
+
+**Architecture note** (review, no action): do **not** abstract react + preact's
+`createContractComponent` similarity into a shared `framework-runtime/createComponent()`. The
+duplication is healthy; the shared layer is `@praxis-kit/adapter-utils` (semantic), not an
+abstraction over the React/Preact element APIs.
+
 ### `lib/styling` — dropped the `variant-pass` "proof path"
 
 `../pk/lib/styling/src/variant-pass/` carried three demo passes (`basePass`/`hoverPass`/`focusPass`,
