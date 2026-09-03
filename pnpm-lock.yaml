@@ -172,6 +172,9 @@ importers:
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../primitive
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.9.0
     devDependencies:
       vitest:
         specifier: 'catalog:'
