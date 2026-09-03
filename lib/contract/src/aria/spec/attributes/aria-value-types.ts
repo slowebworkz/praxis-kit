@@ -24,11 +24,13 @@ export const ARIA_VALUE_TYPES: ReadonlyMap<string, AriaValueType> = new Map([
   ['aria-valuenow', { kind: 'number' }],
   ['aria-valuemin', { kind: 'number' }],
   ['aria-valuemax', { kind: 'number' }],
-  // Integer with optional range
-  // NOTE: WAI-ARIA caps `aria-level` at min 1 with no maximum; the `max: 6` here is the HTML
-  // heading range (h1–h6), applied globally as ported from `../pk`. See DECISIONS.md
-  // ("aria-level value range") — pending a move to heading-scoped enforcement in slice 3b.
-  ['aria-level', { kind: 'integer', min: 1, max: 6 }],
+  // Integer with optional range.
+  // `aria-level` is `min: 1` with no maximum per WAI-ARIA — it applies to `heading`, `treeitem`,
+  // `row`, `listitem`, … and is not capped at the HTML `h1`–`h6` range. Heading-specific
+  // redundancy (an `aria-level` that merely restates a heading's implicit level) is caught
+  // separately by `AriaPolicyEngine.#checkRedundantAriaLevel`. See DECISIONS.md
+  // ("aria-level value range").
+  ['aria-level', { kind: 'integer', min: 1 }],
   ['aria-posinset', { kind: 'integer', min: 1 }],
   ['aria-setsize', { kind: 'integer', min: -1 }],
   ['aria-rowcount', { kind: 'integer', min: -1 }],
