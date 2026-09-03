@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    { "path": "./adapters/react" },
     { "path": "./lib/adapter-utils" },
     { "path": "./lib/contract" },
     { "path": "./lib/contract-props" },
