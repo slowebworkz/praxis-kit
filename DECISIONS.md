@@ -39,6 +39,21 @@ emitting it would be redundant. Revisit when core wires the normalizers in; if M
 some props it lands as a deliberate change with a visible diff in
 `props/normalizers.test.ts`, which currently pins Model A across all eight.
 
+### HTML/ARIA contract layer — standards audit before it is authoritative
+
+Pre-1.0 gate, not an adapter blocker. The HTML/ARIA enforcement data in `packages/core` —
+`HTML_ARIA_RULES` (the per-tag allowed-role table: `main: []`, `nav: []`, and the special handling
+of `h1`–`h6`, `ul`/`ol`/`li`, `a` with/without `href`, `button`, `img`, `input[type]` …),
+`ALLOWED_ROLES` / `ALLOWED_INPUT_ROLES`, `STRONG_ROLES`, `IMPLICIT_ROLE_RECORD` — is ported from
+`../pk` and carries source comments marking it a partial / heuristic model. It is powerful enough
+that a wrong entry makes Praxis *confidently reject valid markup*, so it must be validated
+systematically against the current **ARIA in HTML** (W3C) and **HTML-AAM** specs, with dedicated
+conformance tests citing the normative source per row, before the HTML/ARIA contract layer is
+treated as canonical. The `AriaPolicyEngine` / `createAriaPipeline` architecture does not change —
+this is a data-correctness pass. Consolidates the notes previously scattered under the
+`packages/core` and `lib/primitive` port writeups. Do not widen any of these tables without the
+citation pass + tests.
+
 ## Resolved
 
 ### `runtime/*` — folded into `lib/*` as `lib/runtime`
@@ -136,10 +151,57 @@ Adaptations made during the port review, per slice:
 
 Open follow-ups (`.vscode/MIGRATION.md`): `core/utils` bundles contract state-prop normalizers
 under a "utils" name (reconsider when a real consumer forces the grouping); `primitive.ts`
-surfaces ARIA-role helpers from `contract/types` despite the filename; the `ALLOWED_ROLES` /
-`ALLOWED_INPUT_ROLES` role tables want an ARIA-in-HTML standards audit before being treated as
-canonical (source comments already flag this); the ARIA widget contracts (`menuContract` etc.)
-currently enforce accessible naming, not full APG child patterns.
+surfaces ARIA-role helpers from `contract/types` despite the filename; the HTML/ARIA role tables
+need a standards audit before the contract layer is authoritative (own entry: "HTML/ARIA contract
+layer — standards audit before it is authoritative"); the ARIA widget contracts (`menuContract`
+etc.) currently enforce accessible naming, not full APG child patterns.
+
+### `adapters/react` — port scope and adaptations
+
+First framework adapter. Ported whole (`src/shared/` + `src/current/` React-19 + `src/legacy/`
+React-18 variants, ~2000 src LOC, 33 vitest files / 576 tests, 1 Playwright-CT spec). The adapter
+is a thin shell over `@praxis-kit/adapter-utils`: `buildRuntime` wires `buildCoreRuntime` +
+`buildEngines` + `composeFilter` + `SlotValidator`; `shared/render.ts` is the React render
+pipeline calling `resolveNormalizedProps` / `applyFilter` (the canonical order confirmed at the
+`packages/core` slice-4 checkpoint — verified here, nothing missing). `current/` and `legacy/`
+differ only in ref handling (React 19 plain-prop ref vs React 18 `forwardRef`) and their `Slot` /
+`normalize-children` copies.
+
+- **`exports`:** `.` (React 19) + `./legacy` (React 18). Both mapped in `tsconfig.paths.json`.
+- **deps:** `type-fest` + the six workspace `@praxis-kit/*` it imports move to `dependencies`
+  (`../pk` had all the praxis deps in `devDependencies`); `react` stays a `>=18` peer; `clsx` was
+  listed but unused — dropped. `@praxis-kit/playwright` is a devDep (CT spec only).
+- **No per-package `eslint.config.ts`** — the new repo lints from the root config only, and
+  `configs/architecture.ts` already declares the `adapters/react` boundary element. `../pk`'s
+  per-adapter `no-restricted-imports` (block importing sibling adapters) is a root-config
+  follow-up for when more than one adapter exists.
+- **Dangling `@praxis-kit/*` eslint-disable directives** (3, for the not-yet-ported
+  `no-enforcement-without-strict` rule) rewritten as plain intent comments; re-add the directives
+  with `plugins/eslint`.
+- `@praxis-kit/shared/tests` (a `../pk` path alias to `lib/primitive/src/tests`) → imported
+  directly as `@praxis-kit/primitive/tests` (one hydration-parity test).
+- `defineJsdomConfig` reintroduced in `configs/vitest.base.ts` — see the Vitest entry.
+- `.pw.spec.tsx` runs under `test:pw` (Playwright-CT) only; not wired into CI here (no browser
+  install / CT job yet — follow-up with the first CI workflow).
+
+**Review — `onElement` lifecycle:** legacy `create-contract-component.ts` was missing the
+"clear `cleanupRef` before re-invoking `onElement`" step that `current/` has (so a throwing
+registration on a replacement element could leave the prior, already-run cleanup to fire again on
+unmount) — aligned. Both `on-element.spike.test.tsx` files gained a lifecycle matrix: replacement
+runs the old cleanup before the new registration, cleanup runs exactly once on unmount, a
+`void`-returning `onElement` is tolerated, a throwing `onElement` leaves no stale cleanup (+8
+tests, 586 total).
+
+**Review (P1) — `warnDiscardedChildren` baseline:** the `asChild` discard check compared the *raw*
+`children` prop length against the element-only Slot list, so `{cond && <X/>}`, `null`, `false`,
+and whitespace-only strings (which React arrays but never renders) counted as "discarded" and
+produced spurious warnings. Fixed to compare the *normalized* child list (elements + non-empty
+text/number) against the Slot list — the difference is exactly the text/number siblings Slot
+genuinely drops; a zero-element list is left to `assertSingleChild`. Text siblings in `asChild`
+mode are still warn-and-dropped (not preserved) — there is no element for Slot to render them
+into, and the warning is a real diagnostic, not silent loss. +3 `render.test.ts` cases (real
+discard, falsy-conditional no-warn, bare-text → `assertSingleChild`). **Follow-up:** mirror the
+edge cases in `interaction.pw.spec.tsx` once the CT job runs in CI.
 
 ### `lib/styling` — dropped the `variant-pass` "proof path"
 
@@ -356,8 +418,10 @@ Reviewed the ported surface and changed it rather than freezing `../pk`'s shape:
   truth for `AnyRecord`/`StringMap`; `primitive` also imports the `Diagnostics` type from here, so
   this forms a package cycle — but a **type-only** one, fully erased at build time, so it is
   accepted rather than duplicating the primitives. `@praxis-kit/primitive: workspace:*` is a
-  declared dependency of `lib/diagnostics`. (Reconsider if a shared leaf package for such
-  primitives is ever created, which would break the cycle cleanly.)
+  declared dependency of `lib/diagnostics`. **On the architectural watch list** (port review):
+  accepted now because the alternative — a premature `@praxis-kit/types` / `@praxis-kit/shared`
+  leaf — is worse. If such a genuinely independent leaf package ever exists for its own reasons,
+  `primitive ↔ diagnostics` is the first cycle to move into it.
 
 ### `lib/diagnostics` — `Diagnostic.context` vs `.metadata`
 
@@ -387,6 +451,34 @@ The `DiagnosticCategory` taxonomy keeps a deliberate split, mirrored by the code
 A rule goes in `Accessibility` **only when it is not** an `HTML`/`ARIA` validity fact. This lets
 consumers treat the two classes differently (e.g. fail a build on validity errors, only warn on
 guidance). Documented on the enum itself in `category.ts`; do not let new codes blur the line.
+
+**APG authoring practices are guidance, not validity** (port-review guardrail). Praxis must not
+progressively enforce every WAI-ARIA APG recommendation as if it were a platform violation. The
+line: an APG "should" (unique landmark names, `menu` inside a `menubar`, roving-tabindex order,
+APG child-composition patterns) is `Accessibility` / `warning` at most — never `HTML`/`ARIA` /
+`error`. Only a genuine HTML-spec or ARIA-spec invalidity is `HTML`/`ARIA`. `requireAccessibleName`
+(`packages/core` widget contracts + the `nav`/`aside` landmark rule) is deliberately `warning`
+severity for exactly this reason; keep it and any similar check scoped that way. The
+role-table standards audit (own entry) is the companion task — get the validity facts right, and
+keep everything else advisory.
+
+### Type assertions (`as` / `as unknown as`) — fine at boundaries, suspicious in enforcement logic
+
+Port-review guardrail. The codebase carries ~20 `as` / `as unknown as` casts. The rule for
+keeping that number honest:
+
+- **Acceptable** — a cast at a framework or type-system boundary: the `createPolymorphic` /
+  `createContractComponent` return (`assembled as MergeRecords<…>` — a conditional type TS can't
+  prove while generics are open, guarded by a runtime `invariant`), React ref shapes
+  (`Ref<T> | null` narrowing), `ElementForTag<…>` on the DOM ref API, adapter `FactoryOptions`
+  guards. These sit where the type system genuinely can't follow and a runtime check or a
+  well-understood invariant backs them. Each should carry a one-line comment saying which.
+- **Suspicious** — a cast inside semantic enforcement logic (contract evaluation, ARIA rule
+  results, diagnostic construction, children matching). There the types *are* the specification;
+  a cast is usually a modelling gap to fix, not paper over.
+
+New casts on the "acceptable" side need the boundary comment; new casts on the "suspicious" side
+need a reviewer's sign-off or a follow-up to remove them.
 
 ### Versioning: `0.x` until usable, then `v1.0.0`
 
@@ -493,8 +585,14 @@ the root declares a `test.projects` glob over
 `{lib,packages,adapters,plugins,tooling,qa,examples}/*/vitest.config.ts`; each package owns its own
 config. `configs/vitest.base.ts` (shared `defineLibConfig(name, overrides?)`) is ported too, as of
 the first package (`lib/pipeline`) — collapsed to one function with `environment` etc. passed
-through `overrides` rather than `../pk`'s separate `defineJsdomConfig`; `include` is enforced last
-as policy.
+through `overrides`; `include` is enforced last as policy (`src/**/*.{test,spec}.ts`).
+
+`../pk`'s second factory, **`defineJsdomConfig`, came back with `adapters/react`** — a framework
+adapter genuinely can't be expressed through `defineLibConfig` overrides: it needs
+`environment: 'jsdom'` *and* an include policy of `src/**/*.test.{ts,tsx}` (test files sit beside
+`.tsx` source, and `.pw.spec.tsx` must be left for the Playwright-CT runner, not picked up by
+Vitest). Both are enforced last, same as `defineLibConfig`; `overrides` carries only `setupFiles`
+etc. Every framework adapter uses it.
 
 ### ESLint: ported from `../pk`, minus the in-repo plugin
 
