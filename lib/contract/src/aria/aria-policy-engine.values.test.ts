@@ -103,6 +103,22 @@ describe('validate() — ARIA attribute value validation', () => {
     expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(true)
   })
 
+  it('warns for a partly-numeric string on aria-valuenow (strict parse — not "12abc" → 12)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'slider',
+      'aria-valuenow': '12abc',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(true)
+  })
+
+  it('warns for a non-integer string on an integer attribute (aria-level="3.5")', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'heading',
+      'aria-level': '3.5',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-level')).toBe(true)
+  })
+
   // ── Integer range attributes ─────────────────────────────────────────────
 
   it('accepts aria-level="3" on h2 (valid override)', () => {
