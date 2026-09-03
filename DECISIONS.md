@@ -57,6 +57,28 @@ some props it lands as a deliberate change with a visible diff in
 
 ## Resolved
 
+### `lib/pipeline-kit` — kept as its own package, not folded into `lib/pipeline`
+
+`../pk` had `@praxis-kit/pipeline-kit` alongside `@praxis-kit/pipeline`; the migration tracker
+carried it as "❓ keep? — decide if the new `lib/pipeline` absorbs this".
+
+Kept separate. The two are different abstractions:
+
+- **`lib/pipeline`** (rewritten during its own port) — a data-processing runtime: `Pass` objects,
+  `runPipeline`, phased composition, `{ patch, diagnostics, metadata }` accumulation with
+  sequential/parallel strategies.
+- **`lib/pipeline-kit`** — a bare *callable-function* composition toolkit:
+  `Pipeline<TArgs, TOutput> = (...args) => TOutput`, plus `composePipelines` (chain),
+  `allPipelines` (tuple, `Promise.all`-shaped), `anyPipeline` (first defined wins), and
+  `definePipeline` (a `PipelineFactory` memoized by the resolved-config object identity via a
+  `WeakMap`). ~140 LOC, zero `@praxis-kit` deps (only `type-fest`).
+
+`packages/core` imports `definePipeline` / `PipelineFactory` / `Arguments` directly for its
+render pipelines. Folding pipeline-kit into `lib/pipeline` would mean reconciling two unrelated
+`Pipeline` shapes — a redesign, not a port. Ported verbatim; one lint adaptation (praxis-kit's
+`unicorn/no-useless-undefined` turned `return undefined` / `() => undefined` into `return` /
+`() => {}`).
+
 ### `lib/contract` — `aria-level` value range: `{ min: 1 }`, no maximum
 
 `../pk` typed `aria-level` as `{ kind: 'integer', min: 1, max: 6 }` in `ARIA_VALUE_TYPES`, with an
