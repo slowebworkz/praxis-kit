@@ -1,4 +1,6 @@
-// Ported from `../pk` incrementally. Engines (`./aria`, `./children`, `./strict`), the
-// contract-specific diagnostics (`./diagnostics`) and state contracts (`./props`) land in
-// follow-up commits; the type surface is complete and re-exported here and via `./types`.
+// Ported from `../pk` incrementally. The engines (`./aria`, `./children`, `./strict`) land in
+// follow-up commits; the type surface, the contract-specific diagnostic definitions and the
+// state-prop normalizers are in place.
+export * from './diagnostics'
+export * from './props'
 export * from './types'
