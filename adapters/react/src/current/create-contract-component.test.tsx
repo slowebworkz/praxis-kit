@@ -361,7 +361,7 @@ describe('createContractComponent (current / React 19)', () => {
       props.role === 'button'
         ? [{ valid: false, severity: 'error', fixable: false, message: 'role=button not allowed' }]
         : [{ valid: true }]
-    // Intentionally omits the strict flag: verifies the adapter default (unset diagnostics) throws.
+    // eslint-disable-next-line @praxis-kit/no-enforcement-without-strict -- verifies the adapter default (unset diagnostics) throws
     const Box = createContractComponent({
       enforcement: { aria: [rejectRoleButton] },
     })
