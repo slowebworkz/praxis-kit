@@ -11,6 +11,7 @@
       "@praxis-kit/core/*": ["./packages/core/src/*"],
       "@praxis-kit/diagnostics": ["./lib/diagnostics/src"],
       "@praxis-kit/diagnostics/*": ["./lib/diagnostics/src/*"],
+      "@praxis-kit/preact": ["./adapters/preact/src/index.ts"],
       "@praxis-kit/react": ["./adapters/react/src/index.ts"],
       "@praxis-kit/react/legacy": ["./adapters/react/src/legacy/index.ts"],
       "@praxis-kit/pipeline": ["./lib/pipeline/src"],
