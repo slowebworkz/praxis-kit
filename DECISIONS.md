@@ -2,27 +2,6 @@
 
 ## Open
 
-### `runtime/*` — deferred
-
-`../pk` has a separate `runtime/*` glob with one package, `@praxis-kit/runtime` (`runtime/core`):
-the "Core Runtime" box in the adapter diagram — the validator that adapters call at render time.
-
-Not yet in this workspace. Decide later:
-
-- **Fold into `packages/*`** as `packages/runtime` — if the runtime is a public entry point
-  users/adapters import directly.
-- **Fold into `lib/*`** as `lib/runtime` — if it is an internal building block behind
-  `@praxis-kit/core`.
-- **Restore `runtime/*`** as its own glob — if we expect more than one runtime package (e.g. a slim
-  runtime vs. a dev/strict runtime).
-
-Until resolved, the runtime code lands in `packages/core`.
-
-**Update (packages/core port):** `packages/core` does **not** import `@praxis-kit/runtime` — in
-`../pk` the runtime is consumed by the adapters and `lib/adapter-utils`, not by core. So porting
-`packages/core` doesn't force this decision; it stays open until the adapters / `lib/adapter-utils`
-are ported and it's clear whether the runtime is one package or several.
-
 ### `spikes/*` — deferred
 
 `../pk` keeps a `spikes/*` glob for throwaway experiments (currently empty).
@@ -61,6 +40,44 @@ some props it lands as a deliberate change with a visible diff in
 `props/normalizers.test.ts`, which currently pins Model A across all eight.
 
 ## Resolved
+
+### `runtime/*` — folded into `lib/*` as `lib/runtime`
+
+`../pk` kept `@praxis-kit/runtime` in its own `runtime/*` workspace glob. Folded into `lib/*`.
+
+Why `lib/` and not `packages/` or its own glob:
+
+- It is `private: true`, bundled into `praxis-kit` (`packages/kit`), never published standalone —
+  same profile as every `lib/*` package. `packages/*` in this repo is reserved for the publishable
+  surface (and `packages/core`, which is private but is the assembly point `kit` bundles).
+- It is one package with no anticipated slim/strict split — the "own glob" option only earned its
+  keep if we expected several runtime variants.
+- It is a sibling internal building block for the adapter layer (`lib/adapter-utils`, the
+  adapters, `plugins/vite`'s compiler), not a public entry point.
+
+It sits *beside* `packages/core`, not behind it — `core` does not import it.
+
+**Only the `.` entry (render-time helpers) is ported. `./compiler` is deferred.** `../pk`'s
+compiler (`compileComponent`, the contribution passes, the domain merge algebra) is built on the
+pre-rewrite `@praxis-kit/pipeline` — `createPipeline` / `executePipeline` with a **pluggable
+`merge` strategy and `plugins`** — which the `lib/pipeline` rewrite replaced with `runPipeline` +
+a fixed shallow `mergeContext`. Porting it verbatim is impossible; it needs a rewrite against the
+new pipeline model. Its only consumer is `plugins/vite`, so it lands with that plugin.
+
+`../pk`'s `@praxis-kit/pipeline` also exported a node/tree/capability/merge-strategy model
+(`NodeId`, `SlotName`, `CapabilityMap`, `MergeStrategy`) that the rewrite dropped and that the
+render-helper IRs still use. These now live in `lib/runtime/src/pipeline-compat.ts` — a
+runtime-owned home for pieces that were always more "runtime" than "generic pipeline"; nothing
+else in the workspace needs them. `Diagnostic` / `MetadataMap` / `Pass` survived the rewrite and
+are re-exported straight through.
+
+Deferred to the compiler rewrite (from the port review): the artifact hash domains need precise
+definitions before anything relies on them for cache invalidation (`styling = sha256(metadata)`
+is too broad — it should key on variants/recipes/precomputed inputs, not `docs`); `precomputed`
+merge is single-owner (document or field-merge); `CapabilityMap` should be enforced boolean.
+`.`-entry follow-ups: `TreeContext` is type-immutable but its `Map` / arrays are not frozen at
+runtime (call it logically-immutable or snapshot); `getActiveProps` precedence (variants over
+attributes) wants a doc comment.
 
 ### `packages/core` — private; publishable infra defers to `packages/kit`
 
