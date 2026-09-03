@@ -17,9 +17,11 @@
   },
   "dependencies": {
     "@praxis-kit/contract": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/pipeline-kit": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
-    "@praxis-kit/styling": "workspace:*"
+    "@praxis-kit/styling": "workspace:*",
+    "type-fest": "catalog:"
   },
   "devDependencies": {
     "vitest": "catalog:"
