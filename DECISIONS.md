@@ -721,17 +721,56 @@ adapter genuinely can't be expressed through `defineLibConfig` overrides: it nee
 Vitest). Both are enforced last, same as `defineLibConfig`; `overrides` carries only `setupFiles`
 etc. Every framework adapter uses it.
 
-### ESLint: ported from `../pk`, minus the in-repo plugin
+### `plugins/eslint` — port scope
+
+`@praxis-kit/eslint-plugin`, ported ~verbatim (7 rules — `no-dead-compound`,
+`no-enforcement-without-strict`, `no-invalid-default`, `no-invalid-html-nesting`,
+`no-redundant-role`, `valid-cardinality`, `valid-children-config` — + `types/` + `utils/`,
+~1775 src LOC, 120 tests via `@typescript-eslint/rule-tester`).
+
+- **deps:** `@praxis-kit/{diagnostics,primitive}` + `@typescript-eslint/utils` + `type-fest` →
+  `dependencies`; `eslint >=9` peer; `@typescript-eslint/rule-tester` + `typescript-eslint` +
+  `eslint` dev. `../pk`'s `@praxis-kit/pipeline` devDep dropped (unused).
+- **scaffold:** standard `lib/*` shape — `exports` `.` → `src/index.ts`, `tsconfig.json` extends
+  base, `vitest.config.ts` = `defineLibConfig('eslint-plugin')`. `../pk`'s `tsdown.config.ts` /
+  `tsconfig.build.json` / `build` scripts dropped (the repo defers package builds; the plugin is
+  consumed from source in-repo and `private: true`).
+- **`repository.directory`** corrected `packages/eslint-plugin` → `plugins/eslint`.
+- Wired into `tsconfig.paths.json` + root `references`, and into the root `eslint.config.ts` (see
+  the ESLint entry below).
+
+**Dependency-boundary note** (port review). The ESLint layer must understand Praxis *contracts*,
+not adapter/runtime internals. It does today: its `@praxis-kit/primitive` imports are only the
+framework-neutral utilities (`iterate`, `isObject`, `isString`, `AnyRecord`, `StringMap`), and
+its one semantic dependency is the `@praxis-kit/diagnostics` taxonomy (`DiagnosticCategory` /
+`DiagnosticCode` — the shared diagnostic identity across runtime / TS-plugin / ESLint). It does
+**not** import `lib/runtime`, `lib/adapter-utils`, or any adapter.
+
+- **Follow-up (real coupling):** `src/utils/implicit-roles.ts` (`IMPLICIT_ROLES`) and
+  `src/utils/html-nesting.ts` + `content-model-builders.ts` (`TAG_CATEGORIES`, content models)
+  are *hand-maintained parallel copies* of `packages/core`'s `HTML_ARIA_RULES` / role tables and
+  `lib/contract`'s ARIA spec — a deliberate static-only subset (a lint rule sees only the tag
+  name, can't evaluate `<a href>` conditionally), but a divergence risk. Fold this into the
+  "HTML/ARIA contract layer — standards audit" task: one normative source, ideally one set of
+  data with the plugin consuming a static projection of it.
+
+### ESLint: ported from `../pk`
 
 `eslint.config.ts` + `configs/{base,typescript,architecture,imports,unicorn,types}.ts` are ported.
-Two pieces are left out until the packages they need exist:
 
-- the `@praxis-kit` ESLint plugin import and the self-validation block that runs its rules over
-  `packages|adapters|examples/*/src` — needs `plugins/eslint`.
-- `configs/praxis-plugin.ts`.
+The **`@praxis-kit` plugin + self-validation block are wired back in** as of `plugins/eslint`
+(PR): `eslint.config.ts` imports `./plugins/eslint/src/index`, registers it globally so
+disable-directive validation resolves, and runs all seven rules over
+`{packages,adapters,examples}/*/src/**/*.{ts,tsx}`. `../pk`'s separate `configs/praxis-plugin.ts`
+is **not** recreated — it only existed to feed the per-adapter `eslint.config.ts` files, and this
+repo lints from the root config alone. The 3 react-test sites that verify the adapter's
+unset-`diagnostics` default now carry real `// eslint-disable-next-line
+@praxis-kit/no-enforcement-without-strict` directives again (they were plain comments while the
+rule didn't exist).
 
-`configs/architecture.ts`'s `boundaries/elements` patterns are copied verbatim; they match nothing
-(and so enforce nothing) until those package dirs land.
+`configs/architecture.ts`'s `boundaries/elements` patterns were pointed at the real target dirs
+(`plugins/eslint`, `plugins/typescript`, `plugins/vite`, `lib/tailwind`, `tooling/codemod`) —
+still inert for the ones whose dirs don't exist yet.
 
 ### Git workflow: `main` stable, `develop` integration
 

@@ -230,7 +230,7 @@ describe('Tier 3 — ARIA enforcement', () => {
 describe('Tier 4 — children enforcement', () => {
   const child = (key: string) => createElement('span', { key })
   const Guarded =
-    // Intentionally no strict flag: tests the adapter default (React defaults to 'throw' enforcement)
+    // eslint-disable-next-line @praxis-kit/no-enforcement-without-strict -- tests the adapter default (React defaults to 'throw' enforcement)
     createContractComponent({
       tag: 'div',
       styling: { base: 'group' },
@@ -288,7 +288,7 @@ describe('Tier 4 — children enforcement', () => {
 
 describe('Tier 5 — all capabilities combined', () => {
   const Full =
-    // Intentionally no strict flag: tests the adapter default (React defaults to 'throw' enforcement)
+    // eslint-disable-next-line @praxis-kit/no-enforcement-without-strict -- tests the adapter default (React defaults to 'throw' enforcement)
     createContractComponent({
       tag: 'nav',
       name: 'FullNav',
