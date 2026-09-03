@@ -83,6 +83,47 @@ track what the *current* slice actually contains — `./contract` is not in `exp
 dropped — the repo's `tsconfig.base.json` already has `"types": ["node"]`, so `process` is typed
 without it.
 
+**Ported in four PRs (#18–#21):** (1) `src/types/` + `src/utils/` + `./primitive` / `./styling`
+entries + scaffold; (2) `src/html/` (contracts / spec tables / rule sets — the bulk, ~1780 LOC) +
+`src/children/`; (3) `src/options/` + `src/resolver/` + `src/state/` + `src/validator/`; (4)
+`src/factory/` (`createPolymorphic` + the memoized render pipelines: tag / props / HTML
+prop-normalizers / HTML children-evaluator / class / ARIA), `src/diagnose.ts`, the `./contract`
+barrel, and the final `.` barrel. Otherwise ~verbatim from `../pk`.
+
+Adaptations made during the port review, per slice:
+
+- **Slice 2:** `resolveAllowedRoles`'s `byProp` case resolves an *unrecognized* discriminator to
+  the policy `fallback` — an unknown `<input type>` is checked against `text`'s allowed roles
+  (HTML's own "unknown type behaves as text" rule) instead of being skipped as "not modeled".
+  `createMutuallyExclusiveRule` tests HTML-boolean-attribute *presence* (`required=""` /
+  `required="required"` count, `required={false}` / absent do not) rather than raw truthiness,
+  which missed the string-attribute forms.
+- **Slice 3:** `diagnostics.active` → `.warnActive` in `validateFactoryOptions` (the
+  `lib/diagnostics` rename; a warning-only validator, so the scope matches). Documented that
+  `createResolverPipeline` is a **built-in-rules-only** lightweight path (it takes the minimal
+  `ResolverOptions`, no `ariaRules` / `variantKeys`); custom `enforcement.aria` and variant-aware
+  validation flow through `createPolymorphic` → `createAriaPipeline`, which threads
+  `HTML_ARIA_RULES` + `resolved.ariaRules` + `resolved.variantKeys` into the engine.
+  `allowedAs` constrains a caller-supplied `as` override only, not the component's `defaultTag`.
+- **Slice 4:** the core/adapter boundary is documented on `createPolymorphic`'s `methods` block.
+  `packages/core` resolves the render-time capabilities (`normalizeFn`, `htmlPropNormalizersFn`,
+  `htmlChildrenEvaluatorFn`, `childRules`) and exposes them on `runtime.options`; it does **not**
+  run a full render. `resolveProps` is a component-level merge only. The DOM-facing prop
+  normalization (`htmlPropNormalizersFn` → `normalizeFn`, in that fixed order) and children
+  evaluation are applied one layer up by `@praxis-kit/adapter-utils` (`resolveNormalizedProps` /
+  `build-engines`), which every adapter calls after `resolveProps` — so the ordering is identical
+  across all seven adapters. `resolveAria` is the one enforcement step core runs inline, because
+  `AriaPolicyEngine` also mutates props. (`resolveClassPlugin`'s `factory` param is already
+  `AnyClassPluginFactory` = `… | undefined`, so its `if (!factory)` guard is honest — no change.)
+- Lint: `import-x/consistent-type-specifier-style` and `unicorn/no-useless-undefined` autofixes.
+
+Open follow-ups (`.vscode/MIGRATION.md`): `core/utils` bundles contract state-prop normalizers
+under a "utils" name (reconsider when a real consumer forces the grouping); `primitive.ts`
+surfaces ARIA-role helpers from `contract/types` despite the filename; the `ALLOWED_ROLES` /
+`ALLOWED_INPUT_ROLES` role tables want an ARIA-in-HTML standards audit before being treated as
+canonical (source comments already flag this); the ARIA widget contracts (`menuContract` etc.)
+currently enforce accessible naming, not full APG child patterns.
+
 ### `lib/styling` — dropped the `variant-pass` "proof path"
 
 `../pk/lib/styling/src/variant-pass/` carried three demo passes (`basePass`/`hoverPass`/`focusPass`,
