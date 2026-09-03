@@ -55,22 +55,21 @@ emitting it would be redundant. Revisit when core wires the normalizers in; if M
 some props it lands as a deliberate change with a visible diff in
 `props/normalizers.test.ts`, which currently pins Model A across all eight.
 
-### `lib/contract` — `aria-level` value range (`max: 6`)
-
-`aria/spec/attributes/aria-value-types.ts` types `aria-level` as `{ kind: 'integer', min: 1,
-max: 6 }`, ported from `../pk`, which has a test asserting `aria-level="7"` warns. WAI-ARIA
-actually defines `aria-level` as `min 1` with **no maximum** — `1–6` is the HTML heading range
-(`h1`–`h6`) and `aria-level` also applies to `treeitem`, `row`, `listitem`, etc. with no cap.
-
-Options: (a) keep the global `max: 6` as ported — simplest, catches the common heading typo, but
-technically over-strict for non-heading roles; (b) drop to `{ min: 1 }` and enforce the `1–6`
-range only for heading elements / `role="heading"` (a heading-scoped rule, alongside the existing
-`redundantAriaLevel` check). Would change the ported `aria-level="7"` engine test.
-
-Deferred to the ARIA-engine slice (3b), where the value-checking rule and its tests are ported
-and the heading-scoped path can be added in the same change.
-
 ## Resolved
+
+### `lib/contract` — `aria-level` value range: `{ min: 1 }`, no maximum
+
+`../pk` typed `aria-level` as `{ kind: 'integer', min: 1, max: 6 }` in `ARIA_VALUE_TYPES`, with an
+engine test asserting `aria-level="7"` warns. WAI-ARIA defines `aria-level` as `min 1` with **no
+maximum** — `1–6` is only the HTML `h1`–`h6` heading range, and `aria-level` also applies to
+`treeitem`, `row`, `listitem`, deeply nested headings, etc. with no cap.
+
+Resolved in slice 3b: the table entry is now `{ kind: 'integer', min: 1 }`. Heading-specific
+concerns stay covered — `AriaPolicyEngine.#checkRedundantAriaLevel` still flags an `aria-level`
+that merely restates a heading element's implicit level. A hard `1–6` ceiling scoped to
+`role="heading"` was considered and **not** added: ARIA itself does not require it, deep-nesting
+cases legitimately exceed 6, and no consumer needs it. The ported `aria-level="7"` test is
+updated to assert it is now accepted.
 
 ### `lib/primitive` — port scope and review outcomes
 
