@@ -21,6 +21,9 @@ catalogs:
     '@vitest/ui':
       specifier: ^4.1.11
       version: 4.1.11
+    class-variance-authority:
+      specifier: ^0.7.1
+      version: 0.7.1
     clsx:
       specifier: ^2.1.1
       version: 2.1.1
@@ -223,6 +226,19 @@ importers:
       type-fest:
         specifier: 'catalog:'
         version: 5.9.0
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
+
+  lib/styling:
+    dependencies:
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../primitive
+      class-variance-authority:
+        specifier: 'catalog:'
+        version: 0.7.1
     devDependencies:
       vitest:
         specifier: 'catalog:'
@@ -1268,6 +1284,9 @@ packages:
   ci-info@4.4.0:
     resolution: {integrity: sha512-77PSwercCZU2Fc4sX94eF8k8Pxte6JAwL4/ICZLFjJLqegs7kCuAsqqj/70NQF6TvDpgFjkubQB2FW2ZZddvQg==}
     engines: {node: '>=8'}
+
+  class-variance-authority@0.7.1:
+    resolution: {integrity: sha512-Ka+9Trutv7G8M6WT6SeiRWz792K5qEqIGEGzXKhAE6xOWAY6pPH8U+9IY3oCMv6kqTmLsv7Xh/2w2RigkePMsg==}
 
   cli-table3@0.6.5:
     resolution: {integrity: sha512-+W/5efTR7y5HRD7gACw9yQjqMVvEMLBHmboM/kPWam+H+Hmyrgjh6YncVKK122YZkXrLudzTuAukUw9FnMf7IQ==}
@@ -3536,6 +3555,10 @@ snapshots:
       is-regex: 1.2.1
 
   ci-info@4.4.0: {}
+
+  class-variance-authority@0.7.1:
+    dependencies:
+      clsx: 2.1.1
 
   cli-table3@0.6.5:
     dependencies:
