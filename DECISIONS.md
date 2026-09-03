@@ -34,6 +34,27 @@ cleanup pass: move the `devDependency` declarations into the `qa/*` packages tha
 question applies to `jsdom` and `type-fest` once test/config packages exist that import them (both
 already pared back: `jsdom` dropped from root, `type-fest` under review).
 
+### `lib/contract` — prop-normalizer false-state model
+
+The eight state-prop normalizers in `contract/src/props/` (`disabledProps`, `expandedProps`,
+`pressedProps`, `selectedProps`, `invalidProps`, `loadingProps`, `readonlyProps`, `activeProps`)
+are ported from `../pk` on **Model A**: a truthy state injects the `aria-*` / `data-*` pair, a
+falsy state emits `{}`, and an explicitly-supplied `aria-*` / `data-*` value is preserved (the
+normalizer only fills when the key is `undefined`).
+
+Open question raised in port review: props with a meaningful false state — `aria-expanded`,
+`aria-pressed`, `aria-selected` — arguably want **Model B**, where `expanded: false` synthesizes
+`aria-expanded="false"` rather than nothing. Model A does not *prevent* the false state (a caller
+can still pass `aria-expanded={false}` and it is kept); it just does not *derive* it from the
+sugar prop.
+
+Not resolving this now — the consumer that reveals the right answer is `packages/core` / the
+factory, which is not ported yet, and the call is likely per-prop (tied to component semantics
+the contract layer does not own). `aria-invalid` in particular defaults to `"false"` already, so
+emitting it would be redundant. Revisit when core wires the normalizers in; if Model B wins for
+some props it lands as a deliberate change with a visible diff in
+`props/normalizers.test.ts`, which currently pins Model A across all eight.
+
 ## Resolved
 
 ### `lib/primitive` — port scope and review outcomes
