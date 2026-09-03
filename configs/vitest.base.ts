@@ -25,3 +25,25 @@ export function defineLibConfig(
     },
   })
 }
+
+/**
+ * As `defineLibConfig`, but for framework-adapter packages: `environment: 'jsdom'`
+ * and the include policy is `*.test.{ts,tsx}` — adapters keep `.test.tsx` next to
+ * `.tsx` source, and reserve `.pw.spec.tsx` for the Playwright-CT runner (which
+ * this must not pick up). Both are enforced (come last), so `overrides` carries
+ * only the package-specific bits — `setupFiles`, `server.deps`, etc.
+ */
+export function defineJsdomConfig(
+  name: string,
+  overrides: InlineConfig = {},
+): ReturnType<typeof defineConfig> {
+  return defineConfig({
+    resolve: { tsconfigPaths: true },
+    test: {
+      ...overrides,
+      name,
+      environment: 'jsdom',
+      include: ['src/**/*.test.{ts,tsx}'],
+    },
+  })
+}
