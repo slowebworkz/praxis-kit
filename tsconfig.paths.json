@@ -9,6 +9,8 @@
       "@praxis-kit/diagnostics/*": ["./lib/diagnostics/src/*"],
       "@praxis-kit/pipeline": ["./lib/pipeline/src"],
       "@praxis-kit/pipeline/*": ["./lib/pipeline/src/*"],
+      "@praxis-kit/pipeline-kit": ["./lib/pipeline-kit/src"],
+      "@praxis-kit/pipeline-kit/*": ["./lib/pipeline-kit/src/*"],
       "@praxis-kit/primitive": ["./lib/primitive/src"],
       "@praxis-kit/primitive/*": ["./lib/primitive/src/*"]
     }
