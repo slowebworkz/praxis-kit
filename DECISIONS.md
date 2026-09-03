@@ -71,6 +71,22 @@ that merely restates a heading element's implicit level. A hard `1–6` ceiling 
 cases legitimately exceed 6, and no consumer needs it. The ported `aria-level="7"` test is
 updated to assert it is now accepted.
 
+### `lib/contract` — `AriaPolicyEngine` orchestrates; new rules live outside it
+
+`aria/aria-policy-engine.ts` is ~840 lines as ported: context derivation, empty-role
+normalization, plan cache + key construction, rule selection, `#runRules`, fix sorting/apply,
+`report()`, **and** all ~20 built-in rule bodies as private static methods. Coherent today
+(every part belongs to one engine), but at the edge of becoming a god object.
+
+Not refactoring the existing file now — the port stays faithful and the rules-as-private-statics
+shape is stable. Going forward, though: **a new ARIA semantic rule does not get added as another
+`AriaPolicyEngine.#checkX` method.** It goes under `aria/spec/` (the standards-derived data),
+`aria/spec/validators/` (shared checking logic, like `checkRequiredAttributes`), or a new
+`aria/rules/` module, and the engine's `#pipeline` / `#implicitOnlyRules` arrays just reference
+it. The engine orchestrates: derive context → select policy → run rules → collect violations →
+apply fixes → return. When several existing rules next need to change together, that is the
+moment to extract them outward too.
+
 ### `lib/primitive` — port scope and review outcomes
 
 Ported ~verbatim from `../pk` (156 src files, 7 export subpaths). Kept as **one package** — the
