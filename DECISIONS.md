@@ -18,6 +18,11 @@ Not yet in this workspace. Decide later:
 
 Until resolved, the runtime code lands in `packages/core`.
 
+**Update (packages/core port):** `packages/core` does **not** import `@praxis-kit/runtime` — in
+`../pk` the runtime is consumed by the adapters and `lib/adapter-utils`, not by core. So porting
+`packages/core` doesn't force this decision; it stays open until the adapters / `lib/adapter-utils`
+are ported and it's clear whether the runtime is one package or several.
+
 ### `spikes/*` — deferred
 
 `../pk` keeps a `spikes/*` glob for throwaway experiments (currently empty).
@@ -56,6 +61,27 @@ some props it lands as a deliberate change with a visible diff in
 `props/normalizers.test.ts`, which currently pins Model A across all eight.
 
 ## Resolved
+
+### `packages/core` — private; publishable infra defers to `packages/kit`
+
+`packages/core` is `private: true` in `../pk` — it is not published, it is bundled into
+`praxis-kit` (`packages/kit`), the single published package. So the `packages/core` port carries
+no `.changeset/config.json`, no CI build/test/release job, and no `build` script / tsdown config;
+all of that lands with `packages/kit`. Scaffolded like the `lib/*` packages (minimal
+`package.json`, `tsconfig` extends base, `defineLibConfig` vitest).
+
+Adaptations: `@praxis-kit/primitive` and `@praxis-kit/styling` are **`dependencies`**, not
+`devDependencies` as in `../pk` — `src/utils/index.ts` / `src/styling.ts` / `src/index.ts`
+re-export runtime values from both. `configs/typescript.ts`'s ESLint `allowDefaultProject` list
+gains `packages/*/vitest.config.ts` (`packages/core` is the first `packages/*` entry).
+
+Per-slice hygiene (from the slice-1 review): the `package.json` `exports` map and `dependencies`
+track what the *current* slice actually contains — `./contract` is not in `exports` until
+`src/contract.ts` lands, and `@praxis-kit/diagnostics` / `type-fest` (both used only by
+`src/html/` onward) are added with the slice that first imports them, not up front. `../pk`'s
+`src/global.d.ts` (an ambient `process.env.NODE_ENV` declaration "to avoid `@types/node`") was
+dropped — the repo's `tsconfig.base.json` already has `"types": ["node"]`, so `process` is typed
+without it.
 
 ### `lib/styling` — dropped the `variant-pass` "proof path"
 
