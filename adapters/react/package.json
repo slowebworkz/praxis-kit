@@ -1,0 +1,42 @@
+{
+  "name": "@praxis-kit/react",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./legacy": "./src/legacy/index.ts"
+  },
+  "sideEffects": false,
+  "description": "Praxis Kit adapter for React 18 and 19 — polymorphic components with ARIA contracts and variant composition",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed",
+    "test:pw": "playwright test -c playwright-ct.config.ts"
+  },
+  "dependencies": {
+    "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/contract-props": "workspace:*",
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "@praxis-kit/runtime": "workspace:*",
+    "type-fest": "catalog:"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@playwright/experimental-ct-react": "catalog:",
+    "@praxis-kit/playwright": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "jsdom": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "vitest": "catalog:"
+  }
+}
