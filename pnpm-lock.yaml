@@ -75,6 +75,12 @@ catalogs:
     jsdom:
       specifier: ^29.0.0
       version: 29.1.1
+    preact:
+      specifier: ^10.29.8
+      version: 10.29.8
+    preact-render-to-string:
+      specifier: ^6.7.0
+      version: 6.7.0
     prettier:
       specifier: ^3.9.6
       version: 3.9.6
@@ -190,6 +196,43 @@ importers:
       typescript-eslint:
         specifier: 'catalog:'
         version: 8.68.0(eslint@10.9.1(jiti@2.7.0))(typescript@6.0.3)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(jsdom@29.1.1)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
+
+  adapters/preact:
+    dependencies:
+      '@praxis-kit/adapter-utils':
+        specifier: workspace:*
+        version: link:../../lib/adapter-utils
+      '@praxis-kit/contract-props':
+        specifier: workspace:*
+        version: link:../../lib/contract-props
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../lib/diagnostics
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.9.0
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.4.0
+      jsdom:
+        specifier: 'catalog:'
+        version: 29.1.1
+      preact:
+        specifier: 'catalog:'
+        version: 10.29.8(preact-render-to-string@6.7.0)
+      preact-render-to-string:
+        specifier: 'catalog:'
+        version: 6.7.0(preact@10.29.8)
       vitest:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(jsdom@29.1.1)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
@@ -2455,6 +2498,19 @@ packages:
   postcss@8.5.26:
     resolution: {integrity: sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ==}
     engines: {node: ^10 || ^12 || >=14}
+
+  preact-render-to-string@6.7.0:
+    resolution: {integrity: sha512-Z4WR8fmLMRpdYqJ9i7vrlXSsSrxVJydwrkEXHapexfARbWfGb7vGcnvNQnIzN0cXciMVOlz/XLoiMCi9gUsy9Q==}
+    peerDependencies:
+      preact: '>=10 || >= 11.0.0-0'
+
+  preact@10.29.8:
+    resolution: {integrity: sha512-ej2aVZ+vZ8WO7tvlQWRM9N63A0KzF9q4mWJfDUHgYaIofWY9hu74QdnQrjoPMmZi2/nZ5gN0bJCQF49xQqx09Q==}
+    peerDependencies:
+      preact-render-to-string: '>=5'
+    peerDependenciesMeta:
+      preact-render-to-string:
+        optional: true
 
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
@@ -4948,6 +5004,14 @@ snapshots:
       nanoid: 3.3.18
       picocolors: 1.1.1
       source-map-js: 1.2.1
+
+  preact-render-to-string@6.7.0(preact@10.29.8):
+    dependencies:
+      preact: 10.29.8(preact-render-to-string@6.7.0)
+
+  preact@10.29.8(preact-render-to-string@6.7.0):
+    optionalDependencies:
+      preact-render-to-string: 6.7.0(preact@10.29.8)
 
   prelude-ls@1.2.1: {}
 
