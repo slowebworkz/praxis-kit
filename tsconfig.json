@@ -6,6 +6,7 @@
     { "path": "./lib/diagnostics" },
     { "path": "./lib/pipeline" },
     { "path": "./lib/pipeline-kit" },
-    { "path": "./lib/primitive" }
+    { "path": "./lib/primitive" },
+    { "path": "./lib/styling" }
   ]
 }

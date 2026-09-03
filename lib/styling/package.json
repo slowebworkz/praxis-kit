@@ -1,0 +1,23 @@
+{
+  "name": "@praxis-kit/styling",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "description": "Styling runtime: variant resolver, class pipeline, CVA wrapper, precomputed-variant compilation",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "@praxis-kit/primitive": "workspace:*",
+    "class-variance-authority": "catalog:"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
+}

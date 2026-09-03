@@ -57,6 +57,41 @@ some props it lands as a deliberate change with a visible diff in
 
 ## Resolved
 
+### `lib/styling` — dropped the `variant-pass` "proof path"
+
+`../pk/lib/styling/src/variant-pass/` carried three demo passes (`basePass`/`hoverPass`/`focusPass`,
+Tailwind literals like `inline-flex` / `hover:bg-blue-500`), a `styleMergeStrategy`, and a
+`style-proof.test.ts` that hand-rolled a pipeline loop over them. All three built on the
+pre-rewrite `@praxis-kit/pipeline` API (`Pass<TContext>` + a pluggable `MergeStrategy<TContext>`).
+The rewritten `lib/pipeline` keeps `Pass` but replaced `MergeStrategy` with a fixed shallow
+`mergeContext` (see its own entry), so `styleMergeStrategy` / `style-proof.test.ts` no longer
+compile, and nothing outside `lib/styling` ever imported `basePass` / `styleMergeStrategy`.
+
+Dropped the proof path entirely rather than retarget dead demo code. Kept the parts real
+consumers use: `createVariantPass` / `VariantConfig` / `CompoundVariant` (from `variant-pass.ts`,
+no pipeline dep) and `buildPrecomputedKey` / `compileVariantLookup` (from
+`compile-variant-lookup.ts`), which `lib/adapter-utils` consumes. `DefaultMap` (was a shared
+`@praxis-kit/pipeline` alias for `StringMap<string>`) is now defined locally in
+`compile-variant-lookup.ts` and re-exported — `lib/styling` no longer depends on `lib/pipeline`
+at all. `clsx` / `type-fest` also dropped from its deps (unused directly; `cn` from `primitive`
+owns `clsx`).
+
+Two consistency fixes from the port review:
+
+- **Recipe semantics unified.** `VariantClassResolver.#compute` gated on `if (!recipe)`, so
+  `recipe: ''` was "no recipe" there while `createClassPipeline` / `StaticClassResolver` /
+  `diagnoseClassPipeline` (and the cache key) all treat `recipe !== undefined` as active. Now the
+  whole package follows one rule: `undefined` is "no recipe", every string is a recipe key.
+- **`compileVariantLookup` honors array compound conditions.** `matchesCompound` did an exact
+  `!==`, but a `CompoundVariant` condition value can be `readonly string[]` (`size: ['sm','lg']`)
+  and `diagnoseClassPipeline` already matches those. The compiled precomputed table now matches
+  runtime CVA semantics.
+
+Documented (not changed): the precomputed lookup is the no-recipe path — its keys are variant
+props alone, this resolver's are `recipe | props`, so a recipe-active call never hits it. Still
+open (P3): the cache-key serializer (`s:` / `x:` prefixes) does not escape delimiters — a
+theoretical collision, not reachable with normal CVA string-literal variant values.
+
 ### `lib/pipeline-kit` — kept as its own package, not folded into `lib/pipeline`
 
 `../pk` had `@praxis-kit/pipeline-kit` alongside `@praxis-kit/pipeline`; the migration tracker
