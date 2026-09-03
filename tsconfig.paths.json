@@ -3,10 +3,10 @@
     "paths": {
       "@praxis-kit/contract": ["./lib/contract/src"],
       "@praxis-kit/contract/*": ["./lib/contract/src/*"],
-      "@praxis-kit/core": ["./packages/core/src"],
-      "@praxis-kit/core/*": ["./packages/core/src/*"],
       "@praxis-kit/contract-props": ["./lib/contract-props/src"],
       "@praxis-kit/contract-props/*": ["./lib/contract-props/src/*"],
+      "@praxis-kit/core": ["./packages/core/src"],
+      "@praxis-kit/core/*": ["./packages/core/src/*"],
       "@praxis-kit/diagnostics": ["./lib/diagnostics/src"],
       "@praxis-kit/diagnostics/*": ["./lib/diagnostics/src/*"],
       "@praxis-kit/pipeline": ["./lib/pipeline/src"],
@@ -15,6 +15,8 @@
       "@praxis-kit/pipeline-kit/*": ["./lib/pipeline-kit/src/*"],
       "@praxis-kit/primitive": ["./lib/primitive/src"],
       "@praxis-kit/primitive/*": ["./lib/primitive/src/*"],
+      "@praxis-kit/runtime": ["./lib/runtime/src"],
+      "@praxis-kit/runtime/*": ["./lib/runtime/src/*"],
       "@praxis-kit/styling": ["./lib/styling/src"],
       "@praxis-kit/styling/*": ["./lib/styling/src/*"]
     }

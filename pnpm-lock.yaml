@@ -231,6 +231,28 @@ importers:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
 
+  lib/runtime:
+    dependencies:
+      '@praxis-kit/pipeline':
+        specifier: workspace:*
+        version: link:../pipeline
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../primitive
+      '@praxis-kit/styling':
+        specifier: workspace:*
+        version: link:../styling
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.9.0
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.4.0
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
+
   lib/styling:
     dependencies:
       '@praxis-kit/primitive':

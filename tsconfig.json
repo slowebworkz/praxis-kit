@@ -7,6 +7,7 @@
     { "path": "./lib/pipeline" },
     { "path": "./lib/pipeline-kit" },
     { "path": "./lib/primitive" },
+    { "path": "./lib/runtime" },
     { "path": "./lib/styling" },
     { "path": "./packages/core" }
   ]
