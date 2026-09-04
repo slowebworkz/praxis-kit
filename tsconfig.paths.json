@@ -27,7 +27,9 @@
       "@praxis-kit/runtime": ["./lib/runtime/src"],
       "@praxis-kit/runtime/*": ["./lib/runtime/src/*"],
       "@praxis-kit/styling": ["./lib/styling/src"],
-      "@praxis-kit/styling/*": ["./lib/styling/src/*"]
+      "@praxis-kit/styling/*": ["./lib/styling/src/*"],
+      "@praxis-kit/tailwind": ["./lib/tailwind/src"],
+      "@praxis-kit/tailwind/*": ["./lib/tailwind/src/*"]
     }
   }
 }
