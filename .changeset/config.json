@@ -10,6 +10,7 @@
   "privatePackages": { "version": true, "tag": true },
   "ignore": [
     "@praxis-kit/adapter-utils",
+    "@praxis-kit/codemod",
     "@praxis-kit/contract",
     "@praxis-kit/contract-props",
     "@praxis-kit/core",
