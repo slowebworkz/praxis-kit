@@ -22,7 +22,7 @@ const config = [
         { type: 'svelte', pattern: 'adapters/svelte/**/*' },
         { type: 'tailwind', pattern: 'lib/tailwind/**/*' },
         { type: 'eslint-plugin', pattern: 'plugins/eslint/**/*' },
-        { type: 'ts-plugin', pattern: 'plugins/typescript/**/*' },
+        { type: 'typescript-plugin', pattern: 'plugins/typescript/**/*' },
         { type: 'vite-plugin', pattern: 'plugins/vite/**/*' },
         { type: 'codemod', pattern: 'tooling/codemod/**/*' },
       ],

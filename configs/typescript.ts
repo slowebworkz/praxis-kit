@@ -58,7 +58,7 @@ const config = [
             'lib/*/eslint.config.ts',
             'plugins/*/eslint.config.ts',
             'adapters/*/eslint.config.ts',
-            // codemod and ts-plugin have rootDir:src — tsdown/vitest configs can't be in their tsconfig include
+            // codemod and the TS plugin have rootDir:src — tsdown/vitest configs can't be in their tsconfig include
             'tooling/codemod/tsdown.config.ts',
             'tooling/codemod/vitest.config.ts',
             'plugins/typescript/tsdown.config.mts',
