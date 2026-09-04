@@ -31,3 +31,10 @@ yarn.lock
 # Contract-enforced verbatim asset — `tailwind-safelist.test.ts` asserts its exact `@source
 # inline("…")` content, and it is copied byte-for-byte into the published dist.
 lib/tailwind/src/tailwind-safelist.css
+
+# No prettier-svelte plugin in the catalog, so plain prettier can't parse `.svelte` at all
+# ("No parser could be inferred") — `format:check`/`format` would otherwise hard-error on every
+# `.svelte` file. Pre-existing gap in `../pk` too (same files, same missing plugin); ignored here
+# rather than left to break the first `pnpm format:check` that touches an adapter with `.svelte`
+# source. Revisit if `.svelte` formatting consistency becomes a real need.
+*.svelte
