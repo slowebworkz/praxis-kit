@@ -77,7 +77,14 @@ compiler (`compileComponent`, the contribution passes, the domain merge algebra)
 pre-rewrite `@praxis-kit/pipeline` — `createPipeline` / `executePipeline` with a **pluggable
 `merge` strategy and `plugins`** — which the `lib/pipeline` rewrite replaced with `runPipeline` +
 a fixed shallow `mergeContext`. Porting it verbatim is impossible; it needs a rewrite against the
-new pipeline model. Its only consumer is `plugins/vite`, so it lands with that plugin.
+new pipeline model.
+
+**Update (as of the `plugins/vite` port):** `plugins/vite` was assumed to be `./compiler`'s
+consumer, but the reference `@praxis-kit/vite-plugin` does its own `.tsx`/`.jsx` analysis with
+the TypeScript compiler API and imports **neither** `@praxis-kit/pipeline` nor `@praxis-kit/runtime`.
+So `./compiler` currently has **no consumer in the reference repo**. Options when it next comes up:
+keep deferring until a real consumer appears (a `precompute` step for the runtime's
+`precomputedClasses` / artifact fast-path is the likely one), or drop it. Not porting it on spec.
 
 `../pk`'s `@praxis-kit/pipeline` also exported a node/tree/capability/merge-strategy model
 (`NodeId`, `SlotName`, `CapabilityMap`, `MergeStrategy`) that the rewrite dropped and that the
@@ -804,6 +811,70 @@ plus `checkValidCardinality` (90002–90004) from its own tiny AST walker (`walk
 - Rule parity with `plugins/eslint` (`no-invalid-default`, `no-dead-compound`,
   `valid-children-config`) — `no-invalid-html-nesting` is lower priority (no JSX/HTML model in the
   LS plugin).
+
+### `plugins/vite` — port scope
+
+`@praxis-kit/vite-plugin`, ported (~2800 src LOC after the deferral below, 7 vitest files /
+148 tests). Six build-time Vite plugins that parse `.tsx`/`.jsx` with the **TypeScript compiler
+API** (`import ts from 'typescript'`, not babel):
+
+- `contractPlugin` — static `enforcement.children` cardinality + ARIA-override checks, single-file
+  (`transform`) and cross-file (`buildEnd`, via a `ConstraintRegistry`).
+- `compoundPrunePlugin` — strips dead `styling.compounds` entries.
+- `classExtractPlugin` — injects a static `precomputedClasses` map into each factory call.
+- `slotTransformPlugin` — rewrites safe `asChild` sites to the render-prop form.
+- `staticCompositionPlugin` — inlines statically-analyzable usage sites to direct element creation.
+- `ssrOptimizePlugin` — the bundle of the three transforms in dependency order.
+
+- **deps:** `@praxis-kit/{core (type-only),diagnostics,primitive}` + `typescript` → `dependencies`
+  (`typescript` is a real runtime dep — the plugin bundles compiler-API calls); `vite >=5` peer;
+  `vite` + `vitest` + `@types/node` dev. `type-fest` dropped (was design-tokens-only).
+- **scaffold:** standard `lib/*` shape — `exports .` → `src/index.ts`, `defineLibConfig('vite-plugin')`,
+  no build script. `../pk`'s `tsup` build config dropped entirely (rather than converted to
+  `tsdown`) — nothing consumes it in-repo; a real build lands with the release pipeline. `type:
+  module`.
+- `repository.directory` corrected `packages/vite-plugin` → `plugins/vite`. Added to root
+  `tsconfig.json` `references`; no `tsconfig.paths.json` entry (only self-referenced in JSDoc).
+
+**`designTokensPlugin` deferred.** `src/design-tokens.ts` + `.test.ts` are the only modules that
+import `@praxis-kit/tailwind` (`layoutKeys`), which is not ported yet. They're left out — the
+`./design-tokens` re-exports in `index.ts` are commented with a pointer, and the README section
+carries a "not yet available" note. They land back when `lib/tailwind` does (the last untouched
+`lib/*`). Nothing else in the plugin touches Tailwind.
+
+**Port-review changes:**
+
+- **`parseSource` derives `ScriptKind` from the extension** (`.ts` → `TS`, `.tsx` → `TSX`, `.js`
+  → `JS`, …; unknown → `TSX`). `../pk` always parsed as `TSX`, so a `.ts` file's `<T>expr` type
+  assertion (valid in `compoundPrune` / `classExtract`, which run on `ALL_EXTS`) was mis-parsed.
+  +3 `ast.test.ts` cases.
+- **README + `package.json` reframed** — it *is* a small static compiler, not a "misc plugin
+  collection": description updated; cross-file analysis stated as "best-effort static analysis,
+  not whole-program verification" (`import * as X` / deep barrels / dynamic config are left
+  alone); SSR made the headline use case; `staticCompositionPlugin` marked **experimental**
+  pending differential tests.
+
+**Follow-ups (design toward — not this slice):**
+
+- **Extract a framework-neutral `lib/compiler`** — `parse / analyze / transform / optimize /
+  emit`, with `plugins/vite` (and eventually a Rollup/Webpack/esbuild adapter, and the
+  `plugins/typescript` diagnostics) as thin adapters. The five Vite plugins are really *one
+  pipeline* wearing Vite's independently-ordered-transform clothing. This is the same
+  consolidation as the `plugins/eslint` + `plugins/typescript` "shared diagnostics core"
+  follow-up — one target: `Praxis static compiler → { validation, optimisation, transforms } →
+  {Vite, TS} adapters`.
+- **Source maps.** The transforms return `{ code }` with no `map`. For AST→AST→source, and for
+  diagnostics that must point at the *original* line after several transforms, source-map
+  preservation is a production-readiness requirement before the optimiser is called stable.
+- **Import-aware `isFactoryCall`** (shared with `plugins/typescript`, and more dangerous here
+  since this *rewrites* code) — recognise `createContractComponent` only when imported from
+  `@praxis-kit/*`, not an unrelated same-named function.
+- **`classExtractPlugin` large-map strategy** — the 512-combination cap is a fine safety valve;
+  a shared/generated asset (vs. an inline literal per module) is the eventual answer for big
+  maps, and for not emitting the data when the component is tree-shaken away.
+- **`staticCompositionPlugin` differential tests** — render the inlined output vs the runtime
+  path and assert DOM/attr equivalence, across refs / context / defaults, before dropping the
+  experimental label.
 
 ### Contract: `cardinality: { max: 0 }` is the canonical "forbid this child type"
 
