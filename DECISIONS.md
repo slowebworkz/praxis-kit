@@ -155,12 +155,12 @@ Adaptations made during the port review, per slice:
   `AnyClassPluginFactory` = `… | undefined`, so its `if (!factory)` guard is honest — no change.)
 - Lint: `import-x/consistent-type-specifier-style` and `unicorn/no-useless-undefined` autofixes.
 
-Open follow-ups (`.vscode/MIGRATION.md`): `core/utils` bundles contract state-prop normalizers under
-a "utils" name (reconsider when a real consumer forces the grouping); `primitive.ts` surfaces
-ARIA-role helpers from `contract/types` despite the filename; the HTML/ARIA role tables need a
-standards audit before the contract layer is authoritative (own entry: "HTML/ARIA contract layer —
-standards audit before it is authoritative"); the ARIA widget contracts (`menuContract` etc.)
-currently enforce accessible naming, not full APG child patterns.
+Open follow-ups (`.vscode/MIGRATION.md`): ~~`core/utils` bundles contract state-prop normalizers
+under a "utils" name~~ (resolved with `packages/kit` — they moved to `@praxis-kit/core/props`);
+`primitive.ts` surfaces ARIA-role helpers from `contract/types` despite the filename; the HTML/ARIA
+role tables need a standards audit before the contract layer is authoritative (own entry: "HTML/ARIA
+contract layer — standards audit before it is authoritative"); the ARIA widget contracts
+(`menuContract` etc.) currently enforce accessible naming, not full APG child patterns.
 
 ### `adapters/react` — port scope and adaptations
 
@@ -969,5 +969,68 @@ via `@praxis-kit/pipeline-kit`), `ClassClassifier` / `ClassBuilder`, `LayoutStat
 ### Release flow: Changesets
 
 `@changesets/cli` is in the foundation commit (catalog + root `devDependencies`, `changeset` /
-`version` / `release` scripts). A `.changeset/config.json` and the CI release job land with the
-first publishable package.
+`version` / `release` scripts). **`.changeset/config.json` landed with `packages/kit`.**
+
+- **`praxis-kit` (`packages/kit`) is the only versioned package.** Every `@praxis-kit/*` workspace
+  package is private and bundled into it, so all of them are in the config's `ignore` list.
+  `privatePackages: { version: true, tag: true }` so Changesets versions `praxis-kit` while it is
+  still `private: true` (publishing is separately gated — see below).
+- `changelog: "@changesets/cli/changelog"` (the built-in) — a `@changesets/changelog-github` upgrade
+  is a follow-up (needs the extra dep).
+- `baseBranch: main` — releases are cut from `main`.
+- The **CI release job** and the **first publish** are still deferred: they need `packages/kit` to
+  have a real build, which needs the remaining adapters (`solid`, `svelte`, `lit`, `web`) and
+  `tooling/codemod` — the `exports` map and `../pk`'s `tsup` config both reference them.
+
+### `packages/kit` — scaffold (the `v1.0.0` line)
+
+Ported as a **scaffold**, not the full build package. What landed:
+
+- `package.json` at `0.0.0`, `private: true`, with the `exports` / `typesVersions`-shaped surface
+  for the entries whose source exists (`react` + `/legacy`, `preact`, `vue`, `tailwind` + `.css`,
+  `eslint`, `ts-plugin`, `vite-plugin`, `contract`, `guards`, `html`, `utils`) and their optional
+  peer deps. `../pk`'s `version: 7.8.1` dropped.
+- The four framework-neutral entry files (`contract.ts` / `guards.ts` / `html.ts` / `utils.ts`).
+- `.changeset/config.json` (above).
+
+**`packages/kit`'s entry files are pure pass-throughs.** `contract.ts` (and the others as they get
+the same treatment) is a stack of `export * from '<subpath>'` lines with **no hand-curated name
+lists** — the curated public surface lives one layer down, in purpose-named entries of the lower
+packages, where the docs also live:
+
+- `@praxis-kit/contract/props` (the 8 state-prop normalizers) → re-exported by
+  `@praxis-kit/core/props`
+- `@praxis-kit/primitive/types/factory` (the factory-authoring types) — `FactoryOptions` /
+  `AnyFactoryOptions` now carry the "`satisfies` this to narrow `styling.compounds`" doc on the type
+  itself, not in a `packages/kit` comment
+- `@praxis-kit/core/state` (the 8 state contracts + `mergeContracts`)
+- `@praxis-kit/core/aria` (**new** — the ARIA-rule authoring surface: the fix factories +
+  rule/result types; the one place that still curates a list, since the source barrels are broader
+  than the intended public set)
+- `@praxis-kit/core/diagnostics-api` → `Diagnostics` as a **structural interface**, not the
+  `@praxis-kit/diagnostics` class type. The class has `private` members ⇒ nominal type ⇒ a plugin
+  typed against a class re-export would only accept an instance from that exact bundled copy; a
+  structural type has no identity. A compile-time guard (`DiagnosticsImpl extends Diagnostics`)
+  keeps the interface honest. This also **shrinks the build's shared-`Diagnostics`-chunk problem** —
+  only the runtime class needs de-duping, not the type.
+- The mis-homed `activeProps…selectedProps` re-export was removed from `packages/core/src/utils/`
+  (the `core/utils` follow-up — resolved).
+
+**Rule for the `packages/core` re-export entries** (`primitive.ts`, `contract.ts`, `props.ts`,
+`state`, `aria.ts`, …): a **cross-workspace** re-export is
+`export * from '@praxis-kit/<pkg>/<subpath>'` against a named barrel of the source package — never a
+hand-listed set of symbols, which rots silently when the source renames or drops one. Only
+**same-package** (`./types`, `./x`) names are listed explicitly (this file sees those change). To
+make this work, `lib/primitive` gained `./tag` + `./utils` subpaths and `lib/contract` gained
+`./aria/factories`, `./aria/roles`, `./props`, `./types/aria/aria-rule` — each an exact barrel that
+already existed. `primitive.ts`'s surface grew to whatever `@praxis-kit/primitive/utils` exports (it
+was already all in the bare `@praxis-kit/primitive` surface). The "ARIA-role helpers on the
+`primitive` entry despite the filename" follow-up still stands — the _rot_ concern is fixed, but
+relocating them to an aria/guards entry is a separate call.
+
+**Deferred** (the actual `v1.0.0` work): `../pk`'s `tsup.config.ts` (~20 per-entry configs, the
+shared-`Diagnostics`-chunk scheme, `esbuild-plugin-solid` / svelte handling),
+`scripts/postbuild.ts`, the `tsconfig.build-*.json` variants → converted to `tsdown` once all
+adapters + the codemod exist; `publint`; the CI release workflow; flipping `private: false` and the
+first publish. Two invariants the build must preserve are noted in `packages/kit/README.md` (no
+unpublished names in output; single `Diagnostics` identity via a shared chunk).
