@@ -16,6 +16,7 @@
     { "path": "./lib/styling" },
     { "path": "./packages/core" },
     { "path": "./plugins/eslint" },
-    { "path": "./plugins/typescript" }
+    { "path": "./plugins/typescript" },
+    { "path": "./plugins/vite" }
   ]
 }
