@@ -154,6 +154,31 @@ The goal is simple:
 
 > **Define the rule once. Enforce it wherever it can be known.**
 
+### Where each rule is enforced
+
+Not every contract can be checked at every stage — some need the full module graph, some need
+runtime values. This matrix shows which layer covers which concern:
+
+| Concern                          | Runtime | ESLint                          | TS plugin | Vite plugin          |     Tailwind     |
+| -------------------------------- | :-----: | ------------------------------- | :-------: | -------------------- | :--------------: |
+| Variant class resolution         |    ✓    | —                               |     —     | ✓ (pre-compute)      |        ✓         |
+| Compound variants                |    ✓    | `no-dead-compound`              |     —     | ✓ (prune dead)       |        ✓         |
+| Children cardinality             |    ✓    | `valid-cardinality`             |     ✓     | ✓ (`contractPlugin`) |        —         |
+| `children` rule config validity  |    ✓    | `valid-children-config`         |     —     | —                    |        —         |
+| Enforcement without `strict`     |    ✓    | `no-enforcement-without-strict` |     ✓     | —                    |        —         |
+| HTML nesting / content model     |    ✓    | `no-invalid-html-nesting`       |     —     | —                    |        —         |
+| Invalid variant `defaults`       |    ✓    | `no-invalid-default`            |     —     | —                    |        —         |
+| Redundant / disallowed ARIA role |    ✓    | `no-redundant-role`             |     —     | ✓ (override check)   |        —         |
+| ARIA rule pipeline               |    ✓    | (partial)                       |     —     | ✓ (override check)   |        —         |
+| Layout-dependent class filtering |    ✓    | —                               |     —     | —                    |        ✓         |
+| `asChild` composition            |    ✓    | —                               |     —     | ⚠ experimental       |        —         |
+| Static component inlining        |    ✓    | —                               |     —     | ⚠ experimental       |        —         |
+| Design-token manifest            |    —    | —                               |     —     | ✓ (`designTokens`)   | ✓ (`layoutKeys`) |
+
+Legend: **✓** implemented · **—** not applicable at this stage · **⚠ experimental** — behind an
+opt-in plugin, pending differential tests. The runtime is always the backstop: anything an earlier
+stage can't prove statically still runs through it.
+
 ---
 
 ## Polymorphism as a Foundation

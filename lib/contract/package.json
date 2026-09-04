@@ -5,7 +5,11 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./types": "./src/types/index.ts"
+    "./aria/factories": "./src/aria/factories.ts",
+    "./aria/roles": "./src/aria/aria-roles.ts",
+    "./props": "./src/props/index.ts",
+    "./types": "./src/types/index.ts",
+    "./types/aria/aria-rule": "./src/types/aria/aria-rule.ts"
   },
   "sideEffects": false,
   "description": "Framework-neutral contract validation, diagnostics, and prop normalization",

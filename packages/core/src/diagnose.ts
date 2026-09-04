@@ -7,8 +7,8 @@ import type { AnyRecord, ElementType, IntrinsicProps, ResolvedFactoryOptions } f
 
 export type ComponentDiagnosis = {
   classes: ClassDiagnosis
-  aria: ReadonlyArray<ValidationViolation>
-  children: ReadonlyArray<ChildViolation>
+  aria: readonly ValidationViolation[]
+  children: readonly ChildViolation[]
 }
 
 export function diagnose(
@@ -21,7 +21,11 @@ export function diagnose(
 ): ComponentDiagnosis {
   const classes = diagnoseClassPipeline(options, tag, props, className, recipe)
 
-  let aria: ReadonlyArray<ValidationViolation>
+  let aria: readonly ValidationViolation[]
+  // Both branches evaluate the always-on built-in HTML/ARIA rule pipeline; the `if` only avoids
+  // constructing an engine when there are no extra `enforcement.aria` rules to layer on. An empty
+  // `ariaRules` is equivalent to `undefined` here (there is no "disable ARIA" state) — consistent
+  // with `createAriaPipeline`.
   if (options.ariaRules?.length) {
     const engine = new AriaPolicyEngine(silentDiagnostics, {
       rules: options.ariaRules,
@@ -34,7 +38,7 @@ export function diagnose(
   const childViolations = diagnoseChildren(
     options.childRules ?? [],
     children ?? [],
-    'Component',
+    options.displayName ?? 'Component',
     {
       exclusiveChildren: options.exclusiveChildren,
       allowText: options.allowText,
