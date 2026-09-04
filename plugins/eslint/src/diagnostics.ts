@@ -38,8 +38,6 @@ export const EslintDiagnosticTemplates = {
   negativeMax: 'cardinality.max must be >= 0 (got {{ value }}).',
   maxLessThanMin:
     'cardinality.max ({{ max }}) must be >= cardinality.min ({{ min }}). This rule can never be satisfied.',
-  zeroMax:
-    'cardinality.max of 0 means no children of this type are allowed. Use 0 intentionally or remove the rule.',
 
   // Children config rules
   multipleFirst:
@@ -152,14 +150,6 @@ export const EslintDiagnostics = {
       code: DiagnosticCode.LintMaxLessThanMin,
       category: DiagnosticCategory.Lint,
       message: `cardinality.max (${max}) must be >= cardinality.min (${min}). This rule can never be satisfied.`,
-    }
-  },
-
-  zeroMax(): DiagnosticInput {
-    return {
-      code: DiagnosticCode.LintZeroMax,
-      category: DiagnosticCategory.Lint,
-      message: `cardinality.max of 0 means no children of this type are allowed. Use 0 intentionally or remove the rule.`,
     }
   },
 
