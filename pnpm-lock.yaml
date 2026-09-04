@@ -132,6 +132,9 @@ catalogs:
     typescript-eslint:
       specifier: 8.68.0
       version: 8.68.0
+    vite:
+      specifier: ^8.2.2
+      version: 8.2.2
     vitest:
       specifier: ^4.1.11
       version: 4.1.11
@@ -581,6 +584,31 @@ importers:
       typescript:
         specifier: '>=6 <7'
         version: 6.0.3
+
+  plugins/vite:
+    dependencies:
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../lib/diagnostics
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
+      typescript:
+        specifier: '>=6 <7'
+        version: 6.0.3
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.4.0
+      vite:
+        specifier: 'catalog:'
+        version: 8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(jsdom@29.1.1)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
 
 packages:
 
