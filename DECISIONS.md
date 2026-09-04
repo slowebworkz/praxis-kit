@@ -2,6 +2,19 @@
 
 ## Open
 
+### `lib/primitive` — `StylingOptions.presets` vs. `RecipeMap`/`recipe`
+
+`StylingOptions.presets: TPreset` (`lib/primitive/src/types/factory/styling-options.ts`) holds a
+`RecipeMap`, selected at the call site by the `recipe` prop — but the field itself is still named
+`presets`, not `recipes`. Found while correcting `tooling/codemod`'s README, which had (incorrectly,
+inherited from `../pk`) documented a `styling.presets` → `styling.recipes` rename as already
+shipped; it never did, in `../pk` or here — `presets` is `../pk`'s current field name too. Whether
+to actually rename the field for consistency with `RecipeMap`/`recipe` is an open call for whoever
+owns `lib/primitive` next: it's a real inconsistency, but `presets` is meaningfully descriptive on
+its own (named variant bundles) and a rename now touches every `StylingOptions` call site across
+every already-merged package. If it ever ships, `tooling/codemod` should gain a structural (AST, not
+find-and-replace) command for it — see `DECISIONS.md` → "`tooling/codemod` — port scope".
+
 ### `spikes/*` — deferred
 
 `../pk` keeps a `spikes/*` glob for throwaway experiments (currently empty).
@@ -881,6 +894,91 @@ Tailwind. vite-plugin: 151 → 163 tests.
   `allClasses` union is what matters); revisit with a module-path key + friendly name as metadata if
   the per-component map gains a real consumer.
 
+### `tooling/codemod` — port scope
+
+`@praxis-kit/codemod`, ported ~verbatim (~20 src files, ~430 non-test LOC, 22 tests). A `ts-morph`
+CLI with three commands — `migrate` (the recommended one-pass), `rename`
+(`createPolymorphicComponent` → `createContractComponent` across ESM named imports/exports), and
+`migrate-paths` (`@praxis-kit/*` → `praxis-kit/*` specifiers, incl. `require()` / dynamic
+`import()`, with `@praxis-kit/eslint-plugin` → `praxis-kit/eslint` as the one special case).
+`migrate` runs rename **before** paths so the `PRAXIS_PACKAGE` filter still matches `@praxis-kit/*`
+specifiers; both orders are idempotent and the suite pins that.
+
+- **deps:** `ts-morph` (catalog) → `dependencies`; `@types/node` + `tsdown` + `typescript` +
+  `vitest` (all catalog) dev. No `@praxis-kit/*` deps — it operates on _consumer_ source text, not
+  the kit's own types.
+- **Build scripts kept** (`build` / `dev` via `tsdown`), like `plugins/typescript` and unlike the
+  `lib/*` / `plugins/vite` packages — this is a runnable `praxis-codemod` bin (`dist/index.js`, ESM,
+  `#!/usr/bin/env node` banner), not a from-source library. `tsdown.config.ts` ported verbatim
+  (`entry: src/index.ts`, `format: ['esm']`, `dts`, `clean`, `fixedExtension: false`).
+- **`tsconfig.json` is standalone** (not `extends: ../../tsconfig.base.json` — base is `noEmit` +
+  `moduleResolution: bundler`): `module` / `moduleResolution: NodeNext`, `outDir: dist`,
+  `rootDir: src`, `types: ["node"]`, `+ skipLibCheck`. `vitest.config.ts` uses the repo's
+  `defineLibConfig('codemod')` (was a hand-rolled `defineConfig` in `../pk`).
+- Added to root `tsconfig.json` `references` and `.changeset/config.json` `ignore` (private, bundles
+  into `praxis-kit`); no `tsconfig.paths.json` entry (nothing imports it). `configs/typescript.ts`
+  `allowDefaultProject` and `configs/architecture.ts` already listed the `tooling/codemod` paths.
+
+**Port-review changes:**
+
+- **Deleted 3 dead re-export shims** — `src/types.ts` (re-exported `./types/index.js`),
+  `src/transforms/rename-symbol.ts` (`renameInProject`), `src/cli/project.ts` (`buildProject`).
+  Nothing imported any of them; the real modules are imported directly.
+- **`usage.ts` no longer reads a sibling `.md` at runtime.** `../pk` did
+  `readFileSync(new URL('./usage.md', import.meta.url))` and never copied `usage.md` into `dist` (it
+  wasn't in `files` either) — so the standalone `--help` / no-args / unknown-command paths threw
+  `ENOENT` in a built CLI. The text is now an inline `const usage` string; `usage.md` deleted. Also
+  fixes the prettier-mangled markdown (`*` → `\*`, collapsed command list) the old file had.
+  Verified end-to-end: `node dist/index.js --help` and `migrate --dry-run --verbose` both work.
+
+**Review pass 2 (README accuracy + `rename` scope):**
+
+- **README "Migrations" restructured for versioning clarity.** It listed two dated sections (v1.0.0,
+  v3.1.0) with no signal for whether either was historical or proposed — a reader could reasonably
+  wonder if the codemod was meant to walk several Praxis generations. Added a one-line framing
+  ("each subsection is a migration that has already shipped; there is currently one") so the single
+  real, automated migration reads unambiguously as current, not as the first of a series.
+- **The v3.1.0 section's claim was wrong, not just ambiguous.** It documented `styling.presets` →
+  `styling.recipes` as a completed rename needing manual find-and-replace. It never shipped —
+  `presets` is still the real `StylingOptions` field name, in `../pk` and here (confirmed by reading
+  the source, not just the docs). A codemod or a user manually "fixing" this per the old README text
+  would have broken working code by renaming to a key the type doesn't have. The section now says so
+  plainly and points at the "Open" item above; the `variantKey` → `recipe` prop half of the old
+  claim **is** real but is ancient/already-complete history with nothing left to migrate, so it's
+  dropped rather than presented as still-actionable.
+- **`rename`'s scope stated explicitly** (README, `--help` text, and a code comment on
+  `renameInProject`): it renames a Praxis-Kit factory bound to a `@praxis-kit`/`praxis-kit`
+  specifier, not an arbitrary same-named symbol — and, for an unaliased import, the rename reaches
+  every reference to that binding project-wide (bare references, `.method()` calls, …), not just the
+  import/export line, because it's a real `ts-morph` identifier rename. Both branches were already
+  correct; only the documentation was unclear about which. +2 tests pin the cascade (`fn.bind(...)`,
+  a bare reference) and comment preservation on the specifier line. 24 tests.
+
+**Follow-ups (not this slice):**
+
+- **The `praxis-codemod` bin ships inside `praxis-kit`.** `packages/kit` needs a `bin` entry + a
+  build entry that bundles `src/index.ts` (with the shebang banner) — lands with the `packages/kit`
+  build, alongside the deferred tsup→tsdown work.
+- **A future structural property-migration command** — reviewer-suggested: recognize
+  `styling: { presets: {...} }` and a `recipe`-style JSX attribute via `ts-morph`'s AST rather than
+  find-and-replace, avoiding the false-positive risk of renaming an unrelated same-named object key
+  or prop. There is nothing to migrate for `presets` today (see the "Open" item above) — this stays
+  a template for whenever a real mechanical field/prop rename ships, not a command to build now
+  against a rename that doesn't exist.
+- **A richer migration report** — reviewer-suggested: a structured summary (renames / path rewrites
+  / files modified, plus a "skipped: namespace imports / CJS destructuring" count) instead of the
+  current one-line `message`. The `Summary`/`RenameSummary`/`PathSummary`/`MigrateSummary` types
+  already carry the counts a nicer formatter would need; this is a `create-command.ts` presentation
+  change, not a transform change.
+- **Keep the transform layer framework-neutral** — reviewer's architectural note, worth recording
+  even though nothing prompted it yet: this package should stay scoped to the Praxis Kit public
+  API/contract surface (paths, factory names, eventually API properties). Framework-specific
+  migration logic (React-only, Vue-only, …), if it's ever needed, belongs elsewhere rather than
+  growing branches inside `tooling/codemod`.
+- `isFactoryCall` equivalent: `rename` matches a named import by name + a `@praxis-kit`/`praxis-kit`
+  module filter, which is right, but the same import-identity rigor as the `plugins/*` follow-ups
+  would let it also handle re-export chains.
+
 ### Contract: `cardinality: { max: 0 }` is the canonical "forbid this child type"
 
 The child-rule runtime (`lib/contract` `RuleValidator#validateCardinality`) treats _any_ match
@@ -911,12 +1009,15 @@ inert for the ones whose dirs don't exist yet.
 ### Git workflow: `main` stable, `develop` integration
 
 `main` holds only stable, released state. `develop` is the integration branch — feature branches
-start from `develop` and merge back into it; `develop` merges into `main` at a release.
-`.vscode/tasks.json` carries the workflow helpers — `Git: sync repository` fetches and hard-resets
-**both** `main` and `develop` to their origins then prunes gone branches; `Git: switch develop` and
-the individual `Git: reset … to origin` / `Git: prune gone branches` tasks are also exposed. The
-file is re-included in `.gitignore` past the global `.vscode` exclusion so the workflow travels with
-the repo. A `Git: start feature` task is deferred — the branch name needs input, so it is handled
+start from `develop` and merge back into it; `develop` merges into `main` at a release. A local
+(un-versioned) `.vscode/tasks.json` carries the workflow helpers — `Git: sync repository` fetches
+and hard-resets **both** `main` and `develop` to their origins then prunes gone branches;
+`Git: switch develop` and the individual `Git: reset … to origin` / `Git: prune gone branches` tasks
+are also exposed. `Git: prune gone branches` deletes a local branch when its upstream is `[gone]`
+**and** it is merged into `develop` or `main` (feature branches merge into `develop`, so a
+`--merged=main` check — the original — never matched). The whole `.vscode/` directory is
+`.gitignore`d and was scrubbed from history; the tasks file is a local convenience, not a repo
+artifact. A `Git: start feature` task is deferred — the branch name needs input, so it is handled
 outside a plain shell task for now.
 
 ### `lib/tailwind` — port scope

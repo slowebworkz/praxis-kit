@@ -19,6 +19,7 @@
     { "path": "./packages/kit" },
     { "path": "./plugins/eslint" },
     { "path": "./plugins/typescript" },
-    { "path": "./plugins/vite" }
+    { "path": "./plugins/vite" },
+    { "path": "./tooling/codemod" }
   ]
 }
