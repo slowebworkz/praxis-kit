@@ -1,13 +1,14 @@
 {
-  "name": "@praxis-kit/vite-plugin",
+  "name": "@praxis-kit/tailwind",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./safelist.css": "./src/tailwind-safelist.css"
   },
-  "description": "Build-time compiler and optimisation plugins for Praxis Kit — contract validation, dead-compound pruning, variant class extraction, asChild compilation, and static composition for SSR",
+  "description": "Praxis Kit Tailwind CSS integration — layout-aware class pipeline with variant composition",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -16,16 +17,12 @@
   "dependencies": {
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/pipeline-kit": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
-    "@praxis-kit/tailwind": "workspace:*",
-    "typescript": "catalog:"
-  },
-  "peerDependencies": {
-    "vite": ">=5"
+    "type-fest": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "vite": "catalog:",
     "vitest": "catalog:"
   }
 }

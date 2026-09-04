@@ -16,9 +16,8 @@ import { iterate } from '@praxis-kit/primitive'
 export { analyze } from './analyze'
 export { buildPrecomputedClasses, injectPrecomputedClasses } from './class-extract'
 export { pruneDeadCompounds } from './compound-prune'
-// `designTokensPlugin` / `buildManifest` / `collectFileTokens` (`./design-tokens`) are deferred:
-// they import `layoutKeys` from `@praxis-kit/tailwind`, which is not ported yet. They land back
-// when `lib/tailwind` does. See DECISIONS.md / .vscode/MIGRATION.md.
+export { buildManifest, collectFileTokens, designTokensPlugin } from './design-tokens'
+export type { ComponentTokens, DesignTokenManifest, DesignTokensOptions } from './design-tokens'
 export type { ImportBinding } from './imports'
 export { transformAsChild } from './slot-transform'
 export { composeStatically, extractStaticComponents } from './static-compose'
