@@ -48,6 +48,8 @@ const config = [
                       'vue',
                       '@vue/**',
                       'preact',
+                      'solid-js',
+                      'solid-js/**',
                       'svelte',
                       'svelte/**',
                     ],
