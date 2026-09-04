@@ -3,6 +3,7 @@
 export * from './primitive'
 export * from './html'
 export * from './state'
+export type * from './diagnostics-api'
 export { InvariantBase } from '@praxis-kit/contract'
 export {
   AriaDiagnostics,
@@ -10,7 +11,7 @@ export {
   HtmlDiagnostics,
   SlotDiagnostics,
 } from '@praxis-kit/contract'
-export { disabledProps, invalidProps } from '@praxis-kit/contract'
+export * from './props'
 export {
   AriaPolicyEngine,
   ChildrenEvaluator,

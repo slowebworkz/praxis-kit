@@ -5,7 +5,10 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./tag": "./src/tag/index.ts",
+    "./utils": "./src/utils/index.ts",
     "./types": "./src/types/index.ts",
+    "./types/factory": "./src/types/factory/index.ts",
     "./types/primitives": "./src/types/primitives/index.ts",
     "./guards/children": "./src/guards/children/index.ts",
     "./guards/aria": "./src/guards/aria/index.ts",
