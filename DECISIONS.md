@@ -346,6 +346,132 @@ had these; 209 → 219 tests):
 future `rerender` that returns `void | Promise<void>` would let all adapters use their idiomatic
 test driver.
 
+### `adapters/solid` — port scope and adaptations
+
+Fourth framework adapter, second non-React-family one — a compiler-based reactivity model rather
+than a virtual DOM, the sharpest fidelity test of the neutral core yet. Fine-grained reactivity via
+`createMemo`/`createEffect` (no re-render, no VDOM diff); JSX compiled by Solid's own Babel
+transform, not React's. Flat `src/`. ~1000 non-test src LOC, 6 jsdom vitest files + 2 SSR vitest
+files / 149 tests. Ported **verbatim — no bug fixes needed**, the first adapter slice where that's
+true (react/preact/vue each needed at least one real correctness fix during review).
+
+- **`exports`:** `.` only. `peer: solid-js >=1.6`.
+- **deps:** `@praxis-kit/{adapter-utils,core,diagnostics,primitive}` + `type-fest` → `dependencies`
+  (matches vue's convention — `../pk` had some of these in `devDependencies`). devDeps: `solid-js`,
+  `@solidjs/testing-library`, `vite-plugin-solid`, `jsdom`, `vitest`. No `@types/node` — nothing
+  imports a `node:` builtin (and, unlike react/vue, there's no Playwright-CT setup for this adapter
+  in `../pk` — no `playwright-ct.config.ts`, no `.pw.spec.tsx` files — so no
+  `@praxis-kit/playwright` / `@playwright/experimental-ct-*` deps either).
+- **`configs/tsconfig.solid.json` already existed** (`jsx: "preserve"`,
+  `jsxImportSource: "solid-js"`) — landed speculatively with the ESLint port. `tsconfig.json`
+  extends it and includes both vitest configs directly (react/preact/vue's pattern — no
+  `allowDefaultProject` entry needed, unlike `lib/*`).
+- **No per-package `eslint.config.ts`** (root lint, matching every other adapter) — `../pk`'s had a
+  `no-restricted-imports` sibling-adapter-isolation rule; not recreated, same as it wasn't for
+  react/preact/vue (see the react entry's follow-up — now overdue with a 4th adapter, still not this
+  slice).
+- **Split test config, ported as-is: `vitest.config.ts` (jsdom) + `vitest.ssr.config.ts` (node).**
+  Solid ships mutually exclusive browser/server builds of `solid-js/web` selected by Vite resolve
+  `conditions` (`['development','browser']` vs `['development']`, no `'browser'`) — the SSR file's
+  `renderToString` throws under the browser build, and jsdom can't run the server build's code path
+  at all. Not folded into the shared `defineJsdomConfig` (a jsdom-only helper); the package's own
+  `test` script runs both configs in sequence, which is what `pnpm -r test` actually invokes —
+  confirmed the SSR suite runs. The root workspace `vitest.config.ts` project glob only picks up
+  `vitest.config.ts` by name, so `vitest.ssr.config.ts` is invisible to a bare root `vitest` command
+  — a pre-existing, accepted gap (same shape as `plugins/typescript`'s build config being outside
+  the root glob).
+- **`configs/architecture.ts` gap found and fixed:** the `core` boundary's disallow list forbade
+  `react`/`vue`/`preact`/`svelte` importing into `packages/core`, but not `solid-js` — added
+  `'solid-js'` + `'solid-js/**'` alongside the existing entries.
+- **Solid keeps its own `SlotValidator`** (`src/slot/slot-validator.ts`), not the shared
+  `@praxis-kit/adapter-utils` one react/vue/preact use. This is intentional, not a missed
+  consolidation: the shared `SlotValidator` validates a _child-count_ contract
+  (`assertSingleChild(count)` — asChild clones props onto exactly one child element), because
+  React/Vue/Preact's `asChild` takes ordinary JSX children. Solid's `asChild` takes a **render-prop
+  function** as `children` (`{(props) => <a {...props} />}`) — there's no child element to count, so
+  the contract is `assertRenderFn(children): children is (props) => unknown` instead. Both extend
+  the same `InvariantBase` and use `SlotDiagnostics` (`renderFnRequired` was already ported with
+  `lib/contract`, evidently anticipating this).
+- **README fixes** (found while writing it, not carried from `../pk` verbatim):
+  - The `asChild` usage example showed React/Vue's single-child-element syntax
+    (`<Button asChild><a href="/home">Home</a></Button>`) — wrong for Solid, and would throw at
+    runtime (`assertRenderFn`). Replaced with the real render-prop syntax and a sentence explaining
+    why it differs from the other adapters.
+  - The "Exports" table listed `createPolymorphicComponent` / `createAriaEnforcedComponent` /
+    `createChildrenEnforcedComponent` — none of which `src/index.ts` exports (only
+    `createContractComponent` and `defineContractComponent` do). This exact wrong table also appears
+    in `adapters/react/README.md` and `adapters/vue/README.md` — a stale copy-paste artifact
+    predating this repo, not something solid introduced. Fixed here; **follow-up:** audit react's
+    and vue's README export tables against their real `src/index.ts` too (both already merged, out
+    of scope for this slice).
+
+**Review pass:**
+
+- **`tryRenderAsChild`'s fallback under `strict: 'warn'` locked down as an explicit contract, not
+  just "doesn't throw".** Both of its guards (`assertExclusive` for `as`+`asChild` together,
+  `assertRenderFn` for non-function `children`) route through `InvariantBase.violate` →
+  `Diagnostics.error()`. Under the adapter's `strict: 'throw'` default that throws and nothing after
+  it runs (already pinned by two tests). Under `strict: 'warn'`/`'silent'` it only reports (or does
+  nothing) and returns normally — so `tryRenderAsChild` returns `null` to its caller, and `render()`
+  falls through to the **ordinary DOM-tag render path**, exactly as if `asChild` (and, for the
+  exclusivity guard, `as`) had never been set. A malformed `asChild` usage degrades to a plain
+  render rather than rendering nothing or silently swallowing the children. +2 tests pin the exact
+  result (`<div>not a function</div>` for the non-function-children case; `<section>` — not `<div>`
+  — for the `as`+`asChild` case, `as` still applying). A comment on `tryRenderAsChild` in
+  `render.tsx` states this explicitly now; previously it was true but only inferable from tracing
+  three call sites.
+- **`ResolvedSlotProps`'s `ref`/`role` typing — the doc comment moved here, from an in-source block
+  that had grown to architectural-decision-record length.** `PropsOf<G>` stays `Partial` for the
+  same reason `AsChildProps` does: the type system can't prove every prop actually received a
+  default, only that the runtime _tried_. `ref` is typed `(el: Element) => void` rather than
+  `AsChildProps.ref`'s bare `unknown`, because a render function's own job is spreading this object
+  directly onto a concrete element (`(props) => <a {...props} />`) — it needs a callback-ref shape
+  assignable to that element's own `ref` prop type, and contravariance makes an `Element`-typed
+  callback assignable to any more specific one (`(el: HTMLAnchorElement) => void`, …) without
+  knowing `TAs` in advance; `AsChildProps.ref` itself stays `unknown` because that field types what
+  a _caller_ hands in before the render function has even run, not what the render function receives
+  back out. `role` (added by `buildSlotProps` only when `isKnownAriaRole` narrows it) is omitted
+  from the type entirely, rather than given any explicit type — every candidate representation fails
+  the same way `ref` almost did: Solid's own per-element JSX types (`AnchorHTMLAttributes['role']`,
+  etc.) each narrow `role` to only the ARIA roles valid for _that_ element, a strict subset of the
+  full ARIA vocabulary, so a `KnownAriaRole`-typed field fails to spread onto any of them — and
+  unlike `ref`, there's no contravariance trick for a plain string-literal property (`unknown` fails
+  the same assignability check `KnownAriaRole` does; only `any` would satisfy every per-element
+  union, and this codebase doesn't use `any`). Omitting the key keeps `{...props}` spreads honest
+  and compiling; a render function that specifically needs `role` casts locally. (Previously this
+  whole parameter was bare `UnknownProps` — no type checking at all.)
+- **`ElementRef<T>` confirmed correctly scoped, not too narrow — no change needed.**
+  `ElementRef<T> = T extends IntrinsicTag ? HTMLElementTagNameMap[T] : unknown` looks like it could
+  under-cover SVG/custom elements, but `IntrinsicTag` is itself defined as
+  `keyof HTMLElementTagNameMap` (`lib/primitive/src/types/intrinsic-tag.ts`) — every polymorphic
+  target this repo recognizes as "intrinsic" already _is_ an `HTMLElementTagNameMap` key by
+  construction. `as="circle"` (an SVG tag) falls to `ElementType`'s other arm (`string & {}`), so
+  `ElementRef<'circle'>` is honestly `unknown`, not incorrectly typed as an `HTMLElement` subtype.
+  Praxis Kit's polymorphic targets are deliberately HTML-only; this is shared, pre-existing
+  `lib/primitive` behavior, not solid-specific, and every other adapter relies on the same scoping.
+- **The `TPlugin` cast in `create-contract-component.ts`'s `buildRuntime(options as …)` call is
+  accepted as-is** — it's a documented generic-invariance/`exactOptionalPropertyTypes` limitation
+  (the same class of gap `NormalizeFn` bivariance notes elsewhere in this codebase), not a hidden
+  runtime risk: `TPlugin` is erased at runtime, so no type guard could check it regardless. Not
+  worth more generic machinery to eliminate.
+
+**Follow-up (substantial — not this slice): a shared, explicit cross-adapter conformance contract.**
+`lib/adapter-utils/src/testing` already gives every adapter (react/preact/vue/solid) one shared
+`conformanceSuite`/`conformanceA11ySuite`/`conformancePerformanceSuite`/
+`conformanceIsolationSuite`/`ssrConformanceSuite` — each adapter supplies a small
+`ConformanceAdapter` (create/render/rerender/cleanup/capabilities) and the suites run the same
+assertions against it. What's proposed and not yet true: (1) organizing it as its own package
+(`packages/adapter-conformance` or similar) rather than a `testing` subpath of `lib/adapter-utils`;
+(2) more granular named sub-suites per concern (refs, slots/asChild specifically, SSR hydration
+parity) rather than the current coarser grouping; (3) a documented per-adapter capability/exception
+matrix (`capabilities: { asChild: false, … }` already exists as a mechanism — formalizing what it
+covers and why per adapter is the gap). The value case the reviewer raised is real: this is exactly
+the mechanism that would catch a "React: asChild resolves defaults / Solid: asChild forgets
+defaults" class of drift automatically instead of by manual review — but it's a cross-cutting
+restructuring across every already-merged adapter, sized for its own slice once `svelte`/`lit`/`web`
+exist too (more data points on what's genuinely shared vs. framework-specific before committing to
+the sub-suite boundaries).
+
 ### `lib/styling` — dropped the `variant-pass` "proof path"
 
 `../pk/lib/styling/src/variant-pass/` carried three demo passes (`basePass`/`hoverPass`/`focusPass`,
