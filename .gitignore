@@ -16,8 +16,6 @@ pnpm-debug.log*
 # Local-only Claude guidance — kept out of the repo intentionally.
 CLAUDE.md
 
-# .vscode and CLAUDE.md are excluded by the global gitignore; re-include the
-# shared editor tasks so the git workflow is versioned with the repo.
-!.vscode/
-.vscode/*
-!.vscode/tasks.json
+# .vscode is local-only — editor tasks, migration notes, and lint config are not
+# versioned with the repo (also excluded by the global gitignore; kept explicit here).
+.vscode/
