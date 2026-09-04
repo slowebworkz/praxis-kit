@@ -151,9 +151,9 @@ export default {
 
 ### `designTokensPlugin`
 
-> Not yet available in this build — deferred with `@praxis-kit/tailwind`. See the migration notes.
-
-Extracts design token usage from factory calls and emits a typed manifest.
+Extracts layout/design-token usage from factory calls (via `@praxis-kit/tailwind`'s `layoutKeys`)
+and emits a typed `DesignTokenManifest` — one `.json` per build listing every class each component
+contributes. See `DesignTokenManifest` / `DesignTokensOptions` for configuration.
 
 ---
 
