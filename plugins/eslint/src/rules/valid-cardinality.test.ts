@@ -29,6 +29,10 @@ tester.run('valid-cardinality', validCardinality, {
 
     // no cardinality at all
     `createContractComponent({ tag: 'div', enforcement: { strict: 'warn', children: [{ name: 'X', match: () => true }] } })`,
+
+    // max: 0 — the canonical way to forbid a child type; NOT flagged
+    `createContractComponent({ tag: 'div', enforcement: { strict: 'warn', children: [{ name: 'X', match: () => true, cardinality: { max: 0 } }] } })`,
+    `createContractComponent({ tag: 'div', enforcement: { strict: 'warn', children: [{ name: 'X', match: () => true, cardinality: { min: 0, max: 0 } }] } })`,
   ],
 
   invalid: [
@@ -46,11 +50,6 @@ tester.run('valid-cardinality', validCardinality, {
       // negative max
       code: `createContractComponent({ tag: 'div', enforcement: { strict: 'warn', children: [{ name: 'X', match: () => true, cardinality: { max: -2 } }] } })`,
       errors: [{ messageId: 'negativeMax' }],
-    },
-    {
-      // max: 0 is suspicious
-      code: `createContractComponent({ tag: 'div', enforcement: { strict: 'warn', children: [{ name: 'X', match: () => true, cardinality: { max: 0 } }] } })`,
-      errors: [{ messageId: 'zeroMax' }],
     },
   ],
 })

@@ -754,6 +754,66 @@ its one semantic dependency is the `@praxis-kit/diagnostics` taxonomy (`Diagnost
   "HTML/ARIA contract layer — standards audit" task: one normative source, ideally one set of
   data with the plugin consuming a static projection of it.
 
+### `plugins/typescript` — port scope
+
+`@praxis-kit/typescript-plugin` (renamed from `../pk`'s `@praxis-kit/ts-plugin` — see below),
+ported ~verbatim (~295 src LOC, no tests, no `@praxis-kit/*` deps). A TypeScript language-service
+plugin: proxies `getSemanticDiagnostics` and adds `checkNoEnforcementWithoutStrict` (code 90001)
+plus `checkValidCardinality` (90002–90004) from its own tiny AST walker (`walkEnforcement`).
+`export = init` (CJS).
+
+- **Build scripts kept** (`build` / `dev` via `tsdown`), unlike every other package here — a TS LS
+  plugin is `require()`d by `tsserver` as compiled JS from `dist/index.js`; it *is* its build
+  output, there is no from-source consumption. `tsdown.config.mts` → `format: ['cjs']`,
+  `neverBundle: ['typescript']`.
+- **`tsconfig.json` is standalone** (not `extends: ../../tsconfig.base.json`): `module:
+  CommonJS`, `moduleResolution: Node` (node10), `outDir: dist`. This is deliberate and is the
+  concrete reason `typescript` is catalog-pinned to `>=6 <7` — the `typescript/lib/tsserverlibrary`
+  import and node10 resolution are a hard error in TS 7 (`TS5108`). See `CLAUDE.md`.
+- `peer: typescript >=5.0`. Added to root `tsconfig.json` `references`; no `tsconfig.paths.json`
+  entry (nothing imports it). `configs/typescript.ts` already lists
+  `plugins/typescript/tsdown.config.mts` in `allowDefaultProject`.
+
+**Port-review changes:**
+
+- **Renamed `@praxis-kit/ts-plugin` → `@praxis-kit/typescript-plugin`** — pairs obviously with
+  `@praxis-kit/eslint-plugin`; nothing depended on the old name (clean-room). Propagated to the
+  diagnostic `source` string and the `configs/architecture.ts` boundary label.
+- **README corrected** — it claimed the diagnostics show up "in `tsc` output" and that
+  `--generateTrace` makes a CLI build load the plugin (both false). It is now unambiguously an
+  editor/`tsserver` tool; CI enforcement is `@praxis-kit/eslint-plugin` + runtime.
+- **Diagnostic location narrowed** — `no-enforcement-without-strict` (90001) now anchors on the
+  offending `children` / `aria` key, not the whole factory call.
+- **`max: 0` no longer flagged** (dropped code 90005 / `ZERO_MAX_CODE`, and the matching `zeroMax`
+  rule + template + `DiagnosticCode.LintZeroMax` usage in `plugins/eslint`) — see the contract
+  decision below. `DiagnosticCode.LintZeroMax` stays reserved in `lib/diagnostics/codes.ts`.
+- **Error-vs-warning rule stated** in the README + code: impossible/self-contradictory contract →
+  error; potentially-unintended → warning. (Same spirit as the `Accessibility`-is-guidance
+  taxonomy guardrail.)
+
+**Follow-ups (not this slice):**
+
+- **Shared diagnostics core.** `plugins/eslint` and `plugins/typescript` now hold *two*
+  implementations of `no-enforcement-without-strict` + `valid-cardinality` (different AST models —
+  `@typescript-eslint` estree vs `tsserverlibrary`). They can drift. The target: a
+  framework-neutral rule engine (`validateCardinality({min,max}) → { code, severity, message }`)
+  that both plugins translate their AST into and render from. Sits alongside the
+  `plugins/eslint` "one HTML/ARIA data source" follow-up.
+- `isFactoryCall` matches on callee name only — `otherLib.createContractComponent(...)` matches
+  too. Make the config able to pin the import module identity.
+- Rule parity with `plugins/eslint` (`no-invalid-default`, `no-dead-compound`,
+  `valid-children-config`) — `no-invalid-html-nesting` is lower priority (no JSX/HTML model in the
+  LS plugin).
+
+### Contract: `cardinality: { max: 0 }` is the canonical "forbid this child type"
+
+The child-rule runtime (`lib/contract` `RuleValidator#validateCardinality`) treats *any* match
+against a `bounded` rule with `max: 0` as a violation — so `{ type: Footer, cardinality: { max: 0 } }`
+is a precise, declarative "no `Footer` children allowed". It is **expressive, not suspicious**:
+neither `plugins/eslint` nor `plugins/typescript` flags it. An impossible combination
+(`max < min`, negative bounds) is still an error. `normalizeChildRule` already accepts
+`{ min: 0, max: 0 }` (only `min > max` throws).
+
 ### ESLint: ported from `../pk`
 
 `eslint.config.ts` + `configs/{base,typescript,architecture,imports,unicorn,types}.ts` are ported.
