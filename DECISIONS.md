@@ -472,6 +472,183 @@ restructuring across every already-merged adapter, sized for its own slice once 
 exist too (more data points on what's genuinely shared vs. framework-specific before committing to
 the sub-suite boundaries).
 
+### `adapters/svelte` — port scope and adaptations
+
+Fifth framework adapter, third non-React-family one — and the most architecturally distinct yet.
+Svelte components must originate from `.svelte` files (a compile-time constraint no JS factory can
+work around), so **`createContractComponent` returns a plain `BuiltRuntime` bundle, not a
+component** — every bundle renders through one shared `<Polymorphic bundle={...}>` component
+(`src/Polymorphic.svelte`, typed via a hand-written `Polymorphic.svelte.d.ts` sibling, the mechanism
+`configs/tsconfig.svelte.json`'s `allowArbitraryExtensions` exists for). Svelte 5 runes
+(`$props`/`$derived`/`$effect`) for reactivity; `<svelte:element>` for the dynamic tag; Snippets
+(`{#snippet}`/`{@render}`) as the render-prop mechanism. Flat `src/`. ~700 non-test src LOC (TS +
+one substantial `.svelte` file), 7 vitest files (6 jsdom + 1 SSR) / 122 tests.
+
+- **`exports`:** `.` → `src/index.ts` (as every other adapter); `./Polymorphic.svelte` → the
+  `.svelte` file directly — `../pk`'s `dist`-pointing exports map adapted to this repo's
+  consumed-from-source convention, same as every other adapter has no build.
+- **deps moved from `devDependencies` to `dependencies`:**
+  `@praxis-kit/{adapter-utils,core, diagnostics}` — `../pk` had these three as dev (with only
+  `primitive` + `clsx` + `type-fest` as real deps), inconsistent with every other adapter's "praxis
+  deps → dependencies" convention (react/preact/vue/solid). `clsx` dropped — unused
+  (`Polymorphic.svelte` builds its own class string via the shared class-resolution pipeline, never
+  calls `clsx` directly).
+- **No per-package `eslint.config.ts`** (root lint, matching every other adapter) — `../pk`'s had
+  the same sibling-adapter `no-restricted-imports` rule react/preact/vue/solid's did; not recreated,
+  same follow-up as those.
+- **`configs/architecture.ts` and `configs/tsconfig.svelte.json` needed no changes** — both already
+  had `svelte` wired in (the `core`-boundary disallow list already listed `'svelte'`/`'svelte/**'`;
+  solid's port is what had a gap, not this one's).
+- **Split test config, ported as-is** (same shape as solid, same reason): `vitest.config.ts` forces
+  `conditions: ['browser', 'development']` so `@testing-library/svelte` gets the DOM-capable
+  `svelte/internal` entry; `vitest.ssr.config.ts` runs only `ssr.test.ts` under
+  `environment: 'node'` with no condition override (Svelte 5's compiled output is universal —
+  `vite-plugin-svelte` picks the target itself). The package's own two-config `test` script is what
+  `pnpm -r test` runs.
+
+**A third `asChild` model, distinct from both other variants already in this repo.**
+React/Vue/Preact clone props onto a single child _element_ (`assertSingleChild(count)` — a
+count-based contract). Solid takes a render-prop _function_, needing a runtime `assertRenderFn`
+guard since JS doesn't enforce that shape (`adapters/solid`'s own DECISIONS.md entry). Svelte needs
+**neither guard**: its compiler always wraps a component's default slot content into a callable
+Snippet, so `children` is guaranteed to already be "a function, if present" by the time
+`Polymorphic.svelte` sees it — there's no runtime shape to assert, only presence (`{#if children}`
+before `{@render children(...)}`). It uses the shared `@praxis-kit/adapter-utils` `SlotValidator`
+(the same one vue/react/preact use, constructed with `'Snippet'` as the element-kind label) purely
+for `assertExclusive()` — the `as`+`asChild` mutual-exclusion check — never `assertSingleChild` or
+`warnDiscardedChildren`, since there's no child list to count in the first place.
+
+**`tryRenderAsChild`-equivalent `strict:'warn'` fallback pinned proactively, applying the Solid
+review lesson before being asked.** `useAsChild`'s `assertExclusive()` call has the identical
+`InvariantBase.violate` semantics as every other adapter's: `strict:'throw'` throws (existing test),
+`strict:'warn'` only reports and `useAsChild` resolves to `false`, so `Polymorphic.svelte`'s
+`{:else}` branch renders the ordinary `<svelte:element>` at the `as`-resolved tag — same contract as
+Solid's, same fallback-not-blank-render behavior. +1 test pins the exact result
+(`<section>...</section>`, `as` still applying, not `<div>`).
+
+**Comment density: `ResolvedSlotProps`'s doc trimmed proactively**, applying the Solid review lesson
+rather than waiting for the same feedback twice. Original (`types/resolved-slot-props.ts`) ran ~36
+lines explaining why `ref`/`role`/`style` are omitted from the asChild-snippet prop type; trimmed to
+a 5-line pointer + the usage example. Full case, preserved here: `ref` is omitted because Svelte has
+no `ref` prop concept at all (DOM access is `bind:this`/`onElement`) — a caller who writes a literal
+`ref` key gets it forwarded like any other unknown prop, untyped, since there's no contravariant
+callback-ref trick to apply the way Solid's `ResolvedSlotProps` does. `role` is omitted for the same
+reason Solid's is: every representation either is too wide to spread onto an unknown target
+element's own narrower per-element `role` union, or (`unknown`) fails that same assignability check
+outright. `style` is omitted because, unlike the non-asChild `<svelte:element>` path (which
+serializes a `StyleObject` to a CSS string via `serializeStyle`), the asChild path skips
+serialization entirely — a caller's `style` prop passes through however they wrote it (object or
+string), so there's no one shape to assert.
+
+**Two README bugs found, one severe.** `../pk`'s README (carried in unread) claimed:
+
+- **"The returned value is a Svelte component. Use it in a `.svelte` file: `<Button size="lg">`."**
+  This isn't a wrong-syntax example like Solid's — it misstates the adapter's entire architecture.
+  `createContractComponent` returns a bundle; there is no `Button` component to use as a JSX-like
+  tag. Rewrote the Usage section around the real, working pattern
+  (`export const buttonBundle = createContractComponent(...)`, then
+  `<Polymorphic bundle={buttonBundle} .../>`), taken from `create-contract-component.ts`'s own doc
+  comment, plus the `asChild` snippet syntax.
+- **The "Exports" table listed `createPolymorphicComponent`/`createAriaEnforcedComponent`/
+  `createChildrenEnforcedComponent`** — the same stale artifact found in react's, vue's, and solid's
+  READMEs (see `adapters/solid`'s entry). Fixed here to the two real exports plus a row for the
+  `./Polymorphic.svelte` subpath, since using this adapter at all requires importing it.
+
+**`.prettierignore` gained `*.svelte`.** No `prettier-plugin-svelte` in the catalog, so plain
+Prettier can't parse `.svelte` at all ("No parser could be inferred") — `pnpm format`/
+`format:check` would hard-error on both `.svelte` files in this repo (the first ones to exist).
+Pre-existing gap in `../pk` too (same missing plugin, same files) — never surfaced there because
+nothing apparently ran `prettier --check .` broadly enough to hit it. Ignored rather than fixed
+properly (adding the plugin + verifying its formatting choices) — revisit if `.svelte` formatting
+consistency becomes a real need, not just a `format:check` crash to avoid.
+
+**Review pass:**
+
+- **The event-normalization contract stated and pinned exactly** (`event-normalization.test.ts`, 9
+  cases). `normalizeEventKeys`'s `/^on[A-Z]/` lowercasing is a deliberate compatibility feature (a
+  caller writes React-style `onClick`; Svelte needs native lowercase `onclick`), but its actual
+  reach at runtime is wider than the function itself, because Svelte's own `<svelte:element>` spread
+  treats **any** `on`-prefixed key as event-related regardless of what this function does to it:
+  `onCustomThing` lowercases and binds via `addEventListener` for the literal synthetic event name
+  (fires only if something dispatches a `CustomEvent` under that name — proven by dispatching one);
+  a plausible component-level callback name like `onValueChange` gets the identical treatment and is
+  never invoked directly — there is no separate "custom callback prop" convention this adapter
+  recognizes; `once` / `on-value` (no camelCase to normalize) pass through this function unchanged,
+  but Svelte's runtime still recognizes the literal `on` prefix and silently drops a non-function
+  value rather than rendering it as an attribute — this happens whether or not `normalizeEventKeys`
+  runs, so a future change to the function can't fix or break it. Pinned as an explicit contract in
+  both the function's comment and the tests, not left implicit.
+- **The style-serialization contract stated and pinned exactly** (`style-serialization.test.ts`, 5
+  cases). `serializeStyle`'s `key.replace(/([A-Z])/g, '-$1').toLowerCase()` preserves a CSS custom
+  property (`--my-color` has no uppercase letters to rewrite) and correctly hyphenates a
+  vendor-prefixed property including its leading dash (`WebkitLineClamp` → `-webkit-line-clamp`, the
+  real CSS spelling) — both previously true only as an unstated property of the regex, now asserted
+  by test. `value == null` (not `=== undefined`) keeps a falsy `0` (`opacity: 0`) while dropping a
+  real `undefined`. Assertions read the parsed `CSSStyleDeclaration` (`element.style.*`), not the
+  raw attribute string — the browser's own CSS parser reflows what `serializeStyle` hands it (adds
+  whitespace, and normalizes a unitless `0` length to `0px`), so the literal string is an
+  implementation detail and the parsed value is the real contract.
+- **asChild test depth extended** (`Polymorphic.test.ts`): variant classes and ARIA role resolution
+  reaching the slot snippet are now asserted, not just base class + arbitrary props. The ARIA case
+  surfaced a real, correct-but-previously-undocumented asymmetry: the non-asChild `<svelte:element>`
+  path (`buildDomProps`) strips a role that's redundant with the _target tag's_ implicit role via
+  `runtime.resolveAria`, but the asChild path (`buildSlotProps`) has no target tag to check
+  redundancy against — the caller's snippet decides what renders — so it only validates the role is
+  syntactically real (`isKnownAriaRole`) and forwards it as-is, never stripping for redundancy. Same
+  contract as Solid's `buildSlotProps` (`adapters/solid/src/render.tsx`) — cross-adapter consistent,
+  not a Svelte-specific gap.
+- **A reactivity test for asChild was attempted, failed for an instructive reason, and was replaced
+  rather than dropped or force-fit.** Driving it through `@testing-library/svelte`'s `rerender()` +
+  `createRawSnippet` (the mechanism every other asChild test in this file uses) never observed an
+  updated prop — `createRawSnippet`'s params are captured once at setup and are documented by Svelte
+  itself as non-reactive, a testing-helper limitation, not a fact about `Polymorphic.svelte`. Real
+  reactivity needed a real `$state` host: `asChild-reactivity.spike-host.svelte` owns a `$state`
+  class and exposes `setExtra` as a component export; `asChild-reactivity.test.ts` drives it via
+  `component.setExtra(...)` + `tick()` and confirms the slot snippet's rendered DOM picks up the new
+  resolved class. 144 tests total (119 jsdom + 25 SSR, up from 122).
+- **SSR lifecycle guarantees asserted explicitly** (`ssr.test.ts`, +2 tests): `onElement` is never
+  called and the children evaluator's `evaluate` is never invoked during `svelte/server`'s
+  `render()` — both DOM-only features `Polymorphic.svelte` gates behind
+  `typeof document !== 'undefined'` (registering their `$effect`s during SSR throws `effect_orphan`;
+  the earlier "renders without throwing" test only proved the guard prevents a crash, not that the
+  gated features stay inert). **Gap recorded, not silently assumed covered:** this repo has no
+  Svelte hydration-_transition_ test (server-render, mount client-side over that markup, confirm no
+  mismatch) the way `adapters/solid/src/hydration-parity.test.tsx` does for Solid — `../pk` doesn't
+  have one for Svelte either. A real one needs `svelte/server`'s `render()` output fed into a jsdom
+  container, then `mount()` (not `render()`) over it.
+- **Generic erasure made an explicit, documented design decision**, not just an implicit consequence
+  of `PolymorphicComponentProps.children: Snippet | Snippet<[UnknownProps]>`. Added to that type's
+  own doc comment, and to the README ("`<Polymorphic>` is intentionally generic-erased…") — one
+  physical `.svelte` file/`.d.ts` serves every bundle's `G`; it can't become `Polymorphic<G1>` vs.
+  `Polymorphic<G2>` per call site the way a generic React function component can. Precision is
+  recovered on the caller's side via `ResolvedSlotProps<GenericsOf<...>>`.
+- **Confirmed, no change: the `adapter-utils` boundary is correct as drawn.** `buildCoreRuntime` /
+  `buildEngines` / `composeFilter` / `resolveAdapterCommonOptions` / the shared `SlotValidator`
+  living in `@praxis-kit/adapter-utils` rather than duplicated per-adapter is exactly the trajectory
+  this port has followed since `packages/core`+`lib/adapter-utils` — not something to second-guess
+  now that a 5th adapter is using it identically.
+
+**Follow-ups (not this slice):**
+
+- **A Svelte-specific `asChild` conformance sub-suite** — a concrete, scoped instance of the
+  cross-adapter conformance follow-up already recorded under `adapters/solid`. The generic
+  `conformanceSuite` can't represent a Svelte snippet (`capabilities: { asChild: false }` in
+  `conformance.test.ts` is why), so asChild's real coverage lives only in this package's own
+  `Polymorphic.test.ts` — direct, not a hole, but not shared with the other adapters either. The
+  concrete shape worth building toward: resolved classes, filtered props, variants, ARIA resolution,
+  caller-prop preservation, `as`+`asChild` rejection, and correct rerendering — each already has a
+  direct test _in this package_ after this review pass; turning that into a reusable per-adapter
+  sub-suite (Solid could plug in a comparable one) is the future step.
+- **Publishing the `.svelte` asset is a `packages/kit`-build-slice concern, refined.**
+  `exports: { "./Polymorphic.svelte": "./src/Polymorphic.svelte" }` here works because the monorepo
+  consumes everything from source. Once `packages/kit` builds and publishes `praxis-kit`, the
+  `.svelte` file itself (not just compiled JS) must survive into the published package — most
+  bundlers don't copy arbitrary non-JS/TS assets by default. When that slice lands, verify
+  `praxis-kit/svelte` _and_ `praxis-kit/svelte/Polymorphic.svelte` both resolve from an actual
+  packed tarball (`npm pack` / `pnpm pack`), not just the workspace's symlinked `node_modules` — a
+  real, common way for exactly this kind of non-JS export to work in a monorepo dev loop and
+  silently 404 for an external consumer.
+
 ### `lib/styling` — dropped the `variant-pass` "proof path"
 
 `../pk/lib/styling/src/variant-pass/` carried three demo passes (`basePass`/`hoverPass`/`focusPass`,
