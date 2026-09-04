@@ -15,7 +15,7 @@ const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${
 
 export type Options = [{ calleeNames?: string[] }]
 
-export type MessageIds = 'negativeMin' | 'negativeMax' | 'maxLessThanMin' | 'zeroMax'
+export type MessageIds = 'negativeMin' | 'negativeMax' | 'maxLessThanMin'
 
 export const validCardinality = createRule<Options, MessageIds>({
   name: 'valid-cardinality',
@@ -28,7 +28,6 @@ export const validCardinality = createRule<Options, MessageIds>({
       negativeMin: EslintDiagnosticTemplates.negativeMin,
       negativeMax: EslintDiagnosticTemplates.negativeMax,
       maxLessThanMin: EslintDiagnosticTemplates.maxLessThanMin,
-      zeroMax: EslintDiagnosticTemplates.zeroMax,
     },
     schema: [
       {
@@ -62,9 +61,8 @@ export const validCardinality = createRule<Options, MessageIds>({
         context.report({ node: maxProp, messageId: 'negativeMax', data: { value: String(max) } })
       }
 
-      if (maxProp && max === 0) {
-        context.report({ node: maxProp, messageId: 'zeroMax' })
-      }
+      // `max: 0` is intentionally NOT flagged — it is the canonical way to forbid a child type
+      // (the runtime treats any match as a violation). See DECISIONS.md.
 
       if (min !== undefined && max !== undefined && min >= 0 && max > 0 && max < min) {
         context.report({

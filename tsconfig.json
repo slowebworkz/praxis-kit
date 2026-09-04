@@ -15,6 +15,7 @@
     { "path": "./lib/runtime" },
     { "path": "./lib/styling" },
     { "path": "./packages/core" },
-    { "path": "./plugins/eslint" }
+    { "path": "./plugins/eslint" },
+    { "path": "./plugins/typescript" }
   ]
 }
