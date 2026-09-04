@@ -6,16 +6,8 @@ export {
   wrapMethodForDetection,
 } from '@praxis-kit/primitive'
 export type { Observable, WrappedMethod } from '@praxis-kit/primitive'
-export {
-  activeProps,
-  disabledProps,
-  expandedProps,
-  invalidProps,
-  loadingProps,
-  pressedProps,
-  readonlyProps,
-  selectedProps,
-} from '@praxis-kit/contract'
+// The state-prop normalizers moved to the dedicated `@praxis-kit/core/props` entry
+// (`src/props.ts`) — they were never a "utils" concern. See DECISIONS.md.
 export {
   COMPONENT_DEFAULT_TAG,
   COMPONENT_ID,
