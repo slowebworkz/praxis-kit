@@ -4,6 +4,7 @@
     { "path": "./adapters/preact" },
     { "path": "./adapters/react" },
     { "path": "./adapters/solid" },
+    { "path": "./adapters/svelte" },
     { "path": "./adapters/vue" },
     { "path": "./lib/adapter-utils" },
     { "path": "./lib/contract" },

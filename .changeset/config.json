@@ -25,6 +25,7 @@
     "@praxis-kit/runtime",
     "@praxis-kit/solid",
     "@praxis-kit/styling",
+    "@praxis-kit/svelte",
     "@praxis-kit/tailwind",
     "@praxis-kit/typescript-plugin",
     "@praxis-kit/vite-plugin",
