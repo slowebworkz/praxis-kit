@@ -27,3 +27,7 @@ yarn.lock
 # Minified assets
 *.min.js
 *.min.css
+
+# Contract-enforced verbatim asset — `tailwind-safelist.test.ts` asserts its exact `@source
+# inline("…")` content, and it is copied byte-for-byte into the published dist.
+lib/tailwind/src/tailwind-safelist.css
