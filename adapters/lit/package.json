@@ -1,0 +1,32 @@
+{
+  "name": "@praxis-kit/lit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "description": "Praxis Kit adapter for Lit — polymorphic custom elements with ARIA contracts and variant composition",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config vitest.config.ts && vitest run --config vitest.ssr.config.ts",
+    "test:related": "vitest run --changed --config vitest.config.ts && vitest run --changed --config vitest.ssr.config.ts"
+  },
+  "dependencies": {
+    "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/contract-props": "workspace:*",
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "type-fest": "catalog:"
+  },
+  "peerDependencies": {
+    "lit": ">=3.0"
+  },
+  "devDependencies": {
+    "jsdom": "catalog:",
+    "lit": "catalog:",
+    "vitest": "catalog:"
+  }
+}

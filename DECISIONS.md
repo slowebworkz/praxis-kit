@@ -1438,3 +1438,127 @@ shared-`Diagnostics`-chunk scheme, `esbuild-plugin-solid` / svelte handling),
 adapters + the codemod exist; `publint`; the CI release workflow; flipping `private: false` and the
 first publish. Two invariants the build must preserve are noted in `packages/kit/README.md` (no
 unpublished names in output; single `Diagnostics` identity via a shared chunk).
+
+### `adapters/lit` — port scope and adaptations
+
+Sixth framework adapter, fourth non-React-family one. Lit components are plain custom-element
+classes (`LitElement` subclasses), Light DOM only (`createRenderRoot()` returns `this`) — variants,
+`as`, and the pipeline's other built-in fields are ordinary HTML attributes, reflected via Lit's
+`static properties`, not a props object. `createContractComponent` returns the class itself; callers
+register it with `customElements.define()`. Flat `src/`, 22 files, 135 tests (111 jsdom + 24 SSR) —
+unchanged from `../pk`'s own count.
+
+Ported from `../pk`'s working tree as of 2026-09-04, including its uncommitted
+`ContractProps<T>`/`GenericsOf<T>` addition (not yet committed there) — see below.
+
+- **`package.json`:** same fix as every prior adapter — `../pk` ships a `dist`-pointing `exports`
+  map and puts `@praxis-kit/{adapter-utils,core,diagnostics,primitive,contract-props}` in
+  `devDependencies` (only `type-fest` as a real dependency); moved all five to real `dependencies`,
+  `exports` to `{ ".": "./src/index.ts" }`, dropped `files`/`repository`/`homepage`/`bugs`/
+  `license`/`author`/`keywords`/`engines`/per-package `lint` scripts (none of that survives in any
+  other adapter here either).
+- **No framework-specific `tsconfig.<name>.json` needed** — Lit has zero `.tsx`, so `tsconfig.json`
+  extends `../../tsconfig.base.json` directly, the same as Vue's.
+- **`vitest.config.ts` needed no adaptation at all** — `../pk`'s already calls the shared
+  `defineJsdomConfig('@praxis-kit/lit')` helper from `configs/vitest.base.ts`, which already exists
+  here unmodified. (Solid/Svelte bypass that helper only because they need a framework-specific Vite
+  plugin its signature doesn't accept; Lit needs none.) `vitest.ssr.config.ts` (raw `defineConfig`,
+  `environment: 'node'`) ported unchanged too.
+- **`configs/architecture.ts` gap found and fixed — present in `../pk` too, not introduced by this
+  port.** Neither `lit` nor `web` (not yet ported) has a `boundaries/elements` entry or a `core`
+  disallow-list entry in `../pk`'s copy of this file either — confirmed byte-identical to this
+  repo's copy before this change. Every prior port here has fixed this class of gap on sight
+  (Solid's port added `solid-js`/`solid-js/**`); added
+  `{ type: 'lit', pattern: 'adapters/lit/**/*' }` and `'lit'`/`'lit/**'` to the `core` boundary's
+  disallow list.
+- **`import-x/no-duplicates` lint gap found and fixed — a real difference from `../pk`, not carried
+  over.** `../pk`'s lint passes cleanly on `build-runtime.ts` (`./types/index` imported twice, one
+  statement type-only) and `create-contract-component.ts` (`@praxis-kit/core` imported twice,
+  `AnyRecord` split into its own statement) — this repo's `eslint.config.ts` enforces
+  `import-x/no-duplicates` where `../pk`'s apparently doesn't reach these files the same way. Merged
+  both pairs of imports into one statement each; no behavior change.
+- **README bug found and fixed:** `../pk`'s Exports table describes `defineContractComponent` as
+  "Registers the component as a custom element (from `adapter-utils`)" — wrong on inspection of the
+  actual (shared, adapter-agnostic) implementation
+  (`lib/adapter-utils/src/runtime/define-component.ts`): it only curries a factory's options
+  (`(options) => (factory) => factory(options)`), matching what Solid's and Svelte's READMEs already
+  say for the identical shared function. Also replaced the `praxis-kit/lit` subpath-import framing
+  (`packages/kit` doesn't wire in `./lit` yet — matching Solid/Svelte's own not-yet-wired state)
+  with `@praxis-kit/lit` direct-install framing, and rewrote Usage around the real
+  `customElements.define()` pattern, since the original example never showed registration at all.
+  Kept (verified accurate, not carried over blind): the "known limitations" block already present in
+  `../pk`'s own `conformance.test.ts` header comment (tag polymorphism is ARIA-only; variant
+  attributes reach the DOM; `asChild` disabled) — folded into the README's own Usage section rather
+  than left undiscoverable in a test file.
+
+**The `ContractProps<T>`/`GenericsOf<T>` mechanism, carried over mid-flight from `../pk`.** Unlike
+Svelte's `GenericsOf<T>` (a direct `infer` off `BuiltRuntime<G, TOptions>`, no marker needed — that
+adapter's `createContractComponent` returns the bundle type unerased), Lit's
+`createContractComponent` erases `TDefault`/`Props`/`TPreset` entirely from its return type
+(`LitContractComponent<TVariants, TPluginProps>` only ever carried those two parameters) — there was
+no ordinary type parameter left to recover `G` from. `LitContractComponent` gained a third,
+defaulted parameter `G` and a phantom `readonly __generics?: G` field, the same marker shape
+React's/Preact's `HasGenerics<G>` (`@praxis-kit/contract-props`) uses for their own erased,
+overload-based component types — new dependency on that package (already present here, used by
+React/Preact). `ContractProps<T>` itself takes no `Mode` parameter, unlike React's/Preact's
+`ContractProps<T, Mode>` — Lit has exactly one render mode (no `asChild`/`render`), so there is only
+ever one prop shape to recover: the custom props (`PropsOf<G>`) plus variant props plus `recipe`
+(`as` is `never` — see below). This was in-progress, not yet committed, in `../pk` at port time (its
+reference commit history has no `feat(lit): …ContractProps…` commit) — ported anyway per explicit
+direction, rather than deferred to a later sync.
+
+**`as` removed entirely — a design bug inherited from `../pk`, found in review and fixed here, not
+merely ported.** `../pk`'s Lit adapter accepted `as` as a _semantic-only_ override: setting `as="a"`
+never changed the rendered element (a custom element's tag is fixed at `customElements.define()`
+time — nothing can turn a `<praxis-button>` into an `<a>`), but it did change which ARIA/
+content-model rules `resolveTag`/`resolveAria`/the children-evaluator applied, as if the element
+really were an anchor. Two real problems, not just a naming one:
+
+- **A live accessibility footgun.** `as="a"` could produce `role="link"` (or whatever ARIA state a
+  real anchor implies) on an element with none of an anchor's actual keyboard/click/middle-click
+  behavior — a role-without-matching-behavior mismatch regardless of what the option was called.
+- **SSR disagreed with the client, silently.** `renderBundleToString` (`lib/adapter-utils`, shared
+  with the not-yet-ported Web adapter) has no live DOM to constrain it, so it rendered whatever tag
+  `as` named as a literal string wrapper: `renderToString(Button, { as: 'a' })` produced
+  `<a …>…</a>`, while the browser could only ever produce `<praxis-button>…</praxis-button>`. This
+  also quietly contradicted the adapter's own `capabilities.tagPolymorphism: false` in the
+  conformance suite — that flag already said Lit has no tag polymorphism; SSR provided a fake,
+  DOM-inconsistent form of it anyway.
+
+Fixed by removing `as` from the pipeline entirely, on both paths, rather than renaming it to signal
+"semantic-only" (the renamed option would still carry the same footgun): no longer a declared Lit
+reactive property (removed from `staticProps`/`InstanceProps`/`praxisProps`); explicitly filtered
+out of `_buildProps()`'s attribute scan (so an undeclared, raw `as="…"` HTML attribute is inert too,
+not just the removed property); `ContractProps<T>['as']` is now `never`, not
+`DefaultOf<GenericsOf<T>>`; `renderToString`'s standalone SSR entry strips an incoming `as` key from
+`props` before it reaches the shared `renderBundleToString`. Also fixed the shared testing
+infrastructure this exposed: `SsrConformanceAdapter` (`lib/adapter-utils`) had no
+`capabilities.tagPolymorphism` gate at all — unlike the DOM-side `ConformanceAdapter`, which already
+skips its "as changes the tag" tests when that capability is `false` — so `ssrConformanceSuite`
+universally asserted real `as`-driven tag polymorphism with no opt-out. Added the same gate to the
+SSR suite (`lib/adapter-utils/src/types/ssr-conformance-adapter.ts`,
+`lib/adapter-utils/src/testing/ssr.ts`) and set `capabilities: { tagPolymorphism: false }` on Lit's
+`ssrConformanceSuite` call, matching what it already declares for the DOM suite. This is a genuine
+gap in the reference implementation too (`../pk` has the identical unconditional SSR test, and the
+same `renderToString` behavior) — worth carrying upstream, and directly relevant to Web's eventual
+port, which shares `renderBundleToString` and has the identical fixed-tag constraint.
+
+New regression coverage: `ssr.test.ts` asserts `renderToString` output is byte-identical with and
+without an `as` key, and that `options.tag` still renders regardless of an unsupported-looking `as`
+value; a new `property-attribute-convergence.test.ts` proves every praxis-owned property
+(`direction`, `recipe`, `praxisClass`) produces the same pipeline result whether set via
+`el.x = 'y'` or `el.setAttribute('x', 'y')` — the client-side test suite previously exercised
+attributes almost exclusively — plus a dedicated case confirming `el.as = 'a'` (property assignment)
+has zero effect, mirroring the SSR-side fix.
+
+**Noted, not acted on:** the SSR registry's module-local
+`WeakMap<LitContractComponent, RegistryEntry>` (`render-to-string.ts`) means a second,
+separately-bundled copy of this adapter package would get its own registry, and a class registered
+against one copy wouldn't resolve against the other's `renderToString` — a packaging/bundling
+concern for whenever `packages/kit` starts assembling these adapters for publish (the same "single
+identity across the published graph" invariant already called out for `Diagnostics` in
+`packages/kit/README.md`), not an architectural flaw to fix today.
+
+Verification: `pnpm -r typecheck` (23 packages) 0 errors, `pnpm -r test` all packages green
+(`adapters/lit` 141/141, up from 135), `pnpm lint:check` clean, `pnpm format:check` clean (no new
+drift — the pre-existing 19 flagged files still sit outside everything touched here).
