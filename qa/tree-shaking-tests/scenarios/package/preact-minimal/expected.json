@@ -1,0 +1,13 @@
+{
+  "mustInclude": [
+    "packages/kit/dist/preact/index.js",
+    "packages/kit/dist/_shared/diagnostics.js"
+  ],
+  "mustExclude": [
+    "packages/kit/dist/vue",
+    "packages/kit/dist/react",
+    "packages/kit/dist/lit",
+    "packages/kit/dist/web",
+    "packages/kit/dist/svelte"
+  ]
+}

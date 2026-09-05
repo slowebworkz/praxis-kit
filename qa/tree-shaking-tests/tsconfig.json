@@ -7,9 +7,9 @@
   },
   "include": ["scripts/**/*", "scenarios/**/*"],
   "exclude": [
-    "scenarios/solid-minimal",
-    "scenarios/vue-minimal",
-    "scenarios/preact-minimal",
-    "scenarios/svelte-minimal"
+    "scenarios/source/solid-minimal",
+    "scenarios/source/vue-minimal",
+    "scenarios/source/preact-minimal",
+    "scenarios/source/svelte-minimal"
   ]
 }

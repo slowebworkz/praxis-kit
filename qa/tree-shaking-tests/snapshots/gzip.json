@@ -1,35 +1,50 @@
 {
-  "aria-only": {
+  "source/aria-only": {
     "gzip": 21202
   },
-  "contracts-only": {
+  "source/contracts-only": {
     "gzip": 21266
   },
-  "full-runtime": {
+  "source/full-runtime": {
     "gzip": 21425
   },
-  "minimal-polymorphic": {
+  "source/minimal-polymorphic": {
     "gzip": 21155
   },
-  "pk2-engine-only": {
+  "source/pk2-engine-only": {
     "gzip": 792
   },
-  "polymorphic-validation": {
+  "source/polymorphic-validation": {
     "gzip": 21225
   },
-  "preact-minimal": {
+  "source/preact-minimal": {
     "gzip": 20901
   },
-  "react-minimal": {
+  "source/react-minimal": {
     "gzip": 21155
   },
-  "solid-minimal": {
+  "source/solid-minimal": {
     "gzip": 19796
   },
-  "svelte-minimal": {
+  "source/svelte-minimal": {
     "gzip": 18589
   },
-  "vue-minimal": {
+  "source/vue-minimal": {
     "gzip": 20459
+  },
+  "package/lit-minimal": {
+    "gzip": 20484
+  },
+  "package/preact-minimal": {
+    "gzip": 21660
+  },
+  "package/react-minimal": {
+    "gzip": 21921
+  },
+  "package/vue-minimal": {
+    "gzip": 21218
+  },
+  "package/web-minimal": {
+    "gzip": 20450
   }
 }

@@ -1,0 +1,16 @@
+{
+  "mustInclude": ["lib/primitive/src", "adapters/react/src"],
+  "mustExclude": [
+    "adapters/vue/src",
+    "adapters/solid/src",
+    "adapters/preact/src",
+    "lib/tailwind/src"
+  ],
+  "mustIncludePackages": ["@praxis-kit/react", "@praxis-kit/primitive"],
+  "mustExcludePackages": [
+    "@praxis-kit/vue",
+    "@praxis-kit/solid",
+    "@praxis-kit/preact",
+    "@praxis-kit/tailwind"
+  ]
+}

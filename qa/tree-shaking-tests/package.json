@@ -9,6 +9,7 @@
     "report": "node --experimental-strip-types scripts/report.ts",
     "assert": "node --experimental-strip-types scripts/assert.ts",
     "gzip": "node --experimental-strip-types scripts/gzip.ts",
+    "gzip:update": "node --experimental-strip-types scripts/gzip.ts --update",
     "test": "pnpm build && pnpm assert && pnpm gzip",
     "typecheck": "tsc --noEmit"
   },
@@ -21,13 +22,17 @@
     "@praxis-kit/react": "workspace:*",
     "@praxis-kit/solid": "workspace:*",
     "@praxis-kit/svelte": "workspace:*",
-    "@praxis-kit/vue": "workspace:*"
+    "@praxis-kit/vue": "workspace:*",
+    "praxis-kit": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "esbuild": "^0.28.1",
+    "lit": "catalog:",
+    "preact": "catalog:",
     "react": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vue": "catalog:"
   }
 }

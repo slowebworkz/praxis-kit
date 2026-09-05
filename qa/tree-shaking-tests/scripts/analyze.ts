@@ -1,12 +1,22 @@
 /**
- * Builds each scenario directory with esbuild (production, metafile enabled) and
- * writes dist/<scenario>/bundle.js + dist/<scenario>/meta.json for downstream assertion
- * and gzip scripts.
+ * Builds each scenario directory with esbuild (production, metafile enabled) and writes
+ * dist/<group>/<scenario>/bundle.js + meta.json for downstream assertion/gzip/report scripts.
  *
- * Workspace packages are resolved to their TypeScript source so this works without
- * a prior `pnpm build`.
+ * Two scenario groups, under scenarios/source/ and scenarios/package/, answer different
+ * questions:
+ *   - source/  — imports `@praxis-kit/<name>` and resolves it straight to this workspace's
+ *     TypeScript source (via the `alias` map below). Answers "can esbuild tree-shake our current
+ *     source architecture?" No prior build required.
+ *   - package/ — imports `praxis-kit/<name>` (the single published package's real subpath) and
+ *     resolves it via ordinary node module resolution against `packages/kit`'s *built* dist/ —
+ *     no alias at all. Answers "can a customer tree-shake the package we actually publish?"
+ *     Requires `pnpm --filter praxis-kit build` to have already run.
+ * These are materially different tests — source-graph tree-shakeability doesn't guarantee the
+ * built, minified, externals-resolved package tree-shakes the same way, and only the second one
+ * is what a real consumer experiences.
  */
 import { build } from 'esbuild'
+import { existsSync } from 'node:fs'
 import { readdir, writeFile, mkdir } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -18,7 +28,8 @@ const root = join(pkg, '../../..')
 const scenariosDir = join(pkg, '../scenarios')
 const distDir = join(pkg, '../dist')
 
-// Workspace source aliases — resolve published packages to their TypeScript source.
+// Workspace source aliases (source/ scenarios only) — resolve published packages to their
+// TypeScript source.
 //
 // `@praxis-kit/runtime/compiler` and `@praxis-kit/runtime` (../pk's aliases for its PK2 compiler
 // scenarios) are deliberately absent: this repo has no `runtime/compiler` module at all yet
@@ -66,16 +77,15 @@ const workspaceAlias: Record<string, string> = {
     root,
     'lib/contract/src/types/aria/aria-rule.ts',
   ),
-  '@praxis-kit/primitive': join(root, 'lib/primitive/src/index.ts'),
-  '@praxis-kit/styling': join(root, 'lib/styling/src/index.ts'),
-  '@praxis-kit/contract': join(root, 'lib/contract/src/index.ts'),
-  '@praxis-kit/contract/types': join(root, 'lib/contract/src/types/index.ts'),
   '@praxis-kit/adapter-utils': join(root, 'lib/adapter-utils/src/index.ts'),
 }
 
-// Framework peer dependencies — provided by consumer, not bundled.
-// Exact-string externals cover the root import; the plugin handles subpath patterns.
-const externalStrings = [
+// Consumer-owned runtimes, never bundled — provided by whoever actually installs the package, not
+// shipped inside it. One policy, two mechanisms because esbuild's `external` option only takes
+// exact strings; subpaths (`solid-js/web`, `preact/compat`, `@lit/reactive-element`, …) and Node
+// builtins need the plugin's regex instead. React/Vue/svelte's own root imports are covered by the
+// string list; everything scoped under a framework name, plus `node:*`, goes through the plugin.
+const consumerExternalStrings = [
   'react',
   'react/jsx-runtime',
   'react-dom',
@@ -84,52 +94,81 @@ const externalStrings = [
   'solid-js',
   'preact',
   'svelte',
+  'lit',
 ]
 
-// esbuild's `external` option only accepts strings; regex patterns need a plugin.
-function frameworkExternalPlugin(): Plugin {
-  // Covers framework subpaths (solid-js/web, preact/compat, etc.) and Node built-ins
-  // (node:crypto, node:fs, …) used by PK2 compiler scenarios.
-  const re = /^(solid-js|preact|svelte)\/|^node:/
+function consumerExternalPlugin(): Plugin {
+  const re = /^(solid-js|preact|svelte|lit|lit-html|lit-element)\/|^@lit\/|^@lit-labs\/|^node:/
   return {
-    name: 'framework-external',
+    name: 'consumer-external',
     setup(b) {
       b.onResolve({ filter: re }, (args) => ({ path: args.path, external: true }))
     },
   }
 }
 
-const scenarios = await readdir(scenariosDir, { withFileTypes: true }).then((entries) =>
-  entries.filter((e) => e.isDirectory()).map((e) => e.name),
-)
+async function listScenarios(groupDir: string): Promise<string[]> {
+  if (!existsSync(groupDir)) return []
+  const entries = await readdir(groupDir, { withFileTypes: true })
+  return entries.filter((e) => e.isDirectory()).map((e) => e.name)
+}
+
+// Fails loudly and specifically rather than letting esbuild's own "file not found" surface for an
+// entry point that was never there — a scenario directory with no entry.ts is a broken fixture,
+// not an esbuild problem.
+function assertScenarioSchema(group: string, scenario: string, entryPoint: string): void {
+  if (!existsSync(entryPoint)) {
+    throw new Error(
+      `scenario "${group}/${scenario}" is missing entry.ts (expected at ${entryPoint}) — ` +
+        `every scenario directory needs an entry.ts and an expected.json`,
+    )
+  }
+}
 
 let built = 0
 
-for (const scenario of scenarios) {
-  const entryPoint = join(scenariosDir, scenario, 'entry.ts')
-  const outDir = join(distDir, scenario)
-  await mkdir(outDir, { recursive: true })
+for (const group of ['source', 'package'] as const) {
+  const groupDir = join(scenariosDir, group)
+  const scenarios = await listScenarios(groupDir)
+  if (scenarios.length === 0) continue
 
-  const result = await build({
-    entryPoints: [entryPoint],
-    bundle: true,
-    minify: true,
-    format: 'esm',
-    treeShaking: true,
-    metafile: true,
-    sourcemap: false,
-    platform: 'browser',
-    conditions: ['import', 'module'],
-    external: externalStrings,
-    alias: workspaceAlias,
-    plugins: [frameworkExternalPlugin()],
-    absWorkingDir: root,
-    outfile: join(outDir, 'bundle.js'),
-  })
+  if (group === 'package' && !existsSync(join(root, 'packages/kit/dist'))) {
+    throw new Error(
+      'scenarios/package/* import the published `praxis-kit` package, which has no dist/ yet — ' +
+        'run `pnpm --filter praxis-kit build` first.',
+    )
+  }
 
-  await writeFile(join(outDir, 'meta.json'), JSON.stringify(result.metafile, null, 2))
-  built++
-  console.log(`  built  ${scenario}`)
+  for (const scenario of scenarios) {
+    const entryPoint = join(groupDir, scenario, 'entry.ts')
+    assertScenarioSchema(group, scenario, entryPoint)
+
+    const outDir = join(distDir, group, scenario)
+    await mkdir(outDir, { recursive: true })
+
+    const result = await build({
+      entryPoints: [entryPoint],
+      bundle: true,
+      minify: true,
+      format: 'esm',
+      treeShaking: true,
+      metafile: true,
+      sourcemap: false,
+      platform: 'browser',
+      conditions: ['import', 'module'],
+      external: consumerExternalStrings,
+      // `package/` scenarios resolve `praxis-kit/*` for real (node module resolution against
+      // packages/kit's built dist/) — no alias at all, that's the whole point.
+      alias: group === 'source' ? workspaceAlias : {},
+      plugins: [consumerExternalPlugin()],
+      absWorkingDir: root,
+      outfile: join(outDir, 'bundle.js'),
+    })
+
+    await writeFile(join(outDir, 'meta.json'), JSON.stringify(result.metafile, null, 2))
+    built++
+    console.log(`  built  ${group}/${scenario}`)
+  }
 }
 
 console.log(`\n${built} scenario(s) built → dist/`)

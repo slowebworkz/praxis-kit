@@ -1983,3 +1983,61 @@ Verification: `pnpm --filter @praxis-kit/tree-shaking-tests typecheck` 0 errors;
 pass their `mustInclude`/`mustExclude` assertions, fresh `snapshots/gzip.json` baseline recorded and
 re-verified stable on a second run; `pnpm -r typecheck` (27 packages) 0 errors;
 `pnpm lint:check`/`format:check` clean.
+
+**Review pass — closes the "source graph, not published boundary" gap, plus three smaller hardening
+fixes.** The port above validated `@praxis-kit/react` etc. aliased straight to workspace TypeScript
+source — a genuinely different question from "can a customer tree-shake the package we actually
+publish," which only `packages/kit`'s own `dist/` output can answer. Four changes:
+
+1. **`scenarios/source/` and `scenarios/package/` split.** The 11 ported scenarios moved under
+   `source/` unchanged. Added `package/{react,preact,vue,lit,web}-minimal` under `package/` —
+   `import ... from 'praxis-kit/<name>'`, resolved via ordinary node module resolution against
+   `packages/kit`'s _built_ dist (no `alias` at all, unlike `source/*`), so this is exactly what a
+   real install does. `solid` is absent from `package/*` for the same reason it's absent from
+   `packages/kit`'s own build (no rolldown Solid transform yet); `svelte` is absent because its
+   `.d.ts` doesn't exist yet — both already-tracked gaps, not new ones. `analyze.ts` requires
+   `packages/kit/dist` to exist before building `package/*` and fails with an actionable message
+   (`pnpm --filter praxis-kit build` first) rather than silently building it as a side effect —
+   requires no adjustment to `assert.ts`'s `mustInclude`/`mustExclude` mechanism: tsdown's build
+   isn't minified into one truly opaque blob per entry — each entry still imports
+   `dist/_shared/diagnostics.js` as a real (rewritten-relative) module, so the metafile still shows
+   a real, if coarser, multi-file live-input graph (e.g.
+   `mustInclude: ["packages/kit/dist/react/index.js", "packages/kit/dist/_shared/diagnostics.js"]`,
+   `mustExclude` on every sibling entry's `dist/<name>` — proving cross-entry isolation, that
+   importing `praxis-kit/react` doesn't also drag in `praxis-kit/vue`'s bundle).
+2. **`assert.ts` gained `mustIncludePackages`/`mustExcludePackages`**, alongside the existing
+   path-fragment `mustInclude`/`mustExclude` (both still work — nothing existing needed to migrate).
+   A small `toPackageName()` resolver maps a live path to `@praxis-kit/<name>` (`adapters/<name>/`,
+   `lib/<name>/`, `packages/core/` → `@praxis-kit/core`) or `praxis-kit` (`packages/kit/dist/`); a
+   path it doesn't recognize contributes no package name rather than guessing. Package-level
+   assertions survive a source file moving around inside its own package, where a raw path fragment
+   doesn't. Demonstrated on `source/react-minimal` alongside its existing path-fragment assertions;
+   the rest weren't migrated (not required, and every scenario mixing both forms wasn't worth the
+   diff).
+3. **`gzip.ts` no longer writes `snapshots/gzip.json` as a side effect of `pnpm test`.** It used to:
+   no baseline → record one and exit clean, meaning a CI run of `pnpm test` could silently mutate
+   tracked repository state. Split into two explicit modes: default (what `pnpm test` runs) now
+   _fails_ if the baseline file is missing entirely, if a built scenario has no baseline entry, or
+   if a baseline entry has no matching built scenario (stale — a deleted/renamed scenario left its
+   entry behind, previously undetectable). `--update` (`pnpm gzip:update`, a new script) replaces
+   the snapshot with exactly the current scenario set — a person runs it, reviews the diff, and
+   commits it; a test run never does.
+4. **`analyze.ts` validates scenario shape before handing it to esbuild.** A `scenarios/foo/` with
+   no `entry.ts` used to surface as an esbuild "file not found," not obviously a fixture problem.
+   Now fails with `scenario "<group>/<name>" is missing entry.ts` naming the exact expected path.
+5. Framework-external policy centralized and extended to `lit` (`@lit/*`, `@lit-labs/*`, `lit-html`,
+   `lit-element`) — previously only react/vue/solid/preact/svelte were covered; needed for the new
+   `package/lit-minimal` scenario, and worth having regardless since `lit` is a real adapter here.
+
+`report.ts`'s hardcoded `LIB_TAGS` list is left as a known, disclosed limitation — it'll drift as
+the library grows; deriving it from real package metadata is a fine follow-up, not done here.
+
+Verification: all of the above re-run clean —
+`pnpm --filter @praxis-kit/tree-shaking-tests typecheck` 0 errors (including the 5 new `package/*`
+entries, none needed the tsconfig exclusion the 4 framework-specific `source/*` scenarios do);
+`pnpm test` 16/16 scenarios pass; fresh `snapshots/gzip.json` (16 entries) recorded via
+`gzip:update` and re-verified stable; manually confirmed the two new failure modes actually fire (a
+deliberately-broken scenario directory, and an injected stale baseline entry, each produced the
+expected `FAIL` and non-zero exit, then reverted); `pnpm -r typecheck`/`lint:check`/`format:check`
+clean. Also fixed `configs/typescript.ts`'s `allowDefaultProject` entries for the 4
+tsconfig-excluded scenarios, stale after the `source/` move.

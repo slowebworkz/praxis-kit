@@ -919,6 +919,9 @@ importers:
       '@praxis-kit/vue':
         specifier: workspace:*
         version: link:../../adapters/vue
+      praxis-kit:
+        specifier: workspace:*
+        version: link:../../packages/kit
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -929,12 +932,21 @@ importers:
       esbuild:
         specifier: '>=0.28.1'
         version: 0.28.2
+      lit:
+        specifier: 'catalog:'
+        version: 3.3.3
+      preact:
+        specifier: 'catalog:'
+        version: 10.29.8(preact-render-to-string@6.7.0)
       react:
         specifier: 'catalog:'
         version: 19.2.8
       typescript:
         specifier: '>=6 <7'
         version: 6.0.3
+      vue:
+        specifier: 'catalog:'
+        version: 3.5.42(typescript@6.0.3)
 
   tooling/codemod:
     dependencies:
