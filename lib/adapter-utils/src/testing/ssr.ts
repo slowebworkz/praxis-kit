@@ -14,6 +14,8 @@ export type { SsrConformanceAdapter } from '../types'
 export function ssrConformanceSuite<C extends ConformanceComponent = ConformanceComponent>(
   adapter: SsrConformanceAdapter<C>,
 ): void {
+  const caps = { tagPolymorphism: true, ...adapter.capabilities }
+
   // ── basic rendering ─────────────────────────────────────────────────────────
 
   describe('ssr — basic rendering', () => {
@@ -39,12 +41,13 @@ export function ssrConformanceSuite<C extends ConformanceComponent = Conformance
       expect(html).toMatch(/<nav[\s>]/)
     })
 
-    it('as prop overrides the default tag', async () => {
-      const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
-      const html = await adapter.renderToString(Box, { as: 'section' })
-      expect(html).toMatch(/<section[\s>]/)
-      expect(html).not.toMatch(/<div[\s>]/)
-    })
+    if (caps.tagPolymorphism)
+      it('as prop overrides the default tag', async () => {
+        const Box = adapter.createComponent({ enforcement: { diagnostics: silentDiagnostics } })
+        const html = await adapter.renderToString(Box, { as: 'section' })
+        expect(html).toMatch(/<section[\s>]/)
+        expect(html).not.toMatch(/<div[\s>]/)
+      })
   })
 
   // ── class output ─────────────────────────────────────────────────────────────

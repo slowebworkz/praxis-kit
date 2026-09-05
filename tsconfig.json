@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    { "path": "./adapters/lit" },
     { "path": "./adapters/preact" },
     { "path": "./adapters/react" },
     { "path": "./adapters/solid" },
