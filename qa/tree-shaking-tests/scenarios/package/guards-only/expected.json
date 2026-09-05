@@ -1,0 +1,15 @@
+{
+  "mustInclude": ["packages/kit/dist/guards/index.js"],
+  "mustExclude": [
+    "packages/kit/dist/react",
+    "packages/kit/dist/vue",
+    "packages/kit/dist/preact",
+    "packages/kit/dist/lit",
+    "packages/kit/dist/web",
+    "packages/kit/dist/svelte",
+    "packages/kit/dist/contract",
+    "packages/kit/dist/html",
+    "packages/kit/dist/utils",
+    "packages/kit/dist/_shared"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@praxis-kit/tree-shaking-tests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "CI-gated tree-shaking assertions and gzip regression tracking for all published packages",
+  "scripts": {
+    "build": "node --experimental-strip-types scripts/analyze.ts",
+    "report": "node --experimental-strip-types scripts/report.ts",
+    "assert": "node --experimental-strip-types scripts/assert.ts",
+    "gzip": "node --experimental-strip-types scripts/gzip.ts",
+    "gzip:update": "node --experimental-strip-types scripts/gzip.ts --update",
+    "test": "pnpm build && pnpm assert && pnpm gzip",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/pipeline": "workspace:*",
+    "@praxis-kit/preact": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "@praxis-kit/react": "workspace:*",
+    "@praxis-kit/solid": "workspace:*",
+    "@praxis-kit/svelte": "workspace:*",
+    "@praxis-kit/vue": "workspace:*",
+    "praxis-kit": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "esbuild": "^0.28.1",
+    "lit": "catalog:",
+    "preact": "catalog:",
+    "react": "catalog:",
+    "typescript": "catalog:",
+    "vue": "catalog:"
+  }
+}

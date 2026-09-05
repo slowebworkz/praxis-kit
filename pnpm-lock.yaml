@@ -890,6 +890,64 @@ importers:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(jsdom@29.1.1)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
 
+  qa/tree-shaking-tests:
+    dependencies:
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../lib/diagnostics
+      '@praxis-kit/pipeline':
+        specifier: workspace:*
+        version: link:../../lib/pipeline
+      '@praxis-kit/preact':
+        specifier: workspace:*
+        version: link:../../adapters/preact
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
+      '@praxis-kit/react':
+        specifier: workspace:*
+        version: link:../../adapters/react
+      '@praxis-kit/solid':
+        specifier: workspace:*
+        version: link:../../adapters/solid
+      '@praxis-kit/svelte':
+        specifier: workspace:*
+        version: link:../../adapters/svelte
+      '@praxis-kit/vue':
+        specifier: workspace:*
+        version: link:../../adapters/vue
+      praxis-kit:
+        specifier: workspace:*
+        version: link:../../packages/kit
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.4.0
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.18
+      esbuild:
+        specifier: '>=0.28.1'
+        version: 0.28.2
+      lit:
+        specifier: 'catalog:'
+        version: 3.3.3
+      preact:
+        specifier: 'catalog:'
+        version: 10.29.8(preact-render-to-string@6.7.0)
+      react:
+        specifier: 'catalog:'
+        version: 19.2.8
+      typescript:
+        specifier: '>=6 <7'
+        version: 6.0.3
+      vue:
+        specifier: 'catalog:'
+        version: 3.5.42(typescript@6.0.3)
+
   tooling/codemod:
     dependencies:
       ts-morph:

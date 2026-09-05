@@ -79,10 +79,10 @@ const config = [
             'spikes/*/vitest.config.ts',
             // framework-specific scenarios are excluded from the tree-shaking-tests tsconfig
             // (jsxImportSource:react conflicts with Solid/Vue/Preact/Svelte JSX/return types)
-            'qa/tree-shaking-tests/scenarios/solid-minimal/*.ts',
-            'qa/tree-shaking-tests/scenarios/vue-minimal/*.ts',
-            'qa/tree-shaking-tests/scenarios/preact-minimal/*.ts',
-            'qa/tree-shaking-tests/scenarios/svelte-minimal/*.ts',
+            'qa/tree-shaking-tests/scenarios/source/solid-minimal/*.ts',
+            'qa/tree-shaking-tests/scenarios/source/vue-minimal/*.ts',
+            'qa/tree-shaking-tests/scenarios/source/preact-minimal/*.ts',
+            'qa/tree-shaking-tests/scenarios/source/svelte-minimal/*.ts',
           ],
           maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 85,
           defaultProject: './tsconfig.base.json',
