@@ -1,0 +1,73 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.0.4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Only packages/kit is published. examples/* (once ported) depend on praxis-kit/<adapter>
+      # (packages/kit's published subpaths), which don't exist until packages/kit itself is
+      # built — a full `pnpm build` would typecheck those first and fail. The repo-wide check
+      # already gates every merge via ci.yml's `pnpm verify`.
+      - name: Build
+        run: pnpm --filter praxis-kit build
+
+      - name: Configure npm auth
+        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Resolve dist-tag
+        id: dist_tag
+        run: |
+          version=$(node -p "require('./packages/kit/package.json').version")
+          if echo "$version" | grep -qE '-(alpha|beta|rc)'; then
+            echo "tag=beta" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for unresolved catalog specifiers
+        run: |
+          tmpdir=$(mktemp -d)
+          (cd packages/kit && pnpm pack --pack-destination "$tmpdir" 2>/dev/null)
+          if tar -xzf "$tmpdir"/*.tgz -C "$tmpdir" && grep -rF "\"catalog:" "$tmpdir/package/package.json" 2>/dev/null; then
+            echo "ERROR: packages/kit published package.json contains unresolved catalog: specifiers"
+            rm -rf "$tmpdir"
+            exit 1
+          fi
+          rm -rf "$tmpdir"
+
+      - name: Publish
+        run: |
+          name=$(node -p "require('./packages/kit/package.json').name")
+          version=$(node -p "require('./packages/kit/package.json').version")
+          if npm view "$name@$version" version &>/dev/null; then
+            echo "Skipping $name@$version — already published"
+          else
+            (cd packages/kit && pnpm publish --access public --no-git-checks --tag ${{ steps.dist_tag.outputs.tag }})
+          fi

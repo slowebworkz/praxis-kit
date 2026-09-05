@@ -13,6 +13,7 @@
     "test:ci": "pnpm -r --if-present test",
     "test:related": "pnpm -r --if-present test:related",
     "check": "pnpm lint:check && pnpm typecheck && pnpm test",
+    "verify": "pnpm --filter praxis-kit build && pnpm check",
     "lint": "NODE_OPTIONS=--max-old-space-size=8192 eslint . --fix",
     "lint:check": "NODE_OPTIONS=--max-old-space-size=8192 eslint .",
     "lint:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' | xargs eslint --fix",
