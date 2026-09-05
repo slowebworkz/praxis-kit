@@ -21,6 +21,7 @@ const config = [
         { type: 'solid', pattern: 'adapters/solid/**/*' },
         { type: 'svelte', pattern: 'adapters/svelte/**/*' },
         { type: 'lit', pattern: 'adapters/lit/**/*' },
+        { type: 'web', pattern: 'adapters/web/**/*' },
         { type: 'tailwind', pattern: 'lib/tailwind/**/*' },
         { type: 'eslint-plugin', pattern: 'plugins/eslint/**/*' },
         { type: 'typescript-plugin', pattern: 'plugins/typescript/**/*' },

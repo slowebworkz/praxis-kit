@@ -1,29 +1,26 @@
-# @praxis-kit/lit
+# @praxis-kit/web
 
-Lit adapter for praxis-kit — a Custom Element host carrying a Praxis semantic contract: styling,
-variant composition, ARIA policy, and structural child validation. Not a reimplementation of native
-HTML element behavior — see "What `tag` means" below.
+Vanilla Custom Elements adapter for praxis-kit — a Custom Element host carrying a Praxis semantic
+contract: styling, ARIA policy, and structural child validation. No framework dependency, no
+`@praxis-kit/runtime` or any other rendering library — a plain `HTMLElement` subclass. Not a
+reimplementation of native HTML element behavior — see "What `tag` means" below.
 
 ---
 
 ## Installation
 
 ```bash
-pnpm add @praxis-kit/lit
+pnpm add @praxis-kit/web
 ```
 
-Lit is a peer dependency:
-
-```bash
-pnpm add lit
-```
+No peer dependencies — this is the zero-framework path.
 
 ---
 
 ## Usage
 
 ```ts
-import { createContractComponent } from '@praxis-kit/lit'
+import { createContractComponent } from '@praxis-kit/web'
 
 const Button = createContractComponent({
   tag: 'button',
@@ -43,13 +40,11 @@ customElements.define('praxis-button', Button)
 <praxis-button size="lg">Click me</praxis-button>
 ```
 
-Unlike the other adapters, `createContractComponent` returns a **Lit custom-element class**, not a
-JSX-usable component — register it yourself with `customElements.define()`. Variants and the
-built-in fields (`recipe`, `praxis-class`) are all plain HTML attributes; there's no props object to
-spread.
-
-This adapter targets **Light DOM composition only** — `createRenderRoot()` returns `this`, so Shadow
-DOM styling (`::slotted`, etc.) and the Shadow DOM slot protocol are intentionally out of scope.
+The pipeline runs synchronously on `connectedCallback` and on every `attributeChangedCallback` for
+praxis-owned attributes (variant keys, `variant-key`, `praxis-class`). For non-reactive attributes
+(`aria-*`, `role`, `data-*`) — or a praxis-owned property set directly rather than via
+`setAttribute` (property assignment alone never triggers a re-run) — call `element.update()`
+afterward.
 
 ### What `tag` means
 
@@ -68,18 +63,17 @@ interactive behavior. Need real button/link/input behavior? Wire it yourself (`o
 hook) — the same requirement any `role="button"` `<div>` would carry.
 
 Two differences from the other adapters, both consequences of the model/host distinction above
-rather than bugs:
+rather than bugs — identical to the Lit adapter's, since both are fixed-identity custom elements
+sharing the same underlying pipeline:
 
 - **No `as` — no tag polymorphism at all.** A custom element's DOM tag is fixed at
   `customElements.define()` time; nothing at render time can turn a `<praxis-button>` into an `<a>`.
-  Setting an `as` attribute has no effect (it's filtered out before it reaches the pipeline, on both
-  the DOM and SSR paths) rather than silently reinterpreting semantics for a tag the element will
-  never actually be — matches `capabilities.tagPolymorphism: false` in the conformance suite. Need
-  different semantics for one case? Register a second component with a different `tag`, or set
-  `role` directly.
-- **Variant attributes stay on the host.** Lit's reactive property system reflects them as real DOM
-  attributes (`size="lg"`), unlike React/Vue where they're consumed and stripped before reaching the
-  DOM.
+  Setting an `as` attribute has no effect (filtered out before it reaches the pipeline, on both the
+  DOM and SSR paths) rather than silently reinterpreting semantics for a tag the element will never
+  actually be. Need different semantics for one case? Register a second component with a different
+  `tag`, or set `role` directly.
+- **Variant attributes stay on the host.** They're read from and reflected as real DOM attributes,
+  unlike React/Vue where they're consumed and stripped before reaching the DOM.
 
 `asChild` is not available on this adapter — Light DOM has no JSX-style slot to clone props onto.
 
@@ -102,7 +96,5 @@ could ever upgrade in place even if it tried.
 | `createContractComponent`     | Factory: styling + ARIA enforcement + children validation           |
 | `defineContractComponent`     | Curries a factory's options so multiple call sites share one config |
 | `renderContractToString`      | Serializes the resolved contract to HTML — not Custom Element SSR   |
-| `LitFactoryOptions` (type)    | Factory options with Lit-specific extensions                        |
-| `LitContractComponent` (type) | Return type of the factory                                          |
-| `ContractProps<T>` (type)     | A built component's full prop contract, recovered from `typeof X`   |
-| `GenericsOf<T>` (type)        | Recovers the `PolymorphicGenerics` a component was built from       |
+| `WebFactoryOptions` (type)    | Factory options with web-specific extensions                        |
+| `WebContractComponent` (type) | Return type of the factory                                          |

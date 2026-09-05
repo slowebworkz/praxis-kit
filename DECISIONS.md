@@ -1562,3 +1562,145 @@ identity across the published graph" invariant already called out for `Diagnosti
 Verification: `pnpm -r typecheck` (23 packages) 0 errors, `pnpm -r test` all packages green
 (`adapters/lit` 141/141, up from 135), `pnpm lint:check` clean, `pnpm format:check` clean (no new
 drift — the pre-existing 19 flagged files still sit outside everything touched here).
+
+### `adapters/web` — port scope and adaptations
+
+Seventh and final framework adapter — `../pk`'s full adapter set is now ported. A plain
+`HTMLElement` subclass, no framework dependency at all (no peer dependency either — "the
+zero-framework path"). Architecturally Lit's closest sibling: both are fixed-identity custom
+elements sharing `resolveHostState`/`renderBundleToString`/`diffAndApplyAttributes` from
+`@praxis-kit/adapter-utils`, and Web's own reactivity is even simpler — no framework runtime at all,
+just the native `observedAttributes`/`attributeChangedCallback` lifecycle plus a manual `update()`
+escape hatch for anything that isn't an observed attribute. 15 files, 91 tests (63 jsdom, 28 SSR).
+
+Applied the exact `as`-removal design fix from `adapters/lit`'s own port proactively, rather than
+porting the bug forward and re-discovering it — `../pk`'s web adapter has the textually identical
+issue: `as` was observed (`observedAttrNames`), overlaid into `_buildProps()`
+(`self.as ?? this.getAttribute('as')`), and reached `resolveHostState`/`renderBundleToString`
+exactly like Lit's did, with the identical two failure modes (a `role`-without-behavior
+accessibility footgun, and `renderToString(Button, { as: 'a' })` disagreeing with what the live
+`<praxis-button>` could ever render). Fixed the same way: removed from `observedAttrNames`, filtered
+out of the raw-attribute scan in `_buildProps()` (so an undeclared `as="…"` attribute is inert too),
+and stripped from `props` in the standalone `renderToString()` SSR entry before it reaches the
+shared `renderBundleToString`. `ssrConformanceSuite` call gets
+`capabilities: { tagPolymorphism: false }`, using the gate added to
+`SsrConformanceAdapter`/`ssrConformanceSuite` during the Lit port (`lib/adapter-utils` — no further
+changes needed there, this port just consumes it). New `property-attribute-convergence.test.ts` here
+differs from Lit's in a genuinely adapter-specific way, not a copy-paste: Web has no declared
+reactive-property accessors at all (unlike Lit's `static get properties()`), so a praxis-owned
+property set directly (`el.direction = 'row'`) does **not** auto-trigger the pipeline the way
+`setAttribute` does — convergence only holds once `.update()` is called explicitly. Both halves are
+pinned: convergence after `.update()`, and an explicit test that skipping it leaves the pipeline
+stale (a real behavioral difference from Lit worth documenting, not an oversight to paper over).
+
+Other adaptations, same class of fix `adapters/lit` and every prior adapter needed:
+
+- **`package.json`:** `../pk` had `@praxis-kit/primitive` correctly in real `dependencies` already
+  (unlike Lit, where every praxis dep was miscategorized) but still had
+  `adapter-utils`/`core`/`diagnostics` in `devDependencies` — moved all four to `dependencies`.
+  `exports` switched to the source-consumed convention; dropped `files`/`repository`/`homepage`/
+  `bugs`/`license`/`author`/`keywords`/`engines`/per-package `lint` scripts, `eslint.config.ts`
+  (root-only lint here, like every other adapter).
+- **No framework-specific `tsconfig.<name>.json` needed** — zero `.tsx`, so `tsconfig.json` extends
+  `../../tsconfig.base.json` directly, same as Vue's and Lit's.
+- **`vitest.config.ts` ported with one real detail preserved, not simplified away**: `../pk`'s sets
+  `pool: 'forks'` with a comment explaining why (jsdom's `HTMLElement` instances carry circular
+  references that overflow Vitest's IPC serializer under the default pool) — kept verbatim, since
+  dropping it silently would reintroduce whatever failure it was added to prevent.
+- **`configs/architecture.ts` gap found and fixed — present in `../pk` too, same as Lit's.** Added
+  `{ type: 'web', pattern: 'adapters/web/**/*' }` to `boundaries/elements`. No `core`-boundary
+  disallow-list entry needed for Web specifically (unlike Lit/`lit`, `react`, etc.) — Web imports no
+  framework npm package at all, so there's no dependency name to forbid.
+- **README bugs found and fixed, both**: same `defineContractComponent` "registers the component as
+  a custom element" error Lit's README had (identical shared implementation, identical fix — it only
+  curries factory options); and a second, Web-specific one — the README claimed the adapter "Uses
+  `@praxis-kit/runtime` for rendering instead of a host framework," but nothing in `package.json` or
+  any source file references that package at all. Rewrote around the real, dependency-free
+  implementation.
+
+Verification: `pnpm -r typecheck` (24 packages) 0 errors, `pnpm -r test` all packages green
+(`adapters/web` 91/91), `pnpm lint:check` clean, `pnpm format:check` clean.
+
+### `adapters/lit` and `adapters/web` — "model vs. host," and `renderToString` renamed
+
+Follow-up to both adapters' `as`-removal fixes, found in review of the finished Web port and applied
+retroactively to Lit for consistency (both share the exact same constraint). Two related but
+distinct clarifications, not new bugs in the sense `as` was — both are about naming and
+documentation catching up to what the architecture has always actually done, not about behavior that
+needed to change.
+
+**`options.tag` is a semantic target, not the host tag — now stated as a first-class concept.**
+Previously implicit (the `as` doc comments referenced `options.tag` without ever defining what it
+means for _these_ two adapters specifically). Made explicit on `createContractComponent`'s own doc
+comment and each README's new "What `tag` means" section:
+
+```text
+Praxis intrinsic model:  button          (options.tag — drives ARIA/content-model/normalizers)
+DOM host:                praxis-button   (customElements.define()'s name — the actual element)
+```
+
+`options.tag` is the lookup key into the shared ARIA-role/content-model/prop-normalizer engine
+(`@praxis-kit/core`) — it was never the tag written to the DOM for these two adapters, unlike the
+five VDOM adapters where `tag`/`as` genuinely is the render target. Once this is explicit,
+`disabled` stops being confusing: `<praxis-button disabled>` correctly gets `aria-disabled="true"`
+from the `disabledProps` normalizer (the HTML-boolean-attribute handling in `_buildProps()` was
+already correct), but the browser doesn't make the custom element keyboard-inert or
+form-participating — not a gap in that normalizer, but a direct, unavoidable consequence of
+`class X extends HTMLElement` that no ARIA attribute on any element (custom or not) ever closes. The
+contract layer (styling, variants, ARIA policy, child enforcement, attribute management, lifecycle
+hooks, diagnostics) and the host's real interactive behavior are documented as staying conceptually
+separate — a caller needing real button/link/input behavior wires it themselves via `onElement`.
+**Customized built-ins** (`class X extends HTMLButtonElement` + `{ extends: 'button' }`, giving
+`<button is="praxis-button">` real `HTMLButtonElement` behavior) were considered and explicitly
+rejected as the fix: a real platform mechanism, but a different consumer-facing API with its own
+platform constraints, not worth the complexity for what's already an honest, documented trade-off
+rather than a defect.
+
+**`renderToString` renamed to `renderContractToString`, in both adapters.** Independent of the `as`
+fix, a second, more fundamental SSR/DOM difference exists and — unlike `as` — cannot be "fixed" the
+way `as` was: `renderBundleToString` (shared, `lib/adapter-utils`) always emits `options.tag` as the
+literal wrapper (`<button>…</button>`), never the registered custom-element tag
+(`<praxis-button>…</praxis-button>`), because it has no way to know that name —
+`customElements.define()` happens externally, after `createContractComponent()` already returned,
+possibly under multiple names or never. This is stable and deterministic per component (unlike the
+old `as` bug, which made SSR output vary per call for a prop the client ignored entirely), but it
+means this output can never be handed to the browser expecting the live custom element to
+progressively upgrade over it — the platform's Custom Element upgrade mechanism only fires on an
+exact tag-name match, and a server-sent `<button>` can never become `<praxis-button>` no matter what
+the client bundle does. Two ways forward were considered:
+
+- Make it truly hydration-safe by having the caller supply the registered element name explicitly,
+  emitting that tag instead of `options.tag` when given — real DOM parity, but a genuine API
+  expansion (a new parameter threaded through `renderBundleToString`'s shared signature, both
+  adapters' `renderToString`, every SSR test and README example).
+- Keep emitting `options.tag`, but stop implying this is Custom Element SSR at all — rename and
+  redocument it as exactly what it is: serialization of the resolved contract's styling/ARIA/
+  attribute pipeline as plain HTML, useful standalone (static generation, snapshot tests, previews),
+  no hydration promise.
+
+Took the second path — no architecture change, and it's the framing "model vs. host" above already
+implies: the contract layer was never promising to reproduce the live custom element, on the DOM
+side or the SSR side. `renderToString` → `renderContractToString` in both `adapters/lit` and
+`adapters/web` (exported name, error messages, all doc comments, all test call sites); the shared
+`SsrConformanceAdapter`/`ssrConformanceSuite` interface's own `renderToString` property name is
+**not** renamed — that property is generic across every adapter (including the five VDOM ones, where
+it genuinely does render a hydratable string), so only the two adapter-specific exports changed, not
+the shared testing contract. If real Custom Element hydration is wanted later, the first option
+above is what it would take — not attempted here.
+
+Also fixed, same class of staleness the `as`/`renderToString` conversation surfaced: both adapters'
+`package.json` `description` and README opening lines called them "polymorphic," despite both
+explicitly declaring `capabilities: { tagPolymorphism: false, asChild: false }` — reworded to
+"Custom Elements with Praxis styling, ARIA contracts, and structural child validation," dropping the
+word entirely rather than qualifying it. Lit's README also still listed `as` among the "built-in
+fields" reflected as attributes — a leftover from before its removal, fixed.
+
+**Noted, not acted on:** a future Web-specific primitive or plugin supplying real behavioral
+semantics for ARIA states that imply interaction (`disabled`, `pressed`, `expanded`, `selected`) —
+e.g. wiring actual keyboard handling to match `aria-pressed` — would be a legitimate enhancement,
+but it's additive product work on top of the contract/host separation documented here, not a fix to
+anything currently wrong.
+
+Verification: `pnpm -r typecheck` (24 packages) 0 errors, `pnpm -r test` all packages green
+(`adapters/lit` 141/141, `adapters/web` 91/91 — same counts as before, this is a rename plus
+documentation, not a behavior change), `pnpm lint:check` clean, `pnpm format:check` clean.

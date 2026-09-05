@@ -1,23 +1,21 @@
 import { renderBundleToString } from '@praxis-kit/adapter-utils'
-import type { LitContractComponent, LooseBundle, RegistryEntry, UnknownProps } from './types'
+import type { LooseBundle, RegistryEntry, UnknownProps, WebContractComponent } from './types/index'
 
-// LitContractComponent is a constructor (object) — WeakMap key works directly.
-//
 // Module-local: a second, separately-bundled copy of this adapter package would get its own
 // registry, and a class registered against one copy wouldn't resolve against the other's
 // renderContractToString. Not a concern today (the monorepo consumes everything from one source
 // copy), but worth flagging for when `packages/kit` starts assembling/bundling these adapters for
-// publish — verify there's exactly one copy of this module in the published graph, the same
-// "single identity" invariant `packages/kit/README.md` already calls out for `Diagnostics`.
-const ssrRegistry = new WeakMap<LitContractComponent, RegistryEntry>()
+// publish — same "single identity across the published graph" invariant already noted on Lit's
+// identical registry (`adapters/lit/src/render-to-string.ts`).
+const ssrRegistry = new WeakMap<WebContractComponent, RegistryEntry>()
 
 /** Called by createContractComponent to enable renderContractToString for a class. */
-export function registerForSsr(cls: LitContractComponent, bundle: LooseBundle): void {
+export function registerForSsr(cls: WebContractComponent, bundle: LooseBundle): void {
   ssrRegistry.set(cls, { bundle })
 }
 
 /**
- * Serializes a praxis-kit Lit component's **resolved contract** to an HTML string, without
+ * Serializes a praxis-kit web component's **resolved contract** to an HTML string, without
  * requiring a DOM — not Custom Element SSR, and not a hydration mechanism.
  *
  * This distinction matters and is easy to get wrong: the output element is `options.tag`
@@ -37,15 +35,9 @@ export function registerForSsr(cls: LitContractComponent, bundle: LooseBundle): 
  *
  * `innerHTML` is treated as a pre-sanitized HTML string and inserted verbatim.
  * Callers are responsible for escaping any untrusted content before passing it.
- *
- * ```ts
- * // @vitest-environment node
- * const html = renderContractToString(Button, { intent: 'primary', size: 'lg' })
- * // => '<button class="btn btn-primary btn-lg"></button>'
- * ```
  */
 export function renderContractToString(
-  component: LitContractComponent,
+  component: WebContractComponent,
   props: UnknownProps = {},
   innerHTML = '',
 ): string {
@@ -54,7 +46,7 @@ export function renderContractToString(
     const name = (component as { name?: string }).name ?? 'AnonymousComponent'
     throw new Error(
       `[renderContractToString] ${name} was not registered for SSR. ` +
-        'Ensure it was created with createContractComponent from @praxis-kit/lit.',
+        'Ensure it was created with createContractComponent from @praxis-kit/web.',
     )
   }
 

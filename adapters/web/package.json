@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-kit/lit",
+  "name": "@praxis-kit/web",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "sideEffects": false,
-  "description": "Praxis Kit adapter for Lit — Custom Elements with Praxis styling, ARIA contracts, and structural child validation",
+  "description": "Praxis Kit vanilla Custom Elements adapter — framework-free Custom Elements with Praxis styling, ARIA contracts, and structural child validation",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config vitest.config.ts && vitest run --config vitest.ssr.config.ts",
@@ -15,18 +15,13 @@
   },
   "dependencies": {
     "@praxis-kit/adapter-utils": "workspace:*",
-    "@praxis-kit/contract-props": "workspace:*",
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
     "type-fest": "catalog:"
   },
-  "peerDependencies": {
-    "lit": ">=3.0"
-  },
   "devDependencies": {
     "jsdom": "catalog:",
-    "lit": "catalog:",
     "vitest": "catalog:"
   }
 }

@@ -47,25 +47,55 @@ import type { LitContractComponent, LitFactoryOptions, RuntimeG, UnknownProps } 
  * customElements.define('praxis-button', Button)
  * ```
  *
+ * **This adapter is a Custom Element host carrying a Praxis semantic contract — not a
+ * reimplementation of native HTML element behavior.** `options.tag` (`'button'` above) names the
+ * _intrinsic model_ Praxis resolves ARIA roles, content-model rules, and built-in prop
+ * normalizers (`disabledProps`, etc.) against — it is not, and was never meant to be, the tag
+ * actually written to the DOM. The DOM tag is whatever name a caller later passes to
+ * `customElements.define(name, Button)`, entirely separate from `options.tag` and not knowable by
+ * this function at all (registration happens externally, after this returns, possibly under
+ * multiple names or never). So for the example above:
+ *
+ * ```text
+ * Praxis intrinsic model:  button   (options.tag — drives ARIA/content-model/normalizers)
+ * DOM host:                praxis-button   (customElements.define()'s name — the actual element)
+ * ```
+ *
+ * A concrete consequence worth internalizing: `<praxis-button disabled>` gets `aria-disabled` from
+ * the `disabledProps` normalizer (correctly, since `disabled`'s HTML-boolean-attribute semantics
+ * are honored in `_buildProps()` below), but the browser does **not** make the custom element
+ * keyboard-inert, form-participating, or otherwise behave like a real `HTMLButtonElement` — that
+ * gap isn't a bug, it's the direct consequence of `class X extends HTMLElement`, and no ARIA
+ * attribute on any element, custom or not, ever supplies real interactive behavior. The contract
+ * layer (styling, variants, ARIA policy, child enforcement, attribute management, lifecycle hooks,
+ * diagnostics) and the host's actual interactive behavior are — and have to stay — conceptually
+ * separate; a caller who needs real button/link/input behavior supplies it themselves (`onElement`
+ * is the wiring point), the same way any `role="button"` `<div>` would require it. (Customized
+ * built-ins — `class X extends HTMLButtonElement` + `{ extends: 'button' }` — were considered and
+ * rejected for solving this: a real platform mechanism, but a different consumer-facing API
+ * (`<button is="…">` instead of `<praxis-button>`) with its own platform constraints, not worth the
+ * complexity it would add here.)
+ *
  * **No `as` prop, unlike every VDOM adapter.** React/Vue/Preact/Solid/Svelte's `as` genuinely
- * changes the rendered host element — real tag polymorphism. A custom element's tag is fixed at
- * `customElements.define()` time; nothing at render time can turn a `<praxis-button>` into an
- * `<a>`, so this adapter never accepted `as` as a semantic-only override either (an earlier design
- * did — resolving ARIA/content-model rules as if the element were a different tag while the real
- * DOM node stayed put). That was worse than not having it: it let a caller produce
- * `role="link"`-shaped output with none of an anchor's actual keyboard/click/middle-click
- * behavior — a real accessibility footgun regardless of what the option was named — and it made
- * `renderToString`'s SSR output disagree with the live client (SSR had no live DOM to constrain it
- * to `options.tag`, so it rendered the *chosen* tag as a literal wrapper, e.g. `<a>…</a>`, while the
- * browser could only ever produce `<praxis-button>…</praxis-button>`). `as` is filtered out
- * unconditionally in `_buildProps()` below (including as a raw, undeclared HTML attribute — not
- * just the removed Lit property) precisely so `resolveTag`/`renderBundleToString` — shared,
- * unmodified, cross-adapter code — always resolve to `options.tag` for this adapter, on both the
- * client and SSR paths alike. Matches `capabilities.tagPolymorphism: false` already declared in
- * the conformance suite (`conformance.test.ts`), which this closes a real gap against: that flag
- * already said Lit has no tag polymorphism, but SSR quietly provided a fake, DOM-inconsistent form
- * of it until now. Need different semantics for one instance? Register a second component with a
- * different `tag`, or set `role` directly — both already work today, unaffected by this.
+ * changes the rendered host element — real tag polymorphism. Once the model/host distinction above
+ * is explicit, this becomes easy: a custom element's DOM tag is fixed at `customElements.define()`
+ * time, so there is no tag for `as` to switch — this adapter never accepted `as` as a semantic-only
+ * override either (an earlier design did — resolving ARIA/content-model rules as if the element
+ * were a different tag while the real DOM node stayed put). That was worse than not having it: it
+ * let a caller produce `role="link"`-shaped output with none of an anchor's actual
+ * keyboard/click/middle-click behavior — a real accessibility footgun regardless of what the
+ * option was named — and it made `renderContractToString`'s output disagree with the live client
+ * (SSR had no live DOM to constrain it to `options.tag`, so it rendered the *chosen* tag as a
+ * literal wrapper, e.g. `<a>…</a>`, while the browser could only ever produce
+ * `<praxis-button>…</praxis-button>`). `as` is filtered out unconditionally in `_buildProps()`
+ * below (including as a raw, undeclared HTML attribute — not just the removed Lit property)
+ * precisely so `resolveTag`/`renderBundleToString` — shared, unmodified, cross-adapter code —
+ * always resolve to `options.tag` for this adapter, on both the client and SSR paths alike.
+ * Matches `capabilities.tagPolymorphism: false` already declared in the conformance suite
+ * (`conformance.test.ts`), which this closes a real gap against: that flag already said Lit has no
+ * tag polymorphism, but SSR quietly provided a fake, DOM-inconsistent form of it until now. Need
+ * different semantics for one instance? Register a second component with a different `tag`, or
+ * set `role` directly — both already work today, unaffected by this.
  */
 export function createContractComponent<
   TDefault extends ElementType,
@@ -259,7 +289,7 @@ export function createContractComponent<
     'Generated class failed to satisfy the LitContractComponent shape',
   )
 
-  // Register for SSR before returning — renderToString looks up the bundle via WeakMap.
+  // Register for SSR before returning — renderContractToString looks up the bundle via WeakMap.
   registerForSsr(PolymorphicLitElement, looseBundle)
 
   const assembled = assembleCompoundComponent(PolymorphicLitElement, options.subComponents)
