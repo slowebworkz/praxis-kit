@@ -2,6 +2,9 @@
 
 > **Build components that enforce the rules of the web.**
 
+Praxis Kit is an open-source implementation of a different way of building UI: components as
+executable semantic contracts.
+
 Praxis Kit is a **contract-based UI framework** that turns HTML semantics, ARIA requirements, and
 component composition rules into executable contracts.
 

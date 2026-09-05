@@ -22,6 +22,20 @@
       "types": "./dist/vue/index.d.ts",
       "import": "./dist/vue/index.js"
     },
+    "./svelte": {
+      "import": "./dist/svelte/index.js"
+    },
+    "./svelte/Polymorphic.svelte": {
+      "svelte": "./dist/svelte/Polymorphic.svelte"
+    },
+    "./lit": {
+      "types": "./dist/lit/index.d.ts",
+      "import": "./dist/lit/index.js"
+    },
+    "./web": {
+      "types": "./dist/web/index.d.ts",
+      "import": "./dist/web/index.js"
+    },
     "./tailwind": {
       "types": "./dist/tailwind/index.d.ts",
       "import": "./dist/tailwind/index.js"
@@ -38,6 +52,10 @@
     "./vite-plugin": {
       "types": "./dist/vite-plugin/index.d.ts",
       "import": "./dist/vite-plugin/index.js"
+    },
+    "./codemod": {
+      "types": "./dist/codemod/index.d.ts",
+      "import": "./dist/codemod/index.js"
     },
     "./contract": {
       "types": "./dist/contract/index.d.ts",
@@ -56,21 +74,81 @@
       "import": "./dist/utils/index.js"
     }
   },
+  "typesVersions": {
+    "*": {
+      "react": [
+        "./dist/react/index.d.ts"
+      ],
+      "react/legacy": [
+        "./dist/react/legacy.d.ts"
+      ],
+      "preact": [
+        "./dist/preact/index.d.ts"
+      ],
+      "vue": [
+        "./dist/vue/index.d.ts"
+      ],
+      "lit": [
+        "./dist/lit/index.d.ts"
+      ],
+      "web": [
+        "./dist/web/index.d.ts"
+      ],
+      "tailwind": [
+        "./dist/tailwind/index.d.ts"
+      ],
+      "eslint": [
+        "./dist/eslint/index.d.ts"
+      ],
+      "ts-plugin": [
+        "./dist/ts-plugin/index.d.cts"
+      ],
+      "vite-plugin": [
+        "./dist/vite-plugin/index.d.ts"
+      ],
+      "codemod": [
+        "./dist/codemod/index.d.ts"
+      ],
+      "contract": [
+        "./dist/contract/index.d.ts"
+      ],
+      "guards": [
+        "./dist/guards/index.d.ts"
+      ],
+      "html": [
+        "./dist/html/index.d.ts"
+      ],
+      "utils": [
+        "./dist/utils/index.d.ts"
+      ]
+    }
+  },
+  "bin": {
+    "praxis-codemod": "./dist/codemod/index.js"
+  },
   "files": [
     "dist",
     "LICENSE"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "build": "rm -rf dist && tsdown && tsx scripts/postbuild.ts",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm test:pack",
+    "lint:pkg": "publint",
+    "test:pack": "tsx scripts/smoke-test.ts"
   },
   "dependencies": {
+    "@typescript-eslint/utils": "catalog:",
     "clsx": "catalog:",
     "type-fest": "catalog:"
   },
   "peerDependencies": {
     "eslint": ">=9",
+    "lit": ">=3.0",
     "preact": ">=10.11",
     "react": ">=18",
+    "svelte": ">=5",
     "typescript": ">=5",
     "vite": ">=5",
     "vue": ">=3.4"
@@ -79,10 +157,16 @@
     "eslint": {
       "optional": true
     },
+    "lit": {
+      "optional": true
+    },
     "preact": {
       "optional": true
     },
     "react": {
+      "optional": true
+    },
+    "svelte": {
       "optional": true
     },
     "typescript": {
@@ -99,7 +183,20 @@
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
-    "@types/node": "catalog:"
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "lit": "catalog:",
+    "preact": "catalog:",
+    "publint": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "svelte": "catalog:",
+    "tsdown": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vue": "catalog:"
   },
   "publishConfig": {
     "access": "public"
@@ -128,7 +225,9 @@
     "variants",
     "react",
     "preact",
-    "vue"
+    "vue",
+    "svelte",
+    "lit"
   ],
   "engines": {
     "node": ">=18"

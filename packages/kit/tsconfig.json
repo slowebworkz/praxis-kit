@@ -1,4 +1,12 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["contract.ts", "guards.ts", "html.ts", "utils.ts"]
+  "include": [
+    "contract.ts",
+    "guards.ts",
+    "html.ts",
+    "utils.ts",
+    "./tsdown.config.ts",
+    "./scripts/postbuild.ts",
+    "./scripts/smoke-test.ts"
+  ]
 }
