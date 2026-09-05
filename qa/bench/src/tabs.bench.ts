@@ -11,8 +11,12 @@
 //
 // What the benchmark measures:
 //   - Initial render (mount) — factory resolution, class pipeline, ARIA engine
-//   - Re-render on tab switch — reactive update cost
-//   - Controlled re-render — parent-driven value prop update
+//   - Full cycle (mount + tab switch/re-render + unmount) — the two suites below that name
+//     themselves this way include root creation and teardown in every iteration; useful as its
+//     own number, but not a warm-update measurement
+//   - Warm re-render — a root created once, outside any bench callback; the timed callback
+//     measures only reconciliation against an existing fiber tree, alternating tabs on every call
+//     so React never bails out on a referentially-equal state update
 //
 // What it does not measure:
 //   - GC pressure or allocation rate
@@ -209,7 +213,12 @@ describe('Tabs — initial render (mount)', () => {
   })
 })
 
-describe('Tabs — re-render on tab switch', () => {
+// Named for what these actually measure — full mount + unmount per iteration, not an isolated
+// re-render. withRoot() recreates the container/root/fiber tree every call, so the timed callback
+// includes React's mount bootstrap and teardown alongside the click/re-render itself. Useful as its
+// own number (a caller who genuinely tears down and remounts on every tab switch would see this),
+// but it is not warm-update cost — see the "warm re-render" suite below for that.
+describe('Tabs — full cycle: mount + tab switch + unmount (not an isolated re-render)', () => {
   bench('praxis-kit Tabs', () => {
     withRoot((root, container) => {
       flushSync(() => root.render(makePraxisTabs()))
@@ -227,7 +236,7 @@ describe('Tabs — re-render on tab switch', () => {
   })
 })
 
-describe('Tabs — controlled re-render (value prop update)', () => {
+describe('Tabs — full cycle: mount + re-render + unmount (not an isolated re-render)', () => {
   bench('praxis-kit Tabs', () => {
     withRoot((root) => {
       flushSync(() => root.render(makePraxisTabs()))
@@ -241,5 +250,41 @@ describe('Tabs — controlled re-render (value prop update)', () => {
       flushSync(() => root.render(makeVanillaTabs()))
       flushSync(() => root.render(makeVanillaTabs()))
     })
+  })
+})
+
+// ─── Genuinely warm re-render ───────────────────────────────────────────────────
+//
+// The two suites above bracket every iteration with root creation and teardown — the number they
+// report is a full lifecycle cost, not an isolated update. These roots are created once, outside
+// any bench callback (mirroring pipeline.bench.ts's pattern), so the timed callback measures only
+// the update itself: reconciliation against an existing fiber tree, not fiber-tree creation.
+//
+// Clicking the same already-selected tab would be a no-op re-render (React bails out when setState
+// receives a referentially-equal value) — alternating between both triggers on every call guarantees
+// a real state change, and therefore a real re-render, on every iteration.
+
+function makeWarmTabsFixture(render: () => ReturnType<typeof createElement>) {
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+  const root = createRoot(container)
+  flushSync(() => root.render(render()))
+  const triggers = container.querySelectorAll('[role="tab"]')
+  let idx = 0
+  return {
+    clickNext: () => flushSync(() => (triggers[idx++ % 2] as HTMLElement).click()),
+  }
+}
+
+describe('Tabs — warm re-render (pre-existing root, tab switch alternating)', () => {
+  const praxisFixture = makeWarmTabsFixture(makePraxisTabs)
+  const vanillaFixture = makeWarmTabsFixture(makeVanillaTabs)
+
+  bench('praxis-kit Tabs', () => {
+    praxisFixture.clickNext()
+  })
+
+  bench('vanilla React Tabs (baseline)', () => {
+    vanillaFixture.clickNext()
   })
 })
