@@ -24,6 +24,7 @@
     { "path": "./plugins/eslint" },
     { "path": "./plugins/typescript" },
     { "path": "./plugins/vite" },
+    { "path": "./qa/bench" },
     { "path": "./tooling/codemod" }
   ]
 }
