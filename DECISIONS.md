@@ -1755,3 +1755,170 @@ Verification: `pnpm --filter @praxis-kit/bench typecheck` 0 errors;
 `vitest bench --config vitest.bench.config.ts --run` executes all 7 files without error (a smoke run
 — bench numbers themselves aren't asserted, matching `../pk`'s own "indicative, not CI-gated"
 framing). `pnpm lint:check`/`format:check` clean.
+
+### `packages/kit` — real build (tsup → tsdown)
+
+The PR #32 scaffold (see "`packages/kit` — scaffold" above) shipped `package.json` with no build at
+all — `private: true`, `typecheck`-only, and an `exports` map missing `solid`, `svelte`, `lit`,
+`web`, and `codemod` because those adapters didn't exist yet. All 7 framework adapters now do, so
+this is the actual `v1.0.0` work: a real `tsdown.config.ts`, `scripts/postbuild.ts`, and the full
+`exports`/`typesVersions`/`dependencies` surface.
+
+**Not a straight port.** `../pk` builds this package with `tsup` (`tsup.config.ts`, ~17 entries + a
+shared diagnostics chunk); this repo already committed to tsdown instead (see "Bundler: tsdown (not
+tsup)" above), and pk itself has never built this particular package with tsdown — there was no
+tsup-shaped config to carry over line-for-line, only the entry list and dependency-boundary intent.
+
+**tsdown's bundling default is the opposite of what its docs' `neverBundle`/`alwaysBundle` naming
+suggests at a glance.** With no `deps` config at all, tsdown bundles every reachable import,
+workspace packages _and_ npm packages alike — confirmed against `../pk`'s own already-built tsup
+output, whose `dist/preact/index.js` inlines `lib/contract`/`lib/styling` source directly (by
+source-comment evidence) while leaving framework peers external, i.e. tsup's default lands in the
+same place. A first pass here with zero `deps` config silently inlined `lit` and its own
+`@lit/reactive-element`/`lit-html`/`lit-element`/`@lit-labs/ssr-dom-shim` dependency tree straight
+into `dist/lit/index.js` — undetected until the build's own "detected dependencies in bundle" hint
+flagged it. Fix: every entry sets `deps.neverBundle` to an explicit list — always
+`@praxis-kit/diagnostics`, plus that entry's own framework peer and everything scoped under it
+(`react`/`react-dom`/`react/*`, `preact/*`, `vue/*`, `lit`/`lit-*`/`@lit/*`/`@lit-labs/*`) — and
+lets every internal `@praxis-kit/*` package the entry actually reaches (`adapter-utils`, `core`,
+`primitive`, `contract`, `styling`, `runtime` — whichever) bundle in by the same default tsup relied
+on. No `alwaysBundle`/`alias` allowlist needed once the peer exclusion is explicit; an earlier
+attempt at the inverse (`neverBundle: true` + an `alwaysBundle` allowlist naming only
+`adapter-utils`/`core`) under-bundled instead — `alwaysBundle` string entries don't prefix-match
+subpaths (`@praxis-kit/core/props` didn't match a bare `'@praxis-kit/core'` entry), and it missed
+`core`/`adapter-utils`'s own further-transitive internal deps.
+
+**`@praxis-kit/diagnostics`** stays external everywhere via the same shared-chunk trick as pk's
+build (single `dist/_shared/diagnostics.*`, private class members mean bundling it per-entry would
+make the class nominally distinct across entries). **`class-variance-authority`** ends up bundled
+into every entry that reaches `lib/styling`'s `cva.ts` (preact/vue/web/lit/contract/guards/html) —
+confirmed `../pk`'s own build does _not_ reach it from these adapters at all (0 occurrences in its
+built `dist/preact/index.js`), so this is a genuine, if minor, divergence between the two repos'
+`lib/styling`/`adapter-utils` wiring, not a build misconfiguration on this side. Left bundled
+(functionally correct, a few KB) rather than chased — worth a future look, not a blocker. **Open.**
+
+**`svelte` ships with `dts: false`, JS-only, and `solid` isn't in `exports` at all** — two real,
+separately-tracked gaps, not oversights:
+
+- **Svelte's declaration file.** `svelte`'s own shipped types use `declare module 'svelte' { ... }`
+  ambient-module-augmentation rather than plain top-level `export`s. `rolldown-plugin-dts` (tried
+  both its `oxc` and `tsc` resolver modes) bundles declarations by statically binding re-exports
+  through rolldown's own linker, which can't resolve an ambient `declare module` re-export
+  (`[MISSING_EXPORT] "Snippet" is not exported by .../svelte/types/index.d.ts`, even though
+  `Snippet` is genuinely declared there) and exposes no external/opaque-module escape hatch for it.
+  `rollup-plugin-dts` (what tsup/pk's build uses) handles this package shape natively. The JS build
+  is unaffected — `adapters/svelte`'s only `svelte` import is `import type { Snippet }`, erased at
+  that level — only `dist/svelte/index.d.ts` is missing until this is fixed upstream in
+  `rolldown-plugin-dts`, or `adapters/svelte`'s public prop types stop surfacing `Snippet`.
+- **Solid isn't ported into this build at all.** `../pk`'s tsup config compiles Solid's `.tsx` via
+  `esbuild-plugin-solid` (`babel-preset-solid` under esbuild's plugin API). Rolldown's plugin API is
+  a different shape, and no rolldown-native Solid JSX transform is wired into this workspace today —
+  `babel-preset-solid`/`babel-plugin-jsx-dom-expressions` are present only as incidental transitive
+  deps of `@solidjs/testing-library`, not a real, declared build dependency. Writing and validating
+  a custom Babel-based rolldown transform plugin from scratch was out of scope for this pass; the
+  `solid` kit entry is deferred rather than forced. **Open** — options when picked back up: a real
+  rolldown/unplugin Solid transform if one lands, a standalone-esbuild pre-transpile step feeding
+  tsdown pre-compiled JS, or continuing to defer.
+
+**`postbuild.ts` simplified, not ported verbatim.** `../pk`'s version threads its 5 steps through a
+`@praxis-kit/pipeline` `Pass` chain; this package has no other reason to depend on
+`@praxis-kit/pipeline`, and 5 linear steps (copy the tailwind safelist, copy `Polymorphic.svelte`,
+discover dist files, rewrite the diagnostics specifier, enforce the single-declaration invariant)
+don't need a Pass-chain abstraction to stay readable, so it's plain sequential functions instead.
+Same behavior and same invariant checks otherwise.
+
+**Package.json surface**: full `exports`/`typesVersions` for every built entry (`solid` excluded per
+above), `bin.praxis-codemod`, `scripts.build` (`tsdown && tsx scripts/postbuild.ts`),
+`scripts.dev`/`prepublishOnly`/`lint:pkg` (`publint`). `peerDependencies` gained `lit`/`svelte`
+(optional, matching the existing react/vue/preact/eslint/vite/typescript pattern). `devDependencies`
+gained everything the build itself now needs: `@typescript-eslint/utils`, `@types/react(-dom)`,
+`lit`, `preact`, `publint`, `react(-dom)`, `svelte`, `tsdown`, `tsx`, `typescript`, `vite`, `vue`.
+
+Verification: `pnpm --filter praxis-kit build` clean (17 entries + shared chunk; `solid` excluded,
+`svelte` JS-only per above); `postbuild` reports all invariants hold and rewrites the diagnostics
+specifier in 21 files; `pnpm --filter praxis-kit typecheck` and `pnpm -r typecheck` (26 packages) 0
+errors; `pnpm lint:check`/`format:check` clean; `pnpm --filter praxis-kit lint:pkg` (`publint`)
+clean.
+
+**Review pass — packaging fixes, two of them found only by actually installing the tarball.**
+`publint` and a workspace typecheck are necessary but not sufficient for a multi-entry package like
+this one; they check `dist/` shape and source types, not what a real install of the published
+tarball actually does at runtime. Confirmed the hard way:
+
+- **`@typescript-eslint/utils` was externalized but not a published dependency.**
+  `praxis-kit/eslint` really does
+  `import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'` at runtime (confirmed in
+  `dist/eslint/index.js`), but the package only listed it in `devDependencies`. Moved to
+  `dependencies` (not a peer — this is implementation machinery for the plugin, not something a
+  consumer should need to know about). Verified against a real `pnpm pack` tarball installed into an
+  isolated fixture (not the monorepo's own hoisted `node_modules`, which would have masked the gap):
+  `praxis-kit/eslint` now resolves cleanly.
+- **`codemod`'s `deps.neverBundle: ['typescript']` was a no-op — traced, not assumed.**
+  `dist/codemod/ index.js` has zero bare npm import specifiers besides Node builtins; `ts-morph`'s
+  compiler access goes through `@ts-morph/common`, which vendors its own `dist/typescript.js` as a
+  relative-path file inside that package (not a `dependencies` edge on the real `typescript` npm
+  package) — `neverBundle` only intercepts bare specifiers, so it never had anything to externalize
+  here. Removed the dead config entry; `praxis-codemod` was already, and remains, fully
+  self-contained — no consumer TypeScript install needed for this entry specifically (`vite-plugin`
+  is different: it really does `import ts from 'typescript'`, confirmed in its own
+  `dist/vite-plugin/index.js`, so its optional peer stays).
+- **Found via the tarball install, not by inspection: `praxis-codemod` threw
+  `ReferenceError: __filename is not defined in ES module scope` on every invocation.** Vendored
+  `@ts-morph/common` code calls `isFileSystemCaseSensitive()`, which references the CJS global
+  `__filename` — no equivalent exists in ESM output by default. tsup auto-shims this; tsdown
+  requires `shims: true` explicitly per entry. Added to the `codemod` entry only (the only one that
+  touches `__filename`/`__dirname`, confirmed by grepping the other entries' output).
+- **Found via the tarball install: `praxis-codemod`'s CLI silently did nothing at all — `--help`, no
+  args, everything — even after the shim fix.** Root cause is in `tooling/codemod/src/ index.ts`
+  itself, not the kit build: its "is this the entry point" guard compared
+  `process.argv[1] === fileURLToPath(import.meta.url)` directly. A real install's `bin` entry is a
+  symlink (`node_modules/.bin/praxis-codemod -> ../praxis-kit/dist/codemod/index.js`); Node leaves
+  `process.argv[1]` as the symlink path but resolves `import.meta.url` to the real target, so the
+  two never matched and `main()` never ran — no error, no output, exit 0. This is a **pre-existing
+  bug in `tooling/codemod` itself**, not something the kit packaging introduced —
+  `@praxis-kit/codemod` published on its own would have the identical failure the moment anyone
+  installed it for real (every prior verification of that package ran its bin by direct path,
+  `node dist/index.js`, which never exercises the symlink). Fixed by resolving `process.argv[1]`
+  through `realpathSync` before comparing. `tooling/codemod`'s own 24 tests + typecheck stay green;
+  re-verified end-to-end through the actual `.bin` symlink in the tarball fixture, including a real
+  `migrate --dry-run` run.
+- `packages/kit/README.md` rewritten — it still described the PR #32 scaffold's gated status
+  ("Scaffold only… gated on the remaining adapters… landing") long after the build actually shipped.
+  Replaced with the real per-entry status table and the `svelte`/`solid` gaps stated plainly rather
+  than folded into a generic "not yet published" line.
+
+**Verification method going forward, not just this pass:** `pnpm --filter praxis-kit build` →
+`pnpm pack` → install the tarball into an isolated fixture (outside the monorepo's own
+`node_modules`, which resolves internal deps via hoisting regardless of what's actually declared) →
+import every framework-neutral/plugin entry → run the `codemod` bin through its real `.bin` symlink,
+not by direct path. Two of the four fixes above (`__filename`, the `argv`/symlink mismatch) were
+invisible to `publint`, a workspace typecheck, and a direct-path bin invocation alike — only a real
+install surfaced them.
+
+**Made permanent: `packages/kit/scripts/smoke-test.ts` (`pnpm --filter praxis-kit test:pack`).**
+Automates the exact sequence above rather than leaving it as a one-off manual check: fresh
+`pnpm build` → `pnpm pack` → install the tarball plus every framework peer into an isolated
+`os.tmpdir()` fixture (deliberately outside this repo's own pnpm workspace — inside it, resolution
+would go through workspace hoisting and mask the same class of gap the `@typescript-eslint/utils`
+finding above was) → `import()` every plain-JS public entry (14 of them; `ts-plugin` is CJS-only and
+`codemod` is exercised as a CLI instead) and report every failure rather than stopping at the first
+→ run `praxis-codemod --help` and a real `migrate --dry-run` through the actual `.bin` symlink, not
+by direct path. Exits non-zero on any failure. Wired into `prepublishOnly` (replacing a bare
+`pnpm build`) so a real publish can't skip it; not yet wired into CI, since this repo doesn't have a
+CI pipeline at all yet (lands separately — see `.vscode/MIGRATION.md`). `pnpm pack --json`'s real
+shape is `{ filename, files }` (a single object, not an array) — worth noting since the shape isn't
+obvious without checking, and easy to get wrong first try (initial version assumed an array).
+
+**Added: type resolution, not just runtime imports.** The first version of `smoke-test.ts` proved
+every entry's JS resolves from the installed tarball, but said nothing about `.d.ts` resolution —
+`typesVersions`/`types` fields, broken declaration re-exports, and a stray unresolved
+`@praxis-kit/*` reference in public types are all invisible to a plain `import()` check. Added a
+second phase: write one `export type { <RealExportName> as _checkN } from 'praxis-kit/<entry>'` line
+per typed public entry (13 of the 14; `svelte` is skipped — its documented JS-only gap, not an
+oversight — and `codemod`/`ts-plugin` have no meaningful ESM named-type surface to check), then run
+the fixture's own installed `tsc --noEmit` against it. A re-export rather than a bare `import type`
+guarantees every name is actually consumed, so nothing passes by accident via unused-import elision.
+**Confirmed this actually catches something**, not just theoretically: renamed one entry's checked
+export to a nonexistent name and reran — failed immediately with a real `tsc`
+`TS2305 "has no exported member"` error, exit 2, propagated as a script failure. Reverted after
+confirming.
