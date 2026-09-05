@@ -2075,3 +2075,57 @@ tsconfig-excluded scenarios, stale after the `source/` move.
 Verification: same as above, rerun with all 20 scenarios (16 + 4 new) — `pnpm test` 20/20 pass,
 `snapshots/gzip.json` regenerated via `gzip:update`, `pnpm -r typecheck`/`lint:check`/
 `format:check` clean.
+
+### CI — `.github/workflows/ci.yml` + `publish.yml`, scoped to what actually exists
+
+`../pk`'s `ci.yml` runs `pnpm verify` → `pnpm build` → `pnpm analyze:duplicates` → `pnpm repo-state`
+→ `pnpm analyze:deps` → `pnpm analyze:patterns` → `pnpm metrics:collect && pnpm metrics:assert`.
+Checked each before porting, not assumed: `repo-state` is `scripts/generate-repo-state.ts` (not
+ported — the confirmed blocker on `qa/metrics`); `analyze:deps` is `dependency-cruiser` against a
+`.dependency-cruiser.cjs` that doesn't exist here; `analyze:patterns` is `ast-grep` against an
+`.ast-grep/sgconfig.yml` that doesn't exist here; `metrics:*` is `qa/metrics` itself, still blocked
+on the same `repo-state` prerequisite. None of the four are portable today. `analyze:duplicates`
+(`jscpd --config .jscpd.json`) is the one exception — the config and dependency already exist in
+this repo (landed with an earlier port, never wired to CI) and it runs clean (0 clones over
+threshold) — kept.
+
+**A real, previously-undetected ordering bug, found by actually trying a clean-checkout CI run, not
+by reading the workflow.** `qa/tree-shaking-tests/scenarios/package/*` import `praxis-kit/<name>`,
+resolved through `packages/kit`'s built `dist/` — including at **typecheck** time, not just at its
+own `test` script's runtime build. Confirmed by moving `packages/kit/dist` aside and running
+`pnpm --filter @praxis-kit/tree-shaking-tests typecheck`: 9 `TS2307 "Cannot find module"` errors.
+`pnpm -r typecheck` (and therefore `pnpm build`, which runs it first) would fail on any genuinely
+fresh checkout — this was invisible in every verification this session because `packages/kit/dist`
+happened to already exist locally from earlier work. This is exactly the problem `../pk`'s own
+`pnpm verify` (`scripts/build-pipeline.ts`, threading `@praxis-kit/pipeline/node`'s `shellPass`)
+solves — but that subpath doesn't exist in this repo's `lib/pipeline` either (the same reason
+`qa/tree-shaking-tests`' own `pipeline.ts` was dropped, not ported). Added a plain root script
+instead of a new pipeline file: `"verify": "pnpm --filter praxis-kit build && pnpm check"` — two
+sequential commands don't need a `Pass`-chain abstraction. Confirmed fixed the same way the bug was
+found: moved `dist/` aside again, ran `pnpm verify`, clean.
+
+**`publish.yml` diverges from `../pk`'s in one deliberate way**: dropped the
+`cp README.md packages/kit/README.md` step. `../pk` republishes the root project README as the npm
+package page; this repo's `packages/kit/README.md` has been deliberately, separately maintained this
+session (the real per-entry status table, the build/verification writeup) and is better npm
+package-page content than the root project pitch — overwriting it with the root README on every
+publish would discard that. Otherwise ported close to verbatim: the dist-tag resolution
+(`-alpha`/`-beta`/`-rc` → `beta`, else `latest`), the already-published guard
+(`npm view "$name@$version"`), and the unresolved-`catalog:`-specifier check (packs, extracts, greps
+the real tarball's `package.json` — catches the class of bug where a workspace catalog specifier
+leaks into a published package unresolved).
+
+CI triggers on `[main, develop]` (`../pk`'s only real branch is `main`; this repo's `CLAUDE.md`
+gitflow uses `develop` as the integration branch feature branches merge into, so both need coverage)
+— `codeql.yml` (already-ported, pre-existing) still only watches `main`, a real, now more-visible
+inconsistency, left as an **Open** item rather than changed in this PR (out of scope for a
+CI-workflow port, not a regression this PR introduces).
+
+`publish.yml` exists and is ready, but `packages/kit/package.json` is still `private: true` — first
+publish is a separate, deliberate step, not something this PR flips as a side effect.
+
+Verification: `pnpm verify` and `pnpm build` both confirmed clean from a simulated fresh checkout
+(`packages/kit/dist` removed and rebuilt); `pnpm analyze:duplicates` clean (0 clones over
+threshold); `pnpm lint:check`/`format:check` clean; both workflow YAML files validated (Prettier's
+own YAML parser, plus a structural diff against `../pk`'s known-working versions — `actionlint`
+wasn't available in this environment to check further).

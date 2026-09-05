@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Build, Typecheck & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.0.4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # qa/tree-shaking-tests/scenarios/package/* import `praxis-kit/<name>` and resolve it
+      # through packages/kit's built dist/ — which only exists once packages/kit is built.
+      # `pnpm check`'s own typecheck/test steps have no awareness of that ordering requirement
+      # (confirmed the hard way: `pnpm -r typecheck` fails on a fresh checkout without this), so
+      # `pnpm verify` builds packages/kit first, then runs `pnpm check`.
+      - name: Verify
+        run: pnpm verify
+
+      - name: Build
+        run: pnpm build
+
+      - name: Duplicate Analysis
+        run: pnpm analyze:duplicates
+
+      # `../pk`'s CI also runs `repo-state` (scripts/generate-repo-state.ts),
+      # `analyze:deps` (dependency-cruiser), `analyze:patterns` (ast-grep), and
+      # `metrics:collect`/`metrics:assert` (qa/metrics) here. None are ported yet — they depend on
+      # scripts/generate-repo-state.ts, a `.dependency-cruiser.cjs` config, and an
+      # `.ast-grep/sgconfig.yml` config, none of which exist in this repo. Land them here once
+      # qa/metrics and its prerequisites do — see DECISIONS.md.
