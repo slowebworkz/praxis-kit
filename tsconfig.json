@@ -25,6 +25,7 @@
     { "path": "./plugins/typescript" },
     { "path": "./plugins/vite" },
     { "path": "./qa/bench" },
+    { "path": "./qa/tree-shaking-tests" },
     { "path": "./tooling/codemod" }
   ]
 }

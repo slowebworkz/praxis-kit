@@ -1,0 +1,35 @@
+{
+  "aria-only": {
+    "gzip": 21202
+  },
+  "contracts-only": {
+    "gzip": 21266
+  },
+  "full-runtime": {
+    "gzip": 21425
+  },
+  "minimal-polymorphic": {
+    "gzip": 21155
+  },
+  "pk2-engine-only": {
+    "gzip": 792
+  },
+  "polymorphic-validation": {
+    "gzip": 21225
+  },
+  "preact-minimal": {
+    "gzip": 20901
+  },
+  "react-minimal": {
+    "gzip": 21155
+  },
+  "solid-minimal": {
+    "gzip": 19796
+  },
+  "svelte-minimal": {
+    "gzip": 18589
+  },
+  "vue-minimal": {
+    "gzip": 20459
+  }
+}

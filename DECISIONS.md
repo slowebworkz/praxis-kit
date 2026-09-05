@@ -1922,3 +1922,64 @@ guarantees every name is actually consumed, so nothing passes by accident via un
 export to a nonexistent name and reran — failed immediately with a real `tsc`
 `TS2305 "has no exported member"` error, exit 2, propagated as a script failure. Reverted after
 confirming.
+
+### `qa/tree-shaking-tests` — ported; less blocked than earlier stated
+
+The `qa/*` entry above said this package "needs the unported `runtime/core`." Checked precisely
+before porting: only 2 of `../pk`'s 13 scenarios (`pk2-compiler-minimal`,
+`pk2-compiler-with-variants`) actually import `@praxis-kit/runtime/compiler` — this repo has no
+`runtime/compiler` module at all (`lib/runtime` is flat), so those two aren't ported. The other 11
+don't touch it and port cleanly. `esbuild` (`^0.28.1`) resolves every workspace package straight to
+its TypeScript source via a hand-maintained `alias` map in `scripts/analyze.ts` — no prior
+`pnpm build` required, matching `../pk`'s own approach.
+
+**Two real bugs found in `../pk`'s own fixtures, fixed here, not just carried over.** 5 of the 11
+ported `expected.json` files asserted `mustExclude: ["packages/tailwind/src"]` — stale from before
+`../pk`'s own `packages/tailwind` → `lib/tailwind` move (confirmed: `../pk`'s current layout is
+`lib/tailwind` too). Since a `mustExclude` fragment that never appears in a real metafile always
+"passes" silently, this assertion has been dead in `../pk` itself since that move, not just here —
+fixed to `lib/tailwind/src` so it can actually fire. `pk2-engine-only/expected.json`'s `mustExclude`
+also referenced `runtime/core/src/compiler`, which can't exist in this repo — dropped that line
+rather than leaving a permanently-vacuous assertion.
+
+**`pk2-engine-only`'s entry.ts needed a real rewrite, not a path fix — `@praxis-kit/pipeline`'s API
+is genuinely different here.** `../pk`'s version imports `startPipeline`/`executePipeline`/
+`executeProcessor`/`createPipeline` (a builder-chain API: `startPipeline().then().build()`, also
+seen in `../pk`'s own `postbuild.ts` scripts throughout this port). This repo's clean-room
+`lib/pipeline` has none of those — its real exports are `runPipeline`/`phasedPipeline` (execution)
+and `mergeContext`/`mergeResults`/`shallowDiff` (context-merge primitives). Rewrote the scenario to
+import the real exports, preserving the same claim under test ("the pipeline engine alone pulls in
+zero adapter/compiler/style code") — `mustInclude: ["lib/pipeline/src"]` still holds.
+
+**`esbuild`'s `alias` does prefix-matching against unmatched subpaths**, not exact-match-only as the
+option's shape might suggest — an import for `@praxis-kit/foo/bar` with no exact
+`@praxis-kit/foo/bar` key falls back to appending `/bar` onto whatever `@praxis-kit/foo` resolves
+to, which breaks immediately against a single-file alias target
+(`Cannot read directory ".../index.ts": not a directory`). Every subpath actually reachable from the
+11 ported scenarios needs its own explicit map entry. This repo's
+`packages/core/src/ {primitive,contract}.ts` (refactored into pass-throughs against granular barrels
+— see "`packages/kit` — scaffold") reach several subpaths `../pk`'s equivalent files don't:
+`@praxis-kit/primitive/{tag,utils}` and
+`@praxis-kit/contract/{aria/factories,aria/roles,props, types/aria/aria-rule}`. Added all of them;
+`gzip.ts`'s `StringMap` import also moved from `@praxis-kit/pipeline` (where `../pk` exports it) to
+`@praxis-kit/primitive` (where this repo's reconstruction does — the same substitution
+`lib/adapter-utils`'s port already documented).
+
+**`pipeline.ts` (the `pnpm test` orchestrator) dropped, not ported.** `../pk`'s version threads
+build → assert → gzip through `@praxis-kit/pipeline/node`'s `shellPass`/`runPipeline` — a real
+`./node` subpath this repo's `lib/pipeline` doesn't expose at all (confirmed: only `.` is in its
+`exports` map). Porting that subpath into an already-released, already-depended-on `lib/pipeline`
+just to satisfy one qa script's orchestration preference is a bigger, more invasive change than this
+port needs — `package.json`'s own `test` script is a plain `pnpm build && pnpm assert && pnpm gzip`
+chain instead, functionally identical, no new dependency surface. `tsx` dropped from devDependencies
+along with it (only `pipeline.ts` needed it).
+
+Also fixed: `qa/*`'s `.changeset/config.json` `ignore` list was missing `@praxis-kit/bench`,
+`@praxis-kit/lit`, and `@praxis-kit/web` entirely — none were added when those packages landed.
+Added those three plus `@praxis-kit/tree-shaking-tests`, alphabetized.
+
+Verification: `pnpm --filter @praxis-kit/tree-shaking-tests typecheck` 0 errors;
+`pnpm --filter @praxis-kit/tree-shaking-tests test` (build → assert → gzip) green, 11/11 scenarios
+pass their `mustInclude`/`mustExclude` assertions, fresh `snapshots/gzip.json` baseline recorded and
+re-verified stable on a second run; `pnpm -r typecheck` (27 packages) 0 errors;
+`pnpm lint:check`/`format:check` clean.

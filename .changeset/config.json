@@ -10,12 +10,14 @@
   "privatePackages": { "version": true, "tag": true },
   "ignore": [
     "@praxis-kit/adapter-utils",
+    "@praxis-kit/bench",
     "@praxis-kit/codemod",
     "@praxis-kit/contract",
     "@praxis-kit/contract-props",
     "@praxis-kit/core",
     "@praxis-kit/diagnostics",
     "@praxis-kit/eslint-plugin",
+    "@praxis-kit/lit",
     "@praxis-kit/pipeline",
     "@praxis-kit/pipeline-kit",
     "@praxis-kit/playwright",
@@ -27,8 +29,10 @@
     "@praxis-kit/styling",
     "@praxis-kit/svelte",
     "@praxis-kit/tailwind",
+    "@praxis-kit/tree-shaking-tests",
     "@praxis-kit/typescript-plugin",
     "@praxis-kit/vite-plugin",
-    "@praxis-kit/vue"
+    "@praxis-kit/vue",
+    "@praxis-kit/web"
   ]
 }

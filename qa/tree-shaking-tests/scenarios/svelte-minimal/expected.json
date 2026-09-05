@@ -1,0 +1,10 @@
+{
+  "mustInclude": ["lib/primitive/src", "adapters/svelte/src"],
+  "mustExclude": [
+    "adapters/react/src",
+    "adapters/vue/src",
+    "adapters/solid/src",
+    "adapters/preact/src",
+    "lib/tailwind/src"
+  ]
+}
