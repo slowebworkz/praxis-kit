@@ -3,30 +3,40 @@ import type { LooseBundle, RegistryEntry, UnknownProps, WebContractComponent } f
 
 // Module-local: a second, separately-bundled copy of this adapter package would get its own
 // registry, and a class registered against one copy wouldn't resolve against the other's
-// renderToString. Not a concern today (the monorepo consumes everything from one source copy),
-// but worth flagging for when `packages/kit` starts assembling/bundling these adapters for
+// renderContractToString. Not a concern today (the monorepo consumes everything from one source
+// copy), but worth flagging for when `packages/kit` starts assembling/bundling these adapters for
 // publish — same "single identity across the published graph" invariant already noted on Lit's
 // identical registry (`adapters/lit/src/render-to-string.ts`).
 const ssrRegistry = new WeakMap<WebContractComponent, RegistryEntry>()
 
-/** Called by createContractComponent to enable renderToString for a class. */
+/** Called by createContractComponent to enable renderContractToString for a class. */
 export function registerForSsr(cls: WebContractComponent, bundle: LooseBundle): void {
   ssrRegistry.set(cls, { bundle })
 }
 
 /**
- * Renders a praxis-kit web component to an HTML string without requiring a DOM.
+ * Serializes a praxis-kit web component's **resolved contract** to an HTML string, without
+ * requiring a DOM — not Custom Element SSR, and not a hydration mechanism.
  *
- * The output tag is always `options.tag` — never influenced by an `as` key on `props`, which is
- * stripped below before reaching the shared `renderBundleToString`. See the `as` note on
- * `createContractComponent`'s own doc comment for why: this adapter has no tag polymorphism at
- * all, on either the client or the SSR path, so there is nothing here for `as` to resolve to that
- * would ever match what the live custom element renders.
+ * This distinction matters and is easy to get wrong: the output element is `options.tag`
+ * (`<button>…</button>`, say), never the registered custom-element tag (`<praxis-button>`) —
+ * `createContractComponent`'s own doc comment covers why the two are different concepts ("the
+ * element Praxis models" vs. "the element actually in the DOM"). `customElements.define()` happens
+ * externally, after `createContractComponent()` returns, and this function has no way to know what
+ * name (if any) a caller eventually registers the class under, so there is no tag it could emit
+ * that's guaranteed to match. Even if it could, the browser's Custom Element upgrade mechanism only
+ * upgrades an exact tag-name match — a server-sent `<button>` can never become the live
+ * `<praxis-button>` no matter what the client bundle does, so this was never a viable
+ * SSR-then-upgrade path regardless of naming.
+ *
+ * Use this for what it actually is: previewing/testing the resolved styling + ARIA + attribute
+ * pipeline as plain HTML (static generation, snapshot tests, non-interactive contexts) — not for
+ * server-rendering markup you intend the live custom element to take over.
  *
  * `innerHTML` is treated as a pre-sanitized HTML string and inserted verbatim.
  * Callers are responsible for escaping any untrusted content before passing it.
  */
-export function renderToString(
+export function renderContractToString(
   component: WebContractComponent,
   props: UnknownProps = {},
   innerHTML = '',
@@ -35,7 +45,7 @@ export function renderToString(
   if (!entry) {
     const name = (component as { name?: string }).name ?? 'AnonymousComponent'
     throw new Error(
-      `[renderToString] ${name} was not registered for SSR. ` +
+      `[renderContractToString] ${name} was not registered for SSR. ` +
         'Ensure it was created with createContractComponent from @praxis-kit/web.',
     )
   }

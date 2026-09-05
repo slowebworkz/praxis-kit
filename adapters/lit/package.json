@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "sideEffects": false,
-  "description": "Praxis Kit adapter for Lit — polymorphic custom elements with ARIA contracts and variant composition",
+  "description": "Praxis Kit adapter for Lit — Custom Elements with Praxis styling, ARIA contracts, and structural child validation",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config vitest.config.ts && vitest run --config vitest.ssr.config.ts",

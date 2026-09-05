@@ -1,20 +1,26 @@
 // @vitest-environment node
 //
-// Lit SSR — renders to an HTML string without any DOM globals.
+// Lit SSR — serializes the resolved Praxis contract to an HTML string, without any DOM globals.
+// Not Custom Element SSR: the output tag is always options.tag ('button' below), never the
+// registered custom-element tag ('praxis-button') — see renderContractToString's own doc comment
+// for the full reasoning, and createContractComponent's for the "model vs. host" distinction this
+// follows from. As a consequence, this output isn't meant to be handed to the browser expecting the
+// live custom element to take over it — there's no tag-name match for the platform's Custom Element
+// upgrade mechanism to act on. It's a serialization of the contract's resolved styling/ARIA/
+// attribute pipeline, useful on its own (static generation, snapshot tests, previews).
 //
 // The rendered tag always comes from options.tag, never from an `as` prop — this adapter has no
 // tag polymorphism at all (capabilities.tagPolymorphism: false, both here and in
 // conformance.test.ts), on the DOM path or this SSR path. See createContractComponent's own doc
-// comment for why: a custom element's tag is fixed at customElements.define() time, so honoring
-// `as` here (as an earlier design did) would make SSR output disagree with what the live client
-// could ever actually render.
+// comment for why: an earlier design honored `as` here, making this output disagree even with
+// itself across calls to the same component.
 
 import { describe, it, expect } from 'vitest'
 import { ssrConformanceSuite } from '@praxis-kit/adapter-utils/testing'
 import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from './create-contract-component'
-import { renderToString } from './render-to-string'
+import { renderContractToString } from './render-to-string'
 
 // ─── Conformance suite ────────────────────────────────────────────────────────
 
@@ -24,20 +30,20 @@ ssrConformanceSuite({
       typeof createContractComponent
     > & { displayName?: string },
 
-  renderToString: (component, props = {}) => renderToString(component, props),
+  renderToString: (component, props = {}) => renderContractToString(component, props),
 
   capabilities: { tagPolymorphism: false },
 })
 
 // ─── Lit-specific SSR tests ───────────────────────────────────────────────────
 
-describe('renderToString — Lit-specific', () => {
+describe('renderContractToString — Lit-specific', () => {
   it('renders self-closing element when children is empty', () => {
     const Box = createContractComponent({
       tag: 'div',
       enforcement: { diagnostics: silentDiagnostics },
     })
-    const html = renderToString(Box)
+    const html = renderContractToString(Box)
     expect(html).toBe('<div></div>')
   })
 
@@ -46,14 +52,14 @@ describe('renderToString — Lit-specific', () => {
       tag: 'div',
       enforcement: { diagnostics: silentDiagnostics },
     })
-    const html = renderToString(Box, {}, '<span>hello</span>')
+    const html = renderContractToString(Box, {}, '<span>hello</span>')
     expect(html).toContain('<span>hello</span>')
   })
 
   it('throws if component was not created by createContractComponent', () => {
     expect(() =>
-      renderToString(class {} as unknown as ReturnType<typeof createContractComponent>),
-    ).toThrow('[renderToString]')
+      renderContractToString(class {} as unknown as ReturnType<typeof createContractComponent>),
+    ).toThrow('[renderContractToString]')
   })
 
   it('escapes double quotes in attribute values', () => {
@@ -61,7 +67,7 @@ describe('renderToString — Lit-specific', () => {
       tag: 'div',
       enforcement: { diagnostics: silentDiagnostics },
     })
-    const html = renderToString(Box, { 'aria-label': 'Say "hello"' })
+    const html = renderContractToString(Box, { 'aria-label': 'Say "hello"' })
     expect(html).toContain('&quot;hello&quot;')
     expect(html).not.toContain('"hello"')
   })
@@ -71,7 +77,7 @@ describe('renderToString — Lit-specific', () => {
       tag: 'div',
       enforcement: { diagnostics: silentDiagnostics },
     })
-    const html = renderToString(Box)
+    const html = renderContractToString(Box)
     expect(html).not.toContain('class=')
   })
 
@@ -81,28 +87,31 @@ describe('renderToString — Lit-specific', () => {
       styling: { base: 'base' },
       enforcement: { diagnostics: silentDiagnostics },
     })
-    expect(renderToString(Box, { class: 'extra' })).toContain('extra')
-    expect(renderToString(Box, { className: 'extra' })).toContain('extra')
+    expect(renderContractToString(Box, { class: 'extra' })).toContain('extra')
+    expect(renderContractToString(Box, { className: 'extra' })).toContain('extra')
   })
 })
 
 // ─── DOM/SSR parity — `as` ─────────────────────────────────────────────────────
 //
-// The regression this closes: `renderToString(Box, { as: 'section' })` used to emit `<section>`,
-// a tag the live client (always `<praxis-button>`-shaped, never structurally an anchor/section/
-// whatever `as` named) could never itself produce. These pin the fix at the one seam SSR output
-// is actually generated from — `renderToString`'s own `props` argument — so a future change can't
-// quietly reintroduce a DOM/SSR divergence through that path.
+// The regression this closes: `renderContractToString(Box, { as: 'section' })` used to emit
+// `<section>`, a tag that varied per call for no reason the client ever honored (the live client is
+// always `<praxis-box>`-shaped, never structurally an anchor/section/whatever `as` named). These pin
+// the fix at the one seam this output is actually generated from — `renderContractToString`'s own
+// `props` argument — so a future change can't quietly reintroduce that instability. This is
+// separate from, and doesn't resolve, the base "options.tag vs. the registered custom-element tag"
+// difference documented at the top of this file — that one is constant across every call, by
+// design, not a regression to guard against.
 
-describe('renderToString — `as` has no effect (matches the DOM path)', () => {
+describe('renderContractToString — `as` has no effect', () => {
   it('ignores `as` entirely — output is identical with and without it', () => {
     const Box = createContractComponent({
       tag: 'div',
       styling: { base: 'base' },
       enforcement: { diagnostics: silentDiagnostics },
     })
-    const withoutAs = renderToString(Box, { 'aria-label': 'x' })
-    const withAs = renderToString(Box, { 'aria-label': 'x', as: 'section' })
+    const withoutAs = renderContractToString(Box, { 'aria-label': 'x' })
+    const withAs = renderContractToString(Box, { 'aria-label': 'x', as: 'section' })
     expect(withAs).toBe(withoutAs)
     expect(withAs).not.toContain('<section')
   })
@@ -112,7 +121,7 @@ describe('renderToString — `as` has no effect (matches the DOM path)', () => {
       tag: 'nav',
       enforcement: { diagnostics: silentDiagnostics },
     })
-    const html = renderToString(Nav, { as: 'not-a-real-tag' })
+    const html = renderContractToString(Nav, { as: 'not-a-real-tag' })
     expect(html).toMatch(/^<nav[\s>]/)
   })
 })

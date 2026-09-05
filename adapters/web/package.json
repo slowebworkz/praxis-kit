@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "sideEffects": false,
-  "description": "Praxis Kit vanilla Custom Elements adapter — framework-free polymorphic components with ARIA contracts",
+  "description": "Praxis Kit vanilla Custom Elements adapter — framework-free Custom Elements with Praxis styling, ARIA contracts, and structural child validation",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config vitest.config.ts && vitest run --config vitest.ssr.config.ts",

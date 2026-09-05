@@ -52,21 +52,51 @@ import type { WebContractComponent, WebFactoryOptions, UnknownProps } from './ty
  * alone never fires `attributeChangedCallback`) — call `element.update()` after
  * to trigger an explicit pipeline re-run.
  *
+ * **This adapter is a Custom Element host carrying a Praxis semantic contract — not a
+ * reimplementation of native HTML element behavior.** `options.tag` (`'button'` above) names the
+ * _intrinsic model_ Praxis resolves ARIA roles, content-model rules, and built-in prop
+ * normalizers (`disabledProps`, etc.) against — it is not, and was never meant to be, the tag
+ * actually written to the DOM. The DOM tag is whatever name a caller later passes to
+ * `customElements.define(name, Button)`, entirely separate from `options.tag` and not knowable by
+ * this function at all (registration happens externally, after this returns, possibly under
+ * multiple names or never). So for the example above:
+ *
+ * ```text
+ * Praxis intrinsic model:  button   (options.tag — drives ARIA/content-model/normalizers)
+ * DOM host:                praxis-button   (customElements.define()'s name — the actual element)
+ * ```
+ *
+ * A concrete consequence worth internalizing: `<praxis-button disabled>` gets `aria-disabled` from
+ * the `disabledProps` normalizer (correctly, since `disabled`'s HTML-boolean-attribute semantics
+ * are honored in `_buildProps()` below), but the browser does **not** make the custom element
+ * keyboard-inert, form-participating, or otherwise behave like a real `HTMLButtonElement` — that
+ * gap isn't a bug, it's the direct consequence of `class X extends HTMLElement`, and no ARIA
+ * attribute on any element, custom or not, ever supplies real interactive behavior. The contract
+ * layer (styling, variants, ARIA policy, child enforcement, attribute management, lifecycle hooks,
+ * diagnostics) and the host's actual interactive behavior are — and have to stay — conceptually
+ * separate; a caller who needs real button/link/input behavior supplies it themselves (`onElement`
+ * is the wiring point), the same way any `role="button"` `<div>` would require it. (Customized
+ * built-ins — `class X extends HTMLButtonElement` + `{ extends: 'button' }` — were considered and
+ * rejected for solving this: a real platform mechanism, but a different consumer-facing API
+ * (`<button is="…">` instead of `<praxis-button>`) with its own platform constraints, not worth the
+ * complexity it would add here.)
+ *
  * **No `as` prop.** Like the Lit adapter (this one's closest sibling — both are fixed-identity
  * custom elements, sharing `resolveHostState`/`renderBundleToString` from `@praxis-kit/adapter-utils`),
- * a custom element's tag is fixed at `customElements.define()` time — nothing at render time can
- * turn a `<praxis-button>` into an `<a>`. An earlier design accepted `as` as a semantic-only
- * override (never changing the rendered element, but changing which ARIA/content-model rules
- * applied, as if it really were a different tag). That was worse than not having it: it could
- * produce `role="link"`-shaped output with none of an anchor's actual keyboard/click/middle-click
- * behavior — a real accessibility footgun regardless of the option's name — and it made
- * `renderToString`'s SSR output disagree with the live client, which can only ever produce
- * `<praxis-button>…</praxis-button>` regardless of what tag `as` named. `as` is filtered out
- * unconditionally in `_buildProps()` below (including as a raw, undeclared HTML attribute, not
- * just a declared property) so `resolveHostState`/`renderBundleToString` — shared, unmodified,
- * cross-adapter code — always resolve to `options.tag` here, on both the client and SSR paths.
- * Need different semantics for one instance? Register a second component with a different `tag`,
- * or set `role` directly — both already work today, unaffected by this.
+ * a custom element's DOM tag is fixed at `customElements.define()` time — once the model/host
+ * distinction above is explicit, this becomes easy: there is no tag for `as` to switch. An earlier
+ * design accepted `as` as a semantic-only override (never changing the rendered element, but
+ * changing which ARIA/content-model rules applied, as if it really were a different tag). That was
+ * worse than not having it: it could produce `role="link"`-shaped output with none of an anchor's
+ * actual keyboard/click/middle-click behavior — a real accessibility footgun regardless of the
+ * option's name — and it made `renderContractToString`'s output disagree with itself across calls
+ * to the same component, which can only ever produce `<praxis-button>…</praxis-button>` on the live
+ * client regardless of what tag `as` named. `as` is filtered out unconditionally in `_buildProps()`
+ * below (including as a raw, undeclared HTML attribute, not just a declared property) so
+ * `resolveHostState`/`renderBundleToString` — shared, unmodified, cross-adapter code — always
+ * resolve to `options.tag` here, on both the client and SSR paths. Need different semantics for one
+ * instance? Register a second component with a different `tag`, or set `role` directly — both
+ * already work today, unaffected by this.
  */
 export function createContractComponent<
   TDefault extends ElementType,
@@ -102,7 +132,7 @@ export function createContractComponent<
   // In SSR (Node) environments HTMLElement is not defined. The class still needs
   // to be created so registerForSsr() can register the bundle — but the element
   // lifecycle methods (connectedCallback, attributeChangedCallback) will never
-  // run server-side; only renderToString() is used.
+  // run server-side; only renderContractToString() is used.
   const BaseElement: typeof HTMLElement =
     typeof HTMLElement !== 'undefined' ? HTMLElement : (class {} as unknown as typeof HTMLElement)
 
@@ -234,7 +264,7 @@ export function createContractComponent<
     'Generated class failed to satisfy the WebContractComponent shape',
   )
 
-  // Register for SSR before returning — renderToString looks up the bundle via WeakMap.
+  // Register for SSR before returning — renderContractToString looks up the bundle via WeakMap.
   registerForSsr(contractClass, looseBundle)
 
   const assembled = assembleCompoundComponent(contractClass, options.subComponents)
