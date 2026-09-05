@@ -2041,3 +2041,37 @@ deliberately-broken scenario directory, and an injected stale baseline entry, ea
 expected `FAIL` and non-zero exit, then reverted); `pnpm -r typecheck`/`lint:check`/`format:check`
 clean. Also fixed `configs/typescript.ts`'s `allowDefaultProject` entries for the 4
 tsconfig-excluded scenarios, stale after the `source/` move.
+
+**Second review pass — naming precision, plus four genuinely surgical scenarios.** Two more rounds:
+
+1. **"Published package" was the wrong claim for `scenarios/package/*`.** It consumes
+   `packages/kit`'s built dist through the pnpm workspace link
+   (`node_modules/praxis-kit → packages/kit`), not an actual `pnpm pack` tarball installed into an
+   isolated consumer — so it doesn't cover `files`/npm packing/`.npmignore`/package metadata the way
+   a real install would (`packages/kit/scripts/smoke-test.ts` already does exactly that, for the kit
+   package itself). Corrected every comment in `analyze.ts` and
+   `scenarios/package/react-minimal/entry.ts` to call this **package-consumption testing** and name
+   published-package testing (a `pnpm pack`-based version of this same scenario group) as the real,
+   not-yet-done follow-up, rather than overclaiming it already happened. Not a functional change —
+   the test itself was already doing something real and useful, just mislabeled.
+2. **Added `package/{contract,guards,html,utils}-only`** — genuinely surgical scenarios, unlike an
+   adapter-scoped equivalent would have been. Considered `react-primitive-only`/`react-aria-only`/
+   etc. first and dropped them: every `praxis-kit/<adapter>` entry's only real export is
+   `createContractComponent`, already bundled as one function by `packages/kit`'s own build —
+   there's no shallower value-level import an adapter entry offers that would pull in less. This is
+   exactly why the 5 original `source/*` "depth" scenarios (`aria-only`, `contracts-only`,
+   `full-runtime`, `minimal-polymorphic`, `polymorphic-validation`) all produce byte-identical
+   bundles (142 live modules each, confirmed again on this rebuild) — their only differences are
+   type-only imports, erased before esbuild ever sees them. The framework-neutral entries
+   (`contract`, `guards`, `html`, `utils`) are where real, distinct footprints exist to test:
+   confirmed empirically, not assumed — `guards-only`/`utils-only` (pure `@praxis-kit/primitive`
+   re-exports) each resolve to exactly **1** live module and ~120–350 bytes gzip; `contract-only`
+   (core + primitive, no diagnostics — its only `Diagnostics` reference is `import type`, erased) is
+   **1** module, 917 bytes; `html-only` (core, and a real runtime diagnostics import, unlike
+   `contract`) is **2** modules (its own file + the shared diagnostics chunk), 8221 bytes — versus
+   20–22 KB for any framework adapter entry. That range (118 B → 8.2 KB → 20+ KB) is the kind of
+   real size discrimination the original "depth" scenarios never actually produced.
+
+Verification: same as above, rerun with all 20 scenarios (16 + 4 new) — `pnpm test` 20/20 pass,
+`snapshots/gzip.json` regenerated via `gzip:update`, `pnpm -r typecheck`/`lint:check`/
+`format:check` clean.

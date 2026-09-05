@@ -7,13 +7,17 @@
  *   - source/  — imports `@praxis-kit/<name>` and resolves it straight to this workspace's
  *     TypeScript source (via the `alias` map below). Answers "can esbuild tree-shake our current
  *     source architecture?" No prior build required.
- *   - package/ — imports `praxis-kit/<name>` (the single published package's real subpath) and
- *     resolves it via ordinary node module resolution against `packages/kit`'s *built* dist/ —
- *     no alias at all. Answers "can a customer tree-shake the package we actually publish?"
- *     Requires `pnpm --filter praxis-kit build` to have already run.
- * These are materially different tests — source-graph tree-shakeability doesn't guarantee the
- * built, minified, externals-resolved package tree-shakes the same way, and only the second one
- * is what a real consumer experiences.
+ *   - package/ — imports `praxis-kit/<name>` and resolves it via ordinary node module resolution
+ *     against `packages/kit`'s *built* dist/ — no alias at all. This is **package-consumption
+ *     testing**, not published-package testing: resolution goes through the pnpm workspace link
+ *     (`node_modules/praxis-kit` → `packages/kit`), not an actual `pnpm pack` tarball installed
+ *     into an isolated consumer, so it doesn't cover `files`/npm packing/`.npmignore`/package
+ *     metadata the way a real install would (`packages/kit/scripts/smoke-test.ts` does that, for
+ *     the kit package itself). It still answers a real, different question from `source/`: "does
+ *     the built, minified, externals-resolved JS this workspace produces actually tree-shake,"
+ *     not just "does the source graph." Requires `pnpm --filter praxis-kit build` to have already
+ *     run. A `pnpm pack`-based version of this scenario group, for genuine published-package
+ *     testing, is a real follow-up — see DECISIONS.md.
  */
 import { build } from 'esbuild'
 import { existsSync } from 'node:fs'
@@ -134,7 +138,7 @@ for (const group of ['source', 'package'] as const) {
 
   if (group === 'package' && !existsSync(join(root, 'packages/kit/dist'))) {
     throw new Error(
-      'scenarios/package/* import the published `praxis-kit` package, which has no dist/ yet — ' +
+      'scenarios/package/* consume `packages/kit`, which has no dist/ yet — ' +
         'run `pnpm --filter praxis-kit build` first.',
     )
   }

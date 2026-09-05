@@ -32,6 +32,15 @@
   "source/vue-minimal": {
     "gzip": 20459
   },
+  "package/contract-only": {
+    "gzip": 917
+  },
+  "package/guards-only": {
+    "gzip": 353
+  },
+  "package/html-only": {
+    "gzip": 8221
+  },
   "package/lit-minimal": {
     "gzip": 20484
   },
@@ -40,6 +49,9 @@
   },
   "package/react-minimal": {
     "gzip": 21921
+  },
+  "package/utils-only": {
+    "gzip": 118
   },
   "package/vue-minimal": {
     "gzip": 21218
