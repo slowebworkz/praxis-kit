@@ -7,6 +7,7 @@
     { "path": "./adapters/solid" },
     { "path": "./adapters/svelte" },
     { "path": "./adapters/vue" },
+    { "path": "./adapters/web" },
     { "path": "./lib/adapter-utils" },
     { "path": "./lib/contract" },
     { "path": "./lib/contract-props" },

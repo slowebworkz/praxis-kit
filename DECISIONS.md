@@ -1562,3 +1562,61 @@ identity across the published graph" invariant already called out for `Diagnosti
 Verification: `pnpm -r typecheck` (23 packages) 0 errors, `pnpm -r test` all packages green
 (`adapters/lit` 141/141, up from 135), `pnpm lint:check` clean, `pnpm format:check` clean (no new
 drift — the pre-existing 19 flagged files still sit outside everything touched here).
+
+### `adapters/web` — port scope and adaptations
+
+Seventh and final framework adapter — `../pk`'s full adapter set is now ported. A plain
+`HTMLElement` subclass, no framework dependency at all (no peer dependency either — "the
+zero-framework path"). Architecturally Lit's closest sibling: both are fixed-identity custom
+elements sharing `resolveHostState`/`renderBundleToString`/`diffAndApplyAttributes` from
+`@praxis-kit/adapter-utils`, and Web's own reactivity is even simpler — no framework runtime at all,
+just the native `observedAttributes`/`attributeChangedCallback` lifecycle plus a manual `update()`
+escape hatch for anything that isn't an observed attribute. 15 files, 91 tests (63 jsdom, 28 SSR).
+
+Applied the exact `as`-removal design fix from `adapters/lit`'s own port proactively, rather than
+porting the bug forward and re-discovering it — `../pk`'s web adapter has the textually identical
+issue: `as` was observed (`observedAttrNames`), overlaid into `_buildProps()`
+(`self.as ?? this.getAttribute('as')`), and reached `resolveHostState`/`renderBundleToString`
+exactly like Lit's did, with the identical two failure modes (a `role`-without-behavior
+accessibility footgun, and `renderToString(Button, { as: 'a' })` disagreeing with what the live
+`<praxis-button>` could ever render). Fixed the same way: removed from `observedAttrNames`, filtered
+out of the raw-attribute scan in `_buildProps()` (so an undeclared `as="…"` attribute is inert too),
+and stripped from `props` in the standalone `renderToString()` SSR entry before it reaches the
+shared `renderBundleToString`. `ssrConformanceSuite` call gets
+`capabilities: { tagPolymorphism: false }`, using the gate added to
+`SsrConformanceAdapter`/`ssrConformanceSuite` during the Lit port (`lib/adapter-utils` — no further
+changes needed there, this port just consumes it). New `property-attribute-convergence.test.ts` here
+differs from Lit's in a genuinely adapter-specific way, not a copy-paste: Web has no declared
+reactive-property accessors at all (unlike Lit's `static get properties()`), so a praxis-owned
+property set directly (`el.direction = 'row'`) does **not** auto-trigger the pipeline the way
+`setAttribute` does — convergence only holds once `.update()` is called explicitly. Both halves are
+pinned: convergence after `.update()`, and an explicit test that skipping it leaves the pipeline
+stale (a real behavioral difference from Lit worth documenting, not an oversight to paper over).
+
+Other adaptations, same class of fix `adapters/lit` and every prior adapter needed:
+
+- **`package.json`:** `../pk` had `@praxis-kit/primitive` correctly in real `dependencies` already
+  (unlike Lit, where every praxis dep was miscategorized) but still had
+  `adapter-utils`/`core`/`diagnostics` in `devDependencies` — moved all four to `dependencies`.
+  `exports` switched to the source-consumed convention; dropped `files`/`repository`/`homepage`/
+  `bugs`/`license`/`author`/`keywords`/`engines`/per-package `lint` scripts, `eslint.config.ts`
+  (root-only lint here, like every other adapter).
+- **No framework-specific `tsconfig.<name>.json` needed** — zero `.tsx`, so `tsconfig.json` extends
+  `../../tsconfig.base.json` directly, same as Vue's and Lit's.
+- **`vitest.config.ts` ported with one real detail preserved, not simplified away**: `../pk`'s sets
+  `pool: 'forks'` with a comment explaining why (jsdom's `HTMLElement` instances carry circular
+  references that overflow Vitest's IPC serializer under the default pool) — kept verbatim, since
+  dropping it silently would reintroduce whatever failure it was added to prevent.
+- **`configs/architecture.ts` gap found and fixed — present in `../pk` too, same as Lit's.** Added
+  `{ type: 'web', pattern: 'adapters/web/**/*' }` to `boundaries/elements`. No `core`-boundary
+  disallow-list entry needed for Web specifically (unlike Lit/`lit`, `react`, etc.) — Web imports no
+  framework npm package at all, so there's no dependency name to forbid.
+- **README bugs found and fixed, both**: same `defineContractComponent` "registers the component as
+  a custom element" error Lit's README had (identical shared implementation, identical fix — it only
+  curries factory options); and a second, Web-specific one — the README claimed the adapter "Uses
+  `@praxis-kit/runtime` for rendering instead of a host framework," but nothing in `package.json` or
+  any source file references that package at all. Rewrote around the real, dependency-free
+  implementation.
+
+Verification: `pnpm -r typecheck` (24 packages) 0 errors, `pnpm -r test` all packages green
+(`adapters/web` 91/91), `pnpm lint:check` clean, `pnpm format:check` clean.

@@ -19,6 +19,7 @@
       "@praxis-kit/solid": ["./adapters/solid/src/index.ts"],
       "@praxis-kit/svelte": ["./adapters/svelte/src/index.ts"],
       "@praxis-kit/vue": ["./adapters/vue/src/index.ts"],
+      "@praxis-kit/web": ["./adapters/web/src/index.ts"],
       "@praxis-kit/pipeline": ["./lib/pipeline/src"],
       "@praxis-kit/pipeline/*": ["./lib/pipeline/src/*"],
       "@praxis-kit/pipeline-kit": ["./lib/pipeline-kit/src"],
