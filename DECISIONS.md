@@ -2100,9 +2100,11 @@ happened to already exist locally from earlier work. This is exactly the problem
 `pnpm verify` (`scripts/build-pipeline.ts`, threading `@praxis-kit/pipeline/node`'s `shellPass`)
 solves — but that subpath doesn't exist in this repo's `lib/pipeline` either (the same reason
 `qa/tree-shaking-tests`' own `pipeline.ts` was dropped, not ported). Added a plain root script
-instead of a new pipeline file: `"verify": "pnpm --filter praxis-kit build && pnpm check"` — two
+instead of a new pipeline file: `"verify": "pnpm --filter ./packages/kit build && pnpm check"` — two
 sequential commands don't need a `Pass`-chain abstraction. Confirmed fixed the same way the bug was
-found: moved `dist/` aside again, ran `pnpm verify`, clean.
+found: moved `dist/` aside again, ran `pnpm verify`, clean. (The filter was originally name-based —
+`--filter praxis-kit` — until a second, independent bug made that unsafe; see
+"`verify`/`publish.yml` — the `--filter praxis-kit` name collision" below.)
 
 **`publish.yml` diverges from `../pk`'s in one deliberate way**: dropped the
 `cp README.md packages/kit/README.md` step. `../pk` republishes the root project README as the npm
@@ -2129,3 +2131,82 @@ Verification: `pnpm verify` and `pnpm build` both confirmed clean from a simulat
 threshold); `pnpm lint:check`/`format:check` clean; both workflow YAML files validated (Prettier's
 own YAML parser, plus a structural diff against `../pk`'s known-working versions — `actionlint`
 wasn't available in this environment to check further).
+
+### `packages/kit` — both deferred gaps from the real build closed
+
+The `packages/kit` real-build entry above deferred `solid` (no rolldown-native JSX transform known
+to exist in this workspace) and `svelte`'s `.d.ts` (`rolldown-plugin-dts` couldn't bundle through
+its ambient `declare module 'svelte'` type-export style) rather than force either. Revisited both —
+not by guessing, by checking what's actually available now:
+
+- **Solid.** `unplugin-solid/rolldown` is a real, currently-maintained rolldown-native Solid JSX
+  transform — confirmed via tsdown's own documented Solid recipe
+  (`tsdown.dev/recipes/solid-support`), not just a registry search. Added `unplugin-solid`
+  (`^2.0.0`, catalog) and wired `plugins: [solid()]` into the `solid` entry. Built clean on the
+  first real attempt: `dist/solid/ index.js` shows genuine Solid-compiled output
+  (`Dynamic`/`createComponent` from `solid-js/web`, not raw JSX), `solid-js`/`solid-js/web`
+  correctly external (the same `deps.neverBundle` mechanism every other framework entry uses), and
+  `dist/solid/index.d.ts` generated without any special handling — Solid's own type shape apparently
+  has no `rolldown-plugin-dts` quirk analogous to Svelte's. Added `praxis-kit/solid` to the
+  `exports` map, `typesVersions`, the packed-tarball smoke test, and a new
+  `qa/tree-shaking-tests/scenarios/package/solid-minimal`.
+- **Svelte's declarations.** Traced the exact upstream fix rather than re-attempting the same
+  workarounds already ruled out: `rolldown-plugin-dts@0.28.5`'s changelog lists "treat script-style
+  ambient declarations as modules" — exactly the failure mode hit before
+  (`[MISSING_EXPORT] "Snippet" is not exported by .../svelte/types/index.d.ts`). The installed
+  `tsdown@0.22.14` pins `rolldown-plugin-dts@^0.27.13` (a 0.x caret range — doesn't reach 0.28.x on
+  its own); `tsdown@0.23.0` bumps that pin to `^0.28.5`. Bumped the `tsdown` catalog entry
+  (`^0.22.14` → `^0.23.0`) and re-enabled `dts` on the `svelte` entry — confirmed, not assumed:
+  `dist/svelte/index.d.ts` now generates correctly (51 KB, `import { Snippet } from "svelte"`
+  resolved as a clean external type reference, no error). Re-verified `plugins/typescript` and
+  `tooling/codemod` (this repo's two other `tsdown` consumers) still build clean after the bump —
+  the ts-plugin build emits a new, pre-existing-shape "CommonJS dts syntax" advisory (its `.d.ts` is
+  a genuine `export =` shape) that doesn't affect its correct, unchanged output.
+- `praxis-kit/svelte` gained a real `types` field in `exports` and an entry in `typesVersions`
+  (previously JS-only); added to the packed-tarball smoke test's type-resolution check now that
+  there's a real declaration to resolve.
+
+`packages/kit/README.md`'s status table updated — every framework entry is now ✅ ready, with a new
+"Formerly-deferred gaps, now resolved" section replacing "Known gaps."
+
+Verification: `pnpm --filter praxis-kit build` clean (all entries, `dist/solid` and
+`dist/svelte/index.d.ts` both real); `pnpm --filter praxis-kit typecheck` and `pnpm -r typecheck`
+(27 packages) 0 errors; `pnpm --filter praxis-kit lint:pkg` (`publint`) clean;
+`pnpm --filter praxis-kit test:pack` clean (15 runtime-import entries, 14 type-resolution entries,
+the codemod bin through its real symlink); `qa/tree-shaking-tests` rebuilt with the new
+`package/solid-minimal` scenario, 21/21 pass, gzip baseline regenerated;
+`pnpm lint:check`/`format:check` clean.
+
+### `verify`/`publish.yml` — the `--filter praxis-kit` name collision
+
+CI's first real run on this branch (PR #42) failed on the `Verify` step, with the exact symptom
+`pnpm verify` was supposed to have already fixed: `Cannot find module 'praxis-kit/solid'` (and
+`react`/`lit`/`html`/`contract`), from `qa/tree-shaking-tests`' own typecheck. Confusing, since this
+is precisely the ordering bug the previous entry fixed — but the actual root cause was different and
+hadn't surfaced locally.
+
+**`pnpm --filter praxis-kit` is ambiguous in this repo — not a typo, a genuine name collision.** The
+root workspace `package.json` is named `"praxis-kit"` (its own real identity), and
+`packages/kit/package.json` is _also_ `"praxis-kit"` (the actual published npm name). Confirmed
+directly: `pnpm --filter praxis-kit list --depth -1` prints both `.` and `packages/kit`. A
+name-based `--filter praxis-kit build` therefore runs **both** matched packages' `build` scripts —
+including the root's own `pnpm typecheck && pnpm -r build`, which recursively typechecks
+`qa/tree-shaking-tests` before `packages/kit`'s own build has written `dist/`, if pnpm happens to
+schedule the root's script first. Every local verification of `pnpm verify` up to this point
+happened to schedule `packages/kit`'s own build first — pure luck, not correctness — so the bug
+never showed up until CI's run had the unlucky order.
+
+`../pk`'s own `publish.yml` already used a **path** filter (`--filter ./packages/kit build`) for
+exactly this reason — porting it to a name filter (`--filter praxis-kit build`) was an unintentional
+regression made when this repo's `ci.yml`/`publish.yml`/`verify` were first written, not a
+deliberate divergence. Fixed by switching every occurrence back to the path form: the root `verify`
+script, `publish.yml`'s `Build` step, and the doc comment in `packages/kit/scripts/smoke-test.ts`
+suggesting how to invoke `test:pack` manually. A path filter matches by location, not name, so it
+can't collide regardless of what any package happens to be called.
+
+Verification: reproduced the exact failure locally first (`pnpm --filter praxis-kit list --depth -1`
+prints both packages), then confirmed the fix the same way — `packages/kit/dist` removed,
+`pnpm verify` then `pnpm build` both run fresh end-to-end, both exit 0, `qa/tree-shaking-tests`'
+`package/*` scenarios resolve correctly throughout. `pnpm --filter ./packages/kit build` alone
+prints no "Scope: 2 of 27" line (unlike the old name filter), confirming the collision is actually
+gone, not just no longer triggered.

@@ -1,6 +1,7 @@
 import { resolve as resolvePath, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'tsdown'
+import solid from 'unplugin-solid/rolldown'
 import rootPaths from '../../tsconfig.paths.json' with { type: 'json' }
 import type { StringMap } from '@praxis-kit/primitive'
 
@@ -92,6 +93,22 @@ export default defineConfig([
     deps: { neverBundle: [diagnostics, 'vue', /^vue\//] },
   },
 
+  // Solid — needs a real JSX transform (Solid compiles JSX to reactive DOM-expression code, not
+  // React-style createElement calls), unlike every other adapter here. `unplugin-solid/rolldown`
+  // (backed by `babel-preset-solid`, the same compiler `esbuild-plugin-solid` wraps for `../pk`'s
+  // tsup build) is the rolldown-native equivalent — this was a genuinely open question when this
+  // config was first written (no rolldown-native Solid transform was known to exist in this
+  // workspace at the time); confirmed via the tsdown project's own documented Solid recipe.
+  {
+    entry: { 'solid/index': '../../adapters/solid/src/index.ts' },
+    format: ['esm'],
+    dts: dts(),
+    tsconfig: '../../adapters/solid/tsconfig.json',
+    fixedExtension: false,
+    deps: { neverBundle: [diagnostics, 'solid-js', /^solid-js\//] },
+    plugins: [solid()],
+  },
+
   // Lit
   {
     entry: { 'lit/index': '../../adapters/lit/src/index.ts' },
@@ -112,19 +129,14 @@ export default defineConfig([
   {
     entry: { 'svelte/index': '../../adapters/svelte/src/index.ts' },
     format: ['esm'],
-    // KNOWN GAP, not a config bug: `dts` is disabled for this entry only. `svelte`'s own shipped
-    // types use `declare module 'svelte' { ... }` ambient-module-augmentation style rather than
-    // plain top-level `export`s. rolldown-plugin-dts (both its `oxc` and `tsc` resolver modes —
-    // both tried) bundles declarations by statically binding re-exports through rolldown's own
-    // linker, which doesn't resolve an ambient `declare module` re-export
+    // `dts` was disabled here for a while: rolldown-plugin-dts couldn't bundle declarations
+    // through svelte's `declare module 'svelte' { ... }` ambient-module-augmentation style
     // (`[MISSING_EXPORT] "Snippet" is not exported by .../svelte/types/index.d.ts`, even though
-    // `Snippet` is genuinely declared there). `rollup-plugin-dts` (what tsup/pk's build used)
-    // handles this package shape natively; rolldown-plugin-dts does not yet, and exposes no
-    // external/opaque-module escape hatch for it. The JS build is unaffected (the `Snippet` import
-    // is `import type`, erased at that level) — only `dist/svelte/index.d.ts` is missing until this
-    // is resolved upstream or `adapters/svelte`'s public prop types stop surfacing `Snippet`.
-    // Tracked in DECISIONS.md.
-    dts: false,
+    // `Snippet` is genuinely declared there). Fixed by tsdown 0.23.0's bundled
+    // rolldown-plugin-dts@^0.28.5 ("Treat script-style ambient declarations as modules" —
+    // confirmed empirically, not just by the changelog line: re-enabling this produces a real,
+    // correct `dist/svelte/index.d.ts` now). See DECISIONS.md.
+    dts: dts(),
     tsconfig: '../../adapters/svelte/tsconfig.json',
     fixedExtension: false,
     deps: { neverBundle: [diagnostics] },

@@ -32,6 +32,7 @@
     "lit": "catalog:",
     "preact": "catalog:",
     "react": "catalog:",
+    "solid-js": "catalog:",
     "typescript": "catalog:",
     "vue": "catalog:"
   }
