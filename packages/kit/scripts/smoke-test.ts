@@ -28,6 +28,7 @@ const ENTRIES = [
   'react/legacy',
   'preact',
   'vue',
+  'solid',
   'lit',
   'web',
   'svelte',
@@ -45,6 +46,7 @@ const PEERS = [
   'react-dom',
   'vue',
   'preact',
+  'solid-js',
   'lit',
   'svelte',
   'eslint',
@@ -56,11 +58,10 @@ const PEERS = [
 // read that entry's `.d.ts` from the installed tarball, not just confirm the file exists. Catches
 // what a runtime `import()` check can't: a wrong `types` path, a broken declaration import, a
 // `typesVersions` mistake, or a stray unresolved `@praxis-kit/*` reference leaking into public
-// types. `svelte` is excluded — it ships JS-only, a known/documented gap, not an oversight here.
-// `codemod` is excluded — its `.d.ts` is `export {}` (a CLI with no importable API surface), so
-// there's nothing to resolve. `ts-plugin` is excluded — its CJS `export = init` shape needs
-// different import syntax than every other (ESM, named-export) entry, and it's excluded from the
-// runtime import check above for the same underlying reason.
+// types. `codemod` is excluded — its `.d.ts` is `export {}` (a CLI with no importable API
+// surface), so there's nothing to resolve. `ts-plugin` is excluded — its CJS `export = init` shape
+// needs different import syntax than every other (ESM, named-export) entry, and it's excluded
+// from the runtime import check above for the same underlying reason.
 //
 // Confirmed with a negative control: renaming one of these to a nonexistent export makes this step
 // fail with a real `tsc` TS2305 "has no exported member" error, not a silent pass.
@@ -69,8 +70,10 @@ const TYPE_CHECK_ENTRIES: Record<string, string> = {
   'react/legacy': 'AnyFactoryOptions',
   preact: 'AnyFactoryOptions',
   vue: 'AnyFactoryOptions',
+  solid: 'AnyFactoryOptions',
   lit: 'AnyFactoryOptions',
   web: 'AnyFactoryOptions',
+  svelte: 'AnyFactoryOptions',
   tailwind: 'ClassBuilder',
   eslint: 'plugin',
   'vite-plugin': 'ComponentConstraint',

@@ -2129,3 +2129,48 @@ Verification: `pnpm verify` and `pnpm build` both confirmed clean from a simulat
 threshold); `pnpm lint:check`/`format:check` clean; both workflow YAML files validated (Prettier's
 own YAML parser, plus a structural diff against `../pk`'s known-working versions — `actionlint`
 wasn't available in this environment to check further).
+
+### `packages/kit` — both deferred gaps from the real build closed
+
+The `packages/kit` real-build entry above deferred `solid` (no rolldown-native JSX transform known
+to exist in this workspace) and `svelte`'s `.d.ts` (`rolldown-plugin-dts` couldn't bundle through
+its ambient `declare module 'svelte'` type-export style) rather than force either. Revisited both —
+not by guessing, by checking what's actually available now:
+
+- **Solid.** `unplugin-solid/rolldown` is a real, currently-maintained rolldown-native Solid JSX
+  transform — confirmed via tsdown's own documented Solid recipe
+  (`tsdown.dev/recipes/solid-support`), not just a registry search. Added `unplugin-solid`
+  (`^2.0.0`, catalog) and wired `plugins: [solid()]` into the `solid` entry. Built clean on the
+  first real attempt: `dist/solid/ index.js` shows genuine Solid-compiled output
+  (`Dynamic`/`createComponent` from `solid-js/web`, not raw JSX), `solid-js`/`solid-js/web`
+  correctly external (the same `deps.neverBundle` mechanism every other framework entry uses), and
+  `dist/solid/index.d.ts` generated without any special handling — Solid's own type shape apparently
+  has no `rolldown-plugin-dts` quirk analogous to Svelte's. Added `praxis-kit/solid` to the
+  `exports` map, `typesVersions`, the packed-tarball smoke test, and a new
+  `qa/tree-shaking-tests/scenarios/package/solid-minimal`.
+- **Svelte's declarations.** Traced the exact upstream fix rather than re-attempting the same
+  workarounds already ruled out: `rolldown-plugin-dts@0.28.5`'s changelog lists "treat script-style
+  ambient declarations as modules" — exactly the failure mode hit before
+  (`[MISSING_EXPORT] "Snippet" is not exported by .../svelte/types/index.d.ts`). The installed
+  `tsdown@0.22.14` pins `rolldown-plugin-dts@^0.27.13` (a 0.x caret range — doesn't reach 0.28.x on
+  its own); `tsdown@0.23.0` bumps that pin to `^0.28.5`. Bumped the `tsdown` catalog entry
+  (`^0.22.14` → `^0.23.0`) and re-enabled `dts` on the `svelte` entry — confirmed, not assumed:
+  `dist/svelte/index.d.ts` now generates correctly (51 KB, `import { Snippet } from "svelte"`
+  resolved as a clean external type reference, no error). Re-verified `plugins/typescript` and
+  `tooling/codemod` (this repo's two other `tsdown` consumers) still build clean after the bump —
+  the ts-plugin build emits a new, pre-existing-shape "CommonJS dts syntax" advisory (its `.d.ts` is
+  a genuine `export =` shape) that doesn't affect its correct, unchanged output.
+- `praxis-kit/svelte` gained a real `types` field in `exports` and an entry in `typesVersions`
+  (previously JS-only); added to the packed-tarball smoke test's type-resolution check now that
+  there's a real declaration to resolve.
+
+`packages/kit/README.md`'s status table updated — every framework entry is now ✅ ready, with a new
+"Formerly-deferred gaps, now resolved" section replacing "Known gaps."
+
+Verification: `pnpm --filter praxis-kit build` clean (all entries, `dist/solid` and
+`dist/svelte/index.d.ts` both real); `pnpm --filter praxis-kit typecheck` and `pnpm -r typecheck`
+(27 packages) 0 errors; `pnpm --filter praxis-kit lint:pkg` (`publint`) clean;
+`pnpm --filter praxis-kit test:pack` clean (15 runtime-import entries, 14 type-resolution entries,
+the codemod bin through its real symlink); `qa/tree-shaking-tests` rebuilt with the new
+`package/solid-minimal` scenario, 21/21 pass, gzip baseline regenerated;
+`pnpm lint:check`/`format:check` clean.

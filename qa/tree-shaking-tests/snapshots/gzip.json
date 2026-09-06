@@ -50,6 +50,9 @@
   "package/react-minimal": {
     "gzip": 21921
   },
+  "package/solid-minimal": {
+    "gzip": 20644
+  },
   "package/utils-only": {
     "gzip": 118
   },
