@@ -2246,3 +2246,21 @@ push produces **no** workflow run at all — the correct behavior for a non-`mai
 branch push in this session produced a phantom, zero-job `codeql.yml` failure; this one produced
 none, confirming the diagnosis (a parse-time schema failure, not a real per-branch trigger) rather
 than just the changelog-adjacent theory.
+
+### `SECURITY.md` — ported near-verbatim, one section genuinely doesn't apply yet
+
+`../pk`'s `SECURITY.md` is almost entirely repo-identity-agnostic content that's already correct for
+this repo as-is: the GitHub Security Advisories URL and repository links already point at
+`slowebworkz/praxis-kit` (the real repo both `../pk` and this repo's own `package.json`
+`repository.url` use), the reporter's email matches this repo's own author metadata, and the
+7-adapter list (React, Preact, Vue, Solid, Svelte, Lit, Web) matches exactly. The "Scope" section
+and the `examples/*`/`tooling/*`/`qa/*` lower-priority note both describe policy that holds
+regardless of what's ported yet.
+
+**One section needed a real edit, not a copy.** "Supported Versions" claimed `4.x` is the current
+supported major — false for this repo: `packages/kit` is still `private: true`, version `0.0.0`,
+nothing has ever been published. Copying that table verbatim would have been a real, checkable false
+claim in a security policy specifically, not a harmless stale detail. Replaced with an honest
+not-yet-published statement instead of inventing a plausible-looking version number.
+
+Verification: `format:check`/markdownlint clean.
