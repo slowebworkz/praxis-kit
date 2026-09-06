@@ -33,8 +33,15 @@ jobs:
       # (packages/kit's published subpaths), which don't exist until packages/kit itself is
       # built — a full `pnpm build` would typecheck those first and fail. The repo-wide check
       # already gates every merge via ci.yml's `pnpm verify`.
+      #
+      # `--filter ./packages/kit`, not `--filter praxis-kit`: the root workspace package.json is
+      # also named "praxis-kit" (its real npm name), so a name-based filter matches *both* and runs
+      # both their `build` scripts — including the root's own `pnpm typecheck && pnpm -r build`,
+      # which recursively typechecks qa/tree-shaking-tests before packages/kit's own build has
+      # written dist/. Confirmed the hard way: this is what broke CI on #42 (`pnpm verify` used the
+      # same ambiguous filter). A path filter is unambiguous regardless of name collisions.
       - name: Build
-        run: pnpm --filter praxis-kit build
+        run: pnpm --filter ./packages/kit build
 
       - name: Configure npm auth
         run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc

@@ -8,9 +8,10 @@
 // this repo's own pnpm workspace (so nothing resolves via workspace hoisting) → exercise every
 // public entry the way a consumer's code actually would.
 //
-// Run: pnpm --filter praxis-kit test:pack (from anywhere), or `tsx scripts/smoke-test.ts` from
-// this directory. Exits non-zero on any failure — safe to wire into CI once CI itself is ported
-// (see .vscode/MIGRATION.md).
+// Run: pnpm --filter ./packages/kit test:pack (from anywhere — a *path* filter; the root
+// workspace package.json is also named "praxis-kit", so a name filter matches both and runs both
+// their scripts), or `tsx scripts/smoke-test.ts` from this directory. Exits non-zero on any
+// failure — safe to wire into CI once CI itself is ported (see .vscode/MIGRATION.md).
 
 import { spawnSync } from 'node:child_process'
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, existsSync } from 'node:fs'

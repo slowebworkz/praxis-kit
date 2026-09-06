@@ -2100,9 +2100,11 @@ happened to already exist locally from earlier work. This is exactly the problem
 `pnpm verify` (`scripts/build-pipeline.ts`, threading `@praxis-kit/pipeline/node`'s `shellPass`)
 solves — but that subpath doesn't exist in this repo's `lib/pipeline` either (the same reason
 `qa/tree-shaking-tests`' own `pipeline.ts` was dropped, not ported). Added a plain root script
-instead of a new pipeline file: `"verify": "pnpm --filter praxis-kit build && pnpm check"` — two
+instead of a new pipeline file: `"verify": "pnpm --filter ./packages/kit build && pnpm check"` — two
 sequential commands don't need a `Pass`-chain abstraction. Confirmed fixed the same way the bug was
-found: moved `dist/` aside again, ran `pnpm verify`, clean.
+found: moved `dist/` aside again, ran `pnpm verify`, clean. (The filter was originally name-based —
+`--filter praxis-kit` — until a second, independent bug made that unsafe; see
+"`verify`/`publish.yml` — the `--filter praxis-kit` name collision" below.)
 
 **`publish.yml` diverges from `../pk`'s in one deliberate way**: dropped the
 `cp README.md packages/kit/README.md` step. `../pk` republishes the root project README as the npm
@@ -2174,3 +2176,37 @@ Verification: `pnpm --filter praxis-kit build` clean (all entries, `dist/solid` 
 the codemod bin through its real symlink); `qa/tree-shaking-tests` rebuilt with the new
 `package/solid-minimal` scenario, 21/21 pass, gzip baseline regenerated;
 `pnpm lint:check`/`format:check` clean.
+
+### `verify`/`publish.yml` — the `--filter praxis-kit` name collision
+
+CI's first real run on this branch (PR #42) failed on the `Verify` step, with the exact symptom
+`pnpm verify` was supposed to have already fixed: `Cannot find module 'praxis-kit/solid'` (and
+`react`/`lit`/`html`/`contract`), from `qa/tree-shaking-tests`' own typecheck. Confusing, since this
+is precisely the ordering bug the previous entry fixed — but the actual root cause was different and
+hadn't surfaced locally.
+
+**`pnpm --filter praxis-kit` is ambiguous in this repo — not a typo, a genuine name collision.** The
+root workspace `package.json` is named `"praxis-kit"` (its own real identity), and
+`packages/kit/package.json` is _also_ `"praxis-kit"` (the actual published npm name). Confirmed
+directly: `pnpm --filter praxis-kit list --depth -1` prints both `.` and `packages/kit`. A
+name-based `--filter praxis-kit build` therefore runs **both** matched packages' `build` scripts —
+including the root's own `pnpm typecheck && pnpm -r build`, which recursively typechecks
+`qa/tree-shaking-tests` before `packages/kit`'s own build has written `dist/`, if pnpm happens to
+schedule the root's script first. Every local verification of `pnpm verify` up to this point
+happened to schedule `packages/kit`'s own build first — pure luck, not correctness — so the bug
+never showed up until CI's run had the unlucky order.
+
+`../pk`'s own `publish.yml` already used a **path** filter (`--filter ./packages/kit build`) for
+exactly this reason — porting it to a name filter (`--filter praxis-kit build`) was an unintentional
+regression made when this repo's `ci.yml`/`publish.yml`/`verify` were first written, not a
+deliberate divergence. Fixed by switching every occurrence back to the path form: the root `verify`
+script, `publish.yml`'s `Build` step, and the doc comment in `packages/kit/scripts/smoke-test.ts`
+suggesting how to invoke `test:pack` manually. A path filter matches by location, not name, so it
+can't collide regardless of what any package happens to be called.
+
+Verification: reproduced the exact failure locally first (`pnpm --filter praxis-kit list --depth -1`
+prints both packages), then confirmed the fix the same way — `packages/kit/dist` removed,
+`pnpm verify` then `pnpm build` both run fresh end-to-end, both exit 0, `qa/tree-shaking-tests`'
+`package/*` scenarios resolve correctly throughout. `pnpm --filter ./packages/kit build` alone
+prints no "Scope: 2 of 27" line (unlike the old name filter), confirming the collision is actually
+gone, not just no longer triggered.
