@@ -2240,7 +2240,9 @@ fails before it ever reaches evaluating whether a given push's branch matches `o
 every push produces a zero-job "workflow file issue" run regardless of which branch it's on. Fixed
 to `languages: javascript-typescript,actions`.
 
-Verification: `format:check` clean; pushed to a scratch branch and confirmed via the API that a push
-no longer produces a phantom `codeql.yml` run at all (the correct behavior for a branch that isn't
-`main` — previously every branch produced one; now none do, confirming this was the parse failure,
-not a real per-branch trigger).
+Verification: `format:check` clean; pushed this fix to its own branch (`fix/codeql-languages-input`)
+and confirmed via the API (`GET /repos/.../actions/runs?branch=...` → `total_count: 0`) that the
+push produces **no** workflow run at all — the correct behavior for a non-`main` branch. Every prior
+branch push in this session produced a phantom, zero-job `codeql.yml` failure; this one produced
+none, confirming the diagnosis (a parse-time schema failure, not a real per-branch trigger) rather
+than just the changelog-adjacent theory.
