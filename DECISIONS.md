@@ -2210,3 +2210,39 @@ prints both packages), then confirmed the fix the same way — `packages/kit/dis
 `package/*` scenarios resolve correctly throughout. `pnpm --filter ./packages/kit build` alone
 prints no "Scope: 2 of 27" line (unlike the old name filter), confirming the collision is actually
 gone, not just no longer triggered.
+
+### `codeql.yml` — invalid `with:` shape, not a branch-scoping bug
+
+Noticed while investigating the fix above: `.github/workflows/codeql.yml` had been failing on
+**every single push to every branch** — including `develop` itself, across at least the last 8 runs
+going back before this session's CI work — with zero jobs ever created and GitHub's generic
+"workflow file issue" message. Confirmed via the API (`gh api .../actions/runs/<id>` → 0 jobs; the
+check-suite → 0 check-runs), not just the CLI summary.
+
+The workflow's own trigger is `branches: [main]`, so a failure specifically on feature-branch pushes
+looked at first like a branch-scoping question — it isn't. Ruled out, in order: GitHub's repo-level
+"default CodeQL setup" conflicting with a custom workflow (checked `code-scanning/default-setup` —
+`"not-configured"`); an Advanced Security licensing gate (repo is public, not an issue); an Actions
+allowlist blocking `codeql-action`/`checkout` (`actions/permissions` → `"allowed_actions": "all"`).
+The actual cause: `with: languages:` was a YAML sequence —
+
+```yaml
+languages:
+  - javascript-typescript
+  - actions
+```
+
+`github/codeql-action/init`'s own docs specify `languages` as a **comma-separated string**, and more
+fundamentally, every `with:` value in a GitHub Actions workflow must be a scalar — a nested sequence
+there is a schema violation of the workflow file format itself, not just a wrong value for this one
+input. That's exactly why the failure was branch-independent: GitHub's static parse of the file
+fails before it ever reaches evaluating whether a given push's branch matches `on.push.branches`, so
+every push produces a zero-job "workflow file issue" run regardless of which branch it's on. Fixed
+to `languages: javascript-typescript,actions`.
+
+Verification: `format:check` clean; pushed this fix to its own branch (`fix/codeql-languages-input`)
+and confirmed via the API (`GET /repos/.../actions/runs?branch=...` → `total_count: 0`) that the
+push produces **no** workflow run at all — the correct behavior for a non-`main` branch. Every prior
+branch push in this session produced a phantom, zero-job `codeql.yml` failure; this one produced
+none, confirming the diagnosis (a parse-time schema failure, not a real per-branch trigger) rather
+than just the changelog-adjacent theory.
