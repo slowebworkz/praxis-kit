@@ -1,0 +1,407 @@
+# Getting Started
+
+This guide walks from a minimal working component to the full feature set, one step at a time. Each
+step produces something you can render before the next layer of complexity is introduced.
+
+---
+
+## Installation
+
+`praxis-kit` ships as a single package. Install it once, then import from the subpath for your
+framework:
+
+```bash
+pnpm add praxis-kit
+```
+
+```ts
+import { createContractComponent } from 'praxis-kit/react' // React 19+
+import { createContractComponent } from 'praxis-kit/react/legacy' // React 18
+import { createContractComponent } from 'praxis-kit/vue' // Vue 3
+import { createContractComponent } from 'praxis-kit/solid' // Solid
+import { createContractComponent } from 'praxis-kit/preact' // Preact
+import { createContractComponent } from 'praxis-kit/svelte' // Svelte 5
+import { createContractComponent } from 'praxis-kit/lit' // Lit
+import { createContractComponent } from 'praxis-kit/web' // Vanilla Custom Elements
+```
+
+The rest of this guide uses the React adapter. The API is identical across React, Vue, Solid,
+Preact, and Svelte — only the import path changes. Lit and Web are the two exceptions: a custom
+element's tag is fixed at `customElements.define()` time, so they don't accept `as` (see Step 5).
+Everything else in this guide — `styling`, `enforcement`, presets, `onElement` — works the same way
+on all seven.
+
+---
+
+## Step 1 — Your first component
+
+The minimum required option is `tag`: the HTML element to render.
+
+```ts
+import { createContractComponent } from 'praxis-kit/react'
+
+const Box = createContractComponent({ tag: 'div' })
+```
+
+```tsx
+// renders: <div>Hello</div>
+<Box>Hello</Box>
+```
+
+That's a working component. Every option from here is opt-in.
+
+---
+
+## Step 2 — A base class
+
+`styling.base` is applied unconditionally on every render.
+
+```ts
+const Box = createContractComponent({
+  tag: 'div',
+  styling: { base: 'rounded border bg-white' },
+})
+```
+
+```tsx
+// renders: <div class="rounded border bg-white">…</div>
+<Box>…</Box>
+```
+
+Pass a `className` prop to append additional classes:
+
+```tsx
+// renders: <div class="rounded border bg-white p-4">…</div>
+<Box className="p-4">…</Box>
+```
+
+---
+
+## Step 3 — Variants
+
+Add named variant dimensions. Each variant key maps to a set of class strings.
+
+```ts
+const Box = createContractComponent({
+  tag: 'div',
+  styling: {
+    base: 'rounded border',
+    variants: {
+      size: {
+        sm: 'px-2 py-1 text-sm',
+        md: 'px-4 py-2 text-base',
+        lg: 'px-6 py-3 text-lg',
+      },
+      tone: {
+        neutral: 'bg-white text-gray-900',
+        primary: 'bg-blue-600 text-white',
+      },
+    },
+    defaults: { size: 'md', tone: 'neutral' },
+  },
+})
+```
+
+```tsx
+// defaults apply: size=md, tone=neutral
+<Box>Content</Box>
+
+// override one or both
+<Box size="lg" tone="primary">Highlighted</Box>
+```
+
+Variant props are forwarded as classes only — they are not passed to the DOM element.
+
+---
+
+## Step 4 — Compound variants
+
+Apply extra classes when a specific combination of variants is active.
+
+```ts
+styling: {
+  variants: {
+    size:   { sm: 'text-sm', lg: 'text-lg' },
+    intent: { ghost: 'opacity-70', solid: 'shadow' },
+  },
+  compounds: [
+    // class fires only when size=sm AND intent=ghost together
+    { size: 'sm', intent: 'ghost', class: 'text-xs' },
+  ],
+},
+```
+
+Compounds fire across the preset boundary — a preset and a caller prop can together satisfy a
+compound rule.
+
+---
+
+## Step 5 — Polymorphic rendering
+
+Pass `as` to change the rendered element without changing the component's classes or props.
+
+```tsx
+const Button = createContractComponent({
+  tag: 'button',
+  styling: { base: 'btn', variants: { size: { sm: 'btn--sm', lg: 'btn--lg' } } },
+})
+```
+
+```tsx
+// renders <button class="btn">
+<Button>Save</Button>
+
+// renders <a class="btn" href="/">  — note href is now valid
+<Button as="a" href="/">Home</Button>
+```
+
+TypeScript narrows the allowed props to match the active element. `href` is only valid when
+`as="a"`.
+
+**Lit and Web don't accept `as`.** A custom element's tag is fixed the moment it's registered with
+`customElements.define()` — there's no live element to retarget the way there is in a VDOM
+framework. `options.tag` still resolves the ARIA/content-model rules the same way; it just isn't
+also a per-instance override on these two adapters.
+
+---
+
+## Step 6 — Accessibility contracts
+
+`enforcement.diagnostics` turns on built-in ARIA validation. The ARIA engine runs on every render
+and corrects attribute problems before they reach the DOM.
+
+```ts
+const Nav = createContractComponent({
+  tag: 'nav',
+  enforcement: { diagnostics: 'warn' },
+})
+```
+
+```tsx
+// <nav> already carries implicit role="navigation".
+// The redundant attribute is stripped; a warning is emitted.
+<Nav role="navigation" />
+
+// role="region" is not a valid override for <nav>.
+// The attribute is stripped before it reaches the DOM.
+<Nav role="region" />
+```
+
+Three presets (or pass a full `Diagnostics` instance for custom reporting):
+
+| Value      | On violation                        |
+| ---------- | ----------------------------------- |
+| `'silent'` | fixed silently, nothing reported    |
+| `'warn'`   | `console.warn`, continues rendering |
+| `'throw'`  | throws at render time               |
+
+---
+
+## Step 7 — Structural contracts
+
+`enforcement.children` validates which child types may appear and how many are allowed.
+
+```tsx
+import { isValidElement } from 'react'
+import { createContractComponent } from 'praxis-kit/react'
+import { CardHeader, CardBody } from './card-parts'
+
+const Card = createContractComponent({
+  tag: 'div',
+  enforcement: {
+    diagnostics: 'throw',
+    children: [
+      {
+        name: 'CardHeader',
+        match: (c) => isValidElement(c) && c.type === CardHeader,
+        cardinality: { min: 1, max: 1 },
+      },
+      {
+        name: 'CardBody',
+        match: (c) => isValidElement(c) && c.type === CardBody,
+        cardinality: { min: 1 },
+      },
+    ],
+  },
+})
+```
+
+```tsx
+// valid — one header, one body
+<Card>
+  <CardHeader>Title</CardHeader>
+  <CardBody>Content</CardBody>
+</Card>
+
+// throws — missing CardHeader
+<Card>
+  <CardBody>Content</CardBody>
+</Card>
+// Error: [Card] contract violation — expected exactly 1 CardHeader (got 0)
+```
+
+Use `diagnostics: 'warn'` while developing and switch to `diagnostics: 'throw'` for production
+contracts. Omit `enforcement` entirely to skip all validation — zero runtime cost.
+
+---
+
+## Step 8 — Slot rendering with `asChild`
+
+`asChild` merges the component's resolved props and classes onto its single child element instead of
+rendering its own DOM node. The child's element type becomes the rendered tag.
+
+```tsx
+const Button = createContractComponent({
+  tag: 'button',
+  styling: { base: 'btn', variants: { size: { sm: 'btn--sm', lg: 'btn--lg' } } },
+})
+```
+
+```tsx
+// renders <a class="btn" href="/dashboard">  — Button's classes, anchor's element
+<Button asChild>
+  <a href="/dashboard">Dashboard</a>
+</Button>
+```
+
+Use `Slottable` when the slot child wraps additional content that should receive the original
+children:
+
+```tsx
+import { Slottable } from 'praxis-kit/react'
+;<Button asChild>
+  <a href="/dashboard">
+    <span aria-hidden>→</span>
+    <Slottable>Dashboard</Slottable>
+  </a>
+</Button>
+```
+
+---
+
+## Step 9 — Named presets
+
+Presets are partial variant selections bundled under a name, selected via the `recipe` prop. Useful
+for design-system tokens.
+
+```ts
+styling: {
+  variants: {
+    size:   { sm: 'btn--sm',      lg: 'btn--lg'    },
+    intent: { ghost: 'btn--ghost', solid: 'btn--solid' },
+  },
+  defaults: { size: 'lg', intent: 'solid' },
+  presets: {
+    secondary: { size: 'sm', intent: 'ghost' },
+  },
+},
+```
+
+```tsx
+// activates size=sm, intent=ghost; caller can still override either
+<Button recipe="secondary" size="lg">
+  Submit
+</Button>
+```
+
+---
+
+## React 18
+
+Import from the `/legacy` sub-path. The API is identical — the adapter wraps in `forwardRef` for
+React 18 compatibility.
+
+```ts
+import { createContractComponent } from 'praxis-kit/react/legacy'
+```
+
+---
+
+## Tailwind layout-aware classes
+
+`praxis-kit/tailwind` provides a class pipeline plugin that filters layout utilities based on the
+active layout mode — no separate install, it ships in the same package:
+
+```ts
+import { createTailwindPipeline } from 'praxis-kit/tailwind'
+
+const Box = createContractComponent({
+  tag: 'div',
+  styling: {
+    plugin: createTailwindPipeline,
+    base: 'rounded p-4',
+    variants: {
+      direction: { row: 'flex-row', col: 'flex-col' },
+      gap:       { sm: 'gap-2', lg: 'gap-6' },
+    },
+  },
+})
+
+// flex mode — grid-cols-* is stripped automatically
+<Box flex className="flex-col gap-4 grid-cols-3">…</Box>
+
+// grid mode — flex-col, grow, shrink-* are stripped automatically
+<Box grid className="grid-cols-3 gap-4 flex-col">…</Box>
+```
+
+---
+
+## Development
+
+```bash
+pnpm install
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm --filter @praxis-kit/bench bench          # render pipeline and children matcher benchmarks
+pnpm --filter @praxis-kit/bench bench:render   # praxis-kit vs. vanilla React Tabs overhead benchmark
+```
+
+`examples/*` (a runnable dev server per framework) hasn't landed in this repo yet — see
+`DECISIONS.md` for current status.
+
+---
+
+## Common Questions
+
+### Won't runtime validation be slow?
+
+Structural validation is development-only. It runs behind a `process.env.NODE_ENV !== 'production'`
+gate and is completely absent from production builds. Zero cost.
+
+Class resolution is cached. An LRU cache skips re-evaluation when the same variant props appear on
+re-render. The full render pipeline (tag resolution + prop merge + class resolution) runs in under a
+microsecond on warm cache. Run `pnpm --filter @praxis-kit/bench bench` to see numbers on your
+machine.
+
+### Why not TypeScript?
+
+TypeScript catches type errors at compile time. Structural violations — wrong children, wrong
+nesting, missing required elements — happen at runtime and produce no TypeScript errors.
+
+```tsx
+// TypeScript accepts this. It's a valid ReactNode.
+// The bug is structural, not type-level.
+<Tabs>
+  <p>This is not a TabsList.</p>
+</Tabs>
+```
+
+### Will you keep up with multiple frameworks?
+
+Validation logic lives in `@praxis-kit/core` and is shared across all adapters. A bug fix there
+fixes all adapters simultaneously. The conformance suite runs 3,500+ tests across all adapters,
+gated on every push and pull request via CI (`pnpm check` — lint, typecheck, test), including
+behavioral contracts, SSR, hydration parity, accessibility, and compound component examples.
+
+That said — if a major framework makes a breaking API change, updating all adapters takes real work.
+This is a genuine maintenance commitment, not a solved problem.
+
+---
+
+## What's next
+
+- [ARCHITECTURE.md](ARCHITECTURE.md) — internal runtime pipeline, data flow, execution phases, and
+  debugging guide (`diagnoseClassPipeline`, ARIA violation messages, child evaluator traces)
+- [ADAPTER_AUTHORING.md](ADAPTER_AUTHORING.md) — writing a new framework adapter against the core
+  contract

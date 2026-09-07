@@ -2264,3 +2264,67 @@ claim in a security policy specifically, not a harmless stale detail. Replaced w
 not-yet-published statement instead of inventing a plausible-looking version number.
 
 Verification: `format:check`/markdownlint clean.
+
+### `GETTING_STARTED.md`, `ADAPTER_AUTHORING.md`, `ARCHITECTURE.md`, `docs/*` — ported, and two real API-naming bugs caught before they shipped
+
+Ported all four remaining doc deliverables together, per instruction, rather than one PR per file
+(the pattern for every earlier doc port this session). Each was checked against real source, not
+copied from `../pk` and adjusted for surface differences — two of those checks turned up genuine,
+checkable inaccuracies in `../pk`'s own docs that would otherwise have shipped as wrong
+documentation here too:
+
+1. **`variantKey` → `recipe`.** `../pk`'s `GETTING_STARTED.md` and `ADAPTER_AUTHORING.md` both use
+   `variantKey` as the preset-selection prop name. Traced end to end in this repo —
+   `lib/primitive/src/types/factory/styling-options.ts`'s doc comment ("selectable as a single unit
+   via the `recipe` prop"), `packages/core/src/resolver/resolver.ts`'s `input.recipe`,
+   `packages/core/src/factory/create-polymorphic.ts`'s
+   `resolveClasses(tag, props, className?, recipe?)`, and
+   `lib/styling/src/diagnose-class-pipeline.ts`'s `ClassDiagnosis.recipeKey` — the real, current
+   prop is `recipe` everywhere, with no `variantKey` in the type system at all. Fixed in all four
+   new docs.
+2. **`enforcement.strict` → `enforcement.diagnostics`.** `../pk`'s docs use a two-value
+   `strict: 'warn' | 'throw'` (plus `false`). The real `EnforcementOptions` type
+   (`lib/primitive/src/types/factory/enforcement-options.ts`) has no `strict` field at all — the
+   real field is `diagnostics`, a three-way preset (`'silent'` / `'warn'` / `'throw'`) or a full
+   `Diagnostics` instance, backed by `lib/diagnostics` (a real severity/policy system —
+   `silentDiagnostics`/`warnDiagnostics`/`throwDiagnostics`), not a boolean/string flag interpreted
+   inline. This was caught mid-turn: `GETTING_STARTED.md` had already been written and linted once
+   with `strict` before the type was double-checked while researching `ADAPTER_AUTHORING.md`,
+   requiring a self-correction pass across both files.
+
+Also corrected, independent of those two: `../pk`'s `ADAPTER_AUTHORING.md` is stale even for `../pk`
+itself (says "five adapters," uses `packages/<framework>/` paths, describes a per-adapter
+`eslint.config.ts`/`.dependency-cruiser.cjs`/`.ast-grep/` that this repo has never had —
+cross-package isolation here is one root `eslint.config.ts` + `configs/architecture.ts`'s
+`eslint-plugin-boundaries` mechanism instead); `ARCHITECTURE.md`'s `lib/` layer list
+(`primitive`/`contract`/`styling`/ `adapter-utils` only) undercounts this repo's actual ten `lib/*`
+modules (also `contract-props`, `diagnostics`, `pipeline`, `pipeline-kit`, `runtime`, `tailwind`,
+`playwright`) and its 3-way strict diagram/message tables needed the same `diagnostics` correction,
+verified line-for-line against `lib/contract/src/diagnostics/{html,aria,contract}.ts`'s actual
+message templates rather than assumed unchanged; `packages/core`'s subpath exports (`./contract`,
+`./aria`, `./styling`, `./props`, `./state`) were confirmed for real rather than assumed from
+`../pk`'s example imports, and `diagnoseChildren` specifically has **no** public subpath here (only
+the combined `diagnose()` from the package root) since `lib/contract` — unlike `../pk`'s published
+`@praxis-kit/contract` — is an internal, unpublished workspace package; `docs/concepts.md`'s
+Tailwind section was rewritten against `lib/tailwind/src/class-classifier.ts` and
+`create-tailwind-pipeline.ts`, which support any CSS display value as a layout-mode prop (not just
+`flex`/`grid`) and exempt flex/grid _item_ properties from stripping — materially richer than
+`../pk`'s simple two-mode prefix-stripping description; `docs/index.md`'s layer overview was
+rewritten to make clear only one package (`praxis-kit`) is ever published — every `@praxis-kit/*`
+name, `core` included, is `private: true` workspace-internal, which `../pk`'s own equivalent doc
+doesn't need to clarify since several of its packages really are published separately.
+
+`docs/examples.md` needed the largest structural change: this repo has no `examples/*` workspace at
+all (confirmed `ls examples` → no such directory), so `../pk`'s per-adapter dev-server walkthrough
+doesn't apply. Rewrote it to point at the closest real analogs instead — `qa/tree-shaking-tests`'
+`scenarios/package/*`, `packages/kit/scripts/smoke-test.ts`'s real-tarball install, the
+cross-adapter conformance harness, and `qa/bench`'s Tabs benchmark — rather than describing example
+code that doesn't exist. Also dropped `../pk`'s "Key finding: ARIA role gap (PR #89)" anecdote
+entirely: it's real project history specific to `../pk`'s own past, not something this clean-room
+rebuild has any record of, and inventing an equivalent finding for this repo would be fabricated
+history.
+
+Verification: `npx prettier --check` and `npx markdownlint-cli2` clean on all six files
+(`GETTING_STARTED.md`, `ADAPTER_AUTHORING.md`, `ARCHITECTURE.md`, `docs/index.md`,
+`docs/concepts.md`, `docs/examples.md`); `pnpm lint:check` run as a full-workspace regression check
+even though the change is docs-only.
