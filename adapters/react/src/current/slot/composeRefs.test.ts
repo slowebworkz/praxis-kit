@@ -2,19 +2,20 @@ import { describe, expect, it } from 'vitest'
 import { createElement } from 'react'
 import type { ReactElement } from 'react'
 import { getChildRef } from './composeRefs'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 // Plain-object constructors avoid React's frozen element props.
 function makePlainElement(propsRef?: unknown): ReactElement {
-  const props: Record<string, unknown> = {}
+  const props: AnyRecord = {}
   if (propsRef !== undefined) props.ref = propsRef
   return { type: 'div', props, key: null } as unknown as ReactElement
 }
 
 function makePlainElementWithWarningOnPropsRef(elementRef?: unknown): ReactElement {
-  const props: Record<string, unknown> = {}
+  const props: AnyRecord = {}
   const fakeWarningGetter = Object.assign(() => {}, { isReactWarning: true })
   Object.defineProperty(props, 'ref', { get: fakeWarningGetter, configurable: true })
-  const el: Record<string, unknown> = { type: 'div', props, key: null }
+  const el: AnyRecord = { type: 'div', props, key: null }
   if (elementRef !== undefined) el.ref = elementRef
   return el as unknown as ReactElement
 }

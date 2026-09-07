@@ -12,6 +12,7 @@
     { "path": "./lib/contract" },
     { "path": "./lib/contract-props" },
     { "path": "./lib/diagnostics" },
+    { "path": "./lib/foundation" },
     { "path": "./lib/pipeline" },
     { "path": "./lib/playwright" },
     { "path": "./lib/pipeline-kit" },
@@ -25,6 +26,7 @@
     { "path": "./plugins/typescript" },
     { "path": "./plugins/vite" },
     { "path": "./qa/bench" },
+    { "path": "./qa/metrics" },
     { "path": "./qa/tree-shaking-tests" },
     { "path": "./tooling/codemod" }
   ]

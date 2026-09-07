@@ -1,12 +1,7 @@
-/**
- * A string-keyed object whose values are of type `T`.
- */
-export type StringMap<T = unknown> = Record<string, T>
-
-/**
- * A string-keyed object with values of unknown type.
- */
-export type AnyRecord = StringMap<unknown>
+// Moved to @praxis-kit/foundation (see DECISIONS.md); re-exported here so every existing
+// consumer of @praxis-kit/primitive's public surface keeps working unchanged.
+import type { AnyRecord } from '@praxis-kit/foundation'
+export type { AnyRecord, StringMap } from '@praxis-kit/foundation'
 
 /**
  * An object type with no named properties.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { AriaContext } from '../types'
+import type { AnyRecord, AriaContext } from '../types'
 import {
   acceptRequiresFileTypeRule,
   altRequiresImageTypeRule,
@@ -24,7 +24,7 @@ import {
 } from './input-rules'
 
 function ctx(
-  props: Record<string, unknown>,
+  props: AnyRecord,
   tag = 'input',
   variantKeys: ReadonlySet<string> = new Set(),
 ): AriaContext {

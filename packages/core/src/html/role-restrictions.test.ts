@@ -1,13 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import type { AriaContext } from '../types'
+import type { AnyRecord, AriaContext } from '../types'
 import { roleNotPermittedRule } from './role-restrictions'
 
-function ctx(
-  tag: string,
-  props: Record<string, unknown>,
-  implicitRole: string | undefined,
-): AriaContext {
+function ctx(tag: string, props: AnyRecord, implicitRole: string | undefined): AriaContext {
   return {
     tag: tag as AriaContext['tag'],
     props,

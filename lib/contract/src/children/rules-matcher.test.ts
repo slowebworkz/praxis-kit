@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { isObject } from '@praxis-kit/primitive'
+import type { AnyRecord } from '@praxis-kit/primitive'
 import type { ChildRuleMatch, NormalizedChildRule } from '../types'
 import type { MatchResult } from './rules-matcher'
 import { RuleMatcher } from './rules-matcher'
@@ -267,8 +268,7 @@ describe('RuleMatcher.match() — type-indexed fast path', () => {
     )
     const isDisabled = rule(
       'disabled',
-      (c): c is { disabled: true } =>
-        isObject(c) && (c as Record<string, unknown>).disabled === true,
+      (c): c is { disabled: true } => isObject(c) && (c as AnyRecord).disabled === true,
     )
     const disabledBar = { type: BarComponent, disabled: true }
     const m = mat(new RuleMatcher([r0, isDisabled]).match([fooVNode, disabledBar]))

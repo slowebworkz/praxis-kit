@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@praxis-kit/diagnostics": "workspace:*",
-    "clsx": "catalog:",
+    "@praxis-kit/foundation": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {

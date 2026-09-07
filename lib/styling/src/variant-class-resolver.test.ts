@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { cva } from './cva'
 import { VariantClassResolver } from './variant-class-resolver'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -130,7 +131,7 @@ describe('VariantClassResolver — caching', () => {
 
 describe('VariantClassResolver — LRU eviction', () => {
   it('evicts the oldest entry when the cache exceeds 1000 entries', () => {
-    const fn = vi.fn((props: Record<string, unknown>) => String(props['k']))
+    const fn = vi.fn((props: AnyRecord) => String(props['k']))
     const r = new VariantClassResolver(fn)
 
     // prime k=0 (oldest), then push 1000 more unique entries to force eviction
@@ -146,7 +147,7 @@ describe('VariantClassResolver — LRU eviction', () => {
   })
 
   it('a cache hit repositions the entry so it survives subsequent eviction', () => {
-    const fn = vi.fn((props: Record<string, unknown>) => String(props['k']))
+    const fn = vi.fn((props: AnyRecord) => String(props['k']))
     const r = new VariantClassResolver(fn)
 
     // fill to exactly 1000: k=0 is oldest, k=999 is newest

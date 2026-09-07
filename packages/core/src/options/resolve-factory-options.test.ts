@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { resolveFactoryOptions } from './resolve-factory-options'
 import { throwDiagnostics, warnDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
+import type { AnyRecord } from '../types'
 
 // ---------------------------------------------------------------------------
 // Defaults
@@ -130,7 +131,7 @@ describe('resolveFactoryOptions() — normalize', () => {
   })
 
   it('maps normalize to normalizeFn', () => {
-    const normalize = (p: Record<string, unknown>) => p
+    const normalize = (p: AnyRecord) => p
     expect(resolveFactoryOptions({ normalize }).normalizeFn).toBe(normalize)
   })
 
@@ -139,31 +140,31 @@ describe('resolveFactoryOptions() — normalize', () => {
   })
 
   it('passes a single-element normalize array straight through', () => {
-    const normalize = (p: Record<string, unknown>) => p
+    const normalize = (p: AnyRecord) => p
     expect(resolveFactoryOptions({ normalize: [normalize] }).normalizeFn).toBe(normalize)
   })
 
   it('composes a normalize array left to right, each entry seeing the previous full output', () => {
-    const addA = (p: Record<string, unknown>) => ({ ...p, a: 1 })
-    const addB = (p: Record<string, unknown>) => ({ ...p, b: (p.a as number) + 1 })
+    const addA = (p: AnyRecord) => ({ ...p, a: 1 })
+    const addB = (p: AnyRecord) => ({ ...p, b: (p.a as number) + 1 })
     const fn = resolveFactoryOptions({ normalize: [addA, addB] }).normalizeFn
     expect(fn?.({})).toEqual({ a: 1, b: 2 })
   })
 
   it('lets a later normalize array entry remove a key an earlier one set', () => {
-    const addTmp = (p: Record<string, unknown>) => ({ ...p, tmp: true })
-    const dropTmp = ({ tmp, ...rest }: Record<string, unknown>) => rest
+    const addTmp = (p: AnyRecord) => ({ ...p, tmp: true })
+    const dropTmp = ({ tmp, ...rest }: AnyRecord) => rest
     const fn = resolveFactoryOptions({ normalize: [addTmp, dropTmp] }).normalizeFn
     expect(fn?.({ keep: 1 })).toEqual({ keep: 1 })
   })
 
   it('runs enforcement.props before the normalize array', () => {
     const order: string[] = []
-    const propA = (p: Record<string, unknown>) => {
+    const propA = (p: AnyRecord) => {
       order.push('props')
       return p
     }
-    const normA = (p: Record<string, unknown>) => {
+    const normA = (p: AnyRecord) => {
       order.push('normalize')
       return p
     }
@@ -213,7 +214,7 @@ describe('resolveFactoryOptions() — immutability', () => {
   it('frozen object prevents mutation', () => {
     const opts = resolveFactoryOptions({ tag: 'div' })
     expect(() => {
-      ;(opts as Record<string, unknown>).defaultTag = 'section'
+      ;(opts as AnyRecord).defaultTag = 'section'
     }).toThrow()
   })
 })

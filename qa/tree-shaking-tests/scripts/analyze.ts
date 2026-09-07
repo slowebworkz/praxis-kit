@@ -25,6 +25,7 @@ import { readdir, writeFile, mkdir } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Plugin } from 'esbuild'
+import type { StringMap } from '@praxis-kit/primitive'
 
 const pkg = dirname(fileURLToPath(import.meta.url))
 const root = join(pkg, '../../..')
@@ -48,7 +49,7 @@ const distDir = join(pkg, '../dist')
 // here versus `../pk`'s own alias map: `packages/core/src/{primitive,contract}.ts` in this repo
 // were refactored into pass-throughs against more granular barrels (see `DECISIONS.md`
 // "`packages/kit` — scaffold"), so this repo's real import graph touches more subpaths than pk's.
-const workspaceAlias: Record<string, string> = {
+const workspaceAlias: StringMap<string> = {
   '@praxis-kit/pipeline': join(root, 'lib/pipeline/src/index.ts'),
   '@praxis-kit/react': join(root, 'adapters/react/src/index.ts'),
   '@praxis-kit/preact': join(root, 'adapters/preact/src/index.ts'),

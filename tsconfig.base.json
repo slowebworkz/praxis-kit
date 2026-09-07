@@ -13,6 +13,12 @@
     "sourceMap": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    // Allows (never requires) an explicit .ts extension in a relative import specifier — needed
+    // by any package whose files are also run directly under `node --experimental-strip-types`
+    // (which requires the real extension; Node's ESM resolver never auto-appends one), e.g.
+    // @praxis-kit/foundation, scripts/, qa/metrics. Every existing extensionless import elsewhere
+    // is unaffected. Safe globally: it requires `noEmit`, already set above.
+    "allowImportingTsExtensions": true
   }
 }

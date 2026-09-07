@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildPrecomputedKey, compileVariantLookup } from './compile-variant-lookup'
+import type { StringMap } from '@praxis-kit/primitive'
 import type { VariantConfig } from './variant-pass'
 
 // ─── buildPrecomputedKey ──────────────────────────────────────────────────────
@@ -106,7 +107,7 @@ describe('compileVariantLookup', () => {
 
   it('returns null when combination count exceeds MAX_COMBINATIONS (512)', () => {
     // 10 dimensions × 1 value each → (1+1)^10 = 1024 combos > 512
-    const variants: Record<string, Record<string, string>> = {}
+    const variants: StringMap<StringMap<string>> = {}
     for (let i = 0; i < 10; i++) {
       variants[`dim${i}`] = { on: `cls-${i}` }
     }

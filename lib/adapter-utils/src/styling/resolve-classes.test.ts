@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { resolveClasses } from './resolve-classes'
 import type { NodeDecoration } from '@praxis-kit/runtime'
 import type { VariantConfig } from '@praxis-kit/styling'
+import type { StringMap } from '@praxis-kit/primitive'
 import type { CompoundRecord } from './build-variant-config'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function decoration(variants: Record<string, string> = {}): Record<string, NodeDecoration> {
+function decoration(variants: StringMap<string> = {}): StringMap<NodeDecoration> {
   return { root: { variants } }
 }
 

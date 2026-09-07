@@ -31,6 +31,7 @@ import { createContractComponent } from './create-contract-component'
 import type { LitConformanceComponent, LitConformanceEl } from './types/index'
 import type { AnyRecord } from '@praxis-kit/core'
 import { iterate } from '@praxis-kit/primitive'
+import type { StringMap } from '@praxis-kit/primitive'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -38,7 +39,7 @@ let counter = 0
 const uniqueTag = () => `praxis-conf-${counter++}`
 
 // React-style event prop → native event name.
-const EVENT_MAP: Record<string, string> = {
+const EVENT_MAP: StringMap<string> = {
   onClick: 'click',
   onFocus: 'focus',
   onBlur: 'blur',

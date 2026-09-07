@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { AriaContext, AriaRole } from '../../../types'
 import type { RoleAttributeRequirements } from '../types'
 import { checkRequiredAttributes, requiredAttributeByRole } from './required-properties-validator'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 const diagnosticFor = (attribute: string, role: AriaRole) => ({
   code: 'ARIA2012' as never,
@@ -9,7 +10,7 @@ const diagnosticFor = (attribute: string, role: AriaRole) => ({
   message: `"${attribute}" is required for role="${role}"`,
 })
 
-function context(effectiveRole: string | undefined, props: Record<string, unknown>): AriaContext {
+function context(effectiveRole: string | undefined, props: AnyRecord): AriaContext {
   return {
     tag: 'div',
     implicitRole: undefined,
@@ -41,7 +42,10 @@ describe('requiredAttributeByRole', () => {
 
 describe('checkRequiredAttributes', () => {
   const requirement: RoleAttributeRequirements = {
-    attributesByRole: { combobox: ['aria-expanded'], scrollbar: ['aria-controls', 'aria-valuenow'] },
+    attributesByRole: {
+      combobox: ['aria-expanded'],
+      scrollbar: ['aria-controls', 'aria-valuenow'],
+    },
     diagnosticFor,
   }
 
@@ -54,12 +58,18 @@ describe('checkRequiredAttributes', () => {
   })
 
   it('passes when every required attribute is present', () => {
-    const results = checkRequiredAttributes(requirement, context('combobox', { 'aria-expanded': 'true' }))
+    const results = checkRequiredAttributes(
+      requirement,
+      context('combobox', { 'aria-expanded': 'true' }),
+    )
     expect(results).toEqual([])
   })
 
   it('reports one warning per missing required attribute', () => {
-    const results = checkRequiredAttributes(requirement, context('scrollbar', { 'aria-controls': 'x' }))
+    const results = checkRequiredAttributes(
+      requirement,
+      context('scrollbar', { 'aria-controls': 'x' }),
+    )
     expect(results).toHaveLength(1)
     expect(results[0]).toMatchObject({
       valid: false,

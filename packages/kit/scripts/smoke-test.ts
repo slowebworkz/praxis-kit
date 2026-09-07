@@ -18,6 +18,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync, existsSync } from 'node:
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import type { StringMap } from '@praxis-kit/primitive'
 
 const KIT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -66,7 +67,7 @@ const PEERS = [
 //
 // Confirmed with a negative control: renaming one of these to a nonexistent export makes this step
 // fail with a real `tsc` TS2305 "has no exported member" error, not a silent pass.
-const TYPE_CHECK_ENTRIES: Record<string, string> = {
+const TYPE_CHECK_ENTRIES: StringMap<string> = {
   react: 'AnyFactoryOptions',
   'react/legacy': 'AnyFactoryOptions',
   preact: 'AnyFactoryOptions',

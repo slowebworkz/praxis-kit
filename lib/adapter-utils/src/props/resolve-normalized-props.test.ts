@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { NormalizeFn, PropNormalizer } from '@praxis-kit/core'
 import { getHtmlPropNormalizers } from '@praxis-kit/core'
+import type { AnyRecord } from '@praxis-kit/primitive'
 import { resolveNormalizedProps } from './resolve-normalized-props'
 
 // Mirrors what resolveFactoryOptions stores on the resolved runtime options.
@@ -46,7 +47,7 @@ describe('resolveNormalizedProps — HTML built-ins', () => {
 describe('resolveNormalizedProps — ordering (the canonical contract)', () => {
   it('runs HTML built-ins before normalizeFn', () => {
     const seen: Array<string | undefined> = []
-    const normalizeFn = ((props: Record<string, unknown>) => {
+    const normalizeFn = ((props: AnyRecord) => {
       seen.push(props['aria-disabled'] as string | undefined)
       return props
     }) as NormalizeFn
@@ -55,7 +56,7 @@ describe('resolveNormalizedProps — ordering (the canonical contract)', () => {
   })
 
   it("lets the caller's normalizeFn override an HTML built-in for the same key", () => {
-    const normalizeFn = ((props: Record<string, unknown>) => ({
+    const normalizeFn = ((props: AnyRecord) => ({
       ...props,
       'aria-disabled': 'false',
     })) as NormalizeFn
@@ -66,7 +67,7 @@ describe('resolveNormalizedProps — ordering (the canonical contract)', () => {
   })
 
   it('applies normalizeFn even when there are no HTML normalizers for the tag', () => {
-    const normalizeFn = ((props: Record<string, unknown>) => ({
+    const normalizeFn = ((props: AnyRecord) => ({
       ...props,
       seen: true,
     })) as NormalizeFn

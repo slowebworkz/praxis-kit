@@ -12,6 +12,7 @@ import type {
   ConformanceAdapter,
 } from '@praxis-kit/adapter-utils/testing'
 import type { ComponentType, VNode } from 'preact'
+import type { AnyRecord } from '@praxis-kit/primitive'
 import type { UnknownProps } from './types'
 import { createContractComponent } from './create-contract-component'
 
@@ -28,7 +29,7 @@ function toVNode(c: ChildSpec): VNode<UnknownProps> {
   return h(c.tag as string, (c.props ?? {}) as UnknownProps) as VNode<UnknownProps>
 }
 
-function normalizeClass<T extends Record<string, unknown>>(props: T): T {
+function normalizeClass<T extends AnyRecord>(props: T): T {
   const { class: cls, ...rest } = props
   return (cls !== undefined ? { ...rest, className: cls } : rest) as T
 }
@@ -41,7 +42,7 @@ const adapter: ConformanceAdapter<PreactConformanceComponent> = {
   render: (component, props = {}, children = []) => {
     const wrapper = document.createElement('div')
     container.appendChild(wrapper)
-    const doRender = (p: Record<string, unknown>, ch: ChildSpec[]) => {
+    const doRender = (p: AnyRecord, ch: ChildSpec[]) => {
       render(h(component, normalizeClass(p) as UnknownProps, ...ch.map(toVNode)), wrapper)
     }
     doRender(props, children)

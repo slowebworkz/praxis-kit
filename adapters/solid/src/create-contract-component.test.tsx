@@ -4,6 +4,7 @@ import { render as solidRender, cleanup } from '@solidjs/testing-library'
 import { createSignal } from 'solid-js'
 import { silentDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from './create-contract-component'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 afterEach(cleanup)
 
@@ -186,7 +187,7 @@ describe('createContractComponent (Solid adapter)', () => {
       solidRender(() => (
         // @ts-expect-error — intentionally invalid: as + asChild together
         <Comp as="section" asChild>
-          {(props: Record<string, unknown>) => <a {...props} />}
+          {(props: AnyRecord) => <a {...props} />}
         </Comp>
       )),
     ).toThrow()
@@ -233,7 +234,7 @@ describe('createContractComponent (Solid adapter)', () => {
     const { container } = solidRender(() => (
       // @ts-expect-error — intentionally invalid: as + asChild together
       <Comp as="section" asChild>
-        {(props: Record<string, unknown>) => <a {...props} />}
+        {(props: AnyRecord) => <a {...props} />}
       </Comp>
     ))
     expect(warn).toHaveBeenCalledWith(

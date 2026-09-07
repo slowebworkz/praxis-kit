@@ -5,6 +5,7 @@ import { createRawSnippet } from 'svelte'
 import { silentDiagnostics, throwDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
 import Polymorphic from './Polymorphic.svelte'
 import { createContractComponent } from './create-contract-component'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 afterEach(cleanup)
 
@@ -76,7 +77,7 @@ describe('Polymorphic (Svelte adapter)', () => {
   describe('asChild', () => {
     it('renders the slot snippet instead of the host element', () => {
       const bundle = createContractComponent({ tag: 'div' })
-      const children = createRawSnippet<[Record<string, unknown>]>(() => ({
+      const children = createRawSnippet<[AnyRecord]>(() => ({
         render: () => '<a href="/home">Home</a>',
       }))
       const { container } = render(Polymorphic, { bundle, asChild: true, children })
@@ -86,8 +87,8 @@ describe('Polymorphic (Svelte adapter)', () => {
 
     it('forwards class and props to the slot snippet', () => {
       const bundle = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
-      let receivedProps: Record<string, unknown> = {}
-      const children = createRawSnippet<[Record<string, unknown>]>((getProps) => ({
+      let receivedProps: AnyRecord = {}
+      const children = createRawSnippet<[AnyRecord]>((getProps) => ({
         render() {
           receivedProps = getProps()
           return `<a>link</a>`
@@ -106,8 +107,8 @@ describe('Polymorphic (Svelte adapter)', () => {
           variants: { size: { sm: 'box--sm', lg: 'box--lg' } },
         },
       })
-      let receivedProps: Record<string, unknown> = {}
-      const children = createRawSnippet<[Record<string, unknown>]>((getProps) => ({
+      let receivedProps: AnyRecord = {}
+      const children = createRawSnippet<[AnyRecord]>((getProps) => ({
         render() {
           receivedProps = getProps()
           return `<a>link</a>`
@@ -126,8 +127,8 @@ describe('Polymorphic (Svelte adapter)', () => {
     // contract as Solid's buildSlotProps (adapters/solid/src/render.tsx).
     it('forwards a syntactically valid ARIA role to the slot snippet (no redundancy check — there is no target tag to check against)', () => {
       const bundle = createContractComponent({ tag: 'button' })
-      let receivedProps: Record<string, unknown> = {}
-      const children = createRawSnippet<[Record<string, unknown>]>((getProps) => ({
+      let receivedProps: AnyRecord = {}
+      const children = createRawSnippet<[AnyRecord]>((getProps) => ({
         render() {
           receivedProps = getProps()
           return `<a>link</a>`
@@ -139,8 +140,8 @@ describe('Polymorphic (Svelte adapter)', () => {
 
     it('omits an invalid (non-ARIA) role from the slot snippet', () => {
       const bundle = createContractComponent({ tag: 'button' })
-      let receivedProps: Record<string, unknown> = {}
-      const children = createRawSnippet<[Record<string, unknown>]>((getProps) => ({
+      let receivedProps: AnyRecord = {}
+      const children = createRawSnippet<[AnyRecord]>((getProps) => ({
         render() {
           receivedProps = getProps()
           return `<a>link</a>`
@@ -171,7 +172,7 @@ describe('Polymorphic (Svelte adapter)', () => {
         tag: 'div',
         enforcement: { diagnostics: throwDiagnostics },
       })
-      const children = createRawSnippet<[Record<string, unknown>]>(() => ({
+      const children = createRawSnippet<[AnyRecord]>(() => ({
         render: () => '<a>link</a>',
       }))
       expect(() => render(Polymorphic, { bundle, asChild: true, as: 'span', children })).toThrow()
@@ -189,7 +190,7 @@ describe('Polymorphic (Svelte adapter)', () => {
         tag: 'div',
         enforcement: { diagnostics: warnDiagnostics },
       })
-      const children = createRawSnippet<[Record<string, unknown>]>(() => ({
+      const children = createRawSnippet<[AnyRecord]>(() => ({
         render: () => '<a>link</a>',
       }))
       const { container } = render(Polymorphic, {

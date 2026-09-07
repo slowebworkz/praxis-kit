@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { ResolvedFactoryOptions } from '../types'
+import type { AnyRecord, ResolvedFactoryOptions } from '../types'
 import { validateFactoryOptions } from './validate-factory-options'
 import {
   CollectingReporter,
@@ -13,7 +13,7 @@ import {
 
 // The validator exists for untyped/cast consumers, so the tests construct
 // resolved-options shapes directly and cast past the typed surface.
-function resolved(over: Record<string, unknown>): ResolvedFactoryOptions {
+function resolved(over: AnyRecord): ResolvedFactoryOptions {
   return {
     defaultTag: 'div',
     displayName: 'Box',

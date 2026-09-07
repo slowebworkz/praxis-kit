@@ -1,4 +1,4 @@
-import { iterate } from './iterate'
+import { iterate } from '@praxis-kit/foundation'
 import { isFunction } from '../guards/foundational'
 
 import type { AnyRef } from '../types'

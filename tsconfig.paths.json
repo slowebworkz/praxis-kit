@@ -12,6 +12,8 @@
       "@praxis-kit/diagnostics": ["./lib/diagnostics/src"],
       "@praxis-kit/diagnostics/*": ["./lib/diagnostics/src/*"],
       "@praxis-kit/eslint-plugin": ["./plugins/eslint/src/index.ts"],
+      "@praxis-kit/foundation": ["./lib/foundation/src"],
+      "@praxis-kit/foundation/*": ["./lib/foundation/src/*"],
       "@praxis-kit/lit": ["./adapters/lit/src/index.ts"],
       "@praxis-kit/preact": ["./adapters/preact/src/index.ts"],
       "@praxis-kit/react": ["./adapters/react/src/index.ts"],

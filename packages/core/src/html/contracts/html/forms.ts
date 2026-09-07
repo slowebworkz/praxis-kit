@@ -1,4 +1,4 @@
-import type { ChildRuleContext } from '@praxis-kit/primitive'
+import type { AnyRecord, ChildRuleContext } from '@praxis-kit/primitive'
 import { dynamic, getTag, isNumber, isString, isTag } from '@praxis-kit/primitive'
 import {
   INTERACTIVE_CONTENT_TAGS,
@@ -58,7 +58,7 @@ function isLabelableControl(child: unknown): child is VNodeLike {
   return !isString(type) || type !== 'hidden'
 }
 
-function hasAccessibleNameProp(props: Readonly<Record<string, unknown>>): boolean {
+function hasAccessibleNameProp(props: Readonly<AnyRecord>): boolean {
   return 'aria-label' in props || 'aria-labelledby' in props
 }
 
