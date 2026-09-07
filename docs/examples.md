@@ -1,9 +1,11 @@
 # Examples
 
-There is no `examples/*` workspace yet — a runnable Box/Button/Tabs dev server per adapter, the way
-`../pk` ships one, hasn't landed in this repo. See `DECISIONS.md` for current status. This document
-covers what exists today as the closest thing to a worked example, and will be replaced with the
-real per-adapter walkthroughs once `examples/*` lands.
+There is no `examples/*` workspace in this repo, and there isn't going to be one — unlike `../pk`,
+which ships a runnable Box/Button/Tabs dev server per adapter under `examples/*`, real
+praxis-kit-based components live in the separate `praxis-components` library instead. This document
+covers what exists here as the closest thing to a worked example: real, complete component configs
+you can read or copy, plus pointers to where praxis-kit is actually exercised end to end in this
+repo's own tests.
 
 ## Where to see praxis-kit exercised end to end today
 
@@ -50,10 +52,68 @@ and `apply-filter.bench.ts` isolate each stage of the render pipeline described 
 pnpm --filter @praxis-kit/bench bench
 ```
 
-## What a Tabs-style compound component looks like
+## Worked examples
+
+### Box — the Tailwind layout pipeline
+
+A minimal `Box` demonstrating `createTailwindPipeline` end to end: a base class, size/tone variants,
+a named preset, and the boolean display-mode props described in
+[concepts.md](./concepts.md#tailwind-layout-pipeline-and-variant-naming).
+
+```ts
+import { createContractComponent } from 'praxis-kit/react'
+import { createTailwindPipeline } from 'praxis-kit/tailwind'
+
+const Box = createContractComponent({
+  tag: 'div',
+  styling: {
+    plugin: createTailwindPipeline,
+    base: 'rounded-lg border p-4',
+    variants: {
+      size: { sm: 'gap-2 text-sm', lg: 'gap-6 text-lg' },
+      tone: { neutral: 'border-gray-200 bg-white', accent: 'border-blue-200 bg-blue-50' },
+    },
+    defaults: { size: 'sm', tone: 'neutral' },
+    presets: {
+      card: { size: 'lg', tone: 'accent' },
+    },
+  },
+})
+```
+
+```tsx
+// base + defaults only — no display mode, so flex-*/grid-* utilities in className are stripped
+<Box className="grid-cols-3">Plain content</Box>
+
+// flex mode — the pipeline prepends `flex` and strips grid-cols-3 (grid-family);
+// flex-col and gap-4 survive
+<Box flex className="flex-col gap-4 grid-cols-3">
+  <span>One</span>
+  <span>Two</span>
+</Box>
+
+// grid mode — the inverse: flex-col is stripped (a flex-family container property);
+// grid-cols-3 and gap-4 survive (gap-* survives under either active family)
+<Box grid className="grid-cols-3 gap-4 flex-col">
+  <span>One</span>
+  <span>Two</span>
+</Box>
+
+// the "card" preset — recipe selects size=lg, tone=accent; explicit props still win over it
+<Box recipe="card" tone="neutral">
+  Overridden back to neutral
+</Box>
+```
+
+`Box` has no `enforcement` declared, so it costs nothing beyond the class pipeline itself — no ARIA
+engine, no children evaluator instantiated. That's the deliberate contrast with the Tabs example
+below: a primitive with real styling machinery but zero structural contracts, versus a compound
+component that's almost entirely contracts.
+
+### Tabs — the compound-component pattern
 
 The general shape any of the seven adapters would use — enough to read alongside a conformance test
-file or write your own before `examples/*` exists:
+file or write your own:
 
 ```ts
 import { createContractComponent } from 'praxis-kit/react'

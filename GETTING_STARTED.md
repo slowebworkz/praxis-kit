@@ -340,7 +340,9 @@ const Box = createContractComponent({
 // flex mode — grid-cols-* is stripped automatically
 <Box flex className="flex-col gap-4 grid-cols-3">…</Box>
 
-// grid mode — flex-col, grow, shrink-* are stripped automatically
+// grid mode — flex-col is stripped automatically (grow/shrink-* survive regardless of
+// mode — they're item properties that resolve against the parent's layout, not the
+// element's own)
 <Box grid className="grid-cols-3 gap-4 flex-col">…</Box>
 ```
 
