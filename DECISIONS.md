@@ -2328,3 +2328,37 @@ Verification: `npx prettier --check` and `npx markdownlint-cli2` clean on all si
 (`GETTING_STARTED.md`, `ADAPTER_AUTHORING.md`, `ARCHITECTURE.md`, `docs/index.md`,
 `docs/concepts.md`, `docs/examples.md`); `pnpm lint:check` run as a full-workspace regression check
 even though the change is docs-only.
+
+### `examples/*` — not happening; a `Box` worked example lands in `docs/examples.md` instead
+
+Confirmed with you directly (not inferred): `examples/*` will not be ported from `../pk`. Real
+praxis-kit-based components live in a separate, already-in-progress `praxis-components` library —
+this repo's docs should point there for runnable UI, not simulate it with a dev-server workspace
+that would just be redundant with that library. `docs/examples.md`'s intro rewritten accordingly (it
+previously said examples/* "hasn't landed... yet," implying it eventually would).
+
+In its place: a complete, copy-pasteable `Box` config added to `docs/examples.md` under a new
+"Worked examples" section, alongside the existing Tabs config — `Box` exercises
+`createTailwindPipeline` (base class, variants, a `recipe` preset, boolean display-mode props),
+`Tabs` exercises `enforcement` (children cardinality, the built-in ARIA engine). Together they cover
+the two independent capability axes (styling-only vs. contracts-only) the rest of the docs describe
+separately.
+
+**Found and fixed a real inaccuracy while verifying the `Box` example against source** — one that
+had already shipped in `GETTING_STARTED.md`'s own Tailwind section (merged in #45, not caught during
+that PR's review because the deep `lib/tailwind` classifier verification for `ARCHITECTURE.md`/
+`docs/concepts.md` happened later in the same work): the claim "grid mode — flex-col, grow,
+shrink-\* are stripped automatically" is wrong for `grow`/`shrink-*`. Traced to
+`lib/tailwind/src/class-classifier.ts`'s `ITEM_PREFIXES` (`grow`, `shrink`, `basis-`, `self-`,
+`place-self-`, `justify-self-`, `col-`, `row-`, `order`) and its own doc comment: these are
+flex/grid _item_ properties, which resolve against the _parent's_ layout family, not the element's
+own — the classifier "must never strip these based on the element's own family," full stop,
+regardless of mode. Only `flex-col` (a genuine flex-family _container_ property, matched by
+`dependency-rules.ts`'s `flex: [/^flex-/]`) is actually stripped in grid mode. Fixed the claim in
+`GETTING_STARTED.md` and wrote the new `Box` example's own flex/grid comments against the same
+verified source (`constants.ts`'s `LAYOUT_FAMILY_MAP`, `dependency-rules.ts`'s
+`defaultDependencyRules`, and `create-tailwind-pipeline.ts`'s
+`gap-*`-survives-when-mode-isn't-'none' comment) rather than assuming the pattern from the
+now-corrected original.
+
+Verification: `npx prettier --check` and `npx markdownlint-cli2` clean on both changed files.
