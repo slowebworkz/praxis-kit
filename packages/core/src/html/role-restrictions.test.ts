@@ -128,26 +128,102 @@ describe('roleNotPermittedRule', () => {
     it('input type=email with a list attribute accepts combobox (implicit-role path)', () => {
       // `list` flips the implicit role to combobox; role === implicitRole early-returns.
       expect(
-        roleNotPermittedRule(ctx('input', { type: 'email', list: 'x', role: 'combobox' }, 'combobox')),
+        roleNotPermittedRule(
+          ctx('input', { type: 'email', list: 'x', role: 'combobox' }, 'combobox'),
+        ),
       ).toEqual([])
     })
 
     it('input type=button/submit/reset accept the widened button-like set (C8)', () => {
       for (const type of ['button', 'submit', 'reset']) {
-        for (const role of ['checkbox', 'combobox', 'gridcell', 'separator', 'slider', 'treeitem']) {
+        for (const role of [
+          'checkbox',
+          'combobox',
+          'gridcell',
+          'separator',
+          'slider',
+          'treeitem',
+        ]) {
           expect(roleNotPermittedRule(ctx('input', { type, role }, 'button'))).toEqual([])
         }
       }
     })
 
     it('input type=image accepts the button-like set but not combobox (C8)', () => {
-      expect(roleNotPermittedRule(ctx('input', { type: 'image', role: 'slider' }, 'button'))).toEqual(
-        [],
-      )
+      expect(
+        roleNotPermittedRule(ctx('input', { type: 'image', role: 'slider' }, 'button')),
+      ).toEqual([])
       const [combobox] = roleNotPermittedRule(
         ctx('input', { type: 'image', role: 'combobox' }, 'button'),
       )
       expect(combobox).toMatchObject({ valid: false })
+    })
+  })
+
+  // ─── F2: <input list> and <select multiple/size> second discriminators ───
+
+  describe('input[list] narrows the permitted role set (F2)', () => {
+    it('flags a non-combobox role on a text-like input with a list attribute', () => {
+      for (const type of ['text', 'search', 'tel', 'url', 'email']) {
+        const [result] = roleNotPermittedRule(
+          ctx('input', { type, list: 'suggestions', role: 'spinbutton' }, 'combobox'),
+        )
+        expect(result).toMatchObject({ valid: false, fixable: true })
+      }
+    })
+
+    it('still accepts combobox on a text input with a list (redundant-role path)', () => {
+      expect(
+        roleNotPermittedRule(
+          ctx('input', { type: 'text', list: 'x', role: 'combobox' }, 'combobox'),
+        ),
+      ).toEqual([])
+    })
+
+    it('does not narrow when list is absent — the type table still applies', () => {
+      expect(
+        roleNotPermittedRule(ctx('input', { type: 'text', role: 'searchbox' }, 'textbox')),
+      ).toEqual([])
+    })
+
+    it('does not narrow a non-text-like type that happens to carry a list', () => {
+      expect(
+        roleNotPermittedRule(
+          ctx('input', { type: 'checkbox', list: 'x', role: 'switch' }, 'checkbox'),
+        ),
+      ).toEqual([])
+    })
+  })
+
+  describe('select permits no explicit role in its list-box form (F2)', () => {
+    it('permits menu on a default drop-down <select>', () => {
+      expect(roleNotPermittedRule(ctx('select', { role: 'menu' }, 'combobox'))).toEqual([])
+    })
+
+    it('flags any explicit role on a multiple <select>', () => {
+      const [result] = roleNotPermittedRule(
+        ctx('select', { multiple: true, role: 'menu' }, 'listbox'),
+      )
+      expect(result).toMatchObject({ valid: false, fixable: true })
+    })
+
+    it('flags any explicit role on a <select size="4">', () => {
+      const [result] = roleNotPermittedRule(ctx('select', { size: 4, role: 'menu' }, 'listbox'))
+      expect(result).toMatchObject({ valid: false })
+    })
+  })
+
+  // ─── F6: <img> with no alt attribute ───
+
+  describe('img with no alt attribute permits only none/presentation (F6)', () => {
+    it('flags a named-set role on an <img> with no alt', () => {
+      const [result] = roleNotPermittedRule(ctx('img', { role: 'button' }, 'img'))
+      expect(result).toMatchObject({ valid: false, fixable: true })
+    })
+
+    it('permits none/presentation on an <img> with no alt', () => {
+      expect(roleNotPermittedRule(ctx('img', { role: 'none' }, 'img'))).toEqual([])
+      expect(roleNotPermittedRule(ctx('img', { role: 'presentation' }, 'img'))).toEqual([])
     })
   })
 })

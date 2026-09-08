@@ -5,6 +5,7 @@ import type { HtmlElementSpec } from './spec/types'
 import { resolveAllowedRoles } from './spec/types'
 import { inputElementSpec } from './spec/elements/input'
 import { imgElementSpec } from './spec/elements/img'
+import { selectElementSpec } from './spec/elements/select'
 import { tableElementSpec } from './spec/elements/table'
 
 // The WAI-ARIA "ARIA in HTML" recommendation restricts which explicit `role` values a native
@@ -59,7 +60,6 @@ const ALLOWED_ROLES: Readonly<StringMap<readonly AriaRole[]>> = {
     'tab',
     'treeitem',
   ],
-  select: ['menu'],
   h1: ['tab', 'presentation', 'none'],
   h2: ['tab', 'presentation', 'none'],
   h3: ['tab', 'presentation', 'none'],
@@ -123,6 +123,7 @@ const ALLOWED_ROLES: Readonly<StringMap<readonly AriaRole[]>> = {
 const ELEMENT_SPECS: Readonly<StringMap<HtmlElementSpec>> = {
   input: inputElementSpec,
   img: imgElementSpec,
+  select: selectElementSpec,
   table: tableElementSpec,
 }
 
@@ -163,5 +164,5 @@ export const roleNotPermittedRule: AriaRule = Object.assign(
       },
     ]
   },
-  { readsProps: ['role', 'type', 'alt'] as const },
+  { readsProps: ['role', 'type', 'alt', 'list', 'multiple', 'size'] as const },
 )
