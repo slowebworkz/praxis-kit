@@ -21,7 +21,7 @@ import { buildRuntime } from './build-runtime'
 import { isWebContractComponent } from './is-web-contract-component'
 import { registerForSsr } from './render-to-string'
 import { isWebFactoryOptions } from './to-web-factory-options'
-import type { WebContractComponent, WebFactoryOptions, UnknownProps } from './types/index'
+import type { RuntimeG, WebContractComponent, WebFactoryOptions, UnknownProps } from './types/index'
 
 /**
  * Creates a plain `HTMLElement` subclass with praxis-kit contracts applied.
@@ -109,7 +109,12 @@ export function createContractComponent<
   options: WebFactoryOptions<TDefault, TProps, TVariants, TPreset, TPlugin> & {
     readonly subComponents?: TSubComponents
   },
-): WebContractComponent<TVariants, ExtractPluginProps<TPlugin>> & TSubComponents {
+): WebContractComponent<
+  TVariants,
+  ExtractPluginProps<TPlugin>,
+  RuntimeG<TDefault, TProps, TVariants, TPreset>
+> &
+  TSubComponents {
   invariant(isWebFactoryOptions(options), 'options is not a valid WebFactoryOptions object')
   const bundle = buildRuntime(options)
   const looseBundle = toLooseBundle(bundle)
@@ -133,6 +138,10 @@ export function createContractComponent<
   // to be created so registerForSsr() can register the bundle — but the element
   // lifecycle methods (connectedCallback, attributeChangedCallback) will never
   // run server-side; only renderContractToString() is used.
+  //
+  // `typeof HTMLElement !== 'undefined'` (not `isUndefined(HTMLElement)`) is deliberate: the
+  // `isUndefined` helper evaluates its argument, which throws `ReferenceError` on an undeclared
+  // global — a `typeof` check is the only form safe against a global that may not exist at all.
   const BaseElement: typeof HTMLElement =
     typeof HTMLElement !== 'undefined' ? HTMLElement : (class {} as unknown as typeof HTMLElement)
 
@@ -269,9 +278,15 @@ export function createContractComponent<
 
   const assembled = assembleCompoundComponent(contractClass, options.subComponents)
 
-  // TVariants/TPlugin are erased at runtime and can't be checked by any
+  // TVariants/TPlugin/G are erased at runtime and can't be checked by any
   // guard — the check above already proves the class shape genuinely, this
-  // just bridges the erased generics onto the specific public type.
-  return assembled as unknown as WebContractComponent<TVariants, ExtractPluginProps<TPlugin>> &
+  // just bridges the erased generics (including the phantom __generics marker,
+  // never assigned above — see WebContractComponent's own doc comment) onto the
+  // specific public type.
+  return assembled as unknown as WebContractComponent<
+    TVariants,
+    ExtractPluginProps<TPlugin>,
+    RuntimeG<TDefault, TProps, TVariants, TPreset>
+  > &
     TSubComponents
 }

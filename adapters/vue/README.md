@@ -65,9 +65,11 @@ Pass `asChild` to merge props onto the single child element:
 
 ## Exports
 
-| Export                            | Description                                                    |
-| --------------------------------- | -------------------------------------------------------------- |
-| `createContractComponent`         | Full factory: styling + ARIA enforcement + children validation |
-| `createPolymorphicComponent`      | Styling only, no enforcement                                   |
-| `createAriaEnforcedComponent`     | Styling + ARIA enforcement, no children validation             |
-| `createChildrenEnforcedComponent` | Styling + children validation, no ARIA                         |
+| Export                                                                                         | Description                                                         |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `createContractComponent`                                                                      | Factory: styling + ARIA enforcement + children validation           |
+| `defineContractComponent`                                                                      | Curries a factory's options so multiple call sites share one config |
+| `Slottable`                                                                                    | Marks the composition target child for `asChild`                    |
+| `VueFactoryOptions` (type)                                                                     | Factory options with Vue-specific extensions                        |
+| `ContractProps<T, Mode>` (type)                                                                | A built component's prop contract, recovered from `typeof X`        |
+| `PolymorphicComponent`, `PolymorphicProps`, `PolymorphicWithAsChild`, `SlottableProps` (types) | Component / prop shapes for typing wrappers                         |

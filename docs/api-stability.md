@@ -31,11 +31,21 @@ pipeline). Everything else is opt-in tooling or power-user surface.
 
 | Subpath                                                          | For                                                                                                                                                                                         |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `praxis-kit/react`, `/react/legacy` (React 18)                   | The React adapter — `createContractComponent`, `FactoryOptions`.                                                                                                                            |
-| `praxis-kit/preact`, `/vue`, `/solid`, `/svelte`, `/lit`, `/web` | The other six adapters. Identical factory API (documented exceptions on Lit/Web — no `as` / `asChild`, and SSR is `renderContractToString`).                                                |
+| `praxis-kit/react`, `/react/legacy` (React 18)                   | The React adapter.                                                                                                                                                                          |
+| `praxis-kit/preact`, `/vue`, `/solid`, `/svelte`, `/lit`, `/web` | The other six adapters. Identical factory API.                                                                                                                                              |
 | `praxis-kit/svelte/Polymorphic.svelte`                           | The Svelte render component — a Svelte bundle is rendered via `<Polymorphic bundle={…}>`. Required for the Svelte adapter.                                                                  |
 | `praxis-kit/contract`                                            | Framework-neutral contract authoring: `FactoryOptions` / `EnforcementOptions` / `StylingOptions` types, the eight state contracts, the state-prop normalizers, the ARIA-rule fix factories. |
 | `praxis-kit/tailwind`, `praxis-kit/tailwind.css`                 | `createTailwindPipeline` — the flex/grid-aware class pipeline — and its safelist stylesheet.                                                                                                |
+
+**Every adapter exports** `createContractComponent`, `defineContractComponent`, its own
+`*FactoryOptions` type, and `ContractProps<T>` (recover a built component's prop contract from
+`typeof MyComponent`). The VDOM adapters (React, Preact, Vue, Solid) additionally export `Slottable`
+for `asChild` composition (React/Preact/Vue also `SlottableProps`) and the `Polymorphic*` prop
+types; React adds `mergeRefs` and, with `render` mode, `RenderCallbackProps`. **Lit and Web** take
+no `as` / `asChild` and their SSR helper is `renderContractToString`. **Svelte** returns a bundle
+(not a component), rendered through `Polymorphic.svelte`, so it exports `BuiltRuntime` /
+`GenericsOf` / `ResolvedSlotProps` for typing that bundle and its `asChild` snippet rather than
+`ContractProps`.
 
 The `createContractComponent` / `FactoryOptions` contract is **frozen for 0.1** (architecture
 freeze). See [ARCHITECTURE.md](../ARCHITECTURE.md).
@@ -60,9 +70,9 @@ You only need these to build _on top of_ praxis-kit's enforcement, not to use it
 
 ### Experimental — may change or be removed in 0.1.x
 
-| Subpath                  | Status                                                                                                                                                                                                                                                                                                                         |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `praxis-kit/vite-plugin` | `contractPlugin`, `compoundPrunePlugin`, `classExtractPlugin`, `designTokensPlugin` are settling. **`slotTransformPlugin` (`asChild` transform) and `staticCompositionPlugin` (static inlining) are experimental** — behind opt-in plugins, pending differential tests (see the enforcement matrix in [README](../README.md)). |
+| Subpath                  | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `praxis-kit/vite-plugin` | Exports seven plugin factories — `contractPlugin`, `compoundPrunePlugin`, `classExtractPlugin`, `designTokensPlugin` (settling); **`slotTransformPlugin` (`asChild` transform), `staticCompositionPlugin` (static inlining), and `ssrOptimizePlugin` (the three optimisation plugins bundled in dependency order) are experimental** — pending differential tests (see the enforcement matrix in [README](../README.md)) — plus `PluginOptions` / `DesignTokens*` config types. The internal building blocks each plugin composes from are not exported. |
 
 ## Not an API
 

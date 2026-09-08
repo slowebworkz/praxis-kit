@@ -13,16 +13,15 @@ import { composeStatically, extractStaticComponents } from './static-compose'
 import type { PluginOptions } from './types'
 import { iterate } from '@praxis-kit/primitive'
 
-export { analyze } from './analyze'
-export { buildPrecomputedClasses, injectPrecomputedClasses } from './class-extract'
-export { pruneDeadCompounds } from './compound-prune'
-export { buildManifest, collectFileTokens, designTokensPlugin } from './design-tokens'
+// Public surface: the plugin factories plus their config/output types. The building blocks each
+// plugin is composed from (`analyze`, `buildPrecomputedClasses`/`injectPrecomputedClasses`,
+// `pruneDeadCompounds`, `buildManifest`/`collectFileTokens`, `transformAsChild`,
+// `composeStatically`/`extractStaticComponents`) and the internal AST/registry types
+// (`ImportBinding`, `StaticComponent`, `StaticBound`, `ComponentConstraint`, `Diagnostic`) stay
+// module-internal — import them from their own files if you're extending the plugin in-tree.
+export { designTokensPlugin } from './design-tokens'
 export type { ComponentTokens, DesignTokenManifest, DesignTokensOptions } from './design-tokens'
-export type { ImportBinding } from './imports'
-export { transformAsChild } from './slot-transform'
-export { composeStatically, extractStaticComponents } from './static-compose'
-export type { StaticComponent } from './static-compose'
-export type { ComponentConstraint, Diagnostic, PluginOptions, StaticBound } from './types'
+export type { PluginOptions } from './types'
 
 /**
  * Vite plugin that performs static enforcement.children cardinality checks at

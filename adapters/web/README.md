@@ -98,3 +98,5 @@ could ever upgrade in place even if it tried.
 | `renderContractToString`      | Serializes the resolved contract to HTML — not Custom Element SSR   |
 | `WebFactoryOptions` (type)    | Factory options with web-specific extensions                        |
 | `WebContractComponent` (type) | Return type of the factory                                          |
+| `ContractProps<T>` (type)     | A built component's full prop contract, recovered from `typeof X`   |
+| `GenericsOf<T>` (type)        | Recovers the `PolymorphicGenerics` a component was built from       |

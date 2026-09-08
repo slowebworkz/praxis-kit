@@ -2961,3 +2961,50 @@ Changes: `git mv` each `*.spike.test.*` → `*.test.*`; the two Svelte helpers `
 `*.test-host.svelte`; "spike" dropped from the `describe` titles and from the throwaway
 custom-element fixture tag names (`spike-card` → `pk-card`, etc.). No test logic touched.
 `pnpm -r test` + `pnpm -r typecheck` unchanged.
+
+### Public export surface — tightened to match `docs/api-stability.md` (2026-09-08)
+
+Follow-up to the P1 export audit (`.vscode/REMAINING_WORK.md`). Pre-publish is the only window in
+which removing an export is not a breaking change, so the audit's findings were acted on rather than
+just documented.
+
+- **`praxis-kit/react`** no longer re-exports `Slot`, `cloneSlotChild`, `getChildRef`, `composeRefs`
+  — `current/index.ts` / `legacy/index.ts` did `export * from './slot'`, leaking the slot-cloning
+  machinery. `Slot` etc. stay in the bundle (used internally by `build-runtime.ts`), they're just no
+  longer public. `mergeRefs` remains (documented); `composeRefs` was only ever an alias of it. Both
+  index files also switched `export * from './create-contract-component'` →
+  `export { createContractComponent }` for the same reason.
+- **`praxis-kit/svelte`** replaced `export type * from './types'` (+ `./svelte-options`) with an
+  explicit allowlist. It still exposes more than the VDOM adapters — its return value is a rich
+  bundle object — but the resolver plumbing (`Runtime`, `TypedRuntime`, `RuntimeOptions`,
+  `TagResolver`/`PropsResolver`/`ClassResolver`, `NormalizedOptions`, `ResolvedProps`,
+  `ResolvedAttributes`, `FilterPredicate`, `BuiltChildrenEvaluator`, `PolymorphicPropsBase`,
+  `StyleValue`/`StyleObject`, `AsProp`, `KnownProps`) is now internal. Kept: `BuiltRuntime`,
+  `AnyBuiltRuntime`, `WithChildRules`, `GenericsOf`, `ResolvedSlotProps`,
+  `PolymorphicComponentProps`.
+- **`praxis-kit/web`** gained `ContractProps<T>` / `GenericsOf<T>` (new `types/contract-props.ts`, a
+  phantom `__generics` marker on `WebContractComponent`, `RuntimeG` threaded through the factory
+  return type) — a byte-for-byte port of the Lit adapter's, closing the one adapter that had no
+  prop-recovery type. Added `@praxis-kit/contract-props` to its deps + a `contract-props.test.ts`
+  type-test mirroring Lit's.
+- **`praxis-kit/lit` and `/web`** now also re-export `ElementType` / `EmptyRecord` /
+  `PolymorphicGenerics` from core, matching the VDOM adapters — `GenericsOf<T>` returns a
+  `PolymorphicGenerics`, so a consumer needs to be able to name it.
+- **`praxis-kit/vite-plugin`** stopped exporting the building blocks each plugin composes from
+  (`analyze`, `buildPrecomputedClasses`/`injectPrecomputedClasses`, `pruneDeadCompounds`,
+  `buildManifest`/`collectFileTokens`, `transformAsChild`, `composeStatically`/
+  `extractStaticComponents`) and the internal AST/registry types (`ImportBinding`,
+  `StaticComponent`, `StaticBound`, `ComponentConstraint`, `Diagnostic`). Surface is now the seven
+  plugin factories + `PluginOptions` / `DesignTokens*` config types. `ssrOptimizePlugin` (a real,
+  fully-documented convenience bundle that the doc had omitted) is now listed in `api-stability.md`.
+- **Stale README export tables** for react/preact/vue listed four factory helpers that don't exist
+  in this repo (`createPolymorphicComponent`, `createAriaEnforcedComponent`,
+  `createChildrenEnforcedComponent`, `createContractedComponent` — ported from `../pk` and never
+  reconciled). Rewritten against the real `index.ts` surface; solid/svelte/web tables filled out to
+  match.
+
+Verification: full `pnpm typecheck` + `pnpm test` green; `pnpm lint:check` clean; `publint` "All
+good!"; `test:pack` PASS (its `vite-plugin` type-probe updated `ComponentConstraint` →
+`PluginOptions`); `qa/bundle-analysis` + `qa/tree-shaking-tests` gzip snapshots unchanged (react −30
+B from the dropped export statements, everything else ±0 — the removed names were type-only or
+already tree-shaken).
