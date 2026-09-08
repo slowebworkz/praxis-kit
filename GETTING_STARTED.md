@@ -34,7 +34,8 @@ Two adapters render differently:
   `Polymorphic` component: `import Polymorphic from 'praxis-kit/svelte/Polymorphic.svelte'`, then
   `<Polymorphic {bundle} intent="ghost" as="a" href="/home">Home</Polymorphic>`.
 - **Lit / Web.** A custom element's tag is fixed at `customElements.define()` time, so they don't
-  accept `as` (see Step 5).
+  accept `as` (see Step 5) or `asChild` (see Step 8) — the two render-time features that need a live
+  element to retarget or a JSX-style slot to merge onto.
 
 Everything else in this guide — `styling`, `enforcement`, presets, `onElement` — works the same way
 on all seven.
@@ -216,6 +217,7 @@ import { CardHeader, CardBody } from './card-parts'
 
 const Card = createContractComponent({
   tag: 'div',
+  name: 'Card', // used as the prefix in contract diagnostics
   enforcement: {
     diagnostics: 'throw',
     children: [
@@ -245,7 +247,7 @@ const Card = createContractComponent({
 <Card>
   <CardBody>Content</CardBody>
 </Card>
-// Error: [Card] contract violation — expected exactly 1 CardHeader (got 0)
+// throws: Card: "CardHeader" requires at least 1.
 ```
 
 Use `diagnostics: 'warn'` while developing and switch to `diagnostics: 'throw'` for production
@@ -271,6 +273,10 @@ const Button = createContractComponent({
   <a href="/dashboard">Dashboard</a>
 </Button>
 ```
+
+`asChild` is available on React, Preact, Solid, Vue, and Svelte. **Lit and Web don't support it** —
+Light DOM has no JSX-style slot to clone the resolved props onto; register the element you want
+directly instead.
 
 Use `Slottable` when the slot child wraps additional content that should receive the original
 children:
@@ -367,8 +373,10 @@ pnpm --filter @praxis-kit/bench bench          # render pipeline and children ma
 pnpm --filter @praxis-kit/bench bench:render   # praxis-kit vs. vanilla React Tabs overhead benchmark
 ```
 
-`examples/*` (a runnable dev server per framework) hasn't landed in this repo yet — see
-`DECISIONS.md` for current status.
+There is no `examples/*` workspace in this repo, by design — runnable praxis-kit components live in
+the separate `praxis-components` library. [docs/examples.md](docs/examples.md) has copy-pasteable
+`Box` and `Tabs` configs and points to where praxis-kit is exercised end to end in this repo's own
+tests and benches.
 
 ---
 
@@ -390,11 +398,14 @@ TypeScript catches type errors at compile time. Structural violations — wrong 
 nesting, missing required elements — happen at runtime and produce no TypeScript errors.
 
 ```tsx
-// TypeScript accepts this. It's a valid ReactNode.
-// The bug is structural, not type-level.
+// `Tabs` here is a compound component you built with `createContractComponent`, the same way
+// as `Card` in Step 7 — with a `children` rule requiring a `Tabs.List`.
+// TypeScript accepts this: `<p>` is a valid ReactNode. The bug is structural, not type-level,
+// so only the contract catches it:
 <Tabs>
   <p>This is not a TabsList.</p>
 </Tabs>
+// throws: Tabs: "Tabs.List" requires at least 1.
 ```
 
 ### Will you keep up with multiple frameworks?
@@ -411,6 +422,10 @@ This is a genuine maintenance commitment, not a solved problem.
 
 ## What's next
 
+- [docs/](docs/index.md) — concepts, the worked `Box` / `Tabs` examples, the API-stability tiers,
+  and the HTML/ARIA audit
+- [docs/api-stability.md](docs/api-stability.md) — which of the ~19 subpaths are stable for 0.1 and
+  which may still move
 - [ARCHITECTURE.md](ARCHITECTURE.md) — internal runtime pipeline, data flow, execution phases, and
   debugging guide (`diagnoseClassPipeline`, ARIA violation messages, child evaluator traces)
 - [ADAPTER_AUTHORING.md](ADAPTER_AUTHORING.md) — writing a new framework adapter against the core

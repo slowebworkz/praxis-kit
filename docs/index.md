@@ -14,11 +14,13 @@ Framework-neutral UI infrastructure with enforceable structural and accessibilit
 | [Adapter authoring](../ADAPTER_AUTHORING.md)          | Building a new framework adapter                                                                 |
 | [HTML/ARIA audit](./accessibility/html-aria-audit.md) | Normative source, rule, interpretation, test and deviation for every accessibility contract rule |
 | [Release gate](./releasing/verify-release.md)         | What `pnpm verify:release` runs and why the order matters                                        |
+| [Decisions](../DECISIONS.md)                          | Decision log; the **Status** section at the top is the current-state snapshot                    |
 | [Security policy](../SECURITY.md)                     | Supported versions, how to report a vulnerability                                                |
 
 There is no `MIGRATING.md` or `CHANGELOG.md` yet — praxis-kit hasn't shipped a first published
-version, so there is nothing to migrate from and no release history to log. Both will exist once
-`praxis-kit@1.0.0` ships.
+version, so there is nothing to migrate from and no release history to log. A `CHANGELOG.md` starts
+with the first published release (`praxis-kit@0.1.0`); `MIGRATING.md` appears when there is a
+breaking change between published versions to migrate across.
 
 ## Layer overview
 
@@ -75,5 +77,6 @@ const Button = createContractComponent({
 ```
 
 Swap `praxis-kit/react` for the subpath matching your framework — the factory API is identical
-across all seven adapters, with two small, documented exceptions on Lit and Web (no `as` prop; see
+across all seven adapters, with small documented exceptions on Lit and Web (no `as` or `asChild`
+render props; SSR is `renderContractToString`; see
 [GETTING_STARTED.md](../GETTING_STARTED.md#step-5--polymorphic-rendering)).
