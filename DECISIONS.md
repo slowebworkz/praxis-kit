@@ -54,18 +54,29 @@ currently pins Model A across all eight.
 
 ### HTML/ARIA contract layer — standards audit before it is authoritative
 
-Pre-1.0 gate, not an adapter blocker. The HTML/ARIA enforcement data in `packages/core` —
-`HTML_ARIA_RULES` (the per-tag allowed-role table: `main: []`, `nav: []`, and the special handling
-of `h1`–`h6`, `ul`/`ol`/`li`, `a` with/without `href`, `button`, `img`, `input[type]` …),
-`ALLOWED_ROLES` / `ALLOWED_INPUT_ROLES`, `STRONG_ROLES`, `IMPLICIT_ROLE_RECORD` — is ported from
-`../pk` and carries source comments marking it a partial / heuristic model. It is powerful enough
-that a wrong entry makes Praxis _confidently reject valid markup_, so it must be validated
-systematically against the current **ARIA in HTML** (W3C) and **HTML-AAM** specs, with dedicated
-conformance tests citing the normative source per row, before the HTML/ARIA contract layer is
-treated as canonical. The `AriaPolicyEngine` / `createAriaPipeline` architecture does not change —
-this is a data-correctness pass. Consolidates the notes previously scattered under the
-`packages/core` and `lib/primitive` port writeups. Do not widen any of these tables without the
-citation pass + tests.
+Pre-1.0 gate, not an adapter blocker. **In progress** — the running record is
+[`docs/accessibility/html-aria-audit.md`](docs/accessibility/html-aria-audit.md), which now holds
+the normative source, rule, praxis-kit interpretation, covering test and any deliberate deviation
+for every rule the `AriaPolicyEngine` enforces. Do not widen any of these tables without adding the
+corresponding row + test there.
+
+The HTML/ARIA enforcement data in `packages/core` — `HTML_ARIA_RULES`, `ALLOWED_ROLES` /
+`ALLOWED_INPUT_ROLES` / `IMG_NAMED_ROLES`, `STRONG_ROLES`, `IMPLICIT_ROLE_RECORD` and the
+role→attribute table — was ported from `../pk` with source comments marking it a partial model. A
+wrong entry makes praxis-kit _confidently reject valid markup_, so it is being validated row by row
+against **ARIA in HTML**, **WAI-ARIA 1.2** and **HTML-AAM**.
+
+First pass (branch `fix/aria-html-standards-audit`): corrected the allowed-role tables (`nav` was
+`[]` — it permits five roles; `ul`/`ol` carried the deprecated `directory` and lacked
+`none`/`presentation`; `button`, `aside`, `img` and the `input[type]` sets had gaps); fixed
+`<select>` to resolve `combobox`/`listbox` from `multiple`/`size` rather than a hard-coded
+`listbox`; scoped the required-property check so a native `<select>` is not asked for
+`aria-expanded`. The `AriaPolicyEngine` / `createAriaPipeline` architecture did not change — this is
+a data-correctness pass.
+
+Still open (tracked in the audit doc's "Open work" table): the full WAI-ARIA 1.2 §6 pass on the
+role→attribute table incl. prohibited properties (F5), the APG widget-contract audit (F7), and the
+`undefined` allowed-role rows that need ancestry the single-element context lacks.
 
 ## Resolved
 
