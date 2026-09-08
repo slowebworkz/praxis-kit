@@ -9,21 +9,22 @@ import type { StringMap } from '../../types/any-record'
  * 1. **static** — role depends on the tag alone (`nav → navigation`,
  *    `article → article`). Only these belong in `IMPLICIT_ROLE_RECORD`.
  * 2. **attribute-dependent** — role depends on an attribute value
- *    (`a` is `link` *only with* `href`; `input` per `type`, see
- *    `INPUT_TYPE_ROLE_MAP` + `getInputImplicitRole`; `img` per `alt`;
- *    `select` is `combobox` or `listbox` per `multiple`/`size`, see
- *    `getSelectImplicitRole`).
+ *    (`a`/`area` is `link` *with* `href`, `generic` without — see
+ *    `getAnchorImplicitRole`; `input` per `type`, see `INPUT_TYPE_ROLE_MAP` +
+ *    `getInputImplicitRole`; `img` per `alt`; `select` is `combobox` or
+ *    `listbox` per `multiple`/`size`, see `getSelectImplicitRole`).
  * 3. **context-dependent** — role depends on ancestry
  *    (`section`/`form` become landmarks only when they have an accessible name;
  *    `header`/`footer` are `banner`/`contentinfo` only at the top level — see
  *    `getConditionalImplicitRole`).
  * 4. **state-/naming-dependent** — role depends on runtime state or naming.
  *
- * Entries here that are *actually* attribute-dependent (`a`, `td`, `th`) are the
- * "no attributes / defaults" case; callers that know the attributes must prefer
- * the conditional helpers. Do not add an entry whose real role needs more than
- * the tag — `select` is deliberately absent for that reason (its default is
- * `combobox`, not `listbox`, per ARIA-in-HTML).
+ * Entries here that are *actually* attribute-dependent (`td`, `th`) are the "no
+ * attributes / defaults" case; callers that know the attributes must prefer the
+ * conditional helpers. Do not add an entry whose real role needs more than the
+ * tag — `a`/`area` and `select` are deliberately absent for that reason (a bare
+ * `<a>` is `generic`, not `link`; a bare `<select>` is `combobox`, not
+ * `listbox`, per ARIA-in-HTML).
  */
 export const IMPLICIT_ROLE_RECORD = Object.freeze({
   // Landmarks
@@ -34,7 +35,6 @@ export const IMPLICIT_ROLE_RECORD = Object.freeze({
   main: 'main',
   nav: 'navigation',
   // Interactive
-  a: 'link',
   button: 'button',
   textarea: 'textbox',
   // Headings

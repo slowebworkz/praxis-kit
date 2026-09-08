@@ -1,6 +1,7 @@
 export { hasRole } from './has-role'
 export { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './is-aria-attribute'
 export {
+  getAnchorImplicitRole,
   getConditionalImplicitRole,
   getInputImplicitRole,
   getSelectImplicitRole,
