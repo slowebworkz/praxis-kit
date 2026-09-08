@@ -17,3 +17,12 @@ updates:
       # Drop this once TS 7 is confirmed working here.
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
+
+      # `@playwright/test` must stay on the same minor as `@playwright/experimental-ct-react`
+      # and `-ct-vue` (adapters/react and adapters/vue component tests). The CT packages lag —
+      # only `@playwright/test` has published 1.63.0; `experimental-ct-*` is still 1.62.1 — and
+      # a split bumps `playwright-core` under `@playwright/test` while the CT `MountResult` stays
+      # on the old `Locator`, breaking `*.pw.spec.tsx` typecheck. Bump all three together by hand
+      # in pnpm-workspace.yaml once `@playwright/experimental-ct-*` catches up; then drop this.
+      - dependency-name: "@playwright/test"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
