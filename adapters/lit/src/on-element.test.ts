@@ -19,7 +19,7 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('onElement (event-handler wiring spike)', () => {
+describe('onElement (event-handler wiring)', () => {
   it('receives the real element and it is the custom element instance itself', async () => {
     let received: Element | undefined
     const Widget = createContractComponent({
@@ -29,9 +29,9 @@ describe('onElement (event-handler wiring spike)', () => {
         received = el
       },
     })
-    define('spike-on-element-widget', Widget)
+    define('pk-on-element-widget', Widget)
 
-    const el = document.createElement('spike-on-element-widget')
+    const el = document.createElement('pk-on-element-widget')
     document.body.appendChild(el)
     await (el as unknown as LitEl).updateComplete
 
@@ -55,9 +55,9 @@ describe('onElement (event-handler wiring spike)', () => {
         return () => el.removeEventListener('close', handleClose)
       },
     })
-    define('spike-on-element-widget-props', Widget)
+    define('pk-on-element-widget-props', Widget)
 
-    const el = document.createElement('spike-on-element-widget-props')
+    const el = document.createElement('pk-on-element-widget-props')
     el.setAttribute('label', 'first')
     document.body.appendChild(el)
     await (el as unknown as LitEl).updateComplete
@@ -79,9 +79,9 @@ describe('onElement (event-handler wiring spike)', () => {
       name: 'WidgetCleanup',
       onElement: () => cleanup,
     })
-    define('spike-on-element-widget-cleanup', Widget)
+    define('pk-on-element-widget-cleanup', Widget)
 
-    const el = document.createElement('spike-on-element-widget-cleanup')
+    const el = document.createElement('pk-on-element-widget-cleanup')
     document.body.appendChild(el)
     await (el as unknown as LitEl).updateComplete
     expect(cleanup).not.toHaveBeenCalled()
@@ -92,9 +92,9 @@ describe('onElement (event-handler wiring spike)', () => {
 
   it('a plain component with no onElement option is unaffected', async () => {
     const Plain = createContractComponent({ tag: 'div', name: 'PlainOnElement' })
-    define('spike-on-element-plain', Plain)
+    define('pk-on-element-plain', Plain)
 
-    const el = document.createElement('spike-on-element-plain')
+    const el = document.createElement('pk-on-element-plain')
     expect(() => document.body.appendChild(el)).not.toThrow()
     await (el as unknown as LitEl).updateComplete
   })

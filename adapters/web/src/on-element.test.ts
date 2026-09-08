@@ -17,7 +17,7 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('onElement (event-handler wiring spike)', () => {
+describe('onElement (event-handler wiring)', () => {
   it('receives the real element and it is the custom element instance itself', () => {
     let received: Element | undefined
     const Widget = createContractComponent({
@@ -27,9 +27,9 @@ describe('onElement (event-handler wiring spike)', () => {
         received = el
       },
     })
-    define('spike-web-on-element-widget', Widget)
+    define('pk-web-on-element-widget', Widget)
 
-    const el = document.createElement('spike-web-on-element-widget')
+    const el = document.createElement('pk-web-on-element-widget')
     document.body.appendChild(el)
 
     expect(received).toBe(el)
@@ -51,9 +51,9 @@ describe('onElement (event-handler wiring spike)', () => {
         return () => el.removeEventListener('close', handleClose)
       },
     })
-    define('spike-web-on-element-widget-props', Widget)
+    define('pk-web-on-element-widget-props', Widget)
 
-    const el = document.createElement('spike-web-on-element-widget-props')
+    const el = document.createElement('pk-web-on-element-widget-props')
     el.setAttribute('label', 'first')
     document.body.appendChild(el)
 
@@ -73,9 +73,9 @@ describe('onElement (event-handler wiring spike)', () => {
       name: 'WidgetCleanup',
       onElement: () => cleanup,
     })
-    define('spike-web-on-element-widget-cleanup', Widget)
+    define('pk-web-on-element-widget-cleanup', Widget)
 
-    const el = document.createElement('spike-web-on-element-widget-cleanup')
+    const el = document.createElement('pk-web-on-element-widget-cleanup')
     document.body.appendChild(el)
     expect(cleanup).not.toHaveBeenCalled()
 
@@ -85,9 +85,9 @@ describe('onElement (event-handler wiring spike)', () => {
 
   it('a plain component with no onElement option is unaffected', () => {
     const Plain = createContractComponent({ tag: 'div', name: 'PlainOnElement' })
-    define('spike-web-on-element-plain', Plain)
+    define('pk-web-on-element-plain', Plain)
 
-    const el = document.createElement('spike-web-on-element-plain')
+    const el = document.createElement('pk-web-on-element-plain')
     expect(() => document.body.appendChild(el)).not.toThrow()
   })
 })

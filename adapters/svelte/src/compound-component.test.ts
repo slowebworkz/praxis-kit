@@ -8,11 +8,11 @@ import { describe, it, expect, expectTypeOf, afterEach } from 'vitest'
 import { render, cleanup } from '@testing-library/svelte'
 import { createContractComponent } from './create-contract-component'
 import Polymorphic from './Polymorphic.svelte'
-import Host from './compound-component.spike-host.svelte'
+import Host from './compound-component.test-host.svelte'
 
 afterEach(cleanup)
 
-describe('subComponents (compound component generation spike)', () => {
+describe('subComponents (compound component generation)', () => {
   const Header = createContractComponent({ tag: 'header' as const, name: 'CardHeader' })
   const Content = createContractComponent({ tag: 'div' as const, name: 'CardContent' })
   const Footer = createContractComponent({ tag: 'footer' as const, name: 'CardFooter' })

@@ -5,13 +5,13 @@
  * captured once at setup and are documented by Svelte itself as non-reactive — a testing-helper
  * limitation, not a fact about `Polymorphic.svelte`. Proving the asChild path actually reacts to a
  * resolved-prop change needs a real `$state`-driven host and a real `{#snippet}` block, which is
- * what `asChild-reactivity.spike-host.svelte` is: it owns its own `class` in `$state` and exposes
+ * what `asChild-reactivity.test-host.svelte` is: it owns its own `class` in `$state` and exposes
  * `setExtra` as a component export, callable via the `component` testing-library gives back.
  */
 import { describe, it, expect, afterEach } from 'vitest'
 import { render, cleanup } from '@testing-library/svelte'
 import { tick } from 'svelte'
-import Host from './asChild-reactivity.spike-host.svelte'
+import Host from './asChild-reactivity.test-host.svelte'
 import { createContractComponent } from './create-contract-component'
 
 afterEach(cleanup)

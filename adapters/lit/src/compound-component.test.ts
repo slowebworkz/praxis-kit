@@ -18,7 +18,7 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('subComponents (compound component generation spike)', () => {
+describe('subComponents (compound component generation)', () => {
   const Header = createContractComponent({ tag: 'header', name: 'CardHeader' })
   const Content = createContractComponent({ tag: 'div', name: 'CardContent' })
   const Footer = createContractComponent({ tag: 'footer', name: 'CardFooter' })
@@ -30,10 +30,10 @@ describe('subComponents (compound component generation spike)', () => {
   })
 
   beforeAll(() => {
-    define('spike-card-header', Header)
-    define('spike-card-content', Content)
-    define('spike-card-footer', Footer)
-    define('spike-card', Card)
+    define('pk-card-header', Header)
+    define('pk-card-content', Content)
+    define('pk-card-footer', Footer)
+    define('pk-card', Card)
   })
 
   it('assembles the sub-components onto the root, like Object.assign would', () => {
@@ -49,15 +49,15 @@ describe('subComponents (compound component generation spike)', () => {
   })
 
   it('renders the assembled sub-components as ordinary children', async () => {
-    const card = document.createElement('spike-card')
+    const card = document.createElement('pk-card')
     card.appendChild(new Card.Header())
     card.appendChild(new Card.Content())
     card.appendChild(new Card.Footer())
     document.body.appendChild(card)
     await (card as unknown as LitEl).updateComplete
 
-    expect(card.querySelector('spike-card-header')).toBeTruthy()
-    expect(card.querySelector('spike-card-footer')).toBeTruthy()
+    expect(card.querySelector('pk-card-header')).toBeTruthy()
+    expect(card.querySelector('pk-card-footer')).toBeTruthy()
   })
 
   it('a plain (non-compound) component is unaffected — no subComponents option, no static sub-component properties', () => {

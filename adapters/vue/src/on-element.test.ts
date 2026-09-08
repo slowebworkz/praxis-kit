@@ -15,7 +15,7 @@ function box(comp: unknown): any {
   return comp
 }
 
-describe('onElement (event-handler wiring spike)', () => {
+describe('onElement (event-handler wiring)', () => {
   it('receives the real element and can call native imperative methods on it', () => {
     let received: Element | undefined
     const Dialog = createContractComponent({

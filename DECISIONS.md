@@ -25,11 +25,10 @@ systems. Remaining work is correctness, documentation, and release mechanics.
   default; `main` tracks the last stable point.
 - **Still open (tracked in `## Open`).** `qa/*` tooling-dependency placement; `spikes/*` location.
   Neither blocks the 0.1 tag.
-- **Remaining before the tag, beyond `## Open`.** The consumer-facing documentation pass (README /
-  Getting Started / runnable-config examples — in progress); a review pass over the `*.spike.test.*`
-  files and a deliberate audit of what each public subpath exports; the dependency / license /
-  package-metadata audits; then the release steps — create the 0.1.0 changeset, flip `packages/kit`
-  off `private`, publish, and re-verify from npm.
+- **Remaining before the tag, beyond `## Open`.** A deliberate audit of what each public subpath
+  exports; the dependency / license / package-metadata audits; then the release steps — create the
+  0.1.0 changeset, flip `packages/kit` off `private`, publish, and re-verify from npm. (The
+  consumer-facing documentation pass and the `*.spike.test.*` review are done — see `## Resolved`.)
 - **Explicitly deferred past 0.1.** `runtime/compiler`; additional framework adapters; a large
   component catalog (real components live in the separate `praxis-components` library); the
   widget-contract APG audit (F7); contextual `<header>`/`<footer>` roles (deviation D4 — needs
@@ -246,7 +245,7 @@ differ only in ref handling (React 19 plain-prop ref vs React 18 `forwardRef`) a
 **Review — `onElement` lifecycle:** legacy `create-contract-component.ts` was missing the "clear
 `cleanupRef` before re-invoking `onElement`" step that `current/` has (so a throwing registration on
 a replacement element could leave the prior, already-run cleanup to fire again on unmount) —
-aligned. Both `on-element.spike.test.tsx` files gained a lifecycle matrix: replacement runs the old
+aligned. Both `on-element.test.tsx` files gained a lifecycle matrix: replacement runs the old
 cleanup before the new registration, cleanup runs exactly once on unmount, a `void`-returning
 `onElement` is tolerated, a throwing `onElement` leaves no stale cleanup (+8 tests, 586 total).
 
@@ -289,8 +288,8 @@ src LOC, 9 vitest files / 162 tests. No Playwright-CT suite in `../pk` (none add
   warnings on `{cond && <X/>}` / `null` / whitespace); same fix + zero-guard. +2 asChild discard
   tests.
 - `create-contract-component.ts` — added the defensive `cleanupRef` clear-before-re-invoke that
-  react's `current/` has; `on-element.spike.test.tsx` gained the same lifecycle matrix (replacement
-  / exactly-once / void return / throwing registration).
+  react's `current/` has; `on-element.test.tsx` gained the same lifecycle matrix (replacement /
+  exactly-once / void return / throwing registration).
 
 **Review — conformance evidence** (the point of the preact adapter is to prove the architecture is
 framework-neutral, so its semantic test matrix should match react's):
@@ -349,9 +348,9 @@ findings):
 
 **Conformance evidence added:** a user's `ref` on `<Box>` resolves to the _component instance_ in
 Vue, not the host element — `onElement` is the adapter's contract for the real DOM node, so
-`on-element.spike.test.ts` gained the full matrix in its place: host element across an `as` override
-and the `asChild` path, cleanup-before-replacement, cleanup-exactly-once on unmount,
-`void`-returning `onElement`, throwing `onElement` on a replacement.
+`on-element.test.ts` gained the full matrix in its place: host element across an `as` override and
+the `asChild` path, cleanup-before-replacement, cleanup-exactly-once on unmount, `void`-returning
+`onElement`, throwing `onElement` on a replacement.
 
 **Second review pass — three contract decisions resolved + a real bug fixed** (`../pk`'s Vue adapter
 had these; 209 → 219 tests):
@@ -642,7 +641,7 @@ consistency becomes a real need, not just a `format:check` crash to avoid.
   `createRawSnippet` (the mechanism every other asChild test in this file uses) never observed an
   updated prop — `createRawSnippet`'s params are captured once at setup and are documented by Svelte
   itself as non-reactive, a testing-helper limitation, not a fact about `Polymorphic.svelte`. Real
-  reactivity needed a real `$state` host: `asChild-reactivity.spike-host.svelte` owns a `$state`
+  reactivity needed a real `$state` host: `asChild-reactivity.test-host.svelte` owns a `$state`
   class and exposes `setExtra` as a component export; `asChild-reactivity.test.ts` drives it via
   `component.setExtra(...)` + `tick()` and confirms the slot snippet's rendered DOM picks up the new
   resolved class. 144 tests total (119 jsdom + 25 SSR, up from 122).
@@ -2942,3 +2941,23 @@ holds a `RecipeMap`, selected at render time by the `recipe` prop, and the inter
 explicitly so a reader meeting the two names together isn't left to wonder. If a rename is ever
 revisited it is a `recipes` field + `TRecipes` generic + `PolymorphicGenerics['recipes']` change,
 shipped with the codemod, not a find-and-replace.
+
+### `*.spike.test.*` — promoted to plain `*.test.*` (2026-09-08)
+
+The P1 review of the 19 `*.spike.test.*` files (3 patterns: `compound-component` ×8, `on-element`
+×8, `contract-props` ×3). Outcome: **promote all of them** — none was throwaway or a limitation-doc.
+
+- They already run in the normal suite and CI: the vitest `include` glob is
+  `src/**/*.{test,spec}.{ts,tsx}`, which `*.spike.test.*` matches. "spike" was purely a filename
+  label with no mechanical effect — a false signal that this coverage was provisional.
+- The content is real regression coverage: the `onElement` lifecycle matrices (element handoff
+  across an `as` override / the `asChild` slot, cleanup ordering on replacement, once-only cleanup
+  on unmount, a throwing hook on a replacement element), compound-output static-property typing, and
+  the `ContractProps<T>` / `GenericsOf<T>` phantom-`__generics` recovery type tests. All of it is
+  worth keeping and none of it duplicates the conformance suite (which covers the render contract,
+  not these adapter-specific mechanisms).
+
+Changes: `git mv` each `*.spike.test.*` → `*.test.*`; the two Svelte helpers `*.spike-host.svelte` →
+`*.test-host.svelte`; "spike" dropped from the `describe` titles and from the throwaway
+custom-element fixture tag names (`spike-card` → `pk-card`, etc.). No test logic touched.
+`pnpm -r test` + `pnpm -r typecheck` unchanged.

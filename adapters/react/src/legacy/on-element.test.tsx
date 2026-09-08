@@ -1,34 +1,19 @@
 // @vitest-environment jsdom
 /**
- * Proves the `onElement` compound mechanism end-to-end in Preact: the real DOM element
- * reaches the hook once per mount, getProps() reflects current props without
- * re-registering, and the returned cleanup fires on unmount. Uses a native `<dialog>`
- * element as the motivating case — showModal()/close() and the dialog's own native
+ * Proves the `onElement` compound mechanism end-to-end in the React 18 (legacy, forwardRef)
+ * adapter: the real DOM element reaches the hook once per mount, getProps() reflects current
+ * props without re-registering, and the returned cleanup fires on unmount. Uses a native
+ * `<dialog>` element as the motivating case — showModal()/close() and the dialog's own native
  * close/cancel events require the real node, not a props-based synthetic handler.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { h, render } from 'preact'
-import type { ComponentType } from 'preact'
-import type { UnknownProps } from './types'
+import { describe, it, expect, vi } from 'vitest'
+import { createElement } from 'react'
+import { box, useReactDom } from '../shared/test-utils'
 import { createContractComponent } from './create-contract-component'
 
-function box(comp: { displayName?: string }): ComponentType<UnknownProps> {
-  return comp as unknown as ComponentType<UnknownProps>
-}
+describe('onElement (event-handler wiring, legacy)', () => {
+  const dom = useReactDom()
 
-let container: HTMLElement
-
-beforeEach(() => {
-  container = document.createElement('div')
-  document.body.appendChild(container)
-})
-
-afterEach(() => {
-  render(null, container)
-  document.body.removeChild(container)
-})
-
-describe('onElement (event-handler wiring spike)', () => {
   it('receives the real element and can call native imperative methods on it', () => {
     let received: Element | undefined
     const Dialog = createContractComponent({
@@ -39,12 +24,15 @@ describe('onElement (event-handler wiring spike)', () => {
       },
     })
 
-    render(h(box(Dialog), null), container)
+    dom.mount(createElement(box(Dialog)))
     expect(received).toBeInstanceOf(HTMLDialogElement)
-    expect(received).toBe(container.querySelector('dialog'))
+    expect(received).toBe(dom.container.querySelector('dialog'))
   })
 
   it('getProps() reflects current props without re-registering the listener', () => {
+    // Deliberately not named `onClose` — React 19 already wires that prop to the dialog's
+    // native `close` event itself; keeping the prop name distinct isolates what onElement
+    // actually does here even though this is the pre-19 adapter.
     let listenerAttachCount = 0
     const Dialog = createContractComponent({
       tag: 'dialog' as const,
@@ -58,14 +46,15 @@ describe('onElement (event-handler wiring spike)', () => {
     })
 
     const firstOnClose = vi.fn()
-    render(h(box(Dialog), { onDialogClose: firstOnClose }), container)
-    container.querySelector('dialog')!.dispatchEvent(new Event('close'))
+    dom.mount(createElement(box(Dialog), { onDialogClose: firstOnClose }))
+    dom.container.querySelector('dialog')!.dispatchEvent(new Event('close'))
     expect(firstOnClose).toHaveBeenCalledTimes(1)
 
+    // Re-render with a new handler — same element, so onElement must not re-fire.
     const onDialogClose = vi.fn()
-    render(h(box(Dialog), { onDialogClose }), container)
+    dom.mount(createElement(box(Dialog), { onDialogClose }))
     expect(listenerAttachCount).toBe(1)
-    container.querySelector('dialog')!.dispatchEvent(new Event('close'))
+    dom.container.querySelector('dialog')!.dispatchEvent(new Event('close'))
     expect(onDialogClose).toHaveBeenCalledTimes(1)
     expect(firstOnClose).toHaveBeenCalledTimes(1)
   })
@@ -78,23 +67,25 @@ describe('onElement (event-handler wiring spike)', () => {
       onElement: () => cleanup,
     })
 
-    render(h(box(Dialog), null), container)
+    dom.mount(createElement(box(Dialog)))
     expect(cleanup).not.toHaveBeenCalled()
-    render(null, container)
+    dom.mount(createElement('div'))
     expect(cleanup).toHaveBeenCalledTimes(1)
   })
 
   it('a plain component with no onElement option is unaffected', () => {
     const Plain = createContractComponent({ tag: 'div' as const, name: 'Plain' })
-    expect(() => render(h(box(Plain), null), container)).not.toThrow()
+    expect(() => dom.mount(createElement(box(Plain)))).not.toThrow()
   })
 })
 
 /**
- * Lifecycle matrix for the callback-ref registration in `create-contract-component.ts` —
- * mirrors `@praxis-kit/react`'s.
+ * Lifecycle matrix for the callback-ref registration in `create-contract-component.ts` — the
+ * React 18 (forwardRef) adapter's copy mirrors the React 19 one, so the same reasoning applies.
  */
-describe('onElement lifecycle', () => {
+describe('onElement lifecycle (legacy)', () => {
+  const dom = useReactDom()
+
   it('runs the previous cleanup before registering against a replacement element', () => {
     const log: string[] = []
     const Box = createContractComponent({
@@ -107,10 +98,8 @@ describe('onElement lifecycle', () => {
       },
     })
 
-    // Changing `as` swaps the host element type — Preact unmounts the old node and mounts a new
-    // one, firing the callback ref null (old) then the replacement.
-    render(h(box(Box), { as: 'section' }), container)
-    render(h(box(Box), { as: 'article' }), container)
+    dom.mount(createElement(box(Box), { as: 'section' }))
+    dom.mount(createElement(box(Box), { as: 'article' }))
 
     expect(log).toEqual(['register:section', 'cleanup:section', 'register:article'])
   })
@@ -123,9 +112,9 @@ describe('onElement lifecycle', () => {
       onElement: () => cleanup,
     })
 
-    render(h(box(Box), null), container)
-    render(h('span', null), container) // unmounts Box
-    render(h('p', null), container)
+    dom.mount(createElement(box(Box)))
+    dom.mount(createElement('span'))
+    dom.mount(createElement('p'))
     expect(cleanup).toHaveBeenCalledTimes(1)
   })
 
@@ -139,8 +128,8 @@ describe('onElement lifecycle', () => {
     })
 
     expect(() => {
-      render(h(box(Box), null), container)
-      render(h('span', null), container)
+      dom.mount(createElement(box(Box)))
+      dom.mount(createElement('span'))
     }).not.toThrow()
   })
 
@@ -157,11 +146,11 @@ describe('onElement lifecycle', () => {
       },
     })
 
-    render(h(box(Box), { as: 'section' }), container)
-    expect(() => render(h(box(Box), { as: 'article' }), container)).toThrow('onElement failed')
+    dom.mount(createElement(box(Box), { as: 'section' }))
+    expect(() => dom.mount(createElement(box(Box), { as: 'article' }))).toThrow('onElement failed')
     expect(firstCleanup).toHaveBeenCalledTimes(1)
 
-    render(h('span', null), container)
+    dom.mount(createElement('span'))
     expect(firstCleanup).toHaveBeenCalledTimes(1)
   })
 })

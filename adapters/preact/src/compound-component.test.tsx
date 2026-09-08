@@ -1,18 +1,38 @@
 // @vitest-environment jsdom
 /**
  * Proves the `subComponents` compound-component mechanism end-to-end in
- * Solid: typed compound output, rendering the attached sub-components as
+ * Preact: typed compound output, rendering the attached sub-components as
  * ordinary children, and non-regression for plain (non-compound) usage.
  */
-import { describe, it, expect, expectTypeOf, afterEach } from 'vitest'
-import { render as solidRender, cleanup } from '@solidjs/testing-library'
+import { describe, it, expect, expectTypeOf, beforeEach, afterEach } from 'vitest'
+import { h, render } from 'preact'
+import type { ComponentType } from 'preact'
 import type { EmptyRecord, PolymorphicGenerics } from '@praxis-kit/core'
-import type { PolymorphicComponent } from './types'
+import type { AnyVNode, PolymorphicComponent, UnknownProps } from './types'
 import { createContractComponent } from './create-contract-component'
 
-afterEach(cleanup)
+// Cast to bypass the PolymorphicComponent union in h() overloads.
+function box(comp: { displayName?: string }): ComponentType<UnknownProps> {
+  return comp as unknown as ComponentType<UnknownProps>
+}
 
-describe('subComponents (compound component generation spike)', () => {
+let container: HTMLElement
+
+function mount(element: AnyVNode) {
+  render(element, container)
+}
+
+beforeEach(() => {
+  container = document.createElement('div')
+  document.body.appendChild(container)
+})
+
+afterEach(() => {
+  render(null, container)
+  document.body.removeChild(container)
+})
+
+describe('subComponents (compound component generation)', () => {
   const Header = createContractComponent({ tag: 'header' as const, name: 'CardHeader' })
   const Content = createContractComponent({ tag: 'div' as const, name: 'CardContent' })
   const Footer = createContractComponent({ tag: 'footer' as const, name: 'CardFooter' })
@@ -41,13 +61,15 @@ describe('subComponents (compound component generation spike)', () => {
   })
 
   it('renders the assembled sub-components as ordinary children', () => {
-    const { container } = solidRender(() => (
-      <Card>
-        <Card.Header />
-        <Card.Content />
-        <Card.Footer />
-      </Card>
-    ))
+    mount(
+      h(
+        box(Card),
+        null,
+        h(box(Card.Header), { key: 'h' }),
+        h(box(Card.Content), { key: 'c' }),
+        h(box(Card.Footer), { key: 'f' }),
+      ),
+    )
     const section = container.querySelector('section')!
     expect(section.querySelector('header')).toBeTruthy()
     expect(section.querySelector('footer')).toBeTruthy()
@@ -60,6 +82,6 @@ describe('subComponents (compound component generation spike)', () => {
     >
     expectTypeOf(Plain).toEqualTypeOf({} as Expected)
 
-    expect(() => solidRender(() => <Plain>{'span content'}</Plain>)).not.toThrow()
+    expect(() => mount(h(box(Plain), null, h('span', { key: 'x' })))).not.toThrow()
   })
 })

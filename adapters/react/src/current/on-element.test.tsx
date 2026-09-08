@@ -11,7 +11,7 @@ import { createElement } from 'react'
 import { box, useReactDom } from '../shared/test-utils'
 import { createContractComponent } from './create-contract-component'
 
-describe('onElement (event-handler wiring spike)', () => {
+describe('onElement (event-handler wiring)', () => {
   const dom = useReactDom()
 
   it('receives the real element and can call native imperative methods on it', () => {
