@@ -2586,3 +2586,24 @@ touched package (`foundation` 36, `primitive` 147, `pipeline` 38, `contract` 501
 29, `svelte` 25, `preact` 169, `web` 28, `lit` 25 — plus `vite-plugin` 164 and `eslint-plugin` 121)
 all pass; the `repo-state` → `qa/metrics` `collect`/`assert` chain re-run clean end to end after the
 sweep.
+
+### `qa/bench` — `pnpm bench` failing on `tabs.bench.ts` — a real, pre-existing config gap
+
+Running the whole `qa/*` suite end to end (`repo-state`, `qa/tree-shaking-tests`, `qa/metrics`,
+`qa/bench`) surfaced a real, pre-existing bug unrelated to any of the work above:
+`pnpm --filter @praxis-kit/bench bench` (the plain `bench` script, `vitest.bench.config.ts`) threw
+`ReferenceError: document is not defined` in `tabs.bench.ts`. Confirmed via `git log` that both
+files were last touched in PR #38 (`0073067`) — months before this session's other work, not a
+regression from anything above.
+
+Root cause: `vitest.bench.config.ts`'s `exclude` list already excludes `pipeline.bench.ts` and
+`react-compiler.bench.ts` (not-yet-implemented render-level benchmarks) but was missing
+`tabs.bench.ts` — a real DOM benchmark (mounts a React Tabs component) that needs a DOM environment
+this config never configures. `vitest.render.bench.config.ts` (the `bench:render` script) does
+configure one and is where `tabs.bench.ts` was always meant to run — confirmed by running
+`bench:render` first, which produces real numbers with no error. Fixed by adding `tabs.bench.ts` to
+both `exclude` arrays in `vitest.bench.config.ts`, alongside its two siblings.
+
+Verification: `pnpm --filter @praxis-kit/bench bench` now exits 0 with no DOM error;
+`pnpm --filter @praxis-kit/bench bench:render` unaffected (still runs `tabs.bench.ts` for real);
+`typecheck`, `format:check`, and `lint:check` all clean on the changed file.
