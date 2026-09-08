@@ -11,10 +11,10 @@ import type { StringMap } from '@praxis-kit/primitive'
 // (spec/types.ts) to actually check its `fallback` argument against this table's real keys.
 // Cross-checked against the "ARIA in HTML" WD per-input-type conformance rows (2026-09, see
 // docs/accessibility/html-aria-audit.md). Lists exclude the type's own redundant implicit role.
-// `combobox` on text-like types requires a `list` attribute — that case flips the *implicit*
-// role to `combobox` (see `getInputImplicitRole`) and passes `roleNotPermittedRule` via its
-// `role === implicitRole` early return, so it is intentionally absent from the no-`list` lists
-// below (`text` keeps `combobox` because the spec permits it there without `list`).
+// These are the *no-`list`* rows. When `list` is present on a text-like type the implicit role
+// flips to `combobox` and no explicit `role` is permitted at all; `inputElementSpec`'s dynamic
+// resolver handles that case (F2) and never consults this table. `combobox` stays on the `text`
+// row because the spec permits it there even without `list`.
 export const ALLOWED_INPUT_ROLES = {
   checkbox: ['menuitemcheckbox', 'option', 'switch', 'button'],
   radio: ['menuitemradio'],
