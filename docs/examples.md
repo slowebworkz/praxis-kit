@@ -27,11 +27,12 @@ npm, rather than a workspace link.
 
 ### The conformance suite (`lib/adapter-utils/src/testing`)
 
-Every adapter runs the same behavioral contract — variant resolution, `as`, ARIA enforcement,
-children contracts, SSR, hydration parity — against a shared conformance harness
-(`make-conformance-adapter.ts` per adapter wires it up). Reading one adapter's conformance test file
-alongside another's is a reasonable way to see the same component config exercised identically
-across frameworks, which is what a runnable example would otherwise demonstrate.
+Every adapter runs the same behavioral contract — variant resolution, `as` (VDOM adapters; Lit/Web
+declare `tagPolymorphism: false` and skip it), ARIA enforcement, children contracts, SSR, hydration
+parity — against a shared conformance harness (`make-conformance-adapter.ts` per adapter wires it
+up). Reading one adapter's conformance test file alongside another's is a reasonable way to see the
+same component config exercised identically across frameworks, which is what a runnable example
+would otherwise demonstrate.
 
 ### `qa/bench`
 
