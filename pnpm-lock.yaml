@@ -36,6 +36,9 @@ catalogs:
     '@testing-library/svelte':
       specifier: ^5.4.2
       version: 5.4.2
+    '@types/aria-query':
+      specifier: ^5.0.4
+      version: 5.0.4
     '@types/node':
       specifier: ^26.4.1
       version: 26.5.0
@@ -69,6 +72,9 @@ catalogs:
     '@vue/test-utils':
       specifier: ^2.5.0
       version: 2.5.0
+    aria-query:
+      specifier: ^5.3.2
+      version: 5.3.2
     class-variance-authority:
       specifier: ^0.7.1
       version: 0.7.1
@@ -187,12 +193,18 @@ importers:
       '@eslint/js':
         specifier: 'catalog:'
         version: 10.0.1(eslint@10.10.0(jiti@2.7.0))
+      '@types/aria-query':
+        specifier: 'catalog:'
+        version: 5.0.4
       '@types/node':
         specifier: 'catalog:'
         version: 26.5.0
       '@vitest/ui':
         specifier: 'catalog:'
         version: 4.1.11(vitest@4.1.11)
+      aria-query:
+        specifier: 'catalog:'
+        version: 5.3.2
       dependency-cruiser:
         specifier: 'catalog:'
         version: 18.2.0
@@ -2434,6 +2446,10 @@ packages:
 
   aria-query@5.3.1:
     resolution: {integrity: sha512-Z/ZeOgVl7bcSYZ/u/rh0fOpvEpq//LZmdbkXyc7syVzjPAhfOa9ebsdTSjEBDU4vs5nC98Kfduj1uFo0qyET3g==}
+    engines: {node: '>= 0.4'}
+
+  aria-query@5.3.2:
+    resolution: {integrity: sha512-COROpnaoap1E2F000S62r6A60uHZnmlvomhfyT2DlTcrY1OrBKn2UhH7qn5wTC9zMvD0AY7csdPSNwKP+7WiQw==}
     engines: {node: '>= 0.4'}
 
   asap@2.0.6:
@@ -5689,6 +5705,8 @@ snapshots:
       dequal: 2.0.3
 
   aria-query@5.3.1: {}
+
+  aria-query@5.3.2: {}
 
   asap@2.0.6: {}
 

@@ -1,0 +1,361 @@
+{
+  "_source": "aria-query@see package.json",
+  "_generatedBy": "scripts/generate-aria-support.ts",
+  "_note": "WAI-ARIA reference data. Do not edit by hand — run the generator. attributeToRoles is role-specific (globals and prohibited attrs removed), restricted to concrete KNOWN_ARIA_ROLES.",
+  "attributeToRoles": {
+    "aria-activedescendant": [
+      "application",
+      "combobox",
+      "grid",
+      "group",
+      "listbox",
+      "menu",
+      "menubar",
+      "radiogroup",
+      "row",
+      "searchbox",
+      "spinbutton",
+      "tablist",
+      "textbox",
+      "toolbar",
+      "tree",
+      "treegrid"
+    ],
+    "aria-autocomplete": [
+      "combobox",
+      "searchbox",
+      "textbox"
+    ],
+    "aria-checked": [
+      "checkbox",
+      "menuitemcheckbox",
+      "menuitemradio",
+      "option",
+      "radio",
+      "switch",
+      "treeitem"
+    ],
+    "aria-colcount": [
+      "grid",
+      "table",
+      "treegrid"
+    ],
+    "aria-colindex": [
+      "cell",
+      "columnheader",
+      "gridcell",
+      "row",
+      "rowheader"
+    ],
+    "aria-colspan": [
+      "cell",
+      "columnheader",
+      "gridcell",
+      "rowheader"
+    ],
+    "aria-expanded": [
+      "application",
+      "button",
+      "checkbox",
+      "columnheader",
+      "combobox",
+      "gridcell",
+      "link",
+      "listbox",
+      "menuitem",
+      "menuitemcheckbox",
+      "menuitemradio",
+      "row",
+      "rowheader",
+      "switch",
+      "tab",
+      "treeitem"
+    ],
+    "aria-haspopup": [
+      "application",
+      "button",
+      "columnheader",
+      "combobox",
+      "gridcell",
+      "link",
+      "menuitem",
+      "menuitemcheckbox",
+      "menuitemradio",
+      "rowheader",
+      "searchbox",
+      "slider",
+      "tab",
+      "textbox",
+      "treeitem"
+    ],
+    "aria-invalid": [
+      "application",
+      "checkbox",
+      "columnheader",
+      "combobox",
+      "gridcell",
+      "listbox",
+      "menuitemcheckbox",
+      "menuitemradio",
+      "radiogroup",
+      "rowheader",
+      "searchbox",
+      "slider",
+      "spinbutton",
+      "switch",
+      "textbox",
+      "tree",
+      "treegrid"
+    ],
+    "aria-level": [
+      "heading",
+      "listitem",
+      "row",
+      "tablist",
+      "treeitem"
+    ],
+    "aria-modal": [
+      "alertdialog",
+      "dialog"
+    ],
+    "aria-multiline": [
+      "searchbox",
+      "textbox"
+    ],
+    "aria-multiselectable": [
+      "grid",
+      "listbox",
+      "tablist",
+      "tree",
+      "treegrid"
+    ],
+    "aria-orientation": [
+      "listbox",
+      "menu",
+      "menubar",
+      "radiogroup",
+      "scrollbar",
+      "separator",
+      "slider",
+      "tablist",
+      "toolbar",
+      "tree",
+      "treegrid"
+    ],
+    "aria-placeholder": [
+      "searchbox",
+      "textbox"
+    ],
+    "aria-posinset": [
+      "article",
+      "listitem",
+      "menuitem",
+      "menuitemcheckbox",
+      "menuitemradio",
+      "option",
+      "radio",
+      "row",
+      "tab",
+      "treeitem"
+    ],
+    "aria-pressed": [
+      "button"
+    ],
+    "aria-readonly": [
+      "checkbox",
+      "columnheader",
+      "combobox",
+      "grid",
+      "gridcell",
+      "listbox",
+      "menuitemcheckbox",
+      "menuitemradio",
+      "radiogroup",
+      "rowheader",
+      "searchbox",
+      "slider",
+      "spinbutton",
+      "switch",
+      "textbox",
+      "treegrid"
+    ],
+    "aria-required": [
+      "checkbox",
+      "columnheader",
+      "combobox",
+      "gridcell",
+      "listbox",
+      "menuitemcheckbox",
+      "menuitemradio",
+      "radiogroup",
+      "rowheader",
+      "searchbox",
+      "spinbutton",
+      "switch",
+      "textbox",
+      "tree",
+      "treegrid"
+    ],
+    "aria-rowcount": [
+      "grid",
+      "table",
+      "treegrid"
+    ],
+    "aria-rowindex": [
+      "cell",
+      "columnheader",
+      "gridcell",
+      "row",
+      "rowheader"
+    ],
+    "aria-rowspan": [
+      "cell",
+      "columnheader",
+      "gridcell",
+      "rowheader"
+    ],
+    "aria-selected": [
+      "columnheader",
+      "gridcell",
+      "option",
+      "row",
+      "rowheader",
+      "tab",
+      "treeitem"
+    ],
+    "aria-setsize": [
+      "article",
+      "listitem",
+      "menuitem",
+      "menuitemcheckbox",
+      "menuitemradio",
+      "option",
+      "radio",
+      "row",
+      "tab",
+      "treeitem"
+    ],
+    "aria-sort": [
+      "columnheader",
+      "rowheader"
+    ],
+    "aria-valuemax": [
+      "meter",
+      "progressbar",
+      "scrollbar",
+      "separator",
+      "slider",
+      "spinbutton"
+    ],
+    "aria-valuemin": [
+      "meter",
+      "progressbar",
+      "scrollbar",
+      "separator",
+      "slider",
+      "spinbutton"
+    ],
+    "aria-valuenow": [
+      "meter",
+      "progressbar",
+      "scrollbar",
+      "separator",
+      "slider",
+      "spinbutton"
+    ],
+    "aria-valuetext": [
+      "meter",
+      "progressbar",
+      "scrollbar",
+      "separator",
+      "slider",
+      "spinbutton"
+    ]
+  },
+  "requiredByRole": {
+    "checkbox": [
+      "aria-checked"
+    ],
+    "combobox": [
+      "aria-controls",
+      "aria-expanded"
+    ],
+    "heading": [
+      "aria-level"
+    ],
+    "menuitemcheckbox": [
+      "aria-checked"
+    ],
+    "menuitemradio": [
+      "aria-checked"
+    ],
+    "meter": [
+      "aria-valuenow"
+    ],
+    "option": [
+      "aria-selected"
+    ],
+    "radio": [
+      "aria-checked"
+    ],
+    "scrollbar": [
+      "aria-controls",
+      "aria-valuenow"
+    ],
+    "slider": [
+      "aria-valuenow"
+    ],
+    "switch": [
+      "aria-checked"
+    ],
+    "treeitem": [
+      "aria-selected"
+    ]
+  },
+  "prohibitedByRole": {
+    "caption": [
+      "aria-label",
+      "aria-labelledby"
+    ],
+    "code": [
+      "aria-label",
+      "aria-labelledby"
+    ],
+    "deletion": [
+      "aria-label",
+      "aria-labelledby"
+    ],
+    "emphasis": [
+      "aria-label",
+      "aria-labelledby"
+    ],
+    "generic": [
+      "aria-label",
+      "aria-labelledby"
+    ],
+    "insertion": [
+      "aria-label",
+      "aria-labelledby"
+    ],
+    "paragraph": [
+      "aria-label",
+      "aria-labelledby"
+    ],
+    "presentation": [
+      "aria-label",
+      "aria-labelledby"
+    ],
+    "strong": [
+      "aria-label",
+      "aria-labelledby"
+    ],
+    "subscript": [
+      "aria-label",
+      "aria-labelledby"
+    ],
+    "superscript": [
+      "aria-label",
+      "aria-labelledby"
+    ]
+  }
+}

@@ -1,9 +1,16 @@
 import type { AriaAttribute, AriaAttributeRoleMap, AriaRoleName } from './types'
 
-// WAI-ARIA 1.2 — states and properties scoped to specific roles.
-// Attributes absent from this map (and not global) are accepted unconditionally
-// because unknown aria-* attributes may be valid per a future spec revision or
-// a custom role not yet covered here.
+// WAI-ARIA 1.2 — states and properties scoped to specific roles ("attribute → the concrete roles
+// that support it", globals and prohibited attributes removed).
+//
+// This table is kept in lockstep with `aria-support.generated.json` (derived from `aria-query`
+// via `scripts/generate-aria-support.ts`); `role-restricted-attributes.spec-conformance.test.ts`
+// fails on any drift. Edit it only alongside a fixture regeneration and a documented reason —
+// `aria-dropeffect` / `aria-grabbed` are the one intentional omission (deprecated since ARIA 1.1).
+//
+// An `aria-*` attribute absent from this map (and not global) is accepted unconditionally: an
+// unknown attribute may be valid per a future spec revision or a custom role. So the table
+// under-reports rather than false-positives on the attributes it does not model.
 export const ROLE_RESTRICTED_ATTRIBUTES: AriaAttributeRoleMap = new Map<
   AriaAttribute,
   ReadonlySet<AriaRoleName>
@@ -19,10 +26,12 @@ export const ROLE_RESTRICTED_ATTRIBUTES: AriaAttributeRoleMap = new Map<
       'menu',
       'menubar',
       'radiogroup',
+      'row',
+      'searchbox',
       'spinbutton',
       'tablist',
-      'toolbar',
       'textbox',
+      'toolbar',
       'tree',
       'treegrid',
     ]),
@@ -46,15 +55,20 @@ export const ROLE_RESTRICTED_ATTRIBUTES: AriaAttributeRoleMap = new Map<
   [
     'aria-expanded',
     new Set([
+      'application',
       'button',
+      'checkbox',
+      'columnheader',
       'combobox',
       'gridcell',
+      'link',
       'listbox',
       'menuitem',
       'menuitemcheckbox',
       'menuitemradio',
       'row',
       'rowheader',
+      'switch',
       'tab',
       'treeitem',
     ]),
@@ -62,24 +76,50 @@ export const ROLE_RESTRICTED_ATTRIBUTES: AriaAttributeRoleMap = new Map<
   [
     'aria-haspopup',
     new Set([
+      'application',
       'button',
+      'columnheader',
       'combobox',
       'gridcell',
-      'listbox',
+      'link',
       'menuitem',
       'menuitemcheckbox',
       'menuitemradio',
+      'rowheader',
+      'searchbox',
+      'slider',
       'tab',
+      'textbox',
       'treeitem',
     ]),
   ],
-  ['aria-level', new Set(['heading', 'listitem', 'row', 'treeitem'])],
+  [
+    'aria-invalid',
+    new Set([
+      'application',
+      'checkbox',
+      'columnheader',
+      'combobox',
+      'gridcell',
+      'listbox',
+      'menuitemcheckbox',
+      'menuitemradio',
+      'radiogroup',
+      'rowheader',
+      'searchbox',
+      'slider',
+      'spinbutton',
+      'switch',
+      'textbox',
+      'tree',
+      'treegrid',
+    ]),
+  ],
+  ['aria-level', new Set(['heading', 'listitem', 'row', 'tablist', 'treeitem'])],
   ['aria-modal', new Set(['alertdialog', 'dialog'])],
-  ['aria-multiline', new Set(['textbox'])],
+  ['aria-multiline', new Set(['searchbox', 'textbox'])],
   ['aria-multiselectable', new Set(['grid', 'listbox', 'tablist', 'tree', 'treegrid'])],
   [
-    // WAI-ARIA 1.2 lists `select` (abstract) here; expanded to its concrete subclasses since a
-    // `role` value is never abstract: listbox, menu, menubar, radiogroup, tree, treegrid.
     'aria-orientation',
     new Set([
       'listbox',
@@ -108,32 +148,46 @@ export const ROLE_RESTRICTED_ATTRIBUTES: AriaAttributeRoleMap = new Map<
       'radio',
       'row',
       'tab',
+      'treeitem',
     ]),
   ],
   ['aria-pressed', new Set(['button'])],
   [
     'aria-readonly',
     new Set([
+      'checkbox',
+      'columnheader',
       'combobox',
       'grid',
       'gridcell',
       'listbox',
+      'menuitemcheckbox',
+      'menuitemradio',
       'radiogroup',
+      'rowheader',
+      'searchbox',
       'slider',
       'spinbutton',
+      'switch',
       'textbox',
-      'tree',
       'treegrid',
     ]),
   ],
   [
     'aria-required',
     new Set([
+      'checkbox',
+      'columnheader',
       'combobox',
       'gridcell',
       'listbox',
+      'menuitemcheckbox',
+      'menuitemradio',
       'radiogroup',
+      'rowheader',
+      'searchbox',
       'spinbutton',
+      'switch',
       'textbox',
       'tree',
       'treegrid',
@@ -158,6 +212,7 @@ export const ROLE_RESTRICTED_ATTRIBUTES: AriaAttributeRoleMap = new Map<
       'radio',
       'row',
       'tab',
+      'treeitem',
     ]),
   ],
   ['aria-sort', new Set(['columnheader', 'rowheader'])],
