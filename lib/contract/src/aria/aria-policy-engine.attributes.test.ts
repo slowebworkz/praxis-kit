@@ -414,24 +414,18 @@ describe('validate() — WAI-ARIA required properties', () => {
     expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(true)
   })
 
-  it('warns for missing aria-valuenow on input[type=range] (implicit slider)', () => {
-    const { violations } = makeValidator(silentDiagnostics).validate('input', {
-      type: 'range',
-    })
-    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(true)
-  })
-
-  it('no violation for input[type=range] when aria-valuenow is present', () => {
-    const { violations } = makeValidator(throwDiagnostics).validate('input', {
-      type: 'range',
-      'aria-valuenow': '50',
-    })
+  // F4: required States and Properties are an authoring obligation for an *explicit* role only.
+  // A native control carries its implicit role's semantics itself.
+  it('does NOT demand aria-valuenow on a bare <input type="range"> (implicit slider)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', { type: 'range' })
     expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(false)
   })
 
-  // A native <select> is an implicit combobox (ARIA-in-HTML), but its open/closed state is owned
-  // by the user agent — `aria-expanded` is not authorable and must not be demanded. See
-  // docs/accessibility/html-aria-audit.md F1/F4.
+  it('does NOT demand aria-valuenow on a bare <input type="number"> (implicit spinbutton)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('input', { type: 'number' })
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(false)
+  })
+
   it('does NOT demand aria-expanded on a plain <select> (implicit combobox)', () => {
     const { violations } = makeValidator(throwDiagnostics).validate('select', {})
     expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(false)
@@ -440,6 +434,11 @@ describe('validate() — WAI-ARIA required properties', () => {
   it('does NOT demand aria-expanded on <select multiple> (implicit listbox)', () => {
     const { violations } = makeValidator(throwDiagnostics).validate('select', { multiple: true })
     expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(false)
+  })
+
+  it('DOES demand required properties once a role is set explicitly (e.g. <div role="slider">)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', { role: 'slider' })
+    expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(true)
   })
 
   it('still demands aria-expanded when role="combobox" is set explicitly on a <select>', () => {

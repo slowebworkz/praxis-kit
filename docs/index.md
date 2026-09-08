@@ -10,6 +10,7 @@ Framework-neutral UI infrastructure with enforceable structural and accessibilit
 | [Architecture](../ARCHITECTURE.md)                    | Layer model, dependency graph, runtime lifecycle                                                 |
 | [Examples](./examples.md)                             | Where to see praxis-kit exercised end to end today                                               |
 | [Concepts](./concepts.md)                             | Core abstractions: polymorphism, contracts, styling                                              |
+| [API stability](./api-stability.md)                   | Which of the ~19 subpaths are stable for 0.1, and which may still move                           |
 | [Adapter authoring](../ADAPTER_AUTHORING.md)          | Building a new framework adapter                                                                 |
 | [HTML/ARIA audit](./accessibility/html-aria-audit.md) | Normative source, rule, interpretation, test and deviation for every accessibility contract rule |
 | [Release gate](./releasing/verify-release.md)         | What `pnpm verify:release` runs and why the order matters                                        |

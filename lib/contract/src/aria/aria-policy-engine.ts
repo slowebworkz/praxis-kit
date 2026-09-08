@@ -472,26 +472,18 @@ export class AriaPolicyEngine extends InvariantBase {
   ] as const satisfies readonly AriaRule[]
 
   // Rules for elements with an implicit role but no explicit role (not a live region).
+  // `#checkRequiredAriaProperties` is intentionally absent — required properties are an authoring
+  // obligation for an explicitly assigned role only (F4). `#checkNameRequiredRoles` stays: it
+  // covers `role=img` (incl. the implicit one on a bare `<img>`), which is useless without a name.
   static readonly #implicitOnlyRules = [
     AriaPolicyEngine.#checkAriaAttributeValues,
     AriaPolicyEngine.#checkInvalidAriaAttributes,
     AriaPolicyEngine.#checkNameProhibitedRoles,
-    AriaPolicyEngine.#checkRequiredAriaProperties,
     AriaPolicyEngine.#checkNameRequiredRoles,
     AriaPolicyEngine.#checkRedundantAriaLevel,
     AriaPolicyEngine.#checkAriaHiddenOnFocusable,
     AriaPolicyEngine.#checkPresentationalAriaAttributes,
   ] as const satisfies readonly AriaRule[]
-
-  // (tag, implicit-role) pairs the required-ARIA-properties check must NOT fire on when the role
-  // is only implicit (no explicit `role` prop). The native element already conveys the state the
-  // ARIA property would carry, and it is not author-settable: a native `<select>`'s open/closed
-  // state is owned entirely by the user agent, so demanding `aria-expanded` on an ordinary
-  // `<select>` is a false positive (see docs/accessibility/html-aria-audit.md F1/F4). Contrast
-  // `<input type="range">` → `slider`, where `aria-valuenow` stays required by deliberate choice.
-  static readonly #implicitRequiredPropertyExemptions: ReadonlyMap<string, string> = new Map([
-    ['select', 'combobox'],
-  ])
 
   static #checkInvalidRoleOverride({
     tag,
@@ -736,14 +728,14 @@ export class AriaPolicyEngine extends InvariantBase {
     diagnosticFor: (attribute, role) => AriaDiagnostics.requiredProperty(attribute, role),
   }
 
+  // WAI-ARIA "Required States and Properties" is an authoring obligation for an *explicitly
+  // assigned* role. A native element carrying an *implicit* role provides that role's required
+  // semantics itself — a bare `<input type="range">` has a value without `aria-valuenow`, a bare
+  // `<select>` is a combobox without `aria-expanded`. So this check only runs when the author set
+  // an explicit `role`. (F4 — replaced a per-tag exemption map; see
+  // docs/accessibility/html-aria-audit.md.)
   static #checkRequiredAriaProperties(context: AriaContext): readonly AriaResult[] {
-    const { tag, props, implicitRole } = context
-    if (
-      !isNonNull(props.role) &&
-      AriaPolicyEngine.#implicitRequiredPropertyExemptions.get(tag) === implicitRole
-    ) {
-      return NO_VIOLATIONS
-    }
+    if (!isNonNull(context.props.role)) return NO_VIOLATIONS
     return checkRequiredAttributes(AriaPolicyEngine.#requiredAriaPropertiesRule, context)
   }
 
