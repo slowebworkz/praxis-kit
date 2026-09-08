@@ -6,6 +6,11 @@ updates:
     schedule:
       interval: "weekly"
 
+    # Dependency bumps go through the same integration path as every other change: onto
+    # `develop`, then to `main` only via the release PR — never straight to `main`. `develop`
+    # is the repository's default branch, so Dependabot reads this file from it. See CLAUDE.md.
+    target-branch: "develop"
+
     ignore:
       # TS 7 breaks plugins/typescript's tsserverlibrary import and the CommonJS build's
       # moduleResolution setup; tsdown also flags TS 7's API as unstable. See CLAUDE.md.
