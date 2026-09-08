@@ -577,9 +577,9 @@ importers:
 
   lib/diagnostics:
     dependencies:
-      '@praxis-kit/primitive':
+      '@praxis-kit/foundation':
         specifier: workspace:*
-        version: link:../primitive
+        version: link:../foundation
     devDependencies:
       vitest:
         specifier: 'catalog:'
@@ -740,6 +740,9 @@ importers:
       '@typescript-eslint/utils':
         specifier: 'catalog:'
         version: 8.68.0(eslint@10.9.1(jiti@2.7.0))(typescript@6.0.3)
+      class-variance-authority:
+        specifier: 'catalog:'
+        version: 0.7.1
       clsx:
         specifier: 'catalog:'
         version: 2.1.1

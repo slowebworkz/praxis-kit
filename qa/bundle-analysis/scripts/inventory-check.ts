@@ -29,6 +29,7 @@ const root = join(pkg, '../../..')
 const scenariosDir = join(pkg, '../scenarios/package')
 
 const NOT_BUNDLE_ENTRIES = new Set([
+  './package.json',
   './tailwind.css',
   './svelte/Polymorphic.svelte',
   './eslint',
