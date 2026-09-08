@@ -61,6 +61,33 @@ export function getInputImplicitRole(type: unknown, list?: unknown): string | un
   return role
 }
 
+// A boolean HTML attribute is "on" when present with any value except a literal `false`
+// (JSX authors write `multiple={false}` to mean "off"). `""`, `"multiple"`, `true` are all on.
+function isBooleanAttrOn(value: unknown): boolean {
+  if (value === false || value === undefined || value === null) return false
+  if (typeof value === 'string') return value.toLowerCase() !== 'false'
+  return true
+}
+
+/**
+ * Returns the implicit ARIA role for a `<select>` element.
+ *
+ * Per HTML-AAM / ARIA-in-HTML a `<select>` is a **`combobox`** in its default
+ * drop-down form, and a **`listbox`** only when it is a list box — i.e. it has a
+ * `multiple` attribute, or a `size` attribute whose value is greater than 1.
+ *
+ * Kept as a helper (not an `IMPLICIT_ROLE_RECORD` entry) because the role needs
+ * more than the tag name — the same reason `<input>` is handled by
+ * `getInputImplicitRole`.
+ */
+export function getSelectImplicitRole(multiple?: unknown, size?: unknown): string {
+  if (isBooleanAttrOn(multiple)) return 'listbox'
+  const sizeNum =
+    typeof size === 'number' ? size : typeof size === 'string' ? Number(size) : Number.NaN
+  if (Number.isFinite(sizeNum) && sizeNum > 1) return 'listbox'
+  return 'combobox'
+}
+
 /**
  * Returns the conditional implicit landmark role for `<section>` and
  * `<form>` elements.

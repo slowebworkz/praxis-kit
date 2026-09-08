@@ -10,17 +10,20 @@ import type { StringMap } from '../../types/any-record'
  *    `article → article`). Only these belong in `IMPLICIT_ROLE_RECORD`.
  * 2. **attribute-dependent** — role depends on an attribute value
  *    (`a` is `link` *only with* `href`; `input` per `type`, see
- *    `INPUT_TYPE_ROLE_MAP` + `getInputImplicitRole`; `img` per `alt`).
+ *    `INPUT_TYPE_ROLE_MAP` + `getInputImplicitRole`; `img` per `alt`;
+ *    `select` is `combobox` or `listbox` per `multiple`/`size`, see
+ *    `getSelectImplicitRole`).
  * 3. **context-dependent** — role depends on ancestry
  *    (`section`/`form` become landmarks only when they have an accessible name;
  *    `header`/`footer` are `banner`/`contentinfo` only at the top level — see
  *    `getConditionalImplicitRole`).
  * 4. **state-/naming-dependent** — role depends on runtime state or naming.
  *
- * Entries here that are *actually* attribute-dependent (`a`, `select`, `td`,
- * `th`) are the "no attributes / defaults" case; callers that know the
- * attributes must prefer the conditional helpers. Do not add an entry whose
- * real role needs more than the tag.
+ * Entries here that are *actually* attribute-dependent (`a`, `td`, `th`) are the
+ * "no attributes / defaults" case; callers that know the attributes must prefer
+ * the conditional helpers. Do not add an entry whose real role needs more than
+ * the tag — `select` is deliberately absent for that reason (its default is
+ * `combobox`, not `listbox`, per ARIA-in-HTML).
  */
 export const IMPLICIT_ROLE_RECORD = Object.freeze({
   // Landmarks
@@ -33,7 +36,6 @@ export const IMPLICIT_ROLE_RECORD = Object.freeze({
   // Interactive
   a: 'link',
   button: 'button',
-  select: 'listbox',
   textarea: 'textbox',
   // Headings
   h1: 'heading',
@@ -87,14 +89,15 @@ type ImplicitRole = (typeof IMPLICIT_ROLE_RECORD)[Tag]
  * Roles whose implicit assignment this library treats as **not overridable** by
  * an explicit `role` attribute (a warning, not a hard block).
  *
- * ⚠️ Standards-sensitive and currently a heuristic. The precise rules live in
- * HTML-AAM 1.0 and ARIA-in-HTML ("Document conformance requirements for use of
- * ARIA attributes"), and they are more nuanced than this flat set — e.g. some
- * landmark overrides are permitted, and `<header>`/`<footer>` are only
- * `banner`/`contentinfo` at the top level (see `getConditionalImplicitRole`).
- * Treat this list as a conservative starting point: needs a dedicated
- * spec-citation pass and its own conformance tests before it is canonical. Do
- * not widen it without both.
+ * DELIBERATE POLICY, wider than ARIA-in-HTML (audited 2026-09, see
+ * docs/accessibility/html-aria-audit.md D1). ARIA-in-HTML *permits* specific role overrides
+ * on landmark elements (e.g. `<nav role="tablist">`); Praxis flags them anyway
+ * via `landmarkRoleRule`, because overriding a landmark's role silently drops it
+ * from the screen-reader landmark menu, and the APG's own menu/tab/tree patterns
+ * never put those roles on a landmark element. The allowed-role tables in
+ * `role-restrictions.ts` remain spec-accurate; this set only drives the softer
+ * landmark-override advisory. `<header>`/`<footer>` are `banner`/`contentinfo`
+ * only at the top level (see `getConditionalImplicitRole`).
  */
 export const STRONG_ROLES = Object.freeze([
   'main',

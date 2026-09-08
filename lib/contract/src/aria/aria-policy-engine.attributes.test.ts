@@ -374,6 +374,24 @@ describe('validate() — WAI-ARIA required properties', () => {
     expect(violations.some((v) => v.attribute === 'aria-valuenow')).toBe(false)
   })
 
+  // A native <select> is an implicit combobox (ARIA-in-HTML), but its open/closed state is owned
+  // by the user agent — `aria-expanded` is not authorable and must not be demanded. See
+  // docs/accessibility/html-aria-audit.md F1/F4.
+  it('does NOT demand aria-expanded on a plain <select> (implicit combobox)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('select', {})
+    expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(false)
+  })
+
+  it('does NOT demand aria-expanded on <select multiple> (implicit listbox)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('select', { multiple: true })
+    expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(false)
+  })
+
+  it('still demands aria-expanded when role="combobox" is set explicitly on a <select>', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('select', { role: 'combobox' })
+    expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(true)
+  })
+
   it('warns for missing aria-controls and aria-valuenow on role="scrollbar"', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('div', {
       role: 'scrollbar',

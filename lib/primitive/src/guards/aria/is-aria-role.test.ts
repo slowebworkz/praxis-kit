@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   getConditionalImplicitRole,
   getInputImplicitRole,
+  getSelectImplicitRole,
   hasStandaloneRole,
   isStrongImplicitRole,
 } from './is-aria-role'
@@ -55,6 +56,37 @@ describe('getInputImplicitRole', () => {
       expect(getInputImplicitRole('color', 'options')).toBeUndefined()
       expect(getInputImplicitRole('date', 'options')).toBeUndefined()
     })
+  })
+})
+
+// ── getSelectImplicitRole ────────────────────────────────────────────────────
+
+describe('getSelectImplicitRole', () => {
+  it('is combobox for a plain <select>', () => {
+    expect(getSelectImplicitRole()).toBe('combobox')
+    expect(getSelectImplicitRole(undefined, undefined)).toBe('combobox')
+    expect(getSelectImplicitRole(false)).toBe('combobox')
+    expect(getSelectImplicitRole(undefined, '1')).toBe('combobox')
+    expect(getSelectImplicitRole(undefined, 1)).toBe('combobox')
+  })
+
+  it('is listbox when multiple is present (any truthy boolean-attr form)', () => {
+    expect(getSelectImplicitRole(true)).toBe('listbox')
+    expect(getSelectImplicitRole('')).toBe('listbox')
+    expect(getSelectImplicitRole('multiple')).toBe('listbox')
+  })
+
+  it('treats multiple="false" as off (JSX shorthand)', () => {
+    expect(getSelectImplicitRole('false')).toBe('combobox')
+  })
+
+  it('is listbox when size > 1', () => {
+    expect(getSelectImplicitRole(undefined, 2)).toBe('listbox')
+    expect(getSelectImplicitRole(undefined, '4')).toBe('listbox')
+  })
+
+  it('ignores a non-numeric size', () => {
+    expect(getSelectImplicitRole(undefined, 'tall')).toBe('combobox')
   })
 })
 
