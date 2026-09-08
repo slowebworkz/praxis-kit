@@ -176,7 +176,7 @@ describe('validate() — implicit role expansion', () => {
     expect(violations).toHaveLength(0)
   })
 
-  it('warns for aria-pressed on <a> (implicit link role does not permit it)', () => {
+  it('warns for aria-pressed on a bare <a> (implicit generic role does not permit it)', () => {
     const { reporter, engine } = makeCollecting()
     engine.validate('a', { 'aria-pressed': 'true' })
     expect(reporter.diagnostics.length).toBeGreaterThan(0)
@@ -370,6 +370,36 @@ describe('validate() — select implicit role via multiple/size (ARIA-in-HTML)',
       'aria-multiselectable': 'true',
     })
     expect(violations.some((v) => v.attribute === 'aria-multiselectable')).toBe(false)
+  })
+})
+
+describe('validate() — anchor implicit role via href (ARIA-in-HTML)', () => {
+  it('<a href> is an implicit link — role="link" is redundant', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('a', {
+      href: '/about',
+      role: 'link',
+    })
+    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+  })
+
+  it('a bare <a> is generic, NOT link — role="button" is not a redundant override', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('a', { role: 'button' })
+    expect(violations.some((v) => v.message.includes('redundant'))).toBe(false)
+  })
+
+  it('a bare <a> is an implicit generic — role="generic" is redundant', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('a', { role: 'generic' })
+    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+  })
+
+  it('<area href> is an implicit link, a bare <area> is generic', () => {
+    const withHref = makeValidator(silentDiagnostics).validate('area', {
+      href: '/x',
+      role: 'link',
+    })
+    expect(withHref.violations.some((v) => v.message.includes('redundant'))).toBe(true)
+    const bare = makeValidator(silentDiagnostics).validate('area', { role: 'button' })
+    expect(bare.violations.some((v) => v.message.includes('redundant'))).toBe(false)
   })
 })
 

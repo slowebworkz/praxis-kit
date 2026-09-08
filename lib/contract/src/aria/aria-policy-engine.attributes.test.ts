@@ -151,6 +151,61 @@ describe('validate() — global aria-* attributes always pass through', () => {
     })
     expect(violations).toHaveLength(0)
   })
+
+  it('allows aria-description (WAI-ARIA 1.2 global)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('nav', {
+      'aria-description': 'A short description',
+    })
+    expect(violations).toHaveLength(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validate() — #checkNameProhibitedRoles (WAI-ARIA 1.2 §5.2.8.6)
+// ---------------------------------------------------------------------------
+
+describe('validate() — aria-label / aria-labelledby on a Name-Prohibited role', () => {
+  it('flags + strips aria-label on an explicit role="generic"', () => {
+    const { violations, props } = makeValidator(silentDiagnostics).validate('span', {
+      role: 'generic',
+      'aria-label': 'nope',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-label')).toBe(true)
+    expect(props).not.toHaveProperty('aria-label')
+  })
+
+  it('flags aria-label on a bare <a> (implicit generic — no href)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('a', {
+      'aria-label': 'nope',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-label')).toBe(true)
+  })
+
+  it('does NOT flag aria-label on <a href> (that is a link, which can be named)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('a', {
+      href: '/about',
+      'aria-label': 'About us',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-label')).toBe(false)
+  })
+
+  it('flags aria-labelledby on role="paragraph" and the inline text roles', () => {
+    for (const role of ['paragraph', 'code', 'strong', 'emphasis', 'deletion', 'subscript']) {
+      const { violations } = makeValidator(silentDiagnostics).validate('span', {
+        role,
+        'aria-labelledby': 'x',
+      })
+      expect(violations.some((v) => v.attribute === 'aria-labelledby'), role).toBe(true)
+    }
+  })
+
+  it('reports name-prohibited via #checkPresentationalAriaAttributes only for role="presentation" (no double report)', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
+      role: 'presentation',
+      'aria-label': 'nope',
+    })
+    expect(violations.filter((v) => v.attribute === 'aria-label')).toHaveLength(1)
+  })
 })
 
 // ---------------------------------------------------------------------------

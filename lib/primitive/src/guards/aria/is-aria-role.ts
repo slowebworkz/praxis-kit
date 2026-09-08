@@ -89,6 +89,21 @@ export function getSelectImplicitRole(multiple?: unknown, size?: unknown): strin
 }
 
 /**
+ * Returns the implicit ARIA role for an `<a>` or `<area>` element.
+ *
+ * Per ARIA-in-HTML, an `<a>`/`<area>` **with an `href`** is a `link`; **without
+ * an `href`** it is `generic` (it has no interactive semantics — it is just a
+ * styled span). Kept as a helper (not an `IMPLICIT_ROLE_RECORD` entry) because
+ * the role needs the `href` attribute, not just the tag: a bare `<a>` is *not* a
+ * `link`, so `<a role="button">` on it is not a redundant override.
+ *
+ * A `href=""` (empty string) still counts — it is a valid same-page link.
+ */
+export function getAnchorImplicitRole(href?: unknown): string {
+  return isNullish(href) ? 'generic' : 'link'
+}
+
+/**
  * Returns the conditional implicit landmark role for `<section>` and
  * `<form>` elements.
  *

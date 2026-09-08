@@ -42,6 +42,7 @@ export enum DiagnosticCode {
   AriaRequiredProperty = 'ARIA2012',
   AriaInvalidAttributeValue = 'ARIA2013',
   AriaRedundantLevelAttribute = 'ARIA2014',
+  AriaNameProhibited = 'ARIA2015',
 
   // HTML — general (3000–3099)
   InvalidHeadingHierarchy = 'HTML3001',

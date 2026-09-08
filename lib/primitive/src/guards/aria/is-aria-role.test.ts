@@ -1,11 +1,32 @@
 import { describe, it, expect } from 'vitest'
 import {
+  getAnchorImplicitRole,
   getConditionalImplicitRole,
   getInputImplicitRole,
   getSelectImplicitRole,
   hasStandaloneRole,
   isStrongImplicitRole,
 } from './is-aria-role'
+
+// ── getAnchorImplicitRole ────────────────────────────────────────────────────
+
+describe('getAnchorImplicitRole', () => {
+  it('is link when an href is present', () => {
+    expect(getAnchorImplicitRole('/about')).toBe('link')
+    expect(getAnchorImplicitRole('https://example.com')).toBe('link')
+    expect(getAnchorImplicitRole('#section')).toBe('link')
+  })
+
+  it('treats an empty-string href as a (same-page) link', () => {
+    expect(getAnchorImplicitRole('')).toBe('link')
+  })
+
+  it('is generic without an href — a bare <a> is not interactive', () => {
+    expect(getAnchorImplicitRole()).toBe('generic')
+    expect(getAnchorImplicitRole(undefined)).toBe('generic')
+    expect(getAnchorImplicitRole(null)).toBe('generic')
+  })
+})
 
 // ── getInputImplicitRole ─────────────────────────────────────────────────────
 
