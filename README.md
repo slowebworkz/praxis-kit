@@ -275,6 +275,17 @@ The repository contains:
 The repository is organized as a pnpm workspace so the contract system, runtime, adapters, and
 development tooling can evolve as a coordinated system.
 
+It ships as **one npm package**, `praxis-kit`, with subpaths per adapter and per tool. To build
+components you import from **one** of them — your framework:
+
+```ts
+import { createContractComponent } from 'praxis-kit/react' // /vue, /solid, /svelte, /preact, /lit, /web
+```
+
+Everything else (`/contract`, `/tailwind`, `/eslint`, `/vite-plugin`, `/codemod`, …) is opt-in.
+[docs/api-stability.md](./docs/api-stability.md) says which subpaths are stable for 0.1 and which
+may still move.
+
 ---
 
 ## Vision
