@@ -2362,3 +2362,227 @@ verified source (`constants.ts`'s `LAYOUT_FAMILY_MAP`, `dependency-rules.ts`'s
 now-corrected original.
 
 Verification: `npx prettier --check` and `npx markdownlint-cli2` clean on both changed files.
+
+### `scripts/generate-repo-state.ts` + `qa/metrics` — ported; the `boundaries/dependencies` rule was silently never enforcing anything
+
+Ported `../pk`'s root `scripts/generate-repo-state.ts` (570 lines: `dependency-cruiser` + a
+builder-chain `@praxis-kit/pipeline` API this repo's clean-room `lib/pipeline` doesn't have) and its
+dependent `qa/metrics`, deliberately, not verbatim — see the full design in the session's plan file
+for the detailed reasoning; summarized below.
+
+**Package discovery bug in `../pk` itself, not just a porting mismatch**: `../pk`'s
+`discoverPackages()` only ever globs `packages/`, never `adapters/` — `../pk` moved every framework
+adapter to `adapters/<name>/` years ago and never updated this function, so its own
+`.repo-state/adapters.json`/`contracts.json` come out empty and `exports.json` only ever has
+`@praxis-kit/core` on every real run there today. Fixed here at the root cause: `discoverPackages()`
+reads `pnpm-workspace.yaml`'s real `packages:` glob list (a narrow, documented line-based reader of
+that file's own controlled shape, not a general YAML parser) instead of a hardcoded directory, so a
+future new top-level workspace dir doesn't require touching this script again. Real result: 26 (28
+once `lib/foundation`/`qa/metrics` themselves landed) packages discovered correctly across
+`packages/`, `lib/`, `adapters/`, `plugins/`, `tooling/`, `qa/`.
+
+**Dependency-graph source changed from `dependency-cruiser` to `eslint-plugin-boundaries`** — this
+repo's actual, CI-gated architecture-enforcement mechanism, rather than standing up a second,
+parallel config nothing keeps in sync (the exact staleness class already found in `../pk`'s own
+`.dependency-cruiser.cjs`, which still has dead rules referencing pre-migration `packages/react`
+paths). `violations` come from ESLint's Node API run against `configs/architecture.ts` directly (so
+it can never drift from what CI actually lints with); the full package-to-package import graph
+(`packageImports`) comes from a separate ts-morph AST import-specifier scan, since the boundaries
+plugin fundamentally reports policy pass/fail per import, not a resolved edge list — confirmed by
+reading its compiled rule source before assuming otherwise.
+
+**A real, pre-existing, repo-wide bug found while wiring this up**: `configs/architecture.ts`'s
+`boundaries/dependencies` rule — the `core` must-not-import-frameworks policy that's been in this
+repo's checked-in CI-gated lint config all along — has never actually fired. Traced to the rule's
+own source (`node_modules/eslint-plugin-boundaries/dist/Rules/Dependencies.js`): it only evaluates
+policies when `checkAllOrigins || isLocalDependency`, and `checkAllOrigins` defaults to `false` —
+meaning by default the rule only checks dependencies whose _target_ is a **local** (workspace)
+element, never an **external** package. Since the `core` policy's entire purpose is disallowing
+imports of _external_ framework packages (`'react'`, `'vue'`, etc.), it had silently never been
+evaluated. Confirmed empirically, not by reading alone: `import 'react'` into
+`packages/core/src/ index.ts` produced zero lint output before the fix and a real, correct violation
+after adding `checkAllOrigins: true` to the rule's options. Re-running the full repo through the
+fixed rule found no latent violation (`packages/core` genuinely never imports a framework package
+today) — the CI gate had been doing nothing, not silently ignoring a real breach, but it was still a
+real gap in what this repo's own lint config believed it was enforcing. This is arguably the most
+significant finding of this port, independent of `qa/metrics` itself.
+
+**Investigated and deliberately did not add**: a structural "`foundation` must never depend on
+anything internal" policy, attempted via the same rule. Confirmed via
+`ESLINT_PLUGIN_BOUNDARIES_DEBUG=1` that this plugin's **local-to-local (element-to-element)
+resolution does not work in this repo's current setup** — even a real, declared, resolvable
+workspace dependency (`@praxis-kit/diagnostics`, temporarily added to `lib/foundation/package.json`
+to test with) reports `module.origin: "external"` and `element.isUnknown: true` in the debug output,
+meaning `to: { element: { type: ... } } }`-shaped policies can never match a local dependency here
+today — only external-package string matching (`dependency.source`, the mechanism the `core` policy
+already uses) is confirmed working. This is a separate, deeper gap than the `checkAllOrigins`
+default (likely a missing resolver setting this plugin needs beyond what `configs/architecture.ts`
+currently configures) — investigating and fixing it is out of scope for this task. Reverted the
+non-functional policy attempt rather than ship a second silently-inert rule of exactly the kind just
+found and fixed above; `foundation`'s leaf status stays a documented, code-reviewed convention (its
+own README, zero real dependencies) rather than a mechanically-enforced one for now.
+
+**`qa/metrics`**: ported `collect.ts`/`report.ts`/`assert.ts`/`types.ts` largely as-is once their
+inputs existed for real, with two real fixes:
+
+- `assert.ts`'s git-baseline path was `lib/metrics/snapshots/metrics.json` in `../pk` — a path that
+  never existed in either repo (the package has always been `qa/metrics`), silently no-op'ing every
+  soft-gate growth comparison there on every real run. Fixed to `qa/metrics/snapshots/metrics.json`.
+- `SOURCE_PACKAGES`' complexity-scan bucket list extended from `../pk`'s stale 5 entries to 10,
+  covering
+  `lib/{primitive,diagnostics,contract-props,contract,styling,tailwind,pipeline-kit, runtime,adapter-utils}` +
+  `packages/core` — explicitly excluding `lib/pipeline` (no real production consumer yet) and
+  `lib/playwright` (test infrastructure, same tier as the already- excluded `qa/*` packages) rather
+  than silently inheriting a list that predates half of this repo's real `lib/*` inventory.
+
+`generate-repo-state.ts` runs as plain sequential functions (`async function main()`), not a
+`lib/pipeline` `Pass` chain — matching the same call already made for
+`packages/kit/scripts/ postbuild.ts` and the root `verify` script for structurally identical linear
+scripts; `../pk`'s builder-chain `@praxis-kit/pipeline` API doesn't exist in this repo's clean-room
+rewrite anyway. `node --experimental-strip-types`, not `tsx`, matching `qa/tree-shaking-tests`'s own
+already- established move away from `tsx` for this class of package. No `runtime-graph.json` —
+dropped entirely per explicit decision (hand-written documentation duplicating `ARCHITECTURE.md`'s
+real render-pipeline table, no source derivation at all).
+
+`pnpm repo-state` wired into the root `verify` script (already the exact step `ci.yml` runs), so the
+architecture check this script produces is now genuinely CI-gated, not just a report nobody reads —
+closing a gap flagged during review before it shipped un-wired.
+
+`generate-repo-state.ts`'s own `main()` originally treated a
+`dependency-graph.json.status === 'ERROR'` (e.g. a thrown ESLint invocation) as a silent success —
+exit code 0, "✓ .repo-state/ written" printed regardless. Fixed during review, before merging:
+`ERROR` now sets `process.exitCode = 1` and prints the underlying error, same as a real
+`'VIOLATIONS'` result. An architecture- verification tool that reports its own failure as success
+defeats the entire point of gating `verify` on it.
+
+Verification: `pnpm -r typecheck`, `pnpm lint:check`, `pnpm format:check` all clean;
+`pnpm repo-state` produces all 6 files (no `runtime-graph.json`) with a real, non-empty, correct
+28-package inventory (confirmed `adapters.json` has exactly 7 real entries with derived
+`optionsType`/ `frameworkSpecificOptions`, not `../pk`'s empty map); intentionally broke the hard
+gate (a disallowed `import 'react'`), confirmed `status: 'VIOLATIONS'`, a real violation entry, and
+`process.exitCode === 1`, then reverted; `qa/metrics`'s `collect`/`report`/`assert` all run clean
+end to end.
+
+### `lib/foundation` — extracted from `lib/primitive`; a real Node-native-resolution bug found along the way
+
+While building `qa/metrics` above, importing `iterate` from `@praxis-kit/primitive` crashed with
+`ERR_UNSUPPORTED_DIR_IMPORT`. Root cause: `lib/primitive/src/index.ts` re-exports via directory-
+style barrels (`export * from './utils'`, `export * from './tag'`, etc.) — TypeScript's bundler-mode
+resolution expands `'./utils'` to `'./utils/index.ts'` automatically (every other consumer in this
+repo goes through a bundler — Vite, tsdown, esbuild, or `tsc` itself), but Node's native ESM loader
+has no directory-to-index fallback and throws on a bare directory specifier. Confirmed no other
+`node --experimental-strip-types` script in this repo already hits this: `qa/tree-shaking-tests`
+never imports `@praxis-kit/*` directly, it only feeds those packages to esbuild as bundle entry
+points, and esbuild has its own resolver — `qa/metrics` is genuinely the first script in this repo
+to import a workspace package's real value export under Node's native loader.
+
+**Decision**: extract a new, genuinely flat package — `@praxis-kit/foundation` at `lib/foundation`,
+no subdirectories, no directory-style barrel exports anywhere in it — rather than reworking
+`lib/primitive`'s own internal structure repo-wide (a much larger, unrelated refactor) or continuing
+to duplicate trivial-but-not-trivial logic inline per Node-native script. Confirmed no existing
+`lib/*` package was both flat and a good identity fit first: `lib/contract-props` is flat but
+narrowly scoped to the generics-attachment typing mechanism (its own README: "pure type utilities");
+`lib/diagnostics` and `lib/pipeline-kit` both have subdirectories, so either would have the
+identical problem.
+
+**Scope**: all 6 zero-internal-dependency utilities in `lib/primitive/src/utils/`, confirmed via
+full read of every file in that directory, not just `iterate`/`StringMap` — `assertNever`, `cn`,
+`createObservable`, `LRUCache`, `wrapMethodForDetection` moved alongside them, giving the new
+package a coherent "generic, Node-safe utilities" identity rather than a one-off carve-out. Stayed
+in `lib/primitive`, confirmed real internal dependencies: `lazy` (needs primitive's own `Factory`
+type), `memoize` (needs `UnaryFn`), `mergeRefsCore`/`mergeProps` (need `AnyRef`/`AnyRecord`/
+`isFunction`; `mergeRefsCore` itself now imports `iterate` from the new package instead of a sibling
+file). `AnyRecord` stays in `lib/primitive` too, redefined as `StringMap<unknown>` importing
+`StringMap` from `@praxis-kit/foundation` — it's more deeply woven into primitive's own type
+vocabulary (`SubComponentMap`, `NoVariants`, `NoPreset`, `MergeRecords` all sit in the same file)
+than `StringMap` itself is. `lib/primitive` depends on and re-exports the moved surface from its
+existing public API (root barrel + the `merge-refs.ts` internal import), so none of its ~50 grepped
+existing consumers across `lib/`, `adapters/`, `packages/`, `plugins/` needed to change.
+
+**A second real, repo-wide fix fell out of this**: making `lib/foundation/src/index.ts`'s own
+internal exports resolve under Node's native loader required writing them with explicit `.ts`
+extensions (`export { iterate } from './iterate.ts'`, not `'./iterate'`) — Node's ESM resolver never
+auto-appends an extension to a relative specifier, TS-native-execution or not. That in turn made
+`tsc` reject the file everywhere it's type-checked under a _consuming_ project's tsconfig (e.g.
+`packages/kit`'s own `tsc --noEmit`, which pulls in `lib/foundation/src/index.ts` as source via the
+path alias and applies **its own** compiler options to it, not `lib/foundation`'s) unless
+`allowImportingTsExtensions` was enabled somewhere every consumer inherits. Rather than sprinkling
+the override into every tsconfig that might transitively touch a `.ts`-extensioned import
+(`lib/ foundation`, `scripts/`, `qa/metrics`, and any future Node-native package), enabled it once
+in the shared `tsconfig.base.json` — it only _allows_ the extension when explicitly written, never
+requires or adds one, so every existing extensionless import elsewhere is unaffected, and it needs
+`noEmit` (already set there) to be valid at all.
+
+Verification: `pnpm -r typecheck` (all 28 packages, including a full `packages/kit` `tsc --noEmit`
+that transitively type-checks `lib/foundation` under kit's own config) clean; `pnpm lint:check`
+clean; full test suites for `lib/foundation` (36 tests, new), `lib/primitive` (147), `lib/contract`
+(501), `lib/tailwind` (350), `lib/styling` (72), `lib/adapter-utils` (61), `packages/core` (378),
+and adapter spot-checks (`@praxis-kit/react` 586, `@praxis-kit/lit` 25) all pass; a real
+`pnpm --filter ./packages/kit build` confirmed `@praxis-kit/foundation`'s code (`LRUCache`,
+`iterate`, etc.) is genuinely inlined into multiple built entries (`contract`, `eslint`, `svelte`,
+`vite-plugin`, `lit`) with no bare `@praxis-kit/foundation` specifier leaking into any output; the
+full `qa/metrics` chain (`repo-state` → `collect` → `assert`) re-run end to end importing `iterate`
+for real (not the earlier inlined workaround) as the concrete proof this solves the original
+problem.
+
+### `Record<string, unknown>` / `Record<string, T>` — repo-wide sweep to `AnyRecord`/`StringMap`
+
+Following the `lib/foundation` extraction above, swept the whole workspace for bare
+`Record<string, unknown>` (→ `AnyRecord`) and `Record<string, T>` for `T ≠ unknown` (→
+`StringMap<T>`), replacing each with an import rather than leaving the two forms to drift apart in
+meaning. Two source packages, chosen deliberately per context, not uniformly:
+
+- **`@praxis-kit/primitive`** is the entry point for every ordinary (bundler-resolved) package —
+  adapters, `lib/*`, `packages/core`, `plugins/*` — even where a package (e.g. `lib/pipeline`, which
+  had zero dependencies before this) has no other reason to depend on it yet. Consistency (one
+  well-known front door already depended on almost everywhere) won over avoiding a new edge for a
+  package that would otherwise stay dependency-free.
+- **`@praxis-kit/foundation`** directly is for genuinely Node-native scripts whose other imports
+  already have to route through it for real (value-level `iterate`, not just the type) —
+  `qa/metrics` is the only case: its `collect.ts`/`report.ts`/`assert.ts` already import `iterate`
+  from `@praxis-kit/foundation` for real, so `StringMap` there follows the same source rather than
+  splitting one file's utility imports across two packages for no reason.
+  `scripts/ generate-repo-state.ts` and `qa/tree-shaking-tests`, by contrast, use
+  `@praxis-kit/primitive` for both — confirmed `qa/tree-shaking-tests`' sibling scripts (`gzip.ts`,
+  `report.ts`, `assert.ts`) already imported `StringMap` from `@praxis-kit/primitive` before this
+  session, and type-only imports are erased before Node's native loader ever runs, so the
+  `ERR_UNSUPPORTED_DIR_IMPORT` risk that motivated extracting `foundation` in the first place never
+  applies to a type-only import regardless of which package it's sourced from — only real value
+  imports like `iterate` are constrained to `foundation`.
+
+**Two real, structural reasons found for declining the change, not just stylistic taste:**
+
+- **`lib/contract-props`** (`has-generics.test.ts`'s `Record<string, never>`) was left alone on two
+  independent grounds: the package's own README states it is deliberately dependency-free ("pure
+  type utilities, no `@praxis-kit/*` dependencies"), and the shape itself isn't really "a map of
+  real values" the way `StringMap<T>` means — `Record<string, never>` is an intentionally
+  uninhabited props placeholder for a generics-recovery test, a different concept that happens to
+  share `Record`'s syntax.
+- **`tooling/codemod`** was attempted (added `@praxis-kit/primitive` as a dependency, converted two
+  files) and then reverted after `pnpm -r typecheck` caught a real, structural incompatibility: this
+  package's `tsconfig.json` is entirely standalone (does not extend `tsconfig.base.json`) and uses
+  `module`/`moduleResolution: "NodeNext"` — a fundamentally different, stricter resolution mode than
+  the "bundler" mode every other package in this repo uses. Under NodeNext,
+  `@praxis-kit/primitive`'s own internal extensionless relative imports (`export * from './tag'`)
+  are hard errors (TS2834), not just warnings — confirmed by letting the typecheck actually fail
+  rather than assuming success. `@praxis-kit/foundation` would fail there too, for the mirror-image
+  reason (its internal imports use explicit `.ts` extensions, valid only with
+  `allowImportingTsExtensions`, which NodeNext mode doesn't pair with meaningfully).
+  `tooling/codemod` keeps bare `Record<string, string>` — the two occurrences there are the only
+  ones in the whole sweep that don't route through either package.
+
+Also found and fixed one real leftover along the way: `lib/primitive/src/types/any-record.ts` had
+both an `import type { AnyRecord, StringMap } from '@praxis-kit/foundation'` and a separate
+`export type { AnyRecord, StringMap } from '@praxis-kit/foundation'` — the import brought
+`StringMap` into scope only to leave it unused (the export statement re-exports directly, no local
+binding needed), caught by `@typescript-eslint/no-unused-vars` once the full lint ran. Trimmed the
+import to just `AnyRecord`, the one name the file's own `EmptyRecord`/`SubComponentMap` etc.
+actually reference locally.
+
+Verification: `pnpm -r typecheck` (all 29 packages, including the real `tooling/codemod` NodeNext
+failure-then-fix), `pnpm lint:check`, `pnpm format:check` all clean; full test suites for every
+touched package (`foundation` 36, `primitive` 147, `pipeline` 38, `contract` 501, `styling` 72,
+`adapter-utils` 61, `codemod` 24, `core` 378, and every adapter — `react` 586, `vue` 219, `solid`
+29, `svelte` 25, `preact` 169, `web` 28, `lit` 25 — plus `vite-plugin` 164 and `eslint-plugin` 121)
+all pass; the `repo-state` → `qa/metrics` `collect`/`assert` chain re-run clean end to end after the
+sweep.

@@ -4,6 +4,8 @@ import { resolveReplacement } from './transforms/resolve-replacement.js'
 import { renameInProject } from './transforms/rename.js'
 import { migratePathsInProject } from './transforms/migrate-paths.js'
 
+// Record<string, string>, not StringMap from @praxis-kit/primitive — see the note in
+// transforms/constants.ts (NodeNext resolution can't consume it). See DECISIONS.md.
 function makeProject(files: Record<string, string>): Project {
   const project = new Project({ useInMemoryFileSystem: true, skipAddingFilesFromTsConfig: true })
   for (const [path, content] of Object.entries(files)) {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import type { AriaContext, EnforcementOptions } from '../types'
+import type { AnyRecord, AriaContext, EnforcementOptions } from '../types'
 import { ChildrenEvaluator, diagnoseChildren } from '../children'
 import { throwDiagnostics } from '@praxis-kit/diagnostics'
 import { getHtmlChildrenEvaluator } from './evaluators'
@@ -48,7 +48,7 @@ function el(tag: string) {
   return { type: tag }
 }
 
-function elWithProps(tag: string, props: Record<string, unknown>) {
+function elWithProps(tag: string, props: AnyRecord) {
   return { type: tag, props }
 }
 
@@ -64,11 +64,7 @@ function taggedComponentEl(defaultTag: string) {
   return { type: Component, props: {} }
 }
 
-function check(
-  contract: EnforcementOptions,
-  children: unknown[],
-  props: Record<string, unknown> = {},
-) {
+function check(contract: EnforcementOptions, children: unknown[], props: AnyRecord = {}) {
   return diagnoseChildren(
     contract.children!,
     children,
@@ -716,11 +712,7 @@ describe('getHtmlChildrenEvaluator', () => {
 describe('landmarkContract', () => {
   const rule = landmarkContract.aria![0]!
 
-  function ctx(
-    tag: string,
-    props: Record<string, unknown>,
-    implicitRole: string | undefined,
-  ): AriaContext {
+  function ctx(tag: string, props: AnyRecord, implicitRole: string | undefined): AriaContext {
     return { tag, props, implicitRole, effectiveRole: implicitRole } as unknown as AriaContext
   }
 
@@ -824,11 +816,7 @@ describe('htmlContracts', () => {
 // ─── landmarkAccessibleNameRule ─────────────────────────────────────────────────────
 
 describe('landmarkAccessibleNameRule', () => {
-  function ctx(
-    tag: string,
-    props: Record<string, unknown>,
-    implicitRole: string | undefined,
-  ): AriaContext {
+  function ctx(tag: string, props: AnyRecord, implicitRole: string | undefined): AriaContext {
     return { tag, props, implicitRole, effectiveRole: implicitRole } as unknown as AriaContext
   }
 
@@ -879,7 +867,7 @@ describe('landmarkAccessibleNameRule', () => {
 // ─── Widget contracts ─────────────────────────────────────────────────────────
 
 describe('widget contracts', () => {
-  function ctx(tag: string, props: Record<string, unknown>): AriaContext {
+  function ctx(tag: string, props: AnyRecord): AriaContext {
     return {
       tag,
       props,

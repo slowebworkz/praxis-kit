@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
 import type { MockInstance } from 'vitest'
 import { validateRenderProps } from './validate-render-props'
+import type { AnyRecord } from '../types'
 import {
   CollectingReporter,
   Diagnostics,
@@ -91,7 +92,7 @@ describe('validateRenderProps — unknown recipeKey', () => {
 
   it('does not treat inherited properties as valid presets', () => {
     const { reporter, diagnostics } = makeCollecting()
-    const inherited = Object.create({ inheritedPreset: {} }) as Record<string, unknown>
+    const inherited = Object.create({ inheritedPreset: {} }) as AnyRecord
     validateRenderProps(diagnostics, { variants, recipeMap: inherited }, {}, 'inheritedPreset')
     expect(reporter.diagnostics).toHaveLength(1)
   })

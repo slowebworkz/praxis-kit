@@ -1,5 +1,6 @@
 declare module '*.vue' {
   import type { DefineComponent } from 'vue'
-  const component: DefineComponent<Record<string, unknown>, Record<string, unknown>, unknown>
+  import type { AnyRecord } from '@praxis-kit/primitive'
+  const component: DefineComponent<AnyRecord, AnyRecord, unknown>
   export default component
 }

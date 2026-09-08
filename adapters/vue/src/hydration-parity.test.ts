@@ -9,21 +9,22 @@ import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
 import type { UnknownProps } from './types'
 import { createContractComponent } from './create-contract-component'
 import { iterate } from '@praxis-kit/primitive'
+import type { StringMap } from '@praxis-kit/primitive'
 
-function parseAttributes(html: string): Record<string, string> {
+function parseAttributes(html: string): StringMap<string> {
   const container = document.createElement('div')
   container.innerHTML = html
   const el = container.firstElementChild
   if (!el) return {}
-  const attrs: Record<string, string> = {}
+  const attrs: StringMap<string> = {}
   iterate.forEach(iterate.items(el.attributes), ({ name, value }) => {
     attrs[name] = value
   })
   return attrs
 }
 
-function normalizeAttrs(attrs: Record<string, string>): Record<string, string> {
-  const out: Record<string, string> = {}
+function normalizeAttrs(attrs: StringMap<string>): StringMap<string> {
+  const out: StringMap<string> = {}
   iterate.forEachEntry(attrs, (k, v) => {
     out[k] = k === 'class' ? v.split(' ').sort().join(' ') : v
   })

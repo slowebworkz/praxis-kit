@@ -9,6 +9,7 @@ lib/**/*.js.map
 .env
 .env.local
 coverage/
+.repo-state/
 pnpm-debug.log*
 **/.playwright/
 **/playwright/.cache/

@@ -16,6 +16,7 @@ import type {
   TagName,
   TagSet,
 } from '../types'
+import type { StringMap } from '@praxis-kit/primitive'
 
 // ─── Sets ───────────────────────────────────────────────────────────────────────────────────────
 
@@ -163,7 +164,7 @@ export function categoriesFor(
  * property to the annotation's type up front. TypeScript's `const` type parameter modifier
  * (5.0+) does the actual work; this function just gives it a name at the call site.
  */
-export function defineContentModels<const T extends Record<string, ContentModelDefinition>>(
+export function defineContentModels<const T extends StringMap<ContentModelDefinition>>(
   definitions: T,
 ): T {
   return definitions

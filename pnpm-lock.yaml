@@ -585,7 +585,21 @@ importers:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(jsdom@29.1.1)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
 
+  lib/foundation:
+    dependencies:
+      clsx:
+        specifier: 'catalog:'
+        version: 2.1.1
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(jsdom@29.1.1)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
+
   lib/pipeline:
+    dependencies:
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../primitive
     devDependencies:
       vitest:
         specifier: 'catalog:'
@@ -625,9 +639,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics
-      clsx:
-        specifier: 'catalog:'
-        version: 2.1.1
+      '@praxis-kit/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       type-fest:
         specifier: 'catalog:'
         version: 5.9.0
@@ -898,6 +912,22 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(jsdom@29.1.1)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
+
+  qa/metrics:
+    dependencies:
+      '@praxis-kit/foundation':
+        specifier: workspace:*
+        version: link:../../lib/foundation
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.4.0
+      ts-morph:
+        specifier: 'catalog:'
+        version: 28.0.0
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.9.0
 
   qa/tree-shaking-tests:
     dependencies:

@@ -1,7 +1,7 @@
 import { DiagnosticCode } from '@praxis-kit/diagnostics'
 import { describe, expect, it } from 'vitest'
 
-import type { AriaContext, AriaRule } from '../types'
+import type { AnyRecord, AriaContext, AriaRule } from '../types'
 import {
   ANCHOR_RULES,
   ariaDisabledInertRule,
@@ -9,7 +9,7 @@ import {
   roleButtonWithHrefRule,
 } from './anchor-rules'
 
-function ctx(props: Record<string, unknown>, tag = 'a'): AriaContext {
+function ctx(props: AnyRecord, tag = 'a'): AriaContext {
   return {
     tag: tag as AriaContext['tag'],
     props,

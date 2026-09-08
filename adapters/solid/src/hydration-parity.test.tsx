@@ -10,16 +10,17 @@
 // suites asserting against the same EXPECTED_* constants — divergence fails one side.
 import { describe, it, expect } from 'vitest'
 import { iterate } from '@praxis-kit/primitive'
+import type { StringMap } from '@praxis-kit/primitive'
 import { renderToString } from 'solid-js/web'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from './create-contract-component'
 
-function parseAttributes(html: string): Record<string, string> {
+function parseAttributes(html: string): StringMap<string> {
   // Node environment: use regex to parse attributes from the first tag.
   const match = html.match(/<[a-z][^>]*>/i)
   if (!match) return {}
   const tag = match[0]
-  const attrs: Record<string, string> = {}
+  const attrs: StringMap<string> = {}
   const attrRe = /([a-z][a-z0-9-]*)(?:="([^"]*)")?/gi
   let m: RegExpExecArray | null
   let first = true
@@ -33,8 +34,8 @@ function parseAttributes(html: string): Record<string, string> {
   return attrs
 }
 
-function normalizeAttrs(attrs: Record<string, string>): Record<string, string> {
-  const out: Record<string, string> = {}
+function normalizeAttrs(attrs: StringMap<string>): StringMap<string> {
+  const out: StringMap<string> = {}
   iterate.forEachEntry(attrs, (k, v) => {
     // Solid's Dynamic SSR appends a trailing space to class attribute values
     // (confirmed: `<Dynamic component="div" class="x" />` → `class="x "`).

@@ -6,6 +6,7 @@
  */
 import { describe, it, expect, expectTypeOf, beforeAll, afterEach } from 'vitest'
 import { createContractComponent } from './create-contract-component'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 type LitEl = HTMLElement & { updateComplete: Promise<boolean> }
 
@@ -61,6 +62,6 @@ describe('subComponents (compound component generation spike)', () => {
 
   it('a plain (non-compound) component is unaffected — no subComponents option, no static sub-component properties', () => {
     const Plain = createContractComponent({ tag: 'div', name: 'Plain' })
-    expect((Plain as unknown as Record<string, unknown>).Header).toBeUndefined()
+    expect((Plain as unknown as AnyRecord).Header).toBeUndefined()
   })
 })

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { writeFileSync } from 'node:fs'
 import { buildManifest, collectFileTokens, designTokensPlugin } from './design-tokens'
 import { parseSource } from './ast'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 vi.mock('node:fs', () => ({ writeFileSync: vi.fn() }))
 const writeMock = vi.mocked(writeFileSync)
@@ -140,7 +141,7 @@ describe('designTokensPlugin lifecycle', () => {
   const BTN = `const Button = createContractComponent({ styling: { base: 'btn-p' } })`
   const CARD = `const Card = createContractComponent({ styling: { base: 'card-p' } })`
 
-  function lastManifest(): { components: Record<string, unknown> } {
+  function lastManifest(): { components: AnyRecord } {
     return JSON.parse(writeMock.mock.calls.at(-1)![1] as string)
   }
 

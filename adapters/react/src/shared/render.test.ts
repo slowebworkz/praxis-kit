@@ -7,6 +7,7 @@ import { normalizeChildren as realNormalizeChildren } from '../current/normalize
 import { Slottable } from './slot'
 import { SlotValidator } from '@praxis-kit/adapter-utils'
 import type { ChildrenEvaluator } from '@praxis-kit/core'
+import type { AnyRecord } from '@praxis-kit/primitive'
 import type { FilterPredicate, Runtime } from './types'
 
 function makeRuntime(overrides?: Partial<Runtime>): Runtime {
@@ -102,7 +103,7 @@ describe('render', () => {
       filterProps: noopFilter,
       slotValidator: defaultValidator,
     })
-    expect((el.props as Record<string, unknown>)['data-testid']).toBe('box')
+    expect((el.props as AnyRecord)['data-testid']).toBe('box')
   })
 
   it('omits children from props when not provided', () => {
@@ -142,7 +143,7 @@ describe('render', () => {
       filterProps: (key) => key === 'size',
       slotValidator: defaultValidator,
     })
-    const props = el.props as Record<string, unknown>
+    const props = el.props as AnyRecord
     expect(props['size']).toBeUndefined()
     expect(props['data-keep']).toBe('yes')
   })
@@ -151,11 +152,11 @@ describe('render', () => {
     // Regression test: a component's own `enforcement.aria`/`enforcement.rules` custom rules
     // must be able to read a variant-only prop (e.g. a styling-only `size`) even though the
     // DOM-bound props passed as resolveAria's second argument have already had it stripped.
-    const calls: Array<[unknown, Record<string, unknown> | undefined]> = []
+    const calls: Array<[unknown, AnyRecord | undefined]> = []
     render({
       runtime: makeRuntime({
         resolveAria: (_tag, props, extraProps) => {
-          calls.push([props, extraProps as Record<string, unknown> | undefined])
+          calls.push([props, extraProps as AnyRecord | undefined])
           return { props }
         },
       }),
@@ -167,7 +168,7 @@ describe('render', () => {
       slotValidator: defaultValidator,
     })
     expect(calls).toHaveLength(1)
-    const [domProps, extraProps] = calls[0] as [Record<string, unknown>, Record<string, unknown>]
+    const [domProps, extraProps] = calls[0] as [AnyRecord, AnyRecord]
     expect(domProps['size']).toBeUndefined()
     expect(extraProps['size']).toBe('lg')
     expect(extraProps['data-keep']).toBe('yes')
@@ -380,7 +381,7 @@ describe('render', () => {
   })
 
   it('normalizeFn is called with merged props and its output reaches the DOM', () => {
-    const normalize = vi.fn((p: Record<string, unknown>) => ({ ...p, 'data-normalized': 'yes' }))
+    const normalize = vi.fn((p: AnyRecord) => ({ ...p, 'data-normalized': 'yes' }))
     const el = render({
       runtime: makeRuntime({
         options: {
@@ -399,16 +400,16 @@ describe('render', () => {
       slotValidator: defaultValidator,
     })
     expect(normalize).toHaveBeenCalledOnce()
-    expect((el.props as Record<string, unknown>)['data-normalized']).toBe('yes')
+    expect((el.props as AnyRecord)['data-normalized']).toBe('yes')
   })
 
   it('runs HTML built-in normalizers before normalizeFn, letting normalizeFn see and override their output', () => {
     const seen: unknown[] = []
-    const htmlNormalizer = (props: Record<string, unknown>) => ({
+    const htmlNormalizer = (props: AnyRecord) => ({
       ...props,
       'aria-disabled': 'true',
     })
-    const normalize = vi.fn((props: Record<string, unknown>) => {
+    const normalize = vi.fn((props: AnyRecord) => {
       seen.push(props['aria-disabled'])
       return { ...props, 'aria-disabled': 'overridden' }
     })
@@ -432,7 +433,7 @@ describe('render', () => {
     })
     // normalizeFn observed the HTML normalizer's output, then overrode it.
     expect(seen).toEqual(['true'])
-    expect((el.props as Record<string, unknown>)['aria-disabled']).toBe('overridden')
+    expect((el.props as AnyRecord)['aria-disabled']).toBe('overridden')
   })
 
   it('normalizeFn is not called when absent', () => {
@@ -493,7 +494,7 @@ describe('render', () => {
   describe('children evaluators vs. asChild', () => {
     const child = createElement('a', { href: '/' })
 
-    function renderWith(props: Record<string, unknown>): {
+    function renderWith(props: AnyRecord): {
       html: ReturnType<typeof vi.fn>
       consumer: ReturnType<typeof vi.fn>
     } {
@@ -544,7 +545,7 @@ describe('render', () => {
     it('skips both evaluators when a render callback owns the output', () => {
       const { html, consumer } = renderWith({
         children: child,
-        render: (p: Record<string, unknown>) => createElement('span', p),
+        render: (p: AnyRecord) => createElement('span', p),
       })
       expect(html).not.toHaveBeenCalled()
       expect(consumer).not.toHaveBeenCalled()
@@ -561,7 +562,7 @@ describe('render', () => {
       filterProps: noopFilter,
       slotValidator: defaultValidator,
     })
-    const props = el.props as Record<string, unknown>
+    const props = el.props as AnyRecord
     expect(props['as']).toBeUndefined()
     expect(props['asChild']).toBeUndefined()
     expect(props['recipe']).toBeUndefined()

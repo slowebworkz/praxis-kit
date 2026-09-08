@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Pass, Pipeline } from './types'
 import { ParallelConflictError, runPipeline } from './run'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 interface Ctx {
   value: number
@@ -57,15 +58,12 @@ describe('runPipeline', () => {
       execute: () => ({ diagnostics: [{ code, message: code, severity: 'warning' }] }),
     })
     const inner: Pipeline<Ctx> = { name: 'inner', nodes: [warn('B')] }
-    const result = await runPipeline(
-      { name: 'outer', nodes: [warn('A'), inner, warn('C')] },
-      start,
-    )
+    const result = await runPipeline({ name: 'outer', nodes: [warn('A'), inner, warn('C')] }, start)
     expect(result.diagnostics.map((d) => d.code)).toEqual(['A', 'B', 'C'])
   })
 
   it('shallow-merges metadata in run order, last key wins', async () => {
-    const meta = (patch: Record<string, unknown>): Pass<Ctx> => ({
+    const meta = (patch: AnyRecord): Pass<Ctx> => ({
       name: 'meta',
       execute: () => ({ metadata: patch }),
     })
@@ -116,7 +114,7 @@ describe('runPipeline — parallel', () => {
     expect(result.context).toEqual({ value: 42, trail: ['x'] })
   })
 
-  it('does not let one node see another node\'s writes', async () => {
+  it("does not let one node see another node's writes", async () => {
     const seen: number[] = []
     const a: Pass<Ctx> = { name: 'a', execute: () => ({ context: { value: 100 } }) }
     const b: Pass<Ctx> = {
@@ -157,7 +155,7 @@ describe('runPipeline — parallel', () => {
     expect(result.metadata).toEqual({ A: true, B: true })
   })
 
-  it('folds a nested pipeline\'s patch via its diff against the shared input', async () => {
+  it("folds a nested pipeline's patch via its diff against the shared input", async () => {
     const inner: Pipeline<Ctx> = { name: 'inner', nodes: [add(5)] }
     const sibling: Pass<Ctx> = {
       name: 's',

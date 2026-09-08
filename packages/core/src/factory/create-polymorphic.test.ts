@@ -7,6 +7,7 @@ import {
   silentDiagnostics,
 } from '@praxis-kit/diagnostics'
 import { createPolymorphic } from './create-polymorphic'
+import type { AnyRecord } from '../types'
 
 function makeCollecting() {
   const reporter = new CollectingReporter()
@@ -99,7 +100,7 @@ describe('createPolymorphic — resolveAria()', () => {
   // the misleadingly-named `aria` bucket to get it.
   it('runs an enforcement.rules fix for a roleless tag (no relationship to ARIA)', () => {
     const stripDataUnsafe = Object.assign(
-      (ctx: { props: Record<string, unknown> }) => {
+      (ctx: { props: AnyRecord }) => {
         if (!('data-unsafe' in ctx.props)) return [{ valid: true as const }]
         return [
           {
@@ -109,7 +110,7 @@ describe('createPolymorphic — resolveAria()', () => {
             fix: {
               kind: 'removeAttribute' as const,
               attribute: 'data-unsafe',
-              apply: ({ props }: { props: Record<string, unknown> }) => {
+              apply: ({ props }: { props: AnyRecord }) => {
                 const { 'data-unsafe': _omit, ...rest } = props
                 return { applied: true as const, next: rest, previous: props }
               },

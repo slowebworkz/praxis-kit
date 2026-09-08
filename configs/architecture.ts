@@ -13,7 +13,7 @@ const config = [
         { type: 'contract', pattern: 'lib/contract/**/*' },
         { type: 'styling', pattern: 'lib/styling/**/*' },
         { type: 'adapter-utils', pattern: 'lib/adapter-utils/**/*' },
-        { type: 'bench', pattern: 'lib/bench/**/*' },
+        { type: 'bench', pattern: 'qa/bench/**/*' },
         { type: 'core', pattern: 'packages/core/**/*' },
         { type: 'react', pattern: 'adapters/react/**/*' },
         { type: 'vue', pattern: 'adapters/vue/**/*' },
@@ -27,6 +27,14 @@ const config = [
         { type: 'typescript-plugin', pattern: 'plugins/typescript/**/*' },
         { type: 'vite-plugin', pattern: 'plugins/vite/**/*' },
         { type: 'codemod', pattern: 'tooling/codemod/**/*' },
+        { type: 'pipeline', pattern: 'lib/pipeline/**/*' },
+        { type: 'pipeline-kit', pattern: 'lib/pipeline-kit/**/*' },
+        { type: 'contract-props', pattern: 'lib/contract-props/**/*' },
+        { type: 'diagnostics', pattern: 'lib/diagnostics/**/*' },
+        { type: 'foundation', pattern: 'lib/foundation/**/*' },
+        { type: 'playwright', pattern: 'lib/playwright/**/*' },
+        { type: 'runtime', pattern: 'lib/runtime/**/*' },
+        { type: 'tree-shaking-tests', pattern: 'qa/tree-shaking-tests/**/*' },
       ],
 
       'boundaries/ignore': ['**/dist/**', '**/node_modules/**'],
@@ -37,6 +45,7 @@ const config = [
         'error',
         {
           default: 'allow',
+          checkAllOrigins: true,
 
           policies: [
             {

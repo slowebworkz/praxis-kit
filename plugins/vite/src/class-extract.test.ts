@@ -8,6 +8,7 @@ import {
 } from './class-extract'
 import { parseSource } from './ast'
 import { iterate } from '@praxis-kit/primitive'
+import type { StringMap } from '@praxis-kit/primitive'
 
 const CALLEE_NAMES = new Set(['createContractComponent'])
 
@@ -91,9 +92,9 @@ describe('enumerateCombinations', () => {
 
   it('returns null when combinations exceed 512', () => {
     // 4 dims × 4 values = 5^4 = 625 > 512
-    const big: Record<string, Record<string, string>> = {}
+    const big: StringMap<StringMap<string>> = {}
     for (let d = 0; d < 4; d++) {
-      const vals: Record<string, string> = {}
+      const vals: StringMap<string> = {}
       for (let v = 0; v < 4; v++) vals[`v${v}`] = `c${v}`
       big[`dim${d}`] = vals
     }

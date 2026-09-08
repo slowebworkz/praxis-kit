@@ -2,12 +2,13 @@ import { describe, it, expect } from 'vitest'
 import { COMPONENT_DEFAULT_TAG } from './component-id'
 import { getTag, isFlowContent, isTag } from './is-tag'
 import type { ChildRuleInput } from '../../types/contracts'
+import type { AnyRecord } from '../../types'
 
-function nativeVnode(tag: string, props: Record<string, unknown> = {}) {
+function nativeVnode(tag: string, props: AnyRecord = {}) {
   return { type: tag, props }
 }
 
-function componentVnode(defaultTag: string, props: Record<string, unknown> = {}) {
+function componentVnode(defaultTag: string, props: AnyRecord = {}) {
   function Component() {}
   Object.assign(Component, { [COMPONENT_DEFAULT_TAG]: defaultTag })
   return { type: Component, props }

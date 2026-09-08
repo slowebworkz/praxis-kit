@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { AriaPolicyEngine } from './aria-policy-engine'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 // ---------------------------------------------------------------------------
 // Randomized (fuzz) testing over role/tag/attribute/value combinations.
@@ -126,8 +127,8 @@ const ARIA_VALUES = [
   50,
 ] as const
 
-function randomProps(rng: () => number): Record<string, unknown> {
-  const props: Record<string, unknown> = {}
+function randomProps(rng: () => number): AnyRecord {
+  const props: AnyRecord = {}
   const role = pick(rng, ROLES)
   if (role !== undefined) props.role = role
 

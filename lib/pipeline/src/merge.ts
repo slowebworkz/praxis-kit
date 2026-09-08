@@ -1,3 +1,4 @@
+import type { AnyRecord } from '@praxis-kit/primitive'
 import type { PassResult } from './types'
 
 /** Apply a pass's `context` patch to the accumulated pipeline context.
@@ -40,12 +41,9 @@ export function mergeResults<TContext>(
  *  preserves the reference of every untouched key, so an identity diff is exact
  *  for keys the pipeline left alone and conservative (reports a change) for a
  *  key reassigned to an equal-but-new value. */
-export function shallowDiff<TContext>(
-  before: TContext,
-  after: TContext,
-): Partial<TContext> {
+export function shallowDiff<TContext>(before: TContext, after: TContext): Partial<TContext> {
   const patch: Partial<TContext> = {}
-  const keys = Object.keys(after as Record<string, unknown>) as (keyof TContext)[]
+  const keys = Object.keys(after as AnyRecord) as (keyof TContext)[]
   for (const key of keys) {
     if (after[key] !== before[key]) patch[key] = after[key]
   }

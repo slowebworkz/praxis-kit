@@ -4,6 +4,7 @@ import { createElement, Fragment, createRef } from 'react'
 import type { RenderCallbackProps } from '../shared'
 import { warnDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
 import type { AriaRule } from '@praxis-kit/core/contract'
+import type { AnyRecord } from '@praxis-kit/primitive'
 import { box, useReactDom } from '../shared/test-utils'
 import { createContractComponent } from './create-contract-component'
 
@@ -294,7 +295,7 @@ describe('createContractComponent (current / React 19)', () => {
 
   it('render prop: forwards non-variant DOM props (e.g. data-testid) through callback', () => {
     const Box = createContractComponent({ tag: 'div' })
-    const received: Record<string, unknown> = {}
+    const received: AnyRecord = {}
 
     dom.mount(
       createElement(box(Box), {

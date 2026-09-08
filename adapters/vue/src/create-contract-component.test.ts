@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { Comment, createTextVNode, defineComponent, h, ref } from 'vue'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from './create-contract-component'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function box(comp: unknown): any {
@@ -244,7 +245,7 @@ describe('createContractComponent — asChild prop merge', () => {
 describe('createContractComponent — reactivity', () => {
   it('does not re-run the resolution pipeline on an unrelated parent update', async () => {
     // `normalize` runs once per `prepareRenderState`, which is wrapped in `computed()`.
-    const normalize = vi.fn((p: Record<string, unknown>) => p)
+    const normalize = vi.fn((p: AnyRecord) => p)
     const Box = createContractComponent({ styling: { base: 'b' }, normalize } as never)
 
     const Parent = defineComponent({
@@ -266,7 +267,7 @@ describe('createContractComponent — reactivity', () => {
   })
 
   it('does re-run the pipeline when a prop it depends on actually changes', async () => {
-    const normalize = vi.fn((p: Record<string, unknown>) => p)
+    const normalize = vi.fn((p: AnyRecord) => p)
     const Box = createContractComponent({
       styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
       normalize,

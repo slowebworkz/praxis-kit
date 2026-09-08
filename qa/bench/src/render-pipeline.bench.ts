@@ -6,6 +6,7 @@ import { bench, describe } from 'vitest'
 import { createPolymorphic } from '@praxis-kit/core'
 import { cva } from 'class-variance-authority'
 import type { AnyRecord } from '@praxis-kit/core'
+import type { StringMap } from '@praxis-kit/primitive'
 
 // Runtimes are created once at module load so factory cost is excluded.
 const noVariantRuntime = createPolymorphic({
@@ -51,7 +52,7 @@ function pickCyclic<T>(arr: readonly T[], i: number): T {
 //   but cvaFn ignores _bust in #compute — resolver work is identical each call (bad).
 //   nonce is declared, so CVA sees a genuinely different variant combination on each
 //   call, exercising both the cache miss path and the resolver computation path.
-const NONCE_VARIANTS: Record<string, string> = Object.fromEntries(
+const NONCE_VARIANTS: StringMap<string> = Object.fromEntries(
   Array.from({ length: 1200 }, (_, i) => [String(i), `n-${i}`]),
 )
 
