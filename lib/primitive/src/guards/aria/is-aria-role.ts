@@ -1,6 +1,7 @@
 import {
   IMPLICIT_ROLE_RECORD,
   INPUT_TYPE_ROLE_MAP,
+  LIST_ELIGIBLE_INPUT_TYPES,
   STRONG_ROLES_SET,
   STANDALONE_ROLES_SET,
 } from '../../constants'
@@ -32,14 +33,10 @@ export function hasStandaloneRole(tag: string): boolean {
 }
 
 /**
- * Input types for which the presence of a `list` attribute changes the
- * implicit ARIA role from `textbox` to `combobox`, as defined by the
- * ARIA-in-HTML specification.
- */
-const LIST_ELIGIBLE_INPUT_TYPES = new Set<InputType>(['text', 'search', 'tel', 'url', 'email'])
-
-/**
  * Returns the implicit ARIA role for an `<input>` element.
+ *
+ * An omitted `type` attribute defaults to `text` (HTML), so a bare `<input>`
+ * resolves to `textbox` — `<input role="textbox">` is then caught as redundant.
  *
  * For text-like input types associated with a `<datalist>` via the
  * `list` attribute, the implicit role becomes `combobox` instead of
@@ -49,12 +46,13 @@ const LIST_ELIGIBLE_INPUT_TYPES = new Set<InputType>(['text', 'search', 'tel', '
  * ARIA role (for example `color`, `date`, or `hidden`).
  */
 export function getInputImplicitRole(type: unknown, list?: unknown): string | undefined {
-  if (!isString(type)) return undefined
+  const resolvedType = isNullish(type) ? 'text' : type
+  if (!isString(resolvedType)) return undefined
 
-  const role = INPUT_TYPE_ROLE_MAP[type as keyof typeof INPUT_TYPE_ROLE_MAP]
+  const role = INPUT_TYPE_ROLE_MAP[resolvedType as keyof typeof INPUT_TYPE_ROLE_MAP]
   if (!role) return undefined
 
-  if (!isNullish(list) && LIST_ELIGIBLE_INPUT_TYPES.has(type as InputType)) {
+  if (!isNullish(list) && LIST_ELIGIBLE_INPUT_TYPES.has(resolvedType as InputType)) {
     return 'combobox'
   }
 

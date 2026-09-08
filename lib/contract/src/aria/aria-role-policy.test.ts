@@ -29,7 +29,10 @@ describe('getImplicitRole', () => {
 
     it('returns undefined for a type with no ARIA role', () => {
       expect(getImplicitRole('input', { type: 'hidden' } as IntrinsicProps)).toBeUndefined()
-      expect(getImplicitRole('input', {} as IntrinsicProps)).toBeUndefined()
+    })
+
+    it('defaults an absent type to text → textbox (F3)', () => {
+      expect(getImplicitRole('input', {} as IntrinsicProps)).toBe('textbox')
     })
   })
 

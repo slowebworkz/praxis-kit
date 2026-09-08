@@ -37,8 +37,13 @@ describe('getInputImplicitRole', () => {
     expect(getInputImplicitRole('hidden')).toBeUndefined()
   })
 
-  it('returns undefined for a non-string type', () => {
-    expect(getInputImplicitRole(undefined)).toBeUndefined()
+  it('defaults an absent type to `text` → textbox (F3)', () => {
+    expect(getInputImplicitRole(undefined)).toBe('textbox')
+    expect(getInputImplicitRole(null)).toBe('textbox')
+    expect(getInputImplicitRole(undefined, 'options')).toBe('combobox')
+  })
+
+  it('returns undefined for a non-string, non-nullish type', () => {
     expect(getInputImplicitRole(42)).toBeUndefined()
   })
 
