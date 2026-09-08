@@ -35,6 +35,7 @@ const config = [
         { type: 'playwright', pattern: 'lib/playwright/**/*' },
         { type: 'runtime', pattern: 'lib/runtime/**/*' },
         { type: 'tree-shaking-tests', pattern: 'qa/tree-shaking-tests/**/*' },
+        { type: 'bundle-analysis', pattern: 'qa/bundle-analysis/**/*' },
       ],
 
       'boundaries/ignore': ['**/dist/**', '**/node_modules/**'],

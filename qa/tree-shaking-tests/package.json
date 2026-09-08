@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "CI-gated tree-shaking assertions and gzip regression tracking for all published packages",
+  "exports": {
+    ".": "./scripts/workspace-resolution.ts"
+  },
   "scripts": {
     "build": "node --experimental-strip-types scripts/analyze.ts",
     "report": "node --experimental-strip-types scripts/report.ts",

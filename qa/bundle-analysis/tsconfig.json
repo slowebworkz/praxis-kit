@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
+  },
+  "include": ["scripts/**/*", "scenarios/**/*"],
+  // Preact and Solid's own .tsx source (reached transitively via source/preact, source/solid)
+  // fails real semantic checks under this file's `jsxImportSource: "react"` — their own JSX
+  // element types aren't assignable to React's. tree-shaking-tests hits the identical problem and
+  // excludes its own preact-minimal/solid-minimal scenarios for the same reason; esbuild itself
+  // (scripts/analyze.ts) parses and compiles these scenarios fine regardless — this exclusion is
+  // tsc-only, not a build gap.
+  "exclude": ["scenarios/source/preact", "scenarios/source/solid"]
+}

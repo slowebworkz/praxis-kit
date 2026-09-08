@@ -11,6 +11,7 @@
   "ignore": [
     "@praxis-kit/adapter-utils",
     "@praxis-kit/bench",
+    "@praxis-kit/bundle-analysis",
     "@praxis-kit/codemod",
     "@praxis-kit/contract",
     "@praxis-kit/contract-props",

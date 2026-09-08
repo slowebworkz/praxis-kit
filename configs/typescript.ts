@@ -83,6 +83,10 @@ const config = [
             'qa/tree-shaking-tests/scenarios/source/vue-minimal/*.ts',
             'qa/tree-shaking-tests/scenarios/source/preact-minimal/*.ts',
             'qa/tree-shaking-tests/scenarios/source/svelte-minimal/*.ts',
+            // same reason, same fix — qa/bundle-analysis/tsconfig.json excludes these two for the
+            // identical jsxImportSource:react conflict (see that file's own comment)
+            'qa/bundle-analysis/scenarios/source/preact/*.ts',
+            'qa/bundle-analysis/scenarios/source/solid/*.ts',
           ],
           maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 85,
           defaultProject: './tsconfig.base.json',

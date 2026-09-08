@@ -16,6 +16,7 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { toPackageName } from './workspace-resolution.ts'
 import type { AnyRecord, StringMap } from '@praxis-kit/primitive'
 
 const pkg = dirname(fileURLToPath(import.meta.url))
@@ -44,18 +45,6 @@ function getLiveInputPaths(metafile: Metafile): string[] {
     }
   }
   return live
-}
-
-// Best-effort path → package-name resolver, covering this repo's own layout. A path this doesn't
-// recognize contributes no package name (never silently matches everything).
-function toPackageName(path: string): string | undefined {
-  let m = /^adapters\/([^/]+)\//.exec(path)
-  if (m) return `@praxis-kit/${m[1]}`
-  m = /^lib\/([^/]+)\//.exec(path)
-  if (m) return `@praxis-kit/${m[1]}`
-  if (/^packages\/core\//.test(path)) return '@praxis-kit/core'
-  if (/^packages\/kit\/dist\//.test(path)) return 'praxis-kit'
-  return undefined
 }
 
 function scenarioLabel(group: string, scenario: string): string {
