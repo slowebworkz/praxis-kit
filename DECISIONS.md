@@ -2745,3 +2745,51 @@ afterward); full `pnpm verify` (root — a real `packages/kit` rebuild, then `li
 `typecheck` + `test` across all ~31 packages, then `repo-state`) exits 0, `qa/bundle-analysis`'s own
 `test` script picked up automatically by `pnpm -r --if-present test` with no CI YAML change and no
 root `package.json` change, exactly as `tree-shaking-tests` itself was.
+
+### `lib/adapter-utils` — SSR tag serialization had no safety boundary; `assertSerializableTag` added
+
+Found via review, not this session's own exploration: `renderBundleToString`
+(`lib/adapter-utils/src/render/render-to-string.ts`, the shared SSR string-renderer for the Lit and
+Web adapters) interpolates the resolved tag directly into the returned markup —
+`` `<${tag}${attrStr}>${innerHTML}</${tag}>` `` — with no validation that `tag` is a syntactically
+safe HTML/custom-element tag name. `resolveTag()` itself is a bare `as ?? defaultTag` passthrough
+(`lib/primitive/src/tag/resolve-tag.ts`), and `ElementType` is `IntrinsicTag | (string & {})` — no
+real type-level narrowing, so an arbitrary string reaches `tag` under full type safety, no unsafe
+cast required. `enforceAllowedAs` — the only existing guard anywhere near this path — doesn't close
+the gap: it only runs when a component declares `allowedAs` at all, and even then reports through
+the pluggable `diagnostics` system, which a consumer can configure as `silentDiagnostics` and
+thereby disable. Neither condition is met by the common case (no `allowedAs` declared).
+
+Not exploitable through either of `renderBundleToString`'s two current callers today:
+`adapters/lit/src/render-to-string.ts` and `adapters/web/src/render-to-string.ts` both destructure
+and discard `as` from `props` before calling in (`const { as: _as, ...rest } = props`) — for an
+unrelated reason (neither adapter supports tag polymorphism in SSR, a deliberate design choice
+predating this fix). That makes this a real latent defect in a shared, reusable function rather than
+a live exploit today: a future caller of `renderBundleToString` that reintroduces `as` (a third
+non-VDOM adapter, or a future change to Lit/Web's own no-polymorphism decision), or a dynamically-
+configured `options.tag` reaching this path some other way, would silently reintroduce it with no
+guard anywhere to catch it.
+
+Fixed by adding `assertSerializableTag(tag)` — checked against `/^[a-zA-Z][a-zA-Z0-9-]*$/` (a valid
+HTML or custom-element tag name) — called unconditionally immediately after `resolveTag()`, before
+`enforceAllowedAs` or any other processing. Deliberately a raw `throw new Error(...)`, not routed
+through `options.diagnostics`: `enforceAllowedAs` is a semantic/business-rule allowlist a consumer
+may legitimately want to permit-and-log rather than hard-fail on (hence it's diagnostics-routed and
+silenceable); this check is a serialization _invariant_ — a tag either can or cannot be safely
+written into `<${tag}>`, with no legal escaping once it's there, so a consumer silencing it would
+just ship broken or injected markup. Matches this same file's own existing convention
+(`renderContractToString`'s "not registered for SSR" failure is already a raw, unconditional
+`throw`, not diagnostics-routed).
+
+No existing test could exercise this path at all — both adapters' own `ssr.test.ts` go through
+`renderContractToString`, which always strips `as` first. Added
+`lib/adapter-utils/src/render/render-to-string.test.ts` (7 tests) calling `renderBundleToString`
+directly against a minimal fake `SsrBundle`, covering: a normal tag, a hyphenated custom-element
+tag, a tag containing a markup delimiter, a tag containing an attribute-injection-shaped space, an
+empty tag, a tag starting with a digit/hyphen, and the same check firing when the malicious value
+comes from `options.tag` (via a stubbed `resolveTag`) rather than `as`.
+
+Verification: new test file passes (7/7); full `lib/adapter-utils` suite (68 tests, up from 61),
+`@praxis-kit/lit` (116 + 25 SSR-conformance), and `@praxis-kit/web` (63 + 28) suites all pass
+unchanged; `typecheck` clean on all three packages; confirmed via a real `packages/kit` rebuild
+(`pnpm --filter ./packages/kit build`) that this change is included with no regressions.
