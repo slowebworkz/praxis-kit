@@ -23,9 +23,8 @@ systems. Remaining work is correctness, documentation, and release mechanics.
   ledger); the single release gate (`pnpm verify:release`) wired into CI; the published-package
   artifact validated from a real tarball install. `develop` is the integration branch and the repo
   default; `main` tracks the last stable point.
-- **Still open (tracked in `## Open`).** Whether to rename `StylingOptions.presets` for consistency
-  with the `recipe` prop; `qa/*` tooling-dependency placement; `spikes/*` location. None blocks the
-  0.1 tag — they ship as documented items if they slip.
+- **Still open (tracked in `## Open`).** `qa/*` tooling-dependency placement; `spikes/*` location.
+  Neither blocks the 0.1 tag.
 - **Remaining before the tag, beyond `## Open`.** The consumer-facing documentation pass (README /
   Getting Started / runnable-config examples — in progress); a review pass over the `*.spike.test.*`
   files and a deliberate audit of what each public subpath exports; the dependency / license /
@@ -39,19 +38,6 @@ systems. Remaining work is correctness, documentation, and release mechanics.
 ---
 
 ## Open
-
-### `lib/primitive` — `StylingOptions.presets` vs. `RecipeMap`/`recipe`
-
-`StylingOptions.presets: TPreset` (`lib/primitive/src/types/factory/styling-options.ts`) holds a
-`RecipeMap`, selected at the call site by the `recipe` prop — but the field itself is still named
-`presets`, not `recipes`. Found while correcting `tooling/codemod`'s README, which had (incorrectly,
-inherited from `../pk`) documented a `styling.presets` → `styling.recipes` rename as already
-shipped; it never did, in `../pk` or here — `presets` is `../pk`'s current field name too. Whether
-to actually rename the field for consistency with `RecipeMap`/`recipe` is an open call for whoever
-owns `lib/primitive` next: it's a real inconsistency, but `presets` is meaningfully descriptive on
-its own (named variant bundles) and a rename now touches every `StylingOptions` call site across
-every already-merged package. If it ever ships, `tooling/codemod` should gain a structural (AST, not
-find-and-replace) command for it — see `DECISIONS.md` → "`tooling/codemod` — port scope".
 
 ### `spikes/*` — deferred
 
@@ -2932,3 +2918,27 @@ Verification: `pnpm verify:release` clean from a simulated fresh checkout (`pack
 removed); `test:pack` PASS including the new Svelte compile-and-resolve check; full `pnpm -r test`
 and `pnpm -r typecheck` unchanged; `publint` "All good!"; tarball re-inspected — CVA now an external
 `import`, `_polymorphic-runtime.{js,d.ts}` present under `dist/svelte/`, no other content change.
+
+### `StylingOptions.presets` — kept, not renamed to `recipes` (2026-09-08)
+
+Resolved the naming question raised while porting `tooling/codemod`'s README: `styling.presets`
+holds a `RecipeMap`, selected at render time by the `recipe` prop, and the internal type family is
+`Recipe*` (`RecipeMap`, `RecipeOf`, `RecipeTarget`). **The field stays `presets`.**
+
+- `presets` and `recipe` name two different things, not one thing inconsistently: `styling.presets`
+  is the **store** of named variant bundles a component defines; `recipe` is the **prop** that
+  selects one of them by name at a call site. "Here are my presets" / "use this recipe" both read
+  correctly in English. The only genuine mismatch is the _type_ under the field being called
+  `RecipeMap` rather than `PresetMap` — a smaller, internal-only wart, and `RecipeMap` is at least
+  right about what a caller does with it.
+- `presets` is `../pk`'s field name too. A clean-room reconstruction diverging from the reference on
+  a public API name — with no functional reason — is worse than the inconsistency.
+- The architecture is frozen for 0.1. A rename touches ~46 sites across 27 files plus every doc,
+  needs the AST codemod command noted under "`tooling/codemod` — port scope", and — post-publish —
+  becomes a breaking change gated behind 0.2/1.0 anyway. The payoff (one field name matching one
+  type name) does not clear that bar.
+
+`styling-options.ts`'s doc comment for `presets` now states the preset/recipe relationship
+explicitly so a reader meeting the two names together isn't left to wonder. If a rename is ever
+revisited it is a `recipes` field + `TRecipes` generic + `PolymorphicGenerics['recipes']` change,
+shipped with the codemod, not a find-and-replace.

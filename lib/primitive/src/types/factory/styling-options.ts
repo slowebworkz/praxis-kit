@@ -24,8 +24,11 @@ export type StylingOptions<
    */
   readonly compounds?: readonly CompoundVariant<V>[]
   /**
-   * Named bundles of variant values, selectable as a single unit via the `recipe` prop (e.g.
-   * `<Button recipe="cta">` instead of setting `intent`/`size` individually).
+   * Named bundles of variant values a component defines up front. A caller activates one by name
+   * through the `recipe` prop (e.g. `<Button recipe="cta">` instead of setting `intent`/`size`
+   * individually) — `presets` is the store, `recipe` is the selector, which is why the field and
+   * the prop read differently. Explicit props always win over the activated bundle. The value type
+   * is `RecipeMap` (see `lib/primitive/src/types/variants/recipe-map.ts`).
    */
   readonly presets?: TPreset
   /** Maps a resolved tag directly to a raw class string, independent of the variant system. */
