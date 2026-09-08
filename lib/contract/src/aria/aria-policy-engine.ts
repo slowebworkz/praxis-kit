@@ -6,6 +6,7 @@ import { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attri
 import { getImplicitRole, hasStandaloneRole, isStrongImplicitRole } from './aria-role-policy'
 import { REQUIRED_ARIA_PROPERTIES } from './spec/roles/required-properties'
 import { NAME_REQUIRED_ROLES } from './spec/roles/name-required'
+import { NAME_PROHIBITED_ATTRIBUTES, NAME_PROHIBITED_ROLES } from './spec/roles/name-prohibited'
 import { ATOMIC_REQUIREMENTS, LIVE_REGION_ROLES } from './spec/roles/live-region'
 import { ARIA_VALUE_TYPES } from './spec/attributes/aria-value-types'
 import { VALID_RELEVANT_TOKENS } from './spec/attributes/aria-relevant-tokens'
@@ -459,6 +460,7 @@ export class AriaPolicyEngine extends InvariantBase {
     AriaPolicyEngine.#checkStandaloneRegion,
     AriaPolicyEngine.#checkAriaAttributeValues,
     AriaPolicyEngine.#checkInvalidAriaAttributes,
+    AriaPolicyEngine.#checkNameProhibitedRoles,
     AriaPolicyEngine.#checkRequiredAriaProperties,
     AriaPolicyEngine.#checkNameRequiredRoles,
     AriaPolicyEngine.#checkRedundantAriaLevel,
@@ -473,6 +475,7 @@ export class AriaPolicyEngine extends InvariantBase {
   static readonly #implicitOnlyRules = [
     AriaPolicyEngine.#checkAriaAttributeValues,
     AriaPolicyEngine.#checkInvalidAriaAttributes,
+    AriaPolicyEngine.#checkNameProhibitedRoles,
     AriaPolicyEngine.#checkRequiredAriaProperties,
     AriaPolicyEngine.#checkNameRequiredRoles,
     AriaPolicyEngine.#checkRedundantAriaLevel,
@@ -672,6 +675,39 @@ export class AriaPolicyEngine extends InvariantBase {
         fix: AriaPolicyEngine.#makeRemoveAttributeFix('aria-level'),
       },
     ]
+  }
+
+  // ─── Name-prohibited roles ─────────────────────────────────────────────────
+
+  // WAI-ARIA 1.2 §5.2.8.6: `generic` and the inline text-level roles do not support a name from
+  // the author, so `aria-label` / `aria-labelledby` on them is a conformance error (they are
+  // otherwise global). Strips the offending attribute. `none`/`presentation` are in the source
+  // set but handled by `#checkPresentationalAriaAttributes` instead — skip them here.
+  static #checkNameProhibitedRoles({
+    props,
+    effectiveRole,
+  }: AriaContext): readonly AriaResult[] {
+    if (
+      !effectiveRole ||
+      effectiveRole === 'none' ||
+      effectiveRole === 'presentation' ||
+      !NAME_PROHIBITED_ROLES.has(effectiveRole)
+    ) {
+      return NO_VIOLATIONS
+    }
+    const results: AriaResult[] = []
+    for (const key of NAME_PROHIBITED_ATTRIBUTES) {
+      if (!(key in props)) continue
+      results.push({
+        valid: false,
+        fixable: true,
+        severity: 'warning',
+        attribute: key,
+        diagnostic: AriaDiagnostics.nameProhibited(key, effectiveRole),
+        fix: AriaPolicyEngine.#makeRemoveAttributeFix(key),
+      })
+    }
+    return results
   }
 
   // ─── Name-required roles ───────────────────────────────────────────────────

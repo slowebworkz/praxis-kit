@@ -111,6 +111,22 @@ export const AriaDiagnostics = {
     }
   },
 
+  nameProhibited(attr: string, role: string): DiagnosticInput {
+    return {
+      code: DiagnosticCode.AriaNameProhibited,
+      category: DiagnosticCategory.ARIA,
+      message: `"${attr}" is prohibited on role="${role}" — this role does not support a name from the author. It will be removed.`,
+      rationale:
+        'WAI-ARIA 1.2 lists a set of roles (generic, presentation/none, and the inline text-level roles) as Name Prohibited: aria-label / aria-labelledby on them are a conformance error and are ignored by assistive technology.',
+      suggestions: [
+        {
+          title: 'Remove the attribute',
+          description: `role="${role}" cannot be named. If the element needs an accessible name, give it a role that supports one (or use visible text / a wrapping labelled element).`,
+        },
+      ],
+    }
+  },
+
   attributeOnPresentational(attr: string, tag: string): DiagnosticInput {
     return {
       code: DiagnosticCode.AriaAttributeOnPresentational,
