@@ -41,15 +41,21 @@ only fills when the key is `undefined`).
 
 The eight files were byte-for-byte identical bar three strings, so they collapsed into
 `makeStateNormalizer(config)` (`props/make-state-normalizer.ts`) plus eight one-line configs in
-`props/index.ts`. `makeStateNormalizer` is also exported for consumers authoring their own state
-props. It carries a `falseState: 'omit' | 'synthesize'` option — `omit` is the ported Model A;
-`synthesize` (Model B, `state={false}` → `aria-*="false"`) is available but not yet used.
+`props/index.ts`. `makeStateNormalizer` is also exported (with `StateNormalizerConfig`) for
+consumers authoring their own state props.
 
-Open question raised in port review: props with a meaningful false state — `aria-expanded`,
-`aria-pressed`, `aria-selected` — arguably want `synthesize`, since an absent `aria-expanded` means
-"not an expandable element" and `="false"` means "expandable, currently collapsed", which assistive
-technology announces differently. Revisit when core wires the normalizers in; if it wins for some
-props it is a one-word config flip + a visible diff in `props/normalizers.test.ts`.
+**Resolved (2026-09):** the false-state model is **per-prop**, a `falseState` field on the config:
+
+- **`omit`** (default) — `disabled`, `invalid`, `loading`, `readonly`, `active`. `aria-*="false"`
+  equals the attribute's default, so deriving it is redundant noise.
+- **`synthesize`** (**Model B**) — `expanded`, `pressed`, `selected`. `state={false}` produces
+  `aria-*="false"`; `state` absent (`undefined` / `null`) still emits nothing. An absent
+  `aria-expanded` means "not an expandable element"; `="false"` means "expandable, currently
+  collapsed" — assistive technology announces the two differently, and if a component exposes an
+  `expanded` prop it _is_ an expandable element. The `data-*` attr stays present-when-true under
+  either model (style the false state via `[aria-*="false"]`).
+
+Under both models an explicitly supplied `aria-*` / `data-*` value is preserved.
 
 ### HTML/ARIA contract layer — standards audit before it is authoritative
 

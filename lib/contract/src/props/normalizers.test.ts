@@ -12,35 +12,46 @@ import {
   selectedProps,
 } from './index'
 
-// The eight built-in normalizers, all on the `omit` false-state model (see
-// `make-state-normalizer.ts`): a truthy state injects the aria-* / data-* pair, a falsy state
-// emits nothing, an explicitly-supplied aria-* / data-* value is never overwritten.
+// The eight built-in normalizers. `expanded` / `pressed` / `selected` synthesise `aria-*="false"`
+// from `state={false}`; the rest omit it (see `make-state-normalizer.ts`). Under either model a
+// truthy state injects the pair and an explicit aria-* / data-* value is never overwritten.
 const cases: ReadonlyArray<{
   name: string
   fn: PropNormalizer
   stateKey: string
   ariaKey: string
   dataKey: string
+  synthesize?: boolean
 }> = [
   { name: 'disabledProps', fn: disabledProps, stateKey: 'disabled', ariaKey: 'aria-disabled', dataKey: 'data-disabled' }, // prettier-ignore
-  { name: 'expandedProps', fn: expandedProps, stateKey: 'expanded', ariaKey: 'aria-expanded', dataKey: 'data-expanded' }, // prettier-ignore
   { name: 'invalidProps', fn: invalidProps, stateKey: 'invalid', ariaKey: 'aria-invalid', dataKey: 'data-invalid' }, // prettier-ignore
   { name: 'loadingProps', fn: loadingProps, stateKey: 'loading', ariaKey: 'aria-busy', dataKey: 'data-loading' }, // prettier-ignore
-  { name: 'pressedProps', fn: pressedProps, stateKey: 'pressed', ariaKey: 'aria-pressed', dataKey: 'data-pressed' }, // prettier-ignore
   { name: 'readonlyProps', fn: readonlyProps, stateKey: 'readOnly', ariaKey: 'aria-readonly', dataKey: 'data-readonly' }, // prettier-ignore
-  { name: 'selectedProps', fn: selectedProps, stateKey: 'selected', ariaKey: 'aria-selected', dataKey: 'data-selected' }, // prettier-ignore
   { name: 'activeProps', fn: activeProps, stateKey: 'active', ariaKey: 'aria-current', dataKey: 'data-active' }, // prettier-ignore
+  { name: 'expandedProps', fn: expandedProps, stateKey: 'expanded', ariaKey: 'aria-expanded', dataKey: 'data-expanded', synthesize: true }, // prettier-ignore
+  { name: 'pressedProps', fn: pressedProps, stateKey: 'pressed', ariaKey: 'aria-pressed', dataKey: 'data-pressed', synthesize: true }, // prettier-ignore
+  { name: 'selectedProps', fn: selectedProps, stateKey: 'selected', ariaKey: 'aria-selected', dataKey: 'data-selected', synthesize: true }, // prettier-ignore
 ]
 
-describe.each(cases)('$name', ({ fn, stateKey, ariaKey, dataKey }) => {
+describe.each(cases)('$name', ({ fn, stateKey, ariaKey, dataKey, synthesize }) => {
   it('injects the aria-* / data-* pair when the state is truthy', () => {
     expect(fn({ [stateKey]: true })).toEqual({ [ariaKey]: 'true', [dataKey]: '' })
   })
 
-  it('emits nothing when the state is falsy', () => {
-    expect(fn({ [stateKey]: false })).toEqual({})
+  it('emits nothing when the state prop is absent', () => {
     expect(fn({})).toEqual({})
   })
+
+  if (synthesize) {
+    it('synthesises aria-*="false" when the state is explicitly false', () => {
+      expect(fn({ [stateKey]: false })).toEqual({ [ariaKey]: 'false' })
+      expect(fn({ [stateKey]: null })).toEqual({})
+    })
+  } else {
+    it('emits nothing when the state is false', () => {
+      expect(fn({ [stateKey]: false })).toEqual({})
+    })
+  }
 
   it('does not overwrite an explicitly-supplied aria-* value', () => {
     expect(fn({ [stateKey]: true, [ariaKey]: 'false' })).toEqual({ [dataKey]: '' })

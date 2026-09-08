@@ -4,7 +4,8 @@ export { makeStateNormalizer } from './make-state-normalizer'
 export type { StateNormalizerConfig } from './make-state-normalizer'
 
 // The eight built-in state-prop normalizers — one `makeStateNormalizer` config each.
-// See `make-state-normalizer.ts` and DECISIONS.md → "prop-normalizer false-state model".
+// `expanded` / `pressed` / `selected` use `falseState: 'synthesize'` (a meaningful, AT-announced
+// false); the rest omit it. See `make-state-normalizer.ts` and DECISIONS.md.
 export const activeProps = makeStateNormalizer({
   state: 'active',
   aria: 'aria-current',
@@ -19,6 +20,7 @@ export const expandedProps = makeStateNormalizer({
   state: 'expanded',
   aria: 'aria-expanded',
   data: 'data-expanded',
+  falseState: 'synthesize',
 })
 export const invalidProps = makeStateNormalizer({
   state: 'invalid',
@@ -34,6 +36,7 @@ export const pressedProps = makeStateNormalizer({
   state: 'pressed',
   aria: 'aria-pressed',
   data: 'data-pressed',
+  falseState: 'synthesize',
 })
 export const readonlyProps = makeStateNormalizer({
   state: 'readOnly',
@@ -44,4 +47,5 @@ export const selectedProps = makeStateNormalizer({
   state: 'selected',
   aria: 'aria-selected',
   data: 'data-selected',
+  falseState: 'synthesize',
 })
