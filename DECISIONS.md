@@ -39,18 +39,17 @@ ported from `../pk` on **Model A**: a truthy state injects the `aria-*` / `data-
 state emits `{}`, and an explicitly-supplied `aria-*` / `data-*` value is preserved (the normalizer
 only fills when the key is `undefined`).
 
-Open question raised in port review: props with a meaningful false state — `aria-expanded`,
-`aria-pressed`, `aria-selected` — arguably want **Model B**, where `expanded: false` synthesizes
-`aria-expanded="false"` rather than nothing. Model A does not _prevent_ the false state (a caller
-can still pass `aria-expanded={false}` and it is kept); it just does not _derive_ it from the sugar
-prop.
+The eight files were byte-for-byte identical bar three strings, so they collapsed into
+`makeStateNormalizer(config)` (`props/make-state-normalizer.ts`) plus eight one-line configs in
+`props/index.ts`. `makeStateNormalizer` is also exported for consumers authoring their own state
+props. It carries a `falseState: 'omit' | 'synthesize'` option — `omit` is the ported Model A;
+`synthesize` (Model B, `state={false}` → `aria-*="false"`) is available but not yet used.
 
-Not resolving this now — the consumer that reveals the right answer is `packages/core` / the
-factory, which is not ported yet, and the call is likely per-prop (tied to component semantics the
-contract layer does not own). `aria-invalid` in particular defaults to `"false"` already, so
-emitting it would be redundant. Revisit when core wires the normalizers in; if Model B wins for some
-props it lands as a deliberate change with a visible diff in `props/normalizers.test.ts`, which
-currently pins Model A across all eight.
+Open question raised in port review: props with a meaningful false state — `aria-expanded`,
+`aria-pressed`, `aria-selected` — arguably want `synthesize`, since an absent `aria-expanded` means
+"not an expandable element" and `="false"` means "expandable, currently collapsed", which assistive
+technology announces differently. Revisit when core wires the normalizers in; if it wins for some
+props it is a one-word config flip + a visible diff in `props/normalizers.test.ts`.
 
 ### HTML/ARIA contract layer — standards audit before it is authoritative
 
