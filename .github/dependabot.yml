@@ -26,3 +26,9 @@ updates:
       # in pnpm-workspace.yaml once `@playwright/experimental-ct-*` catches up; then drop this.
       - dependency-name: "@playwright/test"
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
+
+    # `aria-query` is WAI-ARIA reference data, not a normal dependency — a bump can move the
+    # role→attribute-support fixture. Its bump PR must run `pnpm aria:regen`, commit the
+    # regenerated `lib/primitive/src/constants/aria/aria-support.generated.json`, and re-review
+    # whatever drift the aria spec-conformance tests then report. (No `ignore` — just flagging
+    # the review step.)
