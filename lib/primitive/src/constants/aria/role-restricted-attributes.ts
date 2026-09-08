@@ -30,7 +30,15 @@ export const ROLE_RESTRICTED_ATTRIBUTES: AriaAttributeRoleMap = new Map<
   ['aria-autocomplete', new Set(['combobox', 'searchbox', 'textbox'])],
   [
     'aria-checked',
-    new Set(['checkbox', 'menuitemcheckbox', 'option', 'radio', 'switch', 'treeitem']),
+    new Set([
+      'checkbox',
+      'menuitemcheckbox',
+      'menuitemradio',
+      'option',
+      'radio',
+      'switch',
+      'treeitem',
+    ]),
   ],
   ['aria-colcount', new Set(['grid', 'table', 'treegrid'])],
   ['aria-colindex', new Set(['cell', 'columnheader', 'gridcell', 'row', 'rowheader'])],
@@ -70,8 +78,22 @@ export const ROLE_RESTRICTED_ATTRIBUTES: AriaAttributeRoleMap = new Map<
   ['aria-multiline', new Set(['textbox'])],
   ['aria-multiselectable', new Set(['grid', 'listbox', 'tablist', 'tree', 'treegrid'])],
   [
+    // WAI-ARIA 1.2 lists `select` (abstract) here; expanded to its concrete subclasses since a
+    // `role` value is never abstract: listbox, menu, menubar, radiogroup, tree, treegrid.
     'aria-orientation',
-    new Set(['scrollbar', 'select', 'separator', 'slider', 'tablist', 'toolbar', 'tree']),
+    new Set([
+      'listbox',
+      'menu',
+      'menubar',
+      'radiogroup',
+      'scrollbar',
+      'separator',
+      'slider',
+      'tablist',
+      'toolbar',
+      'tree',
+      'treegrid',
+    ]),
   ],
   ['aria-placeholder', new Set(['searchbox', 'textbox'])],
   [

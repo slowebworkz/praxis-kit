@@ -79,6 +79,25 @@ describe('validate() — aria-* attribute on wrong role', () => {
     expect(violations).toHaveLength(0)
   })
 
+  // WAI-ARIA 1.2 role→attribute corrections — see docs/accessibility/html-aria-audit.md F5.
+  it('accepts aria-checked on role="menuitemradio"', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('nav', {
+      role: 'menuitemradio',
+      'aria-checked': 'true',
+    })
+    expect(violations).toHaveLength(0)
+  })
+
+  it('accepts aria-orientation on the concrete select-subclass roles', () => {
+    for (const role of ['listbox', 'menu', 'menubar', 'radiogroup', 'treegrid']) {
+      const { violations } = makeValidator(throwDiagnostics).validate('nav', {
+        role,
+        'aria-orientation': 'vertical',
+      })
+      expect(violations, role).toHaveLength(0)
+    }
+  })
+
   it('produces no violation for an unknown/uncurated attribute', () => {
     const { violations } = makeValidator(throwDiagnostics).validate('nav', {
       role: 'button',

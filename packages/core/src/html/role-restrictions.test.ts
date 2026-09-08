@@ -83,4 +83,71 @@ describe('roleNotPermittedRule', () => {
   it('is a no-op for label with no role', () => {
     expect(roleNotPermittedRule(ctx('label', {}, undefined))).toEqual([])
   })
+
+  // ─── ARIA-in-HTML conformance-table regressions (see docs/accessibility/html-aria-audit.md) ───
+
+  describe('ARIA-in-HTML allowed-role tables', () => {
+    it('nav permits the five spec alternates (C1)', () => {
+      for (const role of ['menu', 'menubar', 'none', 'presentation', 'tablist']) {
+        expect(roleNotPermittedRule(ctx('nav', { role }, 'navigation'))).toEqual([])
+      }
+    })
+
+    it('aside permits note (C2)', () => {
+      expect(roleNotPermittedRule(ctx('aside', { role: 'note' }, 'complementary'))).toEqual([])
+    })
+
+    it('button permits combobox/gridcell/separator/slider/treeitem (C3)', () => {
+      for (const role of ['combobox', 'gridcell', 'separator', 'slider', 'treeitem']) {
+        expect(roleNotPermittedRule(ctx('button', { role }, 'button'))).toEqual([])
+      }
+    })
+
+    it('ul/ol permit none and presentation, reject deprecated directory (C4)', () => {
+      expect(roleNotPermittedRule(ctx('ul', { role: 'presentation' }, 'list'))).toEqual([])
+      expect(roleNotPermittedRule(ctx('ol', { role: 'none' }, 'list'))).toEqual([])
+      const [directory] = roleNotPermittedRule(ctx('ul', { role: 'directory' }, 'list'))
+      expect(directory).toMatchObject({ valid: false, fixable: true })
+    })
+
+    it('named <img> permits math, meter and radio (C5)', () => {
+      for (const role of ['math', 'meter', 'radio']) {
+        expect(roleNotPermittedRule(ctx('img', { alt: 'A chart', role }, 'img'))).toEqual([])
+      }
+    })
+
+    it('input type=email/tel/url/search reject combobox without a list attribute (C6/C7)', () => {
+      for (const type of ['email', 'tel', 'url', 'search']) {
+        const [result] = roleNotPermittedRule(
+          ctx('input', { type, role: 'combobox' }, type === 'search' ? 'searchbox' : 'textbox'),
+        )
+        expect(result).toMatchObject({ valid: false })
+      }
+    })
+
+    it('input type=email with a list attribute accepts combobox (implicit-role path)', () => {
+      // `list` flips the implicit role to combobox; role === implicitRole early-returns.
+      expect(
+        roleNotPermittedRule(ctx('input', { type: 'email', list: 'x', role: 'combobox' }, 'combobox')),
+      ).toEqual([])
+    })
+
+    it('input type=button/submit/reset accept the widened button-like set (C8)', () => {
+      for (const type of ['button', 'submit', 'reset']) {
+        for (const role of ['checkbox', 'combobox', 'gridcell', 'separator', 'slider', 'treeitem']) {
+          expect(roleNotPermittedRule(ctx('input', { type, role }, 'button'))).toEqual([])
+        }
+      }
+    })
+
+    it('input type=image accepts the button-like set but not combobox (C8)', () => {
+      expect(roleNotPermittedRule(ctx('input', { type: 'image', role: 'slider' }, 'button'))).toEqual(
+        [],
+      )
+      const [combobox] = roleNotPermittedRule(
+        ctx('input', { type: 'image', role: 'combobox' }, 'button'),
+      )
+      expect(combobox).toMatchObject({ valid: false })
+    })
+  })
 })
