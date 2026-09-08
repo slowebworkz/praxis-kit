@@ -913,6 +913,28 @@ importers:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@26.4.0)(@vitest/ui@4.1.11)(jsdom@29.1.1)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
 
+  qa/bundle-analysis:
+    dependencies:
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../lib/primitive
+      '@praxis-kit/tree-shaking-tests':
+        specifier: workspace:*
+        version: link:../tree-shaking-tests
+      praxis-kit:
+        specifier: workspace:*
+        version: link:../../packages/kit
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.4.0
+      esbuild:
+        specifier: '>=0.28.1'
+        version: 0.28.2
+      typescript:
+        specifier: '>=6 <7'
+        version: 6.0.3
+
   qa/metrics:
     dependencies:
       '@praxis-kit/foundation':

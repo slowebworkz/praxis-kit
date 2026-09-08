@@ -1,23 +1,31 @@
 /**
  * Builds each scenario directory with esbuild (production, metafile enabled) and writes
- * dist/<group>/<scenario>/bundle.js + meta.json for downstream assertion/gzip/report scripts.
+ * dist/<group>/<scenario>/bundle.js + meta.json for downstream leak-check/gzip/report scripts.
  *
- * Two scenario groups, under scenarios/source/ and scenarios/package/, answer different
- * questions:
+ * Two scenario groups answer different questions, reusing tree-shaking-tests' own vocabulary
+ * rather than reinventing it:
  *   - source/  — imports `@praxis-kit/<name>` and resolves it straight to this workspace's
- *     TypeScript source (via the `alias` map below). Answers "can esbuild tree-shake our current
- *     source architecture?" No prior build required.
+ *     TypeScript source. Gives real per-original-file `bytesInOutput` composition data (esbuild's
+ *     metafile), which does not survive into packages/kit's already-tsdown-bundled dist output
+ *     (rolldown collapses many source modules into one physical chunk). Only the 9 entries with a
+ *     real workspace-source counterpart get a source/* scenario (react, react-legacy, preact, vue,
+ *     solid, svelte, lit, web, tailwind) — contract/guards/html/utils are pass-through re-export
+ *     files that live *in* packages/kit itself (packages/kit/{contract,guards,html,utils}.ts), not
+ *     a distinct workspace package with its own source tree, so there's no separate "resolve to
+ *     source" question to ask for them beyond what the existing @praxis-kit/core and
+ *     @praxis-kit/primitive source scenarios (in tree-shaking-tests) already answer.
  *   - package/ — imports `praxis-kit/<name>` and resolves it via ordinary node module resolution
- *     against `packages/kit`'s *built* dist/ — no alias at all. This is **package-consumption
- *     testing**, not published-package testing: resolution goes through the pnpm workspace link
- *     (`node_modules/praxis-kit` → `packages/kit`), not an actual `pnpm pack` tarball installed
- *     into an isolated consumer, so it doesn't cover `files`/npm packing/`.npmignore`/package
- *     metadata the way a real install would (`packages/kit/scripts/smoke-test.ts` does that, for
- *     the kit package itself). It still answers a real, different question from `source/`: "does
- *     the built, minified, externals-resolved JS this workspace produces actually tree-shake,"
- *     not just "does the source graph." Requires `pnpm --filter praxis-kit build` to have already
- *     run. A `pnpm pack`-based version of this scenario group, for genuine published-package
- *     testing, is a real follow-up — see DECISIONS.md.
+ *     against packages/kit's *built* dist/ — no alias at all. Every one of the 13 scope entries
+ *     gets a package/* scenario: this is the tier that answers "what does a real consumer actually
+ *     get," which is a meaningful question for all 13 regardless of whether a source-tier
+ *     counterpart exists. Requires `pnpm --filter praxis-kit build` to have already run.
+ *
+ * Unlike tree-shaking-tests' minimal-usage scenarios (import one symbol, export just that), every
+ * scenario here does `export * from '<specifier>'` — the entire public surface of the entry, not
+ * one function. That's deliberate: this tool measures the real total cost of an entry point people
+ * actually import, not the smallest possible slice of it (tree-shaking-tests already covers that
+ * question well). See DECISIONS.md for the full scope rationale, including what was deliberately
+ * not ported from ../pk's original `.size-limit.json` fixtures.
  */
 import { build } from 'esbuild'
 import { existsSync } from 'node:fs'
@@ -28,13 +36,16 @@ import {
   workspaceAlias,
   consumerExternalStrings,
   consumerExternalPlugin,
-} from './workspace-resolution.ts'
+} from '@praxis-kit/tree-shaking-tests'
+import { extraWorkspaceAlias } from './workspace-alias.ts'
 
 const pkg = dirname(fileURLToPath(import.meta.url))
 const root = join(pkg, '../../..')
 
 const scenariosDir = join(pkg, '../scenarios')
 const distDir = join(pkg, '../dist')
+
+const sourceAlias = { ...workspaceAlias, ...extraWorkspaceAlias }
 
 async function listScenarios(groupDir: string): Promise<string[]> {
   if (!existsSync(groupDir)) return []
@@ -49,7 +60,7 @@ function assertScenarioSchema(group: string, scenario: string, entryPoint: strin
   if (!existsSync(entryPoint)) {
     throw new Error(
       `scenario "${group}/${scenario}" is missing entry.ts (expected at ${entryPoint}) — ` +
-        `every scenario directory needs an entry.ts and an expected.json`,
+        `every scenario directory needs an entry.ts`,
     )
   }
 }
@@ -88,7 +99,7 @@ for (const group of ['source', 'package'] as const) {
       external: consumerExternalStrings,
       // `package/` scenarios resolve `praxis-kit/*` for real (node module resolution against
       // packages/kit's built dist/) — no alias at all, that's the whole point.
-      alias: group === 'source' ? workspaceAlias : {},
+      alias: group === 'source' ? sourceAlias : {},
       plugins: [consumerExternalPlugin()],
       absWorkingDir: root,
       outfile: join(outDir, 'bundle.js'),

@@ -26,6 +26,7 @@
     { "path": "./plugins/typescript" },
     { "path": "./plugins/vite" },
     { "path": "./qa/bench" },
+    { "path": "./qa/bundle-analysis" },
     { "path": "./qa/metrics" },
     { "path": "./qa/tree-shaking-tests" },
     { "path": "./tooling/codemod" }
