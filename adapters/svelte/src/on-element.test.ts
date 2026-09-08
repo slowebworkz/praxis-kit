@@ -13,7 +13,7 @@ import { createContractComponent } from './create-contract-component'
 
 afterEach(cleanup)
 
-describe('onElement (event-handler wiring spike)', () => {
+describe('onElement (event-handler wiring)', () => {
   it('receives the real element and can call native imperative methods on it', () => {
     let received: Element | undefined
     const bundle = createContractComponent({

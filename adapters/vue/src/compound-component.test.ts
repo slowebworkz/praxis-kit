@@ -2,7 +2,7 @@
  * Proves the `subComponents` compound-component mechanism end-to-end in
  * Vue: typed compound output, rendering the attached sub-components as
  * ordinary children, and non-regression for plain (non-compound) usage.
- * Mirrors `adapters/react/src/current/compound-component.spike.test.tsx` —
+ * Mirrors `adapters/react/src/current/compound-component.test.tsx` —
  * same assertions, proving the framework-neutral core behaves identically
  * here.
  */
@@ -18,7 +18,7 @@ function box(comp: unknown): any {
   return comp
 }
 
-describe('subComponents (compound component generation spike)', () => {
+describe('subComponents (compound component generation)', () => {
   const Header = createContractComponent({ tag: 'header', name: 'CardHeader' })
   const Content = createContractComponent({ tag: 'div', name: 'CardContent' })
   const Footer = createContractComponent({ tag: 'footer', name: 'CardFooter' })

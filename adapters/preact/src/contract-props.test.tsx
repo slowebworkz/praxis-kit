@@ -1,6 +1,6 @@
 /**
  * Compile-time type contract tests for `ContractProps<T, Mode>` — mirrors
- * `adapters/react/src/current/contract-props.spike.test.tsx`, minus the `'render'`-mode section
+ * `adapters/react/src/current/contract-props.test.tsx`, minus the `'render'`-mode section
  * (Preact has no render-callback render strategy, unlike React).
  *
  * `ComponentProps<typeof Component>`-style extraction always resolves against

@@ -1,6 +1,6 @@
 /**
  * Compile-time type contract tests for `ContractProps<T>` / `GenericsOf<T>` — the Lit analog of
- * `adapters/preact/src/contract-props.spike.test.tsx` (React has the same shape too). Lit has no
+ * `adapters/preact/src/contract-props.test.tsx` (React has the same shape too). Lit has no
  * `asChild`/`render` mode (see the "known limitations" note atop `conformance.test.ts`), so unlike
  * those two adapters there is no `Mode` parameter here, and no asChild-mode section below.
  *
@@ -37,7 +37,7 @@ const Card = createContractComponent({
   subComponents: { Header },
 })
 
-// Unlike React/Preact's JSX-based spike tests, nothing here renders — every
+// Unlike React/Preact's JSX-based type tests, nothing here renders — every
 // assertion below is `typeof Button`/`typeof Card` in a type position only.
 void Button
 void Card
