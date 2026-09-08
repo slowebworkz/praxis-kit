@@ -38,16 +38,57 @@ function copyTailwindSafelist(): void {
 }
 
 // tsdown only bundles the compiled svelte/index.js entry — Polymorphic.svelte is consumed as raw
-// .svelte source by the Svelte compiler at the *consumer's* build time, matching how
-// @praxis-kit/svelte itself re-exports it, so it must be copied into dist verbatim rather than
-// compiled.
+// .svelte source by the Svelte compiler at the *consumer's* build time, so it is copied into dist
+// rather than compiled. Its `<script>` block imports helpers and types from workspace-internal
+// (`private: true`, never published) `@praxis-kit/*` packages and from `./types`; none of those
+// resolve in a consumer project.
+//
+//   - `@praxis-kit/core` / `@praxis-kit/primitive` / `@praxis-kit/adapter-utils` → the bundled
+//     `./_polymorphic-runtime.js` entry (see ../svelte-polymorphic-runtime.ts).
+//   - `./types` → `./index.js`, the real `praxis-kit/svelte` entry, which already re-exports the
+//     four names the component needs. Routing there (not through the runtime shim) keeps the
+//     `bundle` prop's nominal runtime types identical to a consumer's own bundle.
+//
+// The post-rewrite leak check asserts no unresolvable specifier survives, so a new import in the
+// adapter source can't silently ship broken.
+const POLYMORPHIC_RUNTIME_SPECIFIER = './_polymorphic-runtime.js'
+const POLYMORPHIC_IMPORT_REWRITES: ReadonlyArray<readonly [from: string, to: string]> = [
+  ['@praxis-kit/core', POLYMORPHIC_RUNTIME_SPECIFIER],
+  ['@praxis-kit/primitive', POLYMORPHIC_RUNTIME_SPECIFIER],
+  ['@praxis-kit/adapter-utils', POLYMORPHIC_RUNTIME_SPECIFIER],
+  ['./types', './index.js'],
+]
+const POLYMORPHIC_RESOLVABLE_SPECIFIERS = new Set([POLYMORPHIC_RUNTIME_SPECIFIER, './index.js'])
+
 function copyPolymorphicSvelte(): void {
   mkdirSync(join(DIST, 'svelte'), { recursive: true })
-  copyFileSync(
+  const src = readFileSync(
     join(ROOT_DIR, '..', '..', 'adapters', 'svelte', 'src', 'Polymorphic.svelte'),
-    join(DIST, 'svelte', 'Polymorphic.svelte'),
+    'utf8',
   )
-  console.log('postbuild: copied Polymorphic.svelte into dist/svelte/')
+
+  let rewritten = src
+  for (const [spec, target] of POLYMORPHIC_IMPORT_REWRITES) {
+    rewritten = rewritten
+      .replaceAll(`from '${spec}'`, `from '${target}'`)
+      .replaceAll(`from "${spec}"`, `from "${target}"`)
+  }
+
+  // Any remaining bare `@praxis-kit/*` or `./`-relative import in the copied file that isn't one
+  // of the rewrite targets would be unresolvable for a consumer — fail the build rather than ship.
+  const leaked = [...rewritten.matchAll(/from\s+['"]((?:@praxis-kit\/|\.\/)[^'"]+)['"]/g)]
+    .map((m) => m[1] as string)
+    .filter((s) => !POLYMORPHIC_RESOLVABLE_SPECIFIERS.has(s))
+  if (leaked.length > 0) {
+    throw new Error(
+      `postbuild: FAILED — Polymorphic.svelte still imports unpublishable specifiers after ` +
+        `rewrite: ${[...new Set(leaked)].join(', ')}. Extend POLYMORPHIC_IMPORT_REWRITES and, if ` +
+        `it is a runtime helper, re-export it from packages/kit/svelte-polymorphic-runtime.ts.`,
+    )
+  }
+
+  writeFileSync(join(DIST, 'svelte', 'Polymorphic.svelte'), rewritten)
+  console.log('postbuild: copied Polymorphic.svelte into dist/svelte/ (imports rewritten)')
 }
 
 function discoverDistFiles(): string[] {

@@ -2793,3 +2793,88 @@ Verification: new test file passes (7/7); full `lib/adapter-utils` suite (68 tes
 `@praxis-kit/lit` (116 + 25 SSR-conformance), and `@praxis-kit/web` (63 + 28) suites all pass
 unchanged; `typecheck` clean on all three packages; confirmed via a real `packages/kit` rebuild
 (`pnpm --filter ./packages/kit build`) that this change is included with no regressions.
+
+### RC package validation — one blocker (Svelte adapter unusable) + packaging cleanup
+
+A full release-candidate pass over the published `packages/kit` artifact (build → `publint` →
+`pnpm pack` → tarball inspection → isolated-fixture install → import/type/CLI checks → tree-shaking
+→ bundle-analysis → `repo-state`). Every automated gate already passed; the value was in the manual
+tarball inspection, which surfaced one release blocker and a set of smaller issues. Fixed on
+`fix/rc-packaging-issues`.
+
+**Blocker — `praxis-kit/svelte/Polymorphic.svelte` did not resolve for consumers.** It ships as raw
+`.svelte` source (correct — the consumer's own Svelte compiler processes it), but its `<script>`
+block imported `enforceAllowedAs`/`isKnownAriaRole` from `@praxis-kit/core`, `isObject`/`isString`
+from `@praxis-kit/primitive`, `applyFilter`/`resolveNormalizedProps` from
+`@praxis-kit/adapter-utils`, and four types from `./types`. All of those are `private: true`
+workspace packages (never published) or a file not in the tarball. Since Svelte's
+`createContractComponent` returns a bundle that can only be rendered by `<Polymorphic bundle={…}>`,
+**the Svelte adapter was non-functional as published** — and the `test:pack` smoke test missed it
+(it `import()`s `praxis-kit/svelte`, the JS index, but a `.svelte` file can't be `import()`-ed by
+Node, and that export has no `types` condition to check).
+
+Fix: a bundled, non-public `svelte/_polymorphic-runtime` entry
+(`packages/kit/svelte-polymorphic-runtime.ts`) that re-exports the six runtime helpers plus the two
+_structural_ type aliases (`ElementType`, `IntrinsicProps`). `postbuild.ts` rewrites the copied
+`.svelte`'s three `@praxis-kit/*` specifiers to `./_polymorphic-runtime.js`, and rewrites `./types`
+to `./index.js` — routing `PolymorphicComponentProps` (whose `bundle` field carries the _nominal_
+`SlotValidator`/`ChildrenEvaluator`, private members) through the real `praxis-kit/svelte` entry so
+those types stay identical to a consumer's own `createContractComponent` bundle rather than becoming
+a second, non-assignable copy. The runtime shim's `.d.ts` dropped from 26 kB to 5.6 kB once it no
+longer re-exported the runtime-typed names, and the postbuild nominal-split warnings for those two
+classes went away. `postbuild.ts` now also asserts, after the rewrite, that no unresolvable
+`@praxis-kit/*` / relative specifier survives in the copied file — a new adapter import can't
+silently ship broken. `smoke-test.ts` grew a fixture-side check that compiles the shipped
+`Polymorphic.svelte` (client + server) with the consumer's own `svelte` and `require.resolve`s every
+one of its import specifiers.
+
+**`class-variance-authority` was bundled into every adapter but undeclared.** `lib/styling` depends
+on it (`catalog:`), the published package bundles `lib/styling`, so tsdown inlined CVA into
+`dist/*/index.js` — while `clsx`, the sibling dependency, was correctly left external because it
+_is_ in `packages/kit`'s `dependencies`. Added `class-variance-authority` there (matching `clsx`);
+tsdown now externalizes it (`import { cva } from "class-variance-authority"`), the "unintended
+bundling" build hint is gone, and consumers dedupe one copy.
+
+**`pnpm build` failed on a fresh checkout.** `"build": "pnpm typecheck && pnpm -r build"` ran the
+aggregate typecheck — which includes `qa/tree-shaking-tests`' `scenarios/package/*` resolving
+`praxis-kit/<entry>` types through `packages/kit/dist/` — _before_ the build that produces that
+dist. Known (`ci.yml` works around it by running `pnpm verify` first) but a footgun. Reordered to
+`"build": "pnpm -r build && pnpm typecheck"`: pnpm's topological ordering builds `packages/kit`
+before the `qa/*` packages that depend on it, so dist exists by the time the typecheck runs.
+`pnpm build` is now self-sufficient.
+
+**Single release gate + metrics wired in.** Added `pnpm verify:release` — `verify` (build kit → lint
+→ typecheck → test → repo-state) then `publint`, `test:pack`, `qa/tree-shaking-tests`,
+`qa/bundle-analysis`, and `qa/metrics` (`collect` + `assert`). `qa/metrics` existed but had no
+root-script wiring and no CI invocation (the `ci.yml` comment claiming it and
+`scripts/generate-repo-state.ts` were "not ported yet" was stale — both have existed since the
+`qa/metrics` port). Added `metrics:collect` / `metrics:report` / `metrics:assert` root scripts and
+switched `ci.yml`'s scattered `verify` + `build` steps to `verify:release`. Documented in
+`docs/releasing/verify-release.md`.
+
+**Cosmetic internal-name leaks in shipped output.** `dist/lit/index.js` / `dist/web/index.js`'s "not
+registered for SSR" error told authors to use `createContractComponent from @praxis-kit/lit` — an
+unpublished name; changed to `praxis-kit/lit` / `praxis-kit/web`. The TS-plugin's four diagnostic
+`source: '@praxis-kit/typescript-plugin'` labels (shown bracketed in editor tooltips) became
+`source: 'praxis-kit/ts-plugin'`, the real public subpath. The `@praxis-kit/*` ESLint _rule_ names
+in `dist/eslint` were left alone — that is the plugin's intended rule namespace, not a leak.
+
+**`diagnostics → primitive` package cycle broken.** `lib/diagnostics` imported `AnyRecord` (a type)
+from `@praxis-kit/primitive` while `primitive` imports the `Diagnostics` type from `diagnostics` — a
+type-only cycle `repo-state` and pnpm both flag. `AnyRecord`/`StringMap` originate in
+`@praxis-kit/foundation` (a leaf that `primitive` already depends on); pointed `diagnostics` at
+`foundation` for them and swapped its lone `dependencies` entry. `diagnostics → foundation` is
+acyclic.
+
+**Also added `"./package.json": "./package.json"` to `packages/kit`'s `exports`** — standard
+practice, and the Svelte smoke check needs a resolvable way to find the package root (the
+`./svelte/Polymorphic.svelte` export's lone `svelte` condition is not one Node's resolver selects).
+
+Not in scope for this pass (separate P0 items): per-framework real consumer apps (a Svelte one would
+now have caught the blocker end to end), the changesets/npm-auth release infra, and the
+`private: true` / `0.0.0` flip.
+
+Verification: `pnpm verify:release` clean from a simulated fresh checkout (`packages/kit/dist`
+removed); `test:pack` PASS including the new Svelte compile-and-resolve check; full `pnpm -r test`
+and `pnpm -r typecheck` unchanged; `publint` "All good!"; tarball re-inspected — CVA now an external
+`import`, `_polymorphic-runtime.{js,d.ts}` present under `dist/svelte/`, no other content change.

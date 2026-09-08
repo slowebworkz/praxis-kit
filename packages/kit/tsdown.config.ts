@@ -121,11 +121,27 @@ export default defineConfig([
     },
   },
 
+  // Bundled helper + type surface that the copied `dist/svelte/Polymorphic.svelte`'s <script>
+  // block imports. NOT in package.json `exports` — reachable only by relative path from the
+  // sibling .svelte file (the same pattern as `_shared/diagnostics`). postbuild.ts rewrites the
+  // .svelte file's workspace-internal specifiers to `./_polymorphic-runtime.js`. Built with this
+  // package's own tsconfig (like the contract/guards/html/utils entries), not the svelte
+  // adapter's. See svelte-polymorphic-runtime.ts.
+  {
+    entry: { 'svelte/_polymorphic-runtime': './svelte-polymorphic-runtime.ts' },
+    format: ['esm'],
+    dts: dts(),
+    tsconfig: 'tsconfig.json',
+    fixedExtension: false,
+    deps: { neverBundle: [diagnostics] },
+  },
+
   // Svelte — the adapter's own entry is plain `.ts` (only `import type { Snippet } from 'svelte'`,
   // erased at the JS level, so `svelte` needs no runtime externalizing here). `Polymorphic.svelte`
   // is *not* compiled by this bundler at all — it's raw `.svelte` source, consumed by the
   // *consumer's own* Svelte compiler at their build time, so postbuild.ts copies it into
-  // dist/svelte/ byte-for-byte (matching how `@praxis-kit/svelte` itself re-exports it).
+  // dist/svelte/ byte-for-byte, then rewrites its workspace-internal imports to the
+  // `_polymorphic-runtime` entry above.
   {
     entry: { 'svelte/index': '../../adapters/svelte/src/index.ts' },
     format: ['esm'],

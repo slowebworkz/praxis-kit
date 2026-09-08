@@ -54,7 +54,7 @@ export function renderContractToString(
     const name = (component as { name?: string }).name ?? 'AnonymousComponent'
     throw new Error(
       `[renderContractToString] ${name} was not registered for SSR. ` +
-        'Ensure it was created with createContractComponent from @praxis-kit/lit.',
+        'Ensure it was created with createContractComponent from praxis-kit/lit.',
     )
   }
 

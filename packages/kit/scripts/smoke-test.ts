@@ -187,6 +187,40 @@ console.log(\`All \${results.length} entries imported cleanly\`)
       ),
     )
 
+    // The Svelte adapter's only render path is `praxis-kit/svelte/Polymorphic.svelte`, shipped as
+    // raw source — every `import` in its `<script>` must resolve from the installed package. A
+    // plain `import()` can't reach it (Node won't load `.svelte`) and the type-resolution step
+    // above skips it (no `types` condition on that export), so check it in a fixture-side script:
+    // compile it with the consumer's own `svelte`, then `require.resolve` each import specifier
+    // from the file's own directory. Catches the class of bug where it ships with unpublished
+    // `@praxis-kit/*` / `./types` imports (RC validation finding F1).
+    const svelteCheckFile = join(fixture, 'check-svelte.mjs')
+    writeFileSync(
+      svelteCheckFile,
+      `import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { join, dirname } from 'node:path'
+const require = createRequire(import.meta.url)
+const { compile } = require('svelte/compiler')
+// The './svelte/Polymorphic.svelte' export only has a 'svelte' condition, which Node's own
+// resolver won't select — locate it via the package root instead, the way a bundler's
+// svelte-resolve plugin ultimately does.
+const file = join(dirname(require.resolve('praxis-kit/package.json')), 'dist/svelte/Polymorphic.svelte')
+const src = readFileSync(file, 'utf8')
+compile(src, { filename: 'Polymorphic.svelte', generate: 'client' })
+compile(src, { filename: 'Polymorphic.svelte', generate: 'server' })
+const dir = dirname(file)
+const fromDir = createRequire(join(dir, 'x.js'))
+for (const m of src.matchAll(/\\bfrom\\s+['"]([^'"]+)['"]/g)) {
+  try { fromDir.resolve(m[1]) }
+  catch (e) { console.error('FAIL Polymorphic.svelte imports ' + m[1] + ': ' + e.message); process.exit(1) }
+}
+console.log('Polymorphic.svelte compiles (client + server) and every import resolves')
+`,
+    )
+    console.log('smoke-test: checking praxis-kit/svelte/Polymorphic.svelte …')
+    console.log(run('node', ['check-svelte.mjs'], fixture))
+
     console.log('smoke-test: running praxis-codemod through its real .bin symlink …')
     const binPath = join(fixture, 'node_modules', '.bin', 'praxis-codemod')
     console.log(run('node', [binPath, '--help'], fixture))

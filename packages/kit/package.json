@@ -6,6 +6,7 @@
   "sideEffects": false,
   "description": "Praxis Kit — polymorphic components with ARIA contracts and variant composition. The single package for every framework adapter and tooling entry point.",
   "exports": {
+    "./package.json": "./package.json",
     "./react": {
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.js"
@@ -151,6 +152,7 @@
   },
   "dependencies": {
     "@typescript-eslint/utils": "catalog:",
+    "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "type-fest": "catalog:"
   },

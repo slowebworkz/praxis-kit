@@ -30,13 +30,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # qa/tree-shaking-tests/scenarios/package/* import `praxis-kit/<name>` and resolve it
-      # through packages/kit's built dist/ — which only exists once packages/kit is built.
-      # `pnpm check`'s own typecheck/test steps have no awareness of that ordering requirement
-      # (confirmed the hard way: `pnpm -r typecheck` fails on a fresh checkout without this), so
-      # `pnpm verify` builds packages/kit first, then runs `pnpm check`.
-      - name: Verify
-        run: pnpm verify
+      # The single release gate: `pnpm verify` (build packages/kit → lint → typecheck → test →
+      # repo-state) followed by publint, the packed-tarball smoke test, tree-shaking and
+      # bundle-size assertions, and the qa/metrics snapshot gate. If this passes, the repo is
+      # releasable. See package.json and docs/releasing/verify-release.md.
+      #
+      # packages/kit must be built before `pnpm -r typecheck` — qa/tree-shaking-tests'
+      # scenarios/package/* import `praxis-kit/<name>` and resolve it through packages/kit's
+      # dist/. `pnpm verify` builds it first; `pnpm build` (reordered to `pnpm -r build && pnpm
+      # typecheck`) is now also safe on a fresh checkout.
+      - name: Verify (release gate)
+        run: pnpm verify:release
 
       - name: Build
         run: pnpm build
@@ -44,9 +48,7 @@ jobs:
       - name: Duplicate Analysis
         run: pnpm analyze:duplicates
 
-      # `../pk`'s CI also runs `repo-state` (scripts/generate-repo-state.ts),
-      # `analyze:deps` (dependency-cruiser), `analyze:patterns` (ast-grep), and
-      # `metrics:collect`/`metrics:assert` (qa/metrics) here. None are ported yet — they depend on
-      # scripts/generate-repo-state.ts, a `.dependency-cruiser.cjs` config, and an
-      # `.ast-grep/sgconfig.yml` config, none of which exist in this repo. Land them here once
-      # qa/metrics and its prerequisites do — see DECISIONS.md.
+      # Still not ported from `../pk`'s CI: `analyze:deps` (dependency-cruiser) and
+      # `analyze:patterns` (ast-grep) — they need a `.dependency-cruiser.cjs` and an
+      # `.ast-grep/sgconfig.yml` that don't exist here yet. `repo-state` and `qa/metrics` are
+      # now wired in (via `pnpm verify:release`). See DECISIONS.md.

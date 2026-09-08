@@ -25,9 +25,17 @@ import { createContractComponent } from 'praxis-kit/lit' // Lit
 import { createContractComponent } from 'praxis-kit/web' // Vanilla Custom Elements
 ```
 
-The rest of this guide uses the React adapter. The API is identical across React, Vue, Solid,
-Preact, and Svelte — only the import path changes. Lit and Web are the two exceptions: a custom
-element's tag is fixed at `customElements.define()` time, so they don't accept `as` (see Step 5).
+The rest of this guide uses the React adapter. The factory options (`tag`, `styling`, `enforcement`,
+`defaults`, …) are identical across React, Vue, Solid, and Preact — only the import path changes.
+
+Two adapters render differently:
+
+- **Svelte.** `createContractComponent` returns a _bundle_, not a component. Render it through the
+  `Polymorphic` component: `import Polymorphic from 'praxis-kit/svelte/Polymorphic.svelte'`, then
+  `<Polymorphic {bundle} intent="ghost" as="a" href="/home">Home</Polymorphic>`.
+- **Lit / Web.** A custom element's tag is fixed at `customElements.define()` time, so they don't
+  accept `as` (see Step 5).
+
 Everything else in this guide — `styling`, `enforcement`, presets, `onElement` — works the same way
 on all seven.
 
