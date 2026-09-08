@@ -337,6 +337,42 @@ describe('validate() — output (implicit role: status)', () => {
   })
 })
 
+describe('validate() — select implicit role via multiple/size (ARIA-in-HTML)', () => {
+  it('a plain <select> is an implicit combobox — role="combobox" is redundant', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('select', { role: 'combobox' })
+    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+  })
+
+  it('a plain <select> is NOT a listbox — role="listbox" is a non-redundant override', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('select', { role: 'listbox' })
+    expect(violations.some((v) => v.message.includes('redundant'))).toBe(false)
+  })
+
+  it('<select multiple> is an implicit listbox — role="listbox" is redundant', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('select', {
+      multiple: true,
+      role: 'listbox',
+    })
+    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+  })
+
+  it('<select size="4"> is an implicit listbox — role="listbox" is redundant', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('select', {
+      size: '4',
+      role: 'listbox',
+    })
+    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+  })
+
+  it('allows aria-multiselectable on <select multiple> (valid for listbox)', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('select', {
+      multiple: true,
+      'aria-multiselectable': 'true',
+    })
+    expect(violations.some((v) => v.attribute === 'aria-multiselectable')).toBe(false)
+  })
+})
+
 // ---------------------------------------------------------------------------
 // validate() — input[type=...] implicit role
 // ---------------------------------------------------------------------------

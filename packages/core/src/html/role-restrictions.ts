@@ -13,16 +13,22 @@ import { tableElementSpec } from './spec/elements/table'
 // see (e.g. <td> becomes a valid `gridcell` only inside a `role="grid"` ancestor, which this
 // tag-and-props-only context has no visibility into), or the allowed set isn't settled enough to
 // enforce confidently. `[]` means the opposite extreme: no explicit role is permitted at all.
-// This table should be cross-checked against the current W3C ARIA-in-HTML spec before being
-// treated as exhaustive — it was authored from well-established fragments of that spec, not
-// generated from it mechanically.
+// Cross-checked against the W3C "ARIA in HTML" WD conformance table (2026-09, see
+// docs/accessibility/html-aria-audit.md). Entries carry a `// ARIA-in-HTML <tag>: …` comment quoting the
+// spec's allowed-roles cell; entries that deliberately diverge are marked `DELIBERATE POLICY`.
+// Still not modelled here (context-dependent, needs sibling/ancestor visibility a single-element
+// AriaContext lacks): `dl`/`dt`/`dd`, `section`, `figure` (figcaption-conditional), table cells.
 const ALLOWED_ROLES: Readonly<StringMap<readonly AriaRole[]>> = {
   article: ['application', 'document', 'feed', 'main', 'none', 'presentation', 'region'],
-  aside: ['feed', 'none', 'presentation', 'region', 'search'],
+  // ARIA-in-HTML <aside>: feed, none, note, presentation, region, search.
+  aside: ['feed', 'none', 'note', 'presentation', 'region', 'search'],
   footer: ['group', 'none', 'presentation'],
   header: ['group', 'none', 'presentation'],
   main: [],
-  nav: [],
+  // ARIA-in-HTML <nav>: menu, menubar, none, presentation, tablist. `landmarkRoleRule` still
+  // advises against overriding the navigation landmark (deliberate Praxis policy) — this list
+  // only stops `roleNotPermittedRule` from *also* flagging the spec-permitted alternates.
+  nav: ['menu', 'menubar', 'none', 'presentation', 'tablist'],
   a: [
     'button',
     'checkbox',
@@ -35,16 +41,23 @@ const ALLOWED_ROLES: Readonly<StringMap<readonly AriaRole[]>> = {
     'tab',
     'treeitem',
   ],
+  // ARIA-in-HTML <button>: checkbox, combobox, gridcell, link, menuitem, menuitemcheckbox,
+  // menuitemradio, option, radio, separator, slider, switch, tab, treeitem.
   button: [
     'checkbox',
+    'combobox',
+    'gridcell',
     'link',
     'menuitem',
     'menuitemcheckbox',
     'menuitemradio',
     'option',
     'radio',
+    'separator',
+    'slider',
     'switch',
     'tab',
+    'treeitem',
   ],
   select: ['menu'],
   h1: ['tab', 'presentation', 'none'],
@@ -53,28 +66,37 @@ const ALLOWED_ROLES: Readonly<StringMap<readonly AriaRole[]>> = {
   h4: ['tab', 'presentation', 'none'],
   h5: ['tab', 'presentation', 'none'],
   h6: ['tab', 'presentation', 'none'],
+  // ARIA-in-HTML <ul>/<ol>: group, listbox, menu, menubar, none, presentation, radiogroup,
+  // tablist, toolbar, tree. (`directory` was dropped — it is deprecated in WAI-ARIA 1.2 and
+  // maps to `list`.)
   ul: [
-    'directory',
     'group',
     'listbox',
     'menu',
     'menubar',
+    'none',
+    'presentation',
     'radiogroup',
     'tablist',
     'toolbar',
     'tree',
   ],
   ol: [
-    'directory',
     'group',
     'listbox',
     'menu',
     'menubar',
+    'none',
+    'presentation',
     'radiogroup',
     'tablist',
     'toolbar',
     'tree',
   ],
+  // DELIBERATE POLICY (wider than current spec): current ARIA-in-HTML narrowed <li>-in-a-list to
+  // "no role other than listitem", but the APG tree / menu / menubar / tablist patterns are all
+  // built on `<li role="treeitem|menuitem|tab">`. Enforcing the spec text literally would flag
+  // those reference patterns. Revisit if ARIA-in-HTML restores an explicit list.
   li: [
     'menuitem',
     'menuitemcheckbox',

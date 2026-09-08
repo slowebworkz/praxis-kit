@@ -4,15 +4,16 @@ Framework-neutral UI infrastructure with enforceable structural and accessibilit
 
 ## Contents
 
-| Document                                      | What it covers                                            |
-| --------------------------------------------- | --------------------------------------------------------- |
-| [Getting started](../GETTING_STARTED.md)      | Installation, first component, quick reference            |
-| [Architecture](../ARCHITECTURE.md)            | Layer model, dependency graph, runtime lifecycle          |
-| [Examples](./examples.md)                     | Where to see praxis-kit exercised end to end today        |
-| [Concepts](./concepts.md)                     | Core abstractions: polymorphism, contracts, styling       |
-| [Adapter authoring](../ADAPTER_AUTHORING.md)  | Building a new framework adapter                          |
-| [Release gate](./releasing/verify-release.md) | What `pnpm verify:release` runs and why the order matters |
-| [Security policy](../SECURITY.md)             | Supported versions, how to report a vulnerability         |
+| Document                                              | What it covers                                                                                   |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [Getting started](../GETTING_STARTED.md)              | Installation, first component, quick reference                                                   |
+| [Architecture](../ARCHITECTURE.md)                    | Layer model, dependency graph, runtime lifecycle                                                 |
+| [Examples](./examples.md)                             | Where to see praxis-kit exercised end to end today                                               |
+| [Concepts](./concepts.md)                             | Core abstractions: polymorphism, contracts, styling                                              |
+| [Adapter authoring](../ADAPTER_AUTHORING.md)          | Building a new framework adapter                                                                 |
+| [HTML/ARIA audit](./accessibility/html-aria-audit.md) | Normative source, rule, interpretation, test and deviation for every accessibility contract rule |
+| [Release gate](./releasing/verify-release.md)         | What `pnpm verify:release` runs and why the order matters                                        |
+| [Security policy](../SECURITY.md)                     | Supported versions, how to report a vulnerability                                                |
 
 There is no `MIGRATING.md` or `CHANGELOG.md` yet — praxis-kit hasn't shipped a first published
 version, so there is nothing to migrate from and no release history to log. Both will exist once
