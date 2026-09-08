@@ -85,19 +85,6 @@ export type Tag = keyof typeof IMPLICIT_ROLE_RECORD
 export type InputType = keyof typeof INPUT_TYPE_ROLE_MAP
 type ImplicitRole = (typeof IMPLICIT_ROLE_RECORD)[Tag]
 
-// `input[type]` values for which a `list` attribute (a `<datalist>` binding) changes the implicit
-// role from `textbox`/`searchbox` to `combobox`, per ARIA-in-HTML. Shared by `getInputImplicitRole`
-// (the implicit-role flip) and `inputElementSpec` (the allowed-explicit-role narrowing) so the two
-// stay in lockstep: once `list` is present, `combobox` is the only permitted role and it is
-// redundant with the implicit one.
-export const LIST_ELIGIBLE_INPUT_TYPES: ReadonlySet<InputType> = new Set([
-  'text',
-  'search',
-  'tel',
-  'url',
-  'email',
-])
-
 /**
  * Roles whose implicit assignment this library treats as **not overridable** by
  * an explicit `role` attribute (a warning, not a hard block).

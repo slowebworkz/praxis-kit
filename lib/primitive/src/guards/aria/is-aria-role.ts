@@ -1,7 +1,6 @@
 import {
   IMPLICIT_ROLE_RECORD,
   INPUT_TYPE_ROLE_MAP,
-  LIST_ELIGIBLE_INPUT_TYPES,
   STRONG_ROLES_SET,
   STANDALONE_ROLES_SET,
 } from '../../constants'
@@ -31,6 +30,15 @@ export function hasStandaloneRole(tag: string): boolean {
   const role = lookupImplicitRole(tag)
   return !isNullish(role) && STANDALONE_ROLES_SET.has(role)
 }
+
+/**
+ * Input types for which the presence of a `list` attribute changes the implicit
+ * ARIA role from `textbox` to `combobox`, per the ARIA-in-HTML specification.
+ * `packages/core`'s `inputElementSpec` keeps its own copy of this set (it must
+ * not import the guard module) — the two are pinned to the spec by tests on both
+ * sides and must stay in sync.
+ */
+const LIST_ELIGIBLE_INPUT_TYPES = new Set<InputType>(['text', 'search', 'tel', 'url', 'email'])
 
 /**
  * Returns the implicit ARIA role for an `<input>` element.
