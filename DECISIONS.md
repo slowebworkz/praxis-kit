@@ -3115,3 +3115,54 @@ P2 housekeeping.
 Verification: `pnpm install` clean (no ignored-build prompt), full `pnpm typecheck` + `pnpm test` +
 `pnpm lint:check` green, `pnpm analyze:duplicates` + `@praxis-kit/codemod` (ts-morph consumer) both
 still work.
+
+### `packages/kit` — dependency / license / metadata audit for 0.1 (2026-09-08)
+
+Deliberate review of the publishable package's `package.json` ahead of the first publish.
+
+**Dependency reclassification: `@typescript-eslint/utils` moved from `dependencies` → optional
+`peerDependencies` (`>=8`).** Only the `praxis-kit/eslint` entry uses it (`RuleCreator` from
+`@typescript-eslint/utils/eslint-utils`, left external by the tsdown config on purpose — "a real
+dependency of consumers' own eslint config, not something to duplicate into this bundle"). As a hard
+`dependency` it pulled ~20 transitive packages
+(`@typescript-eslint/{types,scope-manager, typescript-estree,project-service,visitor-keys,tsconfig-utils}`,
+`ts-api-utils`, `minimatch`, `semver`, `debug`, …) into _every_ `praxis-kit` install, even one that
+only imports `praxis-kit/react`. Anyone using `praxis-kit/eslint` already has `typescript-eslint` in
+their flat config, so the peer resolves transitively for the actual audience. `../pk` doesn't
+declare it at all (it bundles it); this is the same intent, done via an optional peer.
+`smoke-test.ts`'s `PEERS` gained `@typescript-eslint/utils`, and it's a `devDependency` of
+`packages/kit` for local build / typecheck.
+
+**`dependencies` after the move — all genuinely universal, all permissive:**
+
+- `class-variance-authority` (Apache-2.0) — every adapter's class pipeline (`lib/styling`).
+  Externalized (not bundled) since #56, matching `clsx`.
+- `clsx` (MIT) — same.
+- `type-fest` (MIT OR CC0-1.0) — a real dep, not dev-only: rolldown-plugin-dts leaves
+  `import { Simplify, OmitIndexSignature, … } from 'type-fest'` in the published `.d.ts` (10
+  specifiers), so a consumer's `tsc` needs it resolvable.
+
+**Peers** (all optional, one per framework/tool entry): `react` `preact` `vue` `solid-js` `svelte`
+`lit` `eslint` `vite` `typescript` — plus the new `@typescript-eslint/utils`. `react-dom` is
+deliberately _not_ a peer — the React adapter runtime never imports it (it's a `devDependency` for
+the test suites only).
+
+**License audit — clean.** `packages/kit` is MIT; `LICENSE` is in `files` and matches the root.
+Every transitive production dependency license is permissive — MIT / Apache-2.0 / BSD-2/3-Clause /
+ISC / BlueOak-1.0.0 / (MIT OR CC0-1.0). No GPL/LGPL/AGPL anywhere in the published tree. (The two
+MPL-2.0 packages in the workspace — `axe-core`, `@axe-core/playwright` — are `lib/playwright`
+dev-only and never shipped.)
+
+**Metadata — verified, no changes needed beyond:**
+
+- `description` reworded off "polymorphic components" onto the contract framing #69 established;
+  `web-components` added to `keywords`.
+- No root `"."` export — deliberate (`docs/api-stability.md`: "you import from one of them, your
+  framework"). `./package.json` is exported for tooling.
+- `exports` (types+import per subpath, cjs for `ts-plugin`), `typesVersions` (mirrors it for older
+  `moduleResolution`), `bin` (`praxis-codemod`, shebang via the tsdown banner), `files`
+  (`["dist", "LICENSE"]`), `sideEffects: false`, `engines.node >=18`,
+  `publishConfig.access: public`, `repository.directory`, `homepage`, `bugs` — all correct.
+  `publint` "All good!", `test:pack` PASS.
+- `version: 0.0.0` / `private: true` — flipped in the release steps, not here. `funding` — a
+  release-time decision per `CLAUDE.md`'s "revisit GitHub Sponsors at each tag".
