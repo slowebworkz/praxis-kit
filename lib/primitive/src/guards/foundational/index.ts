@@ -1,6 +1,18 @@
-export { isArray } from './is-array'
-export { isBoolean } from './is-boolean'
-export { isDefined, isUndefined } from './is-defined'
-export { isNull, isNonNull, isNullish } from './is-null'
-export { isFunction, isNumber, isObject, isString } from '../../utils/type-guards'
-export { isPlainObject as isRecord } from '../../utils/type-guards'
+// The foundational runtime guards live in @praxis-kit/foundation (a genuinely flat package, safe
+// to import directly under Node's native ESM loader) — re-exported here so every existing consumer
+// of @praxis-kit/primitive's public surface keeps working unchanged. `isPlainObject` is surfaced
+// under primitive's historical name `isRecord`. See DECISIONS.md.
+export {
+  isArray,
+  isBoolean,
+  isDefined,
+  isUndefined,
+  isNull,
+  isNonNull,
+  isNullish,
+  isFunction,
+  isNumber,
+  isObject,
+  isString,
+  isPlainObject as isRecord,
+} from '@praxis-kit/foundation'

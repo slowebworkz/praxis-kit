@@ -1,3 +1,4 @@
+import { isString, isUndefined } from '@praxis-kit/foundation'
 import type { Diagnostics } from './diagnostics'
 import { silentDiagnostics, throwDiagnostics, warnDiagnostics } from './presets'
 
@@ -19,6 +20,6 @@ export function resolveDiagnostics(
   value: Diagnostics | DiagnosticsMode | undefined,
   fallback: Diagnostics,
 ): Diagnostics {
-  if (value === undefined) return fallback
-  return typeof value === 'string' ? PRESETS_BY_MODE[value] : value
+  if (isUndefined(value)) return fallback
+  return isString(value) ? PRESETS_BY_MODE[value] : value
 }

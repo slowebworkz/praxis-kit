@@ -1,5 +1,5 @@
 import { GLOBAL_ARIA_ATTRIBUTES, ROLE_RESTRICTED_ATTRIBUTES } from '../../constants/aria'
-import { isUndefined } from '../foundational/is-defined'
+import { isUndefined } from '../foundational'
 
 export function isGlobalAriaAttribute(attr: string): boolean {
   return GLOBAL_ARIA_ATTRIBUTES.has(attr)

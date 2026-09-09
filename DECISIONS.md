@@ -3008,3 +3008,47 @@ good!"; `test:pack` PASS (its `vite-plugin` type-probe updated `ComponentConstra
 `PluginOptions`); `qa/bundle-analysis` + `qa/tree-shaking-tests` gzip snapshots unchanged (react −30
 B from the dropped export statements, everything else ±0 — the removed names were type-only or
 already tree-shaken).
+
+### `lib/foundation` — the foundational type guards moved here too (2026-09-08)
+
+The runtime predicate vocabulary — `isString` `isNumber` `isBoolean` `isFunction` `isArray`
+`isObject` `isPlainObject` `isDefined` `isUndefined` `isNull` `isNonNull` `isNullish`, plus the
+`AnyFunction` type — moved from `lib/primitive` (`src/utils/type-guards.ts` +
+`src/guards/foundational/is-{array,boolean,defined,null}.ts`) into
+`lib/foundation/src/type-guards.ts` / `any-function.ts`. Same rationale as the original `iterate` /
+`StringMap` extraction: a package _below_ `primitive` in the graph could not use them.
+
+- Concrete beneficiary: **`lib/diagnostics`** (`primitive` depends on it for the `Diagnostics` type,
+  so it can't depend back on `primitive`). It was hand-rolling `typeof value === 'string'` /
+  `value === undefined` in `resolve-diagnostics.ts` and `formatter.ts`; those now use `isString` /
+  `isUndefined` / `isDefined` from `@praxis-kit/foundation`, which it already depends on. The
+  `node --experimental-strip-types` scripts (`qa/*/scripts`, `scripts/*`) can now reach the same
+  predicates the same way, though only `diagnostics` was actually converted here.
+- `@praxis-kit/primitive`'s public surface is unchanged: `src/guards/foundational/index.ts` now
+  re-exports every guard from `@praxis-kit/foundation` (with `isPlainObject` surfaced under
+  primitive's historical name `isRecord`), and `src/types/any-function.ts` re-exports `AnyFunction`.
+  All ~40 downstream `@praxis-kit/primitive` guard imports across `lib/`, `adapters/`, `packages/`,
+  `plugins/` are untouched. Two intra-`primitive` imports that reached the deleted files by direct
+  path (`guards/contract/is-validation.ts`, `guards/aria/is-aria-attribute.ts`) were repointed at
+  the `../foundational` barrel.
+- **Stayed in `primitive`:** every domain guard (`isTag`, `isComponent`, `isAriaRole`,
+  `isKnownAriaRole`, `isAriaAttribute`, `isInvalid`, `isVariantMap`, `isVariantSelection`,
+  `isCardinality`, `isValidation`, `isDynamicRule`, the merge predicates) — they depend on domain
+  types that live in `primitive`.
+- `isObject` / `isPlainObject`'s `excludeArrays: true` overload now narrows to `StringMap<unknown>`
+  (foundation's own name) instead of primitive's `AnyRecord` — the two are defined to be the same
+  type (`AnyRecord = StringMap<unknown>`), so no consumer sees a change.
+- `lib/foundation` stays flat — no subdirectories, explicit `.ts` extensions on `index.ts`'s
+  re-exports — for the Node-native-loader reason it was extracted for. The new files are flat
+  siblings; the guard file kept the `type-guards.ts` name it already had in `primitive`.
+
+Not addressed here (deliberately): `isUndefined(possiblyUndeclaredGlobal)` throws `ReferenceError`
+because the argument is evaluated before the guard runs — `typeof X !== 'undefined'` is the only
+safe form for a global-existence check, and remains so (2 spots, both in `adapters/web`, both
+commented). A NOTE to that effect sits at the top of `type-guards.ts`.
+
+Cost: `type-guards.ts` is now its own bundled module rather than part of `primitive`'s
+`utils/type-guards.ts`, so every published bundle that includes any guard gained one small module
+wrapper — a uniform +2…+27 B gzip (~0.1%) across the `qa/*` scenarios, well within the 5% gate.
+Baselines regenerated (`gzip:update`) in the same change. Same one-time cost the original
+`StringMap`/`iterate` extraction paid.
