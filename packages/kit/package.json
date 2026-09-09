@@ -1,7 +1,6 @@
 {
   "name": "praxis-kit",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
   "sideEffects": false,
   "description": "Praxis Kit — HTML semantics, ARIA requirements, and component composition rules as executable contracts, shared across every framework adapter. The single npm package for all adapters and tooling.",

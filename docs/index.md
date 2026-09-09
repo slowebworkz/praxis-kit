@@ -17,10 +17,10 @@ Framework-neutral UI infrastructure with enforceable structural and accessibilit
 | [Decisions](../DECISIONS.md)                          | Decision log; the **Status** section at the top is the current-state snapshot                    |
 | [Security policy](../SECURITY.md)                     | Supported versions, how to report a vulnerability                                                |
 
-There is no `MIGRATING.md` or `CHANGELOG.md` yet — praxis-kit hasn't shipped a first published
-version, so there is nothing to migrate from and no release history to log. A `CHANGELOG.md` starts
-with the first published release (`praxis-kit@0.1.0`); `MIGRATING.md` appears when there is a
-breaking change between published versions to migrate across.
+`packages/kit/CHANGELOG.md` starts at `praxis-kit@0.1.0` — the first release of this codebase. (The
+`praxis-kit` npm name previously carried a separate `1.x`–`7.x` line from an earlier repo; `0.1.0`
+is a deliberate reset, not a continuation.) There is no `MIGRATING.md` yet — it appears when there
+is a breaking change between published `0.x` versions to migrate across.
 
 ## Layer overview
 

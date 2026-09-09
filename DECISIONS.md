@@ -963,17 +963,24 @@ that number honest:
 New casts on the "acceptable" side need the boundary comment; new casts on the "suspicious" side
 need a reviewer's sign-off or a follow-up to remove them.
 
-### Versioning: `0.x` until usable, then `v1.0.0`
+### Versioning: `0.x` line, first release `v0.1.0`
 
-Every package stays on `0.y.z` until `@praxis-kit/kit` can be installed and used to build a real
-component with contract enforcement working through at least one framework adapter and the
-standalone runtime. That milestone is `v1.0.0` — the first git tag, cut on `main`.
+**Revised 2026-09-09** (was "0.x until usable, then `v1.0.0`"): the first release is **`v0.1.0`**,
+not `v1.0.0`. `0.x` is the right signal — the `createContractComponent` / `FactoryOptions` contract
+is frozen for `0.1.x`, but the rest of the surface (tooling entries, `contract`/`guards`/`html`
+authoring types) may still move (`docs/api-stability.md`). A `1.0.0` that promised whole-surface
+stability would be a lie this early.
 
 - Pre-1.0, breaking changes are expected and do not force a major; Changesets moves `0.y.z`.
-- The old repo's version numbers are **not** carried over (`../pk` had drifted to root `4.0.0` and
-  `@praxis-kit/kit` `7.8.1` with no changeset config). This repo starts at `0.0.0` and Changesets
-  owns every bump from the first publishable package.
-- No `v0.x` tags unless a real pre-release is cut; no version badge in `README.md` before `v1.0.0`.
+- The old repo's version numbers are **not** carried over. **This repo replaces `../pk` as the
+  source of the `praxis-kit` npm package** (user decision, 2026-09-09). `../pk` published
+  `praxis-kit` up to `7.8.1`; this repo publishes `0.1.0` as a deliberate reset (never-published
+  version — npm accepts it fresh; `publish.yml`'s `--tag latest` points `latest` at it). The
+  `1.1.0`–`7.8.1` line gets deprecated on npm after `0.1.0` lands (npm won't unpublish versions
+  > 72h old — `npm deprecate` is the realistic move).
+- The release flow: `develop` → `main` PR, then a `v0.1.0` tag on `main` fires
+  `.github/workflows/publish.yml` (build `packages/kit` → npm auth via `secrets.NPM_TOKEN` →
+  dist-tag resolution → unresolved-`catalog:` guard → `pnpm publish --provenance --access public`).
 
 Migration status and the full "where version numbers live" checklist are tracked in
 `.vscode/MIGRATION.md` (uncommitted).
