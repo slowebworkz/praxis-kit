@@ -35,7 +35,7 @@ pipeline). Everything else is opt-in tooling or power-user surface.
 | `praxis-kit/preact`, `/vue`, `/solid`, `/svelte`, `/lit`, `/web` | The other six adapters. Identical factory API.                                                                                                                                              |
 | `praxis-kit/svelte/Polymorphic.svelte`                           | The Svelte render component — a Svelte bundle is rendered via `<Polymorphic bundle={…}>`. Required for the Svelte adapter.                                                                  |
 | `praxis-kit/contract`                                            | Framework-neutral contract authoring: `FactoryOptions` / `EnforcementOptions` / `StylingOptions` types, the eight state contracts, the state-prop normalizers, the ARIA-rule fix factories. |
-| `praxis-kit/tailwind`, `praxis-kit/tailwind.css`                 | `createTailwindPipeline` — the flex/grid-aware class pipeline — and its safelist stylesheet.                                                                                                |
+| `praxis-kit/tailwind`, `praxis-kit/tailwind.css`                 | `createTailwindPipeline` (the flex/grid-aware class pipeline) + `layoutKeys` + `LayoutProps` / `LayoutKey` types, and the safelist stylesheet.                                              |
 
 **Every adapter exports** `createContractComponent`, `defineContractComponent`, its own
 `*FactoryOptions` type, and `ContractProps<T>` (recover a built component's prop contract from

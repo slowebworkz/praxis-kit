@@ -3052,3 +3052,40 @@ Cost: `type-guards.ts` is now its own bundled module rather than part of `primit
 wrapper — a uniform +2…+27 B gzip (~0.1%) across the `qa/*` scenarios, well within the 5% gate.
 Baselines regenerated (`gzip:update`) in the same change. Same one-time cost the original
 `StringMap`/`iterate` extraction paid.
+
+### Public-leak sweep — `tailwind` / `vite-plugin` / `svelte` tightened, internal package names scrubbed from `.d.ts` prose (2026-09-08)
+
+A full sweep of the built `packages/kit/dist/**/*.d.ts` for internal API reaching the published
+surface, after the #72 export-tightening. Clean: no internal `@praxis-kit/*` **import specifiers**
+in code (postbuild rewrite + the leak-check hold), the shared `dist/index-*` chunk is not in the
+`exports` map, `praxis-kit/contract`'s ARIA-rule types are a deliberate curated authoring surface,
+`praxis-kit/guards` matches its doc. Three real leaks + one cosmetic issue fixed:
+
+- **`praxis-kit/tailwind`** — same over-broad pattern `vite-plugin` had. It exported `ClassBuilder`,
+  `ClassClassifier`, `DependencyEvaluator`, `LayoutState` (internal classes),
+  `defaultDependencyRules` / `DependencyRules` (not even a `createTailwindPipeline` option), and
+  `export type * from './types'` (~16 `*Token` / `ResolvedLayout` / `TailwindPipelineContext` /
+  `CompoundVariant` types). Nothing outside `lib/tailwind/src` used any of them
+  (`praxis-kit/vite-plugin` uses only the `layoutKeys` _value_). Trimmed to
+  `createTailwindPipeline`, `layoutKeys`, and the `LayoutProps` / `LayoutKey` / `ResolvedLayout`
+  types (the layout-shorthand prop shape, for typing a wrapper). `smoke-test.ts`'s tailwind
+  type-probe moved `ClassBuilder` → `createTailwindPipeline`; README Exports table rewritten.
+- **`praxis-kit/vite-plugin`** — the seven plugin factories' `@example` JSDoc blocks showed
+  `import { contractPlugin } from '@praxis-kit/vite-plugin'` — the unpublished internal name — which
+  ships verbatim in `dist/vite-plugin/index.{d.ts,js}`. A consumer copy-pastes a broken import.
+  Reworded to `praxis-kit/vite-plugin`.
+- **`praxis-kit/svelte`** — dropped `WithChildRules` from the #72 allowlist. It's the internal bound
+  on `BuiltRuntime`'s second type parameter; a consumer annotating a bundle writes `BuiltRuntime` /
+  `AnyBuiltRuntime` and lets the default fill in, never names this. Still bundled into the `.d.ts`
+  (referenced by `BuiltRuntime`), just no longer a named export.
+- **Cosmetic** — ~9 JSDoc comments on public types (`ContractProps`, the `__generics` markers,
+  `ChildrenEvaluator`'s structural counterpart, `ReactFactoryOptions.compiled`) named internal
+  packages (`@praxis-kit/contract-props`, `@praxis-kit/runtime`, `@praxis-kit/contract`,
+  `@praxis-kit/adapter-utils`) in their prose — visible in a consumer's editor hover, unresolvable.
+  Reworded at the source (drop the parenthetical package ref, or "the shared adapter runtime" / "the
+  praxis-kit compiler"). `postbuild.ts` only rewrites `from '…'` specifiers, not comment text, so
+  this had to be a source change.
+
+Verification: full `pnpm typecheck` + `pnpm test` + `pnpm lint:check` green; `publint` "All good!";
+`test:pack` PASS; `qa/*` gzip within threshold (type-only + dead-re-export removal — no runtime
+bytes moved).

@@ -37,7 +37,7 @@ export type { PluginOptions } from './types'
  *
  * @example
  * // vite.config.ts
- * import { contractPlugin } from '@praxis-kit/vite-plugin'
+ * import { contractPlugin } from 'praxis-kit/vite-plugin'
  * export default { plugins: [contractPlugin()] }
  */
 export function contractPlugin(options?: PluginOptions): Plugin {
@@ -126,7 +126,7 @@ export function contractPlugin(options?: PluginOptions): Plugin {
  *
  * @example
  * // vite.config.ts
- * import { compoundPrunePlugin, contractPlugin } from '@praxis-kit/vite-plugin'
+ * import { compoundPrunePlugin, contractPlugin } from 'praxis-kit/vite-plugin'
  * export default { plugins: [compoundPrunePlugin(), contractPlugin()] }
  */
 export function compoundPrunePlugin(options?: Pick<PluginOptions, 'calleeNames'>): Plugin {
@@ -163,7 +163,7 @@ export function compoundPrunePlugin(options?: Pick<PluginOptions, 'calleeNames'>
  *
  * @example
  * // vite.config.ts
- * import { compoundPrunePlugin, classExtractPlugin, contractPlugin } from '@praxis-kit/vite-plugin'
+ * import { compoundPrunePlugin, classExtractPlugin, contractPlugin } from 'praxis-kit/vite-plugin'
  * export default { plugins: [compoundPrunePlugin(), classExtractPlugin(), contractPlugin()] }
  */
 export function classExtractPlugin(options?: Pick<PluginOptions, 'calleeNames'>): Plugin {
@@ -195,7 +195,7 @@ export function classExtractPlugin(options?: Pick<PluginOptions, 'calleeNames'>)
  *
  * @example
  * // vite.config.ts
- * import { slotTransformPlugin, contractPlugin } from '@praxis-kit/vite-plugin'
+ * import { slotTransformPlugin, contractPlugin } from 'praxis-kit/vite-plugin'
  * export default { plugins: [slotTransformPlugin(), contractPlugin()] }
  */
 export function slotTransformPlugin(): Plugin {
@@ -232,7 +232,7 @@ export function slotTransformPlugin(): Plugin {
  *
  * @example
  * // vite.config.ts
- * import { classExtractPlugin, staticCompositionPlugin } from '@praxis-kit/vite-plugin'
+ * import { classExtractPlugin, staticCompositionPlugin } from 'praxis-kit/vite-plugin'
  * export default { plugins: [classExtractPlugin(), staticCompositionPlugin()] }
  */
 export function staticCompositionPlugin(options?: Pick<PluginOptions, 'calleeNames'>): Plugin {
@@ -294,7 +294,7 @@ export function staticCompositionPlugin(options?: Pick<PluginOptions, 'calleeNam
  *
  * @example
  * // vite.config.ts
- * import { ssrOptimizePlugin, contractPlugin } from '@praxis-kit/vite-plugin'
+ * import { ssrOptimizePlugin, contractPlugin } from 'praxis-kit/vite-plugin'
  * export default { plugins: [ssrOptimizePlugin(), contractPlugin()] }
  */
 export function ssrOptimizePlugin(options?: Pick<PluginOptions, 'calleeNames'>): Plugin[] {

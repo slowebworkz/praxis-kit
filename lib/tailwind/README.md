@@ -103,11 +103,12 @@ Without this import, props like `<Button inline-block>` will not produce any `di
 
 ## Exports
 
-| Export                   | Description                                                                                   |
-| ------------------------ | --------------------------------------------------------------------------------------------- |
-| `createTailwindPipeline` | `ClassPluginFactory` — pass as `styling.plugin` reference; the runtime calls it               |
-| `ClassBuilder`           | Assembles the final class string from classified tokens; sorts layout tokens before utilities |
-| `ClassClassifier`        | Parses a class token into one of: `layout`, `conditional`, `gap`, or `utility`                |
-| `DependencyEvaluator`    | Decides whether a token survives the active layout mode using configurable regex rules        |
-| `defaultDependencyRules` | Built-in rules: strips `flex-*`/`grow`/`shrink`/`basis-*` in grid mode and vice versa         |
-| `LayoutState`            | Tracks the active display mode and its filtering family for a single pipeline invocation      |
+| Export                                                          | Description                                                                                                                            |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `createTailwindPipeline`                                        | `ClassPluginFactory` — pass as `styling.plugin`; the runtime calls it                                                                  |
+| `layoutKeys`                                                    | The canonical layout-shorthand prop names (`flex`, `grid`, …); also read by `praxis-kit/vite-plugin`'s `designTokensPlugin`            |
+| `LayoutProps<T>` / `LayoutKey<T>` / `ResolvedLayout<T>` (types) | The mutually-exclusive layout-prop shape a component gains from the pipeline — `LayoutProps<typeof layoutKeys>` — for typing a wrapper |
+
+The classifier / dependency-evaluator / builder / layout-state classes and the
+token/pipeline-context types are implementation detail of `createTailwindPipeline`, not part of the
+public surface.

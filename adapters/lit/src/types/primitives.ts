@@ -48,9 +48,9 @@ export type LitContractComponent<
    * `TDefault`/`Props`/`TPreset` entirely from its return type — only
    * `TVariants` and `TPluginProps` survive as real instance-shape information,
    * since those are the two that show up as actual constructor properties.
-   * This field is the Lit adapter's `HasGenerics<G>` (`@praxis-kit/contract-props`)
-   * counterpart: it carries the full `PolymorphicGenerics` the component was
-   * built from so `GenericsOf`/`ContractProps` (./contract-props) can recover
+   * This field is the Lit adapter's `HasGenerics<G>` counterpart: it carries
+   * the full `PolymorphicGenerics` the component was built from so
+   * `GenericsOf`/`ContractProps` (./contract-props) can recover
    * it from outside the file that built it, the same recovery React/Preact do
    * for their own erased overload-based component types. Inline rather than
    * intersected for the same reason those adapters keep it inline — untested

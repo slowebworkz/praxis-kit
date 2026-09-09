@@ -79,7 +79,7 @@ export type CompoundComponent<
 
 /**
  * A component's full prop contract, both render modes at once — naming symmetry with React's/
- * Preact's `ContractProps<T, Mode>` (`@praxis-kit/contract-props`), not a fix for a gap: Vue has
+ * Preact's `ContractProps<T, Mode>`, not a fix for a gap: Vue has
  * no version of the overload-resolution ceiling those two adapters need a marker to work around.
  * `PolymorphicComponent<G>`'s single `new()` construct signature already exposes both modes
  * unioned together (`$props: PolymorphicProps<G> | PolymorphicWithAsChild<G>`), so this alias is

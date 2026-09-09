@@ -70,7 +70,7 @@ export type PolymorphicComponent<G extends PolymorphicGenerics> = {
   (props: PolymorphicProps<G, DefaultOf<G>>): AnyVNode
 
   /**
-   * Type-only; never assigned at runtime. See `HasGenerics<G>` (`@praxis-kit/contract-props`) for
+   * Type-only; never assigned at runtime. See `HasGenerics<G>` for
    * the full rationale — kept as an inline field rather than `HasGenerics<G> & {...}` because
    * intersecting it onto this callable type changes how `PolymorphicComponent<any>` resolves
    * against concrete instantiations (confirmed for React's identical shape,
