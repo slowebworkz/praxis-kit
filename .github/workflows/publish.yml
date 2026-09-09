@@ -8,6 +8,9 @@ on:
 
 permissions:
   contents: read
+  # Required for npm publish provenance — mints a short-lived OIDC token GitHub Actions exchanges
+  # with npm to cryptographically attest that this tarball was built from this repo at this commit.
+  id-token: write
 
 jobs:
   publish:
@@ -76,5 +79,5 @@ jobs:
           if npm view "$name@$version" version &>/dev/null; then
             echo "Skipping $name@$version — already published"
           else
-            (cd packages/kit && pnpm publish --access public --no-git-checks --tag ${{ steps.dist_tag.outputs.tag }})
+            (cd packages/kit && pnpm publish --access public --no-git-checks --provenance --tag ${{ steps.dist_tag.outputs.tag }})
           fi

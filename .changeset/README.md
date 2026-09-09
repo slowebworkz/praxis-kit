@@ -6,6 +6,7 @@ This folder is managed by [Changesets](https://github.com/changesets/changesets)
 package is private and bundled into it, so they are all `ignore`d in `config.json`. Add a changeset
 for user-facing changes with `pnpm changeset`; it targets `praxis-kit` only.
 
-Releases are cut from `main` (`baseBranch`). The first tag is `v1.0.0` — see `DECISIONS.md`
-("Versioning") — which is gated on `packages/kit` having a real build (all adapters + the codemod
-ported) and the CI release workflow.
+Releases are cut from `main` (`baseBranch`): `develop` merges to `main`, a `vX.Y.Z` tag on `main`
+fires `.github/workflows/publish.yml`. The first release is **`v0.1.0`** — see `DECISIONS.md`
+("Versioning"). `0.x` signals that surfaces outside the frozen `createContractComponent` /
+`FactoryOptions` contract may still move (`docs/api-stability.md`).
