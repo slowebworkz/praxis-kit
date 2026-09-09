@@ -3089,3 +3089,29 @@ in code (postbuild rewrite + the leak-check hold), the shared `dist/index-*` chu
 Verification: full `pnpm typecheck` + `pnpm test` + `pnpm lint:check` green; `publint` "All good!";
 `test:pack` PASS; `qa/*` gzip within threshold (type-only + dead-re-export removal — no runtime
 bytes moved).
+
+### CI / tooling cleanup — CodeQL on `develop`, dead analysis deps removed (2026-09-08)
+
+P2 housekeeping.
+
+- **`codeql.yml`** now triggers on `push` / `pull_request` to `[main, develop]`, not just `main`.
+  `develop` is the default branch and every PR targets it, so CodeQL had been running on no PR at
+  all — only the weekly `schedule` cron touched the code. (Closes the **Open** item flagged in the
+  `CI — .github/workflows/ci.yml + publish.yml` entry above.)
+- **`@ast-grep/cli`** and **`dependency-cruiser`** removed from the root `devDependencies`, the
+  `catalog:`, and (for ast-grep) `allowBuilds`. Both were carried over from `../pk` and used by
+  nothing here — no `analyze:deps` / `analyze:patterns` script, no `.dependency-cruiser.cjs`, no
+  `.ast-grep/` config, no import. `../pk`'s two analysis passes are deliberately not part of this
+  repo's gate: the layer boundaries they check are already enforced by `eslint-plugin-boundaries`
+  (`configs/architecture.ts`) + `import-x/no-cycle`, and `scripts/generate-repo-state.ts` produces
+  the dependency-graph snapshot. `-276` lockfile lines.
+- **Kept:** `ts-morph` at the root — `scripts/generate-repo-state.ts` (typechecked by
+  `scripts/tsconfig.json` via the root `typecheck` script, and run under `pnpm repo-state`) imports
+  it directly; `jscpd` (`pnpm analyze:duplicates`, `.jscpd.json`); `aria-query` /
+  `@types/aria-query` (`scripts/generate-aria-support.ts`). All real root dev tools.
+- Reworded the now-stale `ci.yml` comment and the `.dependency-cruiser.cjs` reference in
+  `lib/primitive/src/types/contracts/children-evaluator.ts`.
+
+Verification: `pnpm install` clean (no ignored-build prompt), full `pnpm typecheck` + `pnpm test` +
+`pnpm lint:check` green, `pnpm analyze:duplicates` + `@praxis-kit/codemod` (ts-morph consumer) both
+still work.
