@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Build, Typecheck & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with:
+          version: 11.0.4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The single release gate: `pnpm verify` (build packages/kit → lint → typecheck → test →
+      # repo-state) followed by publint, the packed-tarball smoke test, tree-shaking and
+      # bundle-size assertions, and the qa/metrics snapshot gate. If this passes, the repo is
+      # releasable. See package.json and docs/releasing/verify-release.md.
+      #
+      # packages/kit must be built before `pnpm -r typecheck` — qa/tree-shaking-tests'
+      # scenarios/package/* import `praxis-kit/<name>` and resolve it through packages/kit's
+      # dist/. `pnpm verify` builds it first; `pnpm build` (reordered to `pnpm -r build && pnpm
+      # typecheck`) is now also safe on a fresh checkout.
+      - name: Verify (release gate)
+        run: pnpm verify:release
+
+      - name: Build
+        run: pnpm build
+
+      - name: Duplicate Analysis
+        run: pnpm analyze:duplicates
+
+      # `../pk`'s `analyze:deps` (dependency-cruiser) and `analyze:patterns` (ast-grep) passes are
+      # deliberately not part of praxis-kit's gate — the layer boundaries they'd check are already
+      # enforced by `eslint-plugin-boundaries` (`configs/architecture.ts`) and the `import-x/no-cycle`
+      # rule, and `repo-state` covers the dependency-graph snapshot. Both tools were removed from the
+      # root deps. `repo-state` and `qa/metrics` run via `pnpm verify:release`. See DECISIONS.md.

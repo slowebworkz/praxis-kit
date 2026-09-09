@@ -1,0 +1,64 @@
+/**
+ * Proves the `subComponents` compound-component mechanism end-to-end in the
+ * framework-free web adapter: typed compound output (static properties on
+ * the custom-element class), rendering the attached sub-components as
+ * ordinary children, and non-regression for plain (non-compound) usage.
+ */
+import { describe, it, expect, expectTypeOf, beforeAll, afterEach } from 'vitest'
+import { createContractComponent } from './create-contract-component'
+import type { AnyRecord } from '@praxis-kit/primitive'
+
+function define(name: string, ctor: CustomElementConstructor) {
+  if (!customElements.get(name)) customElements.define(name, ctor)
+}
+
+afterEach(() => {
+  document.body.innerHTML = ''
+})
+
+describe('subComponents (compound component generation)', () => {
+  const Header = createContractComponent({ tag: 'header', name: 'CardHeader' })
+  const Content = createContractComponent({ tag: 'div', name: 'CardContent' })
+  const Footer = createContractComponent({ tag: 'footer', name: 'CardFooter' })
+
+  const Card = createContractComponent({
+    tag: 'section',
+    name: 'Card',
+    subComponents: { Header, Content, Footer },
+  })
+
+  beforeAll(() => {
+    define('pk-web-card-header', Header)
+    define('pk-web-card-content', Content)
+    define('pk-web-card-footer', Footer)
+    define('pk-web-card', Card)
+  })
+
+  it('assembles the sub-components onto the root, like Object.assign would', () => {
+    expect(Card.Header).toBe(Header)
+    expect(Card.Content).toBe(Content)
+    expect(Card.Footer).toBe(Footer)
+  })
+
+  it('has the correct compile-time type for each sub-component', () => {
+    expectTypeOf(Card.Header).toEqualTypeOf(Header)
+    expectTypeOf(Card.Content).toEqualTypeOf(Content)
+    expectTypeOf(Card.Footer).toEqualTypeOf(Footer)
+  })
+
+  it('renders the assembled sub-components as ordinary children', () => {
+    const card = document.createElement('pk-web-card')
+    card.appendChild(new Card.Header())
+    card.appendChild(new Card.Content())
+    card.appendChild(new Card.Footer())
+    document.body.appendChild(card)
+
+    expect(card.querySelector('pk-web-card-header')).toBeTruthy()
+    expect(card.querySelector('pk-web-card-footer')).toBeTruthy()
+  })
+
+  it('a plain (non-compound) component is unaffected — no subComponents option, no static sub-component properties', () => {
+    const Plain = createContractComponent({ tag: 'div', name: 'Plain' })
+    expect((Plain as unknown as AnyRecord).Header).toBeUndefined()
+  })
+})

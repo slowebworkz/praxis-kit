@@ -1,0 +1,27 @@
+{
+  "name": "@praxis-kit/bundle-analysis",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Bundle composition breakdown and cross-adapter leak detection for every published praxis-kit entry point — a fresh rewrite, not a port of ../pk's broken (and never CI-gated) qa/bundle-analysis. See DECISIONS.md.",
+  "scripts": {
+    "build": "node --experimental-strip-types scripts/analyze.ts",
+    "report": "node --experimental-strip-types scripts/report.ts",
+    "leak-check": "node --experimental-strip-types scripts/leak-check.ts",
+    "inventory-check": "node --experimental-strip-types scripts/inventory-check.ts",
+    "gzip": "node --experimental-strip-types scripts/gzip.ts",
+    "gzip:update": "node --experimental-strip-types scripts/gzip.ts --update",
+    "test": "pnpm inventory-check && pnpm build && pnpm leak-check && pnpm gzip",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@praxis-kit/primitive": "workspace:*",
+    "@praxis-kit/tree-shaking-tests": "workspace:*",
+    "praxis-kit": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "esbuild": "^0.28.1",
+    "typescript": "catalog:"
+  }
+}

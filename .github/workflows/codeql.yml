@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+      - develop
 
   pull_request:
     branches:
       - main
+      - develop
 
   schedule:
     # Every Monday at 03:17 UTC
@@ -35,9 +37,14 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
-          languages:
-            - javascript-typescript
-            - actions
+          # `with:` values in a GitHub Actions workflow must be scalars — a YAML sequence here is
+          # a schema violation of the workflow file itself, not just a wrong value for this
+          # action's `languages` input (which the action's own docs specify as a comma-separated
+          # string). This is why the previous, list-shaped version failed validation on *every*
+          # push to *every* branch, not just main: GitHub's static parse of the workflow file
+          # fails before it ever evaluates whether the push's branch matches `on.push.branches`,
+          # so the run shows zero jobs and a generic "workflow file issue" regardless of branch.
+          languages: javascript-typescript,actions
           build-mode: none
           config-file: ./.github/codeql/codeql-config.yml
 

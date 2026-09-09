@@ -1,0 +1,34 @@
+{
+  "name": "@praxis-kit/preact",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "description": "Praxis Kit adapter for Preact — polymorphic components with ARIA contracts and variant composition",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/contract-props": "workspace:*",
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "type-fest": "catalog:"
+  },
+  "peerDependencies": {
+    "preact": ">=10.11"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "jsdom": "catalog:",
+    "preact": "catalog:",
+    "preact-render-to-string": "catalog:",
+    "vitest": "catalog:"
+  }
+}

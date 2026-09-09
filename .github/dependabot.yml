@@ -6,9 +6,38 @@ updates:
     schedule:
       interval: "weekly"
 
+    # Dependency bumps go through the same integration path as every other change: onto
+    # `develop`, then to `main` only via the release PR — never straight to `main`. `develop`
+    # is the repository's default branch, so Dependabot reads this file from it. See CLAUDE.md.
+    target-branch: "develop"
+
     ignore:
       # TS 7 breaks plugins/typescript's tsserverlibrary import and the CommonJS build's
       # moduleResolution setup; tsdown also flags TS 7's API as unstable. See CLAUDE.md.
       # Drop this once TS 7 is confirmed working here.
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
+
+      # `@playwright/test` must stay on the same minor as `@playwright/experimental-ct-react`
+      # and `-ct-vue` (adapters/react and adapters/vue component tests). The CT packages lag —
+      # only `@playwright/test` has published 1.63.0; `experimental-ct-*` is still 1.62.1 — and
+      # a split bumps `playwright-core` under `@playwright/test` while the CT `MountResult` stays
+      # on the old `Locator`, breaking `*.pw.spec.tsx` typecheck. Bump all three together by hand
+      # in pnpm-workspace.yaml once `@playwright/experimental-ct-*` catches up; then drop this.
+      - dependency-name: "@playwright/test"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+
+    # `aria-query` is WAI-ARIA reference data, not a normal dependency — a bump can move the
+    # role→attribute-support fixture. Its bump PR must run `pnpm aria:regen`, commit the
+    # regenerated `lib/primitive/src/constants/aria/aria-support.generated.json`, and re-review
+    # whatever drift the aria spec-conformance tests then report. (No `ignore` — just flagging
+    # the review step.)
+
+  # Third-party GitHub Actions are pinned to a full commit SHA (with a `# vX.Y.Z` comment) for
+  # supply-chain safety — CodeQL's `actions/unpinned-tag` rule, and it matters most for
+  # `publish.yml`, which holds `NPM_TOKEN`. Dependabot reads the version comment and bumps both.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "develop"

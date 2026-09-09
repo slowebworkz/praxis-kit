@@ -2,12 +2,12 @@
 
 > **Build components that enforce the rules of the web.**
 
-Praxis Kit is a **contract-based UI framework** that turns HTML semantics, ARIA requirements, and
-component composition rules into executable contracts.
+Praxis Kit is a **contract-based UI toolkit**: it turns HTML semantics, ARIA requirements, and
+component composition rules into executable contracts a component carries with it.
 
-Instead of relying solely on documentation, conventions, and code review, Praxis lets components
-define the rules that govern how they may be composed, rendered, and used—and gives the development
-toolchain mechanisms to enforce those rules.
+Instead of relying solely on documentation, conventions, and code review, Praxis lets a component
+define the rules that govern how it may be composed, rendered, and used — and gives the development
+toolchain the mechanisms to enforce them.
 
 Contracts can be evaluated across the development lifecycle, from editor and build-time analysis to
 runtime validation. Framework adapters allow the same contracts to be shared across React, Vue,
@@ -42,45 +42,88 @@ These rules become **executable contracts** rather than documentation.
 
 ## Example
 
-A component hierarchy can express requirements that ordinary type systems cannot:
+Praxis Kit is the **contract toolkit**, not a component library — you build components with
+`createContractComponent` (or use `praxis-components`, a separate component set built on it; see
+[docs/examples.md](./docs/examples.md)). Either way, a component declares its contract inline, and
+that contract is enforced on every render, in every framework.
+
+```tsx
+import { createContractComponent } from 'praxis-kit/react'
+import { isValidElement } from 'react'
+import { TabList, TabPanel } from './tab-parts' // your own parts, each its own createContractComponent
+
+const Tabs = createContractComponent({
+  tag: 'div',
+  name: 'Tabs',
+  enforcement: {
+    diagnostics: 'throw',
+    children: [
+      {
+        name: 'Tabs.List',
+        match: (c) => isValidElement(c) && c.type === TabList,
+        cardinality: { min: 1, max: 1 },
+      },
+      {
+        name: 'Tabs.Panel',
+        match: (c) => isValidElement(c) && c.type === TabPanel,
+        cardinality: { min: 1 },
+      },
+    ],
+  },
+})
+```
+
+A structural mistake TypeScript happily accepts as a valid `ReactNode`:
 
 ```tsx
 <Tabs>
-  <TabsTrigger />
+  <button>Tab one</button>
 </Tabs>
 ```
 
 ```text
-✖ TabsList is required.
-✖ TabsPanel is required.
+✖ Tabs: "Tabs.List" requires at least 1.
+✖ Tabs: "Tabs.Panel" requires at least 1.
 ```
 
-Or invalid composition:
+Accessibility runs on the built-in ARIA engine — no rule wiring, just turn it on:
 
 ```tsx
-<Menu>
-  <Button />
-</Menu>
+const Nav = createContractComponent({ tag: 'nav', enforcement: { diagnostics: 'warn' } })
+```
+
+```tsx
+<Nav role="region">…</Nav>
 ```
 
 ```text
-✖ Button cannot be a direct child of Menu.
+✖ <nav> should not override its implicit role="navigation" with role="region".
 ```
 
-Or an accessibility requirement:
-
-```tsx
-<Dialog>
-  <DialogContent />
-</Dialog>
-```
-
-```text
-✖ DialogTitle is required.
-✖ Accessible name is missing.
-```
+(`diagnostics: 'warn'` reports and keeps rendering; `'throw'` stops at the violation; `'silent'`
+fixes it and says nothing.)
 
 Praxis validates these structures automatically rather than leaving them as latent bugs.
+
+---
+
+## Getting started
+
+```bash
+pnpm add praxis-kit
+```
+
+```ts
+import { createContractComponent } from 'praxis-kit/react'
+//                                              ^ or /vue /solid /svelte /preact /lit /web
+
+const Box = createContractComponent({ tag: 'div' })
+```
+
+That's a working component — every other option (`styling`, `enforcement`, presets, and the `as` /
+`asChild` render props on the VDOM adapters) is opt-in.
+[**GETTING_STARTED.md**](./GETTING_STARTED.md) walks from here to the full feature set one step at a
+time; [docs/](./docs/index.md) covers concepts, the API-stability tiers, and the HTML/ARIA audit.
 
 ---
 
@@ -153,6 +196,31 @@ work when behavior can be determined ahead of time.
 The goal is simple:
 
 > **Define the rule once. Enforce it wherever it can be known.**
+
+### Where each rule is enforced
+
+Not every contract can be checked at every stage — some need the full module graph, some need
+runtime values. This matrix shows which layer covers which concern:
+
+| Concern                           | Runtime | ESLint                          | TS plugin | Vite plugin          |     Tailwind     |
+| --------------------------------- | :-----: | ------------------------------- | :-------: | -------------------- | :--------------: |
+| Variant class resolution          |    ✓    | —                               |     —     | ✓ (pre-compute)      |        ✓         |
+| Compound variants                 |    ✓    | `no-dead-compound`              |     —     | ✓ (prune dead)       |        ✓         |
+| Children cardinality              |    ✓    | `valid-cardinality`             |     ✓     | ✓ (`contractPlugin`) |        —         |
+| `children` rule config validity   |    ✓    | `valid-children-config`         |     —     | —                    |        —         |
+| Enforcement without `diagnostics` |    ✓    | `no-enforcement-without-strict` |     ✓     | —                    |        —         |
+| HTML nesting / content model      |    ✓    | `no-invalid-html-nesting`       |     —     | —                    |        —         |
+| Invalid variant `defaults`        |    ✓    | `no-invalid-default`            |     —     | —                    |        —         |
+| Redundant / disallowed ARIA role  |    ✓    | `no-redundant-role`             |     —     | ✓ (override check)   |        —         |
+| ARIA rule pipeline                |    ✓    | (partial)                       |     —     | ✓ (override check)   |        —         |
+| Layout-dependent class filtering  |    ✓    | —                               |     —     | —                    |        ✓         |
+| `asChild` composition             |    ✓    | —                               |     —     | ⚠ experimental       |        —         |
+| Static component inlining         |    ✓    | —                               |     —     | ⚠ experimental       |        —         |
+| Design-token manifest             |    —    | —                               |     —     | ✓ (`designTokens`)   | ✓ (`layoutKeys`) |
+
+Legend: **✓** implemented · **—** not applicable at this stage · **⚠ experimental** — behind an
+opt-in plugin, pending differential tests. The runtime is always the backstop: anything an earlier
+stage can't prove statically still runs through it.
 
 ---
 
@@ -246,6 +314,17 @@ The repository contains:
 
 The repository is organized as a pnpm workspace so the contract system, runtime, adapters, and
 development tooling can evolve as a coordinated system.
+
+It ships as **one npm package**, `praxis-kit`, with subpaths per adapter and per tool. To build
+components you import from **one** of them — your framework:
+
+```ts
+import { createContractComponent } from 'praxis-kit/react' // /vue, /solid, /svelte, /preact, /lit, /web
+```
+
+Everything else (`/contract`, `/tailwind`, `/eslint`, `/vite-plugin`, `/codemod`, …) is opt-in.
+[docs/api-stability.md](./docs/api-stability.md) says which subpaths are stable for 0.1 and which
+may still move.
 
 ---
 

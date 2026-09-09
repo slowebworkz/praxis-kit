@@ -1,0 +1,259 @@
+{
+  "name": "praxis-kit",
+  "version": "0.1.0",
+  "type": "module",
+  "sideEffects": false,
+  "description": "Praxis Kit — HTML semantics, ARIA requirements, and component composition rules as executable contracts, shared across every framework adapter. The single npm package for all adapters and tooling.",
+  "exports": {
+    "./package.json": "./package.json",
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js"
+    },
+    "./react/legacy": {
+      "types": "./dist/react/legacy.d.ts",
+      "import": "./dist/react/legacy.js"
+    },
+    "./preact": {
+      "types": "./dist/preact/index.d.ts",
+      "import": "./dist/preact/index.js"
+    },
+    "./vue": {
+      "types": "./dist/vue/index.d.ts",
+      "import": "./dist/vue/index.js"
+    },
+    "./solid": {
+      "types": "./dist/solid/index.d.ts",
+      "import": "./dist/solid/index.js"
+    },
+    "./svelte": {
+      "types": "./dist/svelte/index.d.ts",
+      "import": "./dist/svelte/index.js"
+    },
+    "./svelte/Polymorphic.svelte": {
+      "svelte": "./dist/svelte/Polymorphic.svelte"
+    },
+    "./lit": {
+      "types": "./dist/lit/index.d.ts",
+      "import": "./dist/lit/index.js"
+    },
+    "./web": {
+      "types": "./dist/web/index.d.ts",
+      "import": "./dist/web/index.js"
+    },
+    "./tailwind": {
+      "types": "./dist/tailwind/index.d.ts",
+      "import": "./dist/tailwind/index.js"
+    },
+    "./tailwind.css": "./dist/tailwind/safelist.css",
+    "./eslint": {
+      "types": "./dist/eslint/index.d.ts",
+      "import": "./dist/eslint/index.js"
+    },
+    "./ts-plugin": {
+      "types": "./dist/ts-plugin/index.d.cts",
+      "require": "./dist/ts-plugin/index.cjs"
+    },
+    "./vite-plugin": {
+      "types": "./dist/vite-plugin/index.d.ts",
+      "import": "./dist/vite-plugin/index.js"
+    },
+    "./codemod": {
+      "types": "./dist/codemod/index.d.ts",
+      "import": "./dist/codemod/index.js"
+    },
+    "./contract": {
+      "types": "./dist/contract/index.d.ts",
+      "import": "./dist/contract/index.js"
+    },
+    "./guards": {
+      "types": "./dist/guards/index.d.ts",
+      "import": "./dist/guards/index.js"
+    },
+    "./html": {
+      "types": "./dist/html/index.d.ts",
+      "import": "./dist/html/index.js"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "import": "./dist/utils/index.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "react": [
+        "./dist/react/index.d.ts"
+      ],
+      "react/legacy": [
+        "./dist/react/legacy.d.ts"
+      ],
+      "preact": [
+        "./dist/preact/index.d.ts"
+      ],
+      "vue": [
+        "./dist/vue/index.d.ts"
+      ],
+      "solid": [
+        "./dist/solid/index.d.ts"
+      ],
+      "lit": [
+        "./dist/lit/index.d.ts"
+      ],
+      "web": [
+        "./dist/web/index.d.ts"
+      ],
+      "svelte": [
+        "./dist/svelte/index.d.ts"
+      ],
+      "tailwind": [
+        "./dist/tailwind/index.d.ts"
+      ],
+      "eslint": [
+        "./dist/eslint/index.d.ts"
+      ],
+      "ts-plugin": [
+        "./dist/ts-plugin/index.d.cts"
+      ],
+      "vite-plugin": [
+        "./dist/vite-plugin/index.d.ts"
+      ],
+      "codemod": [
+        "./dist/codemod/index.d.ts"
+      ],
+      "contract": [
+        "./dist/contract/index.d.ts"
+      ],
+      "guards": [
+        "./dist/guards/index.d.ts"
+      ],
+      "html": [
+        "./dist/html/index.d.ts"
+      ],
+      "utils": [
+        "./dist/utils/index.d.ts"
+      ]
+    }
+  },
+  "bin": {
+    "praxis-codemod": "./dist/codemod/index.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsdown && tsx scripts/postbuild.ts",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm test:pack",
+    "lint:pkg": "publint",
+    "test:pack": "tsx scripts/smoke-test.ts"
+  },
+  "dependencies": {
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "type-fest": "catalog:"
+  },
+  "peerDependencies": {
+    "@typescript-eslint/utils": ">=8",
+    "eslint": ">=9",
+    "lit": ">=3.0",
+    "preact": ">=10.11",
+    "react": ">=18",
+    "solid-js": ">=1.6",
+    "svelte": ">=5",
+    "typescript": ">=5",
+    "vite": ">=5",
+    "vue": ">=3.4"
+  },
+  "peerDependenciesMeta": {
+    "@typescript-eslint/utils": {
+      "optional": true
+    },
+    "eslint": {
+      "optional": true
+    },
+    "lit": {
+      "optional": true
+    },
+    "preact": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    },
+    "typescript": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "@typescript-eslint/utils": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "lit": "catalog:",
+    "preact": "catalog:",
+    "publint": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "solid-js": "catalog:",
+    "svelte": "catalog:",
+    "tsdown": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "unplugin-solid": "catalog:",
+    "vite": "catalog:",
+    "vue": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slowebworkz/praxis-kit.git",
+    "directory": "packages/kit"
+  },
+  "homepage": "https://github.com/slowebworkz/praxis-kit#readme",
+  "bugs": {
+    "url": "https://github.com/slowebworkz/praxis-kit/issues"
+  },
+  "license": "MIT",
+  "author": "K Huehn <slowebworkz@gmail.com>",
+  "keywords": [
+    "praxis-kit",
+    "polymorphic",
+    "ui",
+    "components",
+    "accessibility",
+    "aria",
+    "typescript",
+    "framework-agnostic",
+    "contract",
+    "variants",
+    "react",
+    "preact",
+    "vue",
+    "solid",
+    "svelte",
+    "lit",
+    "web-components"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

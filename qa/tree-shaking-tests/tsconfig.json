@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
+  },
+  "include": ["scripts/**/*", "scenarios/**/*"],
+  "exclude": [
+    "scenarios/source/solid-minimal",
+    "scenarios/source/vue-minimal",
+    "scenarios/source/preact-minimal",
+    "scenarios/source/svelte-minimal"
+  ]
+}

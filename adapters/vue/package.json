@@ -1,0 +1,40 @@
+{
+  "name": "@praxis-kit/vue",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "description": "Praxis Kit adapter for Vue 3 — polymorphic components with ARIA contracts and variant composition",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed",
+    "test:pw": "playwright test -c playwright-ct.config.ts"
+  },
+  "dependencies": {
+    "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/contract-props": "workspace:*",
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "type-fest": "catalog:"
+  },
+  "peerDependencies": {
+    "vue": ">=3.4"
+  },
+  "devDependencies": {
+    "@playwright/experimental-ct-vue": "catalog:",
+    "@praxis-kit/playwright": "workspace:*",
+    "@types/node": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
+    "@vue/compiler-dom": "catalog:",
+    "@vue/server-renderer": "catalog:",
+    "@vue/test-utils": "catalog:",
+    "jsdom": "catalog:",
+    "vitest": "catalog:",
+    "vue": "catalog:"
+  }
+}

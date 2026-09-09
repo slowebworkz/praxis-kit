@@ -1,0 +1,33 @@
+{
+  "name": "@praxis-kit/solid",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "description": "Praxis Kit adapter for SolidJS — polymorphic components with ARIA contracts and variant composition",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config vitest.config.ts && vitest run --config vitest.ssr.config.ts",
+    "test:related": "vitest run --changed --config vitest.config.ts && vitest run --changed --config vitest.ssr.config.ts"
+  },
+  "dependencies": {
+    "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "type-fest": "catalog:"
+  },
+  "peerDependencies": {
+    "solid-js": ">=1.6"
+  },
+  "devDependencies": {
+    "@solidjs/testing-library": "catalog:",
+    "jsdom": "catalog:",
+    "solid-js": "catalog:",
+    "vite-plugin-solid": "catalog:",
+    "vitest": "catalog:"
+  }
+}

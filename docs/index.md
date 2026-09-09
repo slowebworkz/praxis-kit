@@ -1,0 +1,82 @@
+# praxis-kit documentation
+
+Framework-neutral UI infrastructure with enforceable structural and accessibility contracts.
+
+## Contents
+
+| Document                                              | What it covers                                                                                   |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [Getting started](../GETTING_STARTED.md)              | Installation, first component, quick reference                                                   |
+| [Architecture](../ARCHITECTURE.md)                    | Layer model, dependency graph, runtime lifecycle                                                 |
+| [Examples](./examples.md)                             | Where to see praxis-kit exercised end to end today                                               |
+| [Concepts](./concepts.md)                             | Core abstractions: polymorphism, contracts, styling                                              |
+| [API stability](./api-stability.md)                   | Which of the ~19 subpaths are stable for 0.1, and which may still move                           |
+| [Adapter authoring](../ADAPTER_AUTHORING.md)          | Building a new framework adapter                                                                 |
+| [HTML/ARIA audit](./accessibility/html-aria-audit.md) | Normative source, rule, interpretation, test and deviation for every accessibility contract rule |
+| [Release gate](./releasing/verify-release.md)         | What `pnpm verify:release` runs and why the order matters                                        |
+| [Decisions](../DECISIONS.md)                          | Decision log; the **Status** section at the top is the current-state snapshot                    |
+| [Security policy](../SECURITY.md)                     | Supported versions, how to report a vulnerability                                                |
+
+`packages/kit/CHANGELOG.md` starts at `praxis-kit@0.1.0` — the first release of this codebase. (The
+`praxis-kit` npm name previously carried a separate `1.x`–`7.x` line from an earlier repo; `0.1.0`
+is a deliberate reset, not a continuation.) There is no `MIGRATING.md` yet — it appears when there
+is a breaking change between published `0.x` versions to migrate across.
+
+## Layer overview
+
+praxis-kit publishes a **single** npm package — there is no separate `@praxis-kit/react`,
+`@praxis-kit/core`, etc. to install. Everything under `@praxis-kit/*` is an internal workspace name
+(`private: true`); what you actually `pnpm add` is `praxis-kit`, then import from the subpath for
+what you need:
+
+```text
+praxis-kit                praxis-kit                — the framework-neutral children/guards/utils
+                           /contract  /guards  /html  /utils  surface, no framework required
+
+praxis-kit/react           React 19+ adapter          praxis-kit/react/legacy   React 18
+praxis-kit/preact          Preact adapter
+praxis-kit/vue             Vue 3 adapter
+praxis-kit/solid           Solid adapter
+praxis-kit/svelte          Svelte 5 adapter           (+ /svelte/Polymorphic.svelte)
+praxis-kit/lit             Lit adapter
+praxis-kit/web             Vanilla Custom Elements adapter
+
+praxis-kit/tailwind        Tailwind layout-aware class pipeline    (+ /tailwind.css safelist)
+praxis-kit/eslint          no-invalid-html-nesting and friends, as an ESLint plugin
+praxis-kit/ts-plugin       TypeScript language-service plugin
+praxis-kit/vite-plugin     Vite integration
+praxis-kit/codemod         `praxis-codemod` CLI (also installed as a bin)
+```
+
+Internally, this one package is built from a much larger workspace — `packages/core` (the
+capability-driven factory) sits on top of ten separate `lib/*` modules (tag/prop resolution, the
+ARIA engine, the children validator, the class pipeline, the diagnostics/severity system, and the
+cross-adapter runtime helpers), and each `adapters/<framework>/` directory consumes that layer
+directly as workspace source. See [ARCHITECTURE.md](../ARCHITECTURE.md) for the full layout and
+dependency graph — none of it is a concern for someone just consuming `praxis-kit`.
+
+## Quick start
+
+```ts
+import { createContractComponent } from 'praxis-kit/react'
+
+const Button = createContractComponent({
+  tag: 'button',
+  defaults: { type: 'button' },
+  styling: {
+    base: 'inline-flex items-center rounded font-medium',
+    variants: {
+      intent: {
+        primary: 'bg-blue-600 text-white',
+        ghost: 'bg-transparent text-gray-600',
+      },
+    },
+    defaults: { intent: 'primary' },
+  },
+})
+```
+
+Swap `praxis-kit/react` for the subpath matching your framework — the factory API is identical
+across all seven adapters, with small documented exceptions on Lit and Web (no `as` or `asChild`
+render props; SSR is `renderContractToString`; see
+[GETTING_STARTED.md](../GETTING_STARTED.md#step-5--polymorphic-rendering)).

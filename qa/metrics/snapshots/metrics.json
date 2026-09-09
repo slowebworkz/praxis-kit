@@ -1,0 +1,180 @@
+{
+  "generated": "2026-09-07T23:14:01.724Z",
+  "bundles": {
+    "package/contract-only": 917,
+    "package/guards-only": 353,
+    "package/html-only": 8221,
+    "package/lit-minimal": 20484,
+    "package/preact-minimal": 21660,
+    "package/react-minimal": 21921,
+    "package/solid-minimal": 20644,
+    "package/utils-only": 118,
+    "package/vue-minimal": 21218,
+    "package/web-minimal": 20450,
+    "source/aria-only": 21202,
+    "source/contracts-only": 21266,
+    "source/full-runtime": 21425,
+    "source/minimal-polymorphic": 21155,
+    "source/pk2-engine-only": 792,
+    "source/polymorphic-validation": 21225,
+    "source/preact-minimal": 20901,
+    "source/react-minimal": 21155,
+    "source/solid-minimal": 19796,
+    "source/svelte-minimal": 18589,
+    "source/vue-minimal": 20459
+  },
+  "architecture": {
+    "status": "CLEAN",
+    "violations": 0,
+    "exports": {
+      "@praxis-kit/adapter-utils": {
+        "values": 35,
+        "types": 23
+      },
+      "@praxis-kit/codemod": {
+        "values": 0,
+        "types": 0
+      },
+      "@praxis-kit/contract": {
+        "values": 31,
+        "types": 38
+      },
+      "@praxis-kit/contract-props": {
+        "values": 0,
+        "types": 3
+      },
+      "@praxis-kit/core": {
+        "values": 84,
+        "types": 101
+      },
+      "@praxis-kit/diagnostics": {
+        "values": 19,
+        "types": 14
+      },
+      "@praxis-kit/eslint-plugin": {
+        "values": 10,
+        "types": 0
+      },
+      "@praxis-kit/foundation": {
+        "values": 7,
+        "types": 4
+      },
+      "@praxis-kit/lit": {
+        "values": 3,
+        "types": 6
+      },
+      "@praxis-kit/pipeline": {
+        "values": 8,
+        "types": 11
+      },
+      "@praxis-kit/pipeline-kit": {
+        "values": 4,
+        "types": 10
+      },
+      "@praxis-kit/playwright": {
+        "values": 35,
+        "types": 4
+      },
+      "@praxis-kit/preact": {
+        "values": 3,
+        "types": 11
+      },
+      "@praxis-kit/primitive": {
+        "values": 68,
+        "types": 127
+      },
+      "@praxis-kit/react": {
+        "values": 8,
+        "types": 14
+      },
+      "@praxis-kit/runtime": {
+        "values": 8,
+        "types": 24
+      },
+      "@praxis-kit/solid": {
+        "values": 2,
+        "types": 12
+      },
+      "@praxis-kit/styling": {
+        "values": 8,
+        "types": 32
+      },
+      "@praxis-kit/svelte": {
+        "values": 2,
+        "types": 29
+      },
+      "@praxis-kit/tailwind": {
+        "values": 7,
+        "types": 17
+      },
+      "@praxis-kit/typescript-plugin": {
+        "values": 0,
+        "types": 0
+      },
+      "@praxis-kit/vite-plugin": {
+        "values": 16,
+        "types": 9
+      },
+      "@praxis-kit/vue": {
+        "values": 3,
+        "types": 11
+      },
+      "@praxis-kit/web": {
+        "values": 3,
+        "types": 4
+      }
+    }
+  },
+  "complexity": {
+    "lib/primitive": {
+      "files": 137,
+      "functions": 62,
+      "loc": 2097
+    },
+    "lib/diagnostics": {
+      "files": 18,
+      "functions": 23,
+      "loc": 450
+    },
+    "lib/contract-props": {
+      "files": 4,
+      "functions": 0,
+      "loc": 61
+    },
+    "lib/contract": {
+      "files": 57,
+      "functions": 131,
+      "loc": 2441
+    },
+    "lib/styling": {
+      "files": 18,
+      "functions": 21,
+      "loc": 476
+    },
+    "lib/tailwind": {
+      "files": 15,
+      "functions": 25,
+      "loc": 606
+    },
+    "lib/pipeline-kit": {
+      "files": 8,
+      "functions": 5,
+      "loc": 143
+    },
+    "lib/runtime": {
+      "files": 22,
+      "functions": 11,
+      "loc": 260
+    },
+    "lib/adapter-utils": {
+      "files": 48,
+      "functions": 51,
+      "loc": 2378
+    },
+    "packages/core": {
+      "files": 72,
+      "functions": 58,
+      "loc": 2464
+    }
+  }
+}

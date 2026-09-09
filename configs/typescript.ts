@@ -58,7 +58,7 @@ const config = [
             'lib/*/eslint.config.ts',
             'plugins/*/eslint.config.ts',
             'adapters/*/eslint.config.ts',
-            // codemod and ts-plugin have rootDir:src — tsdown/vitest configs can't be in their tsconfig include
+            // codemod and the TS plugin have rootDir:src — tsdown/vitest configs can't be in their tsconfig include
             'tooling/codemod/tsdown.config.ts',
             'tooling/codemod/vitest.config.ts',
             'plugins/typescript/tsdown.config.mts',
@@ -69,12 +69,9 @@ const config = [
             'adapters/vue/playwright/index.ts',
             'playwright.workspace.ts',
             'vitest.workspace.ts',
-            // lib packages whose vitest.config.ts lives outside their tsconfig include
-            'lib/adapter-utils/vitest.config.ts',
-            'lib/backend-utils/vitest.config.ts',
-            'lib/primitive/vitest.config.ts',
-            'lib/pipeline/vitest.config.ts',
-            'lib/style/vitest.config.ts',
+            // every lib/package's vitest.config.ts lives outside its `include: ["src"]` tsconfig
+            'lib/*/vitest.config.ts',
+            'packages/*/vitest.config.ts',
             'examples/*/vite.config.ts',
             // workspace vitest configs live outside any tsconfig include
             'runtime/*/vitest.config.ts',
@@ -82,10 +79,14 @@ const config = [
             'spikes/*/vitest.config.ts',
             // framework-specific scenarios are excluded from the tree-shaking-tests tsconfig
             // (jsxImportSource:react conflicts with Solid/Vue/Preact/Svelte JSX/return types)
-            'qa/tree-shaking-tests/scenarios/solid-minimal/*.ts',
-            'qa/tree-shaking-tests/scenarios/vue-minimal/*.ts',
-            'qa/tree-shaking-tests/scenarios/preact-minimal/*.ts',
-            'qa/tree-shaking-tests/scenarios/svelte-minimal/*.ts',
+            'qa/tree-shaking-tests/scenarios/source/solid-minimal/*.ts',
+            'qa/tree-shaking-tests/scenarios/source/vue-minimal/*.ts',
+            'qa/tree-shaking-tests/scenarios/source/preact-minimal/*.ts',
+            'qa/tree-shaking-tests/scenarios/source/svelte-minimal/*.ts',
+            // same reason, same fix — qa/bundle-analysis/tsconfig.json excludes these two for the
+            // identical jsxImportSource:react conflict (see that file's own comment)
+            'qa/bundle-analysis/scenarios/source/preact/*.ts',
+            'qa/bundle-analysis/scenarios/source/solid/*.ts',
           ],
           maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 85,
           defaultProject: './tsconfig.base.json',

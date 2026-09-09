@@ -1,0 +1,29 @@
+{
+  "name": "@praxis-kit/contract",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./aria/factories": "./src/aria/factories.ts",
+    "./aria/roles": "./src/aria/aria-roles.ts",
+    "./props": "./src/props/index.ts",
+    "./types": "./src/types/index.ts",
+    "./types/aria/aria-rule": "./src/types/aria/aria-rule.ts"
+  },
+  "sideEffects": false,
+  "description": "Framework-neutral contract validation, diagnostics, and prop normalization",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "type-fest": "catalog:"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
+}

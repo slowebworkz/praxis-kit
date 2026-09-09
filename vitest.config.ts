@@ -8,7 +8,7 @@ export default defineConfig({
   test: {
     passWithNoTests: true,
     projects: [
-      { test: { name: 'root', include: [], passWithNoTests: true } },
+      { test: { name: 'root', include: [] } },
       '{lib,packages,adapters,plugins,tooling,qa,examples}/*/vitest.config.ts',
     ],
   },

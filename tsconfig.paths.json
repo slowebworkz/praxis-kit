@@ -1,5 +1,41 @@
 {
   "compilerOptions": {
-    "paths": {}
+    "paths": {
+      "@praxis-kit/adapter-utils": ["./lib/adapter-utils/src"],
+      "@praxis-kit/adapter-utils/*": ["./lib/adapter-utils/src/*"],
+      "@praxis-kit/contract": ["./lib/contract/src"],
+      "@praxis-kit/contract/*": ["./lib/contract/src/*"],
+      "@praxis-kit/contract-props": ["./lib/contract-props/src"],
+      "@praxis-kit/contract-props/*": ["./lib/contract-props/src/*"],
+      "@praxis-kit/core": ["./packages/core/src"],
+      "@praxis-kit/core/*": ["./packages/core/src/*"],
+      "@praxis-kit/diagnostics": ["./lib/diagnostics/src"],
+      "@praxis-kit/diagnostics/*": ["./lib/diagnostics/src/*"],
+      "@praxis-kit/eslint-plugin": ["./plugins/eslint/src/index.ts"],
+      "@praxis-kit/foundation": ["./lib/foundation/src"],
+      "@praxis-kit/foundation/*": ["./lib/foundation/src/*"],
+      "@praxis-kit/lit": ["./adapters/lit/src/index.ts"],
+      "@praxis-kit/preact": ["./adapters/preact/src/index.ts"],
+      "@praxis-kit/react": ["./adapters/react/src/index.ts"],
+      "@praxis-kit/react/legacy": ["./adapters/react/src/legacy/index.ts"],
+      "@praxis-kit/solid": ["./adapters/solid/src/index.ts"],
+      "@praxis-kit/svelte": ["./adapters/svelte/src/index.ts"],
+      "@praxis-kit/vue": ["./adapters/vue/src/index.ts"],
+      "@praxis-kit/web": ["./adapters/web/src/index.ts"],
+      "@praxis-kit/pipeline": ["./lib/pipeline/src"],
+      "@praxis-kit/pipeline/*": ["./lib/pipeline/src/*"],
+      "@praxis-kit/pipeline-kit": ["./lib/pipeline-kit/src"],
+      "@praxis-kit/pipeline-kit/*": ["./lib/pipeline-kit/src/*"],
+      "@praxis-kit/playwright": ["./lib/playwright/src"],
+      "@praxis-kit/playwright/*": ["./lib/playwright/src/*"],
+      "@praxis-kit/primitive": ["./lib/primitive/src"],
+      "@praxis-kit/primitive/*": ["./lib/primitive/src/*"],
+      "@praxis-kit/runtime": ["./lib/runtime/src"],
+      "@praxis-kit/runtime/*": ["./lib/runtime/src/*"],
+      "@praxis-kit/styling": ["./lib/styling/src"],
+      "@praxis-kit/styling/*": ["./lib/styling/src/*"],
+      "@praxis-kit/tailwind": ["./lib/tailwind/src"],
+      "@praxis-kit/tailwind/*": ["./lib/tailwind/src/*"]
+    }
   }
 }

@@ -1,0 +1,4 @@
+{
+  "extends": "../../configs/tsconfig.preact.json",
+  "include": ["src", "./vitest.config.ts"]
+}

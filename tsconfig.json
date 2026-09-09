@@ -1,4 +1,34 @@
 {
   "files": [],
-  "references": []
+  "references": [
+    { "path": "./adapters/lit" },
+    { "path": "./adapters/preact" },
+    { "path": "./adapters/react" },
+    { "path": "./adapters/solid" },
+    { "path": "./adapters/svelte" },
+    { "path": "./adapters/vue" },
+    { "path": "./adapters/web" },
+    { "path": "./lib/adapter-utils" },
+    { "path": "./lib/contract" },
+    { "path": "./lib/contract-props" },
+    { "path": "./lib/diagnostics" },
+    { "path": "./lib/foundation" },
+    { "path": "./lib/pipeline" },
+    { "path": "./lib/playwright" },
+    { "path": "./lib/pipeline-kit" },
+    { "path": "./lib/primitive" },
+    { "path": "./lib/runtime" },
+    { "path": "./lib/styling" },
+    { "path": "./lib/tailwind" },
+    { "path": "./packages/core" },
+    { "path": "./packages/kit" },
+    { "path": "./plugins/eslint" },
+    { "path": "./plugins/typescript" },
+    { "path": "./plugins/vite" },
+    { "path": "./qa/bench" },
+    { "path": "./qa/bundle-analysis" },
+    { "path": "./qa/metrics" },
+    { "path": "./qa/tree-shaking-tests" },
+    { "path": "./tooling/codemod" }
+  ]
 }

@@ -1,0 +1,68 @@
+{
+  "source/lit": {
+    "gzip": 21059
+  },
+  "source/preact": {
+    "gzip": 21717
+  },
+  "source/react": {
+    "gzip": 21976
+  },
+  "source/react-legacy": {
+    "gzip": 21724
+  },
+  "source/solid": {
+    "gzip": 20617
+  },
+  "source/svelte": {
+    "gzip": 19416
+  },
+  "source/tailwind": {
+    "gzip": 4724
+  },
+  "source/vue": {
+    "gzip": 21291
+  },
+  "source/web": {
+    "gzip": 21006
+  },
+  "package/contract": {
+    "gzip": 1574
+  },
+  "package/guards": {
+    "gzip": 606
+  },
+  "package/html": {
+    "gzip": 8874
+  },
+  "package/lit": {
+    "gzip": 21892
+  },
+  "package/preact": {
+    "gzip": 22526
+  },
+  "package/react": {
+    "gzip": 22795
+  },
+  "package/react-legacy": {
+    "gzip": 22560
+  },
+  "package/solid": {
+    "gzip": 21480
+  },
+  "package/svelte": {
+    "gzip": 20297
+  },
+  "package/tailwind": {
+    "gzip": 5848
+  },
+  "package/utils": {
+    "gzip": 118
+  },
+  "package/vue": {
+    "gzip": 22066
+  },
+  "package/web": {
+    "gzip": 21859
+  }
+}

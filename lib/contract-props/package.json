@@ -1,0 +1,19 @@
+{
+  "name": "@praxis-kit/contract-props",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "description": "Framework-agnostic type utilities for recovering Praxis Kit component generics and selecting props by render mode",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
+}

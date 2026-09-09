@@ -1,22 +1,42 @@
 # Decisions
 
+## Status — 2026-09-08
+
+This file is a chronological decision log, not a spec. Read it top-down for what is still live:
+unresolved questions live in the **`## Open`** section below; everything under **`## Resolved`** is
+history, kept for the reasoning, not as current-state documentation. For current state, use these
+instead:
+
+| Question                                                | Authoritative source                                                             |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| What's public, and how stable is it for 0.1?            | [`docs/api-stability.md`](docs/api-stability.md)                                 |
+| Which HTML/ARIA rules does the engine enforce, and why? | [`docs/accessibility/html-aria-audit.md`](docs/accessibility/html-aria-audit.md) |
+| How do I build a component?                             | [`GETTING_STARTED.md`](GETTING_STARTED.md), [`docs/`](docs/index.md)             |
+| Internal runtime pipeline                               | [`ARCHITECTURE.md`](ARCHITECTURE.md)                                             |
+
+**Milestone: 0.1.0. The architecture is frozen for it** — no new abstractions, no new tooling
+systems. Remaining work is correctness, documentation, and release mechanics.
+
+- **Decided and shipped.** Public-API surface classified into four stability tiers; state/ARIA
+  normalization semantics settled (per-prop `falseState`, Model B for `expanded`/`pressed`/
+  `selected`); the HTML/ARIA conformance audit closed for 0.1 (F2/F3/F4/F5/F6/F9 — see the audit
+  ledger); the single release gate (`pnpm verify:release`) wired into CI; the published-package
+  artifact validated from a real tarball install. `develop` is the integration branch and the repo
+  default; `main` tracks the last stable point.
+- **Still open (tracked in `## Open`).** `qa/*` tooling-dependency placement; `spikes/*` location.
+  Neither blocks the 0.1 tag.
+- **Remaining before the tag, beyond `## Open`.** A deliberate audit of what each public subpath
+  exports; the dependency / license / package-metadata audits; then the release steps — create the
+  0.1.0 changeset, flip `packages/kit` off `private`, publish, and re-verify from npm. (The
+  consumer-facing documentation pass and the `*.spike.test.*` review are done — see `## Resolved`.)
+- **Explicitly deferred past 0.1.** `runtime/compiler`; additional framework adapters; a large
+  component catalog (real components live in the separate `praxis-components` library); the
+  widget-contract APG audit (F7); contextual `<header>`/`<footer>` roles (deviation D4 — needs
+  ancestry the ARIA context deliberately omits); 1.0-level API guarantees.
+
+---
+
 ## Open
-
-### `runtime/*` — deferred
-
-`../pk` has a separate `runtime/*` glob with one package, `@praxis-kit/runtime` (`runtime/core`):
-the "Core Runtime" box in the adapter diagram — the validator that adapters call at render time.
-
-Not yet in this workspace. Decide later:
-
-- **Fold into `packages/*`** as `packages/runtime` — if the runtime is a public entry point
-  users/adapters import directly.
-- **Fold into `lib/*`** as `lib/runtime` — if it is an internal building block behind
-  `@praxis-kit/core`.
-- **Restore `runtime/*`** as its own glob — if we expect more than one runtime package (e.g. a slim
-  runtime vs. a dev/strict runtime).
-
-Until resolved, the runtime code lands in `packages/core`.
 
 ### `spikes/*` — deferred
 
@@ -34,38 +54,1362 @@ cleanup pass: move the `devDependency` declarations into the `qa/*` packages tha
 question applies to `jsdom` and `type-fest` once test/config packages exist that import them (both
 already pared back: `jsdom` dropped from root, `type-fest` under review).
 
+### `lib/contract` — prop-normalizer false-state model
+
+The eight state-prop normalizers in `contract/src/props/` (`disabledProps`, `expandedProps`,
+`pressedProps`, `selectedProps`, `invalidProps`, `loadingProps`, `readonlyProps`, `activeProps`) are
+ported from `../pk` on **Model A**: a truthy state injects the `aria-*` / `data-*` pair, a falsy
+state emits `{}`, and an explicitly-supplied `aria-*` / `data-*` value is preserved (the normalizer
+only fills when the key is `undefined`).
+
+The eight files were byte-for-byte identical bar three strings, so they collapsed into
+`makeStateNormalizer(config)` (`props/make-state-normalizer.ts`) plus eight one-line configs in
+`props/index.ts`. `makeStateNormalizer` is also exported (with `StateNormalizerConfig`) for
+consumers authoring their own state props.
+
+**Resolved (2026-09):** the false-state model is **per-prop**, a `falseState` field on the config:
+
+- **`omit`** (default) — `disabled`, `invalid`, `loading`, `readonly`, `active`. `aria-*="false"`
+  equals the attribute's default, so deriving it is redundant noise.
+- **`synthesize`** (**Model B**) — `expanded`, `pressed`, `selected`. `state={false}` produces
+  `aria-*="false"`; `state` absent (`undefined` / `null`) still emits nothing. An absent
+  `aria-expanded` means "not an expandable element"; `="false"` means "expandable, currently
+  collapsed" — assistive technology announces the two differently, and if a component exposes an
+  `expanded` prop it _is_ an expandable element. The `data-*` attr stays present-when-true under
+  either model (style the false state via `[aria-*="false"]`).
+
+Under both models an explicitly supplied `aria-*` / `data-*` value is preserved.
+
+### HTML/ARIA contract layer — standards audit before it is authoritative
+
+Pre-1.0 gate, not an adapter blocker. **In progress** — the running record is
+[`docs/accessibility/html-aria-audit.md`](docs/accessibility/html-aria-audit.md), which now holds
+the normative source, rule, praxis-kit interpretation, covering test and any deliberate deviation
+for every rule the `AriaPolicyEngine` enforces. Do not widen any of these tables without adding the
+corresponding row + test there.
+
+The HTML/ARIA enforcement data in `packages/core` — `HTML_ARIA_RULES`, `ALLOWED_ROLES` /
+`ALLOWED_INPUT_ROLES` / `IMG_NAMED_ROLES`, `STRONG_ROLES`, `IMPLICIT_ROLE_RECORD` and the
+role→attribute table — was ported from `../pk` with source comments marking it a partial model. A
+wrong entry makes praxis-kit _confidently reject valid markup_, so it is being validated row by row
+against **ARIA in HTML**, **WAI-ARIA 1.2** and **HTML-AAM**.
+
+First pass (branch `fix/aria-html-standards-audit`): corrected the allowed-role tables (`nav` was
+`[]` — it permits five roles; `ul`/`ol` carried the deprecated `directory` and lacked
+`none`/`presentation`; `button`, `aside`, `img` and the `input[type]` sets had gaps); fixed
+`<select>` to resolve `combobox`/`listbox` from `multiple`/`size` rather than a hard-coded
+`listbox`; scoped the required-property check so a native `<select>` is not asked for
+`aria-expanded`. The `AriaPolicyEngine` / `createAriaPipeline` architecture did not change — this is
+a data-correctness pass.
+
+Still open (tracked in the audit doc's "Open work" table): the full WAI-ARIA 1.2 §6 pass on the
+role→attribute table incl. prohibited properties (F5), the APG widget-contract audit (F7), and the
+`undefined` allowed-role rows that need ancestry the single-element context lacks.
+
 ## Resolved
+
+### `runtime/*` — folded into `lib/*` as `lib/runtime`
+
+`../pk` kept `@praxis-kit/runtime` in its own `runtime/*` workspace glob. Folded into `lib/*`.
+
+Why `lib/` and not `packages/` or its own glob:
+
+- It is `private: true`, bundled into `praxis-kit` (`packages/kit`), never published standalone —
+  same profile as every `lib/*` package. `packages/*` in this repo is reserved for the publishable
+  surface (and `packages/core`, which is private but is the assembly point `kit` bundles).
+- It is one package with no anticipated slim/strict split — the "own glob" option only earned its
+  keep if we expected several runtime variants.
+- It is a sibling internal building block for the adapter layer (`lib/adapter-utils`, the adapters,
+  `plugins/vite`'s compiler), not a public entry point.
+
+It sits _beside_ `packages/core`, not behind it — `core` does not import it.
+
+**Only the `.` entry (render-time helpers) is ported. `./compiler` is deferred.** `../pk`'s compiler
+(`compileComponent`, the contribution passes, the domain merge algebra) is built on the pre-rewrite
+`@praxis-kit/pipeline` — `createPipeline` / `executePipeline` with a **pluggable `merge` strategy
+and `plugins`** — which the `lib/pipeline` rewrite replaced with `runPipeline` + a fixed shallow
+`mergeContext`. Porting it verbatim is impossible; it needs a rewrite against the new pipeline
+model.
+
+**Update (as of the `plugins/vite` port):** `plugins/vite` was assumed to be `./compiler`'s
+consumer, but the reference `@praxis-kit/vite-plugin` does its own `.tsx`/`.jsx` analysis with the
+TypeScript compiler API and imports **neither** `@praxis-kit/pipeline` nor `@praxis-kit/runtime`. So
+`./compiler` currently has **no consumer in the reference repo**. Options when it next comes up:
+keep deferring until a real consumer appears (a `precompute` step for the runtime's
+`precomputedClasses` / artifact fast-path is the likely one), or drop it. Not porting it on spec.
+
+`../pk`'s `@praxis-kit/pipeline` also exported a node/tree/capability/merge-strategy model
+(`NodeId`, `SlotName`, `CapabilityMap`, `MergeStrategy`) that the rewrite dropped and that the
+render-helper IRs still use. These now live in `lib/runtime/src/pipeline-compat.ts` — a
+runtime-owned home for pieces that were always more "runtime" than "generic pipeline"; nothing else
+in the workspace needs them. `Diagnostic` / `MetadataMap` / `Pass` survived the rewrite and are
+re-exported straight through.
+
+Deferred to the compiler rewrite (from the port review): the artifact hash domains need precise
+definitions before anything relies on them for cache invalidation (`styling = sha256(metadata)` is
+too broad — it should key on variants/recipes/precomputed inputs, not `docs`); `precomputed` merge
+is single-owner (document or field-merge); `CapabilityMap` should be enforced boolean. `.`-entry
+follow-ups: `TreeContext` is type-immutable but its `Map` / arrays are not frozen at runtime (call
+it logically-immutable or snapshot); `getActiveProps` precedence (variants over attributes) wants a
+doc comment.
+
+### `packages/core` — private; publishable infra defers to `packages/kit`
+
+`packages/core` is `private: true` in `../pk` — it is not published, it is bundled into `praxis-kit`
+(`packages/kit`), the single published package. So the `packages/core` port carries no
+`.changeset/config.json`, no CI build/test/release job, and no `build` script / tsdown config; all
+of that lands with `packages/kit`. Scaffolded like the `lib/*` packages (minimal `package.json`,
+`tsconfig` extends base, `defineLibConfig` vitest).
+
+Adaptations: `@praxis-kit/primitive` and `@praxis-kit/styling` are **`dependencies`**, not
+`devDependencies` as in `../pk` — `src/utils/index.ts` / `src/styling.ts` / `src/index.ts` re-export
+runtime values from both. `configs/typescript.ts`'s ESLint `allowDefaultProject` list gains
+`packages/*/vitest.config.ts` (`packages/core` is the first `packages/*` entry).
+
+Per-slice hygiene (from the slice-1 review): the `package.json` `exports` map and `dependencies`
+track what the _current_ slice actually contains — `./contract` is not in `exports` until
+`src/contract.ts` lands, and `@praxis-kit/diagnostics` / `type-fest` (both used only by `src/html/`
+onward) are added with the slice that first imports them, not up front. `../pk`'s `src/global.d.ts`
+(an ambient `process.env.NODE_ENV` declaration "to avoid `@types/node`") was dropped — the repo's
+`tsconfig.base.json` already has `"types": ["node"]`, so `process` is typed without it.
+
+**Ported in four PRs (#18–#21):** (1) `src/types/` + `src/utils/` + `./primitive` / `./styling`
+entries + scaffold; (2) `src/html/` (contracts / spec tables / rule sets — the bulk, ~1780 LOC) +
+`src/children/`; (3) `src/options/` + `src/resolver/` + `src/state/` + `src/validator/`; (4)
+`src/factory/` (`createPolymorphic` + the memoized render pipelines: tag / props / HTML
+prop-normalizers / HTML children-evaluator / class / ARIA), `src/diagnose.ts`, the `./contract`
+barrel, and the final `.` barrel. Otherwise ~verbatim from `../pk`.
+
+Adaptations made during the port review, per slice:
+
+- **Slice 2:** `resolveAllowedRoles`'s `byProp` case resolves an _unrecognized_ discriminator to the
+  policy `fallback` — an unknown `<input type>` is checked against `text`'s allowed roles (HTML's
+  own "unknown type behaves as text" rule) instead of being skipped as "not modeled".
+  `createMutuallyExclusiveRule` tests HTML-boolean-attribute _presence_ (`required=""` /
+  `required="required"` count, `required={false}` / absent do not) rather than raw truthiness, which
+  missed the string-attribute forms.
+- **Slice 3:** `diagnostics.active` → `.warnActive` in `validateFactoryOptions` (the
+  `lib/diagnostics` rename; a warning-only validator, so the scope matches). Documented that
+  `createResolverPipeline` is a **built-in-rules-only** lightweight path (it takes the minimal
+  `ResolverOptions`, no `ariaRules` / `variantKeys`); custom `enforcement.aria` and variant-aware
+  validation flow through `createPolymorphic` → `createAriaPipeline`, which threads
+  `HTML_ARIA_RULES` + `resolved.ariaRules` + `resolved.variantKeys` into the engine. `allowedAs`
+  constrains a caller-supplied `as` override only, not the component's `defaultTag`.
+- **Slice 4:** the core/adapter boundary is documented on `createPolymorphic`'s `methods` block.
+  `packages/core` resolves the render-time capabilities (`normalizeFn`, `htmlPropNormalizersFn`,
+  `htmlChildrenEvaluatorFn`, `childRules`) and exposes them on `runtime.options`; it does **not**
+  run a full render. `resolveProps` is a component-level merge only. The DOM-facing prop
+  normalization (`htmlPropNormalizersFn` → `normalizeFn`, in that fixed order) and children
+  evaluation are applied one layer up by `@praxis-kit/adapter-utils` (`resolveNormalizedProps` /
+  `build-engines`), which every adapter calls after `resolveProps` — so the ordering is identical
+  across all seven adapters. `resolveAria` is the one enforcement step core runs inline, because
+  `AriaPolicyEngine` also mutates props. (`resolveClassPlugin`'s `factory` param is already
+  `AnyClassPluginFactory` = `… | undefined`, so its `if (!factory)` guard is honest — no change.)
+- Lint: `import-x/consistent-type-specifier-style` and `unicorn/no-useless-undefined` autofixes.
+
+Open follow-ups (`.vscode/MIGRATION.md`): ~~`core/utils` bundles contract state-prop normalizers
+under a "utils" name~~ (resolved with `packages/kit` — they moved to `@praxis-kit/core/props`);
+`primitive.ts` surfaces ARIA-role helpers from `contract/types` despite the filename; the HTML/ARIA
+role tables need a standards audit before the contract layer is authoritative (own entry: "HTML/ARIA
+contract layer — standards audit before it is authoritative"); the ARIA widget contracts
+(`menuContract` etc.) currently enforce accessible naming, not full APG child patterns.
+
+### `adapters/react` — port scope and adaptations
+
+First framework adapter. Ported whole (`src/shared/` + `src/current/` React-19 + `src/legacy/`
+React-18 variants, ~2000 src LOC, 33 vitest files / 576 tests, 1 Playwright-CT spec). The adapter is
+a thin shell over `@praxis-kit/adapter-utils`: `buildRuntime` wires `buildCoreRuntime` +
+`buildEngines` + `composeFilter` + `SlotValidator`; `shared/render.ts` is the React render pipeline
+calling `resolveNormalizedProps` / `applyFilter` (the canonical order confirmed at the
+`packages/core` slice-4 checkpoint — verified here, nothing missing). `current/` and `legacy/`
+differ only in ref handling (React 19 plain-prop ref vs React 18 `forwardRef`) and their `Slot` /
+`normalize-children` copies.
+
+- **`exports`:** `.` (React 19) + `./legacy` (React 18). Both mapped in `tsconfig.paths.json`.
+- **deps:** `type-fest` + the six workspace `@praxis-kit/*` it imports move to `dependencies`
+  (`../pk` had all the praxis deps in `devDependencies`); `react` stays a `>=18` peer; `clsx` was
+  listed but unused — dropped. `@praxis-kit/playwright` is a devDep (CT spec only).
+- **No per-package `eslint.config.ts`** — the new repo lints from the root config only, and
+  `configs/architecture.ts` already declares the `adapters/react` boundary element. `../pk`'s
+  per-adapter `no-restricted-imports` (block importing sibling adapters) is a root-config follow-up
+  for when more than one adapter exists.
+- **Dangling `@praxis-kit/*` eslint-disable directives** (3, for the not-yet-ported
+  `no-enforcement-without-strict` rule) rewritten as plain intent comments; re-add the directives
+  with `plugins/eslint`.
+- `@praxis-kit/shared/tests` (a `../pk` path alias to `lib/primitive/src/tests`) → imported directly
+  as `@praxis-kit/primitive/tests` (one hydration-parity test).
+- `defineJsdomConfig` reintroduced in `configs/vitest.base.ts` — see the Vitest entry.
+- `.pw.spec.tsx` runs under `test:pw` (Playwright-CT) only; not wired into CI here (no browser
+  install / CT job yet — follow-up with the first CI workflow).
+
+**Review — `onElement` lifecycle:** legacy `create-contract-component.ts` was missing the "clear
+`cleanupRef` before re-invoking `onElement`" step that `current/` has (so a throwing registration on
+a replacement element could leave the prior, already-run cleanup to fire again on unmount) —
+aligned. Both `on-element.test.tsx` files gained a lifecycle matrix: replacement runs the old
+cleanup before the new registration, cleanup runs exactly once on unmount, a `void`-returning
+`onElement` is tolerated, a throwing `onElement` leaves no stale cleanup (+8 tests, 586 total).
+
+**Review (P1) — `warnDiscardedChildren` baseline:** the `asChild` discard check compared the _raw_
+`children` prop length against the element-only Slot list, so `{cond && <X/>}`, `null`, `false`, and
+whitespace-only strings (which React arrays but never renders) counted as "discarded" and produced
+spurious warnings. Fixed to compare the _normalized_ child list (elements + non-empty text/number)
+against the Slot list — the difference is exactly the text/number siblings Slot genuinely drops; a
+zero-element list is left to `assertSingleChild`. Text siblings in `asChild` mode are still
+warn-and-dropped (not preserved) — there is no element for Slot to render them into, and the warning
+is a real diagnostic, not silent loss. +3 `render.test.ts` cases (real discard, falsy-conditional
+no-warn, bare-text → `assertSingleChild`). **Follow-up:** mirror the edge cases in
+`interaction.pw.spec.tsx` once the CT job runs in CI.
+
+### `adapters/preact` — port scope and adaptations
+
+Second framework adapter. Flatter than react — Preact has one component model, so no
+`current/legacy/shared` split: everything is at `src/` (its own copy of `slot/`, `render.tsx`,
+`build-runtime`, `create-contract-component` — it does **not** depend on `@praxis-kit/react`). ~1150
+src LOC, 9 vitest files / 162 tests. No Playwright-CT suite in `../pk` (none added).
+
+- **`exports`:** `.` only (Preact 10 is a single target). `peer: preact >=10.11`.
+- **deps:** the five workspace `@praxis-kit/*` it imports + `type-fest` → `dependencies` (`../pk`
+  had them in `devDependencies`); `clsx` was listed but unused — dropped. No `@praxis-kit/runtime`
+  (unlike react — preact doesn't import it). devDeps: `preact`, `preact-render-to-string`, `jsdom`,
+  `vitest`, `@types/node`.
+- **No per-package `eslint.config.ts`** (root lint), same as react. `import-x/no-duplicates` fixes
+  on 3 `../pk` files (`conformance.test`, `create-contract-component.test`,
+  `types/polymorphic-props`) that its per-package lint had missed.
+- `vitest.config.ts` → `defineJsdomConfig('preact')`.
+
+**Brought to parity with post-review react** (same fixes, applied here proactively):
+
+- `normalize-children.ts` now **keeps non-empty text/number** (`../pk`'s preact version filtered to
+  elements only — so its child evaluators never saw text, unlike react's, a real cross-adapter
+  contract-enforcement divergence). Added `NormalizedChild = AnyVNode | string | number`; the
+  asChild/Slot path filters back to elements via `getSlotChildren`. + `normalize-children.test.ts`
+  (was missing).
+- `render.tsx` `warnDiscardedChildren` — same raw-vs-filtered baseline bug as react (spurious
+  warnings on `{cond && <X/>}` / `null` / whitespace); same fix + zero-guard. +2 asChild discard
+  tests.
+- `create-contract-component.ts` — added the defensive `cleanupRef` clear-before-re-invoke that
+  react's `current/` has; `on-element.test.tsx` gained the same lifecycle matrix (replacement /
+  exactly-once / void return / throwing registration).
+
+**Review — conformance evidence** (the point of the preact adapter is to prove the architecture is
+framework-neutral, so its semantic test matrix should match react's):
+
+- **Nested-children boundary pinned.** `normalizeChildren` is deliberately one level deep (not a
+  `Children.toArray`): a nested array (`{[<A/>, [<B/>, <C/>]]}`) is discarded, a nested Fragment is
+  one opaque element (not flattened). Preact still renders nested structures correctly on the
+  intrinsic path — normalization only governs what the contract evaluators and the asChild
+  single-child check see. +3 `normalize-children.test.ts` cases.
+- **Ref chain pinned** for every target kind: intrinsic default, `as` override,
+  `as={forwardRef component}` (ref reaches the component-forwarded element), `asChild` (ref →
+  slotted child), element replacement (ref moves), unmount (ref → null). +4
+  `create-contract-component.test.tsx` cases.
+- **Follow-up:** these (nested children, the ref matrix, polymorphic `as`, ARIA normalization)
+  belong in the shared `conformanceSuite` (`lib/adapter-utils/src/testing/`) so every adapter runs
+  one matrix rather than each re-deriving it; react's `normalize-children.test` should gain the
+  matching nested-children cases when that consolidation happens.
+
+**Architecture note** (review, no action): do **not** abstract react + preact's
+`createContractComponent` similarity into a shared `framework-runtime/createComponent()`. The
+duplication is healthy; the shared layer is `@praxis-kit/adapter-utils` (semantic), not an
+abstraction over the React/Preact element APIs.
+
+### `adapters/vue` — port scope and adaptations
+
+Third framework adapter, first non-React-family one — a real fidelity test of the neutral core.
+`defineComponent` + `setup()` returning a render function; `h()` render calls (no JSX); children
+arrive as Vue `Slots`, not a `children` prop. Flat `src/`. ~840 src LOC, 13 vitest files / 196
+tests + a Playwright-CT interaction suite (`.vue` SFC fixtures, `test:pw`).
+
+- **`exports`:** `.` only. `peer: vue >=3.4`.
+- **deps:** the five workspace `@praxis-kit/*` + `type-fest` → `dependencies` (`../pk` had them in
+  dev). devDeps: `vue`, `@vue/{server-renderer,test-utils,compiler-dom}`, `@vitejs/plugin-vue`,
+  `@playwright/experimental-ct-vue`, `@praxis-kit/playwright`, `jsdom`, `vitest`, `@types/node`.
+- **No `configs/tsconfig.vue.json`** — Vue needs no `jsx` compiler option; `tsconfig.json` extends
+  `tsconfig.base.json` directly and `src/shims-vue.d.ts` covers `*.vue` imports.
+- **No per-package `eslint.config.ts`** (root lint). `.vue` fixture files aren't linted (no Vue
+  ESLint plugin in the repo config) — only reached by the CT suite.
+- `vitest.config.ts` → `defineJsdomConfig('vue')` (the `../pk` `exclude: ['**/*.pw.spec.ts']` is
+  redundant — the shared include is `*.test.ts` only).
+- `playwright-ct.config.ts` tidied to match react's (explicit `@praxis-kit/*` → source aliases,
+  since the CT bundler doesn't read tsconfig paths); `ctPort: 3102`.
+
+**Vue-specific behaviour that is already correct** (no fix needed, unlike the react/preact review
+findings):
+
+- `normalizeChildren(slots)` filters `slots.default()` output with `isVNode` and reports a
+  `discarded` count. No raw-length-vs-filtered bug: Vue's slot output is the already-rendered vnode
+  list — `v-if="false"` is a _comment vnode_ (passes `isVNode`, kept, seen by the evaluator), text
+  is a _text vnode_ (kept). A nested array is counted as discarded, not flattened. +2
+  `normalize-children.test.ts` cases pin this.
+- `onElementRef` in `create-contract-component.ts` already tracks `boundElement` (Vue re-invokes a
+  vnode's function-ref on every patch, not just mount/unmount) and clears `cleanup` before rebinding
+  — so same-element re-invocation is a no-op and a throwing registration leaves no stale cleanup.
+  The react/preact "defensive clear" fix is already present here in a stronger form.
+
+**Conformance evidence added:** a user's `ref` on `<Box>` resolves to the _component instance_ in
+Vue, not the host element — `onElement` is the adapter's contract for the real DOM node, so
+`on-element.test.ts` gained the full matrix in its place: host element across an `as` override and
+the `asChild` path, cleanup-before-replacement, cleanup-exactly-once on unmount, `void`-returning
+`onElement`, throwing `onElement` on a replacement.
+
+**Second review pass — three contract decisions resolved + a real bug fixed** (`../pk`'s Vue adapter
+had these; 209 → 219 tests):
+
+- **VNode classification for the asChild target.** `normalizeChildren`'s "only element nodes"
+  comment was wrong — `isVNode` also passes Text / Comment / Fragment. The asChild path now narrows
+  the child list to element/component vnodes via `isElementVNode` (`slot/predicates.ts`) before
+  picking the single clone target — mirroring how react/preact narrow their normalized list back to
+  elements. A Comment (`v-if="false"`) sibling is ignored silently; a dropped Text sibling warns.
+- **asChild prop merging aligned with the other adapters.** `../pk` forwarded only
+  string/number/boolean attributes onto the cloned child — `@click`, `:style`, object props were
+  silently dropped. Now the wrapper's resolved props (listeners, `style`, `class`, `role`, the
+  `onElement` ref) are handed to `cloneVNode`, whose `mergeProps` chains `onXxx` handlers,
+  concatenates `class`, and shallow-merges `style` — the same policy as `mergeSlotProps` in
+  `@praxis-kit/adapter-utils` (react/preact Slot). Tests pin chained-onClick and merged-style.
+- **`normalizeListenerKey` fixed.** `../pk` lowercased the whole event name (`onKeyDown` →
+  `onkeydown`), which only "worked" via the DOM IDL property, not Vue's event system, and broke
+  `Once`/`Passive`/`Capture` modifiers entirely. Now it collapses the event name to a single leading
+  capital (`onKeyDown` → `onKeydown` → Vue `hyphenate` → `keydown`) and preserves the modifier
+  suffix. New `event-normalization.test.ts` matrix: `onClick` / `onKeyDown` / `onPointerDown` /
+  `onMouseEnter` / `onBeforeInput` bind to the right DOM event on the intrinsic and asChild paths;
+  `onClickCapture` keeps its capture option.
+- **Conformance `rerender` is now a real update.** `../pk`'s Vue conformance adapter did
+  `unmount()` + `mount()`, so the perf/isolation suites never observed a Vue _update_. Rewritten to
+  raw `render(h(Component, props), container)` (a second `render()` patches, like the Preact
+  adapter), so `rerender` exercises the update path.
+- **Reactivity proof:** `computed(prepareRenderState)` — an unrelated parent update does not re-run
+  the resolution pipeline (deps unchanged); a real prop change does. +2 tests.
+
+**Follow-up:** the `RenderResult.rerender` contract (`lib/adapter-utils`) is sync `void`; Vue's
+`@vue/test-utils` updates are async. The raw-`render()` conformance adapter sidesteps this, but a
+future `rerender` that returns `void | Promise<void>` would let all adapters use their idiomatic
+test driver.
+
+### `adapters/solid` — port scope and adaptations
+
+Fourth framework adapter, second non-React-family one — a compiler-based reactivity model rather
+than a virtual DOM, the sharpest fidelity test of the neutral core yet. Fine-grained reactivity via
+`createMemo`/`createEffect` (no re-render, no VDOM diff); JSX compiled by Solid's own Babel
+transform, not React's. Flat `src/`. ~1000 non-test src LOC, 6 jsdom vitest files + 2 SSR vitest
+files / 149 tests. Ported **verbatim — no bug fixes needed**, the first adapter slice where that's
+true (react/preact/vue each needed at least one real correctness fix during review).
+
+- **`exports`:** `.` only. `peer: solid-js >=1.6`.
+- **deps:** `@praxis-kit/{adapter-utils,core,diagnostics,primitive}` + `type-fest` → `dependencies`
+  (matches vue's convention — `../pk` had some of these in `devDependencies`). devDeps: `solid-js`,
+  `@solidjs/testing-library`, `vite-plugin-solid`, `jsdom`, `vitest`. No `@types/node` — nothing
+  imports a `node:` builtin (and, unlike react/vue, there's no Playwright-CT setup for this adapter
+  in `../pk` — no `playwright-ct.config.ts`, no `.pw.spec.tsx` files — so no
+  `@praxis-kit/playwright` / `@playwright/experimental-ct-*` deps either).
+- **`configs/tsconfig.solid.json` already existed** (`jsx: "preserve"`,
+  `jsxImportSource: "solid-js"`) — landed speculatively with the ESLint port. `tsconfig.json`
+  extends it and includes both vitest configs directly (react/preact/vue's pattern — no
+  `allowDefaultProject` entry needed, unlike `lib/*`).
+- **No per-package `eslint.config.ts`** (root lint, matching every other adapter) — `../pk`'s had a
+  `no-restricted-imports` sibling-adapter-isolation rule; not recreated, same as it wasn't for
+  react/preact/vue (see the react entry's follow-up — now overdue with a 4th adapter, still not this
+  slice).
+- **Split test config, ported as-is: `vitest.config.ts` (jsdom) + `vitest.ssr.config.ts` (node).**
+  Solid ships mutually exclusive browser/server builds of `solid-js/web` selected by Vite resolve
+  `conditions` (`['development','browser']` vs `['development']`, no `'browser'`) — the SSR file's
+  `renderToString` throws under the browser build, and jsdom can't run the server build's code path
+  at all. Not folded into the shared `defineJsdomConfig` (a jsdom-only helper); the package's own
+  `test` script runs both configs in sequence, which is what `pnpm -r test` actually invokes —
+  confirmed the SSR suite runs. The root workspace `vitest.config.ts` project glob only picks up
+  `vitest.config.ts` by name, so `vitest.ssr.config.ts` is invisible to a bare root `vitest` command
+  — a pre-existing, accepted gap (same shape as `plugins/typescript`'s build config being outside
+  the root glob).
+- **`configs/architecture.ts` gap found and fixed:** the `core` boundary's disallow list forbade
+  `react`/`vue`/`preact`/`svelte` importing into `packages/core`, but not `solid-js` — added
+  `'solid-js'` + `'solid-js/**'` alongside the existing entries.
+- **Solid keeps its own `SlotValidator`** (`src/slot/slot-validator.ts`), not the shared
+  `@praxis-kit/adapter-utils` one react/vue/preact use. This is intentional, not a missed
+  consolidation: the shared `SlotValidator` validates a _child-count_ contract
+  (`assertSingleChild(count)` — asChild clones props onto exactly one child element), because
+  React/Vue/Preact's `asChild` takes ordinary JSX children. Solid's `asChild` takes a **render-prop
+  function** as `children` (`{(props) => <a {...props} />}`) — there's no child element to count, so
+  the contract is `assertRenderFn(children): children is (props) => unknown` instead. Both extend
+  the same `InvariantBase` and use `SlotDiagnostics` (`renderFnRequired` was already ported with
+  `lib/contract`, evidently anticipating this).
+- **README fixes** (found while writing it, not carried from `../pk` verbatim):
+  - The `asChild` usage example showed React/Vue's single-child-element syntax
+    (`<Button asChild><a href="/home">Home</a></Button>`) — wrong for Solid, and would throw at
+    runtime (`assertRenderFn`). Replaced with the real render-prop syntax and a sentence explaining
+    why it differs from the other adapters.
+  - The "Exports" table listed `createPolymorphicComponent` / `createAriaEnforcedComponent` /
+    `createChildrenEnforcedComponent` — none of which `src/index.ts` exports (only
+    `createContractComponent` and `defineContractComponent` do). This exact wrong table also appears
+    in `adapters/react/README.md` and `adapters/vue/README.md` — a stale copy-paste artifact
+    predating this repo, not something solid introduced. Fixed here; **follow-up:** audit react's
+    and vue's README export tables against their real `src/index.ts` too (both already merged, out
+    of scope for this slice).
+
+**Review pass:**
+
+- **`tryRenderAsChild`'s fallback under `strict: 'warn'` locked down as an explicit contract, not
+  just "doesn't throw".** Both of its guards (`assertExclusive` for `as`+`asChild` together,
+  `assertRenderFn` for non-function `children`) route through `InvariantBase.violate` →
+  `Diagnostics.error()`. Under the adapter's `strict: 'throw'` default that throws and nothing after
+  it runs (already pinned by two tests). Under `strict: 'warn'`/`'silent'` it only reports (or does
+  nothing) and returns normally — so `tryRenderAsChild` returns `null` to its caller, and `render()`
+  falls through to the **ordinary DOM-tag render path**, exactly as if `asChild` (and, for the
+  exclusivity guard, `as`) had never been set. A malformed `asChild` usage degrades to a plain
+  render rather than rendering nothing or silently swallowing the children. +2 tests pin the exact
+  result (`<div>not a function</div>` for the non-function-children case; `<section>` — not `<div>`
+  — for the `as`+`asChild` case, `as` still applying). A comment on `tryRenderAsChild` in
+  `render.tsx` states this explicitly now; previously it was true but only inferable from tracing
+  three call sites.
+- **`ResolvedSlotProps`'s `ref`/`role` typing — the doc comment moved here, from an in-source block
+  that had grown to architectural-decision-record length.** `PropsOf<G>` stays `Partial` for the
+  same reason `AsChildProps` does: the type system can't prove every prop actually received a
+  default, only that the runtime _tried_. `ref` is typed `(el: Element) => void` rather than
+  `AsChildProps.ref`'s bare `unknown`, because a render function's own job is spreading this object
+  directly onto a concrete element (`(props) => <a {...props} />`) — it needs a callback-ref shape
+  assignable to that element's own `ref` prop type, and contravariance makes an `Element`-typed
+  callback assignable to any more specific one (`(el: HTMLAnchorElement) => void`, …) without
+  knowing `TAs` in advance; `AsChildProps.ref` itself stays `unknown` because that field types what
+  a _caller_ hands in before the render function has even run, not what the render function receives
+  back out. `role` (added by `buildSlotProps` only when `isKnownAriaRole` narrows it) is omitted
+  from the type entirely, rather than given any explicit type — every candidate representation fails
+  the same way `ref` almost did: Solid's own per-element JSX types (`AnchorHTMLAttributes['role']`,
+  etc.) each narrow `role` to only the ARIA roles valid for _that_ element, a strict subset of the
+  full ARIA vocabulary, so a `KnownAriaRole`-typed field fails to spread onto any of them — and
+  unlike `ref`, there's no contravariance trick for a plain string-literal property (`unknown` fails
+  the same assignability check `KnownAriaRole` does; only `any` would satisfy every per-element
+  union, and this codebase doesn't use `any`). Omitting the key keeps `{...props}` spreads honest
+  and compiling; a render function that specifically needs `role` casts locally. (Previously this
+  whole parameter was bare `UnknownProps` — no type checking at all.)
+- **`ElementRef<T>` confirmed correctly scoped, not too narrow — no change needed.**
+  `ElementRef<T> = T extends IntrinsicTag ? HTMLElementTagNameMap[T] : unknown` looks like it could
+  under-cover SVG/custom elements, but `IntrinsicTag` is itself defined as
+  `keyof HTMLElementTagNameMap` (`lib/primitive/src/types/intrinsic-tag.ts`) — every polymorphic
+  target this repo recognizes as "intrinsic" already _is_ an `HTMLElementTagNameMap` key by
+  construction. `as="circle"` (an SVG tag) falls to `ElementType`'s other arm (`string & {}`), so
+  `ElementRef<'circle'>` is honestly `unknown`, not incorrectly typed as an `HTMLElement` subtype.
+  Praxis Kit's polymorphic targets are deliberately HTML-only; this is shared, pre-existing
+  `lib/primitive` behavior, not solid-specific, and every other adapter relies on the same scoping.
+- **The `TPlugin` cast in `create-contract-component.ts`'s `buildRuntime(options as …)` call is
+  accepted as-is** — it's a documented generic-invariance/`exactOptionalPropertyTypes` limitation
+  (the same class of gap `NormalizeFn` bivariance notes elsewhere in this codebase), not a hidden
+  runtime risk: `TPlugin` is erased at runtime, so no type guard could check it regardless. Not
+  worth more generic machinery to eliminate.
+
+**Follow-up (substantial — not this slice): a shared, explicit cross-adapter conformance contract.**
+`lib/adapter-utils/src/testing` already gives every adapter (react/preact/vue/solid) one shared
+`conformanceSuite`/`conformanceA11ySuite`/`conformancePerformanceSuite`/
+`conformanceIsolationSuite`/`ssrConformanceSuite` — each adapter supplies a small
+`ConformanceAdapter` (create/render/rerender/cleanup/capabilities) and the suites run the same
+assertions against it. What's proposed and not yet true: (1) organizing it as its own package
+(`packages/adapter-conformance` or similar) rather than a `testing` subpath of `lib/adapter-utils`;
+(2) more granular named sub-suites per concern (refs, slots/asChild specifically, SSR hydration
+parity) rather than the current coarser grouping; (3) a documented per-adapter capability/exception
+matrix (`capabilities: { asChild: false, … }` already exists as a mechanism — formalizing what it
+covers and why per adapter is the gap). The value case the reviewer raised is real: this is exactly
+the mechanism that would catch a "React: asChild resolves defaults / Solid: asChild forgets
+defaults" class of drift automatically instead of by manual review — but it's a cross-cutting
+restructuring across every already-merged adapter, sized for its own slice once `svelte`/`lit`/`web`
+exist too (more data points on what's genuinely shared vs. framework-specific before committing to
+the sub-suite boundaries).
+
+### `adapters/svelte` — port scope and adaptations
+
+Fifth framework adapter, third non-React-family one — and the most architecturally distinct yet.
+Svelte components must originate from `.svelte` files (a compile-time constraint no JS factory can
+work around), so **`createContractComponent` returns a plain `BuiltRuntime` bundle, not a
+component** — every bundle renders through one shared `<Polymorphic bundle={...}>` component
+(`src/Polymorphic.svelte`, typed via a hand-written `Polymorphic.svelte.d.ts` sibling, the mechanism
+`configs/tsconfig.svelte.json`'s `allowArbitraryExtensions` exists for). Svelte 5 runes
+(`$props`/`$derived`/`$effect`) for reactivity; `<svelte:element>` for the dynamic tag; Snippets
+(`{#snippet}`/`{@render}`) as the render-prop mechanism. Flat `src/`. ~700 non-test src LOC (TS +
+one substantial `.svelte` file), 7 vitest files (6 jsdom + 1 SSR) / 122 tests.
+
+- **`exports`:** `.` → `src/index.ts` (as every other adapter); `./Polymorphic.svelte` → the
+  `.svelte` file directly — `../pk`'s `dist`-pointing exports map adapted to this repo's
+  consumed-from-source convention, same as every other adapter has no build.
+- **deps moved from `devDependencies` to `dependencies`:**
+  `@praxis-kit/{adapter-utils,core, diagnostics}` — `../pk` had these three as dev (with only
+  `primitive` + `clsx` + `type-fest` as real deps), inconsistent with every other adapter's "praxis
+  deps → dependencies" convention (react/preact/vue/solid). `clsx` dropped — unused
+  (`Polymorphic.svelte` builds its own class string via the shared class-resolution pipeline, never
+  calls `clsx` directly).
+- **No per-package `eslint.config.ts`** (root lint, matching every other adapter) — `../pk`'s had
+  the same sibling-adapter `no-restricted-imports` rule react/preact/vue/solid's did; not recreated,
+  same follow-up as those.
+- **`configs/architecture.ts` and `configs/tsconfig.svelte.json` needed no changes** — both already
+  had `svelte` wired in (the `core`-boundary disallow list already listed `'svelte'`/`'svelte/**'`;
+  solid's port is what had a gap, not this one's).
+- **Split test config, ported as-is** (same shape as solid, same reason): `vitest.config.ts` forces
+  `conditions: ['browser', 'development']` so `@testing-library/svelte` gets the DOM-capable
+  `svelte/internal` entry; `vitest.ssr.config.ts` runs only `ssr.test.ts` under
+  `environment: 'node'` with no condition override (Svelte 5's compiled output is universal —
+  `vite-plugin-svelte` picks the target itself). The package's own two-config `test` script is what
+  `pnpm -r test` runs.
+
+**A third `asChild` model, distinct from both other variants already in this repo.**
+React/Vue/Preact clone props onto a single child _element_ (`assertSingleChild(count)` — a
+count-based contract). Solid takes a render-prop _function_, needing a runtime `assertRenderFn`
+guard since JS doesn't enforce that shape (`adapters/solid`'s own DECISIONS.md entry). Svelte needs
+**neither guard**: its compiler always wraps a component's default slot content into a callable
+Snippet, so `children` is guaranteed to already be "a function, if present" by the time
+`Polymorphic.svelte` sees it — there's no runtime shape to assert, only presence (`{#if children}`
+before `{@render children(...)}`). It uses the shared `@praxis-kit/adapter-utils` `SlotValidator`
+(the same one vue/react/preact use, constructed with `'Snippet'` as the element-kind label) purely
+for `assertExclusive()` — the `as`+`asChild` mutual-exclusion check — never `assertSingleChild` or
+`warnDiscardedChildren`, since there's no child list to count in the first place.
+
+**`tryRenderAsChild`-equivalent `strict:'warn'` fallback pinned proactively, applying the Solid
+review lesson before being asked.** `useAsChild`'s `assertExclusive()` call has the identical
+`InvariantBase.violate` semantics as every other adapter's: `strict:'throw'` throws (existing test),
+`strict:'warn'` only reports and `useAsChild` resolves to `false`, so `Polymorphic.svelte`'s
+`{:else}` branch renders the ordinary `<svelte:element>` at the `as`-resolved tag — same contract as
+Solid's, same fallback-not-blank-render behavior. +1 test pins the exact result
+(`<section>...</section>`, `as` still applying, not `<div>`).
+
+**Comment density: `ResolvedSlotProps`'s doc trimmed proactively**, applying the Solid review lesson
+rather than waiting for the same feedback twice. Original (`types/resolved-slot-props.ts`) ran ~36
+lines explaining why `ref`/`role`/`style` are omitted from the asChild-snippet prop type; trimmed to
+a 5-line pointer + the usage example. Full case, preserved here: `ref` is omitted because Svelte has
+no `ref` prop concept at all (DOM access is `bind:this`/`onElement`) — a caller who writes a literal
+`ref` key gets it forwarded like any other unknown prop, untyped, since there's no contravariant
+callback-ref trick to apply the way Solid's `ResolvedSlotProps` does. `role` is omitted for the same
+reason Solid's is: every representation either is too wide to spread onto an unknown target
+element's own narrower per-element `role` union, or (`unknown`) fails that same assignability check
+outright. `style` is omitted because, unlike the non-asChild `<svelte:element>` path (which
+serializes a `StyleObject` to a CSS string via `serializeStyle`), the asChild path skips
+serialization entirely — a caller's `style` prop passes through however they wrote it (object or
+string), so there's no one shape to assert.
+
+**Two README bugs found, one severe.** `../pk`'s README (carried in unread) claimed:
+
+- **"The returned value is a Svelte component. Use it in a `.svelte` file: `<Button size="lg">`."**
+  This isn't a wrong-syntax example like Solid's — it misstates the adapter's entire architecture.
+  `createContractComponent` returns a bundle; there is no `Button` component to use as a JSX-like
+  tag. Rewrote the Usage section around the real, working pattern
+  (`export const buttonBundle = createContractComponent(...)`, then
+  `<Polymorphic bundle={buttonBundle} .../>`), taken from `create-contract-component.ts`'s own doc
+  comment, plus the `asChild` snippet syntax.
+- **The "Exports" table listed `createPolymorphicComponent`/`createAriaEnforcedComponent`/
+  `createChildrenEnforcedComponent`** — the same stale artifact found in react's, vue's, and solid's
+  READMEs (see `adapters/solid`'s entry). Fixed here to the two real exports plus a row for the
+  `./Polymorphic.svelte` subpath, since using this adapter at all requires importing it.
+
+**`.prettierignore` gained `*.svelte`.** No `prettier-plugin-svelte` in the catalog, so plain
+Prettier can't parse `.svelte` at all ("No parser could be inferred") — `pnpm format`/
+`format:check` would hard-error on both `.svelte` files in this repo (the first ones to exist).
+Pre-existing gap in `../pk` too (same missing plugin, same files) — never surfaced there because
+nothing apparently ran `prettier --check .` broadly enough to hit it. Ignored rather than fixed
+properly (adding the plugin + verifying its formatting choices) — revisit if `.svelte` formatting
+consistency becomes a real need, not just a `format:check` crash to avoid.
+
+**Review pass:**
+
+- **The event-normalization contract stated and pinned exactly** (`event-normalization.test.ts`, 9
+  cases). `normalizeEventKeys`'s `/^on[A-Z]/` lowercasing is a deliberate compatibility feature (a
+  caller writes React-style `onClick`; Svelte needs native lowercase `onclick`), but its actual
+  reach at runtime is wider than the function itself, because Svelte's own `<svelte:element>` spread
+  treats **any** `on`-prefixed key as event-related regardless of what this function does to it:
+  `onCustomThing` lowercases and binds via `addEventListener` for the literal synthetic event name
+  (fires only if something dispatches a `CustomEvent` under that name — proven by dispatching one);
+  a plausible component-level callback name like `onValueChange` gets the identical treatment and is
+  never invoked directly — there is no separate "custom callback prop" convention this adapter
+  recognizes; `once` / `on-value` (no camelCase to normalize) pass through this function unchanged,
+  but Svelte's runtime still recognizes the literal `on` prefix and silently drops a non-function
+  value rather than rendering it as an attribute — this happens whether or not `normalizeEventKeys`
+  runs, so a future change to the function can't fix or break it. Pinned as an explicit contract in
+  both the function's comment and the tests, not left implicit.
+- **The style-serialization contract stated and pinned exactly** (`style-serialization.test.ts`, 5
+  cases). `serializeStyle`'s `key.replace(/([A-Z])/g, '-$1').toLowerCase()` preserves a CSS custom
+  property (`--my-color` has no uppercase letters to rewrite) and correctly hyphenates a
+  vendor-prefixed property including its leading dash (`WebkitLineClamp` → `-webkit-line-clamp`, the
+  real CSS spelling) — both previously true only as an unstated property of the regex, now asserted
+  by test. `value == null` (not `=== undefined`) keeps a falsy `0` (`opacity: 0`) while dropping a
+  real `undefined`. Assertions read the parsed `CSSStyleDeclaration` (`element.style.*`), not the
+  raw attribute string — the browser's own CSS parser reflows what `serializeStyle` hands it (adds
+  whitespace, and normalizes a unitless `0` length to `0px`), so the literal string is an
+  implementation detail and the parsed value is the real contract.
+- **asChild test depth extended** (`Polymorphic.test.ts`): variant classes and ARIA role resolution
+  reaching the slot snippet are now asserted, not just base class + arbitrary props. The ARIA case
+  surfaced a real, correct-but-previously-undocumented asymmetry: the non-asChild `<svelte:element>`
+  path (`buildDomProps`) strips a role that's redundant with the _target tag's_ implicit role via
+  `runtime.resolveAria`, but the asChild path (`buildSlotProps`) has no target tag to check
+  redundancy against — the caller's snippet decides what renders — so it only validates the role is
+  syntactically real (`isKnownAriaRole`) and forwards it as-is, never stripping for redundancy. Same
+  contract as Solid's `buildSlotProps` (`adapters/solid/src/render.tsx`) — cross-adapter consistent,
+  not a Svelte-specific gap.
+- **A reactivity test for asChild was attempted, failed for an instructive reason, and was replaced
+  rather than dropped or force-fit.** Driving it through `@testing-library/svelte`'s `rerender()` +
+  `createRawSnippet` (the mechanism every other asChild test in this file uses) never observed an
+  updated prop — `createRawSnippet`'s params are captured once at setup and are documented by Svelte
+  itself as non-reactive, a testing-helper limitation, not a fact about `Polymorphic.svelte`. Real
+  reactivity needed a real `$state` host: `asChild-reactivity.test-host.svelte` owns a `$state`
+  class and exposes `setExtra` as a component export; `asChild-reactivity.test.ts` drives it via
+  `component.setExtra(...)` + `tick()` and confirms the slot snippet's rendered DOM picks up the new
+  resolved class. 144 tests total (119 jsdom + 25 SSR, up from 122).
+- **SSR lifecycle guarantees asserted explicitly** (`ssr.test.ts`, +2 tests): `onElement` is never
+  called and the children evaluator's `evaluate` is never invoked during `svelte/server`'s
+  `render()` — both DOM-only features `Polymorphic.svelte` gates behind
+  `typeof document !== 'undefined'` (registering their `$effect`s during SSR throws `effect_orphan`;
+  the earlier "renders without throwing" test only proved the guard prevents a crash, not that the
+  gated features stay inert). **Gap recorded, not silently assumed covered:** this repo has no
+  Svelte hydration-_transition_ test (server-render, mount client-side over that markup, confirm no
+  mismatch) the way `adapters/solid/src/hydration-parity.test.tsx` does for Solid — `../pk` doesn't
+  have one for Svelte either. A real one needs `svelte/server`'s `render()` output fed into a jsdom
+  container, then `mount()` (not `render()`) over it.
+- **Generic erasure made an explicit, documented design decision**, not just an implicit consequence
+  of `PolymorphicComponentProps.children: Snippet | Snippet<[UnknownProps]>`. Added to that type's
+  own doc comment, and to the README ("`<Polymorphic>` is intentionally generic-erased…") — one
+  physical `.svelte` file/`.d.ts` serves every bundle's `G`; it can't become `Polymorphic<G1>` vs.
+  `Polymorphic<G2>` per call site the way a generic React function component can. Precision is
+  recovered on the caller's side via `ResolvedSlotProps<GenericsOf<...>>`.
+- **Confirmed, no change: the `adapter-utils` boundary is correct as drawn.** `buildCoreRuntime` /
+  `buildEngines` / `composeFilter` / `resolveAdapterCommonOptions` / the shared `SlotValidator`
+  living in `@praxis-kit/adapter-utils` rather than duplicated per-adapter is exactly the trajectory
+  this port has followed since `packages/core`+`lib/adapter-utils` — not something to second-guess
+  now that a 5th adapter is using it identically.
+
+**Follow-ups (not this slice):**
+
+- **A Svelte-specific `asChild` conformance sub-suite** — a concrete, scoped instance of the
+  cross-adapter conformance follow-up already recorded under `adapters/solid`. The generic
+  `conformanceSuite` can't represent a Svelte snippet (`capabilities: { asChild: false }` in
+  `conformance.test.ts` is why), so asChild's real coverage lives only in this package's own
+  `Polymorphic.test.ts` — direct, not a hole, but not shared with the other adapters either. The
+  concrete shape worth building toward: resolved classes, filtered props, variants, ARIA resolution,
+  caller-prop preservation, `as`+`asChild` rejection, and correct rerendering — each already has a
+  direct test _in this package_ after this review pass; turning that into a reusable per-adapter
+  sub-suite (Solid could plug in a comparable one) is the future step.
+- **Publishing the `.svelte` asset is a `packages/kit`-build-slice concern, refined.**
+  `exports: { "./Polymorphic.svelte": "./src/Polymorphic.svelte" }` here works because the monorepo
+  consumes everything from source. Once `packages/kit` builds and publishes `praxis-kit`, the
+  `.svelte` file itself (not just compiled JS) must survive into the published package — most
+  bundlers don't copy arbitrary non-JS/TS assets by default. When that slice lands, verify
+  `praxis-kit/svelte` _and_ `praxis-kit/svelte/Polymorphic.svelte` both resolve from an actual
+  packed tarball (`npm pack` / `pnpm pack`), not just the workspace's symlinked `node_modules` — a
+  real, common way for exactly this kind of non-JS export to work in a monorepo dev loop and
+  silently 404 for an external consumer.
+
+### `lib/styling` — dropped the `variant-pass` "proof path"
+
+`../pk/lib/styling/src/variant-pass/` carried three demo passes (`basePass`/`hoverPass`/`focusPass`,
+Tailwind literals like `inline-flex` / `hover:bg-blue-500`), a `styleMergeStrategy`, and a
+`style-proof.test.ts` that hand-rolled a pipeline loop over them. All three built on the pre-rewrite
+`@praxis-kit/pipeline` API (`Pass<TContext>` + a pluggable `MergeStrategy<TContext>`). The rewritten
+`lib/pipeline` keeps `Pass` but replaced `MergeStrategy` with a fixed shallow `mergeContext` (see
+its own entry), so `styleMergeStrategy` / `style-proof.test.ts` no longer compile, and nothing
+outside `lib/styling` ever imported `basePass` / `styleMergeStrategy`.
+
+Dropped the proof path entirely rather than retarget dead demo code. Kept the parts real consumers
+use: `createVariantPass` / `VariantConfig` / `CompoundVariant` (from `variant-pass.ts`, no pipeline
+dep) and `buildPrecomputedKey` / `compileVariantLookup` (from `compile-variant-lookup.ts`), which
+`lib/adapter-utils` consumes. `DefaultMap` (was a shared `@praxis-kit/pipeline` alias for
+`StringMap<string>`) is now defined locally in `compile-variant-lookup.ts` and re-exported —
+`lib/styling` no longer depends on `lib/pipeline` at all. `clsx` / `type-fest` also dropped from its
+deps (unused directly; `cn` from `primitive` owns `clsx`).
+
+Two consistency fixes from the port review:
+
+- **Recipe semantics unified.** `VariantClassResolver.#compute` gated on `if (!recipe)`, so
+  `recipe: ''` was "no recipe" there while `createClassPipeline` / `StaticClassResolver` /
+  `diagnoseClassPipeline` (and the cache key) all treat `recipe !== undefined` as active. Now the
+  whole package follows one rule: `undefined` is "no recipe", every string is a recipe key.
+- **`compileVariantLookup` honors array compound conditions.** `matchesCompound` did an exact `!==`,
+  but a `CompoundVariant` condition value can be `readonly string[]` (`size: ['sm','lg']`) and
+  `diagnoseClassPipeline` already matches those. The compiled precomputed table now matches runtime
+  CVA semantics.
+
+Documented (not changed): the precomputed lookup is the no-recipe path — its keys are variant props
+alone, this resolver's are `recipe | props`, so a recipe-active call never hits it. Still open (P3):
+the cache-key serializer (`s:` / `x:` prefixes) does not escape delimiters — a theoretical
+collision, not reachable with normal CVA string-literal variant values.
+
+### `lib/pipeline-kit` — kept as its own package, not folded into `lib/pipeline`
+
+`../pk` had `@praxis-kit/pipeline-kit` alongside `@praxis-kit/pipeline`; the migration tracker
+carried it as "❓ keep? — decide if the new `lib/pipeline` absorbs this".
+
+Kept separate. The two are different abstractions:
+
+- **`lib/pipeline`** (rewritten during its own port) — a data-processing runtime: `Pass` objects,
+  `runPipeline`, phased composition, `{ patch, diagnostics, metadata }` accumulation with
+  sequential/parallel strategies.
+- **`lib/pipeline-kit`** — a bare _callable-function_ composition toolkit:
+  `Pipeline<TArgs, TOutput> = (...args) => TOutput`, plus `composePipelines` (chain), `allPipelines`
+  (tuple, `Promise.all`-shaped), `anyPipeline` (first defined wins), and `definePipeline` (a
+  `PipelineFactory` memoized by the resolved-config object identity via a `WeakMap`). ~140 LOC, zero
+  `@praxis-kit` deps (only `type-fest`).
+
+`packages/core` imports `definePipeline` / `PipelineFactory` / `Arguments` directly for its render
+pipelines. Folding pipeline-kit into `lib/pipeline` would mean reconciling two unrelated `Pipeline`
+shapes — a redesign, not a port. Ported verbatim; one lint adaptation (praxis-kit's
+`unicorn/no-useless-undefined` turned `return undefined` / `() => undefined` into `return` /
+`() => {}`).
+
+### `lib/contract` — `aria-level` value range: `{ min: 1 }`, no maximum
+
+`../pk` typed `aria-level` as `{ kind: 'integer', min: 1, max: 6 }` in `ARIA_VALUE_TYPES`, with an
+engine test asserting `aria-level="7"` warns. WAI-ARIA defines `aria-level` as `min 1` with **no
+maximum** — `1–6` is only the HTML `h1`–`h6` heading range, and `aria-level` also applies to
+`treeitem`, `row`, `listitem`, deeply nested headings, etc. with no cap.
+
+Resolved in slice 3b: the table entry is now `{ kind: 'integer', min: 1 }`. Heading-specific
+concerns stay covered — `AriaPolicyEngine.#checkRedundantAriaLevel` still flags an `aria-level` that
+merely restates a heading element's implicit level. A hard `1–6` ceiling scoped to `role="heading"`
+was considered and **not** added: ARIA itself does not require it, deep-nesting cases legitimately
+exceed 6, and no consumer needs it. The ported `aria-level="7"` test is updated to assert it is now
+accepted.
+
+### `lib/contract` — `AriaPolicyEngine` orchestrates; new rules live outside it
+
+`aria/aria-policy-engine.ts` is ~840 lines as ported: context derivation, empty-role normalization,
+plan cache + key construction, rule selection, `#runRules`, fix sorting/apply, `report()`, **and**
+all ~20 built-in rule bodies as private static methods. Coherent today (every part belongs to one
+engine), but at the edge of becoming a god object.
+
+Not refactoring the existing file now — the port stays faithful and the rules-as-private-statics
+shape is stable. Going forward, though: **a new ARIA semantic rule does not get added as another
+`AriaPolicyEngine.#checkX` method.** It goes under `aria/spec/` (the standards-derived data),
+`aria/spec/validators/` (shared checking logic, like `checkRequiredAttributes`), or a new
+`aria/rules/` module, and the engine's `#pipeline` / `#implicitOnlyRules` arrays just reference it.
+The engine orchestrates: derive context → select policy → run rules → collect violations → apply
+fixes → return. When several existing rules next need to change together, that is the moment to
+extract them outward too.
+
+### `lib/contract` — port scope and review outcomes
+
+Ported from `../pk` in seven PRs (#9–#15), each reviewed on landing, kept as **one package**
+(`@praxis-kit/contract`) — the boundary ("the contract runtime: ARIA engine, structural child rules,
+`InvariantBase` severity routing, plus the contract-specific diagnostics/types/prop normalizers
+every adapter and `packages/core` consume") is coherent. Depends on
+`@praxis-kit/{primitive,diagnostics}` and `type-fest`; `primitive` is the single ARIA/child
+vocabulary and this package only interprets it.
+
+Slices: `src/types/` → `src/diagnostics/` + `src/props/` → `src/aria/spec/` + policy → `src/aria/`
+`AriaPolicyEngine` + tests → `src/strict/` → a focusability/numeric correctness pass →
+`src/children/`.
+
+Changes made during the port (beyond the dedicated entries above for the false-state model,
+`aria-level`, and the "engine orchestrates" convention):
+
+- **`types/aria/aria-role.ts`** reduced to a re-export of `primitive`'s `AriaRole` (`../pk`
+  redefined it identically). Same "keep `@praxis-kit/contract` a complete surface" reasoning keeps
+  the `isInvalid` re-export from `./aria` even though it is a bare `primitive` predicate.
+- **`InvariantBase.active` → `warnActive`**, tracking the identical rename in `lib/diagnostics`. One
+  consequence: `ChildrenEvaluator.evaluate()`'s cheap early-return gate is now visibly
+  Warning-scoped, while child violations are Error severity — a hand-built "report errors, ignore
+  warnings" policy would over-skip. Every non-silent `DefaultPolicy` preset reports Warning, so it
+  is latent; commented at the call site, tracked in `.vscode/MIGRATION.md`.
+- **`polymorphic-validator.ts` → `aria-policy-engine.ts`**, `aria-policy-engine.helpers.ts` →
+  `.test-helpers.ts` — the file names now match the class and the `aria-policy-engine.*.test.ts`
+  suite; the helper name marks it test-only.
+- **`INTERACTIVE_TAGS` → `NATIVE_INTERACTIVE_TAGS`** and its comment no longer claims the members
+  are "always keyboard-reachable"; a real **`isPotentiallyFocusable(tag, props)`**
+  (`aria/spec/elements/focusable.ts`, prop-aware: `href`, `type="hidden"`, `disabled`, `tabindex`,
+  `contenteditable`) replaced the bare tag-set check in `#checkAriaHiddenOnFocusable`. Documented as
+  tabbability, not raw focusability (`tabindex="-1"` deliberately excluded).
+- **Strict ARIA numeric parsing** — `strictNumeric()` (whole string must be numeric; `""` is not
+  `0`) replaced `parseFloat`/`parseInt` in `#isValidAriaValue` and `#checkRedundantAriaLevel`.
+- Normative ARIA tables carry `// Source:` provenance lines; `REQUIRED_ARIA_PROPERTIES` and
+  `NAME_REQUIRED_ROLES` are marked intentionally partial; `HtmlDiagnostics.input`
+  `attributeIgnoredForType` takes a typed `InputIgnoredAttribute` key (no runtime throw);
+  `ContractDiagnostics` message grammar normalized to `component:`.
+- **Children: the `position="first"|"last"` ⇒ `max=1` invariant moved into `normalizeChildRule`.**
+  `../pk` checked it in a `ChildrenEvaluator` helper (`checkPositionCardinalityInvariant`) that ran
+  on the static rules only when no dynamic rule existed, and separately on resolved dynamic rules —
+  so a contradictory _static_ positional rule slipped through whenever the evaluator also held a
+  dynamic rule, and `diagnoseChildren` never checked at all. Normalizing is where a
+  structurally-impossible rule is a bad rule, so the throw lives there now and both APIs inherit it;
+  the evaluator helper is deleted. Regression tests added for the static+dynamic case and for
+  `diagnoseChildren` parity.
+- Documented in `rules-matcher.ts`: a rule with a unique `type` matches on `child.type` alone — its
+  `match` predicate is not called on the fast path (a `match` that needs to narrow further must omit
+  `type` or share it).
+
+Open follow-ups (all in `.vscode/MIGRATION.md`): the `warnActive`-scope gate above; a roleless
+focusable element (`<div tabindex="0" aria-hidden>`) is skipped because `AriaPolicyEngine.evaluate`
+short-circuits on `!hasRole`; the name-required check treats `'aria-label' in props` as sufficient
+(`<img aria-label="">` passes) — only matters if `NAME_REQUIRED_ROLES` grows; a `role="img"` element
+still needs the missing-`alt` HTML fact handled separately; a typed `primitive` implicit-role lookup
+would drop the one `tag as Tag` cast in `getImplicitRole`.
+
+### `lib/primitive` — port scope and review outcomes
+
+Ported ~verbatim from `../pk` (156 src files, 7 export subpaths). Kept as **one package** — the
+boundaries ("framework-neutral primitives + semantic machinery for every adapter") are coherent;
+splitting into `primitive-core`/`-types`/`-guards`/… waits for real independent consumers.
+
+Changes made during the port review:
+
+- **`WithChildRules`** tightened — `enforcement.children` is `readonly ChildRuleInput[]`, not
+  `readonly unknown[]`. Documented as the deliberately-minimal structural upper bound / inference
+  wildcard; the real "is children enforcement active" narrowing is downstream
+  (`WithChildrenEnforcement`).
+- **`wrapMethodForDetection.restore()` bug fixed** — it always `delete`d the property, discarding a
+  pre-existing own-property override. Now captures the original descriptor and restores it, falling
+  back to `delete` only when there was none.
+- **ARIA tables documented as a partial model.** `IMPLICIT_ROLE_RECORD` carries a 4-kind taxonomy
+  (static / attribute-dependent / context-dependent / state-dependent) and the rule that only
+  _static_ roles belong in it. `STRONG_ROLES` is flagged standards-sensitive — a heuristic that
+  needs an HTML-AAM / ARIA-in-HTML citation pass and dedicated conformance tests before it is
+  canonical; do not widen it without both. Tracked in `.vscode/MIGRATION.md`.
+- **`createObservable`** — no per-listener `try/catch` is deliberate (a throwing listener is the
+  adapter's bug to surface); documented + tested.
+- **Complexity watches** (comments in the code, no change yet): `ResolvedFactoryOptions` — split
+  into `Resolved{Rendering,Styling,Enforcement,…}Options` before adding a new concern, not append
+  fields; `iterate.ts` — keep to genuinely shared primitives.
+- **Root barrel stays broad but subpaths are the direction.** `src/index.ts` re-exports everything;
+  `./types`, `./guards/aria`, `./constants/aria`, etc. exist so consumers can express narrow intent.
+  Push new consumers to subpaths as the package grows.
+
+### Type organization: `src/types/` folder + barrel is the package default
+
+`../pk` used a `src/types/` folder with grouped files and an `index.ts` barrel in 16 of 17 packages;
+a single `src/types.ts` was one exception (`lib/diagnostics`, 47 lines). This repo standardizes on
+the folder everywhere — mixed conventions across ~26 packages cost more than one directory, and the
+folder scales without churn (a new type is a new file, not a growing monolith).
+
+Two carve-outs:
+
+1. **Co-locate a type with its behavior module when it has one.** `Severity` lives in `severity.ts`,
+   `DiagnosticPolicy` in `policy.ts`, `DiagnosticCode` in `codes.ts`. `types/` holds only pure-data
+   shapes with no natural home module — wire/descriptor types.
+2. **A lone `types.ts` is acceptable only for a genuinely tiny package** — one cohesive group, no
+   growth path. Promote to `types/` at the first second group.
+
+`lib/pipeline` already conforms. `lib/diagnostics` was promoted from `types.ts` to
+`types/{diagnostic,reporter}.ts` + barrel as part of its port.
+
+### `lib/diagnostics` — API changes made during the port
+
+Reviewed the ported surface and changed it rather than freezing `../pk`'s shape:
+
+- **The policy owns enforcement; reporters only report.** `Diagnostics.report` checks the policy
+  first — `Ignore` drops, `Throw` raises a `PraxisError` inline, only `Report` reaches the reporter.
+  `ThrowingReporter` was **removed** (dead — a reporter never got the chance to throw). "Strict
+  mode" is a policy with `throwThreshold: Severity.Error`, not a reporter.
+- **Facade covers all five severities**: `debug` / `info` / `warn` / `error` / `fatal`. `../pk` had
+  only `warn`/`error`/`info` despite `Severity.Debug`/`Fatal` existing.
+- **`active` → `warnActive`.** It only ever meant "a `Warning` would not be ignored" — a cheap gate
+  for skipping warning-level validation work, not a general "diagnostics on" flag. Renamed so the
+  name matches the semantics.
+- **`DefaultPolicy` validates `throwThreshold >= reportThreshold`** (`RangeError` otherwise) — a
+  throw band below the report band is always a misconfiguration.
+- **`AsyncConsoleReporter` dedups on the formatted string**, deliberately — it is a console-UX
+  helper, not a lossless channel. Documented on the class; `CollectingReporter` is the lossless
+  option. A location-aware key stays a future option.
+- **Dropped the `type-fest` dependency** — `DiagnosticInput` uses built-in
+  `Omit<Diagnostic, 'severity'>` instead of `Except`. No other repo code used `type-fest`.
+- **`AnyRecord` is imported from `@praxis-kit/primitive`.** `primitive` is the single source of
+  truth for `AnyRecord`/`StringMap`; `primitive` also imports the `Diagnostics` type from here, so
+  this forms a package cycle — but a **type-only** one, fully erased at build time, so it is
+  accepted rather than duplicating the primitives. `@praxis-kit/primitive: workspace:*` is a
+  declared dependency of `lib/diagnostics`. **On the architectural watch list** (port review):
+  accepted now because the alternative — a premature `@praxis-kit/types` / `@praxis-kit/shared` leaf
+  — is worse. If such a genuinely independent leaf package ever exists for its own reasons,
+  `primitive ↔ diagnostics` is the first cycle to move into it.
+
+### `lib/diagnostics` — `Diagnostic.context` vs `.metadata`
+
+Both are `Record<string, unknown>` bags today, and left to drift they become the same thing. The
+intended split, documented on the types in `types.ts`:
+
+- **`context`** — data a _reader_ needs to understand the diagnostic; the values a formatter
+  interpolates into `rationale`/`message` (offending prop name, expected vs actual child, ARIA
+  token). Human-oriented.
+- **`metadata`** — data a _consumer_ keys off (build plugin, editor integration, telemetry); never
+  rendered to a person. Machine-oriented.
+
+Direction (from the README): grow structured `context` fields so formatters derive messages instead
+of callers pre-formatting them — but **add no field to either bag without a concrete consumer**.
+
+### `lib/diagnostics` — `HTML`/`ARIA` are spec validity; `Accessibility` is guidance
+
+The `DiagnosticCategory` taxonomy keeps a deliberate split, mirrored by the code ranges in
+`codes.ts`:
+
+- **`HTML` (`HTML3xxx`) / `ARIA` (`ARIA2xxx`)** — spec compliance. The markup or ARIA usage is
+  _invalid_ per the HTML standard or the ARIA spec. A fact.
+- **`Accessibility` (`A11Y8xxx`)** — best-practice guidance. The usage is spec-valid but
+  inadvisable. Advisory.
+
+A rule goes in `Accessibility` **only when it is not** an `HTML`/`ARIA` validity fact. This lets
+consumers treat the two classes differently (e.g. fail a build on validity errors, only warn on
+guidance). Documented on the enum itself in `category.ts`; do not let new codes blur the line.
+
+**APG authoring practices are guidance, not validity** (port-review guardrail). Praxis must not
+progressively enforce every WAI-ARIA APG recommendation as if it were a platform violation. The
+line: an APG "should" (unique landmark names, `menu` inside a `menubar`, roving-tabindex order, APG
+child-composition patterns) is `Accessibility` / `warning` at most — never `HTML`/`ARIA` / `error`.
+Only a genuine HTML-spec or ARIA-spec invalidity is `HTML`/`ARIA`. `requireAccessibleName`
+(`packages/core` widget contracts + the `nav`/`aside` landmark rule) is deliberately `warning`
+severity for exactly this reason; keep it and any similar check scoped that way. The role-table
+standards audit (own entry) is the companion task — get the validity facts right, and keep
+everything else advisory.
+
+### Type assertions (`as` / `as unknown as`) — fine at boundaries, suspicious in enforcement logic
+
+Port-review guardrail. The codebase carries ~20 `as` / `as unknown as` casts. The rule for keeping
+that number honest:
+
+- **Acceptable** — a cast at a framework or type-system boundary: the `createPolymorphic` /
+  `createContractComponent` return (`assembled as MergeRecords<…>` — a conditional type TS can't
+  prove while generics are open, guarded by a runtime `invariant`), React ref shapes
+  (`Ref<T> | null` narrowing), `ElementForTag<…>` on the DOM ref API, adapter `FactoryOptions`
+  guards. These sit where the type system genuinely can't follow and a runtime check or a
+  well-understood invariant backs them. Each should carry a one-line comment saying which.
+- **Suspicious** — a cast inside semantic enforcement logic (contract evaluation, ARIA rule results,
+  diagnostic construction, children matching). There the types _are_ the specification; a cast is
+  usually a modelling gap to fix, not paper over.
+
+New casts on the "acceptable" side need the boundary comment; new casts on the "suspicious" side
+need a reviewer's sign-off or a follow-up to remove them.
+
+### Versioning: `0.x` line, first release `v0.1.0`
+
+**Revised 2026-09-09** (was "0.x until usable, then `v1.0.0`"): the first release is **`v0.1.0`**,
+not `v1.0.0`. `0.x` is the right signal — the `createContractComponent` / `FactoryOptions` contract
+is frozen for `0.1.x`, but the rest of the surface (tooling entries, `contract`/`guards`/`html`
+authoring types) may still move (`docs/api-stability.md`). A `1.0.0` that promised whole-surface
+stability would be a lie this early.
+
+- Pre-1.0, breaking changes are expected and do not force a major; Changesets moves `0.y.z`.
+- The old repo's version numbers are **not** carried over. **This repo replaces `../pk` as the
+  source of the `praxis-kit` npm package** (user decision, 2026-09-09). `../pk` published
+  `praxis-kit` up to `7.8.1`; this repo publishes `0.1.0` as a deliberate reset (never-published
+  version — npm accepts it fresh; `publish.yml`'s `--tag latest` points `latest` at it). The
+  `1.1.0`–`7.8.1` line gets deprecated on npm after `0.1.0` lands (npm won't unpublish versions
+  > 72h old — `npm deprecate` is the realistic move).
+- The release flow: `develop` → `main` PR, then a `v0.1.0` tag on `main` fires
+  `.github/workflows/publish.yml` (build `packages/kit` → npm auth via `secrets.NPM_TOKEN` →
+  dist-tag resolution → unresolved-`catalog:` guard → `pnpm publish --provenance --access public`).
+
+Migration status and the full "where version numbers live" checklist are tracked in
+`.vscode/MIGRATION.md` (uncommitted).
+
+### `lib/pipeline` — execution strategy is per-pipeline; parallel conflicts throw
+
+`Pipeline.strategy` is `'sequential'` (default when omitted) or `'parallel'`, set on each pipeline
+so a tree can mix them. `runPipeline` reduces every node — `Pass` or nested `Pipeline` — to the same
+`{ patch, diagnostics, metadata }` outcome, then folds those outcomes per strategy:
+
+- **sequential** — a barrier between nodes; each node sees the previous node's merged context.
+- **parallel** — every node runs against the same input (`Promise.all`); patches are checked with
+  `detectConflicts` and merged. Diagnostics and metadata still accumulate in node order so the
+  result is deterministic.
+
+**A parallel key conflict throws `ParallelConflictError`, it is not a diagnostic.** Two concurrent
+nodes writing the same key with no ordering between them is a pipeline _authoring_ bug — there is no
+correct merged value to pick. Diagnostics are for invalid _input_, not invalid pipelines. Fail fast,
+name the pipeline and the keys.
+
+A nested pipeline running as a parallel node contributes `shallowDiff(input, itsResult)` — it saw
+the same input a sibling pass saw, and `mergeContext` keeps untouched keys by reference, so the diff
+is exact for untouched keys and conservative (flags a change) for a key reassigned to an
+equal-but-new value.
+
+Still deliberately **not** built: a synchronous fast path for all-sync pipelines, and any
+`concurrency` limit on `parallel` (all nodes fire at once).
+
+### `lib/pipeline` — phases are composition sugar, not an execution mode
+
+`phasedPipeline(name, phases)` builds a plain `Pipeline` whose top-level nodes are the canonical
+phases — `normalize`, `enrich`, `validate`, `emit` (`PIPELINE_PHASES`, always that order) — as
+nested sub-pipelines, one per non-empty phase. It runs through `runPipeline` with zero special
+casing.
+
+- **No new runtime.** A phase is a nested `Pipeline` named after the phase; the executor already
+  handles nesting. The only thing `phasedPipeline` adds is the fixed order and the phase names.
+- **Empty phases are dropped**, not run as empty sub-pipelines, so the tree reflects the work that
+  exists.
+- **The names carry no semantics here.** `validate` is not wired to fail-on-diagnostic; `emit` is
+  not special. The pipeline package assigns meaning only to _order_. Consumers (the compiler, the
+  runtime) attach the behaviour.
+- Naming each phase sub-pipeline means a `RunResult`'s diagnostics and any tree-walking tooling can
+  attribute work to a phase without a separate phase concept in the executor.
+
+### `lib/pipeline` — sequential executor is `runPipeline`, always async, returning `RunResult`
+
+`runPipeline(pipeline, input)` walks `pipeline.nodes` in order with a barrier between each: a leaf
+`Pass` is `execute`d and its patch folded in via `mergeContext`; a nested `Pipeline` runs in place
+and its whole outcome is folded into the parent's accumulation.
+
+- **`RunResult` is not `PassResult`.** `PassResult` is a _patch_ one pass proposes
+  (`context?: Partial<TContext>`); `RunResult` is the fully accumulated state the executor owns —
+  final `context: TContext`, and the concrete `diagnostics` / `metadata` collected across the run. A
+  pass never sees a `RunResult`. This is the "execution result vs accumulated context" boundary.
+- **Always returns a `Promise`.** A node may be an async pass (`MaybePromise`), so the executor
+  awaits every node. A synchronous fast path for all-sync runtime pipelines is a later performance
+  concern — not built until benchmarks justify it.
+- **Diagnostics concatenate** in run order. **Metadata shallow-merges** in run order (last key
+  wins); passes that must not collide namespace their keys. Metadata is never merged into `context`.
+- Nesting is structural: a node is a `Pipeline` when it has `nodes`, else a `Pass`. No base class,
+  no `kind` tag.
+
+### `lib/pipeline` — context merge is shallow top-level replace
+
+`mergeContext(accumulated, patch)` is `{ ...accumulated, ...patch }`: each key present on a
+`PassResult.context` patch replaces that key's value wholesale; absent keys are untouched. No deep
+or per-domain merge.
+
+Why:
+
+- It is the honest match for `PassResult.context`'s `Partial<TContext>` type — a shallow patch,
+  merged shallowly. Deep merge would make the type and the runtime disagree.
+- Order-independent under one stateable rule: two passes in the same parallel group must not write
+  the same key. `detectConflicts` enforces that for the future parallel executor. Deep merge has no
+  such rule — write order silently changes the result.
+- `diagnostics` and `metadata` live outside `context` and accumulate separately, which absorbs most
+  of the "different domains need different merge semantics" pressure.
+- Smallest thing that unblocks `Pipeline`. When a concrete in-`context` domain needs concat or
+  recursive merge, a strategy map can be added with shallow replace as the default — backward
+  compatible.
+
+Invariant carried forward: a `Pass` never owns the pipeline's context. It produces a patch; the
+executor owns accumulation. `Pass` → `PassResult` → { context patch → `mergeContext` → accumulated
+context; diagnostics → accumulation; metadata → tooling, never merged into context }.
 
 ### Vitest: root `vitest.config.ts` with `test.projects` (not `vitest.workspace.ts`)
 
 Vitest 4 deprecates the standalone `vitest.workspace.ts` that `../pk` uses. `vitest.config.ts` at
 the root declares a `test.projects` glob over
 `{lib,packages,adapters,plugins,tooling,qa,examples}/*/vitest.config.ts`; each package owns its own
-config. Inert until the first package with tests. `configs/vitest.base.ts` (shared `defineLibConfig`
-/ `defineJsdomConfig` helpers) is still deferred — it lands with that package.
+config. `configs/vitest.base.ts` (shared `defineLibConfig(name, overrides?)`) is ported too, as of
+the first package (`lib/pipeline`) — collapsed to one function with `environment` etc. passed
+through `overrides`; `include` is enforced last as policy (`src/**/*.{test,spec}.ts`).
 
-### ESLint: ported from `../pk`, minus the in-repo plugin
+`../pk`'s second factory, **`defineJsdomConfig`, came back with `adapters/react`** — a framework
+adapter genuinely can't be expressed through `defineLibConfig` overrides: it needs
+`environment: 'jsdom'` _and_ an include policy of `src/**/*.test.{ts,tsx}` (test files sit beside
+`.tsx` source, and `.pw.spec.tsx` must be left for the Playwright-CT runner, not picked up by
+Vitest). Both are enforced last, same as `defineLibConfig`; `overrides` carries only `setupFiles`
+etc. Every framework adapter uses it.
+
+### `plugins/eslint` — port scope
+
+`@praxis-kit/eslint-plugin`, ported ~verbatim (7 rules — `no-dead-compound`,
+`no-enforcement-without-strict`, `no-invalid-default`, `no-invalid-html-nesting`,
+`no-redundant-role`, `valid-cardinality`, `valid-children-config` — + `types/` + `utils/`, ~1775 src
+LOC, 120 tests via `@typescript-eslint/rule-tester`).
+
+- **deps:** `@praxis-kit/{diagnostics,primitive}` + `@typescript-eslint/utils` + `type-fest` →
+  `dependencies`; `eslint >=9` peer; `@typescript-eslint/rule-tester` + `typescript-eslint` +
+  `eslint` dev. `../pk`'s `@praxis-kit/pipeline` devDep dropped (unused).
+- **scaffold:** standard `lib/*` shape — `exports` `.` → `src/index.ts`, `tsconfig.json` extends
+  base, `vitest.config.ts` = `defineLibConfig('eslint-plugin')`. `../pk`'s `tsdown.config.ts` /
+  `tsconfig.build.json` / `build` scripts dropped (the repo defers package builds; the plugin is
+  consumed from source in-repo and `private: true`).
+- **`repository.directory`** corrected `packages/eslint-plugin` → `plugins/eslint`.
+- Wired into `tsconfig.paths.json` + root `references`, and into the root `eslint.config.ts` (see
+  the ESLint entry below).
+
+**Dependency-boundary note** (port review). The ESLint layer must understand Praxis _contracts_, not
+adapter/runtime internals. It does today: its `@praxis-kit/primitive` imports are only the
+framework-neutral utilities (`iterate`, `isObject`, `isString`, `AnyRecord`, `StringMap`), and its
+one semantic dependency is the `@praxis-kit/diagnostics` taxonomy (`DiagnosticCategory` /
+`DiagnosticCode` — the shared diagnostic identity across runtime / TS-plugin / ESLint). It does
+**not** import `lib/runtime`, `lib/adapter-utils`, or any adapter.
+
+- **Follow-up (real coupling):** `src/utils/implicit-roles.ts` (`IMPLICIT_ROLES`) and
+  `src/utils/html-nesting.ts` + `content-model-builders.ts` (`TAG_CATEGORIES`, content models) are
+  _hand-maintained parallel copies_ of `packages/core`'s `HTML_ARIA_RULES` / role tables and
+  `lib/contract`'s ARIA spec — a deliberate static-only subset (a lint rule sees only the tag name,
+  can't evaluate `<a href>` conditionally), but a divergence risk. Fold this into the "HTML/ARIA
+  contract layer — standards audit" task: one normative source, ideally one set of data with the
+  plugin consuming a static projection of it.
+
+### `plugins/typescript` — port scope
+
+`@praxis-kit/typescript-plugin` (renamed from `../pk`'s `@praxis-kit/ts-plugin` — see below), ported
+~verbatim (~295 src LOC, no tests, no `@praxis-kit/*` deps). A TypeScript language-service plugin:
+proxies `getSemanticDiagnostics` and adds `checkNoEnforcementWithoutStrict` (code 90001) plus
+`checkValidCardinality` (90002–90004) from its own tiny AST walker (`walkEnforcement`).
+`export = init` (CJS).
+
+- **Build scripts kept** (`build` / `dev` via `tsdown`), unlike every other package here — a TS LS
+  plugin is `require()`d by `tsserver` as compiled JS from `dist/index.js`; it _is_ its build
+  output, there is no from-source consumption. `tsdown.config.mts` → `format: ['cjs']`,
+  `neverBundle: ['typescript']`.
+- **`tsconfig.json` is standalone** (not `extends: ../../tsconfig.base.json`): `module: CommonJS`,
+  `moduleResolution: Node` (node10), `outDir: dist`. This is deliberate and is the concrete reason
+  `typescript` is catalog-pinned to `>=6 <7` — the `typescript/lib/tsserverlibrary` import and
+  node10 resolution are a hard error in TS 7 (`TS5108`). See `CLAUDE.md`.
+- `peer: typescript >=5.0`. Added to root `tsconfig.json` `references`; no `tsconfig.paths.json`
+  entry (nothing imports it). `configs/typescript.ts` already lists
+  `plugins/typescript/tsdown.config.mts` in `allowDefaultProject`.
+
+**Port-review changes:**
+
+- **Renamed `@praxis-kit/ts-plugin` → `@praxis-kit/typescript-plugin`** — pairs obviously with
+  `@praxis-kit/eslint-plugin`; nothing depended on the old name (clean-room). Propagated to the
+  diagnostic `source` string and the `configs/architecture.ts` boundary label.
+- **README corrected** — it claimed the diagnostics show up "in `tsc` output" and that
+  `--generateTrace` makes a CLI build load the plugin (both false). It is now unambiguously an
+  editor/`tsserver` tool; CI enforcement is `@praxis-kit/eslint-plugin` + runtime.
+- **Diagnostic location narrowed** — `no-enforcement-without-strict` (90001) now anchors on the
+  offending `children` / `aria` key, not the whole factory call.
+- **`max: 0` no longer flagged** (dropped code 90005 / `ZERO_MAX_CODE`, and the matching `zeroMax`
+  rule + template + `DiagnosticCode.LintZeroMax` usage in `plugins/eslint`) — see the contract
+  decision below. `DiagnosticCode.LintZeroMax` stays reserved in `lib/diagnostics/codes.ts`.
+- **Error-vs-warning rule stated** in the README + code: impossible/self-contradictory contract →
+  error; potentially-unintended → warning. (Same spirit as the `Accessibility`-is-guidance taxonomy
+  guardrail.)
+
+**Follow-ups (not this slice):**
+
+- **Shared diagnostics core.** `plugins/eslint` and `plugins/typescript` now hold _two_
+  implementations of `no-enforcement-without-strict` + `valid-cardinality` (different AST models —
+  `@typescript-eslint` estree vs `tsserverlibrary`). They can drift. The target: a framework-neutral
+  rule engine (`validateCardinality({min,max}) → { code, severity, message }`) that both plugins
+  translate their AST into and render from. Sits alongside the `plugins/eslint` "one HTML/ARIA data
+  source" follow-up.
+- `isFactoryCall` matches on callee name only — `otherLib.createContractComponent(...)` matches too.
+  Make the config able to pin the import module identity.
+- Rule parity with `plugins/eslint` (`no-invalid-default`, `no-dead-compound`,
+  `valid-children-config`) — `no-invalid-html-nesting` is lower priority (no JSX/HTML model in the
+  LS plugin).
+
+### `plugins/vite` — port scope
+
+`@praxis-kit/vite-plugin`, ported (~2800 src LOC after the deferral below, 7 vitest files / 148
+tests). Six build-time Vite plugins that parse `.tsx`/`.jsx` with the **TypeScript compiler API**
+(`import ts from 'typescript'`, not babel):
+
+- `contractPlugin` — static `enforcement.children` cardinality + ARIA-override checks, single-file
+  (`transform`) and cross-file (`buildEnd`, via a `ConstraintRegistry`).
+- `compoundPrunePlugin` — strips dead `styling.compounds` entries.
+- `classExtractPlugin` — injects a static `precomputedClasses` map into each factory call.
+- `slotTransformPlugin` — rewrites safe `asChild` sites to the render-prop form.
+- `staticCompositionPlugin` — inlines statically-analyzable usage sites to direct element creation.
+- `ssrOptimizePlugin` — the bundle of the three transforms in dependency order.
+
+- **deps:** `@praxis-kit/{core (type-only),diagnostics,primitive}` + `typescript` → `dependencies`
+  (`typescript` is a real runtime dep — the plugin bundles compiler-API calls); `vite >=5` peer;
+  `vite` + `vitest` + `@types/node` dev. `type-fest` dropped (was design-tokens-only).
+- **scaffold:** standard `lib/*` shape — `exports .` → `src/index.ts`,
+  `defineLibConfig('vite-plugin')`, no build script. `../pk`'s `tsup` build config dropped entirely
+  (rather than converted to `tsdown`) — nothing consumes it in-repo; a real build lands with the
+  release pipeline. `type: module`.
+- `repository.directory` corrected `packages/vite-plugin` → `plugins/vite`. Added to root
+  `tsconfig.json` `references`; no `tsconfig.paths.json` entry (only self-referenced in JSDoc).
+
+**`designTokensPlugin` was deferred then restored.** `src/design-tokens.ts` + `.test.ts` are the
+only modules that import `@praxis-kit/tailwind` (`layoutKeys`). PR #30 landed the plugin without
+them; the `lib/tailwind` PR restored them (+ the `./design-tokens` re-exports in `index.ts`, the
+`@praxis-kit/tailwind: workspace:*` dep, and the README section). Nothing else in the plugin touches
+Tailwind. vite-plugin: 151 → 163 tests.
+
+**Port-review changes:**
+
+- **`parseSource` derives `ScriptKind` from the extension** (`.ts` → `TS`, `.tsx` → `TSX`, `.js` →
+  `JS`, …; unknown → `TSX`). `../pk` always parsed as `TSX`, so a `.ts` file's `<T>expr` type
+  assertion (valid in `compoundPrune` / `classExtract`, which run on `ALL_EXTS`) was mis-parsed. +3
+  `ast.test.ts` cases.
+- **README + `package.json` reframed** — it _is_ a small static compiler, not a "misc plugin
+  collection": description updated; cross-file analysis stated as "best-effort static analysis, not
+  whole-program verification" (`import * as X` / deep barrels / dynamic config are left alone); SSR
+  made the headline use case; `staticCompositionPlugin` marked **experimental** pending differential
+  tests.
+
+**Review pass 2 (with the `lib/tailwind` slice that restored `designTokensPlugin`):**
+
+- **`designTokensPlugin` clears its accumulator on `buildStart`** — without it a watch-mode rebuild
+  after a file is deleted/renamed keeps the removed component's classes in the emitted manifest. +1
+  lifecycle test (`164` tests).
+- **Output root via `configResolved(config).root`** instead of the
+  `(this as unknown as { config? }).config?.root` reach into an internal-ish context shape.
+
+**Follow-ups (design toward — not this slice):**
+
+- **Extract a framework-neutral `lib/compiler`** — `parse / analyze / transform / optimize / emit`,
+  with `plugins/vite` (and eventually a Rollup/Webpack/esbuild adapter, and the `plugins/typescript`
+  diagnostics) as thin adapters. The five Vite plugins are really _one pipeline_ wearing Vite's
+  independently-ordered-transform clothing. This is the same consolidation as the `plugins/eslint` +
+  `plugins/typescript` "shared diagnostics core" follow-up — one target:
+  `Praxis static compiler → { validation, optimisation, transforms } → {Vite, TS} adapters`.
+- **Source maps.** The transforms return `{ code }` with no `map`. For AST→AST→source, and for
+  diagnostics that must point at the _original_ line after several transforms, source-map
+  preservation is a production-readiness requirement before the optimiser is called stable.
+- **Import-aware `isFactoryCall`** (shared with `plugins/typescript`, and more dangerous here since
+  this _rewrites_ code) — recognise `createContractComponent` only when imported from
+  `@praxis-kit/*`, not an unrelated same-named function.
+- **`classExtractPlugin` large-map strategy** — the 512-combination cap is a fine safety valve; a
+  shared/generated asset (vs. an inline literal per module) is the eventual answer for big maps, and
+  for not emitting the data when the component is tree-shaken away.
+- **`staticCompositionPlugin` differential tests** — render the inlined output vs the runtime path
+  and assert DOM/attr equivalence, across refs / context / defaults, before dropping the
+  experimental label. Reviewer: highest-value testing work; ~20–30 targeted cases across
+  `slotTransform` / `staticCompose` / `classExtract` would do.
+- **`designTokensPlugin` manifest keying** — keyed by bare component name, so `admin/Button` +
+  `public/Button` merge. Fine while the manifest's job is Tailwind safelisting (the flat
+  `allClasses` union is what matters); revisit with a module-path key + friendly name as metadata if
+  the per-component map gains a real consumer.
+
+### `tooling/codemod` — port scope
+
+`@praxis-kit/codemod`, ported ~verbatim (~20 src files, ~430 non-test LOC, 22 tests). A `ts-morph`
+CLI with three commands — `migrate` (the recommended one-pass), `rename`
+(`createPolymorphicComponent` → `createContractComponent` across ESM named imports/exports), and
+`migrate-paths` (`@praxis-kit/*` → `praxis-kit/*` specifiers, incl. `require()` / dynamic
+`import()`, with `@praxis-kit/eslint-plugin` → `praxis-kit/eslint` as the one special case).
+`migrate` runs rename **before** paths so the `PRAXIS_PACKAGE` filter still matches `@praxis-kit/*`
+specifiers; both orders are idempotent and the suite pins that.
+
+- **deps:** `ts-morph` (catalog) → `dependencies`; `@types/node` + `tsdown` + `typescript` +
+  `vitest` (all catalog) dev. No `@praxis-kit/*` deps — it operates on _consumer_ source text, not
+  the kit's own types.
+- **Build scripts kept** (`build` / `dev` via `tsdown`), like `plugins/typescript` and unlike the
+  `lib/*` / `plugins/vite` packages — this is a runnable `praxis-codemod` bin (`dist/index.js`, ESM,
+  `#!/usr/bin/env node` banner), not a from-source library. `tsdown.config.ts` ported verbatim
+  (`entry: src/index.ts`, `format: ['esm']`, `dts`, `clean`, `fixedExtension: false`).
+- **`tsconfig.json` is standalone** (not `extends: ../../tsconfig.base.json` — base is `noEmit` +
+  `moduleResolution: bundler`): `module` / `moduleResolution: NodeNext`, `outDir: dist`,
+  `rootDir: src`, `types: ["node"]`, `+ skipLibCheck`. `vitest.config.ts` uses the repo's
+  `defineLibConfig('codemod')` (was a hand-rolled `defineConfig` in `../pk`).
+- Added to root `tsconfig.json` `references` and `.changeset/config.json` `ignore` (private, bundles
+  into `praxis-kit`); no `tsconfig.paths.json` entry (nothing imports it). `configs/typescript.ts`
+  `allowDefaultProject` and `configs/architecture.ts` already listed the `tooling/codemod` paths.
+
+**Port-review changes:**
+
+- **Deleted 3 dead re-export shims** — `src/types.ts` (re-exported `./types/index.js`),
+  `src/transforms/rename-symbol.ts` (`renameInProject`), `src/cli/project.ts` (`buildProject`).
+  Nothing imported any of them; the real modules are imported directly.
+- **`usage.ts` no longer reads a sibling `.md` at runtime.** `../pk` did
+  `readFileSync(new URL('./usage.md', import.meta.url))` and never copied `usage.md` into `dist` (it
+  wasn't in `files` either) — so the standalone `--help` / no-args / unknown-command paths threw
+  `ENOENT` in a built CLI. The text is now an inline `const usage` string; `usage.md` deleted. Also
+  fixes the prettier-mangled markdown (`*` → `\*`, collapsed command list) the old file had.
+  Verified end-to-end: `node dist/index.js --help` and `migrate --dry-run --verbose` both work.
+
+**Review pass 2 (README accuracy + `rename` scope):**
+
+- **README "Migrations" restructured for versioning clarity.** It listed two dated sections (v1.0.0,
+  v3.1.0) with no signal for whether either was historical or proposed — a reader could reasonably
+  wonder if the codemod was meant to walk several Praxis generations. Added a one-line framing
+  ("each subsection is a migration that has already shipped; there is currently one") so the single
+  real, automated migration reads unambiguously as current, not as the first of a series.
+- **The v3.1.0 section's claim was wrong, not just ambiguous.** It documented `styling.presets` →
+  `styling.recipes` as a completed rename needing manual find-and-replace. It never shipped —
+  `presets` is still the real `StylingOptions` field name, in `../pk` and here (confirmed by reading
+  the source, not just the docs). A codemod or a user manually "fixing" this per the old README text
+  would have broken working code by renaming to a key the type doesn't have. The section now says so
+  plainly and points at the "Open" item above; the `variantKey` → `recipe` prop half of the old
+  claim **is** real but is ancient/already-complete history with nothing left to migrate, so it's
+  dropped rather than presented as still-actionable.
+- **`rename`'s scope stated explicitly** (README, `--help` text, and a code comment on
+  `renameInProject`): it renames a Praxis-Kit factory bound to a `@praxis-kit`/`praxis-kit`
+  specifier, not an arbitrary same-named symbol — and, for an unaliased import, the rename reaches
+  every reference to that binding project-wide (bare references, `.method()` calls, …), not just the
+  import/export line, because it's a real `ts-morph` identifier rename. Both branches were already
+  correct; only the documentation was unclear about which. +2 tests pin the cascade (`fn.bind(...)`,
+  a bare reference) and comment preservation on the specifier line. 24 tests.
+
+**Follow-ups (not this slice):**
+
+- **The `praxis-codemod` bin ships inside `praxis-kit`.** `packages/kit` needs a `bin` entry + a
+  build entry that bundles `src/index.ts` (with the shebang banner) — lands with the `packages/kit`
+  build, alongside the deferred tsup→tsdown work.
+- **A future structural property-migration command** — reviewer-suggested: recognize
+  `styling: { presets: {...} }` and a `recipe`-style JSX attribute via `ts-morph`'s AST rather than
+  find-and-replace, avoiding the false-positive risk of renaming an unrelated same-named object key
+  or prop. There is nothing to migrate for `presets` today (see the "Open" item above) — this stays
+  a template for whenever a real mechanical field/prop rename ships, not a command to build now
+  against a rename that doesn't exist.
+- **A richer migration report** — reviewer-suggested: a structured summary (renames / path rewrites
+  / files modified, plus a "skipped: namespace imports / CJS destructuring" count) instead of the
+  current one-line `message`. The `Summary`/`RenameSummary`/`PathSummary`/`MigrateSummary` types
+  already carry the counts a nicer formatter would need; this is a `create-command.ts` presentation
+  change, not a transform change.
+- **Keep the transform layer framework-neutral** — reviewer's architectural note, worth recording
+  even though nothing prompted it yet: this package should stay scoped to the Praxis Kit public
+  API/contract surface (paths, factory names, eventually API properties). Framework-specific
+  migration logic (React-only, Vue-only, …), if it's ever needed, belongs elsewhere rather than
+  growing branches inside `tooling/codemod`.
+- `isFactoryCall` equivalent: `rename` matches a named import by name + a `@praxis-kit`/`praxis-kit`
+  module filter, which is right, but the same import-identity rigor as the `plugins/*` follow-ups
+  would let it also handle re-export chains.
+
+### Contract: `cardinality: { max: 0 }` is the canonical "forbid this child type"
+
+The child-rule runtime (`lib/contract` `RuleValidator#validateCardinality`) treats _any_ match
+against a `bounded` rule with `max: 0` as a violation — so
+`{ type: Footer, cardinality: { max: 0 } }` is a precise, declarative "no `Footer` children
+allowed". It is **expressive, not suspicious**: neither `plugins/eslint` nor `plugins/typescript`
+flags it. An impossible combination (`max < min`, negative bounds) is still an error.
+`normalizeChildRule` already accepts `{ min: 0, max: 0 }` (only `min > max` throws).
+
+### ESLint: ported from `../pk`
 
 `eslint.config.ts` + `configs/{base,typescript,architecture,imports,unicorn,types}.ts` are ported.
-Two pieces are left out until the packages they need exist:
 
-- the `@praxis-kit` ESLint plugin import and the self-validation block that runs its rules over
-  `packages|adapters|examples/*/src` — needs `plugins/eslint`.
-- `configs/praxis-plugin.ts` and `configs/vitest.base.ts`.
+The **`@praxis-kit` plugin + self-validation block are wired back in** as of `plugins/eslint` (PR):
+`eslint.config.ts` imports `./plugins/eslint/src/index`, registers it globally so disable-directive
+validation resolves, and runs all seven rules over
+`{packages,adapters,examples}/*/src/**/*.{ts,tsx}`. `../pk`'s separate `configs/praxis-plugin.ts` is
+**not** recreated — it only existed to feed the per-adapter `eslint.config.ts` files, and this repo
+lints from the root config alone. The 3 react-test sites that verify the adapter's
+unset-`diagnostics` default now carry real
+`// eslint-disable-next-line @praxis-kit/no-enforcement-without-strict` directives again (they were
+plain comments while the rule didn't exist).
 
-`configs/architecture.ts`'s `boundaries/elements` patterns are copied verbatim; they match nothing
-(and so enforce nothing) until those package dirs land.
+`configs/architecture.ts`'s `boundaries/elements` patterns were pointed at the real target dirs
+(`plugins/eslint`, `plugins/typescript`, `plugins/vite`, `lib/tailwind`, `tooling/codemod`) — still
+inert for the ones whose dirs don't exist yet.
 
 ### Git workflow: `main` stable, `develop` integration
 
 `main` holds only stable, released state. `develop` is the integration branch — feature branches
-start from `develop` and merge back into it; `develop` merges into `main` at a release.
-`.vscode/tasks.json` carries the workflow helpers — `Git: sync repository` fetches and hard-resets
-**both** `main` and `develop` to their origins then prunes gone branches; `Git: switch develop` and
-the individual `Git: reset … to origin` / `Git: prune gone branches` tasks are also exposed. The
-file is re-included in `.gitignore` past the global `.vscode` exclusion so the workflow travels with
-the repo. A `Git: start feature` task is deferred — the branch name needs input, so it is handled
+start from `develop` and merge back into it; `develop` merges into `main` at a release. A local
+(un-versioned) `.vscode/tasks.json` carries the workflow helpers — `Git: sync repository` fetches
+and hard-resets **both** `main` and `develop` to their origins then prunes gone branches;
+`Git: switch develop` and the individual `Git: reset … to origin` / `Git: prune gone branches` tasks
+are also exposed. `Git: prune gone branches` deletes a local branch when its upstream is `[gone]`
+**and** it is merged into `develop` or `main` (feature branches merge into `develop`, so a
+`--merged=main` check — the original — never matched). The whole `.vscode/` directory is
+`.gitignore`d and was scrubbed from history; the tasks file is a local convenience, not a repo
+artifact. A `Git: start feature` task is deferred — the branch name needs input, so it is handled
 outside a plain shell task for now.
+
+### `lib/tailwind` — port scope
+
+`@praxis-kit/tailwind`, ported ~verbatim (~800 non-test src LOC, 8 vitest files / 350 tests) — the
+last untouched `lib/*`. A layout-aware Tailwind class pipeline: `createTailwindPipeline` (composed
+via `@praxis-kit/pipeline-kit`), `ClassClassifier` / `ClassBuilder`, `LayoutState`,
+`DependencyEvaluator` + `defaultDependencyRules`, `layoutKeys`, and `tailwind-safelist.css` (a
+`@source inline(…)` asset copied verbatim into the published dist and content-checked by
+`tailwind-safelist.test.ts`).
+
+- **deps:** `@praxis-kit/{core,diagnostics,pipeline-kit,primitive}` + `type-fest` → `dependencies`
+  (`../pk` listed `@praxis-kit/contract` but the code imports `@praxis-kit/core` — corrected);
+  `@types/node` dev (test-only `node:fs` / `node:url`).
+- **scaffold:** standard `lib/*` — `exports` `.` + `./safelist.css`, `tsconfig.json`
+  `include: ["src"]` (**not** `["src", "./vitest.config.ts"]` — `configs/typescript.ts`'s
+  `allowDefaultProject` already owns `lib/*/vitest.config.ts`, and having both errors the project
+  service), `defineLibConfig('tailwind')`. `../pk`'s `tsup` build config dropped.
+- `repository.directory` corrected `packages/tailwind` → `lib/tailwind`. Wired into
+  `tsconfig.paths.json` + root `references`.
+- **`.prettierignore`** gained `lib/tailwind/src/tailwind-safelist.css` — the repo's global
+  `singleQuote: true` rewrites its `@source inline("…")` directive (quote + line-wrap), breaking the
+  test that asserts its exact content. That file is a verbatim published asset, not
+  prettier-managed.
+- **`plugins/vite`'s `designTokensPlugin` restored** now that `@praxis-kit/tailwind` exists (see the
+  `plugins/vite` entry).
+
+**Port-review notes (all doc-only — the review was "keep this architecture, don't refactor"):**
+
+- README now states the conceptual boundary — "a semantic bridge between Praxis layout props and
+  Tailwind utility classes", a **lexical, Tailwind-aware** classifier (not a config-resolving
+  Tailwind parser), and documents the `family` model: `none` = "not a flex/grid formatting context",
+  _not_ `display: none`; item-context utilities (`self-*`, `order-*`, `col-*`, …) are never stripped
+  by the element's own mode (they describe it inside its _parent's_ context).
+- **Optional renames deferred** (reviewer: "minor, not urgent"): `family: 'none'` → `'neutral'`; the
+  internal `deadVariant*` naming → `variantOnlyStripped` (the _diagnostic message_ is already
+  precise — "contributes only classes stripped under this mode"). Both touch a merged package's
+  public type / `DiagnosticCode`, so not worth the churn mid-port.
+- **Follow-up — differential testing across the layers**: the Tailwind pipeline, the `plugins/vite`
+  optimiser, and the runtime component system now overlap enough that the real remaining risk is
+  _between_ them (a class the Tailwind layer strips vs one the Vite `classExtract` precomputes vs
+  what the runtime resolver emits). Fold into the `staticCompositionPlugin` differential-tests
+  follow-up.
 
 ### Bundler: tsdown (not tsup)
 
@@ -75,5 +1419,1769 @@ outside a plain shell task for now.
 ### Release flow: Changesets
 
 `@changesets/cli` is in the foundation commit (catalog + root `devDependencies`, `changeset` /
-`version` / `release` scripts). A `.changeset/config.json` and the CI release job land with the
-first publishable package.
+`version` / `release` scripts). **`.changeset/config.json` landed with `packages/kit`.**
+
+- **`praxis-kit` (`packages/kit`) is the only versioned package.** Every `@praxis-kit/*` workspace
+  package is private and bundled into it, so all of them are in the config's `ignore` list.
+  `privatePackages: { version: true, tag: true }` so Changesets versions `praxis-kit` while it is
+  still `private: true` (publishing is separately gated — see below).
+- `changelog: "@changesets/cli/changelog"` (the built-in) — a `@changesets/changelog-github` upgrade
+  is a follow-up (needs the extra dep).
+- `baseBranch: main` — releases are cut from `main`.
+- The **CI release job** and the **first publish** are still deferred: they need `packages/kit` to
+  have a real build, which needs the remaining adapters (`solid`, `svelte`, `lit`, `web`) and
+  `tooling/codemod` — the `exports` map and `../pk`'s `tsup` config both reference them.
+
+### `packages/kit` — scaffold (the `v1.0.0` line)
+
+Ported as a **scaffold**, not the full build package. What landed:
+
+- `package.json` at `0.0.0`, `private: true`, with the `exports` / `typesVersions`-shaped surface
+  for the entries whose source exists (`react` + `/legacy`, `preact`, `vue`, `tailwind` + `.css`,
+  `eslint`, `ts-plugin`, `vite-plugin`, `contract`, `guards`, `html`, `utils`) and their optional
+  peer deps. `../pk`'s `version: 7.8.1` dropped.
+- The four framework-neutral entry files (`contract.ts` / `guards.ts` / `html.ts` / `utils.ts`).
+- `.changeset/config.json` (above).
+
+**`packages/kit`'s entry files are pure pass-throughs.** `contract.ts` (and the others as they get
+the same treatment) is a stack of `export * from '<subpath>'` lines with **no hand-curated name
+lists** — the curated public surface lives one layer down, in purpose-named entries of the lower
+packages, where the docs also live:
+
+- `@praxis-kit/contract/props` (the 8 state-prop normalizers) → re-exported by
+  `@praxis-kit/core/props`
+- `@praxis-kit/primitive/types/factory` (the factory-authoring types) — `FactoryOptions` /
+  `AnyFactoryOptions` now carry the "`satisfies` this to narrow `styling.compounds`" doc on the type
+  itself, not in a `packages/kit` comment
+- `@praxis-kit/core/state` (the 8 state contracts + `mergeContracts`)
+- `@praxis-kit/core/aria` (**new** — the ARIA-rule authoring surface: the fix factories +
+  rule/result types; the one place that still curates a list, since the source barrels are broader
+  than the intended public set)
+- `@praxis-kit/core/diagnostics-api` → `Diagnostics` as a **structural interface**, not the
+  `@praxis-kit/diagnostics` class type. The class has `private` members ⇒ nominal type ⇒ a plugin
+  typed against a class re-export would only accept an instance from that exact bundled copy; a
+  structural type has no identity. A compile-time guard (`DiagnosticsImpl extends Diagnostics`)
+  keeps the interface honest. This also **shrinks the build's shared-`Diagnostics`-chunk problem** —
+  only the runtime class needs de-duping, not the type.
+- The mis-homed `activeProps…selectedProps` re-export was removed from `packages/core/src/utils/`
+  (the `core/utils` follow-up — resolved).
+
+**Rule for the `packages/core` re-export entries** (`primitive.ts`, `contract.ts`, `props.ts`,
+`state`, `aria.ts`, …): a **cross-workspace** re-export is
+`export * from '@praxis-kit/<pkg>/<subpath>'` against a named barrel of the source package — never a
+hand-listed set of symbols, which rots silently when the source renames or drops one. Only
+**same-package** (`./types`, `./x`) names are listed explicitly (this file sees those change). To
+make this work, `lib/primitive` gained `./tag` + `./utils` subpaths and `lib/contract` gained
+`./aria/factories`, `./aria/roles`, `./props`, `./types/aria/aria-rule` — each an exact barrel that
+already existed. `primitive.ts`'s surface grew to whatever `@praxis-kit/primitive/utils` exports (it
+was already all in the bare `@praxis-kit/primitive` surface). The "ARIA-role helpers on the
+`primitive` entry despite the filename" follow-up still stands — the _rot_ concern is fixed, but
+relocating them to an aria/guards entry is a separate call.
+
+**Deferred** (the actual `v1.0.0` work): `../pk`'s `tsup.config.ts` (~20 per-entry configs, the
+shared-`Diagnostics`-chunk scheme, `esbuild-plugin-solid` / svelte handling),
+`scripts/postbuild.ts`, the `tsconfig.build-*.json` variants → converted to `tsdown` once all
+adapters + the codemod exist; `publint`; the CI release workflow; flipping `private: false` and the
+first publish. Two invariants the build must preserve are noted in `packages/kit/README.md` (no
+unpublished names in output; single `Diagnostics` identity via a shared chunk).
+
+### `adapters/lit` — port scope and adaptations
+
+Sixth framework adapter, fourth non-React-family one. Lit components are plain custom-element
+classes (`LitElement` subclasses), Light DOM only (`createRenderRoot()` returns `this`) — variants,
+`as`, and the pipeline's other built-in fields are ordinary HTML attributes, reflected via Lit's
+`static properties`, not a props object. `createContractComponent` returns the class itself; callers
+register it with `customElements.define()`. Flat `src/`, 22 files, 135 tests (111 jsdom + 24 SSR) —
+unchanged from `../pk`'s own count.
+
+Ported from `../pk`'s working tree as of 2026-09-04, including its uncommitted
+`ContractProps<T>`/`GenericsOf<T>` addition (not yet committed there) — see below.
+
+- **`package.json`:** same fix as every prior adapter — `../pk` ships a `dist`-pointing `exports`
+  map and puts `@praxis-kit/{adapter-utils,core,diagnostics,primitive,contract-props}` in
+  `devDependencies` (only `type-fest` as a real dependency); moved all five to real `dependencies`,
+  `exports` to `{ ".": "./src/index.ts" }`, dropped `files`/`repository`/`homepage`/`bugs`/
+  `license`/`author`/`keywords`/`engines`/per-package `lint` scripts (none of that survives in any
+  other adapter here either).
+- **No framework-specific `tsconfig.<name>.json` needed** — Lit has zero `.tsx`, so `tsconfig.json`
+  extends `../../tsconfig.base.json` directly, the same as Vue's.
+- **`vitest.config.ts` needed no adaptation at all** — `../pk`'s already calls the shared
+  `defineJsdomConfig('@praxis-kit/lit')` helper from `configs/vitest.base.ts`, which already exists
+  here unmodified. (Solid/Svelte bypass that helper only because they need a framework-specific Vite
+  plugin its signature doesn't accept; Lit needs none.) `vitest.ssr.config.ts` (raw `defineConfig`,
+  `environment: 'node'`) ported unchanged too.
+- **`configs/architecture.ts` gap found and fixed — present in `../pk` too, not introduced by this
+  port.** Neither `lit` nor `web` (not yet ported) has a `boundaries/elements` entry or a `core`
+  disallow-list entry in `../pk`'s copy of this file either — confirmed byte-identical to this
+  repo's copy before this change. Every prior port here has fixed this class of gap on sight
+  (Solid's port added `solid-js`/`solid-js/**`); added
+  `{ type: 'lit', pattern: 'adapters/lit/**/*' }` and `'lit'`/`'lit/**'` to the `core` boundary's
+  disallow list.
+- **`import-x/no-duplicates` lint gap found and fixed — a real difference from `../pk`, not carried
+  over.** `../pk`'s lint passes cleanly on `build-runtime.ts` (`./types/index` imported twice, one
+  statement type-only) and `create-contract-component.ts` (`@praxis-kit/core` imported twice,
+  `AnyRecord` split into its own statement) — this repo's `eslint.config.ts` enforces
+  `import-x/no-duplicates` where `../pk`'s apparently doesn't reach these files the same way. Merged
+  both pairs of imports into one statement each; no behavior change.
+- **README bug found and fixed:** `../pk`'s Exports table describes `defineContractComponent` as
+  "Registers the component as a custom element (from `adapter-utils`)" — wrong on inspection of the
+  actual (shared, adapter-agnostic) implementation
+  (`lib/adapter-utils/src/runtime/define-component.ts`): it only curries a factory's options
+  (`(options) => (factory) => factory(options)`), matching what Solid's and Svelte's READMEs already
+  say for the identical shared function. Also replaced the `praxis-kit/lit` subpath-import framing
+  (`packages/kit` doesn't wire in `./lit` yet — matching Solid/Svelte's own not-yet-wired state)
+  with `@praxis-kit/lit` direct-install framing, and rewrote Usage around the real
+  `customElements.define()` pattern, since the original example never showed registration at all.
+  Kept (verified accurate, not carried over blind): the "known limitations" block already present in
+  `../pk`'s own `conformance.test.ts` header comment (tag polymorphism is ARIA-only; variant
+  attributes reach the DOM; `asChild` disabled) — folded into the README's own Usage section rather
+  than left undiscoverable in a test file.
+
+**The `ContractProps<T>`/`GenericsOf<T>` mechanism, carried over mid-flight from `../pk`.** Unlike
+Svelte's `GenericsOf<T>` (a direct `infer` off `BuiltRuntime<G, TOptions>`, no marker needed — that
+adapter's `createContractComponent` returns the bundle type unerased), Lit's
+`createContractComponent` erases `TDefault`/`Props`/`TPreset` entirely from its return type
+(`LitContractComponent<TVariants, TPluginProps>` only ever carried those two parameters) — there was
+no ordinary type parameter left to recover `G` from. `LitContractComponent` gained a third,
+defaulted parameter `G` and a phantom `readonly __generics?: G` field, the same marker shape
+React's/Preact's `HasGenerics<G>` (`@praxis-kit/contract-props`) uses for their own erased,
+overload-based component types — new dependency on that package (already present here, used by
+React/Preact). `ContractProps<T>` itself takes no `Mode` parameter, unlike React's/Preact's
+`ContractProps<T, Mode>` — Lit has exactly one render mode (no `asChild`/`render`), so there is only
+ever one prop shape to recover: the custom props (`PropsOf<G>`) plus variant props plus `recipe`
+(`as` is `never` — see below). This was in-progress, not yet committed, in `../pk` at port time (its
+reference commit history has no `feat(lit): …ContractProps…` commit) — ported anyway per explicit
+direction, rather than deferred to a later sync.
+
+**`as` removed entirely — a design bug inherited from `../pk`, found in review and fixed here, not
+merely ported.** `../pk`'s Lit adapter accepted `as` as a _semantic-only_ override: setting `as="a"`
+never changed the rendered element (a custom element's tag is fixed at `customElements.define()`
+time — nothing can turn a `<praxis-button>` into an `<a>`), but it did change which ARIA/
+content-model rules `resolveTag`/`resolveAria`/the children-evaluator applied, as if the element
+really were an anchor. Two real problems, not just a naming one:
+
+- **A live accessibility footgun.** `as="a"` could produce `role="link"` (or whatever ARIA state a
+  real anchor implies) on an element with none of an anchor's actual keyboard/click/middle-click
+  behavior — a role-without-matching-behavior mismatch regardless of what the option was called.
+- **SSR disagreed with the client, silently.** `renderBundleToString` (`lib/adapter-utils`, shared
+  with the not-yet-ported Web adapter) has no live DOM to constrain it, so it rendered whatever tag
+  `as` named as a literal string wrapper: `renderToString(Button, { as: 'a' })` produced
+  `<a …>…</a>`, while the browser could only ever produce `<praxis-button>…</praxis-button>`. This
+  also quietly contradicted the adapter's own `capabilities.tagPolymorphism: false` in the
+  conformance suite — that flag already said Lit has no tag polymorphism; SSR provided a fake,
+  DOM-inconsistent form of it anyway.
+
+Fixed by removing `as` from the pipeline entirely, on both paths, rather than renaming it to signal
+"semantic-only" (the renamed option would still carry the same footgun): no longer a declared Lit
+reactive property (removed from `staticProps`/`InstanceProps`/`praxisProps`); explicitly filtered
+out of `_buildProps()`'s attribute scan (so an undeclared, raw `as="…"` HTML attribute is inert too,
+not just the removed property); `ContractProps<T>['as']` is now `never`, not
+`DefaultOf<GenericsOf<T>>`; `renderToString`'s standalone SSR entry strips an incoming `as` key from
+`props` before it reaches the shared `renderBundleToString`. Also fixed the shared testing
+infrastructure this exposed: `SsrConformanceAdapter` (`lib/adapter-utils`) had no
+`capabilities.tagPolymorphism` gate at all — unlike the DOM-side `ConformanceAdapter`, which already
+skips its "as changes the tag" tests when that capability is `false` — so `ssrConformanceSuite`
+universally asserted real `as`-driven tag polymorphism with no opt-out. Added the same gate to the
+SSR suite (`lib/adapter-utils/src/types/ssr-conformance-adapter.ts`,
+`lib/adapter-utils/src/testing/ssr.ts`) and set `capabilities: { tagPolymorphism: false }` on Lit's
+`ssrConformanceSuite` call, matching what it already declares for the DOM suite. This is a genuine
+gap in the reference implementation too (`../pk` has the identical unconditional SSR test, and the
+same `renderToString` behavior) — worth carrying upstream, and directly relevant to Web's eventual
+port, which shares `renderBundleToString` and has the identical fixed-tag constraint.
+
+New regression coverage: `ssr.test.ts` asserts `renderToString` output is byte-identical with and
+without an `as` key, and that `options.tag` still renders regardless of an unsupported-looking `as`
+value; a new `property-attribute-convergence.test.ts` proves every praxis-owned property
+(`direction`, `recipe`, `praxisClass`) produces the same pipeline result whether set via
+`el.x = 'y'` or `el.setAttribute('x', 'y')` — the client-side test suite previously exercised
+attributes almost exclusively — plus a dedicated case confirming `el.as = 'a'` (property assignment)
+has zero effect, mirroring the SSR-side fix.
+
+**Noted, not acted on:** the SSR registry's module-local
+`WeakMap<LitContractComponent, RegistryEntry>` (`render-to-string.ts`) means a second,
+separately-bundled copy of this adapter package would get its own registry, and a class registered
+against one copy wouldn't resolve against the other's `renderToString` — a packaging/bundling
+concern for whenever `packages/kit` starts assembling these adapters for publish (the same "single
+identity across the published graph" invariant already called out for `Diagnostics` in
+`packages/kit/README.md`), not an architectural flaw to fix today.
+
+Verification: `pnpm -r typecheck` (23 packages) 0 errors, `pnpm -r test` all packages green
+(`adapters/lit` 141/141, up from 135), `pnpm lint:check` clean, `pnpm format:check` clean (no new
+drift — the pre-existing 19 flagged files still sit outside everything touched here).
+
+### `adapters/web` — port scope and adaptations
+
+Seventh and final framework adapter — `../pk`'s full adapter set is now ported. A plain
+`HTMLElement` subclass, no framework dependency at all (no peer dependency either — "the
+zero-framework path"). Architecturally Lit's closest sibling: both are fixed-identity custom
+elements sharing `resolveHostState`/`renderBundleToString`/`diffAndApplyAttributes` from
+`@praxis-kit/adapter-utils`, and Web's own reactivity is even simpler — no framework runtime at all,
+just the native `observedAttributes`/`attributeChangedCallback` lifecycle plus a manual `update()`
+escape hatch for anything that isn't an observed attribute. 15 files, 91 tests (63 jsdom, 28 SSR).
+
+Applied the exact `as`-removal design fix from `adapters/lit`'s own port proactively, rather than
+porting the bug forward and re-discovering it — `../pk`'s web adapter has the textually identical
+issue: `as` was observed (`observedAttrNames`), overlaid into `_buildProps()`
+(`self.as ?? this.getAttribute('as')`), and reached `resolveHostState`/`renderBundleToString`
+exactly like Lit's did, with the identical two failure modes (a `role`-without-behavior
+accessibility footgun, and `renderToString(Button, { as: 'a' })` disagreeing with what the live
+`<praxis-button>` could ever render). Fixed the same way: removed from `observedAttrNames`, filtered
+out of the raw-attribute scan in `_buildProps()` (so an undeclared `as="…"` attribute is inert too),
+and stripped from `props` in the standalone `renderToString()` SSR entry before it reaches the
+shared `renderBundleToString`. `ssrConformanceSuite` call gets
+`capabilities: { tagPolymorphism: false }`, using the gate added to
+`SsrConformanceAdapter`/`ssrConformanceSuite` during the Lit port (`lib/adapter-utils` — no further
+changes needed there, this port just consumes it). New `property-attribute-convergence.test.ts` here
+differs from Lit's in a genuinely adapter-specific way, not a copy-paste: Web has no declared
+reactive-property accessors at all (unlike Lit's `static get properties()`), so a praxis-owned
+property set directly (`el.direction = 'row'`) does **not** auto-trigger the pipeline the way
+`setAttribute` does — convergence only holds once `.update()` is called explicitly. Both halves are
+pinned: convergence after `.update()`, and an explicit test that skipping it leaves the pipeline
+stale (a real behavioral difference from Lit worth documenting, not an oversight to paper over).
+
+Other adaptations, same class of fix `adapters/lit` and every prior adapter needed:
+
+- **`package.json`:** `../pk` had `@praxis-kit/primitive` correctly in real `dependencies` already
+  (unlike Lit, where every praxis dep was miscategorized) but still had
+  `adapter-utils`/`core`/`diagnostics` in `devDependencies` — moved all four to `dependencies`.
+  `exports` switched to the source-consumed convention; dropped `files`/`repository`/`homepage`/
+  `bugs`/`license`/`author`/`keywords`/`engines`/per-package `lint` scripts, `eslint.config.ts`
+  (root-only lint here, like every other adapter).
+- **No framework-specific `tsconfig.<name>.json` needed** — zero `.tsx`, so `tsconfig.json` extends
+  `../../tsconfig.base.json` directly, same as Vue's and Lit's.
+- **`vitest.config.ts` ported with one real detail preserved, not simplified away**: `../pk`'s sets
+  `pool: 'forks'` with a comment explaining why (jsdom's `HTMLElement` instances carry circular
+  references that overflow Vitest's IPC serializer under the default pool) — kept verbatim, since
+  dropping it silently would reintroduce whatever failure it was added to prevent.
+- **`configs/architecture.ts` gap found and fixed — present in `../pk` too, same as Lit's.** Added
+  `{ type: 'web', pattern: 'adapters/web/**/*' }` to `boundaries/elements`. No `core`-boundary
+  disallow-list entry needed for Web specifically (unlike Lit/`lit`, `react`, etc.) — Web imports no
+  framework npm package at all, so there's no dependency name to forbid.
+- **README bugs found and fixed, both**: same `defineContractComponent` "registers the component as
+  a custom element" error Lit's README had (identical shared implementation, identical fix — it only
+  curries factory options); and a second, Web-specific one — the README claimed the adapter "Uses
+  `@praxis-kit/runtime` for rendering instead of a host framework," but nothing in `package.json` or
+  any source file references that package at all. Rewrote around the real, dependency-free
+  implementation.
+
+Verification: `pnpm -r typecheck` (24 packages) 0 errors, `pnpm -r test` all packages green
+(`adapters/web` 91/91), `pnpm lint:check` clean, `pnpm format:check` clean.
+
+### `adapters/lit` and `adapters/web` — "model vs. host," and `renderToString` renamed
+
+Follow-up to both adapters' `as`-removal fixes, found in review of the finished Web port and applied
+retroactively to Lit for consistency (both share the exact same constraint). Two related but
+distinct clarifications, not new bugs in the sense `as` was — both are about naming and
+documentation catching up to what the architecture has always actually done, not about behavior that
+needed to change.
+
+**`options.tag` is a semantic target, not the host tag — now stated as a first-class concept.**
+Previously implicit (the `as` doc comments referenced `options.tag` without ever defining what it
+means for _these_ two adapters specifically). Made explicit on `createContractComponent`'s own doc
+comment and each README's new "What `tag` means" section:
+
+```text
+Praxis intrinsic model:  button          (options.tag — drives ARIA/content-model/normalizers)
+DOM host:                praxis-button   (customElements.define()'s name — the actual element)
+```
+
+`options.tag` is the lookup key into the shared ARIA-role/content-model/prop-normalizer engine
+(`@praxis-kit/core`) — it was never the tag written to the DOM for these two adapters, unlike the
+five VDOM adapters where `tag`/`as` genuinely is the render target. Once this is explicit,
+`disabled` stops being confusing: `<praxis-button disabled>` correctly gets `aria-disabled="true"`
+from the `disabledProps` normalizer (the HTML-boolean-attribute handling in `_buildProps()` was
+already correct), but the browser doesn't make the custom element keyboard-inert or
+form-participating — not a gap in that normalizer, but a direct, unavoidable consequence of
+`class X extends HTMLElement` that no ARIA attribute on any element (custom or not) ever closes. The
+contract layer (styling, variants, ARIA policy, child enforcement, attribute management, lifecycle
+hooks, diagnostics) and the host's real interactive behavior are documented as staying conceptually
+separate — a caller needing real button/link/input behavior wires it themselves via `onElement`.
+**Customized built-ins** (`class X extends HTMLButtonElement` + `{ extends: 'button' }`, giving
+`<button is="praxis-button">` real `HTMLButtonElement` behavior) were considered and explicitly
+rejected as the fix: a real platform mechanism, but a different consumer-facing API with its own
+platform constraints, not worth the complexity for what's already an honest, documented trade-off
+rather than a defect.
+
+**`renderToString` renamed to `renderContractToString`, in both adapters.** Independent of the `as`
+fix, a second, more fundamental SSR/DOM difference exists and — unlike `as` — cannot be "fixed" the
+way `as` was: `renderBundleToString` (shared, `lib/adapter-utils`) always emits `options.tag` as the
+literal wrapper (`<button>…</button>`), never the registered custom-element tag
+(`<praxis-button>…</praxis-button>`), because it has no way to know that name —
+`customElements.define()` happens externally, after `createContractComponent()` already returned,
+possibly under multiple names or never. This is stable and deterministic per component (unlike the
+old `as` bug, which made SSR output vary per call for a prop the client ignored entirely), but it
+means this output can never be handed to the browser expecting the live custom element to
+progressively upgrade over it — the platform's Custom Element upgrade mechanism only fires on an
+exact tag-name match, and a server-sent `<button>` can never become `<praxis-button>` no matter what
+the client bundle does. Two ways forward were considered:
+
+- Make it truly hydration-safe by having the caller supply the registered element name explicitly,
+  emitting that tag instead of `options.tag` when given — real DOM parity, but a genuine API
+  expansion (a new parameter threaded through `renderBundleToString`'s shared signature, both
+  adapters' `renderToString`, every SSR test and README example).
+- Keep emitting `options.tag`, but stop implying this is Custom Element SSR at all — rename and
+  redocument it as exactly what it is: serialization of the resolved contract's styling/ARIA/
+  attribute pipeline as plain HTML, useful standalone (static generation, snapshot tests, previews),
+  no hydration promise.
+
+Took the second path — no architecture change, and it's the framing "model vs. host" above already
+implies: the contract layer was never promising to reproduce the live custom element, on the DOM
+side or the SSR side. `renderToString` → `renderContractToString` in both `adapters/lit` and
+`adapters/web` (exported name, error messages, all doc comments, all test call sites); the shared
+`SsrConformanceAdapter`/`ssrConformanceSuite` interface's own `renderToString` property name is
+**not** renamed — that property is generic across every adapter (including the five VDOM ones, where
+it genuinely does render a hydratable string), so only the two adapter-specific exports changed, not
+the shared testing contract. If real Custom Element hydration is wanted later, the first option
+above is what it would take — not attempted here.
+
+Also fixed, same class of staleness the `as`/`renderToString` conversation surfaced: both adapters'
+`package.json` `description` and README opening lines called them "polymorphic," despite both
+explicitly declaring `capabilities: { tagPolymorphism: false, asChild: false }` — reworded to
+"Custom Elements with Praxis styling, ARIA contracts, and structural child validation," dropping the
+word entirely rather than qualifying it. Lit's README also still listed `as` among the "built-in
+fields" reflected as attributes — a leftover from before its removal, fixed.
+
+**Noted, not acted on:** a future Web-specific primitive or plugin supplying real behavioral
+semantics for ARIA states that imply interaction (`disabled`, `pressed`, `expanded`, `selected`) —
+e.g. wiring actual keyboard handling to match `aria-pressed` — would be a legitimate enhancement,
+but it's additive product work on top of the contract/host separation documented here, not a fix to
+anything currently wrong.
+
+Verification: `pnpm -r typecheck` (24 packages) 0 errors, `pnpm -r test` all packages green
+(`adapters/lit` 141/141, `adapters/web` 91/91 — same counts as before, this is a rename plus
+documentation, not a behavior change), `pnpm lint:check` clean, `pnpm format:check` clean.
+
+### `qa/bench` — ported; `qa/metrics`/`bundle-analysis`/`tree-shaking-tests` deliberately not
+
+`../pk`'s `qa/` has four sub-packages. Checked all four against what actually exists here before
+porting any of them, rather than assuming the whole directory travels as a unit:
+
+- **`qa/bundle-analysis`** — already broken in `../pk` itself, unrelated to porting. Its
+  `rollup.config.ts` resolves adapter entries from `packages/react/src`, `packages/vue/src`, etc.,
+  but `../pk` only has `packages/core` and `packages/kit` — adapters live in `adapters/*` there too.
+  Stale from before that restructuring; not ported until fixed upstream.
+- **`qa/tree-shaking-tests`** — paths are current (correctly uses `adapters/*`), but depends on
+  `@praxis-kit/runtime`/`@praxis-kit/runtime/compiler`, resolved from `runtime/core/src/...` — a
+  workspace `../pk` has that this repo doesn't, already tracked on `CLAUDE.md`'s own "Not yet ported
+  from `../pk`" list. Blocked on that landing first.
+- **`qa/metrics`** — the trickier one: its declared imports (`@praxis-kit/primitive`, `ts-morph`)
+  resolve fine, and its complexity-scanning paths (`lib/*`, `packages/core`) all exist here — an
+  initial pass wrongly called this "portable now" on that basis alone. What actually blocks it is
+  runtime **data**, not imports: `collect.ts` reads `.repo-state/dependency-graph.json` +
+  `.repo-state/exports.json` (generated by `../pk`'s root `scripts/generate-repo-state.ts`, a
+  570-line dependency-cruiser + `@praxis-kit/pipeline` scan hardcoding the monorepo's package/
+  adapter inventory — not ported, out of scope here) and `qa/tree-shaking-tests/snapshots/gzip.json`
+  (blocked for the reason above). `report.ts`/`assert.ts` only read `collect.ts`'s own output, so
+  they inherit the same blocker. Left unported rather than shipping a package that typechecks but
+  fails the moment `collect` actually runs.
+- **`qa/bench`** — genuinely clean: `@praxis-kit/core` and `@praxis-kit/react` (its only real
+  dependencies) are both fully ported, and every benchmark is pure source-level code with no data
+  files or other workspaces to resolve. Ported in full except one file:
+
+**`slot.bench.ts` excluded, not adapted.** It imports `applySlot`/`mergeProps` from
+`@praxis-kit/react/shared` and `cloneSlotChild` from `@praxis-kit/react`. `cloneSlotChild` resolves
+fine (`adapters/react/src/current/slot/index.ts` already re-exports it from the main entry), but
+`@praxis-kit/react/shared` isn't a real subpath here — `react/package.json`'s `exports` only
+declares `.` and `./legacy`, and `applySlot`/`mergeProps` aren't re-exported from either. Two ways
+to fix it: add a `./shared` subpath purely to satisfy a benchmark (rejected — a bench tool shouldn't
+dictate the adapter's public API surface), or have the bench file reach into
+`adapters/react/src/shared/...` via a relative import, crossing a package boundary
+`configs/architecture.ts` exists to keep intact (also rejected). Left out until `applySlot`/
+`mergeProps` have a real public export path of their own — noted in `qa/bench/README.md` rather than
+silently dropped.
+
+Fixed while porting: `qa/bench/package.json` had `@praxis-kit/adapter-utils`/`diagnostics`/
+`primitive` completely undeclared in `../pk` despite `apply-filter.bench.ts`/`aria.bench.ts`/
+`children.bench.ts` importing from them directly — a phantom-dependency gap (only resolving via pnpm
+hoisting through `@praxis-kit/react`'s own transitive deps). Added all three as real `dependencies`
+(not `devDependencies` — they're used at bench runtime, matching the convention `core`/`react`
+already followed). Dropped an unused `clsx` devDependency.
+
+Verification: `pnpm --filter @praxis-kit/bench typecheck` 0 errors;
+`vitest bench --config vitest.bench.config.ts --run` executes all 7 files without error (a smoke run
+— bench numbers themselves aren't asserted, matching `../pk`'s own "indicative, not CI-gated"
+framing). `pnpm lint:check`/`format:check` clean.
+
+### `packages/kit` — real build (tsup → tsdown)
+
+The PR #32 scaffold (see "`packages/kit` — scaffold" above) shipped `package.json` with no build at
+all — `private: true`, `typecheck`-only, and an `exports` map missing `solid`, `svelte`, `lit`,
+`web`, and `codemod` because those adapters didn't exist yet. All 7 framework adapters now do, so
+this is the actual `v1.0.0` work: a real `tsdown.config.ts`, `scripts/postbuild.ts`, and the full
+`exports`/`typesVersions`/`dependencies` surface.
+
+**Not a straight port.** `../pk` builds this package with `tsup` (`tsup.config.ts`, ~17 entries + a
+shared diagnostics chunk); this repo already committed to tsdown instead (see "Bundler: tsdown (not
+tsup)" above), and pk itself has never built this particular package with tsdown — there was no
+tsup-shaped config to carry over line-for-line, only the entry list and dependency-boundary intent.
+
+**tsdown's bundling default is the opposite of what its docs' `neverBundle`/`alwaysBundle` naming
+suggests at a glance.** With no `deps` config at all, tsdown bundles every reachable import,
+workspace packages _and_ npm packages alike — confirmed against `../pk`'s own already-built tsup
+output, whose `dist/preact/index.js` inlines `lib/contract`/`lib/styling` source directly (by
+source-comment evidence) while leaving framework peers external, i.e. tsup's default lands in the
+same place. A first pass here with zero `deps` config silently inlined `lit` and its own
+`@lit/reactive-element`/`lit-html`/`lit-element`/`@lit-labs/ssr-dom-shim` dependency tree straight
+into `dist/lit/index.js` — undetected until the build's own "detected dependencies in bundle" hint
+flagged it. Fix: every entry sets `deps.neverBundle` to an explicit list — always
+`@praxis-kit/diagnostics`, plus that entry's own framework peer and everything scoped under it
+(`react`/`react-dom`/`react/*`, `preact/*`, `vue/*`, `lit`/`lit-*`/`@lit/*`/`@lit-labs/*`) — and
+lets every internal `@praxis-kit/*` package the entry actually reaches (`adapter-utils`, `core`,
+`primitive`, `contract`, `styling`, `runtime` — whichever) bundle in by the same default tsup relied
+on. No `alwaysBundle`/`alias` allowlist needed once the peer exclusion is explicit; an earlier
+attempt at the inverse (`neverBundle: true` + an `alwaysBundle` allowlist naming only
+`adapter-utils`/`core`) under-bundled instead — `alwaysBundle` string entries don't prefix-match
+subpaths (`@praxis-kit/core/props` didn't match a bare `'@praxis-kit/core'` entry), and it missed
+`core`/`adapter-utils`'s own further-transitive internal deps.
+
+**`@praxis-kit/diagnostics`** stays external everywhere via the same shared-chunk trick as pk's
+build (single `dist/_shared/diagnostics.*`, private class members mean bundling it per-entry would
+make the class nominally distinct across entries). **`class-variance-authority`** ends up bundled
+into every entry that reaches `lib/styling`'s `cva.ts` (preact/vue/web/lit/contract/guards/html) —
+confirmed `../pk`'s own build does _not_ reach it from these adapters at all (0 occurrences in its
+built `dist/preact/index.js`), so this is a genuine, if minor, divergence between the two repos'
+`lib/styling`/`adapter-utils` wiring, not a build misconfiguration on this side. Left bundled
+(functionally correct, a few KB) rather than chased — worth a future look, not a blocker. **Open.**
+
+**`svelte` ships with `dts: false`, JS-only, and `solid` isn't in `exports` at all** — two real,
+separately-tracked gaps, not oversights:
+
+- **Svelte's declaration file.** `svelte`'s own shipped types use `declare module 'svelte' { ... }`
+  ambient-module-augmentation rather than plain top-level `export`s. `rolldown-plugin-dts` (tried
+  both its `oxc` and `tsc` resolver modes) bundles declarations by statically binding re-exports
+  through rolldown's own linker, which can't resolve an ambient `declare module` re-export
+  (`[MISSING_EXPORT] "Snippet" is not exported by .../svelte/types/index.d.ts`, even though
+  `Snippet` is genuinely declared there) and exposes no external/opaque-module escape hatch for it.
+  `rollup-plugin-dts` (what tsup/pk's build uses) handles this package shape natively. The JS build
+  is unaffected — `adapters/svelte`'s only `svelte` import is `import type { Snippet }`, erased at
+  that level — only `dist/svelte/index.d.ts` is missing until this is fixed upstream in
+  `rolldown-plugin-dts`, or `adapters/svelte`'s public prop types stop surfacing `Snippet`.
+- **Solid isn't ported into this build at all.** `../pk`'s tsup config compiles Solid's `.tsx` via
+  `esbuild-plugin-solid` (`babel-preset-solid` under esbuild's plugin API). Rolldown's plugin API is
+  a different shape, and no rolldown-native Solid JSX transform is wired into this workspace today —
+  `babel-preset-solid`/`babel-plugin-jsx-dom-expressions` are present only as incidental transitive
+  deps of `@solidjs/testing-library`, not a real, declared build dependency. Writing and validating
+  a custom Babel-based rolldown transform plugin from scratch was out of scope for this pass; the
+  `solid` kit entry is deferred rather than forced. **Open** — options when picked back up: a real
+  rolldown/unplugin Solid transform if one lands, a standalone-esbuild pre-transpile step feeding
+  tsdown pre-compiled JS, or continuing to defer.
+
+**`postbuild.ts` simplified, not ported verbatim.** `../pk`'s version threads its 5 steps through a
+`@praxis-kit/pipeline` `Pass` chain; this package has no other reason to depend on
+`@praxis-kit/pipeline`, and 5 linear steps (copy the tailwind safelist, copy `Polymorphic.svelte`,
+discover dist files, rewrite the diagnostics specifier, enforce the single-declaration invariant)
+don't need a Pass-chain abstraction to stay readable, so it's plain sequential functions instead.
+Same behavior and same invariant checks otherwise.
+
+**Package.json surface**: full `exports`/`typesVersions` for every built entry (`solid` excluded per
+above), `bin.praxis-codemod`, `scripts.build` (`tsdown && tsx scripts/postbuild.ts`),
+`scripts.dev`/`prepublishOnly`/`lint:pkg` (`publint`). `peerDependencies` gained `lit`/`svelte`
+(optional, matching the existing react/vue/preact/eslint/vite/typescript pattern). `devDependencies`
+gained everything the build itself now needs: `@typescript-eslint/utils`, `@types/react(-dom)`,
+`lit`, `preact`, `publint`, `react(-dom)`, `svelte`, `tsdown`, `tsx`, `typescript`, `vite`, `vue`.
+
+Verification: `pnpm --filter praxis-kit build` clean (17 entries + shared chunk; `solid` excluded,
+`svelte` JS-only per above); `postbuild` reports all invariants hold and rewrites the diagnostics
+specifier in 21 files; `pnpm --filter praxis-kit typecheck` and `pnpm -r typecheck` (26 packages) 0
+errors; `pnpm lint:check`/`format:check` clean; `pnpm --filter praxis-kit lint:pkg` (`publint`)
+clean.
+
+**Review pass — packaging fixes, two of them found only by actually installing the tarball.**
+`publint` and a workspace typecheck are necessary but not sufficient for a multi-entry package like
+this one; they check `dist/` shape and source types, not what a real install of the published
+tarball actually does at runtime. Confirmed the hard way:
+
+- **`@typescript-eslint/utils` was externalized but not a published dependency.**
+  `praxis-kit/eslint` really does
+  `import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'` at runtime (confirmed in
+  `dist/eslint/index.js`), but the package only listed it in `devDependencies`. Moved to
+  `dependencies` (not a peer — this is implementation machinery for the plugin, not something a
+  consumer should need to know about). Verified against a real `pnpm pack` tarball installed into an
+  isolated fixture (not the monorepo's own hoisted `node_modules`, which would have masked the gap):
+  `praxis-kit/eslint` now resolves cleanly.
+- **`codemod`'s `deps.neverBundle: ['typescript']` was a no-op — traced, not assumed.**
+  `dist/codemod/ index.js` has zero bare npm import specifiers besides Node builtins; `ts-morph`'s
+  compiler access goes through `@ts-morph/common`, which vendors its own `dist/typescript.js` as a
+  relative-path file inside that package (not a `dependencies` edge on the real `typescript` npm
+  package) — `neverBundle` only intercepts bare specifiers, so it never had anything to externalize
+  here. Removed the dead config entry; `praxis-codemod` was already, and remains, fully
+  self-contained — no consumer TypeScript install needed for this entry specifically (`vite-plugin`
+  is different: it really does `import ts from 'typescript'`, confirmed in its own
+  `dist/vite-plugin/index.js`, so its optional peer stays).
+- **Found via the tarball install, not by inspection: `praxis-codemod` threw
+  `ReferenceError: __filename is not defined in ES module scope` on every invocation.** Vendored
+  `@ts-morph/common` code calls `isFileSystemCaseSensitive()`, which references the CJS global
+  `__filename` — no equivalent exists in ESM output by default. tsup auto-shims this; tsdown
+  requires `shims: true` explicitly per entry. Added to the `codemod` entry only (the only one that
+  touches `__filename`/`__dirname`, confirmed by grepping the other entries' output).
+- **Found via the tarball install: `praxis-codemod`'s CLI silently did nothing at all — `--help`, no
+  args, everything — even after the shim fix.** Root cause is in `tooling/codemod/src/ index.ts`
+  itself, not the kit build: its "is this the entry point" guard compared
+  `process.argv[1] === fileURLToPath(import.meta.url)` directly. A real install's `bin` entry is a
+  symlink (`node_modules/.bin/praxis-codemod -> ../praxis-kit/dist/codemod/index.js`); Node leaves
+  `process.argv[1]` as the symlink path but resolves `import.meta.url` to the real target, so the
+  two never matched and `main()` never ran — no error, no output, exit 0. This is a **pre-existing
+  bug in `tooling/codemod` itself**, not something the kit packaging introduced —
+  `@praxis-kit/codemod` published on its own would have the identical failure the moment anyone
+  installed it for real (every prior verification of that package ran its bin by direct path,
+  `node dist/index.js`, which never exercises the symlink). Fixed by resolving `process.argv[1]`
+  through `realpathSync` before comparing. `tooling/codemod`'s own 24 tests + typecheck stay green;
+  re-verified end-to-end through the actual `.bin` symlink in the tarball fixture, including a real
+  `migrate --dry-run` run.
+- `packages/kit/README.md` rewritten — it still described the PR #32 scaffold's gated status
+  ("Scaffold only… gated on the remaining adapters… landing") long after the build actually shipped.
+  Replaced with the real per-entry status table and the `svelte`/`solid` gaps stated plainly rather
+  than folded into a generic "not yet published" line.
+
+**Verification method going forward, not just this pass:** `pnpm --filter praxis-kit build` →
+`pnpm pack` → install the tarball into an isolated fixture (outside the monorepo's own
+`node_modules`, which resolves internal deps via hoisting regardless of what's actually declared) →
+import every framework-neutral/plugin entry → run the `codemod` bin through its real `.bin` symlink,
+not by direct path. Two of the four fixes above (`__filename`, the `argv`/symlink mismatch) were
+invisible to `publint`, a workspace typecheck, and a direct-path bin invocation alike — only a real
+install surfaced them.
+
+**Made permanent: `packages/kit/scripts/smoke-test.ts` (`pnpm --filter praxis-kit test:pack`).**
+Automates the exact sequence above rather than leaving it as a one-off manual check: fresh
+`pnpm build` → `pnpm pack` → install the tarball plus every framework peer into an isolated
+`os.tmpdir()` fixture (deliberately outside this repo's own pnpm workspace — inside it, resolution
+would go through workspace hoisting and mask the same class of gap the `@typescript-eslint/utils`
+finding above was) → `import()` every plain-JS public entry (14 of them; `ts-plugin` is CJS-only and
+`codemod` is exercised as a CLI instead) and report every failure rather than stopping at the first
+→ run `praxis-codemod --help` and a real `migrate --dry-run` through the actual `.bin` symlink, not
+by direct path. Exits non-zero on any failure. Wired into `prepublishOnly` (replacing a bare
+`pnpm build`) so a real publish can't skip it; not yet wired into CI, since this repo doesn't have a
+CI pipeline at all yet (lands separately — see `.vscode/MIGRATION.md`). `pnpm pack --json`'s real
+shape is `{ filename, files }` (a single object, not an array) — worth noting since the shape isn't
+obvious without checking, and easy to get wrong first try (initial version assumed an array).
+
+**Added: type resolution, not just runtime imports.** The first version of `smoke-test.ts` proved
+every entry's JS resolves from the installed tarball, but said nothing about `.d.ts` resolution —
+`typesVersions`/`types` fields, broken declaration re-exports, and a stray unresolved
+`@praxis-kit/*` reference in public types are all invisible to a plain `import()` check. Added a
+second phase: write one `export type { <RealExportName> as _checkN } from 'praxis-kit/<entry>'` line
+per typed public entry (13 of the 14; `svelte` is skipped — its documented JS-only gap, not an
+oversight — and `codemod`/`ts-plugin` have no meaningful ESM named-type surface to check), then run
+the fixture's own installed `tsc --noEmit` against it. A re-export rather than a bare `import type`
+guarantees every name is actually consumed, so nothing passes by accident via unused-import elision.
+**Confirmed this actually catches something**, not just theoretically: renamed one entry's checked
+export to a nonexistent name and reran — failed immediately with a real `tsc`
+`TS2305 "has no exported member"` error, exit 2, propagated as a script failure. Reverted after
+confirming.
+
+### `qa/tree-shaking-tests` — ported; less blocked than earlier stated
+
+The `qa/*` entry above said this package "needs the unported `runtime/core`." Checked precisely
+before porting: only 2 of `../pk`'s 13 scenarios (`pk2-compiler-minimal`,
+`pk2-compiler-with-variants`) actually import `@praxis-kit/runtime/compiler` — this repo has no
+`runtime/compiler` module at all (`lib/runtime` is flat), so those two aren't ported. The other 11
+don't touch it and port cleanly. `esbuild` (`^0.28.1`) resolves every workspace package straight to
+its TypeScript source via a hand-maintained `alias` map in `scripts/analyze.ts` — no prior
+`pnpm build` required, matching `../pk`'s own approach.
+
+**Two real bugs found in `../pk`'s own fixtures, fixed here, not just carried over.** 5 of the 11
+ported `expected.json` files asserted `mustExclude: ["packages/tailwind/src"]` — stale from before
+`../pk`'s own `packages/tailwind` → `lib/tailwind` move (confirmed: `../pk`'s current layout is
+`lib/tailwind` too). Since a `mustExclude` fragment that never appears in a real metafile always
+"passes" silently, this assertion has been dead in `../pk` itself since that move, not just here —
+fixed to `lib/tailwind/src` so it can actually fire. `pk2-engine-only/expected.json`'s `mustExclude`
+also referenced `runtime/core/src/compiler`, which can't exist in this repo — dropped that line
+rather than leaving a permanently-vacuous assertion.
+
+**`pk2-engine-only`'s entry.ts needed a real rewrite, not a path fix — `@praxis-kit/pipeline`'s API
+is genuinely different here.** `../pk`'s version imports `startPipeline`/`executePipeline`/
+`executeProcessor`/`createPipeline` (a builder-chain API: `startPipeline().then().build()`, also
+seen in `../pk`'s own `postbuild.ts` scripts throughout this port). This repo's clean-room
+`lib/pipeline` has none of those — its real exports are `runPipeline`/`phasedPipeline` (execution)
+and `mergeContext`/`mergeResults`/`shallowDiff` (context-merge primitives). Rewrote the scenario to
+import the real exports, preserving the same claim under test ("the pipeline engine alone pulls in
+zero adapter/compiler/style code") — `mustInclude: ["lib/pipeline/src"]` still holds.
+
+**`esbuild`'s `alias` does prefix-matching against unmatched subpaths**, not exact-match-only as the
+option's shape might suggest — an import for `@praxis-kit/foo/bar` with no exact
+`@praxis-kit/foo/bar` key falls back to appending `/bar` onto whatever `@praxis-kit/foo` resolves
+to, which breaks immediately against a single-file alias target
+(`Cannot read directory ".../index.ts": not a directory`). Every subpath actually reachable from the
+11 ported scenarios needs its own explicit map entry. This repo's
+`packages/core/src/ {primitive,contract}.ts` (refactored into pass-throughs against granular barrels
+— see "`packages/kit` — scaffold") reach several subpaths `../pk`'s equivalent files don't:
+`@praxis-kit/primitive/{tag,utils}` and
+`@praxis-kit/contract/{aria/factories,aria/roles,props, types/aria/aria-rule}`. Added all of them;
+`gzip.ts`'s `StringMap` import also moved from `@praxis-kit/pipeline` (where `../pk` exports it) to
+`@praxis-kit/primitive` (where this repo's reconstruction does — the same substitution
+`lib/adapter-utils`'s port already documented).
+
+**`pipeline.ts` (the `pnpm test` orchestrator) dropped, not ported.** `../pk`'s version threads
+build → assert → gzip through `@praxis-kit/pipeline/node`'s `shellPass`/`runPipeline` — a real
+`./node` subpath this repo's `lib/pipeline` doesn't expose at all (confirmed: only `.` is in its
+`exports` map). Porting that subpath into an already-released, already-depended-on `lib/pipeline`
+just to satisfy one qa script's orchestration preference is a bigger, more invasive change than this
+port needs — `package.json`'s own `test` script is a plain `pnpm build && pnpm assert && pnpm gzip`
+chain instead, functionally identical, no new dependency surface. `tsx` dropped from devDependencies
+along with it (only `pipeline.ts` needed it).
+
+Also fixed: `qa/*`'s `.changeset/config.json` `ignore` list was missing `@praxis-kit/bench`,
+`@praxis-kit/lit`, and `@praxis-kit/web` entirely — none were added when those packages landed.
+Added those three plus `@praxis-kit/tree-shaking-tests`, alphabetized.
+
+Verification: `pnpm --filter @praxis-kit/tree-shaking-tests typecheck` 0 errors;
+`pnpm --filter @praxis-kit/tree-shaking-tests test` (build → assert → gzip) green, 11/11 scenarios
+pass their `mustInclude`/`mustExclude` assertions, fresh `snapshots/gzip.json` baseline recorded and
+re-verified stable on a second run; `pnpm -r typecheck` (27 packages) 0 errors;
+`pnpm lint:check`/`format:check` clean.
+
+**Review pass — closes the "source graph, not published boundary" gap, plus three smaller hardening
+fixes.** The port above validated `@praxis-kit/react` etc. aliased straight to workspace TypeScript
+source — a genuinely different question from "can a customer tree-shake the package we actually
+publish," which only `packages/kit`'s own `dist/` output can answer. Four changes:
+
+1. **`scenarios/source/` and `scenarios/package/` split.** The 11 ported scenarios moved under
+   `source/` unchanged. Added `package/{react,preact,vue,lit,web}-minimal` under `package/` —
+   `import ... from 'praxis-kit/<name>'`, resolved via ordinary node module resolution against
+   `packages/kit`'s _built_ dist (no `alias` at all, unlike `source/*`), so this is exactly what a
+   real install does. `solid` is absent from `package/*` for the same reason it's absent from
+   `packages/kit`'s own build (no rolldown Solid transform yet); `svelte` is absent because its
+   `.d.ts` doesn't exist yet — both already-tracked gaps, not new ones. `analyze.ts` requires
+   `packages/kit/dist` to exist before building `package/*` and fails with an actionable message
+   (`pnpm --filter praxis-kit build` first) rather than silently building it as a side effect —
+   requires no adjustment to `assert.ts`'s `mustInclude`/`mustExclude` mechanism: tsdown's build
+   isn't minified into one truly opaque blob per entry — each entry still imports
+   `dist/_shared/diagnostics.js` as a real (rewritten-relative) module, so the metafile still shows
+   a real, if coarser, multi-file live-input graph (e.g.
+   `mustInclude: ["packages/kit/dist/react/index.js", "packages/kit/dist/_shared/diagnostics.js"]`,
+   `mustExclude` on every sibling entry's `dist/<name>` — proving cross-entry isolation, that
+   importing `praxis-kit/react` doesn't also drag in `praxis-kit/vue`'s bundle).
+2. **`assert.ts` gained `mustIncludePackages`/`mustExcludePackages`**, alongside the existing
+   path-fragment `mustInclude`/`mustExclude` (both still work — nothing existing needed to migrate).
+   A small `toPackageName()` resolver maps a live path to `@praxis-kit/<name>` (`adapters/<name>/`,
+   `lib/<name>/`, `packages/core/` → `@praxis-kit/core`) or `praxis-kit` (`packages/kit/dist/`); a
+   path it doesn't recognize contributes no package name rather than guessing. Package-level
+   assertions survive a source file moving around inside its own package, where a raw path fragment
+   doesn't. Demonstrated on `source/react-minimal` alongside its existing path-fragment assertions;
+   the rest weren't migrated (not required, and every scenario mixing both forms wasn't worth the
+   diff).
+3. **`gzip.ts` no longer writes `snapshots/gzip.json` as a side effect of `pnpm test`.** It used to:
+   no baseline → record one and exit clean, meaning a CI run of `pnpm test` could silently mutate
+   tracked repository state. Split into two explicit modes: default (what `pnpm test` runs) now
+   _fails_ if the baseline file is missing entirely, if a built scenario has no baseline entry, or
+   if a baseline entry has no matching built scenario (stale — a deleted/renamed scenario left its
+   entry behind, previously undetectable). `--update` (`pnpm gzip:update`, a new script) replaces
+   the snapshot with exactly the current scenario set — a person runs it, reviews the diff, and
+   commits it; a test run never does.
+4. **`analyze.ts` validates scenario shape before handing it to esbuild.** A `scenarios/foo/` with
+   no `entry.ts` used to surface as an esbuild "file not found," not obviously a fixture problem.
+   Now fails with `scenario "<group>/<name>" is missing entry.ts` naming the exact expected path.
+5. Framework-external policy centralized and extended to `lit` (`@lit/*`, `@lit-labs/*`, `lit-html`,
+   `lit-element`) — previously only react/vue/solid/preact/svelte were covered; needed for the new
+   `package/lit-minimal` scenario, and worth having regardless since `lit` is a real adapter here.
+
+`report.ts`'s hardcoded `LIB_TAGS` list is left as a known, disclosed limitation — it'll drift as
+the library grows; deriving it from real package metadata is a fine follow-up, not done here.
+
+Verification: all of the above re-run clean —
+`pnpm --filter @praxis-kit/tree-shaking-tests typecheck` 0 errors (including the 5 new `package/*`
+entries, none needed the tsconfig exclusion the 4 framework-specific `source/*` scenarios do);
+`pnpm test` 16/16 scenarios pass; fresh `snapshots/gzip.json` (16 entries) recorded via
+`gzip:update` and re-verified stable; manually confirmed the two new failure modes actually fire (a
+deliberately-broken scenario directory, and an injected stale baseline entry, each produced the
+expected `FAIL` and non-zero exit, then reverted); `pnpm -r typecheck`/`lint:check`/`format:check`
+clean. Also fixed `configs/typescript.ts`'s `allowDefaultProject` entries for the 4
+tsconfig-excluded scenarios, stale after the `source/` move.
+
+**Second review pass — naming precision, plus four genuinely surgical scenarios.** Two more rounds:
+
+1. **"Published package" was the wrong claim for `scenarios/package/*`.** It consumes
+   `packages/kit`'s built dist through the pnpm workspace link
+   (`node_modules/praxis-kit → packages/kit`), not an actual `pnpm pack` tarball installed into an
+   isolated consumer — so it doesn't cover `files`/npm packing/`.npmignore`/package metadata the way
+   a real install would (`packages/kit/scripts/smoke-test.ts` already does exactly that, for the kit
+   package itself). Corrected every comment in `analyze.ts` and
+   `scenarios/package/react-minimal/entry.ts` to call this **package-consumption testing** and name
+   published-package testing (a `pnpm pack`-based version of this same scenario group) as the real,
+   not-yet-done follow-up, rather than overclaiming it already happened. Not a functional change —
+   the test itself was already doing something real and useful, just mislabeled.
+2. **Added `package/{contract,guards,html,utils}-only`** — genuinely surgical scenarios, unlike an
+   adapter-scoped equivalent would have been. Considered `react-primitive-only`/`react-aria-only`/
+   etc. first and dropped them: every `praxis-kit/<adapter>` entry's only real export is
+   `createContractComponent`, already bundled as one function by `packages/kit`'s own build —
+   there's no shallower value-level import an adapter entry offers that would pull in less. This is
+   exactly why the 5 original `source/*` "depth" scenarios (`aria-only`, `contracts-only`,
+   `full-runtime`, `minimal-polymorphic`, `polymorphic-validation`) all produce byte-identical
+   bundles (142 live modules each, confirmed again on this rebuild) — their only differences are
+   type-only imports, erased before esbuild ever sees them. The framework-neutral entries
+   (`contract`, `guards`, `html`, `utils`) are where real, distinct footprints exist to test:
+   confirmed empirically, not assumed — `guards-only`/`utils-only` (pure `@praxis-kit/primitive`
+   re-exports) each resolve to exactly **1** live module and ~120–350 bytes gzip; `contract-only`
+   (core + primitive, no diagnostics — its only `Diagnostics` reference is `import type`, erased) is
+   **1** module, 917 bytes; `html-only` (core, and a real runtime diagnostics import, unlike
+   `contract`) is **2** modules (its own file + the shared diagnostics chunk), 8221 bytes — versus
+   20–22 KB for any framework adapter entry. That range (118 B → 8.2 KB → 20+ KB) is the kind of
+   real size discrimination the original "depth" scenarios never actually produced.
+
+Verification: same as above, rerun with all 20 scenarios (16 + 4 new) — `pnpm test` 20/20 pass,
+`snapshots/gzip.json` regenerated via `gzip:update`, `pnpm -r typecheck`/`lint:check`/
+`format:check` clean.
+
+### CI — `.github/workflows/ci.yml` + `publish.yml`, scoped to what actually exists
+
+`../pk`'s `ci.yml` runs `pnpm verify` → `pnpm build` → `pnpm analyze:duplicates` → `pnpm repo-state`
+→ `pnpm analyze:deps` → `pnpm analyze:patterns` → `pnpm metrics:collect && pnpm metrics:assert`.
+Checked each before porting, not assumed: `repo-state` is `scripts/generate-repo-state.ts` (not
+ported — the confirmed blocker on `qa/metrics`); `analyze:deps` is `dependency-cruiser` against a
+`.dependency-cruiser.cjs` that doesn't exist here; `analyze:patterns` is `ast-grep` against an
+`.ast-grep/sgconfig.yml` that doesn't exist here; `metrics:*` is `qa/metrics` itself, still blocked
+on the same `repo-state` prerequisite. None of the four are portable today. `analyze:duplicates`
+(`jscpd --config .jscpd.json`) is the one exception — the config and dependency already exist in
+this repo (landed with an earlier port, never wired to CI) and it runs clean (0 clones over
+threshold) — kept.
+
+**A real, previously-undetected ordering bug, found by actually trying a clean-checkout CI run, not
+by reading the workflow.** `qa/tree-shaking-tests/scenarios/package/*` import `praxis-kit/<name>`,
+resolved through `packages/kit`'s built `dist/` — including at **typecheck** time, not just at its
+own `test` script's runtime build. Confirmed by moving `packages/kit/dist` aside and running
+`pnpm --filter @praxis-kit/tree-shaking-tests typecheck`: 9 `TS2307 "Cannot find module"` errors.
+`pnpm -r typecheck` (and therefore `pnpm build`, which runs it first) would fail on any genuinely
+fresh checkout — this was invisible in every verification this session because `packages/kit/dist`
+happened to already exist locally from earlier work. This is exactly the problem `../pk`'s own
+`pnpm verify` (`scripts/build-pipeline.ts`, threading `@praxis-kit/pipeline/node`'s `shellPass`)
+solves — but that subpath doesn't exist in this repo's `lib/pipeline` either (the same reason
+`qa/tree-shaking-tests`' own `pipeline.ts` was dropped, not ported). Added a plain root script
+instead of a new pipeline file: `"verify": "pnpm --filter ./packages/kit build && pnpm check"` — two
+sequential commands don't need a `Pass`-chain abstraction. Confirmed fixed the same way the bug was
+found: moved `dist/` aside again, ran `pnpm verify`, clean. (The filter was originally name-based —
+`--filter praxis-kit` — until a second, independent bug made that unsafe; see
+"`verify`/`publish.yml` — the `--filter praxis-kit` name collision" below.)
+
+**`publish.yml` diverges from `../pk`'s in one deliberate way**: dropped the
+`cp README.md packages/kit/README.md` step. `../pk` republishes the root project README as the npm
+package page; this repo's `packages/kit/README.md` has been deliberately, separately maintained this
+session (the real per-entry status table, the build/verification writeup) and is better npm
+package-page content than the root project pitch — overwriting it with the root README on every
+publish would discard that. Otherwise ported close to verbatim: the dist-tag resolution
+(`-alpha`/`-beta`/`-rc` → `beta`, else `latest`), the already-published guard
+(`npm view "$name@$version"`), and the unresolved-`catalog:`-specifier check (packs, extracts, greps
+the real tarball's `package.json` — catches the class of bug where a workspace catalog specifier
+leaks into a published package unresolved).
+
+CI triggers on `[main, develop]` (`../pk`'s only real branch is `main`; this repo's `CLAUDE.md`
+gitflow uses `develop` as the integration branch feature branches merge into, so both need coverage)
+— `codeql.yml` (already-ported, pre-existing) still only watches `main`, a real, now more-visible
+inconsistency, left as an **Open** item rather than changed in this PR (out of scope for a
+CI-workflow port, not a regression this PR introduces).
+
+`publish.yml` exists and is ready, but `packages/kit/package.json` is still `private: true` — first
+publish is a separate, deliberate step, not something this PR flips as a side effect.
+
+Verification: `pnpm verify` and `pnpm build` both confirmed clean from a simulated fresh checkout
+(`packages/kit/dist` removed and rebuilt); `pnpm analyze:duplicates` clean (0 clones over
+threshold); `pnpm lint:check`/`format:check` clean; both workflow YAML files validated (Prettier's
+own YAML parser, plus a structural diff against `../pk`'s known-working versions — `actionlint`
+wasn't available in this environment to check further).
+
+### `packages/kit` — both deferred gaps from the real build closed
+
+The `packages/kit` real-build entry above deferred `solid` (no rolldown-native JSX transform known
+to exist in this workspace) and `svelte`'s `.d.ts` (`rolldown-plugin-dts` couldn't bundle through
+its ambient `declare module 'svelte'` type-export style) rather than force either. Revisited both —
+not by guessing, by checking what's actually available now:
+
+- **Solid.** `unplugin-solid/rolldown` is a real, currently-maintained rolldown-native Solid JSX
+  transform — confirmed via tsdown's own documented Solid recipe
+  (`tsdown.dev/recipes/solid-support`), not just a registry search. Added `unplugin-solid`
+  (`^2.0.0`, catalog) and wired `plugins: [solid()]` into the `solid` entry. Built clean on the
+  first real attempt: `dist/solid/ index.js` shows genuine Solid-compiled output
+  (`Dynamic`/`createComponent` from `solid-js/web`, not raw JSX), `solid-js`/`solid-js/web`
+  correctly external (the same `deps.neverBundle` mechanism every other framework entry uses), and
+  `dist/solid/index.d.ts` generated without any special handling — Solid's own type shape apparently
+  has no `rolldown-plugin-dts` quirk analogous to Svelte's. Added `praxis-kit/solid` to the
+  `exports` map, `typesVersions`, the packed-tarball smoke test, and a new
+  `qa/tree-shaking-tests/scenarios/package/solid-minimal`.
+- **Svelte's declarations.** Traced the exact upstream fix rather than re-attempting the same
+  workarounds already ruled out: `rolldown-plugin-dts@0.28.5`'s changelog lists "treat script-style
+  ambient declarations as modules" — exactly the failure mode hit before
+  (`[MISSING_EXPORT] "Snippet" is not exported by .../svelte/types/index.d.ts`). The installed
+  `tsdown@0.22.14` pins `rolldown-plugin-dts@^0.27.13` (a 0.x caret range — doesn't reach 0.28.x on
+  its own); `tsdown@0.23.0` bumps that pin to `^0.28.5`. Bumped the `tsdown` catalog entry
+  (`^0.22.14` → `^0.23.0`) and re-enabled `dts` on the `svelte` entry — confirmed, not assumed:
+  `dist/svelte/index.d.ts` now generates correctly (51 KB, `import { Snippet } from "svelte"`
+  resolved as a clean external type reference, no error). Re-verified `plugins/typescript` and
+  `tooling/codemod` (this repo's two other `tsdown` consumers) still build clean after the bump —
+  the ts-plugin build emits a new, pre-existing-shape "CommonJS dts syntax" advisory (its `.d.ts` is
+  a genuine `export =` shape) that doesn't affect its correct, unchanged output.
+- `praxis-kit/svelte` gained a real `types` field in `exports` and an entry in `typesVersions`
+  (previously JS-only); added to the packed-tarball smoke test's type-resolution check now that
+  there's a real declaration to resolve.
+
+`packages/kit/README.md`'s status table updated — every framework entry is now ✅ ready, with a new
+"Formerly-deferred gaps, now resolved" section replacing "Known gaps."
+
+Verification: `pnpm --filter praxis-kit build` clean (all entries, `dist/solid` and
+`dist/svelte/index.d.ts` both real); `pnpm --filter praxis-kit typecheck` and `pnpm -r typecheck`
+(27 packages) 0 errors; `pnpm --filter praxis-kit lint:pkg` (`publint`) clean;
+`pnpm --filter praxis-kit test:pack` clean (15 runtime-import entries, 14 type-resolution entries,
+the codemod bin through its real symlink); `qa/tree-shaking-tests` rebuilt with the new
+`package/solid-minimal` scenario, 21/21 pass, gzip baseline regenerated;
+`pnpm lint:check`/`format:check` clean.
+
+### `verify`/`publish.yml` — the `--filter praxis-kit` name collision
+
+CI's first real run on this branch (PR #42) failed on the `Verify` step, with the exact symptom
+`pnpm verify` was supposed to have already fixed: `Cannot find module 'praxis-kit/solid'` (and
+`react`/`lit`/`html`/`contract`), from `qa/tree-shaking-tests`' own typecheck. Confusing, since this
+is precisely the ordering bug the previous entry fixed — but the actual root cause was different and
+hadn't surfaced locally.
+
+**`pnpm --filter praxis-kit` is ambiguous in this repo — not a typo, a genuine name collision.** The
+root workspace `package.json` is named `"praxis-kit"` (its own real identity), and
+`packages/kit/package.json` is _also_ `"praxis-kit"` (the actual published npm name). Confirmed
+directly: `pnpm --filter praxis-kit list --depth -1` prints both `.` and `packages/kit`. A
+name-based `--filter praxis-kit build` therefore runs **both** matched packages' `build` scripts —
+including the root's own `pnpm typecheck && pnpm -r build`, which recursively typechecks
+`qa/tree-shaking-tests` before `packages/kit`'s own build has written `dist/`, if pnpm happens to
+schedule the root's script first. Every local verification of `pnpm verify` up to this point
+happened to schedule `packages/kit`'s own build first — pure luck, not correctness — so the bug
+never showed up until CI's run had the unlucky order.
+
+`../pk`'s own `publish.yml` already used a **path** filter (`--filter ./packages/kit build`) for
+exactly this reason — porting it to a name filter (`--filter praxis-kit build`) was an unintentional
+regression made when this repo's `ci.yml`/`publish.yml`/`verify` were first written, not a
+deliberate divergence. Fixed by switching every occurrence back to the path form: the root `verify`
+script, `publish.yml`'s `Build` step, and the doc comment in `packages/kit/scripts/smoke-test.ts`
+suggesting how to invoke `test:pack` manually. A path filter matches by location, not name, so it
+can't collide regardless of what any package happens to be called.
+
+Verification: reproduced the exact failure locally first (`pnpm --filter praxis-kit list --depth -1`
+prints both packages), then confirmed the fix the same way — `packages/kit/dist` removed,
+`pnpm verify` then `pnpm build` both run fresh end-to-end, both exit 0, `qa/tree-shaking-tests`'
+`package/*` scenarios resolve correctly throughout. `pnpm --filter ./packages/kit build` alone
+prints no "Scope: 2 of 27" line (unlike the old name filter), confirming the collision is actually
+gone, not just no longer triggered.
+
+### `codeql.yml` — invalid `with:` shape, not a branch-scoping bug
+
+Noticed while investigating the fix above: `.github/workflows/codeql.yml` had been failing on
+**every single push to every branch** — including `develop` itself, across at least the last 8 runs
+going back before this session's CI work — with zero jobs ever created and GitHub's generic
+"workflow file issue" message. Confirmed via the API (`gh api .../actions/runs/<id>` → 0 jobs; the
+check-suite → 0 check-runs), not just the CLI summary.
+
+The workflow's own trigger is `branches: [main]`, so a failure specifically on feature-branch pushes
+looked at first like a branch-scoping question — it isn't. Ruled out, in order: GitHub's repo-level
+"default CodeQL setup" conflicting with a custom workflow (checked `code-scanning/default-setup` —
+`"not-configured"`); an Advanced Security licensing gate (repo is public, not an issue); an Actions
+allowlist blocking `codeql-action`/`checkout` (`actions/permissions` → `"allowed_actions": "all"`).
+The actual cause: `with: languages:` was a YAML sequence —
+
+```yaml
+languages:
+  - javascript-typescript
+  - actions
+```
+
+`github/codeql-action/init`'s own docs specify `languages` as a **comma-separated string**, and more
+fundamentally, every `with:` value in a GitHub Actions workflow must be a scalar — a nested sequence
+there is a schema violation of the workflow file format itself, not just a wrong value for this one
+input. That's exactly why the failure was branch-independent: GitHub's static parse of the file
+fails before it ever reaches evaluating whether a given push's branch matches `on.push.branches`, so
+every push produces a zero-job "workflow file issue" run regardless of which branch it's on. Fixed
+to `languages: javascript-typescript,actions`.
+
+Verification: `format:check` clean; pushed this fix to its own branch (`fix/codeql-languages-input`)
+and confirmed via the API (`GET /repos/.../actions/runs?branch=...` → `total_count: 0`) that the
+push produces **no** workflow run at all — the correct behavior for a non-`main` branch. Every prior
+branch push in this session produced a phantom, zero-job `codeql.yml` failure; this one produced
+none, confirming the diagnosis (a parse-time schema failure, not a real per-branch trigger) rather
+than just the changelog-adjacent theory.
+
+### `SECURITY.md` — ported near-verbatim, one section genuinely doesn't apply yet
+
+`../pk`'s `SECURITY.md` is almost entirely repo-identity-agnostic content that's already correct for
+this repo as-is: the GitHub Security Advisories URL and repository links already point at
+`slowebworkz/praxis-kit` (the real repo both `../pk` and this repo's own `package.json`
+`repository.url` use), the reporter's email matches this repo's own author metadata, and the
+7-adapter list (React, Preact, Vue, Solid, Svelte, Lit, Web) matches exactly. The "Scope" section
+and the `examples/*`/`tooling/*`/`qa/*` lower-priority note both describe policy that holds
+regardless of what's ported yet.
+
+**One section needed a real edit, not a copy.** "Supported Versions" claimed `4.x` is the current
+supported major — false for this repo: `packages/kit` is still `private: true`, version `0.0.0`,
+nothing has ever been published. Copying that table verbatim would have been a real, checkable false
+claim in a security policy specifically, not a harmless stale detail. Replaced with an honest
+not-yet-published statement instead of inventing a plausible-looking version number.
+
+Verification: `format:check`/markdownlint clean.
+
+### `GETTING_STARTED.md`, `ADAPTER_AUTHORING.md`, `ARCHITECTURE.md`, `docs/*` — ported, and two real API-naming bugs caught before they shipped
+
+Ported all four remaining doc deliverables together, per instruction, rather than one PR per file
+(the pattern for every earlier doc port this session). Each was checked against real source, not
+copied from `../pk` and adjusted for surface differences — two of those checks turned up genuine,
+checkable inaccuracies in `../pk`'s own docs that would otherwise have shipped as wrong
+documentation here too:
+
+1. **`variantKey` → `recipe`.** `../pk`'s `GETTING_STARTED.md` and `ADAPTER_AUTHORING.md` both use
+   `variantKey` as the preset-selection prop name. Traced end to end in this repo —
+   `lib/primitive/src/types/factory/styling-options.ts`'s doc comment ("selectable as a single unit
+   via the `recipe` prop"), `packages/core/src/resolver/resolver.ts`'s `input.recipe`,
+   `packages/core/src/factory/create-polymorphic.ts`'s
+   `resolveClasses(tag, props, className?, recipe?)`, and
+   `lib/styling/src/diagnose-class-pipeline.ts`'s `ClassDiagnosis.recipeKey` — the real, current
+   prop is `recipe` everywhere, with no `variantKey` in the type system at all. Fixed in all four
+   new docs.
+2. **`enforcement.strict` → `enforcement.diagnostics`.** `../pk`'s docs use a two-value
+   `strict: 'warn' | 'throw'` (plus `false`). The real `EnforcementOptions` type
+   (`lib/primitive/src/types/factory/enforcement-options.ts`) has no `strict` field at all — the
+   real field is `diagnostics`, a three-way preset (`'silent'` / `'warn'` / `'throw'`) or a full
+   `Diagnostics` instance, backed by `lib/diagnostics` (a real severity/policy system —
+   `silentDiagnostics`/`warnDiagnostics`/`throwDiagnostics`), not a boolean/string flag interpreted
+   inline. This was caught mid-turn: `GETTING_STARTED.md` had already been written and linted once
+   with `strict` before the type was double-checked while researching `ADAPTER_AUTHORING.md`,
+   requiring a self-correction pass across both files.
+
+Also corrected, independent of those two: `../pk`'s `ADAPTER_AUTHORING.md` is stale even for `../pk`
+itself (says "five adapters," uses `packages/<framework>/` paths, describes a per-adapter
+`eslint.config.ts`/`.dependency-cruiser.cjs`/`.ast-grep/` that this repo has never had —
+cross-package isolation here is one root `eslint.config.ts` + `configs/architecture.ts`'s
+`eslint-plugin-boundaries` mechanism instead); `ARCHITECTURE.md`'s `lib/` layer list
+(`primitive`/`contract`/`styling`/ `adapter-utils` only) undercounts this repo's actual ten `lib/*`
+modules (also `contract-props`, `diagnostics`, `pipeline`, `pipeline-kit`, `runtime`, `tailwind`,
+`playwright`) and its 3-way strict diagram/message tables needed the same `diagnostics` correction,
+verified line-for-line against `lib/contract/src/diagnostics/{html,aria,contract}.ts`'s actual
+message templates rather than assumed unchanged; `packages/core`'s subpath exports (`./contract`,
+`./aria`, `./styling`, `./props`, `./state`) were confirmed for real rather than assumed from
+`../pk`'s example imports, and `diagnoseChildren` specifically has **no** public subpath here (only
+the combined `diagnose()` from the package root) since `lib/contract` — unlike `../pk`'s published
+`@praxis-kit/contract` — is an internal, unpublished workspace package; `docs/concepts.md`'s
+Tailwind section was rewritten against `lib/tailwind/src/class-classifier.ts` and
+`create-tailwind-pipeline.ts`, which support any CSS display value as a layout-mode prop (not just
+`flex`/`grid`) and exempt flex/grid _item_ properties from stripping — materially richer than
+`../pk`'s simple two-mode prefix-stripping description; `docs/index.md`'s layer overview was
+rewritten to make clear only one package (`praxis-kit`) is ever published — every `@praxis-kit/*`
+name, `core` included, is `private: true` workspace-internal, which `../pk`'s own equivalent doc
+doesn't need to clarify since several of its packages really are published separately.
+
+`docs/examples.md` needed the largest structural change: this repo has no `examples/*` workspace at
+all (confirmed `ls examples` → no such directory), so `../pk`'s per-adapter dev-server walkthrough
+doesn't apply. Rewrote it to point at the closest real analogs instead — `qa/tree-shaking-tests`'
+`scenarios/package/*`, `packages/kit/scripts/smoke-test.ts`'s real-tarball install, the
+cross-adapter conformance harness, and `qa/bench`'s Tabs benchmark — rather than describing example
+code that doesn't exist. Also dropped `../pk`'s "Key finding: ARIA role gap (PR #89)" anecdote
+entirely: it's real project history specific to `../pk`'s own past, not something this clean-room
+rebuild has any record of, and inventing an equivalent finding for this repo would be fabricated
+history.
+
+Verification: `npx prettier --check` and `npx markdownlint-cli2` clean on all six files
+(`GETTING_STARTED.md`, `ADAPTER_AUTHORING.md`, `ARCHITECTURE.md`, `docs/index.md`,
+`docs/concepts.md`, `docs/examples.md`); `pnpm lint:check` run as a full-workspace regression check
+even though the change is docs-only.
+
+### `examples/*` — not happening; a `Box` worked example lands in `docs/examples.md` instead
+
+Confirmed with you directly (not inferred): `examples/*` will not be ported from `../pk`. Real
+praxis-kit-based components live in a separate, already-in-progress `praxis-components` library —
+this repo's docs should point there for runnable UI, not simulate it with a dev-server workspace
+that would just be redundant with that library. `docs/examples.md`'s intro rewritten accordingly (it
+previously said examples/* "hasn't landed... yet," implying it eventually would).
+
+In its place: a complete, copy-pasteable `Box` config added to `docs/examples.md` under a new
+"Worked examples" section, alongside the existing Tabs config — `Box` exercises
+`createTailwindPipeline` (base class, variants, a `recipe` preset, boolean display-mode props),
+`Tabs` exercises `enforcement` (children cardinality, the built-in ARIA engine). Together they cover
+the two independent capability axes (styling-only vs. contracts-only) the rest of the docs describe
+separately.
+
+**Found and fixed a real inaccuracy while verifying the `Box` example against source** — one that
+had already shipped in `GETTING_STARTED.md`'s own Tailwind section (merged in #45, not caught during
+that PR's review because the deep `lib/tailwind` classifier verification for `ARCHITECTURE.md`/
+`docs/concepts.md` happened later in the same work): the claim "grid mode — flex-col, grow,
+shrink-\* are stripped automatically" is wrong for `grow`/`shrink-*`. Traced to
+`lib/tailwind/src/class-classifier.ts`'s `ITEM_PREFIXES` (`grow`, `shrink`, `basis-`, `self-`,
+`place-self-`, `justify-self-`, `col-`, `row-`, `order`) and its own doc comment: these are
+flex/grid _item_ properties, which resolve against the _parent's_ layout family, not the element's
+own — the classifier "must never strip these based on the element's own family," full stop,
+regardless of mode. Only `flex-col` (a genuine flex-family _container_ property, matched by
+`dependency-rules.ts`'s `flex: [/^flex-/]`) is actually stripped in grid mode. Fixed the claim in
+`GETTING_STARTED.md` and wrote the new `Box` example's own flex/grid comments against the same
+verified source (`constants.ts`'s `LAYOUT_FAMILY_MAP`, `dependency-rules.ts`'s
+`defaultDependencyRules`, and `create-tailwind-pipeline.ts`'s
+`gap-*`-survives-when-mode-isn't-'none' comment) rather than assuming the pattern from the
+now-corrected original.
+
+Verification: `npx prettier --check` and `npx markdownlint-cli2` clean on both changed files.
+
+### `scripts/generate-repo-state.ts` + `qa/metrics` — ported; the `boundaries/dependencies` rule was silently never enforcing anything
+
+Ported `../pk`'s root `scripts/generate-repo-state.ts` (570 lines: `dependency-cruiser` + a
+builder-chain `@praxis-kit/pipeline` API this repo's clean-room `lib/pipeline` doesn't have) and its
+dependent `qa/metrics`, deliberately, not verbatim — see the full design in the session's plan file
+for the detailed reasoning; summarized below.
+
+**Package discovery bug in `../pk` itself, not just a porting mismatch**: `../pk`'s
+`discoverPackages()` only ever globs `packages/`, never `adapters/` — `../pk` moved every framework
+adapter to `adapters/<name>/` years ago and never updated this function, so its own
+`.repo-state/adapters.json`/`contracts.json` come out empty and `exports.json` only ever has
+`@praxis-kit/core` on every real run there today. Fixed here at the root cause: `discoverPackages()`
+reads `pnpm-workspace.yaml`'s real `packages:` glob list (a narrow, documented line-based reader of
+that file's own controlled shape, not a general YAML parser) instead of a hardcoded directory, so a
+future new top-level workspace dir doesn't require touching this script again. Real result: 26 (28
+once `lib/foundation`/`qa/metrics` themselves landed) packages discovered correctly across
+`packages/`, `lib/`, `adapters/`, `plugins/`, `tooling/`, `qa/`.
+
+**Dependency-graph source changed from `dependency-cruiser` to `eslint-plugin-boundaries`** — this
+repo's actual, CI-gated architecture-enforcement mechanism, rather than standing up a second,
+parallel config nothing keeps in sync (the exact staleness class already found in `../pk`'s own
+`.dependency-cruiser.cjs`, which still has dead rules referencing pre-migration `packages/react`
+paths). `violations` come from ESLint's Node API run against `configs/architecture.ts` directly (so
+it can never drift from what CI actually lints with); the full package-to-package import graph
+(`packageImports`) comes from a separate ts-morph AST import-specifier scan, since the boundaries
+plugin fundamentally reports policy pass/fail per import, not a resolved edge list — confirmed by
+reading its compiled rule source before assuming otherwise.
+
+**A real, pre-existing, repo-wide bug found while wiring this up**: `configs/architecture.ts`'s
+`boundaries/dependencies` rule — the `core` must-not-import-frameworks policy that's been in this
+repo's checked-in CI-gated lint config all along — has never actually fired. Traced to the rule's
+own source (`node_modules/eslint-plugin-boundaries/dist/Rules/Dependencies.js`): it only evaluates
+policies when `checkAllOrigins || isLocalDependency`, and `checkAllOrigins` defaults to `false` —
+meaning by default the rule only checks dependencies whose _target_ is a **local** (workspace)
+element, never an **external** package. Since the `core` policy's entire purpose is disallowing
+imports of _external_ framework packages (`'react'`, `'vue'`, etc.), it had silently never been
+evaluated. Confirmed empirically, not by reading alone: `import 'react'` into
+`packages/core/src/ index.ts` produced zero lint output before the fix and a real, correct violation
+after adding `checkAllOrigins: true` to the rule's options. Re-running the full repo through the
+fixed rule found no latent violation (`packages/core` genuinely never imports a framework package
+today) — the CI gate had been doing nothing, not silently ignoring a real breach, but it was still a
+real gap in what this repo's own lint config believed it was enforcing. This is arguably the most
+significant finding of this port, independent of `qa/metrics` itself.
+
+**Investigated and deliberately did not add**: a structural "`foundation` must never depend on
+anything internal" policy, attempted via the same rule. Confirmed via
+`ESLINT_PLUGIN_BOUNDARIES_DEBUG=1` that this plugin's **local-to-local (element-to-element)
+resolution does not work in this repo's current setup** — even a real, declared, resolvable
+workspace dependency (`@praxis-kit/diagnostics`, temporarily added to `lib/foundation/package.json`
+to test with) reports `module.origin: "external"` and `element.isUnknown: true` in the debug output,
+meaning `to: { element: { type: ... } } }`-shaped policies can never match a local dependency here
+today — only external-package string matching (`dependency.source`, the mechanism the `core` policy
+already uses) is confirmed working. This is a separate, deeper gap than the `checkAllOrigins`
+default (likely a missing resolver setting this plugin needs beyond what `configs/architecture.ts`
+currently configures) — investigating and fixing it is out of scope for this task. Reverted the
+non-functional policy attempt rather than ship a second silently-inert rule of exactly the kind just
+found and fixed above; `foundation`'s leaf status stays a documented, code-reviewed convention (its
+own README, zero real dependencies) rather than a mechanically-enforced one for now.
+
+**`qa/metrics`**: ported `collect.ts`/`report.ts`/`assert.ts`/`types.ts` largely as-is once their
+inputs existed for real, with two real fixes:
+
+- `assert.ts`'s git-baseline path was `lib/metrics/snapshots/metrics.json` in `../pk` — a path that
+  never existed in either repo (the package has always been `qa/metrics`), silently no-op'ing every
+  soft-gate growth comparison there on every real run. Fixed to `qa/metrics/snapshots/metrics.json`.
+- `SOURCE_PACKAGES`' complexity-scan bucket list extended from `../pk`'s stale 5 entries to 10,
+  covering
+  `lib/{primitive,diagnostics,contract-props,contract,styling,tailwind,pipeline-kit, runtime,adapter-utils}` +
+  `packages/core` — explicitly excluding `lib/pipeline` (no real production consumer yet) and
+  `lib/playwright` (test infrastructure, same tier as the already- excluded `qa/*` packages) rather
+  than silently inheriting a list that predates half of this repo's real `lib/*` inventory.
+
+`generate-repo-state.ts` runs as plain sequential functions (`async function main()`), not a
+`lib/pipeline` `Pass` chain — matching the same call already made for
+`packages/kit/scripts/ postbuild.ts` and the root `verify` script for structurally identical linear
+scripts; `../pk`'s builder-chain `@praxis-kit/pipeline` API doesn't exist in this repo's clean-room
+rewrite anyway. `node --experimental-strip-types`, not `tsx`, matching `qa/tree-shaking-tests`'s own
+already- established move away from `tsx` for this class of package. No `runtime-graph.json` —
+dropped entirely per explicit decision (hand-written documentation duplicating `ARCHITECTURE.md`'s
+real render-pipeline table, no source derivation at all).
+
+`pnpm repo-state` wired into the root `verify` script (already the exact step `ci.yml` runs), so the
+architecture check this script produces is now genuinely CI-gated, not just a report nobody reads —
+closing a gap flagged during review before it shipped un-wired.
+
+`generate-repo-state.ts`'s own `main()` originally treated a
+`dependency-graph.json.status === 'ERROR'` (e.g. a thrown ESLint invocation) as a silent success —
+exit code 0, "✓ .repo-state/ written" printed regardless. Fixed during review, before merging:
+`ERROR` now sets `process.exitCode = 1` and prints the underlying error, same as a real
+`'VIOLATIONS'` result. An architecture- verification tool that reports its own failure as success
+defeats the entire point of gating `verify` on it.
+
+Verification: `pnpm -r typecheck`, `pnpm lint:check`, `pnpm format:check` all clean;
+`pnpm repo-state` produces all 6 files (no `runtime-graph.json`) with a real, non-empty, correct
+28-package inventory (confirmed `adapters.json` has exactly 7 real entries with derived
+`optionsType`/ `frameworkSpecificOptions`, not `../pk`'s empty map); intentionally broke the hard
+gate (a disallowed `import 'react'`), confirmed `status: 'VIOLATIONS'`, a real violation entry, and
+`process.exitCode === 1`, then reverted; `qa/metrics`'s `collect`/`report`/`assert` all run clean
+end to end.
+
+### `lib/foundation` — extracted from `lib/primitive`; a real Node-native-resolution bug found along the way
+
+While building `qa/metrics` above, importing `iterate` from `@praxis-kit/primitive` crashed with
+`ERR_UNSUPPORTED_DIR_IMPORT`. Root cause: `lib/primitive/src/index.ts` re-exports via directory-
+style barrels (`export * from './utils'`, `export * from './tag'`, etc.) — TypeScript's bundler-mode
+resolution expands `'./utils'` to `'./utils/index.ts'` automatically (every other consumer in this
+repo goes through a bundler — Vite, tsdown, esbuild, or `tsc` itself), but Node's native ESM loader
+has no directory-to-index fallback and throws on a bare directory specifier. Confirmed no other
+`node --experimental-strip-types` script in this repo already hits this: `qa/tree-shaking-tests`
+never imports `@praxis-kit/*` directly, it only feeds those packages to esbuild as bundle entry
+points, and esbuild has its own resolver — `qa/metrics` is genuinely the first script in this repo
+to import a workspace package's real value export under Node's native loader.
+
+**Decision**: extract a new, genuinely flat package — `@praxis-kit/foundation` at `lib/foundation`,
+no subdirectories, no directory-style barrel exports anywhere in it — rather than reworking
+`lib/primitive`'s own internal structure repo-wide (a much larger, unrelated refactor) or continuing
+to duplicate trivial-but-not-trivial logic inline per Node-native script. Confirmed no existing
+`lib/*` package was both flat and a good identity fit first: `lib/contract-props` is flat but
+narrowly scoped to the generics-attachment typing mechanism (its own README: "pure type utilities");
+`lib/diagnostics` and `lib/pipeline-kit` both have subdirectories, so either would have the
+identical problem.
+
+**Scope**: all 6 zero-internal-dependency utilities in `lib/primitive/src/utils/`, confirmed via
+full read of every file in that directory, not just `iterate`/`StringMap` — `assertNever`, `cn`,
+`createObservable`, `LRUCache`, `wrapMethodForDetection` moved alongside them, giving the new
+package a coherent "generic, Node-safe utilities" identity rather than a one-off carve-out. Stayed
+in `lib/primitive`, confirmed real internal dependencies: `lazy` (needs primitive's own `Factory`
+type), `memoize` (needs `UnaryFn`), `mergeRefsCore`/`mergeProps` (need `AnyRef`/`AnyRecord`/
+`isFunction`; `mergeRefsCore` itself now imports `iterate` from the new package instead of a sibling
+file). `AnyRecord` stays in `lib/primitive` too, redefined as `StringMap<unknown>` importing
+`StringMap` from `@praxis-kit/foundation` — it's more deeply woven into primitive's own type
+vocabulary (`SubComponentMap`, `NoVariants`, `NoPreset`, `MergeRecords` all sit in the same file)
+than `StringMap` itself is. `lib/primitive` depends on and re-exports the moved surface from its
+existing public API (root barrel + the `merge-refs.ts` internal import), so none of its ~50 grepped
+existing consumers across `lib/`, `adapters/`, `packages/`, `plugins/` needed to change.
+
+**A second real, repo-wide fix fell out of this**: making `lib/foundation/src/index.ts`'s own
+internal exports resolve under Node's native loader required writing them with explicit `.ts`
+extensions (`export { iterate } from './iterate.ts'`, not `'./iterate'`) — Node's ESM resolver never
+auto-appends an extension to a relative specifier, TS-native-execution or not. That in turn made
+`tsc` reject the file everywhere it's type-checked under a _consuming_ project's tsconfig (e.g.
+`packages/kit`'s own `tsc --noEmit`, which pulls in `lib/foundation/src/index.ts` as source via the
+path alias and applies **its own** compiler options to it, not `lib/foundation`'s) unless
+`allowImportingTsExtensions` was enabled somewhere every consumer inherits. Rather than sprinkling
+the override into every tsconfig that might transitively touch a `.ts`-extensioned import
+(`lib/ foundation`, `scripts/`, `qa/metrics`, and any future Node-native package), enabled it once
+in the shared `tsconfig.base.json` — it only _allows_ the extension when explicitly written, never
+requires or adds one, so every existing extensionless import elsewhere is unaffected, and it needs
+`noEmit` (already set there) to be valid at all.
+
+Verification: `pnpm -r typecheck` (all 28 packages, including a full `packages/kit` `tsc --noEmit`
+that transitively type-checks `lib/foundation` under kit's own config) clean; `pnpm lint:check`
+clean; full test suites for `lib/foundation` (36 tests, new), `lib/primitive` (147), `lib/contract`
+(501), `lib/tailwind` (350), `lib/styling` (72), `lib/adapter-utils` (61), `packages/core` (378),
+and adapter spot-checks (`@praxis-kit/react` 586, `@praxis-kit/lit` 25) all pass; a real
+`pnpm --filter ./packages/kit build` confirmed `@praxis-kit/foundation`'s code (`LRUCache`,
+`iterate`, etc.) is genuinely inlined into multiple built entries (`contract`, `eslint`, `svelte`,
+`vite-plugin`, `lit`) with no bare `@praxis-kit/foundation` specifier leaking into any output; the
+full `qa/metrics` chain (`repo-state` → `collect` → `assert`) re-run end to end importing `iterate`
+for real (not the earlier inlined workaround) as the concrete proof this solves the original
+problem.
+
+### `Record<string, unknown>` / `Record<string, T>` — repo-wide sweep to `AnyRecord`/`StringMap`
+
+Following the `lib/foundation` extraction above, swept the whole workspace for bare
+`Record<string, unknown>` (→ `AnyRecord`) and `Record<string, T>` for `T ≠ unknown` (→
+`StringMap<T>`), replacing each with an import rather than leaving the two forms to drift apart in
+meaning. Two source packages, chosen deliberately per context, not uniformly:
+
+- **`@praxis-kit/primitive`** is the entry point for every ordinary (bundler-resolved) package —
+  adapters, `lib/*`, `packages/core`, `plugins/*` — even where a package (e.g. `lib/pipeline`, which
+  had zero dependencies before this) has no other reason to depend on it yet. Consistency (one
+  well-known front door already depended on almost everywhere) won over avoiding a new edge for a
+  package that would otherwise stay dependency-free.
+- **`@praxis-kit/foundation`** directly is for genuinely Node-native scripts whose other imports
+  already have to route through it for real (value-level `iterate`, not just the type) —
+  `qa/metrics` is the only case: its `collect.ts`/`report.ts`/`assert.ts` already import `iterate`
+  from `@praxis-kit/foundation` for real, so `StringMap` there follows the same source rather than
+  splitting one file's utility imports across two packages for no reason.
+  `scripts/ generate-repo-state.ts` and `qa/tree-shaking-tests`, by contrast, use
+  `@praxis-kit/primitive` for both — confirmed `qa/tree-shaking-tests`' sibling scripts (`gzip.ts`,
+  `report.ts`, `assert.ts`) already imported `StringMap` from `@praxis-kit/primitive` before this
+  session, and type-only imports are erased before Node's native loader ever runs, so the
+  `ERR_UNSUPPORTED_DIR_IMPORT` risk that motivated extracting `foundation` in the first place never
+  applies to a type-only import regardless of which package it's sourced from — only real value
+  imports like `iterate` are constrained to `foundation`.
+
+**Two real, structural reasons found for declining the change, not just stylistic taste:**
+
+- **`lib/contract-props`** (`has-generics.test.ts`'s `Record<string, never>`) was left alone on two
+  independent grounds: the package's own README states it is deliberately dependency-free ("pure
+  type utilities, no `@praxis-kit/*` dependencies"), and the shape itself isn't really "a map of
+  real values" the way `StringMap<T>` means — `Record<string, never>` is an intentionally
+  uninhabited props placeholder for a generics-recovery test, a different concept that happens to
+  share `Record`'s syntax.
+- **`tooling/codemod`** was attempted (added `@praxis-kit/primitive` as a dependency, converted two
+  files) and then reverted after `pnpm -r typecheck` caught a real, structural incompatibility: this
+  package's `tsconfig.json` is entirely standalone (does not extend `tsconfig.base.json`) and uses
+  `module`/`moduleResolution: "NodeNext"` — a fundamentally different, stricter resolution mode than
+  the "bundler" mode every other package in this repo uses. Under NodeNext,
+  `@praxis-kit/primitive`'s own internal extensionless relative imports (`export * from './tag'`)
+  are hard errors (TS2834), not just warnings — confirmed by letting the typecheck actually fail
+  rather than assuming success. `@praxis-kit/foundation` would fail there too, for the mirror-image
+  reason (its internal imports use explicit `.ts` extensions, valid only with
+  `allowImportingTsExtensions`, which NodeNext mode doesn't pair with meaningfully).
+  `tooling/codemod` keeps bare `Record<string, string>` — the two occurrences there are the only
+  ones in the whole sweep that don't route through either package.
+
+Also found and fixed one real leftover along the way: `lib/primitive/src/types/any-record.ts` had
+both an `import type { AnyRecord, StringMap } from '@praxis-kit/foundation'` and a separate
+`export type { AnyRecord, StringMap } from '@praxis-kit/foundation'` — the import brought
+`StringMap` into scope only to leave it unused (the export statement re-exports directly, no local
+binding needed), caught by `@typescript-eslint/no-unused-vars` once the full lint ran. Trimmed the
+import to just `AnyRecord`, the one name the file's own `EmptyRecord`/`SubComponentMap` etc.
+actually reference locally.
+
+Verification: `pnpm -r typecheck` (all 29 packages, including the real `tooling/codemod` NodeNext
+failure-then-fix), `pnpm lint:check`, `pnpm format:check` all clean; full test suites for every
+touched package (`foundation` 36, `primitive` 147, `pipeline` 38, `contract` 501, `styling` 72,
+`adapter-utils` 61, `codemod` 24, `core` 378, and every adapter — `react` 586, `vue` 219, `solid`
+29, `svelte` 25, `preact` 169, `web` 28, `lit` 25 — plus `vite-plugin` 164 and `eslint-plugin` 121)
+all pass; the `repo-state` → `qa/metrics` `collect`/`assert` chain re-run clean end to end after the
+sweep.
+
+### `qa/bench` — `pnpm bench` failing on `tabs.bench.ts` — a real, pre-existing config gap
+
+Running the whole `qa/*` suite end to end (`repo-state`, `qa/tree-shaking-tests`, `qa/metrics`,
+`qa/bench`) surfaced a real, pre-existing bug unrelated to any of the work above:
+`pnpm --filter @praxis-kit/bench bench` (the plain `bench` script, `vitest.bench.config.ts`) threw
+`ReferenceError: document is not defined` in `tabs.bench.ts`. Confirmed via `git log` that both
+files were last touched in PR #38 (`0073067`) — months before this session's other work, not a
+regression from anything above.
+
+Root cause: `vitest.bench.config.ts`'s `exclude` list already excludes `pipeline.bench.ts` and
+`react-compiler.bench.ts` (not-yet-implemented render-level benchmarks) but was missing
+`tabs.bench.ts` — a real DOM benchmark (mounts a React Tabs component) that needs a DOM environment
+this config never configures. `vitest.render.bench.config.ts` (the `bench:render` script) does
+configure one and is where `tabs.bench.ts` was always meant to run — confirmed by running
+`bench:render` first, which produces real numbers with no error. Fixed by adding `tabs.bench.ts` to
+both `exclude` arrays in `vitest.bench.config.ts`, alongside its two siblings.
+
+Verification: `pnpm --filter @praxis-kit/bench bench` now exits 0 with no DOM error;
+`pnpm --filter @praxis-kit/bench bench:render` unaffected (still runs `tabs.bench.ts` for real);
+`typecheck`, `format:check`, and `lint:check` all clean on the changed file.
+
+### root `scripts/` — porting closed; `build-pipeline.ts` skipped, `ast-grep.sh` deferred
+
+Closing out the last two items from `../pk`'s root `scripts/` (beyond `generate-repo-state.ts`,
+already ported — see above). `tsconfig.json` already exists here (trivial, no staleness);
+`README.md` is stale in `../pk` itself (omits `build-pipeline.ts` from its own table), not worth
+porting as-is.
+
+**`build-pipeline.ts` — skipped, not ported.** It's a 2-step sequential pipeline
+(`pnpm --filter ./packages/kit build` → `pnpm check`) built on `@praxis-kit/pipeline`'s `node`
+subpath (`shellPass`/`runPipeline`, a shell-command-composing layer). Porting it would mean adding
+that subpath to this repo's clean-room `lib/pipeline`, which deliberately doesn't have it — and for
+no functional gain: this repo's own root `verify` script
+(`pnpm --filter ./packages/kit build && pnpm check && pnpm repo-state`) already performs the
+identical ordering inline, in plain `package.json` script composition, with no extra abstraction
+layer to maintain. Porting the abstraction just to re-implement a sequence `verify` already does
+correctly would be adding indirection with nothing behind it.
+
+**`ast-grep.sh` + `.ast-grep/` — deferred, not decided.** Real and CI-critical in `../pk`
+(structural AST pattern-matching — a genuinely different tool from `eslint-plugin-boundaries`, not
+superseded by anything already ported here), but its own `.ast-grep/sgconfig.yml` +
+`.ast-grep/rules/*.yml` are a whole separate rule set that hasn't been examined yet. Explicitly set
+aside as its own future task rather than folded into this closure — "closed" here means "no more
+scripts/ porting work is planned," not "ast-grep was evaluated and rejected."
+
+No code changes for this entry — a documentation-only closure.
+
+### `qa/bundle-analysis` — rewritten fresh, not ported; two independent leak signals, both proven against real injected leaks
+
+`../pk`'s `qa/bundle-analysis` is still genuinely broken there, unrelated to porting: its
+`rollup.config.ts` resolves every adapter/tailwind entry via `packages/<pkg>/src/...`, but only
+`packages/core` still lives under `packages/` in `../pk` — every adapter moved to `adapters/*`
+(tailwind to `lib/tailwind`) in one restructuring commit that never updated this file. Confirmed via
+`git log --oneline -- qa/bundle-analysis/rollup.config.ts`: exactly one commit ever touched it (the
+same one that introduced the staleness), followed only by dependency bumps. Also never wired into
+`../pk`'s own CI — its root `package.json` has `analyze`/`size` scripts targeting it by name, but no
+workflow ever invokes them, presumably why the break was never caught. Rather than port a config
+that's provably broken with zero maintenance since, or keep waiting on an upstream fix with no sign
+of happening, rewrote fresh against `qa/tree-shaking-tests`'s already-working esbuild pattern, which
+solves the identical `adapters/*`/`packages/core`/`lib/tailwind` path-aliasing problem correctly in
+this repo today.
+
+**Shared alias knowledge extracted, not duplicated.** Pulled `workspaceAlias`,
+`consumerExternalStrings`, `consumerExternalPlugin`, and `toPackageName` out of
+`qa/tree-shaking-tests/scripts/{analyze,assert}.ts` into a new
+`qa/tree-shaking-tests/scripts/workspace-resolution.ts`, exposed via a new `"."` export in
+`qa/tree-shaking-tests/package.json` pointing directly at that one flat file. `qa/bundle-analysis`
+depends on `@praxis-kit/tree-shaking-tests` and imports these as real runtime values — safe
+specifically because the export points at one flat file, not a directory barrel: the same
+`ERR_UNSUPPORTED_DIR_IMPORT` problem that motivated extracting `lib/foundation` would otherwise
+apply here too (a Node-native script importing a real value through a directory-style export).
+`analyze.ts`/`assert.ts` import the four names back from the new file — a pure extraction, their own
+behavior is unchanged. `qa/bundle-analysis` layers only 3 additional aliases on top, in its own
+`scripts/workspace-alias.ts` (`@praxis-kit/react/legacy`, `@praxis-kit/lit`, `@praxis-kit/web`) —
+the plan going in expected `@praxis-kit/core/{props,state,aria}` would be needed too (they back
+`packages/kit/contract.ts`'s re-exports), but that turned out unnecessary once actually checked: no
+adapter source imports those subpaths directly, and this package's `contract`/`guards`/`html`/
+`utils` scenarios are package-tier only (see below) — left out rather than added speculatively.
+
+**Dual scenario tiers, asymmetric by design, not 1:1.** `scenarios/source/*` — 9 scenarios, one per
+entry with a real workspace-source counterpart (`react`, `react-legacy`, `preact`, `vue`, `solid`,
+`svelte`, `lit`, `web`, `tailwind`) — gives real per-original-file `bytesInOutput` composition data,
+the fine-grained breakdown tier. `scenarios/package/*` — all 13 scope entries, including
+`contract`/`guards`/`html`/`utils` (pass-through re-export files that live _inside_ `packages/kit`
+itself, not a distinct workspace package with its own source tree, so there's no separate "does the
+source graph tree-shake" question to ask for them) — real node resolution against `packages/kit`'s
+built `dist/`, the real-consumer-size tier. Every scenario does `export * from '<entry>'` (the whole
+public surface), not one hand-picked symbol — deliberately different from `tree-shaking-tests`'s
+minimal-usage style, since this tool answers "what does the whole entry actually cost," a different
+question `tree-shaking-tests` already answers well for the narrower one. `preact` and `solid` are
+excluded from `qa/bundle-analysis`'s own `tsc --noEmit` (their real JSX types aren't assignable
+under this package's `jsxImportSource: "react"`) — the exact same conflict `tree-shaking-tests`
+already hits and excludes its own `preact-minimal`/ `solid-minimal` scenarios for;
+`eslint.config.ts`'s `allowDefaultProject` needed the same two new entries `tree-shaking-tests`'s
+equivalents already have, or ESLint's typescript-eslint project service can't find a project for the
+excluded files at all.
+
+**Deliberately not duplicated**: `../pk`'s original 6 `.size-limit.json` fixture scenarios
+(`react-minimal`, `react-enforcement`, `react-variants`, `react-tailwind`, `vue-minimal`,
+`solid-minimal`) — `tree-shaking-tests` already tracks a committed gzip baseline per minimal-usage
+adapter scenario, and its own `DECISIONS.md` entry already proved these collapse to byte-identical
+output per adapter (every adapter's real value-level surface is one function). The one genuinely
+additive dimension this tool tracks instead: total gzip size of the whole real entry (every
+re-export), a real, different number from any existing baseline — confirmed non-trivially different
+in practice: `lib/contract`'s built-in ARIA rule tables turned out to dominate every source/*
+adapter bundle's byte share (47–53%), not the adapter's own code as initially assumed going in —
+architecturally correct (`createContractComponent` pulls in the full enforcement rule set regardless
+of framework) but worth recording as a real, only-empirically-discovered composition fact.
+
+**Two independent leak-detection signals** (`scripts/leak-check.ts`, named distinctly from
+`assert.ts` — isolation correctness, not tree-shaking inclusion): a live-file-path check (does a
+scenario's live input paths include another owner's source/dist dir) and an external-peer check
+(does a scenario externalize a bare specifier belonging to a framework other than its own — the
+signal a byte-count check structurally cannot see, since an externalized import is always 0
+`bytesInOutput`). Both proven against real injected leaks, not just written and trusted: a genuine
+`export * from` re-export between two sibling adapter barrels turned out to be a **false negative**
+on the first attempt — collided value names (`createContractComponent`, `defineContractComponent`)
+between the two `export *` sources are silently dropped under ECMAScript's ambiguous-star-export
+rule, so nothing ever became live. Switched to an unambiguous renamed re-export
+(`export { createContractComponent as __leakedVueCreateContractComponent } from '../../vue/src/create-contract-component'`)
+injected into `adapters/react/src/index.ts`, which both checks caught correctly; reverted after
+confirming. A second injection (`export { render as __leakedSolidRender } from 'solid-js/web'`)
+proved the external-peer check fires independently — no live-file-path signal exists at all for a
+raw external package, so only that check reported it; reverted after confirming.
+
+The `OWNERS` table's `ownPeers` (per-adapter framework-peer patterns) is a hand-maintained mirror of
+`packages/kit/tsdown.config.ts`'s own per-entry `deps.neverBundle` lists, not an import from there —
+deliberately: importing the actual build config would pull tsdown/unplugin-solid in as real
+dependencies of a QA script just to read a few peer-pattern arrays, a real-import version of the
+"parsing tsdown.config.ts as a file would be too clever and brittle" problem it was written to
+avoid. This is accepted, documented duplication, not a false single-source-of-truth claim — the doc
+comment says so explicitly, and a follow-up (a small, side-effect-free shared data module both files
+import) is noted but not done here. `react`/`react-legacy` deliberately share one ownership domain
+(same source/dist dirs — both are the React adapter, differing only in API surface); a known,
+accepted consequence is this check cannot detect one surface depending on something only the other
+exposes. External-peer detection is deliberately narrow — it only flags a specifier belonging to
+_another known Praxis framework owner_, not "any external dependency this repo doesn't recognize" —
+broadening it would dilute a currently crisp invariant ("did one Praxis adapter acquire another's
+peer") into a fuzzier general dependency-policy checker.
+
+**`scripts/inventory-check.ts`** — the one check in this package that looks outward: cross-checks
+`scenarios/package/*` against `packages/kit/package.json`'s real `exports` map, so a new subpath
+export landing in `packages/kit` with no scenario ever created for it doesn't pass silently forever
+(every other script here only ever iterates the scenario directories that already exist). Excludes 5
+real exports with no meaningful bundle-composition question to ask (`./tailwind.css` — a CSS asset;
+`./svelte/Polymorphic.svelte` — raw source for the consumer's own compiler; `./eslint`/
+`./ts-plugin`/`./vite-plugin`/`./codemod` — tooling entries never imported into an application
+bundle). Proven against a real injected drift (an extra scenario directory with no matching export)
+before being trusted.
+
+Verification: `pnpm --filter @praxis-kit/bundle-analysis typecheck`/`build` (22 scenarios)/
+`leak-check` (22/22)/`inventory-check`/`report` (real non-zero composition numbers,
+`composition.json` written per scenario) all clean; `gzip:update` then `gzip` clean; both negative-
+case proofs above confirmed and reverted (`git status` clean on `adapters/react/src/index.ts`
+afterward); full `pnpm verify` (root — a real `packages/kit` rebuild, then `lint:check` +
+`typecheck` + `test` across all ~31 packages, then `repo-state`) exits 0, `qa/bundle-analysis`'s own
+`test` script picked up automatically by `pnpm -r --if-present test` with no CI YAML change and no
+root `package.json` change, exactly as `tree-shaking-tests` itself was.
+
+### `lib/adapter-utils` — SSR tag serialization had no safety boundary; `assertSerializableTag` added
+
+Found via review, not this session's own exploration: `renderBundleToString`
+(`lib/adapter-utils/src/render/render-to-string.ts`, the shared SSR string-renderer for the Lit and
+Web adapters) interpolates the resolved tag directly into the returned markup —
+`` `<${tag}${attrStr}>${innerHTML}</${tag}>` `` — with no validation that `tag` is a syntactically
+safe HTML/custom-element tag name. `resolveTag()` itself is a bare `as ?? defaultTag` passthrough
+(`lib/primitive/src/tag/resolve-tag.ts`), and `ElementType` is `IntrinsicTag | (string & {})` — no
+real type-level narrowing, so an arbitrary string reaches `tag` under full type safety, no unsafe
+cast required. `enforceAllowedAs` — the only existing guard anywhere near this path — doesn't close
+the gap: it only runs when a component declares `allowedAs` at all, and even then reports through
+the pluggable `diagnostics` system, which a consumer can configure as `silentDiagnostics` and
+thereby disable. Neither condition is met by the common case (no `allowedAs` declared).
+
+Not exploitable through either of `renderBundleToString`'s two current callers today:
+`adapters/lit/src/render-to-string.ts` and `adapters/web/src/render-to-string.ts` both destructure
+and discard `as` from `props` before calling in (`const { as: _as, ...rest } = props`) — for an
+unrelated reason (neither adapter supports tag polymorphism in SSR, a deliberate design choice
+predating this fix). That makes this a real latent defect in a shared, reusable function rather than
+a live exploit today: a future caller of `renderBundleToString` that reintroduces `as` (a third
+non-VDOM adapter, or a future change to Lit/Web's own no-polymorphism decision), or a dynamically-
+configured `options.tag` reaching this path some other way, would silently reintroduce it with no
+guard anywhere to catch it.
+
+Fixed by adding `assertSerializableTag(tag)` — checked against `/^[a-zA-Z][a-zA-Z0-9-]*$/` (a valid
+HTML or custom-element tag name) — called unconditionally immediately after `resolveTag()`, before
+`enforceAllowedAs` or any other processing. Deliberately a raw `throw new Error(...)`, not routed
+through `options.diagnostics`: `enforceAllowedAs` is a semantic/business-rule allowlist a consumer
+may legitimately want to permit-and-log rather than hard-fail on (hence it's diagnostics-routed and
+silenceable); this check is a serialization _invariant_ — a tag either can or cannot be safely
+written into `<${tag}>`, with no legal escaping once it's there, so a consumer silencing it would
+just ship broken or injected markup. Matches this same file's own existing convention
+(`renderContractToString`'s "not registered for SSR" failure is already a raw, unconditional
+`throw`, not diagnostics-routed).
+
+No existing test could exercise this path at all — both adapters' own `ssr.test.ts` go through
+`renderContractToString`, which always strips `as` first. Added
+`lib/adapter-utils/src/render/render-to-string.test.ts` (7 tests) calling `renderBundleToString`
+directly against a minimal fake `SsrBundle`, covering: a normal tag, a hyphenated custom-element
+tag, a tag containing a markup delimiter, a tag containing an attribute-injection-shaped space, an
+empty tag, a tag starting with a digit/hyphen, and the same check firing when the malicious value
+comes from `options.tag` (via a stubbed `resolveTag`) rather than `as`.
+
+Verification: new test file passes (7/7); full `lib/adapter-utils` suite (68 tests, up from 61),
+`@praxis-kit/lit` (116 + 25 SSR-conformance), and `@praxis-kit/web` (63 + 28) suites all pass
+unchanged; `typecheck` clean on all three packages; confirmed via a real `packages/kit` rebuild
+(`pnpm --filter ./packages/kit build`) that this change is included with no regressions.
+
+### RC package validation — one blocker (Svelte adapter unusable) + packaging cleanup
+
+A full release-candidate pass over the published `packages/kit` artifact (build → `publint` →
+`pnpm pack` → tarball inspection → isolated-fixture install → import/type/CLI checks → tree-shaking
+→ bundle-analysis → `repo-state`). Every automated gate already passed; the value was in the manual
+tarball inspection, which surfaced one release blocker and a set of smaller issues. Fixed on
+`fix/rc-packaging-issues`.
+
+**Blocker — `praxis-kit/svelte/Polymorphic.svelte` did not resolve for consumers.** It ships as raw
+`.svelte` source (correct — the consumer's own Svelte compiler processes it), but its `<script>`
+block imported `enforceAllowedAs`/`isKnownAriaRole` from `@praxis-kit/core`, `isObject`/`isString`
+from `@praxis-kit/primitive`, `applyFilter`/`resolveNormalizedProps` from
+`@praxis-kit/adapter-utils`, and four types from `./types`. All of those are `private: true`
+workspace packages (never published) or a file not in the tarball. Since Svelte's
+`createContractComponent` returns a bundle that can only be rendered by `<Polymorphic bundle={…}>`,
+**the Svelte adapter was non-functional as published** — and the `test:pack` smoke test missed it
+(it `import()`s `praxis-kit/svelte`, the JS index, but a `.svelte` file can't be `import()`-ed by
+Node, and that export has no `types` condition to check).
+
+Fix: a bundled, non-public `svelte/_polymorphic-runtime` entry
+(`packages/kit/svelte-polymorphic-runtime.ts`) that re-exports the six runtime helpers plus the two
+_structural_ type aliases (`ElementType`, `IntrinsicProps`). `postbuild.ts` rewrites the copied
+`.svelte`'s three `@praxis-kit/*` specifiers to `./_polymorphic-runtime.js`, and rewrites `./types`
+to `./index.js` — routing `PolymorphicComponentProps` (whose `bundle` field carries the _nominal_
+`SlotValidator`/`ChildrenEvaluator`, private members) through the real `praxis-kit/svelte` entry so
+those types stay identical to a consumer's own `createContractComponent` bundle rather than becoming
+a second, non-assignable copy. The runtime shim's `.d.ts` dropped from 26 kB to 5.6 kB once it no
+longer re-exported the runtime-typed names, and the postbuild nominal-split warnings for those two
+classes went away. `postbuild.ts` now also asserts, after the rewrite, that no unresolvable
+`@praxis-kit/*` / relative specifier survives in the copied file — a new adapter import can't
+silently ship broken. `smoke-test.ts` grew a fixture-side check that compiles the shipped
+`Polymorphic.svelte` (client + server) with the consumer's own `svelte` and `require.resolve`s every
+one of its import specifiers.
+
+**`class-variance-authority` was bundled into every adapter but undeclared.** `lib/styling` depends
+on it (`catalog:`), the published package bundles `lib/styling`, so tsdown inlined CVA into
+`dist/*/index.js` — while `clsx`, the sibling dependency, was correctly left external because it
+_is_ in `packages/kit`'s `dependencies`. Added `class-variance-authority` there (matching `clsx`);
+tsdown now externalizes it (`import { cva } from "class-variance-authority"`), the "unintended
+bundling" build hint is gone, and consumers dedupe one copy.
+
+**`pnpm build` failed on a fresh checkout.** `"build": "pnpm typecheck && pnpm -r build"` ran the
+aggregate typecheck — which includes `qa/tree-shaking-tests`' `scenarios/package/*` resolving
+`praxis-kit/<entry>` types through `packages/kit/dist/` — _before_ the build that produces that
+dist. Known (`ci.yml` works around it by running `pnpm verify` first) but a footgun. Reordered to
+`"build": "pnpm -r build && pnpm typecheck"`: pnpm's topological ordering builds `packages/kit`
+before the `qa/*` packages that depend on it, so dist exists by the time the typecheck runs.
+`pnpm build` is now self-sufficient.
+
+**Single release gate + metrics wired in.** Added `pnpm verify:release` — `verify` (build kit → lint
+→ typecheck → test → repo-state) then `publint`, `test:pack`, `qa/tree-shaking-tests`,
+`qa/bundle-analysis`, and `qa/metrics` (`collect` + `assert`). `qa/metrics` existed but had no
+root-script wiring and no CI invocation (the `ci.yml` comment claiming it and
+`scripts/generate-repo-state.ts` were "not ported yet" was stale — both have existed since the
+`qa/metrics` port). Added `metrics:collect` / `metrics:report` / `metrics:assert` root scripts and
+switched `ci.yml`'s scattered `verify` + `build` steps to `verify:release`. Documented in
+`docs/releasing/verify-release.md`.
+
+**Cosmetic internal-name leaks in shipped output.** `dist/lit/index.js` / `dist/web/index.js`'s "not
+registered for SSR" error told authors to use `createContractComponent from @praxis-kit/lit` — an
+unpublished name; changed to `praxis-kit/lit` / `praxis-kit/web`. The TS-plugin's four diagnostic
+`source: '@praxis-kit/typescript-plugin'` labels (shown bracketed in editor tooltips) became
+`source: 'praxis-kit/ts-plugin'`, the real public subpath. The `@praxis-kit/*` ESLint _rule_ names
+in `dist/eslint` were left alone — that is the plugin's intended rule namespace, not a leak.
+
+**`diagnostics → primitive` package cycle broken.** `lib/diagnostics` imported `AnyRecord` (a type)
+from `@praxis-kit/primitive` while `primitive` imports the `Diagnostics` type from `diagnostics` — a
+type-only cycle `repo-state` and pnpm both flag. `AnyRecord`/`StringMap` originate in
+`@praxis-kit/foundation` (a leaf that `primitive` already depends on); pointed `diagnostics` at
+`foundation` for them and swapped its lone `dependencies` entry. `diagnostics → foundation` is
+acyclic.
+
+**Also added `"./package.json": "./package.json"` to `packages/kit`'s `exports`** — standard
+practice, and the Svelte smoke check needs a resolvable way to find the package root (the
+`./svelte/Polymorphic.svelte` export's lone `svelte` condition is not one Node's resolver selects).
+
+Not in scope for this pass (separate P0 items): per-framework real consumer apps (a Svelte one would
+now have caught the blocker end to end), the changesets/npm-auth release infra, and the
+`private: true` / `0.0.0` flip.
+
+Verification: `pnpm verify:release` clean from a simulated fresh checkout (`packages/kit/dist`
+removed); `test:pack` PASS including the new Svelte compile-and-resolve check; full `pnpm -r test`
+and `pnpm -r typecheck` unchanged; `publint` "All good!"; tarball re-inspected — CVA now an external
+`import`, `_polymorphic-runtime.{js,d.ts}` present under `dist/svelte/`, no other content change.
+
+### `StylingOptions.presets` — kept, not renamed to `recipes` (2026-09-08)
+
+Resolved the naming question raised while porting `tooling/codemod`'s README: `styling.presets`
+holds a `RecipeMap`, selected at render time by the `recipe` prop, and the internal type family is
+`Recipe*` (`RecipeMap`, `RecipeOf`, `RecipeTarget`). **The field stays `presets`.**
+
+- `presets` and `recipe` name two different things, not one thing inconsistently: `styling.presets`
+  is the **store** of named variant bundles a component defines; `recipe` is the **prop** that
+  selects one of them by name at a call site. "Here are my presets" / "use this recipe" both read
+  correctly in English. The only genuine mismatch is the _type_ under the field being called
+  `RecipeMap` rather than `PresetMap` — a smaller, internal-only wart, and `RecipeMap` is at least
+  right about what a caller does with it.
+- `presets` is `../pk`'s field name too. A clean-room reconstruction diverging from the reference on
+  a public API name — with no functional reason — is worse than the inconsistency.
+- The architecture is frozen for 0.1. A rename touches ~46 sites across 27 files plus every doc,
+  needs the AST codemod command noted under "`tooling/codemod` — port scope", and — post-publish —
+  becomes a breaking change gated behind 0.2/1.0 anyway. The payoff (one field name matching one
+  type name) does not clear that bar.
+
+`styling-options.ts`'s doc comment for `presets` now states the preset/recipe relationship
+explicitly so a reader meeting the two names together isn't left to wonder. If a rename is ever
+revisited it is a `recipes` field + `TRecipes` generic + `PolymorphicGenerics['recipes']` change,
+shipped with the codemod, not a find-and-replace.
+
+### `*.spike.test.*` — promoted to plain `*.test.*` (2026-09-08)
+
+The P1 review of the 19 `*.spike.test.*` files (3 patterns: `compound-component` ×8, `on-element`
+×8, `contract-props` ×3). Outcome: **promote all of them** — none was throwaway or a limitation-doc.
+
+- They already run in the normal suite and CI: the vitest `include` glob is
+  `src/**/*.{test,spec}.{ts,tsx}`, which `*.spike.test.*` matches. "spike" was purely a filename
+  label with no mechanical effect — a false signal that this coverage was provisional.
+- The content is real regression coverage: the `onElement` lifecycle matrices (element handoff
+  across an `as` override / the `asChild` slot, cleanup ordering on replacement, once-only cleanup
+  on unmount, a throwing hook on a replacement element), compound-output static-property typing, and
+  the `ContractProps<T>` / `GenericsOf<T>` phantom-`__generics` recovery type tests. All of it is
+  worth keeping and none of it duplicates the conformance suite (which covers the render contract,
+  not these adapter-specific mechanisms).
+
+Changes: `git mv` each `*.spike.test.*` → `*.test.*`; the two Svelte helpers `*.spike-host.svelte` →
+`*.test-host.svelte`; "spike" dropped from the `describe` titles and from the throwaway
+custom-element fixture tag names (`spike-card` → `pk-card`, etc.). No test logic touched.
+`pnpm -r test` + `pnpm -r typecheck` unchanged.
+
+### Public export surface — tightened to match `docs/api-stability.md` (2026-09-08)
+
+Follow-up to the P1 export audit (`.vscode/REMAINING_WORK.md`). Pre-publish is the only window in
+which removing an export is not a breaking change, so the audit's findings were acted on rather than
+just documented.
+
+- **`praxis-kit/react`** no longer re-exports `Slot`, `cloneSlotChild`, `getChildRef`, `composeRefs`
+  — `current/index.ts` / `legacy/index.ts` did `export * from './slot'`, leaking the slot-cloning
+  machinery. `Slot` etc. stay in the bundle (used internally by `build-runtime.ts`), they're just no
+  longer public. `mergeRefs` remains (documented); `composeRefs` was only ever an alias of it. Both
+  index files also switched `export * from './create-contract-component'` →
+  `export { createContractComponent }` for the same reason.
+- **`praxis-kit/svelte`** replaced `export type * from './types'` (+ `./svelte-options`) with an
+  explicit allowlist. It still exposes more than the VDOM adapters — its return value is a rich
+  bundle object — but the resolver plumbing (`Runtime`, `TypedRuntime`, `RuntimeOptions`,
+  `TagResolver`/`PropsResolver`/`ClassResolver`, `NormalizedOptions`, `ResolvedProps`,
+  `ResolvedAttributes`, `FilterPredicate`, `BuiltChildrenEvaluator`, `PolymorphicPropsBase`,
+  `StyleValue`/`StyleObject`, `AsProp`, `KnownProps`) is now internal. Kept: `BuiltRuntime`,
+  `AnyBuiltRuntime`, `WithChildRules`, `GenericsOf`, `ResolvedSlotProps`,
+  `PolymorphicComponentProps`.
+- **`praxis-kit/web`** gained `ContractProps<T>` / `GenericsOf<T>` (new `types/contract-props.ts`, a
+  phantom `__generics` marker on `WebContractComponent`, `RuntimeG` threaded through the factory
+  return type) — a byte-for-byte port of the Lit adapter's, closing the one adapter that had no
+  prop-recovery type. Added `@praxis-kit/contract-props` to its deps + a `contract-props.test.ts`
+  type-test mirroring Lit's.
+- **`praxis-kit/lit` and `/web`** now also re-export `ElementType` / `EmptyRecord` /
+  `PolymorphicGenerics` from core, matching the VDOM adapters — `GenericsOf<T>` returns a
+  `PolymorphicGenerics`, so a consumer needs to be able to name it.
+- **`praxis-kit/vite-plugin`** stopped exporting the building blocks each plugin composes from
+  (`analyze`, `buildPrecomputedClasses`/`injectPrecomputedClasses`, `pruneDeadCompounds`,
+  `buildManifest`/`collectFileTokens`, `transformAsChild`, `composeStatically`/
+  `extractStaticComponents`) and the internal AST/registry types (`ImportBinding`,
+  `StaticComponent`, `StaticBound`, `ComponentConstraint`, `Diagnostic`). Surface is now the seven
+  plugin factories + `PluginOptions` / `DesignTokens*` config types. `ssrOptimizePlugin` (a real,
+  fully-documented convenience bundle that the doc had omitted) is now listed in `api-stability.md`.
+- **Stale README export tables** for react/preact/vue listed four factory helpers that don't exist
+  in this repo (`createPolymorphicComponent`, `createAriaEnforcedComponent`,
+  `createChildrenEnforcedComponent`, `createContractedComponent` — ported from `../pk` and never
+  reconciled). Rewritten against the real `index.ts` surface; solid/svelte/web tables filled out to
+  match.
+
+Verification: full `pnpm typecheck` + `pnpm test` green; `pnpm lint:check` clean; `publint` "All
+good!"; `test:pack` PASS (its `vite-plugin` type-probe updated `ComponentConstraint` →
+`PluginOptions`); `qa/bundle-analysis` + `qa/tree-shaking-tests` gzip snapshots unchanged (react −30
+B from the dropped export statements, everything else ±0 — the removed names were type-only or
+already tree-shaken).
+
+### `lib/foundation` — the foundational type guards moved here too (2026-09-08)
+
+The runtime predicate vocabulary — `isString` `isNumber` `isBoolean` `isFunction` `isArray`
+`isObject` `isPlainObject` `isDefined` `isUndefined` `isNull` `isNonNull` `isNullish`, plus the
+`AnyFunction` type — moved from `lib/primitive` (`src/utils/type-guards.ts` +
+`src/guards/foundational/is-{array,boolean,defined,null}.ts`) into
+`lib/foundation/src/type-guards.ts` / `any-function.ts`. Same rationale as the original `iterate` /
+`StringMap` extraction: a package _below_ `primitive` in the graph could not use them.
+
+- Concrete beneficiary: **`lib/diagnostics`** (`primitive` depends on it for the `Diagnostics` type,
+  so it can't depend back on `primitive`). It was hand-rolling `typeof value === 'string'` /
+  `value === undefined` in `resolve-diagnostics.ts` and `formatter.ts`; those now use `isString` /
+  `isUndefined` / `isDefined` from `@praxis-kit/foundation`, which it already depends on. The
+  `node --experimental-strip-types` scripts (`qa/*/scripts`, `scripts/*`) can now reach the same
+  predicates the same way, though only `diagnostics` was actually converted here.
+- `@praxis-kit/primitive`'s public surface is unchanged: `src/guards/foundational/index.ts` now
+  re-exports every guard from `@praxis-kit/foundation` (with `isPlainObject` surfaced under
+  primitive's historical name `isRecord`), and `src/types/any-function.ts` re-exports `AnyFunction`.
+  All ~40 downstream `@praxis-kit/primitive` guard imports across `lib/`, `adapters/`, `packages/`,
+  `plugins/` are untouched. Two intra-`primitive` imports that reached the deleted files by direct
+  path (`guards/contract/is-validation.ts`, `guards/aria/is-aria-attribute.ts`) were repointed at
+  the `../foundational` barrel.
+- **Stayed in `primitive`:** every domain guard (`isTag`, `isComponent`, `isAriaRole`,
+  `isKnownAriaRole`, `isAriaAttribute`, `isInvalid`, `isVariantMap`, `isVariantSelection`,
+  `isCardinality`, `isValidation`, `isDynamicRule`, the merge predicates) — they depend on domain
+  types that live in `primitive`.
+- `isObject` / `isPlainObject`'s `excludeArrays: true` overload now narrows to `StringMap<unknown>`
+  (foundation's own name) instead of primitive's `AnyRecord` — the two are defined to be the same
+  type (`AnyRecord = StringMap<unknown>`), so no consumer sees a change.
+- `lib/foundation` stays flat — no subdirectories, explicit `.ts` extensions on `index.ts`'s
+  re-exports — for the Node-native-loader reason it was extracted for. The new files are flat
+  siblings; the guard file kept the `type-guards.ts` name it already had in `primitive`.
+
+Not addressed here (deliberately): `isUndefined(possiblyUndeclaredGlobal)` throws `ReferenceError`
+because the argument is evaluated before the guard runs — `typeof X !== 'undefined'` is the only
+safe form for a global-existence check, and remains so (2 spots, both in `adapters/web`, both
+commented). A NOTE to that effect sits at the top of `type-guards.ts`.
+
+Cost: `type-guards.ts` is now its own bundled module rather than part of `primitive`'s
+`utils/type-guards.ts`, so every published bundle that includes any guard gained one small module
+wrapper — a uniform +2…+27 B gzip (~0.1%) across the `qa/*` scenarios, well within the 5% gate.
+Baselines regenerated (`gzip:update`) in the same change. Same one-time cost the original
+`StringMap`/`iterate` extraction paid.
+
+### Public-leak sweep — `tailwind` / `vite-plugin` / `svelte` tightened, internal package names scrubbed from `.d.ts` prose (2026-09-08)
+
+A full sweep of the built `packages/kit/dist/**/*.d.ts` for internal API reaching the published
+surface, after the #72 export-tightening. Clean: no internal `@praxis-kit/*` **import specifiers**
+in code (postbuild rewrite + the leak-check hold), the shared `dist/index-*` chunk is not in the
+`exports` map, `praxis-kit/contract`'s ARIA-rule types are a deliberate curated authoring surface,
+`praxis-kit/guards` matches its doc. Three real leaks + one cosmetic issue fixed:
+
+- **`praxis-kit/tailwind`** — same over-broad pattern `vite-plugin` had. It exported `ClassBuilder`,
+  `ClassClassifier`, `DependencyEvaluator`, `LayoutState` (internal classes),
+  `defaultDependencyRules` / `DependencyRules` (not even a `createTailwindPipeline` option), and
+  `export type * from './types'` (~16 `*Token` / `ResolvedLayout` / `TailwindPipelineContext` /
+  `CompoundVariant` types). Nothing outside `lib/tailwind/src` used any of them
+  (`praxis-kit/vite-plugin` uses only the `layoutKeys` _value_). Trimmed to
+  `createTailwindPipeline`, `layoutKeys`, and the `LayoutProps` / `LayoutKey` / `ResolvedLayout`
+  types (the layout-shorthand prop shape, for typing a wrapper). `smoke-test.ts`'s tailwind
+  type-probe moved `ClassBuilder` → `createTailwindPipeline`; README Exports table rewritten.
+- **`praxis-kit/vite-plugin`** — the seven plugin factories' `@example` JSDoc blocks showed
+  `import { contractPlugin } from '@praxis-kit/vite-plugin'` — the unpublished internal name — which
+  ships verbatim in `dist/vite-plugin/index.{d.ts,js}`. A consumer copy-pastes a broken import.
+  Reworded to `praxis-kit/vite-plugin`.
+- **`praxis-kit/svelte`** — dropped `WithChildRules` from the #72 allowlist. It's the internal bound
+  on `BuiltRuntime`'s second type parameter; a consumer annotating a bundle writes `BuiltRuntime` /
+  `AnyBuiltRuntime` and lets the default fill in, never names this. Still bundled into the `.d.ts`
+  (referenced by `BuiltRuntime`), just no longer a named export.
+- **Cosmetic** — ~9 JSDoc comments on public types (`ContractProps`, the `__generics` markers,
+  `ChildrenEvaluator`'s structural counterpart, `ReactFactoryOptions.compiled`) named internal
+  packages (`@praxis-kit/contract-props`, `@praxis-kit/runtime`, `@praxis-kit/contract`,
+  `@praxis-kit/adapter-utils`) in their prose — visible in a consumer's editor hover, unresolvable.
+  Reworded at the source (drop the parenthetical package ref, or "the shared adapter runtime" / "the
+  praxis-kit compiler"). `postbuild.ts` only rewrites `from '…'` specifiers, not comment text, so
+  this had to be a source change.
+
+Verification: full `pnpm typecheck` + `pnpm test` + `pnpm lint:check` green; `publint` "All good!";
+`test:pack` PASS; `qa/*` gzip within threshold (type-only + dead-re-export removal — no runtime
+bytes moved).
+
+### CI / tooling cleanup — CodeQL on `develop`, dead analysis deps removed (2026-09-08)
+
+P2 housekeeping.
+
+- **`codeql.yml`** now triggers on `push` / `pull_request` to `[main, develop]`, not just `main`.
+  `develop` is the default branch and every PR targets it, so CodeQL had been running on no PR at
+  all — only the weekly `schedule` cron touched the code. (Closes the **Open** item flagged in the
+  `CI — .github/workflows/ci.yml + publish.yml` entry above.)
+- **`@ast-grep/cli`** and **`dependency-cruiser`** removed from the root `devDependencies`, the
+  `catalog:`, and (for ast-grep) `allowBuilds`. Both were carried over from `../pk` and used by
+  nothing here — no `analyze:deps` / `analyze:patterns` script, no `.dependency-cruiser.cjs`, no
+  `.ast-grep/` config, no import. `../pk`'s two analysis passes are deliberately not part of this
+  repo's gate: the layer boundaries they check are already enforced by `eslint-plugin-boundaries`
+  (`configs/architecture.ts`) + `import-x/no-cycle`, and `scripts/generate-repo-state.ts` produces
+  the dependency-graph snapshot. `-276` lockfile lines.
+- **Kept:** `ts-morph` at the root — `scripts/generate-repo-state.ts` (typechecked by
+  `scripts/tsconfig.json` via the root `typecheck` script, and run under `pnpm repo-state`) imports
+  it directly; `jscpd` (`pnpm analyze:duplicates`, `.jscpd.json`); `aria-query` /
+  `@types/aria-query` (`scripts/generate-aria-support.ts`). All real root dev tools.
+- Reworded the now-stale `ci.yml` comment and the `.dependency-cruiser.cjs` reference in
+  `lib/primitive/src/types/contracts/children-evaluator.ts`.
+
+Verification: `pnpm install` clean (no ignored-build prompt), full `pnpm typecheck` + `pnpm test` +
+`pnpm lint:check` green, `pnpm analyze:duplicates` + `@praxis-kit/codemod` (ts-morph consumer) both
+still work.
+
+### `packages/kit` — dependency / license / metadata audit for 0.1 (2026-09-08)
+
+Deliberate review of the publishable package's `package.json` ahead of the first publish.
+
+**Dependency reclassification: `@typescript-eslint/utils` moved from `dependencies` → optional
+`peerDependencies` (`>=8`).** Only the `praxis-kit/eslint` entry uses it (`RuleCreator` from
+`@typescript-eslint/utils/eslint-utils`, left external by the tsdown config on purpose — "a real
+dependency of consumers' own eslint config, not something to duplicate into this bundle"). As a hard
+`dependency` it pulled ~20 transitive packages
+(`@typescript-eslint/{types,scope-manager, typescript-estree,project-service,visitor-keys,tsconfig-utils}`,
+`ts-api-utils`, `minimatch`, `semver`, `debug`, …) into _every_ `praxis-kit` install, even one that
+only imports `praxis-kit/react`. Anyone using `praxis-kit/eslint` already has `typescript-eslint` in
+their flat config, so the peer resolves transitively for the actual audience. `../pk` doesn't
+declare it at all (it bundles it); this is the same intent, done via an optional peer.
+`smoke-test.ts`'s `PEERS` gained `@typescript-eslint/utils`, and it's a `devDependency` of
+`packages/kit` for local build / typecheck.
+
+**`dependencies` after the move — all genuinely universal, all permissive:**
+
+- `class-variance-authority` (Apache-2.0) — every adapter's class pipeline (`lib/styling`).
+  Externalized (not bundled) since #56, matching `clsx`.
+- `clsx` (MIT) — same.
+- `type-fest` (MIT OR CC0-1.0) — a real dep, not dev-only: rolldown-plugin-dts leaves
+  `import { Simplify, OmitIndexSignature, … } from 'type-fest'` in the published `.d.ts` (10
+  specifiers), so a consumer's `tsc` needs it resolvable.
+
+**Peers** (all optional, one per framework/tool entry): `react` `preact` `vue` `solid-js` `svelte`
+`lit` `eslint` `vite` `typescript` — plus the new `@typescript-eslint/utils`. `react-dom` is
+deliberately _not_ a peer — the React adapter runtime never imports it (it's a `devDependency` for
+the test suites only).
+
+**License audit — clean.** `packages/kit` is MIT; `LICENSE` is in `files` and matches the root.
+Every transitive production dependency license is permissive — MIT / Apache-2.0 / BSD-2/3-Clause /
+ISC / BlueOak-1.0.0 / (MIT OR CC0-1.0). No GPL/LGPL/AGPL anywhere in the published tree. (The two
+MPL-2.0 packages in the workspace — `axe-core`, `@axe-core/playwright` — are `lib/playwright`
+dev-only and never shipped.)
+
+**Metadata — verified, no changes needed beyond:**
+
+- `description` reworded off "polymorphic components" onto the contract framing #69 established;
+  `web-components` added to `keywords`.
+- No root `"."` export — deliberate (`docs/api-stability.md`: "you import from one of them, your
+  framework"). `./package.json` is exported for tooling.
+- `exports` (types+import per subpath, cjs for `ts-plugin`), `typesVersions` (mirrors it for older
+  `moduleResolution`), `bin` (`praxis-codemod`, shebang via the tsdown banner), `files`
+  (`["dist", "LICENSE"]`), `sideEffects: false`, `engines.node >=18`,
+  `publishConfig.access: public`, `repository.directory`, `homepage`, `bugs` — all correct.
+  `publint` "All good!", `test:pack` PASS.
+- `version: 0.0.0` / `private: true` — flipped in the release steps, not here. `funding` — a
+  release-time decision per `CLAUDE.md`'s "revisit GitHub Sponsors at each tag".
+
+### GitHub Actions — pin third-party actions to a commit SHA (2026-09-09)
+
+CodeQL (`security-extended` → `actions/unpinned-tag`, medium) flagged `pnpm/action-setup@v6` in
+`ci.yml` and `publish.yml` — a moving tag on a third-party action. It matters most for
+`publish.yml`, which runs with `NPM_TOKEN` in scope: if that tag were repointed at a malicious
+commit, the token could be exfiltrated on the next publish.
+
+Pinned both to `pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10` (the commit
+`v6` currently resolves to — no behaviour change). `actions/*` and `github/*` are GitHub-owned and
+excluded by the rule, so they stay on version tags. Added a `github-actions` ecosystem to
+`.github/dependabot.yml` (was `npm`-only) so the pinned SHA + its `# vX.Y.Z` comment stay current.
