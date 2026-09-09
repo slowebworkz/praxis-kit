@@ -32,3 +32,12 @@ updates:
     # regenerated `lib/primitive/src/constants/aria/aria-support.generated.json`, and re-review
     # whatever drift the aria spec-conformance tests then report. (No `ignore` — just flagging
     # the review step.)
+
+  # Third-party GitHub Actions are pinned to a full commit SHA (with a `# vX.Y.Z` comment) for
+  # supply-chain safety — CodeQL's `actions/unpinned-tag` rule, and it matters most for
+  # `publish.yml`, which holds `NPM_TOKEN`. Dependabot reads the version comment and bumps both.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "develop"

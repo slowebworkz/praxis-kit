@@ -3173,3 +3173,15 @@ dev-only and never shipped.)
   `publint` "All good!", `test:pack` PASS.
 - `version: 0.0.0` / `private: true` — flipped in the release steps, not here. `funding` — a
   release-time decision per `CLAUDE.md`'s "revisit GitHub Sponsors at each tag".
+
+### GitHub Actions — pin third-party actions to a commit SHA (2026-09-09)
+
+CodeQL (`security-extended` → `actions/unpinned-tag`, medium) flagged `pnpm/action-setup@v6` in
+`ci.yml` and `publish.yml` — a moving tag on a third-party action. It matters most for
+`publish.yml`, which runs with `NPM_TOKEN` in scope: if that tag were repointed at a malicious
+commit, the token could be exfiltrated on the next publish.
+
+Pinned both to `pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10` (the commit
+`v6` currently resolves to — no behaviour change). `actions/*` and `github/*` are GitHub-owned and
+excluded by the rule, so they stay on version tags. Added a `github-actions` ecosystem to
+`.github/dependabot.yml` (was `npm`-only) so the pinned SHA + its `# vX.Y.Z` comment stay current.
