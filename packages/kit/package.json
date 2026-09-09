@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "sideEffects": false,
-  "description": "Praxis Kit — polymorphic components with ARIA contracts and variant composition. The single package for every framework adapter and tooling entry point.",
+  "description": "Praxis Kit — HTML semantics, ARIA requirements, and component composition rules as executable contracts, shared across every framework adapter. The single npm package for all adapters and tooling.",
   "exports": {
     "./package.json": "./package.json",
     "./react": {
@@ -151,12 +151,12 @@
     "test:pack": "tsx scripts/smoke-test.ts"
   },
   "dependencies": {
-    "@typescript-eslint/utils": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "type-fest": "catalog:"
   },
   "peerDependencies": {
+    "@typescript-eslint/utils": ">=8",
     "eslint": ">=9",
     "lit": ">=3.0",
     "preact": ">=10.11",
@@ -168,6 +168,9 @@
     "vue": ">=3.4"
   },
   "peerDependenciesMeta": {
+    "@typescript-eslint/utils": {
+      "optional": true
+    },
     "eslint": {
       "optional": true
     },
@@ -200,6 +203,7 @@
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
+    "@typescript-eslint/utils": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
@@ -247,7 +251,8 @@
     "vue",
     "solid",
     "svelte",
-    "lit"
+    "lit",
+    "web-components"
   ],
   "engines": {
     "node": ">=18"

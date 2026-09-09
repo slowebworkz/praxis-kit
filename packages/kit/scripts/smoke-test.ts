@@ -52,6 +52,7 @@ const PEERS = [
   'lit',
   'svelte',
   'eslint',
+  '@typescript-eslint/utils',
   'typescript',
   'vite',
 ]

@@ -740,9 +740,6 @@ importers:
 
   packages/kit:
     dependencies:
-      '@typescript-eslint/utils':
-        specifier: 'catalog:'
-        version: 8.68.0(eslint@10.9.1(jiti@2.7.0))(typescript@6.0.3)
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
@@ -774,6 +771,9 @@ importers:
       '@types/react-dom':
         specifier: 'catalog:'
         version: 19.2.7(@types/react@19.2.18)
+      '@typescript-eslint/utils':
+        specifier: 'catalog:'
+        version: 8.68.0(eslint@10.9.1(jiti@2.7.0))(typescript@6.0.3)
       lit:
         specifier: 'catalog:'
         version: 3.3.3
