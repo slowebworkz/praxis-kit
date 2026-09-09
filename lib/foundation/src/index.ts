@@ -7,6 +7,7 @@
 
 export { iterate, items } from './iterate.ts'
 export type { AnyRecord, StringMap } from './string-map.ts'
+export type { AnyFunction } from './any-function.ts'
 export { assertNever } from './assert-never.ts'
 export { cn } from './cn.ts'
 export { createObservable } from './create-observable.ts'
@@ -14,3 +15,17 @@ export type { Observable } from './create-observable.ts'
 export { LRUCache } from './lru-cache.ts'
 export { wrapMethodForDetection } from './wrap-method-for-detection.ts'
 export type { WrappedMethod } from './wrap-method-for-detection.ts'
+export {
+  isString,
+  isNumber,
+  isBoolean,
+  isFunction,
+  isArray,
+  isObject,
+  isPlainObject,
+  isDefined,
+  isUndefined,
+  isNull,
+  isNonNull,
+  isNullish,
+} from './type-guards.ts'
