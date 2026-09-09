@@ -232,7 +232,7 @@ export type DesignTokensOptions = {
  *
  * @example
  * // vite.config.ts
- * import { designTokensPlugin } from '@praxis-kit/vite-plugin'
+ * import { designTokensPlugin } from 'praxis-kit/vite-plugin'
  * export default { plugins: [designTokensPlugin({ outFile: 'praxis-tokens.json' })] }
  *
  * @example

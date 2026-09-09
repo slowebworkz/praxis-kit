@@ -4,7 +4,7 @@ import type { AnyBuiltRuntime, BuiltRuntime, WithChildRules } from './built-runt
 
 /**
  * Recovers a bundle's `PolymorphicGenerics` descriptor from its own value type — the Svelte
- * analog of React's/Preact's `__generics` marker recovery (`@praxis-kit/contract-props`), but
+ * analog of React's/Preact's `__generics` marker recovery, but
  * needs no marker at all: `createContractComponent` already returns `BuiltRuntime<G, TOptions>`
  * directly (not an erased type), so `G` is a plain, ordinary type parameter to `infer` back out.
  * The second type argument is fixed to `WithChildRules` (its own upper bound) rather than

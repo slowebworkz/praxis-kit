@@ -82,7 +82,7 @@ import type { RuntimeG, WebContractComponent, WebFactoryOptions, UnknownProps } 
  * complexity it would add here.)
  *
  * **No `as` prop.** Like the Lit adapter (this one's closest sibling — both are fixed-identity
- * custom elements, sharing `resolveHostState`/`renderBundleToString` from `@praxis-kit/adapter-utils`),
+ * custom elements, sharing `resolveHostState`/`renderBundleToString` from the shared adapter runtime),
  * a custom element's DOM tag is fixed at `customElements.define()` time — once the model/host
  * distinction above is explicit, this becomes easy: there is no tag for `as` to switch. An earlier
  * design accepted `as` as a semantic-only override (never changing the rendered element, but

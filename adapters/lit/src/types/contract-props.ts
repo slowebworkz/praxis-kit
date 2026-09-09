@@ -10,7 +10,7 @@ import type { HasGenerics } from '@praxis-kit/contract-props'
 
 /**
  * Recovers a `LitContractComponent`'s `PolymorphicGenerics` descriptor from its own value type —
- * the Lit analog of React's/Preact's `__generics` marker recovery (`@praxis-kit/contract-props`).
+ * the Lit analog of React's/Preact's `__generics` marker recovery.
  * Needs the marker (unlike Svelte's `GenericsOf<T>`,
  * `adapters/svelte/src/types/resolved-slot-props.ts`) because `createContractComponent` here
  * returns `LitContractComponent<TVariants, TPluginProps, G>`, not `BuiltRuntime<G, TOptions>`

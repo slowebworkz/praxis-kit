@@ -76,7 +76,7 @@ const TYPE_CHECK_ENTRIES: StringMap<string> = {
   lit: 'AnyFactoryOptions',
   web: 'AnyFactoryOptions',
   svelte: 'AnyFactoryOptions',
-  tailwind: 'ClassBuilder',
+  tailwind: 'createTailwindPipeline',
   eslint: 'plugin',
   'vite-plugin': 'PluginOptions',
   contract: 'AnyFactoryOptions',
