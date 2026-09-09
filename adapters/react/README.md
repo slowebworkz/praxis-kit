@@ -100,14 +100,14 @@ Without `Slottable`, the first child receives the merged props.
 
 ## Exports
 
-| Export                            | Description                                                    |
-| --------------------------------- | -------------------------------------------------------------- |
-| `createContractComponent`         | Full factory: styling + ARIA enforcement + children validation |
-| `createPolymorphicComponent`      | Styling only, no enforcement                                   |
-| `createAriaEnforcedComponent`     | Styling + ARIA enforcement, no children validation             |
-| `createChildrenEnforcedComponent` | Styling + children validation, no ARIA                         |
-| `createContractedComponent`       | Alias for `createContractComponent`                            |
-| `Slottable`                       | Marks the composition target child for `asChild`               |
-| `mergeRefs`                       | Utility for combining multiple React refs                      |
+| Export                                                                                                                                                       | Description                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `createContractComponent`                                                                                                                                    | Factory: styling + ARIA enforcement + children validation                                                           |
+| `defineContractComponent`                                                                                                                                    | Curries a factory's options so multiple call sites share one config                                                 |
+| `Slottable`                                                                                                                                                  | Marks the composition target child for `asChild`                                                                    |
+| `mergeRefs`                                                                                                                                                  | Utility for combining multiple React refs                                                                           |
+| `ReactFactoryOptions` (type)                                                                                                                                 | Factory options with React-specific extensions                                                                      |
+| `ContractProps<T, Mode>` (type)                                                                                                                              | A built component's prop contract, recovered from `typeof X` — `Mode` picks the normal / `asChild` / `render` shape |
+| `PolymorphicComponent`, `PolymorphicProps`, `PolymorphicWithAsChild`, `PolymorphicWithRender`, `RenderCallbackProps`, `ElementRef`, `SlottableProps` (types) | Component / prop shapes for typing wrappers                                                                         |
 
-All component types are fully polymorphic and accept `as`, `asChild`, and `render` props.
+Components are fully polymorphic and accept `as`, `asChild`, and `render` props.

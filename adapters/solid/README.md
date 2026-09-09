@@ -62,7 +62,10 @@ to a function you call yourself, so _you_ decide what element renders them:
 
 ## Exports
 
-| Export                    | Description                                                         |
-| ------------------------- | ------------------------------------------------------------------- |
-| `createContractComponent` | Factory: styling + ARIA enforcement + children validation           |
-| `defineContractComponent` | Curries a factory's options so multiple call sites share one config |
+| Export                                                                                                | Description                                                         |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `createContractComponent`                                                                             | Factory: styling + ARIA enforcement + children validation           |
+| `defineContractComponent`                                                                             | Curries a factory's options so multiple call sites share one config |
+| `SolidFactoryOptions` (type)                                                                          | Factory options with Solid-specific extensions                      |
+| `ContractProps<T>` (type)                                                                             | A built component's prop contract, recovered from `typeof X`        |
+| `PolymorphicComponent`, `PolymorphicProps`, `ElementRef`, `ResolvedSlotProps`, `SlotRenderFn` (types) | Component / prop / slot shapes for typing wrappers                  |

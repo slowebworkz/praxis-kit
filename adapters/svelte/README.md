@@ -81,8 +81,13 @@ snippet's parameter explicitly:
 
 ## Exports
 
-| Export                    | Description                                                                                       |
-| ------------------------- | ------------------------------------------------------------------------------------------------- |
-| `createContractComponent` | Factory: styling + ARIA enforcement + children validation — returns a bundle, not a component     |
-| `defineContractComponent` | Curries a factory's options so multiple call sites share one config                               |
-| `./Polymorphic.svelte`    | The component every bundle renders through (separate subpath — a `.svelte` file, not a JS export) |
+| Export                                    | Description                                                                                        |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `createContractComponent`                 | Factory: styling + ARIA enforcement + children validation — returns a bundle, not a component      |
+| `defineContractComponent`                 | Curries a factory's options so multiple call sites share one config                                |
+| `./Polymorphic.svelte`                    | The component every bundle renders through (separate subpath — a `.svelte` file, not a JS export)  |
+| `SvelteFactoryOptions` (type)             | Factory options with Svelte-specific extensions                                                    |
+| `BuiltRuntime` / `AnyBuiltRuntime` (type) | The bundle `createContractComponent` returns                                                       |
+| `GenericsOf<T>` (type)                    | Recovers the `PolymorphicGenerics` a bundle was built from                                         |
+| `ResolvedSlotProps<G>` (type)             | Props an `asChild` snippet receives — annotate with `ResolvedSlotProps<GenericsOf<typeof bundle>>` |
+| `PolymorphicComponentProps` (type)        | Props of `<Polymorphic>` itself, for wrapping it                                                   |
