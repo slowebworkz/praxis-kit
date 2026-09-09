@@ -3185,3 +3185,18 @@ Pinned both to `pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.
 `v6` currently resolves to — no behaviour change). `actions/*` and `github/*` are GitHub-owned and
 excluded by the rule, so they stay on version tags. Added a `github-actions` ecosystem to
 `.github/dependabot.yml` (was `npm`-only) so the pinned SHA + its `# vX.Y.Z` comment stay current.
+
+### `npm-deprecate.yml` — deprecating the old `1.x`–`7.x` line (2026-09-09)
+
+`praxis-kit@0.1.0` shipped (this codebase); the npm name previously carried a `1.1.0`–`7.8.1` line
+from an earlier repo. Those can't be unpublished (npm blocks it past 72h) and their version numbers
+are permanently spent either way — the first stable major here will be `8.0.0`, above the old range.
+**Deprecation** is the right tool: existing `1.x`–`7.x` installs keep resolving but print a notice
+pointing at `@latest`.
+
+A local `npm deprecate` needs an interactive `npm login` and leaves no trail. Added a
+`workflow_dispatch` workflow instead — same `secrets.NPM_TOKEN` the Publish job already uses (a
+granular RW token; the provenance publish proved it can do authenticated writes without an OTP
+prompt), inputs for the range / message / `deprecate`|`undeprecate`, and a guard step that refuses
+any range matching `0.1.0`, `0.9.9`, `8.0.0`, or `9.9.9` so it can never touch the current or a
+future line. Reversible: re-run with `mode: undeprecate`.
