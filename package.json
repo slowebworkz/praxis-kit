@@ -35,14 +35,12 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@ast-grep/cli": "catalog:",
     "@changesets/cli": "catalog:",
     "@eslint/js": "catalog:",
     "@types/aria-query": "catalog:",
     "@types/node": "catalog:",
     "@vitest/ui": "catalog:",
     "aria-query": "catalog:",
-    "dependency-cruiser": "catalog:",
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
     "eslint-plugin-boundaries": "catalog:",
