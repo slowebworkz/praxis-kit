@@ -111,6 +111,31 @@ type IntrinsicPropsWithoutOwned<G extends PolymorphicGenerics, TAs extends Eleme
 >
 
 /**
+ * `data-*` attribute passthrough.
+ *
+ * React's `JSX.IntrinsicElements[tag]` prop types carry no `data-*` index — the JSX checker
+ * special-cases `data-*` at the call site instead — so `IntrinsicPropsWithoutOwned` (which is
+ * `Omit<JSX.IntrinsicElements[tag], …>`) has no `data-*` key either. A polymorphic component
+ * always renders to a host element (or forwards to one via `asChild`) and its runtime prop
+ * pipeline forwards `data-*` unchanged, so the extracted prop type must admit them: without this,
+ * a wrapper can't destructure a `data-*` the contract sets in `defaults` (`data-slot` is the
+ * common case — a styling hook every design system sets and overrides) — `ContractProps<typeof
+ * Component>['data-slot']` would be a type error even though `<Component data-slot="…" />` is
+ * accepted.
+ *
+ * The value type is `string | number | boolean | undefined` by deliberate choice — exactly what
+ * React serializes onto a `data-*` attribute (`true`/`false` render as the strings `"true"` /
+ * `"false"`, not omitted; `undefined` omits) and what survives praxis-kit's prop pipeline
+ * unchanged. It is intentionally tighter than the framework-neutral `unknown` the core contract
+ * uses, so a wrapper can destructure a `data-*` and forward it without a cast — the whole point.
+ */
+type DataAttribute = `data-${string}`
+
+type DataAttributes = {
+  [key: DataAttribute]: string | number | boolean | undefined
+}
+
+/**
  * Props shared by every rendering strategy.
  *
  * Each render mode contributes only its discriminating props.
@@ -119,7 +144,8 @@ type BaseProps<G extends PolymorphicGenerics, TAs extends ElementType> = Intrins
   G,
   TAs
 > &
-  ControlProps<G, TAs>
+  ControlProps<G, TAs> &
+  DataAttributes
 
 /** Standard rendering (`asChild` absent or false). */
 type NormalRenderMode = {
