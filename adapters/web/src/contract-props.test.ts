@@ -80,4 +80,27 @@ describe('ContractProps', () => {
     expectTypeOf<PropsOf<GenericsOf<typeof Card>>>().toEqualTypeOf<EmptyRecord>()
     expectTypeOf<ContractProps<typeof Card>['as']>().toEqualTypeOf<undefined>()
   })
+
+  it('passes data-* attributes through (finding #43)', () => {
+    // `_buildProps()` scans every attribute off the custom element into the pipeline, so a
+    // `data-*` a contract sets in `defaults` — `data-slot`, the styling hook — is real,
+    // forwarded input and must be typeable through `ContractProps`.
+    const Slotted = createContractComponent({
+      tag: 'button',
+      name: 'WebSlottedButton',
+      defaults: { 'data-slot': 'slotted-button' },
+    })
+    void Slotted
+
+    expectTypeOf<ContractProps<typeof Slotted>['data-slot']>().toEqualTypeOf<
+      string | number | boolean | undefined
+    >()
+    // An arbitrary data-* the contract never names is still accepted.
+    expectTypeOf<ContractProps<typeof Slotted>['data-testid']>().toEqualTypeOf<
+      string | number | boolean | undefined
+    >()
+
+    const props: ContractProps<typeof Slotted> = { 'data-slot': 'override' }
+    void props
+  })
 })
