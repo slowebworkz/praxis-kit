@@ -3194,9 +3194,14 @@ are permanently spent either way — the first stable major here will be `8.0.0`
 **Deprecation** is the right tool: existing `1.x`–`7.x` installs keep resolving but print a notice
 pointing at `@latest`.
 
-A local `npm deprecate` needs an interactive `npm login` and leaves no trail. Added a
-`workflow_dispatch` workflow instead — same `secrets.NPM_TOKEN` the Publish job already uses (a
-granular RW token; the provenance publish proved it can do authenticated writes without an OTP
-prompt), inputs for the range / message / `deprecate`|`undeprecate`, and a guard step that refuses
-any range matching `0.1.0`, `0.9.9`, `8.0.0`, or `9.9.9` so it can never touch the current or a
-future line. Reversible: re-run with `mode: undeprecate`.
+A local `npm deprecate` needs an interactive `npm login` and leaves no trail, so a
+`workflow_dispatch` workflow was the plan. It first lived here, but this repo's `secrets.NPM_TOKEN`
+is a granular RW token: the provenance publish proved it can do authenticated writes, but
+`npm deprecate` 404s on it (it uses an older registry API path granular tokens don't authorize).
+
+**The deprecate workflow now lives in `slowebworkz/pk`** (`.github/workflows/npm-deprecate.yml`
+there). That repo published the whole `1.x`–`7.x` line, so its account/token owns the name's legacy
+and can run the older admin API. The workflow keeps the guard (refuses any range matching `0.1.0`,
+`0.9.9`, `8.0.0`, `9.9.9`), a per-version loop (a bare-range deprecate does one flaky bulk PUT), and
+`mode: deprecate|undeprecate` for reversibility. Running it needs `pk`'s `NPM_TOKEN` refreshed as a
+classic Automation token — the granular one it currently holds is expired.
