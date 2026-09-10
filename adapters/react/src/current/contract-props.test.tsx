@@ -17,9 +17,10 @@
  */
 import { describe, it, expectTypeOf } from 'vitest'
 import type { ComponentProps, ReactElement } from 'react'
+import { defineContractComponent } from '@praxis-kit/adapter-utils'
+import type { ClassPluginFactory, EmptyRecord } from '@praxis-kit/core'
 import { createContractComponent } from './create-contract-component'
 import type { ContractProps } from '../shared'
-import type { EmptyRecord } from '@praxis-kit/core'
 
 const Container = createContractComponent<'div', EmptyRecord, EmptyRecord>({ name: 'Container' })
 
@@ -108,5 +109,56 @@ describe('ContractProps — compound components', () => {
       </CardAsChildWrapper>
     )
     void _el
+  })
+})
+
+describe('ContractProps — data-* passthrough (finding #43)', () => {
+  // React's `JSX.IntrinsicElements[tag]` prop types carry no `data-*` index (the JSX checker
+  // special-cases `data-*` at the call site), so a `data-*` a contract sets only in `defaults`
+  // — `data-slot`, the near-universal styling hook — was absent from `ContractProps<typeof X>`
+  // even though `<X data-slot="…" />` type-checks. A wrapper couldn't destructure it.
+  const Img = defineContractComponent({
+    tag: 'img',
+    name: 'Img',
+    defaults: { 'data-slot': 'img' },
+    enforcement: { allowedAs: ['img'] },
+  } as const)((options) => createContractComponent(options))
+
+  it('a data-* key is destructurable and forwardable from ContractProps', () => {
+    function Avatar({ 'data-slot': slot = 'avatar', ...rest }: ContractProps<typeof Img>): ReactElement {
+      return <Img {...rest} data-slot={slot} />
+    }
+    const _el = <Avatar data-slot="custom" />
+    void _el
+  })
+
+  it('holds when a styling.plugin contributes a discriminated union of props', () => {
+    // Mirrors `createTailwindPipeline`, whose plugin props are a mutually-exclusive union
+    // (`{ flex: true } | { grid: true } | …`) — before the fix that union distributed through
+    // `ContractProps` and `data-slot` was no longer a common member.
+    type LayoutUnion = { flex: true; grid?: never } | { grid: true; flex?: never }
+    const layoutPlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<LayoutUnion>
+
+    const Box = defineContractComponent({
+      tag: 'div',
+      name: 'Box',
+      defaults: { 'data-slot': 'box' },
+      styling: { base: '', plugin: layoutPlugin },
+    } as const)((options) => createContractComponent(options))
+
+    function BoxWrapper({
+      'data-slot': slot = 'wrapper',
+      ...rest
+    }: ContractProps<typeof Box>): ReactElement {
+      return <Box {...rest} data-slot={slot} />
+    }
+    const _el = <BoxWrapper flex data-slot="custom" />
+    void _el
+  })
+
+  it('an arbitrary data-* attribute not named in the contract is still accepted', () => {
+    expectTypeOf<ContractProps<typeof Img>['data-testid']>().toEqualTypeOf<
+      string | number | boolean | undefined
+    >()
   })
 })
