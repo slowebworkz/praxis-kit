@@ -38,6 +38,15 @@ export type GenericsOf<T extends HasGenerics<PolymorphicGenerics>> =
  * makes that a type-level fact too, so `{ as: 'a' }` written against `ContractProps<T>` is a compile
  * error, not a silently-ignored no-op a caller could believe was doing something.
  *
+ * `data-*` attributes pass through (`DataAttributes` below). `_buildProps()` in
+ * `createContractComponent` scans every attribute set on the custom element into the pipeline, so
+ * `<praxis-button data-slot="…">` is real, forwarded input — a `data-*` a contract sets in
+ * `defaults` (`data-slot`, the near-universal styling hook) has to be a member of `ContractProps`
+ * for a consumer to type it. Other global/host attributes (`id`, `class`, `slot`, `aria-*`,
+ * `role`) are equally accepted on the element but are *not* part of this type: they are DOM
+ * globals a caller sets on the element directly, not part of a component's declared prop contract.
+ * `data-*` is the exception because contracts author it as an overridable prop.
+ *
  * ```ts
  * const Button = createContractComponent({ tag: 'button', name: 'Button', /* ... *\/ })
  *
@@ -46,8 +55,17 @@ export type GenericsOf<T extends HasGenerics<PolymorphicGenerics>> =
  */
 export type ContractProps<T extends HasGenerics<PolymorphicGenerics>> = Simplify<
   OmitIndexSignature<PropsOf<GenericsOf<T>>> &
-    OmitIndexSignature<VariantProps<VariantsOf<GenericsOf<T>>>> & {
+    OmitIndexSignature<VariantProps<VariantsOf<GenericsOf<T>>>> &
+    DataAttributes & {
       as?: never
       recipe?: keyof RecipeOf<GenericsOf<T>>
     }
 >
+
+/**
+ * `data-*` attribute passthrough. The value type is `string | number | boolean | undefined` —
+ * what a `data-*` attribute serializes to (mirrors the React adapter's own `DataAttributes`).
+ */
+type DataAttributes = {
+  [key: `data-${string}`]: string | number | boolean | undefined
+}
