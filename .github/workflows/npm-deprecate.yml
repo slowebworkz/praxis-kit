@@ -52,13 +52,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Token diagnostics
-        run: |
-          echo "npm: $(npm --version)  node: $(node --version)"
-          echo "whoami: $(npm whoami 2>&1)"
-          echo "access:"; npm access get status praxis-kit 2>&1 || true
-          npm access list packages 2>&1 | grep -i praxis || true
-
       - name: Guard — the range must not touch the 0.x or 8.x+ line
         env:
           RANGE: ${{ inputs.range }}
@@ -75,47 +68,21 @@ jobs:
           done
           echo "Range OK: $RANGE (matches 1.1.0; excludes 0.x and 8.x+)"
 
-      - name: Run — one version at a time
+      - name: Run
         env:
           RANGE: ${{ inputs.range }}
           MODE: ${{ inputs.mode }}
           MESSAGE: ${{ inputs.message }}
         run: |
-          set -euo pipefail
-          MSG=""
-          [ "$MODE" = "deprecate" ] && MSG="$MESSAGE"
-
-          # Expand the range to the concrete published versions it matches — `npm deprecate` with a
-          # bare range does one bulk packument PUT that has been flaky (E404); per-version calls are
-          # the documented-reliable form.
-          mapfile -t VERSIONS < <(
-            npm view praxis-kit versions --json \
-              | node -e 'const vs=JSON.parse(require("fs").readFileSync(0)); for (const v of vs) console.log(v)' \
-              | while read -r v; do npx --yes semver@7 --range "$RANGE" "$v" 2>/dev/null || true; done
-          )
-
-          if [ "${#VERSIONS[@]}" -eq 0 ]; then
-            echo "::error::No published versions match '$RANGE'."
-            exit 1
+          if [ "$MODE" = "undeprecate" ]; then
+            npm deprecate "praxis-kit@${RANGE}" ""
+          else
+            npm deprecate "praxis-kit@${RANGE}" "$MESSAGE"
           fi
-          echo "${#VERSIONS[@]} version(s) to ${MODE}: ${VERSIONS[*]}"
-
-          fail=0
-          for v in "${VERSIONS[@]}"; do
-            if npm deprecate "praxis-kit@${v}" "$MSG"; then
-              echo "  ok   $v"
-            else
-              echo "::warning::failed on $v"
-              fail=1
-            fi
-          done
-          exit $fail
 
       - name: Verify
         env:
           RANGE: ${{ inputs.range }}
         run: |
           echo "Deprecation state after the run:"
-          npm view "praxis-kit@${RANGE}" versions --json \
-            | node -e 'const vs=JSON.parse(require("fs").readFileSync(0)); for (const v of vs) console.log(v)' \
-            | while read -r v; do printf "  %-10s %s\n" "$v" "$(npm view praxis-kit@$v deprecated 2>/dev/null || echo "<not set>")"; done
+          npm view "praxis-kit@${RANGE}" version deprecated 2>&1 || true
