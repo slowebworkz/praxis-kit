@@ -1,5 +1,39 @@
 # praxis-kit
 
+## 0.1.1
+
+### Patch Changes
+
+- ca74ee2: Fix `ContractProps<typeof Component>` (Lit and Web adapters) dropping `data-*`
+  attributes.
+
+  Both adapters' `ContractProps<T>` resolved to the declared prop contract only
+  (`OmitIndexSignature` of the component's own props + variant props + `recipe`), with no `data-*`
+  key — so a `data-*` a contract sets in `defaults` (`data-slot`, the near-universal styling hook)
+  couldn't be typed by a consumer, even though `createContractComponent`'s `_buildProps()` scans
+  every attribute set on the custom element into the pipeline and forwards it.
+
+  `data-*` attributes now pass through `ContractProps` with a
+  `string | number | boolean | undefined` value type, matching the React adapter. Other global/host
+  attributes (`id`, `class`, `slot`, `aria-*`, `role`) remain intentionally outside this type — they
+  are DOM globals set on the element directly, not part of a component's declared prop contract;
+  `data-*` is the exception because contracts author it as an overridable prop.
+
+- de9153c: Fix `ContractProps<typeof Component>` / `PolymorphicProps` (React) dropping `data-*`
+  attributes.
+
+  React's `JSX.IntrinsicElements[tag]` prop types carry no `data-*` index — the JSX checker
+  special-cases `data-*` at the call site — so a `data-*` a contract set only in `defaults`
+  (`data-slot`, the near-universal styling hook) was absent from the extracted prop type even though
+  `<Component data-slot="…" />` type-checks and the runtime forwards it. A wrapper typed with
+  `ContractProps<typeof Base>` couldn't destructure `data-slot`, and a `styling.plugin` that
+  contributes a discriminated prop union (e.g. `createTailwindPipeline`) turned the whole type into
+  a union where `data-*` was no longer a common member.
+
+  `data-*` attributes now pass through `ContractProps` / `PolymorphicProps` /
+  `PolymorphicWithAsChild` / `PolymorphicWithRender` with a `string | number | boolean | undefined`
+  value type (what React serializes onto a `data-*` attribute).
+
 ## 0.1.0
 
 ### Minor Changes

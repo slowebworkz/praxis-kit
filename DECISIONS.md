@@ -3200,3 +3200,78 @@ granular RW token; the provenance publish proved it can do authenticated writes 
 prompt), inputs for the range / message / `deprecate`|`undeprecate`, and a guard step that refuses
 any range matching `0.1.0`, `0.9.9`, `8.0.0`, or `9.9.9` so it can never touch the current or a
 future line. Reversible: re-run with `mode: undeprecate`.
+
+### Proxy-based APIs — four applications evaluated post-0.1.0 (2026-09-09)
+
+An exploration of where JS `Proxy` could earn a place now that 0.1.0 has shipped and the 0.1
+architecture freeze no longer applies. Four distinct applications, evaluated against the actual
+resolution path and adapter code. **Verdicts, most to least promising:**
+
+**1. State-mutation facade over `createObservable` — approved in shape, blocked on a consumer.**
+A `createReactive({ expanded: false })` facade so consumers write `state.expanded = true` instead
+of `state.set('expanded', true)`. This sits off the render hot path (state changes are
+user-event-driven), is purely additive, and the layering is right: `createObservable`
+(`lib/foundation/src/create-observable.ts`) stays the minimal `get`/`set`/`subscribe` primitive,
+`createReactive` is a thin facade on top. **Not built now — there is no consumer.** The one
+candidate consumer was praxis-components finding #28's `FactoryOptions.controller` option; that was
+_declined_ (2026-09-09) after its reference design (`DialogController`) was abandoned in favour of
+"the adapter owns interaction," so there is nothing that would hand a `createReactive` bag back to
+a caller. `createObservable` and `wrapMethodForDetection` sit in `lib/foundation`, tested and
+unused, for whenever a real controller-shaped need reappears. Design constraints when eventually
+built: a reserved `Symbol` for `subscribe`/snapshot access (a string key collides with a state
+field), **referentially-stable snapshot identity** (the `useSyncExternalStore` footgun — a fresh
+object per `getSnapshot()` infinite-loops React), per-key `Object.is` diffing in the `set` trap,
+and shallow only (no deep proxying). ~40-line flat file in `lib/foundation` next to
+`createObservable`, respecting that package's no-subdirectory / `node --experimental-strip-types`
+constraint.
+
+**2. Lazy / derived prop resolution at render time — skeptical, benchmark-gated.**
+A `createPropsProxy(input, pipeline)` exposing resolved props as a lazy view, resolving
+`props.class` / `props['aria-expanded']` only on access. Mechanically feasible (per-render
+resolution is already synchronous — `resolveProps` → `resolveNormalizedProps` → `resolveClasses`
+→ `resolveAria`, `lib/adapter-utils/src/render/host-state.ts`), but three problems:
+
+- **Props are not independently resolvable at render time.** Reading almost any derived key drags
+  in the whole normalize pass; the only genuinely skippable work is class computation (if `class`
+  is never read) and ARIA resolution (if no `aria-*` is read).
+- **`resolveAria` doubles as validation** — it emits the `enforcement.aria` diagnostics and
+  redundant-role checks. Gate it on `aria-*` access and enforcement becomes access-dependent,
+  which breaks praxis-kit's core guarantee; run it eagerly for correctness and most of the lazy
+  win is gone.
+- **Adapters read everything** — VDOM `{...finalProps}` spread hits every key; SSR serializes
+  every attribute. Lazy only helps a selective consumer, and JSX spread is not selective. Proxy
+  spread also costs more than a plain-object spread (no V8 inline caching) and needs `ownKeys` +
+  `getOwnPropertyDescriptor` traps for spread / `Object.keys` / `onElement(getProps)` not to
+  break.
+
+The freeze-compatible ~80% alternative, no Proxy: an internal "was `class` / `aria` actually
+consumed?" skip flag on the host-state path (which already half-gestures at this,
+`host-state.ts:67`), keeping ARIA _validation_ eager. If the Proxy is pursued anyway: a throwaway
+spike benched with `qa/bench`'s `render-pipeline.bench.ts` across small vs. large prop surfaces ×
+client vs. SSR, proceed only on a measured win that doesn't regress the common small-prop case.
+
+**3. Framework-neutral dependency tracking (`trackable`) — declined.**
+A `get`-trap primitive recording which keys a computation read, for fine-grained invalidation. The
+adapters that could use it **already do this with their own reactivity, wrapped around the
+`resolve*` seams**: Solid (`adapters/solid/src/render.tsx` — `createMemo(() => runtime.resolveProps(...))`,
+`createMemo(() => resolvedClass)`, `createEffect` for enforcement), Vue
+(`adapters/vue/src/create-contract-component.ts:79` — "Cache derived render state using Vue's
+dependency tracking"). A praxis-neutral tracker would be strictly redundant with — and worse than
+— `createMemo` / Vue reactivity (compile-time-optimized / hardened respectively), and is the first
+step toward the reactive runtime praxis-kit deliberately is not (`trackable` + invalidation grows
+cleanup / ownership / batching / cycle handling — cf. Solid's `createRoot` / `onCleanup`).
+**Revisit trigger:** a _measured_ case where an adapter's native tracker cannot express "praxis
+resolved X, only Y changed" and it costs real render work. Not seen — the `resolve*` seams are
+already memo boundaries.
+
+**4. Dev-only debug/inspection Proxy — declined (optional, not prioritized).**
+A dev-mode `get`-trap surfacing unknown / deprecated / accidentally-consumed-internal prop reads.
+Existing infra covers it framework-neutrally at build/render time — diagnostics, `enforcement`,
+the ARIA engine, and `filterProps` + owned-key sets (which _define_ "internal/owned prop"). A
+get-trap only catches bad _reads_, not the more common "forgot to forward"; the one niche
+(an adapter consuming an owned key) is already assertable in the conformance suite without a
+Proxy.
+
+**Cross-cutting:** none of these should turn a property read into a reactive dependency edge —
+any Proxy here stays a transparent resolution / tracking mechanism, never a magical dependency
+graph.
