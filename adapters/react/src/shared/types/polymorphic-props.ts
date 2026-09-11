@@ -13,6 +13,7 @@ import type {
   VariantsOf,
 } from '@praxis-kit/core'
 import type { StringMap } from '@praxis-kit/primitive'
+import type { LayoutKeyName } from '@praxis-kit/tailwind'
 import type { HasGenerics, Mode, PickMode } from '@praxis-kit/contract-props'
 import type { RenderCallbackProps } from './props'
 import type { UnknownProps } from './primitives'
@@ -205,6 +206,54 @@ export type PolymorphicWithRender<
 > = Simplify<BaseProps<G, TAs> & CallbackRenderMode>
 
 /**
+ * The layout keys a prop-union actually carries as the tailwind plugin's mutually-exclusive
+ * shape: distributed over every member of `P`, a key counts when its value there is exactly
+ * `true` (the active member) or `never` (a suppressed one) — the two shapes `ExclusiveTrueProp`
+ * produces. `[M[K]] extends [true]` matches both and rejects `boolean`, so a component's *own*
+ * same-named prop and the intrinsic `hidden` attribute (both `boolean`) are not counted, and a
+ * component with no `styling.plugin` yields `never`.
+ */
+type LayoutPluginKeys<P> = {
+  [K in LayoutKeyName]-?: P extends infer M
+    ? K extends keyof M
+      ? [M[K]] extends [true]
+        ? K
+        : never
+      : never
+    : never
+}[LayoutKeyName]
+
+/**
+ * Collapses the mutually-exclusive `LayoutProps` union down to one flat shape — every layout key
+ * an optional `true` — for the **type-extraction** path (`ContractProps<T>`) only.
+ *
+ * `styling.plugin: createTailwindPipeline` contributes `ExclusiveTrueProp<LayoutKey>` — a ~22-way
+ * union (`{ flex: true } | { grid: true } | …`) that distributes through every downstream type,
+ * so `PolymorphicProps<G>` (and a `ContractProps<T>` built from it) becomes a ~22-member union
+ * whose members share no common layout key. That makes the extracted type hostile to every
+ * structural operation a consumer does with it: a spread matches no member on any extra/missing
+ * key (`not assignable to '… | … 20 more … | …'`), `Omit`/`Pick`/`Merge` trips `TS2590 union too
+ * complex`, a rest-destructure trips `TS2700`.
+ *
+ * A consumer extracting props to build a wrapper wants "the layout props exist and are optional",
+ * not the discriminated union — so flatten it here. The strict union stays on
+ * `PolymorphicComponent<G>`'s call overloads, where "only one display prop may be `true`" is the
+ * whole point of the compile error. See finding #44 /
+ * `praxis-kit-0.1.x-contractprops-regression.md` item #2.
+ *
+ * `Omit<P, LayoutKeyName>` (a static key set, so cheap) drops every layout key from every member
+ * — the members only ever differed there — so the union dedupes to one; the flat
+ * `{ flex?: true; … }` is added back from just the keys the union really had. The
+ * `LayoutPluginKeys<P> extends never` fast-path returns `P` untouched for a plugin-less
+ * component, so the expensive `Omit` never runs on the (large) intrinsic-prop object there.
+ */
+type FlattenLayout<P> = [P] extends [never]
+  ? never
+  : [LayoutPluginKeys<P>] extends [never]
+    ? P
+    : Simplify<Omit<P, LayoutKeyName> & { [K in LayoutPluginKeys<P>]?: true }>
+
+/**
  * A polymorphic React component.
  *
  * Overloads provide three rendering strategies:
@@ -228,6 +277,13 @@ export type PolymorphicComponent<G extends PolymorphicGenerics> = {
    * overload. Anchoring that overload to the default element preserves
    * correct prop inference for tools such as Storybook and
    * `React.ComponentProps`.
+   *
+   * Deliberately *not* run through `FlattenLayout`: this overload is still a
+   * real call signature (it catches calls the three generic overloads reject),
+   * so flattening it here would make `<Component flex grid />` — two
+   * mutually-exclusive layout props — compile. `ContractProps<T>` does the
+   * flattening instead, on the pure type-extraction path. `React.ComponentProps`
+   * keeps the strict union it already had.
    */
   (props: PolymorphicProps<G, DefaultOf<G>>): ReactElement
 
@@ -276,9 +332,9 @@ export type ContractProps<T extends HasGenerics<PolymorphicGenerics>, M extends 
   T extends HasGenerics<infer G extends PolymorphicGenerics>
     ? PickMode<
         M,
-        PolymorphicProps<G, DefaultOf<G>>,
-        PolymorphicWithAsChild<G, DefaultOf<G>>,
-        PolymorphicWithRender<G, DefaultOf<G>>
+        FlattenLayout<PolymorphicProps<G, DefaultOf<G>>>,
+        FlattenLayout<PolymorphicWithAsChild<G, DefaultOf<G>>>,
+        FlattenLayout<PolymorphicWithRender<G, DefaultOf<G>>>
       >
     : never
 

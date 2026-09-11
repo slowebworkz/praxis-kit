@@ -19,6 +19,7 @@
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
+    "@praxis-kit/tailwind": "workspace:*",
     "type-fest": "catalog:"
   },
   "peerDependencies": {

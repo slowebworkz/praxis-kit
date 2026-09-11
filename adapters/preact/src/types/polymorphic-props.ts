@@ -13,6 +13,7 @@ import type {
   VariantsOf,
 } from '@praxis-kit/core'
 import type { StringMap } from '@praxis-kit/primitive'
+import type { LayoutKeyName } from '@praxis-kit/tailwind'
 import type { HasGenerics, Mode, PickMode } from '@praxis-kit/contract-props'
 
 export type ElementRef<T extends ElementType> = T extends IntrinsicTag
@@ -54,6 +55,49 @@ export type PolymorphicWithAsChild<
     children: AnyVNode | AnyVNode[]
   }
 >
+
+/**
+ * The layout keys a prop-union actually carries as the tailwind plugin's mutually-exclusive
+ * shape: distributed over every member of `P`, a key counts when its value there is exactly
+ * `true` or `never` — the two shapes `ExclusiveTrueProp` produces. `[M[K]] extends [true]`
+ * matches both and rejects `boolean`, so a component's own same-named prop and the intrinsic
+ * `hidden` attribute are not counted, and a plugin-less component yields `never`.
+ */
+type LayoutPluginKeys<P> = {
+  [K in LayoutKeyName]-?: P extends infer M
+    ? K extends keyof M
+      ? [M[K]] extends [true]
+        ? K
+        : never
+      : never
+    : never
+}[LayoutKeyName]
+
+/**
+ * Collapses the mutually-exclusive `LayoutProps` union down to one flat shape — every layout key
+ * an optional `true` — for the **type-extraction** path (`ContractProps<T>`) only. Mirrors the
+ * React adapter's `FlattenLayout` (`adapters/react/src/shared/types/polymorphic-props.ts`), where
+ * the full rationale lives.
+ *
+ * `styling.plugin: createTailwindPipeline` contributes `ExclusiveTrueProp<LayoutKey>` — a ~22-way
+ * union (`{ flex: true } | { grid: true } | …`) that distributes through `PropsOf<G>` and
+ * everything built from it, so a `ContractProps<T>` built from it becomes a ~22-member union
+ * whose members share no common layout key: hostile to a spread (matches no member), to
+ * `Omit`/`Pick`/`Merge` (`TS2590 union too complex`) and to a rest-destructure (`TS2700`). A
+ * consumer extracting props for a wrapper wants "the layout props exist and are optional", not
+ * the discriminated union. The strict union stays on `PolymorphicComponent<G>`'s call overloads.
+ * See finding #44 / `praxis-kit-0.1.x-contractprops-regression.md` item #2.
+ *
+ * `Omit<P, LayoutKeyName>` (a static key set) drops every layout key from every member so the
+ * union dedupes to one; the flat `{ flex?: true; … }` is added back from just the keys the union
+ * really had. The `LayoutPluginKeys<P> extends never` fast-path returns `P` untouched for a
+ * plugin-less component, so the `Omit` never runs on its large intrinsic-prop object.
+ */
+type FlattenLayout<P> = [P] extends [never]
+  ? never
+  : [LayoutPluginKeys<P>] extends [never]
+    ? P
+    : Simplify<Omit<P, LayoutKeyName> & { [K in LayoutPluginKeys<P>]?: true }>
 
 export type PolymorphicComponent<G extends PolymorphicGenerics> = {
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicWithAsChild<G, TAs>): AnyVNode
@@ -123,5 +167,10 @@ export type ContractProps<
   M extends Exclude<Mode, 'render'> = 'normal',
 > =
   T extends HasGenerics<infer G extends PolymorphicGenerics>
-    ? PickMode<M, PolymorphicProps<G, DefaultOf<G>>, PolymorphicWithAsChild<G, DefaultOf<G>>, never>
+    ? PickMode<
+        M,
+        FlattenLayout<PolymorphicProps<G, DefaultOf<G>>>,
+        FlattenLayout<PolymorphicWithAsChild<G, DefaultOf<G>>>,
+        never
+      >
     : never
