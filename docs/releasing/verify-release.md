@@ -51,5 +51,6 @@ Commit the updated snapshot files in the same change that moves them, with a not
 - **Per-framework real consumer apps** — `test:pack` import-checks one fixture with all peers; it
   does not scaffold + build + render a real app per framework (React/Vue/Solid/Svelte/Preact/Lit/
   Web). Tracked separately.
-- **Publish mechanics** — changesets, npm auth, provenance, the `private: true` / version flip.
-  `.github/workflows/publish.yml` owns those.
+- **Publishing a release** — versioning, npm authentication, and provenance are handled by the
+  release workflow in [`.github/workflows/publish.yml`](../../.github/workflows/publish.yml).
+  This gate verifies the artifact before that workflow publishes it.

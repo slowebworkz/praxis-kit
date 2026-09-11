@@ -1,6 +1,6 @@
 # Decisions
 
-## Status — 2026-09-08
+## Status — 2026-09-11
 
 This file is a chronological decision log, not a spec. Read it top-down for what is still live:
 unresolved questions live in the **`## Open`** section below; everything under **`## Resolved`** is
@@ -14,8 +14,8 @@ instead:
 | How do I build a component?                             | [`GETTING_STARTED.md`](GETTING_STARTED.md), [`docs/`](docs/index.md)             |
 | Internal runtime pipeline                               | [`ARCHITECTURE.md`](ARCHITECTURE.md)                                             |
 
-**Milestone: 0.1.0. The architecture is frozen for it** — no new abstractions, no new tooling
-systems. Remaining work is correctness, documentation, and release mechanics.
+**Milestone: 0.1.x. The architecture remains frozen for the release line** — no new abstractions
+or tooling systems without an explicit post-0.1 decision.
 
 - **Decided and shipped.** Public-API surface classified into four stability tiers; state/ARIA
   normalization semantics settled (per-prop `falseState`, Model B for `expanded`/`pressed`/
@@ -23,12 +23,10 @@ systems. Remaining work is correctness, documentation, and release mechanics.
   ledger); the single release gate (`pnpm verify:release`) wired into CI; the published-package
   artifact validated from a real tarball install. `develop` is the integration branch and the repo
   default; `main` tracks the last stable point.
+- **Released.** `praxis-kit@0.1.0` and `praxis-kit@0.1.1` have been tagged; `packages/kit` is the
+  published, non-private package. The release workflow publishes with npm provenance.
 - **Still open (tracked in `## Open`).** `qa/*` tooling-dependency placement; `spikes/*` location.
-  Neither blocks the 0.1 tag.
-- **Remaining before the tag, beyond `## Open`.** A deliberate audit of what each public subpath
-  exports; the dependency / license / package-metadata audits; then the release steps — create the
-  0.1.0 changeset, flip `packages/kit` off `private`, publish, and re-verify from npm. (The
-  consumer-facing documentation pass and the `*.spike.test.*` review are done — see `## Resolved`.)
+  Neither blocks maintenance releases in the 0.1 line.
 - **Explicitly deferred past 0.1.** `runtime/compiler`; additional framework adapters; a large
   component catalog (real components live in the separate `praxis-components` library); the
   widget-contract APG audit (F7); contextual `<header>`/`<footer>` roles (deviation D4 — needs
@@ -81,6 +79,58 @@ trick, because nothing upstream still carries that type by the time a consumer n
 directly instead of doing generics-archaeology on the built component afterward. Worth reconsidering
 `ContractProps`/`AnyFactoryOptions` against this once `defineContract` lands, per the proposal's own
 §14 Step 5 — not before.
+
+**Refined target (2026-09-11 follow-up) — mirrored in full in `praxis-components`'
+`PRAXIS-KIT-FINDINGS.md` finding #45, this is the condensed version for this log.** The goal,
+stated plainly: a contract is a plain, strongly typed object; `defineContract` captures it without
+losing its concrete type; `createContractComponent` consumes it; `ContractProps<typeof Component>`
+then reliably exposes the resulting props. Sharper than the original proposal on one point:
+`defineContractComponent` should probably go entirely, not survive as a `bindContract` convenience.
+
+The key design constraint: **do not make `ContractProps` the canonical contract representation.**
+`defineContract`'s return value retains the concrete contract type; `createContractComponent` must
+then preserve that relationship onto the resulting component — conceptually
+`type Component = CreateComponent<Contract>` — so `type BoxProps = ContractProps<typeof Box>` can
+reliably recover it. That gives `ContractProps` exactly one job: the cross-framework equivalent of
+React's `ComponentProps`, judged by that standard (`ContractProps<typeof Box>` should be *as
+reliable and unsurprising as* `ComponentProps<typeof Box>` is in React) — not preserved merely
+because of the investment already in its current implementation.
+
+The concrete test for whether an implementation actually simplified anything: given a
+`defineContract({ tag: 'div', name: 'Box', variants: { size: { small: {}, large: {} } }, defaults:
+{ size: 'small' } })` passed straight to `createContractComponent`, `ContractProps<typeof Box>`
+should contain `{ size?: 'small' | 'large'; ... }` **without requiring the consumer, or us as
+maintainers, to understand the internal construction machinery.**
+
+**Priority investigation, probably the most important part of any implementation: eliminate
+`AnyFactoryOptions` from the concrete construction path.** Not
+`defineContract → AnyFactoryOptions → createContractComponent → reconstruct concrete types`; instead
+`defineContract<O> → DefinedContract<O> → createContractComponent<O> → Component<O>`.
+`AnyFactoryOptions` can still exist for genuinely erased-contract use (registries, heterogeneous
+collections) — it just shouldn't sit on the normal concrete path. This targets the "types
+flattening to `any`" failure mode behind finding #43 directly.
+
+Reverse the design pressure on `ContractProps`: stop asking "how complicated can `ContractProps` get
+so it can reconstruct everything from a built component," ask "what must `createContractComponent`
+attach to its result so `ContractProps<typeof Component>` can be a simple projection." Conceptually
+— a sharper, more explicit version of the `HasGenerics<G>`/`__generics` marker every adapter already
+carries, keyed on the whole contract type rather than an already-decomposed `PolymorphicGenerics`:
+
+```ts
+type PraxisComponent<C> = { /* call signature */ readonly __contract: C }
+type ContractOf<T> = T extends PraxisComponent<infer C> ? C : never
+type ContractProps<T> = PropsFromContract<ContractOf<T>>
+```
+
+**Do not assume `defineContract` alone fixes every current `any` leak — trace the loss, don't guess
+at it.** Before committing to an implementation, put a compile-time assertion at each boundary:
+`defineContract → exact contract type?` → `createContractComponent → exact component type?` →
+`ContractProps<typeof Component> → exact props?`. If `defineContract` preserves everything but
+`createContractComponent` widens it, the fix belongs in `createContractComponent`. If
+`createContractComponent` preserves it but `ContractProps` can't extract it, simplify
+`ContractProps`. If the loss happens converting to `AnyFactoryOptions`, eliminate that conversion
+from the concrete path. More disciplined than continuing to patch whatever TypeScript error
+surfaces next — which is, in effect, what findings #43/#44 already had to do reactively.
 
 **Deferred, not rejected.** Even the proposal's own Step 1 (a typed identity function) is a new
 public export and a new named type (`DefinedContract<O>`) on the framework-neutral core — a new
