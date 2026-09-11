@@ -299,6 +299,9 @@ importers:
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
+      '@praxis-kit/tailwind':
+        specifier: workspace:*
+        version: link:../../lib/tailwind
       type-fest:
         specifier: 'catalog:'
         version: 5.9.0
@@ -339,6 +342,9 @@ importers:
       '@praxis-kit/runtime':
         specifier: workspace:*
         version: link:../../lib/runtime
+      '@praxis-kit/tailwind':
+        specifier: workspace:*
+        version: link:../../lib/tailwind
       type-fest:
         specifier: 'catalog:'
         version: 5.9.0
