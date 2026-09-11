@@ -19,6 +19,8 @@ import { describe, it, expectTypeOf } from 'vitest'
 import type { ComponentProps, ReactElement } from 'react'
 import { defineContractComponent } from '@praxis-kit/adapter-utils'
 import type { ClassPluginFactory, EmptyRecord } from '@praxis-kit/core'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
+import type { LayoutKeyName } from '@praxis-kit/tailwind'
 import { createContractComponent } from './create-contract-component'
 import type { ContractProps } from '../shared'
 
@@ -134,9 +136,14 @@ describe('ContractProps — data-* passthrough (finding #43)', () => {
 
   it('holds when a styling.plugin contributes a discriminated union of props', () => {
     // Mirrors `createTailwindPipeline`, whose plugin props are a mutually-exclusive union
-    // (`{ flex: true } | { grid: true } | …`) — before the fix that union distributed through
-    // `ContractProps` and `data-slot` was no longer a common member.
-    type LayoutUnion = { flex: true; grid?: never } | { grid: true; flex?: never }
+    // (`{ flex: true } | { grid: true } | …`) — before finding #43's fix that union distributed
+    // through `ContractProps` and `data-slot` was no longer a common member. Finding #44's
+    // `FlattenLayout` then collapses the union entirely, so `data-slot` is a plain member here.
+    // Shape matches `LayoutProps`: one-of the exclusive `true`s, or none of them.
+    type LayoutUnion =
+      | { flex: true; grid?: never }
+      | { grid: true; flex?: never }
+      | { flex?: never; grid?: never }
     const layoutPlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<LayoutUnion>
 
     const Box = defineContractComponent({
@@ -146,13 +153,17 @@ describe('ContractProps — data-* passthrough (finding #43)', () => {
       styling: { base: '', plugin: layoutPlugin },
     } as const)((options) => createContractComponent(options))
 
+    expectTypeOf<ContractProps<typeof Box>['data-slot']>().toEqualTypeOf<
+      string | number | boolean | undefined
+    >()
+
     function BoxWrapper({
       'data-slot': slot = 'wrapper',
       ...rest
-    }: ContractProps<typeof Box>): ReactElement {
+    }: Omit<ContractProps<typeof Box>, LayoutKeyName>): ReactElement {
       return <Box {...rest} data-slot={slot} />
     }
-    const _el = <BoxWrapper flex data-slot="custom" />
+    const _el = <BoxWrapper data-slot="custom" />
     void _el
   })
 
@@ -160,5 +171,74 @@ describe('ContractProps — data-* passthrough (finding #43)', () => {
     expectTypeOf<ContractProps<typeof Img>['data-testid']>().toEqualTypeOf<
       string | number | boolean | undefined
     >()
+  })
+})
+
+describe('ContractProps — layout-union collapse (finding #44)', () => {
+  // `styling.plugin: createTailwindPipeline` contributes `ExclusiveTrueProp<LayoutKey>` — a
+  // ~22-member mutually-exclusive union. Before the fix that union distributed through
+  // `ContractProps`, so the extracted type was a ~22-way union with no common member: a
+  // rest-destructure tripped `TS2700`, `Omit`/`Pick`/`Merge` tripped `TS2590`, and any prop the
+  // union doesn't share (`data-slot`) was inaccessible. `FlattenLayout` collapses it to one flat
+  // object where each layout key is an optional `true` — for the `ContractProps` extraction path
+  // only; the strict union stays on the component's own call overloads (asserted last).
+  const Box = defineContractComponent({
+    tag: 'div',
+    name: 'TwBox',
+    defaults: { 'data-slot': 'box' },
+    styling: { base: 'gap-2', plugin: createTailwindPipeline },
+  } as const)((options) => createContractComponent(options))
+
+  it('is one object type, not a union — common members are directly accessible', () => {
+    expectTypeOf<ContractProps<typeof Box>['data-slot']>().toEqualTypeOf<
+      string | number | boolean | undefined
+    >()
+    expectTypeOf<ContractProps<typeof Box>['flex']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<ContractProps<typeof Box>['grid']>().toEqualTypeOf<true | undefined>()
+  })
+
+  it('a rest-destructure yields a plain object type (no TS2700)', () => {
+    // Before the fix the ~22-way union made this `TS2700 Rest types may only be created from
+    // object types`.
+    function readProps(props: ContractProps<typeof Box>): void {
+      const { 'data-slot': _slot, flex: _flex, ...rest } = props
+      expectTypeOf(rest).toBeObject()
+    }
+    void readProps
+  })
+
+  it('Omit / Pick / Merge over ContractProps no longer trip TS2590', () => {
+    type WithoutFlex = Omit<ContractProps<typeof Box>, 'flex'>
+    type JustGrid = Pick<ContractProps<typeof Box>, 'grid'>
+    type Merged = ContractProps<typeof Box> & { extra?: string }
+    expectTypeOf<WithoutFlex['grid']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<JustGrid['grid']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<Merged['extra']>().toEqualTypeOf<string | undefined>()
+  })
+
+  it('a wrapper that does not re-expose layout props spreads onto <Box> with no cast', () => {
+    // The realistic finding-#44 wrapper shape: take the contract minus the display props, forward
+    // the rest. (Forwarding a flattened layout prop back onto the strict call signature still
+    // needs an explicit branch or cast — that union is deliberately kept on the component.)
+    function BoxWrapper(props: Omit<ContractProps<typeof Box>, LayoutKeyName>): ReactElement {
+      return <Box {...props} />
+    }
+    const _el = <BoxWrapper data-slot="custom" />
+    void _el
+  })
+
+  it('still rejects two layout props at the component call site — the strict union is intact', () => {
+    // @ts-expect-error — only one display prop may be `true`; the `ExclusiveTrueProp` union stays
+    // on the generic call overloads even though `ContractProps` flattens it.
+    const _el = <Box flex grid />
+    void _el
+  })
+
+  it('is the identity for a component with no tailwind plugin', () => {
+    const Plain = createContractComponent<'div', EmptyRecord, EmptyRecord>({ name: 'Plain' })
+    expectTypeOf<ContractProps<typeof Plain>>().toEqualTypeOf<ComponentProps<typeof Plain>>()
+    // @ts-expect-error — `flex` is not a prop of a component that never opted into the pipeline.
+    const _el = <Plain flex />
+    void _el
   })
 })
