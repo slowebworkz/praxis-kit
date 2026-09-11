@@ -38,6 +38,57 @@ systems. Remaining work is correctness, documentation, and release mechanics.
 
 ## Open
 
+### `defineContract` — proposed contract-definition boundary — deferred past 0.1.1
+
+External proposal (2026-09-11): introduce `defineContract(options): O` as the standard entry point
+for authoring a contract, exported from `praxis-kit/contract`. Establishes a named boundary between
+*defining* a contract (`defineContract`) and *creating a framework component from it*
+(`createContractComponent`), replacing:
+
+```ts
+export const Box = defineContractComponent(boxContract)((opts) => createContractComponent(opts))
+```
+
+with:
+
+```ts
+export const boxContract = defineContract({ tag: 'div', name: 'Box', /* ... */ })
+export const Box = createContractComponent(boxContract)
+```
+
+**The core technical claim checked out against the real code.** `defineContractComponent`
+(`lib/adapter-utils/src/runtime/define-component.ts`) is exactly what the proposal says — a pure
+currying trick (`<O>(options: O) => <R>(factory: (options: O) => R): R => factory(options)`), no
+runtime behavior. It exists because `createContractComponent` has seven generic parameters
+(`TDefault, Props, Variants, TPreset, TPlugin, TAllowed, TSubComponents`) all meant to be inferred
+from different sub-paths of one `options` object — fragile as a single-shot inference, reliable once
+`options` is already pinned to a concrete type `O` (which is all the first curried call does).
+`defineContract(options): O` performs the identical pinning without the second call, so
+`createContractComponent(boxContract)` should infer exactly as well as it does today inside the
+curried callback. The "one contract, multiple adapters" goal (§9 of the proposal) isn't new —
+`defineContractComponent` already lives in the framework-neutral `@praxis-kit/adapter-utils` and is
+already shared across adapters — so the actual delta is narrower than the proposal's framing:
+dropping the second curried call, and repositioning the concept from "define a component" to
+"define a contract."
+
+**Why it's a real diagnosis, not just a naming exercise.** The proposal's §11 (`ContractProps`
+should be a derived view of a defined contract, not the contract's representation) names the exact
+root cause behind finding #44's `ContractProps` layout-union collapse
+(`fix/contractprops-layout-union-collapse`, PR #95): `ContractProps<T>` has to recover the concrete
+contract shape from an *already-built* component via the `HasGenerics<G>`/`__generics` phantom-marker
+trick, because nothing upstream still carries that type by the time a consumer needs it. If
+`defineContract` preserved the concrete type at the definition site, adapters could type off that
+directly instead of doing generics-archaeology on the built component afterward. Worth reconsidering
+`ContractProps`/`AnyFactoryOptions` against this once `defineContract` lands, per the proposal's own
+§14 Step 5 — not before.
+
+**Deferred, not rejected.** Even the proposal's own Step 1 (a typed identity function) is a new
+public export and a new named type (`DefinedContract<O>`) on the framework-neutral core — a new
+abstraction by the letter of the frozen-architecture rule above, regardless of how small its first
+implementation is. User confirmed 2026-09-11: this is post-0.1.1 work. Revisit once the 0.1.x line
+is stable and there's room to touch `FactoryOptions`/`createContractComponent`'s call sites across
+every adapter.
+
 ### `spikes/*` — deferred
 
 `../pk` keeps a `spikes/*` glob for throwaway experiments (currently empty).
