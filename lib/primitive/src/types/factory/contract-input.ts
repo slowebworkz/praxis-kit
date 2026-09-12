@@ -1,6 +1,7 @@
+import type { Except, SetRequired } from 'type-fest'
+import type { AnyClassPluginFactory } from '../class'
 import type { AnyRecord, ElementType } from '../primitives'
 import type { RecipeMap, VariantMap } from '../variants'
-import type { AnyClassPluginFactory } from '../class'
 import type { FactoryOptions } from './factory-options'
 
 /**
@@ -49,7 +50,7 @@ export type ContractInput<
   TPreset extends RecipeMap<V> = RecipeMap<V>,
   TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
   TAllowed extends ElementType = ElementType,
-> = Omit<FactoryOptions<TDefault, Props, V, TPreset, TPlugin, TAllowed>, 'tag' | 'name' | 'diagnostics'> & {
-  readonly tag: TDefault
-  readonly name: string
-}
+> = SetRequired<
+  Except<FactoryOptions<TDefault, Props, V, TPreset, TPlugin, TAllowed>, 'diagnostics'>,
+  'tag' | 'name'
+>

@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client'
 import type { PolymorphicComponent, UnknownProps } from './types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function box(comp: PolymorphicComponent<any>): ComponentType<UnknownProps> {
+export function box(comp: PolymorphicComponent<any, any>): ComponentType<UnknownProps> {
   return comp as ComponentType<UnknownProps>
 }
 

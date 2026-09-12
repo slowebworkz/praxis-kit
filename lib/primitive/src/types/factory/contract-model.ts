@@ -180,3 +180,28 @@ export type ExtractContractAllowed<O> = O extends {
 }
   ? TAllowed
   : ElementType
+
+/**
+ * Assembles a `ContractModel` from a raw literal `O` by running all six `Extract*` helpers above —
+ * the fallback path `ContractModelOf<C>` uses when `C` never went through `defineContract` (no
+ * `__model` marker to read directly). Kept as its own named type, not inlined into
+ * `ContractModelOf`, so every `Contract*Of` accessor (`contract-of.ts`) shares exactly one place
+ * that does this reconstruction, instead of each repeating a `HasContractModel` check plus its own
+ * copy of the six-extractor assembly.
+ */
+export type ContractModelFromRaw<O> = ContractModel<
+  ExtractContractTag<O>,
+  ExtractContractProps<O>,
+  ExtractContractVariants<O>,
+  ExtractContractPreset<O>,
+  ExtractContractPlugin<O>,
+  ExtractContractAllowed<O>
+>
+
+/**
+ * The single place that resolves "does `C` carry a real `ContractModel` already, or do we need to
+ * reconstruct one from its raw shape" — every `Contract*Of` accessor in `contract-of.ts` is now a
+ * one-line projection off this (`ContractModelOf<C>['variants']`, etc.), rather than independently
+ * repeating the same `HasContractModel` check.
+ */
+export type ContractModelOf<C> = C extends HasContractModel<infer M> ? M : ContractModelFromRaw<C>

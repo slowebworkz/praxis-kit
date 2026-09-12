@@ -11,6 +11,8 @@ export type { ContractInput } from './contract-input'
 export type { DefinedContract } from './defined-contract'
 export type {
   ContractModel,
+  ContractModelFromRaw,
+  ContractModelOf,
   HasContractModel,
   ExtractContractAllowed,
   ExtractContractPlugin,

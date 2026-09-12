@@ -5,6 +5,7 @@ import type {
   ClassName,
   DefaultOf,
   ElementType,
+  FactoryOptions,
   IntrinsicTag,
   PolymorphicGenerics,
   RecipeOf,
@@ -14,7 +15,7 @@ import type {
 } from '@praxis-kit/core'
 import type { StringMap } from '@praxis-kit/primitive'
 import type { LayoutKeyName } from '@praxis-kit/tailwind'
-import type { HasGenerics, Mode, PickMode } from '@praxis-kit/contract-props'
+import type { HasContract, HasGenerics, Mode, PickMode } from '@praxis-kit/contract-props'
 import type { RenderCallbackProps } from './props'
 import type { UnknownProps } from './primitives'
 
@@ -262,7 +263,10 @@ type FlattenLayout<P> = [P] extends [never]
  * - `asChild`  — slot rendering
  * - default    — standard polymorphic rendering
  */
-export type PolymorphicComponent<G extends PolymorphicGenerics> = {
+export type PolymorphicComponent<
+  G extends PolymorphicGenerics,
+  C extends FactoryOptions = FactoryOptions,
+> = {
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicWithRender<G, TAs>): ReactElement
 
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicWithAsChild<G, TAs>): ReactElement
@@ -295,6 +299,19 @@ export type PolymorphicComponent<G extends PolymorphicGenerics> = {
    * to `HasGenerics<G>` either way, which is what lets `ContractProps` constrain against it.
    */
   readonly __generics?: G
+
+  /**
+   * Type-only; never assigned at runtime — same rationale as `__generics` above, and the same
+   * "inline field, not intersected" reason (see `HasContract<C>`, `@praxis-kit/contract-props`).
+   * Carries the *complete* contract this component was built from (`C`, the argument
+   * `createContractComponent<C extends ReactFactoryOptions>` was actually called with) —
+   * deliberately a second, separate marker from `__generics`, not `__generics` broadened to do
+   * both jobs: `G` answers "what does the adapter need to implement this component," `C` answers
+   * "what was this component configured with" — related questions, different answers (see
+   * `DECISIONS.md`'s `defineContract` entry). Defaults to the widest `FactoryOptions` so every
+   * existing two-argument `PolymorphicComponent<G>` reference keeps resolving exactly as before.
+   */
+  readonly __contract?: C
 
   displayName?: string
 }

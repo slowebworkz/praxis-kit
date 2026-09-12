@@ -80,7 +80,8 @@ export function createContractComponent<
       Variants,
       TPreset,
       TAllowed
-    >
+    >,
+    C
   >,
   TSubComponents
 > {
@@ -179,7 +180,9 @@ export function createContractComponent<
    * prove that the assembled value satisfies the same conditional expression used by the
    * declared return type. Once the generics are instantiated at a call site, the conditional
    * simplifies correctly. The invariant above validates the runtime shape; this assertion
-   * bridges the gap in the compiler's type reasoning.
+   * bridges the gap in the compiler's type reasoning. Also where `__contract`'s `C` is attached —
+   * type-only, matching `__generics`: `assembled` never actually gains a `__contract` property at
+   * runtime, only in the type this assertion claims.
    */
-  return assembled as MergeRecords<PolymorphicComponent<G>, TSubComponents>
+  return assembled as unknown as MergeRecords<PolymorphicComponent<G, C>, TSubComponents>
 }
