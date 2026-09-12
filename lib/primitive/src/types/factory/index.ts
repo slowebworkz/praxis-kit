@@ -7,3 +7,14 @@ export type {
 } from './factory-options'
 export type { ResolvedFactoryOptions } from './resolved-factory-options'
 export type { StylingOptions } from './styling-options'
+export type { ContractInput } from './contract-input'
+export type { DefinedContract } from './defined-contract'
+export type {
+  ContractAllowedOf,
+  ContractPluginOf,
+  ContractPresetOf,
+  ContractPropsOf,
+  ContractTagOf,
+  ContractVariantsOf,
+} from './contract-of'
+export type { ContractGenericsOf, ContractGenericsWithAllowedOf } from './contract-generics'
