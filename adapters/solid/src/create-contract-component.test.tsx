@@ -85,11 +85,13 @@ describe('createContractComponent (Solid adapter)', () => {
   })
 
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
-    const Comp = createContractComponent<'div', { myProp?: string }>({
+    const Comp = createContractComponent({
       tag: 'div',
       filterProps: (key) => key === 'myProp',
     })
-    const { container } = solidRender(() => <Comp myProp="should-be-stripped" />)
+    const { container } = solidRender(() => (
+      <Comp {...({ myProp: 'should-be-stripped' } as any)} />
+    ))
     expect(container.querySelector('[myProp]')).toBeNull()
     expect(container.querySelector('[myprop]')).toBeNull()
   })
@@ -153,7 +155,14 @@ describe('createContractComponent (Solid adapter)', () => {
 
   it('asChild render function receives merged default props', () => {
     const Comp = createContractComponent({ tag: 'button', defaults: { type: 'button' } })
-    const { container } = solidRender(() => <Comp asChild>{(props) => <button {...props} />}</Comp>)
+    const { container } = solidRender(() => (
+      // `type` is now recovered from `defaults` as a widened `string` (see WidenShallow in
+      // contract-model.ts) rather than `EmptyRecord` — genuinely broader than
+      // `ButtonHTMLAttributes['type']`'s literal union, so a render function spreading straight
+      // onto a real `<button>` casts locally, matching `ResolvedSlotProps`'s own documented
+      // guidance ("a render function that needs it casts locally").
+      <Comp asChild>{(props) => <button {...(props as any)} />}</Comp>
+    ))
     expect(container.querySelector('button')?.getAttribute('type')).toBe('button')
   })
 

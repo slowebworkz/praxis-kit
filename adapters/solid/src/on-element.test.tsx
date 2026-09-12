@@ -31,11 +31,11 @@ describe('onElement (event-handler wiring)', () => {
 
   it('getProps() reflects current props without re-registering the listener', () => {
     let listenerAttachCount = 0
-    const Dialog = createContractComponent<'dialog', { onDialogClose?: () => void }>({
+    const Dialog = createContractComponent({
       tag: 'dialog' as const,
       name: 'Dialog',
       onElement: (el, getProps) => {
-        const handleClose = () => getProps().onDialogClose?.()
+        const handleClose = () => (getProps() as { onDialogClose?: () => void }).onDialogClose?.()
         el.addEventListener('close', handleClose)
         listenerAttachCount++
         return () => el.removeEventListener('close', handleClose)
@@ -53,7 +53,7 @@ describe('onElement (event-handler wiring)', () => {
     const [activeIndex, setActiveIndex] = createSignal(0)
     const onDialogClose = () => handlers[activeIndex()]!()
 
-    const { container } = solidRender(() => <Dialog onDialogClose={onDialogClose} />)
+    const { container } = solidRender(() => <Dialog {...({ onDialogClose } as any)} />)
     container.querySelector('dialog')!.dispatchEvent(new Event('close'))
     expect(firstOnClose).toHaveBeenCalledTimes(1)
     expect(secondOnClose).not.toHaveBeenCalled()

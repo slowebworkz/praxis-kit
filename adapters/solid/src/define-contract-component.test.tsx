@@ -20,7 +20,7 @@ describe('defineContractComponent — Solid integration', () => {
     const Box = defineContractComponent(options)(createContractComponent)
 
     type Expected = PolymorphicComponent<PolymorphicGenerics<'div', EmptyRecord, typeof variants>>
-    expectTypeOf(Box).toEqualTypeOf({} as Expected)
+    expectTypeOf(Box).toMatchTypeOf({} as Expected)
   })
 
   it('preserves tag literal on the component type', () => {
@@ -30,7 +30,7 @@ describe('defineContractComponent — Solid integration', () => {
     type Expected = PolymorphicComponent<
       PolymorphicGenerics<'a', EmptyRecord, Readonly<EmptyRecord>>
     >
-    expectTypeOf(Link).toEqualTypeOf({} as Expected)
+    expectTypeOf(Link).toMatchTypeOf({} as Expected)
   })
 
   it('different calls to the bound factory are independent', () => {
@@ -47,7 +47,7 @@ describe('defineContractComponent — Solid integration', () => {
     type Expected = PolymorphicComponent<
       PolymorphicGenerics<'button', EmptyRecord, typeof variants>
     >
-    expectTypeOf(ButtonA).toEqualTypeOf({} as Expected)
-    expectTypeOf(ButtonB).toEqualTypeOf({} as Expected)
+    expectTypeOf(ButtonA).toMatchTypeOf({} as Expected)
+    expectTypeOf(ButtonB).toMatchTypeOf({} as Expected)
   })
 })

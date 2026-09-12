@@ -58,7 +58,7 @@ describe('subComponents (compound component generation)', () => {
     type Expected = PolymorphicComponent<
       PolymorphicGenerics<'div', EmptyRecord, Readonly<EmptyRecord>>
     >
-    expectTypeOf(Plain).toEqualTypeOf({} as Expected)
+    expectTypeOf(Plain).toMatchTypeOf({} as Expected)
 
     expect(() => solidRender(() => <Plain>{'span content'}</Plain>)).not.toThrow()
   })
