@@ -1,34 +1,23 @@
-import type { AnyRecord, SubComponentMap } from '../primitives'
-import type { FactoryOptions, NormalizeFn } from './factory-options'
-import type { StylingOptions } from './styling-options'
-import type { EnforcementOptions } from './enforcement-options'
 import type { ContractInput } from './contract-input'
 
 /**
- * `defineContract`'s return type: `O`'s own resolved generics (recovered positionally from
- * `ContractInput`'s parameter list via `infer`), intersected with the fields
- * `defineContract`'s runtime normalization step guarantees are always present —
- * `defaults`/`normalize`/`styling`/`enforcement`/`subComponents` narrow from optional to required
- * without changing their declared value type. `diagnostics` and `onElement` stay optional exactly
- * as `FactoryOptions` declares them — see `@praxis-kit/adapter-utils`'s `define-contract.ts` for
- * why no safe non-`undefined` default exists for either.
+ * `defineContract`'s return type — the concrete, established counterpart to `ContractInput`'s
+ * acceptable-structure constraint. Per the `defineContract` proposal (`DECISIONS.md`): "the
+ * semantic distinction that matters is `FactoryOptions` describes *acceptable* structure,
+ * `DefinedContract<O>` represents a *concrete, established* contract."
  *
- * This is a type-level promise, not just documentation: it only holds because `defineContract`'s
- * runtime implementation actually spreads concrete defaults over the author's input (verified
- * against `resolveFactoryOptions`'s existing absent-field handling, so the defaults are runtime-
- * neutral) — a `DefinedContract` produced any other way (e.g. a hand-written `satisfies
- * DefinedContract<...>` object missing one of these fields) would be a lie the first time
- * downstream code reads it.
+ * Deliberately just `O` itself: `defineContract`'s initial implementation is a typed identity
+ * function (no runtime normalization, no injected defaults for omitted `FactoryOptions` fields)
+ * — its architectural value is the named boundary and the `tag`/`name` requirement `ContractInput`
+ * already enforces, not runtime work. A `DefinedContract` that *widened* `O` into some
+ * always-fully-populated shape (every optional field defaulted to a concrete empty value) would
+ * be a lie the moment `defineContract` itself stays a pure passthrough — the type and the runtime
+ * value must agree, so the type stays exactly `O` until `defineContract` actually does more.
+ *
+ * Single-parameter, not parameterized separately by `Props` — see `defineContract`'s own doc
+ * comment for why: `Props` is never given as `defineContract`'s own explicit type argument (a
+ * TypeScript `const`-type-parameter limitation makes mixing one explicit argument with a later
+ * inferred one unreliable, and no real call site needs it), so there is nothing distinct from
+ * `O` itself for a separate `Props` parameter to carry here.
  */
-export type DefinedContract<Props extends AnyRecord, O extends ContractInput<Props>> =
-  O extends ContractInput<Props, infer TDefault, infer V, infer TPreset, infer TPlugin, infer TAllowed>
-    ? FactoryOptions<TDefault, Props, V, TPreset, TPlugin, TAllowed> & {
-        readonly tag: TDefault
-        readonly name: string
-        readonly defaults: Partial<NoInfer<Props>>
-        readonly normalize: NormalizeFn<NoInfer<Props>> | ReadonlyArray<NormalizeFn<NoInfer<Props>>>
-        readonly styling: StylingOptions<V, TPreset, TPlugin>
-        readonly enforcement: EnforcementOptions<TAllowed>
-        readonly subComponents: SubComponentMap
-      }
-    : never
+export type DefinedContract<O extends ContractInput> = O

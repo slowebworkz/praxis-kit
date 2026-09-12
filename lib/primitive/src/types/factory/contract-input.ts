@@ -1,4 +1,4 @@
-import type { AnyRecord, ElementType, EmptyRecord } from '../primitives'
+import type { AnyRecord, ElementType } from '../primitives'
 import type { RecipeMap, VariantMap } from '../variants'
 import type { AnyClassPluginFactory } from '../class'
 import type { FactoryOptions } from './factory-options'
@@ -21,19 +21,32 @@ import type { FactoryOptions } from './factory-options'
  * author overrides diagnostics behavior through `enforcement.diagnostics` instead, never this
  * field directly, so there's nothing for an author to supply here in the first place.
  *
- * `Props` is deliberately the *first* type parameter here — the opposite of `FactoryOptions`'s own
- * `TDefault`-first order — because `defineContract`'s calling convention is the mirror image of
- * `createContractComponent`'s: `TDefault`/`V`/`TPreset`/`TPlugin`/`TAllowed` are all inferred
- * bottom-up from the literal contract object (`tag`, `styling.variants`, …), but `Props` can't be
- * (see `FactoryOptions.defaults`'s own `Partial<NoInfer<Props>>` — the same escape hatch this type
- * relies on), so it's the one parameter an author gives explicitly:
- * `defineContract<ButtonProps>({ tag: 'button', name: 'Button', ... })`.
+ * `Props` is `ContractInput`'s first type parameter (matching `FactoryOptions`'s own field-order
+ * intuition, even though `FactoryOptions` itself puts `TDefault` first) purely for readability —
+ * `defineContract` does not thread an explicit `Props` type argument through its own call (see
+ * that function's doc comment for why: mixing one explicit type argument with a `const`-inferred
+ * later one silently disables `const` inference in this TypeScript version, and no real call site
+ * in this codebase needs to give `Props` explicitly today — every `createContractComponent` call
+ * across every adapter already relies on full inference, zero explicit generics). `Props` stays a
+ * parameter here regardless, since `ContractInput<Props, ...>` is useful as a type annotation in
+ * its own right independent of `defineContract`'s specific calling convention.
+ *
+ * Every other parameter's default widens to that parameter's own *bound* (`Readonly<VariantMap>`,
+ * `RecipeMap<V>`, `AnyClassPluginFactory`, `ElementType`) — `AnyFactoryOptions`'s own philosophy,
+ * not `FactoryOptions`'s narrower `EmptyRecord`-style defaults. This is deliberate and load-bearing:
+ * `ContractInput<Props>` (only `Props` given) is used as *another* type parameter's constraint —
+ * `defineContract`'s `const O extends ContractInput<Props>` — and a real author's contract (real
+ * variants, a real preset, a real plugin) must structurally satisfy that fixed bound. Narrow
+ * defaults there would only accept an empty-variants, no-preset, no-plugin contract; a real
+ * literal with a real `styling.variants` object fails `Readonly<EmptyRecord>`, silently widening
+ * `O`'s inference to the bound itself (an easy, non-obvious trap — confirmed by writing this
+ * exact bug once and catching it via `defineContract`'s own round-trip test).
  */
 export type ContractInput<
-  Props extends AnyRecord = EmptyRecord,
+  Props extends AnyRecord = AnyRecord,
   TDefault extends ElementType = ElementType,
-  V extends Readonly<VariantMap> = Readonly<EmptyRecord>,
-  TPreset extends RecipeMap<V> = Readonly<EmptyRecord>,
+  V extends Readonly<VariantMap> = Readonly<VariantMap>,
+  TPreset extends RecipeMap<V> = RecipeMap<V>,
   TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
   TAllowed extends ElementType = ElementType,
 > = Omit<FactoryOptions<TDefault, Props, V, TPreset, TPlugin, TAllowed>, 'tag' | 'name' | 'diagnostics'> & {
