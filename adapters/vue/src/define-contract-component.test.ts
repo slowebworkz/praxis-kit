@@ -19,12 +19,14 @@ describe('defineContractComponent — Vue integration', () => {
 
     const Box = defineContractComponent(options)(createContractComponent)
 
-    // createContractComponent's return type is `MergeRecords<PolymorphicComponent<G>,
+    // createContractComponent's return type is `MergeRecords<PolymorphicComponent<G, C>,
     // TSubComponents>` — TSubComponents defaults to EmptyRecord when no subComponents option
-    // is passed, and MergeRecords collapses that to just PolymorphicComponent<G> rather than
-    // showing a no-op `& EmptyRecord` intersection.
+    // is passed, and MergeRecords collapses that to just PolymorphicComponent<G, C> rather than
+    // showing a no-op `& EmptyRecord` intersection. toMatchTypeOf (structural, one-directional),
+    // not toEqualTypeOf: Box's real __contract is the specific literal it was built from (Phase
+    // 3's contract-retention marker), narrower than Expected's default (widest FactoryOptions).
     type Expected = PolymorphicComponent<PolymorphicGenerics<'div', EmptyRecord, typeof variants>>
-    expectTypeOf(Box).toEqualTypeOf({} as Expected)
+    expectTypeOf(Box).toMatchTypeOf({} as Expected)
   })
 
   it('preserves tag literal on the component type', () => {
@@ -34,7 +36,7 @@ describe('defineContractComponent — Vue integration', () => {
     type Expected = PolymorphicComponent<
       PolymorphicGenerics<'a', EmptyRecord, Readonly<EmptyRecord>>
     >
-    expectTypeOf(Link).toEqualTypeOf({} as Expected)
+    expectTypeOf(Link).toMatchTypeOf({} as Expected)
   })
 
   it('different calls to the bound factory are independent', () => {
@@ -51,7 +53,7 @@ describe('defineContractComponent — Vue integration', () => {
     type Expected = PolymorphicComponent<
       PolymorphicGenerics<'button', EmptyRecord, typeof variants>
     >
-    expectTypeOf(ButtonA).toEqualTypeOf({} as Expected)
-    expectTypeOf(ButtonB).toEqualTypeOf({} as Expected)
+    expectTypeOf(ButtonA).toMatchTypeOf({} as Expected)
+    expectTypeOf(ButtonB).toMatchTypeOf({} as Expected)
   })
 })

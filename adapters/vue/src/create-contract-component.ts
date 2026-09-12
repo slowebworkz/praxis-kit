@@ -2,12 +2,15 @@ import { computed, defineComponent } from 'vue'
 import type {
   AnyClassPluginFactory,
   AnyRecord,
+  ContractPluginOf,
+  ContractPresetOf,
+  ContractPropsOf,
+  ContractTagOf,
+  ContractVariantsOf,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
   MergeRecords,
-  NoPreset,
-  NoVariants,
   PolymorphicGenerics,
   RecipeMap,
   VariantMap,
@@ -43,16 +46,23 @@ import type { VueFactoryOptions } from './vue-options'
  * Pass `subComponents` to attach named sub-components (`Card.Header`) and `onElement` to run
  * setup once the real DOM element exists — both purely additive on top of the generated
  * component.
+ *
+ * `TDefault`/`Props`/`Variants`/`TPreset`/`TPlugin` are each `ContractXOf<C>`-derived *defaults*
+ * on this function's own type parameter list, mirroring `@praxis-kit/react`'s identical fix — see
+ * that adapter's own doc comment for why (computed as function type-parameter defaults, not inline
+ * body computations, which doesn't resolve for a still-abstract `C`). No `TAllowed` here, matching
+ * this adapter's pre-refactor behavior — Vue never threaded it as its own generic.
  */
 export function createContractComponent<
-  TDefault extends ElementType,
-  Props extends UnknownProps = EmptyRecord,
-  Variants extends Readonly<VariantMap> = NoVariants,
-  TPreset extends RecipeMap<Variants> = NoPreset,
-  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
+  C extends VueFactoryOptions,
+  TDefault extends ElementType = ContractTagOf<C>,
+  Props extends UnknownProps = ContractPropsOf<C>,
+  Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
+  TPreset extends RecipeMap<VariantMap> = ContractPresetOf<C>,
+  TPlugin extends AnyClassPluginFactory = ContractPluginOf<C>,
   TSubComponents extends Readonly<AnyRecord> = EmptyRecord,
 >(
-  options: VueFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> & {
+  options: C & {
     readonly subComponents?: TSubComponents
   },
 ): MergeRecords<
@@ -62,12 +72,21 @@ export function createContractComponent<
       MergeRecords<Props, ExtractPluginProps<TPlugin>>,
       Variants,
       TPreset
-    >
+    >,
+    C
   >,
   TSubComponents
 > {
   invariant(isVueFactoryOptions(options), 'options is not a valid VueFactoryOptions object')
-  const bundle = buildRuntime(options)
+  /**
+   * `C` and `TDefault`/`Props`/`Variants`/`TPreset` are formally independent type parameters to
+   * the checker — see `@praxis-kit/react`'s identical comment for the full explanation. The
+   * `invariant` above is what actually guarantees `options` is `VueFactoryOptions` shaped; this
+   * assertion bridges the gap in the compiler's reasoning.
+   */
+  const bundle = buildRuntime(
+    options as unknown as VueFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin>,
+  )
   const { onElement } = options
 
   const Component = defineComponent({
@@ -140,6 +159,8 @@ export function createContractComponent<
   // prove that the assembled value satisfies the same conditional expression used by the
   // declared return type. Once the generics are instantiated at a call site, the conditional
   // simplifies correctly. The invariant above validates the runtime shape; this assertion
-  // bridges the gap in the compiler's type reasoning.
-  return assembled as MergeRecords<PolymorphicComponent<G>, TSubComponents>
+  // bridges the gap in the compiler's type reasoning. Also where `__contract`'s `C` is attached —
+  // type-only, matching `__generics`: `assembled` never actually gains a `__contract` property at
+  // runtime, only in the type this assertion claims.
+  return assembled as unknown as MergeRecords<PolymorphicComponent<G, C>, TSubComponents>
 }

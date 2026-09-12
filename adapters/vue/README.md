@@ -71,5 +71,5 @@ Pass `asChild` to merge props onto the single child element:
 | `defineContractComponent`                                                                      | Curries a factory's options so multiple call sites share one config |
 | `Slottable`                                                                                    | Marks the composition target child for `asChild`                    |
 | `VueFactoryOptions` (type)                                                                     | Factory options with Vue-specific extensions                        |
-| `ContractProps<T, Mode>` (type)                                                                | A built component's prop contract, recovered from `typeof X`        |
+| `ContractProps<T>` (type)                                                                      | A built component's full prop contract (both render modes), recovered from `typeof X` |
 | `PolymorphicComponent`, `PolymorphicProps`, `PolymorphicWithAsChild`, `SlottableProps` (types) | Component / prop shapes for typing wrappers                         |
