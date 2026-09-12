@@ -18,18 +18,19 @@
 import { describe, it, expectTypeOf } from 'vitest'
 import type { ComponentProps, ReactElement } from 'react'
 import { defineContractComponent } from '@praxis-kit/adapter-utils'
-import type { ClassPluginFactory, EmptyRecord } from '@praxis-kit/core'
+import type { ClassPluginFactory } from '@praxis-kit/core'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import type { LayoutKeyName } from '@praxis-kit/tailwind'
 import { createContractComponent } from './create-contract-component'
 import type { ContractProps } from '../shared'
 
-const Container = createContractComponent<'div', EmptyRecord, EmptyRecord>({ name: 'Container' })
+const Container = createContractComponent({ tag: 'div', name: 'Container' })
 
-const Card = createContractComponent<'section', EmptyRecord, EmptyRecord>({
+const Card = createContractComponent({
+  tag: 'section',
   name: 'Card',
   subComponents: {
-    Header: createContractComponent<'header', EmptyRecord, EmptyRecord>({ name: 'CardHeader' }),
+    Header: createContractComponent({ tag: 'header', name: 'CardHeader' }),
   },
 })
 
@@ -235,7 +236,7 @@ describe('ContractProps — layout-union collapse (finding #44)', () => {
   })
 
   it('is the identity for a component with no tailwind plugin', () => {
-    const Plain = createContractComponent<'div', EmptyRecord, EmptyRecord>({ name: 'Plain' })
+    const Plain = createContractComponent({ tag: 'div', name: 'Plain' })
     expectTypeOf<ContractProps<typeof Plain>>().toEqualTypeOf<ComponentProps<typeof Plain>>()
     // @ts-expect-error — `flex` is not a prop of a component that never opted into the pipeline.
     const _el = <Plain flex />

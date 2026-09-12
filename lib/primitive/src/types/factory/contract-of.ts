@@ -1,6 +1,13 @@
-import type { ElementType, EmptyRecord } from '../primitives'
-import type { AnyClassPluginFactory } from '../class'
 import type { FactoryOptions } from './factory-options'
+import type {
+  ExtractContractAllowed,
+  ExtractContractPlugin,
+  ExtractContractPreset,
+  ExtractContractProps,
+  ExtractContractTag,
+  ExtractContractVariants,
+  HasContractModel,
+} from './contract-model'
 
 /**
  * `FactoryOptions`-level accessor family, mirroring `polymorphic-generics.ts`'s `*Of<T>`
@@ -11,43 +18,46 @@ import type { FactoryOptions } from './factory-options'
  * own `PropsOf`/`VariantsOf`/`RecipeOf`/`AllowedOf`/`DefaultOf` — both families are re-exported
  * from `@praxis-kit/core`, so a name clash would be a real conflict, not a style nit.
  *
- * Each accessor is a conditional-`infer` against `FactoryOptions`'s own type-parameter positions,
- * not a plain property-index alias (`T['tag']`) the way `polymorphic-generics.ts`'s accessors are.
- * `PolymorphicGenerics`'s fields are always required, so indexing is exact, but every
- * `FactoryOptions` field is optional (`tag?`, `styling?`, …), so indexing would recover
- * `TDefault | undefined` instead of the real `TDefault` a caller — most importantly
- * `ContractGenericsOf<C>` — needs to project forward. The other five positions in each
- * conditional are filled with `any`, the same filler role TypeScript's own `Parameters<T>`/
- * `ReturnType<T>` use for "extract one type argument, ignore the rest" — `any` sidesteps having
- * to satisfy each position's real constraint (several of which reference *each other*, e.g.
- * `TPreset extends RecipeMap<V>`), which a same-shaped concrete placeholder can't always do
- * once one of the interdependent positions is itself an unresolved `infer`.
+ * Each accessor checks `C`'s `ContractModel` phantom marker first — a plain, required-field index
+ * access (`M['tag']`, etc.), no ambiguity possible — and falls back to matching `C` directly (via
+ * `contract-model.ts`'s `Extract*` helpers, the same required-pattern-match technique
+ * `defineContract` itself uses) only when no marker is present, e.g. a raw literal handed straight
+ * to `createContractComponent` without going through `defineContract` first — supporting that
+ * still-valid, pre-refactor ergonomic rather than requiring the extra ceremony everywhere.
+ *
+ * An earlier draft of this file derived every dimension from `FactoryOptions`'s own *optional*
+ * fields at every accessor call, with no model in between — confirmed broken for the common case
+ * of an absent field (an unconstrained `infer` resolves to the field's declared *constraint*, not
+ * a tight empty default, with no evidence to say otherwise) — see `contract-model.ts`'s own doc
+ * comment for the full story. The model is the fix: establish each dimension unambiguously once,
+ * with real evidence, and read it back by plain index access everywhere after.
  */
-export type ContractTagOf<C extends FactoryOptions> =
-  C extends FactoryOptions<infer TDefault, any, any, any, any, any> ? TDefault : ElementType
+export type ContractTagOf<C extends FactoryOptions> = C extends HasContractModel<infer M>
+  ? M['tag']
+  : ExtractContractTag<C>
 
-/** This contract's own declared props, before variants are mixed in. See `ContractTagOf`'s doc
- *  comment for why this is a conditional `infer`, not a property-index alias. */
-export type ContractPropsOf<C extends FactoryOptions> =
-  C extends FactoryOptions<any, infer Props, any, any, any, any> ? Props : EmptyRecord
+/** See this file's own doc comment. Best-effort when falling back to direct extraction (no
+ *  `ContractModel` marker present) — see `ExtractContractProps`'s own doc comment for why. */
+export type ContractPropsOf<C extends FactoryOptions> = C extends HasContractModel<infer M>
+  ? M['props']
+  : ExtractContractProps<C>
 
-/** This contract's variant definitions. See `ContractTagOf`'s doc comment for why this is a
- *  conditional `infer`, not a property-index alias. */
-export type ContractVariantsOf<C extends FactoryOptions> =
-  C extends FactoryOptions<any, any, infer V, any, any, any> ? V : Readonly<EmptyRecord>
+/** See this file's own doc comment. */
+export type ContractVariantsOf<C extends FactoryOptions> = C extends HasContractModel<infer M>
+  ? M['variants']
+  : ExtractContractVariants<C>
 
-/** This contract's named presets. See `ContractTagOf`'s doc comment for why this is a conditional
- *  `infer`, not a property-index alias. */
-export type ContractPresetOf<C extends FactoryOptions> =
-  C extends FactoryOptions<any, any, any, infer TPreset, any, any> ? TPreset : Readonly<EmptyRecord>
+/** See this file's own doc comment. */
+export type ContractPresetOf<C extends FactoryOptions> = C extends HasContractModel<infer M>
+  ? M['preset']
+  : ExtractContractPreset<C>
 
-/** This contract's class-resolution plugin (e.g. the Tailwind layout pipeline). See
- *  `ContractTagOf`'s doc comment for why this is a conditional `infer`, not a property-index
- *  alias. */
-export type ContractPluginOf<C extends FactoryOptions> =
-  C extends FactoryOptions<any, any, any, any, infer TPlugin, any> ? TPlugin : AnyClassPluginFactory
+/** See this file's own doc comment. */
+export type ContractPluginOf<C extends FactoryOptions> = C extends HasContractModel<infer M>
+  ? M['plugin']
+  : ExtractContractPlugin<C>
 
-/** The set of elements/tags this contract allows via `as`. See `ContractTagOf`'s doc comment for
- *  why this is a conditional `infer`, not a property-index alias. */
-export type ContractAllowedOf<C extends FactoryOptions> =
-  C extends FactoryOptions<any, any, any, any, any, infer TAllowed> ? TAllowed : ElementType
+/** See this file's own doc comment. */
+export type ContractAllowedOf<C extends FactoryOptions> = C extends HasContractModel<infer M>
+  ? M['allowed']
+  : ExtractContractAllowed<C>

@@ -18,8 +18,8 @@ import { Slottable } from '../shared'
 import type { EmptyRecord, PolymorphicGenerics } from '@praxis-kit/core'
 import type { PolymorphicProps } from '../shared'
 
-const Button = createContractComponent<'button', EmptyRecord, EmptyRecord>({ name: 'Button' })
-const Anchor = createContractComponent<'a', EmptyRecord, EmptyRecord>({ name: 'Anchor' })
+const Button = createContractComponent({ tag: 'button', name: 'Button' })
+const Anchor = createContractComponent({ tag: 'a', name: 'Anchor' })
 
 // ─── as prop: intrinsic attribute narrowing ───────────────────────────────────
 

@@ -1,13 +1,17 @@
 import type {
   AnyClassPluginFactory,
   AnyRecord,
+  ContractAllowedOf,
+  ContractPluginOf,
+  ContractPresetOf,
+  ContractPropsOf,
+  ContractTagOf,
+  ContractVariantsOf,
   ElementForTag,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
   MergeRecords,
-  NoPreset,
-  NoVariants,
   PolymorphicGenerics,
   RecipeMap,
   VariantMap,
@@ -45,17 +49,27 @@ import { buildRuntime } from './build-runtime'
  * `ref` is accepted as a plain prop (React 19) and forwarded to the rendered host element or,
  * with `asChild`, to the consumer's own element. Pass `subComponents` to attach named
  * sub-components (`Card.Header`) and `onElement` to run setup once the real DOM element exists.
+ *
+ * `TDefault`/`Props`/`Variants`/`TPreset`/`TPlugin`/`TAllowed` are each `ContractXOf<C>`-derived
+ * *defaults* on this function's own type parameter list — not computed inline in the function
+ * body from the still-abstract `C` (an earlier draft did this; confirmed broken, since
+ * `ContractXOf<C>` doesn't simplify to a concrete value for an abstract `C` the way it does once
+ * `C` is resolved at a real call site — the same lesson `defineContract`'s own signature already
+ * encodes). Declaring them as defaults means each resolves once, concretely, at the actual call
+ * site, exactly mirroring how these six dimensions were independently inferred pre-refactor —
+ * `C` is now the single authoritative input; these are its projection, not a fresh inference.
  */
 export function createContractComponent<
-  TDefault extends ElementType,
-  Props extends UnknownProps = EmptyRecord,
-  Variants extends Readonly<VariantMap> = NoVariants,
-  TPreset extends RecipeMap<Variants> = NoPreset,
-  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
-  TAllowed extends ElementType = ElementType,
+  C extends ReactFactoryOptions,
+  TDefault extends ElementType = ContractTagOf<C>,
+  Props extends UnknownProps = ContractPropsOf<C>,
+  Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
+  TPreset extends RecipeMap<VariantMap> = ContractPresetOf<C>,
+  TPlugin extends AnyClassPluginFactory = ContractPluginOf<C>,
+  TAllowed extends ElementType = ContractAllowedOf<C>,
   TSubComponents extends Readonly<AnyRecord> = EmptyRecord,
 >(
-  options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin, TAllowed> & {
+  options: C & {
     readonly subComponents?: TSubComponents
   },
 ): MergeRecords<
@@ -71,7 +85,24 @@ export function createContractComponent<
   TSubComponents
 > {
   invariant(isReactFactoryOptions(options), 'options is not a valid ReactFactoryOptions object')
-  const bundle = buildRuntime(options)
+  /**
+   * `C` and `TDefault`/`Props`/`Variants`/`TPreset`/`TAllowed` are formally independent type
+   * parameters to the checker — `TDefault = ContractTagOf<C>` is a *default value*, used only
+   * when nothing else is inferred, not a provable relationship the checker can use inside this
+   * body. The `invariant` above is what actually guarantees `options` is `ReactFactoryOptions`
+   * shaped; this assertion bridges the gap in the compiler's reasoning the same way the return
+   * statement below already does.
+   */
+  const bundle = buildRuntime<TDefault, Props, Variants, TPreset, TAllowed>(
+    options as unknown as ReactFactoryOptions<
+      TDefault,
+      Props,
+      Variants,
+      TPreset,
+      AnyClassPluginFactory,
+      TAllowed
+    >,
+  )
   /** Captured once from the factory options so the callback ref below can remain stable. */
   const { onElement } = options
 
