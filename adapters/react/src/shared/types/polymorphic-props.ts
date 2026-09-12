@@ -3,6 +3,7 @@ import type { JSX, ReactElement, ReactNode, Ref } from 'react'
 import type {
   AllowedOf,
   ClassName,
+  ContractGenericsWithAllowedOf,
   DefaultOf,
   ElementType,
   FactoryOptions,
@@ -15,7 +16,7 @@ import type {
 } from '@praxis-kit/core'
 import type { StringMap } from '@praxis-kit/primitive'
 import type { LayoutKeyName } from '@praxis-kit/tailwind'
-import type { HasContract, HasGenerics, Mode, PickMode } from '@praxis-kit/contract-props'
+import type { HasContract, Mode, PickMode } from '@praxis-kit/contract-props'
 import type { RenderCallbackProps } from './props'
 import type { UnknownProps } from './primitives'
 
@@ -296,7 +297,12 @@ export type PolymorphicComponent<
    * the full rationale — kept as an inline field rather than `HasGenerics<G> & {...}` because
    * intersecting it onto this callable type changes how `PolymorphicComponent<any>` (used by
    * test helpers like `box()`) resolves against concrete instantiations; structurally identical
-   * to `HasGenerics<G>` either way, which is what lets `ContractProps` constrain against it.
+   * to `HasGenerics<G>` either way.
+   *
+   * `ContractProps` no longer reads this field directly (Phase 4: it projects `G` from the
+   * retained `__contract` below instead) — kept per Phase 3's migration policy (added alongside
+   * `__contract`, not replaced by it, until every adapter and test proves the new relationship
+   * out), and because other code may still constrain against `HasGenerics<G>` directly.
    */
   readonly __generics?: G
 
@@ -317,7 +323,7 @@ export type PolymorphicComponent<
 }
 
 /**
- * Recovers a built `PolymorphicComponent<G>`'s prop shape for a specific render mode, from
+ * Recovers a built `PolymorphicComponent<G, C>`'s prop shape for a specific render mode, from
  * outside the file that built it — the missing piece `React.ComponentProps<typeof Component>`
  * can't provide, since it always resolves against `PolymorphicComponent`'s normal-mode fallback
  * overload (see that type's own doc comment).
@@ -333,10 +339,21 @@ export type PolymorphicComponent<
  * type ContainerAsChildProps = ContractProps<typeof Container, 'asChild'>
  * ```
  *
- * `T` accepts any built component value (`PolymorphicComponent<G>` or `CompoundComponent<G, S>` —
- * the latter's sub-component intersection doesn't disturb `__generics`, which lives on the root
- * call signature) via its own `__generics` marker; the `never` branch below only fires for a
- * non-praxis-kit component, which has no `__generics` field to infer from at all.
+ * Projects off the component's retained `__contract` (`C`, via `HasContract<C>` —
+ * `@praxis-kit/contract-props`), not `__generics` (`G`) — a deliberate Phase 4 rewire, not a new
+ * mechanism: `G` is *derived* from `C` (`ContractGenericsWithAllowedOf<C>`, the same canonical
+ * projection `createContractComponent`'s own return type already uses), so reading `C` and
+ * projecting `G` from it recovers exactly the same `G` `__generics` would have, without needing a
+ * second, independently-populated marker to stay in sync with the first. `FlattenLayout`,
+ * `PickMode`, `Mode`, and the three `Polymorphic*` prop-shape types below are unchanged — only
+ * where `G` comes from moved. `__generics` itself is untouched (Phase 3's migration policy: added
+ * alongside `__contract`, not replaced by it, until every adapter and test proves the new
+ * relationship out — see that field's own doc comment).
+ *
+ * `T` accepts any built component value (`PolymorphicComponent<G, C>` or `CompoundComponent<G, S>`
+ * — the latter's sub-component intersection doesn't disturb `__contract`, which lives on the root
+ * call signature) via its own `__contract` marker; the `never` branch below only fires for a
+ * non-praxis-kit component, which has no `__contract` field to infer from at all.
  *
  * Always resolves against the component's *default* element (`PolymorphicWithAsChild<G,
  * DefaultOf<G>>`, etc.) — the same ceiling `React.ComponentProps<typeof Component>` already has
@@ -345,14 +362,16 @@ export type PolymorphicComponent<
  * `PolymorphicProps<G, 'a'>` when a caller needs a specific non-default `as` — those remain two
  * different questions with two different answers.
  */
-export type ContractProps<T extends HasGenerics<PolymorphicGenerics>, M extends Mode = 'normal'> =
-  T extends HasGenerics<infer G extends PolymorphicGenerics>
-    ? PickMode<
-        M,
-        FlattenLayout<PolymorphicProps<G, DefaultOf<G>>>,
-        FlattenLayout<PolymorphicWithAsChild<G, DefaultOf<G>>>,
-        FlattenLayout<PolymorphicWithRender<G, DefaultOf<G>>>
-      >
+export type ContractProps<T extends HasContract<FactoryOptions>, M extends Mode = 'normal'> =
+  T extends HasContract<infer C extends FactoryOptions>
+    ? ContractGenericsWithAllowedOf<C> extends infer G extends PolymorphicGenerics
+      ? PickMode<
+          M,
+          FlattenLayout<PolymorphicProps<G, DefaultOf<G>>>,
+          FlattenLayout<PolymorphicWithAsChild<G, DefaultOf<G>>>,
+          FlattenLayout<PolymorphicWithRender<G, DefaultOf<G>>>
+        >
+      : never
     : never
 
 /**
