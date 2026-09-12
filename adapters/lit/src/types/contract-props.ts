@@ -1,28 +1,42 @@
 import type { OmitIndexSignature, Simplify } from 'type-fest'
 import type {
+  ContractGenericsOf,
+  FactoryOptions,
   PolymorphicGenerics,
   PropsOf,
   RecipeOf,
   VariantProps,
   VariantsOf,
 } from '@praxis-kit/core'
-import type { HasGenerics } from '@praxis-kit/contract-props'
+import type { HasContract } from '@praxis-kit/contract-props'
 
 /**
  * Recovers a `LitContractComponent`'s `PolymorphicGenerics` descriptor from its own value type —
- * the Lit analog of React's/Preact's `__generics` marker recovery.
- * Needs the marker (unlike Svelte's `GenericsOf<T>`,
+ * the Lit analog of React's/Preact's `ContractGenericsOf`-via-`__contract` recovery.
+ * Needs a marker (unlike Svelte's `GenericsOf<T>`,
  * `adapters/svelte/src/types/resolved-slot-props.ts`) because `createContractComponent` here
- * returns `LitContractComponent<TVariants, TPluginProps, G>`, not `BuiltRuntime<G, TOptions>`
+ * returns `LitContractComponent<TVariants, TPluginProps, G, C>`, not `BuiltRuntime<G, TOptions>`
  * directly — `TDefault`/`Props`/`TPreset` are genuinely erased from the return type, not merely
  * hidden, so there is no ordinary type parameter left to `infer` them back out of.
- * `LitContractComponent`'s own `__generics` field (`./primitives`) exists purely to make this
- * recovery possible. Falls back to the widest `PolymorphicGenerics` for any non-praxis-kit value,
- * the same "no marker, nothing to recover" case `HasGenerics<G>`'s own `never` branch covers for
- * React/Preact.
+ *
+ * Re-pointed at `__contract` (Phase 4 of the `defineContract` refactor) rather than the
+ * separately-computed `__generics` field it used to read: `__generics`'s own `G` was assembled
+ * from `TDefault`/`Props`/`TVariants`/`TPreset` alone, with **no plugin-contributed props folded
+ * in** — a real, previously-open gap (`findings.md` #44 — Lit/Web's `ContractProps` silently
+ * missing plugin props entirely, not just unionized like React/Preact's old bug). `ContractGenericsOf<C>`
+ * folds `ExtractPluginProps<TPlugin>` into `props` once, at the canonical projection point, so this
+ * fix comes for free from routing through it — no separate merge needed here. `__generics` itself
+ * is untouched (still assembled, still readable) — this file just no longer reads it.
+ *
+ * Falls back to the widest `PolymorphicGenerics` for any non-praxis-kit value, the same "no
+ * marker, nothing to recover" case `HasContract<C>`'s own `never` branch covers for React/Preact.
  */
-export type GenericsOf<T extends HasGenerics<PolymorphicGenerics>> =
-  T extends HasGenerics<infer G extends PolymorphicGenerics> ? G : PolymorphicGenerics
+export type GenericsOf<T extends HasContract<FactoryOptions>> =
+  T extends HasContract<infer C extends FactoryOptions>
+    ? ContractGenericsOf<C> extends infer G extends PolymorphicGenerics
+      ? G
+      : PolymorphicGenerics
+    : PolymorphicGenerics
 
 /**
  * A component's full prop contract — the attributes a caller can set on the custom element,
@@ -53,7 +67,7 @@ export type GenericsOf<T extends HasGenerics<PolymorphicGenerics>> =
  * type ButtonProps = ContractProps<typeof Button>
  * ```
  */
-export type ContractProps<T extends HasGenerics<PolymorphicGenerics>> = Simplify<
+export type ContractProps<T extends HasContract<FactoryOptions>> = Simplify<
   OmitIndexSignature<PropsOf<GenericsOf<T>>> &
     OmitIndexSignature<VariantProps<VariantsOf<GenericsOf<T>>>> &
     DataAttributes & {
