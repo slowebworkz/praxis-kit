@@ -1,22 +1,26 @@
 import type {
   AnyClassPluginFactory,
   AnyRecord,
+  ContractAllowedOf,
+  ContractPluginOf,
+  ContractPresetOf,
+  ContractPropsOf,
+  ContractTagOf,
+  ContractVariantsOf,
   ElementForTag,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
   MergeRecords,
-  NoPreset,
-  NoVariants,
   PolymorphicGenerics,
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { finalizeComponent } from '@praxis-kit/adapter-utils'
+import { finalizeComponent, invariant } from '@praxis-kit/adapter-utils'
 import type { ReactElement, Ref } from 'react'
 import { forwardRef, useCallback, useRef } from 'react'
 import type { PolymorphicComponent, ReactFactoryOptions, UnknownProps } from '../shared'
-import { applyDisplayName, mergeRefs, render } from '../shared'
+import { applyDisplayName, isReactFactoryOptions, mergeRefs, render } from '../shared'
 import { buildRuntime } from './build-runtime'
 
 /**
@@ -40,17 +44,23 @@ import { buildRuntime } from './build-runtime'
  * Returns a `forwardRef` component — `ref` is forwarded to the rendered host element the same
  * way it works in `praxis-kit/react`. Pass `subComponents` to attach named sub-components
  * (`Card.Header`) and `onElement` to run setup once the real DOM element exists.
+ *
+ * `TDefault`/`Props`/`Variants`/`TPreset`/`TPlugin`/`TAllowed` are each `ContractXOf<C>`-derived
+ * *defaults* on this function's own type parameter list, mirroring `current/create-contract-component.ts`
+ * exactly — see that file's own doc comment for why (computed as function type-parameter defaults,
+ * not inline body computations, which doesn't resolve for a still-abstract `C`).
  */
 export function createContractComponent<
-  TDefault extends ElementType,
-  Props extends UnknownProps = EmptyRecord,
-  Variants extends Readonly<VariantMap> = NoVariants,
-  TPreset extends RecipeMap<Variants> = NoPreset,
-  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
-  TAllowed extends ElementType = ElementType,
+  C extends ReactFactoryOptions,
+  TDefault extends ElementType = ContractTagOf<C>,
+  Props extends UnknownProps = ContractPropsOf<C>,
+  Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
+  TPreset extends RecipeMap<VariantMap> = ContractPresetOf<C>,
+  TPlugin extends AnyClassPluginFactory = ContractPluginOf<C>,
+  TAllowed extends ElementType = ContractAllowedOf<C>,
   TSubComponents extends Readonly<AnyRecord> = EmptyRecord,
 >(
-  options: ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin, TAllowed> & {
+  options: C & {
     readonly subComponents?: TSubComponents
   },
 ): MergeRecords<
@@ -61,11 +71,31 @@ export function createContractComponent<
       Variants,
       TPreset,
       TAllowed
-    >
+    >,
+    C
   >,
   TSubComponents
 > {
-  const bundle = buildRuntime(options)
+  // Confirmed pre-existing gap (found while migrating `current` through this same refactor):
+  // this check was missing here even before this signature collapse. Added to match `current`,
+  // not required by the refactor itself, but low-risk and worth closing alongside.
+  invariant(isReactFactoryOptions(options), 'options is not a valid ReactFactoryOptions object')
+  /**
+   * `C` and `TDefault`/`Props`/`Variants`/`TPreset`/`TAllowed` are formally independent type
+   * parameters to the checker — see `current/create-contract-component.ts`'s identical comment
+   * for the full explanation. The `invariant` above is what actually guarantees `options` is
+   * `ReactFactoryOptions` shaped; this assertion bridges the gap in the compiler's reasoning.
+   */
+  const bundle = buildRuntime(
+    options as unknown as ReactFactoryOptions<
+      TDefault,
+      Props,
+      Variants,
+      TPreset,
+      AnyClassPluginFactory,
+      TAllowed
+    >,
+  )
   const { onElement } = options
 
   // React 18: ref is not available as a plain prop — forwardRef is required.
@@ -120,16 +150,13 @@ export function createContractComponent<
     options.subComponents,
   )
 
-  return assembled as unknown as MergeRecords<
-    PolymorphicComponent<
-      PolymorphicGenerics<
-        TDefault,
-        MergeRecords<Props, ExtractPluginProps<TPlugin>>,
-        Variants,
-        TPreset,
-        TAllowed
-      >
-    >,
-    TSubComponents
+  type G = PolymorphicGenerics<
+    TDefault,
+    MergeRecords<Props, ExtractPluginProps<TPlugin>>,
+    Variants,
+    TPreset,
+    TAllowed
   >
+
+  return assembled as unknown as MergeRecords<PolymorphicComponent<G, C>, TSubComponents>
 }
