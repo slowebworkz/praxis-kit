@@ -27,6 +27,7 @@ describe('defineContract — type-level: requires tag/name, preserves the concre
 
   it('recovers tag/variants/preset exactly (as literals — `const O` preserves them), via the ContractXOf accessors', () => {
     const boxContract = defineContract({ tag: 'div', name: 'Box' })
+    void boxContract
     expectTypeOf<ContractTagOf<typeof boxContract>>().toEqualTypeOf<'div'>()
 
     const buttonContract = defineContract({
@@ -37,6 +38,7 @@ describe('defineContract — type-level: requires tag/name, preserves the concre
         presets: { cta: { size: 'lg' } },
       },
     })
+    void buttonContract
     expectTypeOf<ContractTagOf<typeof buttonContract>>().toEqualTypeOf<'button'>()
     expectTypeOf<ContractVariantsOf<typeof buttonContract>>().toEqualTypeOf<{
       readonly size: { readonly sm: 'text-sm'; readonly lg: 'text-lg' }
@@ -63,4 +65,6 @@ describe('defineContract — type-level: requires tag/name, preserves the concre
  * today), and retain that resolved `Props` explicitly alongside `__contract` — not assume
  * `ContractPropsOf<C>` can re-derive it later from an opaque retained `C`.
  */
-describe.todo('ContractPropsOf — known limitation: cannot recover Props from `defaults` alone (NoInfer)')
+describe.todo(
+  'ContractPropsOf — known limitation: cannot recover Props from `defaults` alone (NoInfer)',
+)

@@ -24,30 +24,36 @@ import type { FactoryOptions } from './factory-options'
  * once one of the interdependent positions is itself an unresolved `infer`.
  */
 export type ContractTagOf<C extends FactoryOptions> =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see this type's own doc comment
   C extends FactoryOptions<infer TDefault, any, any, any, any, any> ? TDefault : ElementType
 
 /** This contract's own declared props, before variants are mixed in. See `ContractTagOf`'s doc
  *  comment for why this is a conditional `infer`, not a property-index alias. */
 export type ContractPropsOf<C extends FactoryOptions> =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see ContractTagOf's own comment
   C extends FactoryOptions<any, infer Props, any, any, any, any> ? Props : EmptyRecord
 
 /** This contract's variant definitions. See `ContractTagOf`'s doc comment for why this is a
  *  conditional `infer`, not a property-index alias. */
 export type ContractVariantsOf<C extends FactoryOptions> =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see ContractTagOf's own comment
   C extends FactoryOptions<any, any, infer V, any, any, any> ? V : Readonly<EmptyRecord>
 
 /** This contract's named presets. See `ContractTagOf`'s doc comment for why this is a conditional
  *  `infer`, not a property-index alias. */
 export type ContractPresetOf<C extends FactoryOptions> =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see ContractTagOf's own comment
   C extends FactoryOptions<any, any, any, infer TPreset, any, any> ? TPreset : Readonly<EmptyRecord>
 
 /** This contract's class-resolution plugin (e.g. the Tailwind layout pipeline). See
  *  `ContractTagOf`'s doc comment for why this is a conditional `infer`, not a property-index
  *  alias. */
 export type ContractPluginOf<C extends FactoryOptions> =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see ContractTagOf's own comment
   C extends FactoryOptions<any, any, any, any, infer TPlugin, any> ? TPlugin : AnyClassPluginFactory
 
 /** The set of elements/tags this contract allows via `as`. See `ContractTagOf`'s doc comment for
  *  why this is a conditional `infer`, not a property-index alias. */
 export type ContractAllowedOf<C extends FactoryOptions> =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see ContractTagOf's own comment
   C extends FactoryOptions<any, any, any, any, any, infer TAllowed> ? TAllowed : ElementType
