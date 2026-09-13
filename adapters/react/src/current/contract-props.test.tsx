@@ -17,7 +17,7 @@
  */
 import { describe, it, expectTypeOf } from 'vitest'
 import type { ComponentProps, ReactElement } from 'react'
-import { defineContractComponent } from '@praxis-kit/adapter-utils'
+import { defineContract } from '@praxis-kit/adapter-utils'
 import type { ClassPluginFactory } from '@praxis-kit/core'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import type { LayoutKeyName } from '@praxis-kit/tailwind'
@@ -120,12 +120,14 @@ describe('ContractProps — data-* passthrough (finding #43)', () => {
   // special-cases `data-*` at the call site), so a `data-*` a contract sets only in `defaults`
   // — `data-slot`, the near-universal styling hook — was absent from `ContractProps<typeof X>`
   // even though `<X data-slot="…" />` type-checks. A wrapper couldn't destructure it.
-  const Img = defineContractComponent({
-    tag: 'img',
-    name: 'Img',
-    defaults: { 'data-slot': 'img' },
-    enforcement: { allowedAs: ['img'] },
-  } as const)((options) => createContractComponent(options))
+  const Img = createContractComponent(
+    defineContract({
+      tag: 'img',
+      name: 'Img',
+      defaults: { 'data-slot': 'img' },
+      enforcement: { allowedAs: ['img'] },
+    }),
+  )
 
   it('a data-* key is destructurable and forwardable from ContractProps', () => {
     function Avatar({ 'data-slot': slot = 'avatar', ...rest }: ContractProps<typeof Img>): ReactElement {
@@ -147,12 +149,14 @@ describe('ContractProps — data-* passthrough (finding #43)', () => {
       | { flex?: never; grid?: never }
     const layoutPlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<LayoutUnion>
 
-    const Box = defineContractComponent({
-      tag: 'div',
-      name: 'Box',
-      defaults: { 'data-slot': 'box' },
-      styling: { base: '', plugin: layoutPlugin },
-    } as const)((options) => createContractComponent(options))
+    const Box = createContractComponent(
+      defineContract({
+        tag: 'div',
+        name: 'Box',
+        defaults: { 'data-slot': 'box' },
+        styling: { base: '', plugin: layoutPlugin },
+      }),
+    )
 
     expectTypeOf<ContractProps<typeof Box>['data-slot']>().toEqualTypeOf<
       string | number | boolean | undefined
@@ -183,12 +187,14 @@ describe('ContractProps — layout-union collapse (finding #44)', () => {
   // union doesn't share (`data-slot`) was inaccessible. `FlattenLayout` collapses it to one flat
   // object where each layout key is an optional `true` — for the `ContractProps` extraction path
   // only; the strict union stays on the component's own call overloads (asserted last).
-  const Box = defineContractComponent({
-    tag: 'div',
-    name: 'TwBox',
-    defaults: { 'data-slot': 'box' },
-    styling: { base: 'gap-2', plugin: createTailwindPipeline },
-  } as const)((options) => createContractComponent(options))
+  const Box = createContractComponent(
+    defineContract({
+      tag: 'div',
+      name: 'TwBox',
+      defaults: { 'data-slot': 'box' },
+      styling: { base: 'gap-2', plugin: createTailwindPipeline },
+    }),
+  )
 
   it('is one object type, not a union — common members are directly accessible', () => {
     expectTypeOf<ContractProps<typeof Box>['data-slot']>().toEqualTypeOf<
