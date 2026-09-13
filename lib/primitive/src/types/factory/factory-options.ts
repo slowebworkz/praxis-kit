@@ -116,8 +116,15 @@ export type FactoryOptions<
    *
    * Return a cleanup function to run when the instance unmounts.
    */
-  readonly onElement?: (
-    element: ElementForTag<TDefault | TAllowed>,
-    getProps: () => Readonly<Props>,
-  ) => void | (() => void)
+  // method-signature form gives bivariant assignability — same fix, same reason as `NormalizeFn`
+  // above: without it, a concrete contract (non-default `TAllowed`/`Props`) fails structural
+  // assignability against a *defaulted* `FactoryOptions<...>` instantiation (e.g. `defineContract`'s
+  // `ContractInput<Props>` bound), since a plain arrow-property type-checks `onElement`'s parameters
+  // contravariantly.
+  readonly onElement?: {
+    onElement(
+      element: ElementForTag<TDefault | TAllowed>,
+      getProps: () => Readonly<Props>,
+    ): void | (() => void)
+  }['onElement']
 }

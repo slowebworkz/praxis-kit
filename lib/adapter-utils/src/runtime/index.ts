@@ -1,5 +1,6 @@
 export { applyDisplayName } from './apply-display-name'
 export { defineContractComponent } from './define-component'
+export { defineContract } from './define-contract'
 export { assembleCompoundComponent } from './assemble-compound-component'
 export { finalizeComponent } from './finalize-component'
 export { FACTORY_OPTIONS_FIELD_VALIDATORS, isFactoryOptionsLike } from './is-factory-options-like'
