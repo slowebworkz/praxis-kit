@@ -122,9 +122,27 @@ describe('transformAsChild — className merge', () => {
     expect(result).not.toBeNull()
     expect(result).not.toContain('asChild')
     expect(result).toContain('render=')
-    // Merged: _p.className + ' link'
+    // Guarded merge: `_p.className ? `${_p.className} link` : 'link'` — see
+    // buildClassNameMerge's own doc comment for why the guard (not a plain `+`
+    // concatenation) is load-bearing: `_p.className` can be `undefined` at runtime.
     expect(result).toContain('_p.className')
-    expect(result).toContain('" link"')
+    expect(result).toMatch(/\$\{_p\.className\} link/)
+    expect(result).toContain('"link"')
+  })
+
+  it('guards against `_p.className` being undefined at runtime (not just styling)', () => {
+    // resolveClasses (lib/styling/src/create-class-pipeline.ts) resolves `undefined`, not `''`,
+    // for a component with no base/variant classes and no caller className — an unconditional
+    // `_p.className + ' link'` would concatenate onto that and produce the literal string
+    // "undefined link". The generated code must branch on `_p.className` instead.
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/" className="link">Home</a></Button>
+      }
+    `)
+    expect(result).not.toBeNull()
+    expect(result).not.toContain('_p.className +')
+    expect(result).toMatch(/_p\.className\s*\?/)
   })
 
   it('transforms when child has a JSX-expression string-literal className', () => {
@@ -271,6 +289,75 @@ describe('transformAsChild — event handler composition', () => {
     `)
     expect(result).not.toBeNull()
     expect(result).not.toMatch(/_e/)
+  })
+
+  // Regression: buildEventMerge's generated code calls the child's handler expression
+  // unconditionally ((childHandler)(_e)) — a handler value that's provably not callable would
+  // throw `TypeError: ... is not a function` at runtime if transformed, even though each of
+  // these is itself perfectly valid, type-checked JSX (an optional handler prop explicitly set
+  // to a non-function value rather than omitted).
+  it('does not transform when a handler is explicitly `undefined`', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/" onClick={undefined}>Home</a></Button>
+      }
+    `)
+    if (result !== null) {
+      expect(result).toContain('asChild')
+    }
+  })
+
+  it('does not transform when a handler is explicitly `null`', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/" onClick={null}>Home</a></Button>
+      }
+    `)
+    if (result !== null) {
+      expect(result).toContain('asChild')
+    }
+  })
+
+  it('does not transform when a handler is a boolean literal', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/" onClick={false}>Home</a></Button>
+      }
+    `)
+    if (result !== null) {
+      expect(result).toContain('asChild')
+    }
+  })
+
+  it('does not transform when a handler is a string or numeric literal', () => {
+    const strResult = transform(`
+      function App() {
+        return <Button asChild><a href="/" onClick={'not-a-fn'}>Home</a></Button>
+      }
+    `)
+    if (strResult !== null) {
+      expect(strResult).toContain('asChild')
+    }
+
+    const numResult = transform(`
+      function App() {
+        return <Button asChild><a href="/" onClick={0}>Home</a></Button>
+      }
+    `)
+    if (numResult !== null) {
+      expect(numResult).toContain('asChild')
+    }
+  })
+
+  it('still transforms a normal identifier-referenced handler (the common case is unaffected)', () => {
+    const result = transform(`
+      function App() {
+        return <Button asChild><a href="/" onClick={handleNav}>Home</a></Button>
+      }
+    `)
+    expect(result).not.toBeNull()
+    expect(result).not.toContain('asChild')
+    expect(result).toContain('handleNav')
   })
 
   it('transforms child with both style and handler together', () => {
