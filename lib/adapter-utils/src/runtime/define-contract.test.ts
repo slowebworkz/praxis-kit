@@ -87,3 +87,23 @@ describe('defineContract — establishes the ContractModel exactly, from real ev
     }>()
   })
 })
+
+/**
+ * `ContractPropsOf<C>` — documenting a real, load-bearing limitation found while writing these
+ * tests, not a defineContract bug: `FactoryOptions.defaults` is declared as
+ * `Partial<NoInfer<Props>>`, and `NoInfer` blocks that occurrence from contributing to *any*
+ * infer-based extraction of `Props` (not just call-site inference) — so `ContractPropsOf<C>`
+ * cannot recover a component's own props from `defaults` alone, only from `onElement`'s
+ * `getProps` (the one `Props`-bearing field FactoryOptions does *not* wrap in `NoInfer`). Most
+ * contracts declare props via `defaults`, not `onElement`, so `ContractPropsOf<C>` alone is not a
+ * reliable general-purpose Props-recovery mechanism for an arbitrary already-built `C`.
+ *
+ * This does not block Phase 1 (defineContract has no `Props`-recovery responsibility — see its own
+ * doc comment) but is a real finding for Phase 2/3: `createContractComponent` must keep inferring
+ * `Props` fresh at its own call site (the same unblocked mechanism `defaults` already relies on
+ * today), and retain that resolved `Props` explicitly alongside `__contract` — not assume
+ * `ContractPropsOf<C>` can re-derive it later from an opaque retained `C`.
+ */
+describe.todo(
+  'ContractPropsOf — known limitation: cannot recover Props from `defaults` alone (NoInfer)',
+)
