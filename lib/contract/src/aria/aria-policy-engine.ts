@@ -1,22 +1,32 @@
-import { isNonNull, isNull, isNumber, isString, iterate, LRUCache } from '@praxis-kit/primitive'
+import {
+  isDefined,
+  isNonNull,
+  isNull,
+  isString,
+  isUndefined,
+  iterate,
+  LRUCache,
+} from '@praxis-kit/primitive'
 
 import { AriaDiagnostics, HtmlDiagnostics } from '../diagnostics'
 import { InvariantBase } from '../strict'
 import { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attribute-policy'
 import { getImplicitRole, hasStandaloneRole, isStrongImplicitRole } from './aria-role-policy'
-import { REQUIRED_ARIA_PROPERTIES } from './spec/roles/required-properties'
-import { NAME_REQUIRED_ROLES } from './spec/roles/name-required'
-import { NAME_PROHIBITED_ATTRIBUTES, NAME_PROHIBITED_ROLES } from './spec/roles/name-prohibited'
-import { ATOMIC_REQUIREMENTS, LIVE_REGION_ROLES } from './spec/roles/live-region'
-import { ARIA_VALUE_TYPES } from './spec/attributes/aria-value-types'
+import { applyPlan, computePlan, createPlanKey, extraRulesKeySuffix } from './plan-cache'
 import { VALID_RELEVANT_TOKENS } from './spec/attributes/aria-relevant-tokens'
-import { HEADING_IMPLICIT_LEVELS } from './spec/elements/heading-implicit-levels'
+import { ARIA_VALUE_TYPES } from './spec/attributes/aria-value-types'
 import { isPotentiallyFocusable } from './spec/elements/focusable'
-import { checkRequiredAttributes } from './spec/validators/required-properties-validator'
+import { HEADING_IMPLICIT_LEVELS } from './spec/elements/heading-implicit-levels'
+import { ATOMIC_REQUIREMENTS, LIVE_REGION_ROLES } from './spec/roles/live-region'
+import { NAME_PROHIBITED_ATTRIBUTES, NAME_PROHIBITED_ROLES } from './spec/roles/name-prohibited'
+import { NAME_REQUIRED_ROLES } from './spec/roles/name-required'
+import { REQUIRED_ARIA_PROPERTIES } from './spec/roles/required-properties'
 import type { RoleAttributeRequirements } from './spec/types'
+import { checkRequiredAttributes } from './spec/validators/required-properties-validator'
+import { describeExpected, isValidAriaValue, strictNumeric } from './value-validation'
 
-import type { AnyRecord, IntrinsicTag } from '@praxis-kit/primitive'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
+import type { AnyRecord, IntrinsicTag } from '@praxis-kit/primitive'
 import type {
   AnyTag,
   AriaContext,
@@ -24,7 +34,6 @@ import type {
   AriaPlan,
   AriaResult,
   AriaRule,
-  AriaValueType,
   EvaluationContext,
   IntrinsicProps,
   NormalizationResult,
@@ -34,7 +43,12 @@ import type {
 } from '../types'
 export { isInvalid } from '@praxis-kit/primitive'
 
-const NO_VIOLATIONS = [{ valid: true }] as const
+// The shared "valid, no violations" return for a rule with nothing to report. An array (not a
+// bare `[]`) because it's typed as `readonly AriaResult[]` and every rule returns this exact
+// reference on its common path — reusing one frozen-shape array avoids a fresh allocation on
+// every rule call for what is overwhelmingly the common case. Named for the value it represents
+// (a single valid `AriaResult`), not the situation a caller uses it for.
+const VALID_RESULT = [{ valid: true }] as const
 
 // Shared empty set for AriaContext.variantKeys when there is no factory context (the standalone
 // `AriaPolicyEngine.evaluate` path). Keeps the context invariant a plain `ReadonlySet<string>`
@@ -48,18 +62,6 @@ function isIntrinsicTag(tag: AnyTag): tag is IntrinsicTag {
 function omitProp<T extends Readonly<AnyRecord>, K extends keyof T>(obj: T, key: K): Omit<T, K> {
   const { [key]: _, ...rest } = obj
   return rest as Omit<T, K>
-}
-
-// Strict numeric coercion for ARIA attribute values. Unlike `parseFloat`/`parseInt`, the whole
-// string must be a number — `"12abc"` is rejected, not read as `12` — and an empty / whitespace
-// string is rejected rather than coerced to `0` the way `Number("")` would.
-function strictNumeric(value: unknown): number | undefined {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined
-  if (typeof value !== 'string') return undefined
-  const trimmed = value.trim()
-  if (trimmed === '') return undefined
-  const n = Number(trimmed)
-  return Number.isFinite(n) ? n : undefined
 }
 
 export class AriaPolicyEngine extends InvariantBase {
@@ -274,84 +276,6 @@ export class AriaPolicyEngine extends InvariantBase {
     })
   }
 
-  // Cache key covers only the aria-relevant subset of props (tag + role + aria-* attrs) —
-  // exactly what the built-in pipeline reads. Non-aria props (className, onClick, etc.) do
-  // not affect built-in ARIA decisions and are excluded so cache hits survive re-renders
-  // that only change non-aria props. This key alone is unsound for #extraRules, which may
-  // read arbitrary props outside this set — validate() extends it with #extraRulesKeySuffix,
-  // or bypasses the cache, to account for that.
-  static #createPlanKey(tag: AnyTag, props: IntrinsicProps): string | null {
-    if (!isIntrinsicTag(tag)) return null
-    const parts: string[] = [tag]
-    if (typeof props.role === 'string') parts.push(`role:${props.role}`)
-    // input's implicit role depends on type — include it so different types never share a cache entry
-    if (tag === 'input' && typeof props.type === 'string') parts.push(`type:${props.type}`)
-    // img's implicit role depends on whether alt is empty (none) or non-empty (img)
-    if (tag === 'img') parts.push(`alt:${props.alt === '' ? 'empty' : 'present'}`)
-    const ariaEntries: string[] = []
-    iterate.forEachEntry(props, (k, v) => {
-      if (!k.startsWith('aria-')) return
-      // Skip non-primitive values — String([object Object]) would produce colliding keys.
-      if (!isString(v) && !isNumber(v) && typeof v !== 'boolean') return
-      ariaEntries.push(`${k}:${String(v)}`)
-    })
-    if (ariaEntries.length > 0) parts.push(...ariaEntries.sort())
-    return parts.join('|')
-  }
-
-  // Extends the base cache key with the props each extra rule declares it reads (`readsProps`).
-  // Returns null — meaning "don't cache" — if any extra rule omits `readsProps` (it may read
-  // arbitrary props the key can't account for) or if a declared prop's value isn't a primitive
-  // (object/array identity isn't stably representable in a string key).
-  static #extraRulesKeySuffix(
-    extraRules: readonly AriaRule[],
-    props: IntrinsicProps,
-  ): string | null {
-    const parts: string[] = []
-    for (const rule of extraRules) {
-      const readsProps = rule.readsProps
-      if (!isNonNull(readsProps)) return null
-      for (const propKey of readsProps) {
-        const v = (props as AnyRecord)[propKey]
-        if (v !== undefined && !isString(v) && !isNumber(v) && typeof v !== 'boolean') return null
-        parts.push(`x:${propKey}:${String(v)}`)
-      }
-    }
-    return parts.sort().join('|')
-  }
-
-  static #computePlan(
-    inputProps: IntrinsicProps,
-    resultProps: IntrinsicProps,
-  ): { removals: ReadonlySet<string>; updates: Readonly<AnyRecord> } {
-    const removals = new Set<string>()
-    const updates: AnyRecord = {}
-    iterate.forEachKey(inputProps, (key) => {
-      if (!(key in (resultProps as object))) removals.add(key)
-    })
-    iterate.forEachEntry(resultProps, (key, resultVal) => {
-      // Capture both new keys (additions) and changed values (modifications).
-      if ((inputProps as AnyRecord)[key] !== resultVal) updates[key] = resultVal
-    })
-    return { removals, updates }
-  }
-
-  static #applyPlan<T extends IntrinsicProps>(
-    props: T,
-    removals: ReadonlySet<string>,
-    updates: Readonly<AnyRecord>,
-  ): T {
-    const hasRemovals = removals.size > 0
-    const hasUpdates = Object.keys(updates).length > 0
-    if (!hasRemovals && !hasUpdates) return props
-    const next: AnyRecord = {}
-    iterate.forEachEntry(props, (k, v) => {
-      if (!removals.has(k)) next[k] = v
-    })
-    Object.assign(next, updates)
-    return next as unknown as T
-  }
-
   // `extraProps`, when supplied, is the pre-variant-filter props object (the same one
   // `normalize()` receives) — used only as the evaluation context for this engine's own
   // #extraRules (a consumer's `enforcement.aria`/`enforcement.rules`), never for the built-in
@@ -360,24 +284,24 @@ export class AriaPolicyEngine extends InvariantBase {
   validate(tag: AnyTag, props: IntrinsicProps, extraProps?: IntrinsicProps): ValidationResult {
     const ruleProps = extraProps ?? props
     // Custom `enforcement.aria` rules (#extraRules) may read arbitrary props that
-    // #createPlanKey doesn't encode (it only covers what the built-in pipeline reads). A rule
+    // createPlanKey doesn't encode (it only covers what the built-in pipeline reads). A rule
     // that declares `readsProps` opts back into caching — its declared props get folded into
     // the key, read off `ruleProps` since that's what the rule itself actually sees. Any extra
     // rule without `readsProps` is assumed unsafe to cache and bypasses the plan cache entirely
     // for this validate() call.
-    const baseKey = AriaPolicyEngine.#createPlanKey(tag, props)
+    const baseKey = createPlanKey(tag, props)
     let key: string | null = baseKey
     if (this.#extraRules.length > 0) {
-      const suffix = AriaPolicyEngine.#extraRulesKeySuffix(this.#extraRules, ruleProps)
+      const suffix = extraRulesKeySuffix(this.#extraRules, ruleProps)
       key = isNonNull(baseKey) && isNonNull(suffix) ? `${baseKey}|${suffix}` : null
     }
 
     if (!isNull(key)) {
       const cached = this.#planCache.get(key)
-      if (cached !== undefined) {
+      if (isDefined(cached)) {
         if (cached.violations.length > 0) this.report(cached.violations as ValidationViolation[])
         return {
-          props: AriaPolicyEngine.#applyPlan(props, cached.removals, cached.updates),
+          props: applyPlan(props, cached.removals, cached.updates),
           violations: cached.violations as ValidationViolation[],
         }
       }
@@ -396,10 +320,7 @@ export class AriaPolicyEngine extends InvariantBase {
     if (result.violations.length > 0) this.report(result.violations)
 
     if (!isNull(key)) {
-      const { removals, updates } = AriaPolicyEngine.#computePlan(
-        props,
-        result.props as IntrinsicProps,
-      )
+      const { removals, updates } = computePlan(props, result.props as IntrinsicProps)
       const plan: AriaPlan = { removals, updates, violations: result.violations }
       this.#planCache.set(key, plan)
     }
@@ -491,7 +412,7 @@ export class AriaPolicyEngine extends InvariantBase {
     implicitRole,
   }: AriaContext): readonly AriaResult[] {
     const role = props.role
-    if (!implicitRole || !role || role === implicitRole) return NO_VIOLATIONS
+    if (!implicitRole || isUndefined(role) || role === implicitRole) return VALID_RESULT
 
     if (isStrongImplicitRole(tag) && role === 'region') {
       const diagnostic = HtmlDiagnostics.implicitRoleOverride(tag, implicitRole, role)
@@ -506,12 +427,12 @@ export class AriaPolicyEngine extends InvariantBase {
       ]
     }
 
-    return NO_VIOLATIONS
+    return VALID_RESULT
   }
 
   static #checkRedundantRole({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] {
     const role = props.role
-    if (!implicitRole || !role || role !== implicitRole) return NO_VIOLATIONS
+    if (!implicitRole || isUndefined(role) || role !== implicitRole) return VALID_RESULT
 
     const diagnostic = HtmlDiagnostics.implicitRoleRedundant(tag, implicitRole)
     return [
@@ -527,8 +448,8 @@ export class AriaPolicyEngine extends InvariantBase {
 
   static #checkStandaloneRegion({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] {
     const role = props.role
-    if (role !== 'region') return NO_VIOLATIONS
-    if (!hasStandaloneRole(tag)) return NO_VIOLATIONS
+    if (role !== 'region') return VALID_RESULT
+    if (!hasStandaloneRole(tag)) return VALID_RESULT
 
     const diagnostic = HtmlDiagnostics.standaloneRegionOverride(tag, implicitRole ?? tag)
     return [
@@ -548,7 +469,7 @@ export class AriaPolicyEngine extends InvariantBase {
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
     // Presentational elements have no semantic role — defer entirely to #checkPresentationalAriaAttributes.
-    if (effectiveRole === 'none' || effectiveRole === 'presentation') return NO_VIOLATIONS
+    if (effectiveRole === 'none' || effectiveRole === 'presentation') return VALID_RESULT
     const results: AriaResult[] = []
 
     iterate.forEachEntry(props, (key) => {
@@ -570,73 +491,24 @@ export class AriaPolicyEngine extends InvariantBase {
   }
 
   // ─── ARIA attribute value validation ──────────────────────────────────────
-
-  static #isValidAriaValue(value: unknown, type: AriaValueType): boolean {
-    switch (type.kind) {
-      case 'boolean':
-        return value === 'true' || value === 'false' || value === true || value === false
-      case 'tristate':
-        return (
-          value === 'true' ||
-          value === 'false' ||
-          value === 'mixed' ||
-          value === true ||
-          value === false
-        )
-      case 'number':
-        return strictNumeric(value) !== undefined
-      case 'integer': {
-        const n = strictNumeric(value)
-        if (n === undefined || !Number.isInteger(n)) return false
-        if (type.min !== undefined && n < type.min) return false
-        if (type.max !== undefined && n > type.max) return false
-        return true
-      }
-      case 'enum':
-        return typeof value === 'string' && type.values.has(value)
-    }
-  }
-
-  static #describeExpected(type: AriaValueType): string {
-    switch (type.kind) {
-      case 'boolean':
-        return '"true" or "false"'
-      case 'tristate':
-        return '"true", "false", or "mixed"'
-      case 'number':
-        return 'a finite number'
-      case 'integer': {
-        const parts: string[] = ['an integer']
-        if (type.min !== undefined && type.max !== undefined)
-          parts.push(`between ${type.min} and ${type.max}`)
-        else if (type.min !== undefined) parts.push(`≥ ${type.min}`)
-        else if (type.max !== undefined) parts.push(`≤ ${type.max}`)
-        return parts.join(' ')
-      }
-      case 'enum':
-        return [...type.values].map((v) => `"${v}"`).join(', ')
-    }
-  }
+  // See value-validation.ts for the value-type system itself (isValidAriaValue/
+  // describeExpected/strictNumeric) — this rule is just a thin caller of it.
 
   static #checkAriaAttributeValues({ props, effectiveRole }: AriaContext): readonly AriaResult[] {
     // Presentational elements have no ARIA semantics — all attrs handled elsewhere.
-    if (effectiveRole === 'none' || effectiveRole === 'presentation') return NO_VIOLATIONS
+    if (effectiveRole === 'none' || effectiveRole === 'presentation') return VALID_RESULT
     const results: AriaResult[] = []
     iterate.forEachEntry(props, (key, value) => {
       if (!key.startsWith('aria-')) return
       const type = ARIA_VALUE_TYPES.get(key)
       if (!isNonNull(type)) return
-      if (AriaPolicyEngine.#isValidAriaValue(value, type)) return
+      if (isValidAriaValue(value, type)) return
       results.push({
         valid: false,
         fixable: true,
         severity: 'warning',
         attribute: key,
-        diagnostic: AriaDiagnostics.invalidAttributeValue(
-          key,
-          value,
-          AriaPolicyEngine.#describeExpected(type),
-        ),
+        diagnostic: AriaDiagnostics.invalidAttributeValue(key, value, describeExpected(type)),
         fix: AriaPolicyEngine.#makeRemoveAttributeFix(key),
       })
     })
@@ -650,13 +522,13 @@ export class AriaPolicyEngine extends InvariantBase {
     props,
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
-    if (effectiveRole === 'none' || effectiveRole === 'presentation') return NO_VIOLATIONS
+    if (effectiveRole === 'none' || effectiveRole === 'presentation') return VALID_RESULT
     const implicitLevel = HEADING_IMPLICIT_LEVELS.get(tag)
-    if (!isNonNull(implicitLevel)) return NO_VIOLATIONS
+    if (!isNonNull(implicitLevel)) return VALID_RESULT
     const raw = props['aria-level']
-    if (!isNonNull(raw)) return NO_VIOLATIONS
+    if (!isNonNull(raw)) return VALID_RESULT
     const n = strictNumeric(raw)
-    if (n === undefined || n !== implicitLevel) return NO_VIOLATIONS
+    if (n === undefined || n !== implicitLevel) return VALID_RESULT
     return [
       {
         valid: false,
@@ -675,17 +547,14 @@ export class AriaPolicyEngine extends InvariantBase {
   // the author, so `aria-label` / `aria-labelledby` on them is a conformance error (they are
   // otherwise global). Strips the offending attribute. `none`/`presentation` are in the source
   // set but handled by `#checkPresentationalAriaAttributes` instead — skip them here.
-  static #checkNameProhibitedRoles({
-    props,
-    effectiveRole,
-  }: AriaContext): readonly AriaResult[] {
+  static #checkNameProhibitedRoles({ props, effectiveRole }: AriaContext): readonly AriaResult[] {
     if (
       !effectiveRole ||
       effectiveRole === 'none' ||
       effectiveRole === 'presentation' ||
       !NAME_PROHIBITED_ROLES.has(effectiveRole)
     ) {
-      return NO_VIOLATIONS
+      return VALID_RESULT
     }
     const results: AriaResult[] = []
     for (const key of NAME_PROHIBITED_ATTRIBUTES) {
@@ -709,10 +578,10 @@ export class AriaPolicyEngine extends InvariantBase {
     props,
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
-    if (!effectiveRole || !NAME_REQUIRED_ROLES.has(effectiveRole)) return NO_VIOLATIONS
-    if ('aria-label' in props || 'aria-labelledby' in props) return NO_VIOLATIONS
+    if (!effectiveRole || !NAME_REQUIRED_ROLES.has(effectiveRole)) return VALID_RESULT
+    if ('aria-label' in props || 'aria-labelledby' in props) return VALID_RESULT
     // Native <img> elements can satisfy the name requirement with a non-empty alt attribute.
-    if (tag === 'img' && typeof props.alt === 'string' && props.alt.length > 0) return NO_VIOLATIONS
+    if (tag === 'img' && isString(props.alt) && props.alt.length > 0) return VALID_RESULT
     return [
       {
         valid: false,
@@ -735,7 +604,7 @@ export class AriaPolicyEngine extends InvariantBase {
   // an explicit `role`. (F4 — replaced a per-tag exemption map; see
   // docs/accessibility/html-aria-audit.md.)
   static #checkRequiredAriaProperties(context: AriaContext): readonly AriaResult[] {
-    if (!isNonNull(context.props.role)) return NO_VIOLATIONS
+    if (!isNonNull(context.props.role)) return VALID_RESULT
     return checkRequiredAttributes(AriaPolicyEngine.#requiredAriaPropertiesRule, context)
   }
 
@@ -744,8 +613,8 @@ export class AriaPolicyEngine extends InvariantBase {
   // an `<input type="hidden">`, and a `disabled` form control are not focusable; `tabindex >= 0`
   // or `contenteditable` makes any element focusable.
   static #checkAriaHiddenOnFocusable({ tag, props }: AriaContext): readonly AriaResult[] {
-    if (props['aria-hidden'] !== 'true' && props['aria-hidden'] !== true) return NO_VIOLATIONS
-    if (!isPotentiallyFocusable(tag, props)) return NO_VIOLATIONS
+    if (props['aria-hidden'] !== 'true' && props['aria-hidden'] !== true) return VALID_RESULT
+    if (!isPotentiallyFocusable(tag, props)) return VALID_RESULT
     return [
       {
         valid: false,
@@ -764,7 +633,7 @@ export class AriaPolicyEngine extends InvariantBase {
     props,
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
-    if (effectiveRole !== 'none' && effectiveRole !== 'presentation') return NO_VIOLATIONS
+    if (effectiveRole !== 'none' && effectiveRole !== 'presentation') return VALID_RESULT
     const results: AriaResult[] = []
     iterate.forEachEntry(props, (key) => {
       if (!key.startsWith('aria-')) return
@@ -784,15 +653,15 @@ export class AriaPolicyEngine extends InvariantBase {
   }
 
   static #checkMissingLiveRegion({ effectiveRole, props }: AriaContext): readonly AriaResult[] {
-    if (!effectiveRole) return NO_VIOLATIONS
+    if (!effectiveRole) return VALID_RESULT
     const impliedLive = LIVE_REGION_ROLES.get(effectiveRole)
-    if (!impliedLive) return NO_VIOLATIONS
+    if (!impliedLive) return VALID_RESULT
     // `props` is the pre-fix snapshot every rule in this pass evaluates against (see #pipeline),
     // so this only sees that the *key* is present, not whether its value is valid. An invalid
     // aria-live value (caught separately by #checkAriaAttributeValues, which strips it) still
     // counts as "present" here and suppresses injection for this pass — the correct value gets
     // injected on the next validate() call, once the invalid value is actually gone from props.
-    if ('aria-live' in props) return NO_VIOLATIONS
+    if ('aria-live' in props) return VALID_RESULT
 
     const injectLive: AriaFix = {
       kind: 'injectLive',
@@ -838,8 +707,8 @@ export class AriaPolicyEngine extends InvariantBase {
 
   static #checkInvalidAriaRelevant({ props }: AriaContext): readonly AriaResult[] {
     const relevant = props['aria-relevant']
-    if (relevant === undefined) return NO_VIOLATIONS
-    if (typeof relevant !== 'string') return NO_VIOLATIONS
+    if (isUndefined(relevant)) return VALID_RESULT
+    if (!isString(relevant)) return VALID_RESULT
 
     const tokens = relevant.trim().split(/\s+/)
     const invalid = tokens.filter((t) => !VALID_RELEVANT_TOKENS.has(t))
@@ -870,6 +739,6 @@ export class AriaPolicyEngine extends InvariantBase {
       ]
     }
 
-    return NO_VIOLATIONS
+    return VALID_RESULT
   }
 }
