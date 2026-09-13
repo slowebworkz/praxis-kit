@@ -24,7 +24,12 @@
 // packages/kit/scripts/postbuild.ts and the root `verify` script. See DECISIONS.md.
 
 import type { AnyRecord, StringMap } from '@praxis-kit/primitive'
-import { iterate } from '@praxis-kit/primitive'
+// iterate comes from @praxis-kit/foundation directly, not the @praxis-kit/primitive re-export —
+// primitive's own barrel (`export * from './tag'`, etc.) uses directory-style exports Node's
+// native ESM loader can't resolve, and this script runs via `node --experimental-strip-types`,
+// not a bundler. foundation is a flat, no-internal-deps package built specifically to be safe for
+// direct Node execution — see its own package.json description.
+import { iterate } from '@praxis-kit/foundation'
 import { ESLint } from 'eslint'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
