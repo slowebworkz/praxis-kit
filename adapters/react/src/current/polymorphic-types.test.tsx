@@ -15,7 +15,7 @@ import { createRef } from 'react'
 import type { ComponentProps, MouseEvent } from 'react'
 import { createContractComponent } from './create-contract-component'
 import { Slottable } from '../shared'
-import type { EmptyRecord, PolymorphicGenerics } from '@praxis-kit/core'
+import type { PolymorphicGenerics } from '@praxis-kit/core'
 import type { PolymorphicProps } from '../shared'
 
 const Button = createContractComponent({ tag: 'button', name: 'Button' })

@@ -41,9 +41,18 @@ type TestPreset = { readonly cta: { readonly size: 'lg' } }
 type TestPlugin = ClassPluginFactory<{ readonly flex?: true }>
 type TestAllowed = 'a' | 'button'
 
-describe('ContractXOf — marker path: recovers a defineContract-shaped contract\'s model exactly', () => {
-  type TestContract = FactoryOptions<'button', TestProps, TestVariants, TestPreset, TestPlugin, TestAllowed> &
-    HasContractModel<ContractModel<'button', TestProps, TestVariants, TestPreset, TestPlugin, TestAllowed>>
+describe("ContractXOf — marker path: recovers a defineContract-shaped contract's model exactly", () => {
+  type TestContract = FactoryOptions<
+    'button',
+    TestProps,
+    TestVariants,
+    TestPreset,
+    TestPlugin,
+    TestAllowed
+  > &
+    HasContractModel<
+      ContractModel<'button', TestProps, TestVariants, TestPreset, TestPlugin, TestAllowed>
+    >
 
   it('ContractTagOf', () => {
     expectTypeOf<ContractTagOf<TestContract>>().toEqualTypeOf<'button'>()
@@ -91,6 +100,7 @@ describe('ContractXOf — marker path: recovers a defineContract-shaped contract
 describe('ContractXOf — fallback path: a real literal, no defineContract marker', () => {
   it('recovers tag exactly, and falls back to tight empty defaults for everything absent', () => {
     const plain = { tag: 'div', name: 'Plain' } as const
+    void plain
     expectTypeOf<ContractTagOf<typeof plain>>().toEqualTypeOf<'div'>()
     expectTypeOf<ContractPropsOf<typeof plain>>().toEqualTypeOf<EmptyRecord>()
     expectTypeOf<ContractVariantsOf<typeof plain>>().toEqualTypeOf<Readonly<EmptyRecord>>()
@@ -109,11 +119,14 @@ describe('ContractXOf — fallback path: a real literal, no defineContract marke
       },
       enforcement: { allowedAs: ['a', 'button'] },
     } as const
+    void full
     expectTypeOf<ContractTagOf<typeof full>>().toEqualTypeOf<'button'>()
     expectTypeOf<ContractVariantsOf<typeof full>>().toEqualTypeOf<{
       readonly size: { readonly sm: 'text-sm'; readonly lg: 'text-lg' }
     }>()
-    expectTypeOf<ContractPresetOf<typeof full>>().toEqualTypeOf<{ readonly cta: { readonly size: 'lg' } }>()
+    expectTypeOf<ContractPresetOf<typeof full>>().toEqualTypeOf<{
+      readonly cta: { readonly size: 'lg' }
+    }>()
     expectTypeOf<ContractAllowedOf<typeof full>>().toEqualTypeOf<'a' | 'button'>()
     // Props: best-effort only, widened back to `string` from the literal `'#'` this `const`
     // literal actually infers, and optional — see ExtractContractProps's own doc comment for why:

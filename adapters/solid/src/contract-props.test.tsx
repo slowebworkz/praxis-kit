@@ -10,8 +10,9 @@ import { createContractComponent } from './create-contract-component'
 import type { ContractProps } from './types'
 
 describe('ContractProps — takes the component value, not bare generics', () => {
-  it('is the union of both render modes, same as the component\'s own call-signature props', () => {
+  it("is the union of both render modes, same as the component's own call-signature props", () => {
     const Container = createContractComponent({ tag: 'div', name: 'Container' })
+    void Container
 
     type Recovered = ContractProps<typeof Container>
     type Expected = Parameters<typeof Container>[0]
@@ -25,6 +26,7 @@ describe('ContractProps — takes the component value, not bare generics', () =>
       name: 'Button',
       styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
     })
+    void Button
 
     type Recovered = ContractProps<typeof Button>
     // A real variant prop should be part of the recovered contract.
@@ -33,6 +35,7 @@ describe('ContractProps — takes the component value, not bare generics', () =>
 
   it('accepts asChild — a plain "just G" extraction still would, this only confirms the rewire kept it', () => {
     const Container = createContractComponent({ tag: 'div', name: 'Container' })
+    void Container
     type Recovered = ContractProps<typeof Container>
 
     const _withAsChild: Recovered = { asChild: true, children: () => null }

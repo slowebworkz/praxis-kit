@@ -7,6 +7,7 @@ import type {
   ContractTagOf,
   ContractVariantsOf,
   ElementType,
+  EmptyRecord,
 } from '@praxis-kit/core'
 
 describe('defineContract — runtime (identity, no normalization)', () => {
@@ -46,9 +47,10 @@ describe('defineContract — type-level: requires tag/name, each a non-empty str
 describe('defineContract — establishes the ContractModel exactly, from real evidence', () => {
   it('a minimal contract recovers tag exactly and tight empty defaults for everything else', () => {
     const boxContract = defineContract({ tag: 'div', name: 'Box' })
+    void boxContract
     expectTypeOf<ContractTagOf<typeof boxContract>>().toEqualTypeOf<'div'>()
-    expectTypeOf<ContractVariantsOf<typeof boxContract>>().toEqualTypeOf<{}>()
-    expectTypeOf<ContractPresetOf<typeof boxContract>>().toEqualTypeOf<{}>()
+    expectTypeOf<ContractVariantsOf<typeof boxContract>>().toEqualTypeOf<Readonly<EmptyRecord>>()
+    expectTypeOf<ContractPresetOf<typeof boxContract>>().toEqualTypeOf<Readonly<EmptyRecord>>()
     expectTypeOf<ContractAllowedOf<typeof boxContract>>().toEqualTypeOf<ElementType>()
   })
 
@@ -63,6 +65,7 @@ describe('defineContract — establishes the ContractModel exactly, from real ev
       },
       enforcement: { allowedAs: ['a', 'button'] },
     })
+    void buttonContract
     expectTypeOf<ContractTagOf<typeof buttonContract>>().toEqualTypeOf<'button'>()
     expectTypeOf<ContractVariantsOf<typeof buttonContract>>().toEqualTypeOf<{
       readonly size: { readonly sm: 'text-sm'; readonly lg: 'text-lg' }
@@ -79,6 +82,8 @@ describe('defineContract — establishes the ContractModel exactly, from real ev
     // to `string` (not the literal `'#'` the `const` argument actually infers — a `defaults`
     // value is a default, not the only value a caller may ever pass), and why the key itself is
     // optional (a prop with a default is, by definition, optional to the caller).
-    expectTypeOf<ContractPropsOf<typeof buttonContract>>().toEqualTypeOf<{ readonly href?: string }>()
+    expectTypeOf<ContractPropsOf<typeof buttonContract>>().toEqualTypeOf<{
+      readonly href?: string
+    }>()
   })
 })

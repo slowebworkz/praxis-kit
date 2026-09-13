@@ -53,6 +53,9 @@ describe('onElement (event-handler wiring)', () => {
     const [activeIndex, setActiveIndex] = createSignal(0)
     const onDialogClose = () => handlers[activeIndex()]!()
 
+    // onDialogClose isn't a declared prop of Dialog; spreading requires an object type, so
+    // `any` is the escape hatch here.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { container } = solidRender(() => <Dialog {...({ onDialogClose } as any)} />)
     container.querySelector('dialog')!.dispatchEvent(new Event('close'))
     expect(firstOnClose).toHaveBeenCalledTimes(1)

@@ -90,6 +90,10 @@ describe('createContractComponent (Solid adapter)', () => {
       filterProps: (key) => key === 'myProp',
     })
     const { container } = solidRender(() => (
+      // myProp isn't a declared prop of Comp; spreading requires an object type (unlike
+      // `as never`, used elsewhere in this file for a non-spread position), so `any` is the
+      // escape hatch here.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <Comp {...({ myProp: 'should-be-stripped' } as any)} />
     ))
     expect(container.querySelector('[myProp]')).toBeNull()
@@ -160,7 +164,10 @@ describe('createContractComponent (Solid adapter)', () => {
       // contract-model.ts) rather than `EmptyRecord` — genuinely broader than
       // `ButtonHTMLAttributes['type']`'s literal union, so a render function spreading straight
       // onto a real `<button>` casts locally, matching `ResolvedSlotProps`'s own documented
-      // guidance ("a render function that needs it casts locally").
+      // guidance ("a render function that needs it casts locally"). `any`, not a narrower cast:
+      // spreading requires an object type, and the actual mismatch is a widened `string` vs a
+      // literal union, not a shape any narrower object type would paper over cleanly.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <Comp asChild>{(props) => <button {...(props as any)} />}</Comp>
     ))
     expect(container.querySelector('button')?.getAttribute('type')).toBe('button')
