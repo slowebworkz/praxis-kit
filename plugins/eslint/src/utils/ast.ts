@@ -1,5 +1,5 @@
 import type { TSESTree } from '@typescript-eslint/utils'
-import { iterate, isObject, isString } from '@praxis-kit/primitive'
+import { iterate, isNumber, isObject, isString, isUndefined } from '@praxis-kit/primitive'
 
 type NullableNode = TSESTree.Node | null | undefined
 
@@ -30,7 +30,7 @@ export function asNumericLiteral(node: NullableNode): number | undefined {
   if (node?.type === 'Literal') {
     const { value } = node
 
-    if (typeof value === 'number') {
+    if (isNumber(value)) {
       return value
     }
   }
@@ -105,7 +105,7 @@ export function isFactoryCall(node: CallExpression, calleeNames: ReadonlySet<str
 
 function extractVariantValues(node: NullableNode): Set<string> | undefined {
   const valuesObj = asObjectExpression(node)
-  if (!valuesObj) return undefined
+  if (isUndefined(valuesObj)) return undefined
 
   const values = new Set<string>()
   iterate.forEach(valuesObj.properties, (prop) => {
@@ -127,7 +127,7 @@ export function extractVariantMap(
   variantsNode: NullableNode,
 ): Map<string, Set<string>> | undefined {
   const variantsObj = asObjectExpression(variantsNode)
-  if (!variantsObj) return undefined
+  if (isUndefined(variantsObj)) return undefined
 
   const map = new Map<string, Set<string>>()
 
@@ -135,10 +135,10 @@ export function extractVariantMap(
     if (prop.type !== 'Property') return
 
     const key = getPropertyKey(prop)
-    if (!key) return
+    if (isUndefined(key)) return
 
     const values = extractVariantValues(prop.value)
-    if (!values) return
+    if (isUndefined(values)) return
 
     map.set(key, values)
   })
