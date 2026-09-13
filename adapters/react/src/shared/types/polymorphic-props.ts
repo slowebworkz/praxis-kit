@@ -1,4 +1,4 @@
-import type { NonEmptyTuple, Simplify } from 'type-fest'
+import type { NonEmptyTuple, OmitIndexSignature, Simplify } from 'type-fest'
 import type { JSX, ReactElement, ReactNode, Ref } from 'react'
 import type {
   AllowedOf,
@@ -41,23 +41,16 @@ type IntrinsicJSXProps<T extends ElementType> = T extends IntrinsicTag
   ? JSX.IntrinsicElements[T]
   : UnknownProps
 
-/**
- * Removes index signatures while preserving explicitly declared
- * properties.
+/** Props explicitly declared by the component.
  *
- * Prevents broad index signatures (for example `Record<string, unknown>`)
- * from causing `keyof T` to become `string`, which would otherwise erase
- * every intrinsic prop during `Omit`.
- */
-type StripIndexSignature<T> = {
-  [K in keyof T as string extends K ? never : K]: T[K]
-}
-
-/** Props explicitly declared by the component. */
-type ComponentProps<G extends PolymorphicGenerics> = StripIndexSignature<PropsOf<G>>
+ * `OmitIndexSignature` (type-fest) — not a hand-rolled version — matches every other adapter's
+ * own `polymorphic-props.ts` (Preact/Vue/Solid all import the same utility for this exact
+ * purpose): strips a broad index signature (e.g. `Record<string, unknown>`) so `keyof T` doesn't
+ * become `string`, which would otherwise erase every intrinsic prop during the `Omit` below. */
+type ComponentProps<G extends PolymorphicGenerics> = OmitIndexSignature<PropsOf<G>>
 
 /** Variant props generated from the component's variant definitions. */
-type ComponentVariants<G extends PolymorphicGenerics> = StripIndexSignature<
+type ComponentVariants<G extends PolymorphicGenerics> = OmitIndexSignature<
   VariantProps<VariantsOf<G>>
 >
 
@@ -208,21 +201,45 @@ export type PolymorphicWithRender<
 > = Simplify<BaseProps<G, TAs> & CallbackRenderMode>
 
 /**
+ * Whether a single (already-distributed) union member `M` declares `K` as exactly `true` — the
+ * "this key is the active one *on this member*" check `KeyTrueInAnyMember` runs once per member.
+ * `K extends keyof M` first, so a member that doesn't declare `K` at all (not even `?: never`)
+ * answers `false` rather than erroring on the indexed access. `[M[K]] extends [true]` (not a bare
+ * `M[K] extends true`) rejects plain `boolean` — a component's *own* same-named prop or the
+ * intrinsic `hidden` attribute — so only the literal `true` `ExclusiveTrueProp` itself produces
+ * counts, matching `LayoutPluginKeys`'s own contract.
+ */
+type IsKeyTrueOn<M, K extends PropertyKey> = K extends keyof M
+  ? [M[K]] extends [true]
+    ? true
+    : false
+  : false
+
+/**
+ * Whether *any* member of the (possibly still-union) `P` sets `K` to `true` — `K` itself if so,
+ * `never` otherwise. `P extends infer M ? ... : never` distributes the check across each member
+ * of `P` individually via `IsKeyTrueOn`, rather than computing `keyof`/an indexed access over the
+ * union as a whole (which only sees keys common to *every* member, via `keyof`'s intersection
+ * rule for unions — confirmed empirically: a union with one member that omits a key entirely,
+ * rather than declaring it `?: never`, silently loses that key everywhere if checked against
+ * `keyof P` directly). `ExclusiveTrueProp` (`@praxis-kit/tailwind`) happens to declare every
+ * layout key on every member today, so that particular gap isn't live — but per-member
+ * distribution costs nothing extra and doesn't depend on that continuing to hold.
+ */
+type KeyTrueInAnyMember<P, K extends PropertyKey> = P extends infer M
+  ? IsKeyTrueOn<M, K> extends true
+    ? K
+    : never
+  : never
+
+/**
  * The layout keys a prop-union actually carries as the tailwind plugin's mutually-exclusive
- * shape: distributed over every member of `P`, a key counts when its value there is exactly
- * `true` (the active member) or `never` (a suppressed one) — the two shapes `ExclusiveTrueProp`
- * produces. `[M[K]] extends [true]` matches both and rejects `boolean`, so a component's *own*
- * same-named prop and the intrinsic `hidden` attribute (both `boolean`) are not counted, and a
- * component with no `styling.plugin` yields `never`.
+ * shape: for each known layout key, keep it only if `KeyTrueInAnyMember` finds it `true`
+ * somewhere in `P`. A component with no `styling.plugin` yields `never` (no member of a
+ * plugin-less `P` ever sets a layout key `true`).
  */
 type LayoutPluginKeys<P> = {
-  [K in LayoutKeyName]-?: P extends infer M
-    ? K extends keyof M
-      ? [M[K]] extends [true]
-        ? K
-        : never
-      : never
-    : never
+  [K in LayoutKeyName]-?: KeyTrueInAnyMember<P, K>
 }[LayoutKeyName]
 
 /**
