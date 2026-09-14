@@ -14,7 +14,6 @@ export type {
 export type { ReactFactoryOptions } from '../shared'
 export { mergeRefs } from '../shared'
 export type {
-  AnyFactoryOptions,
   ElementType,
   EmptyRecord,
   FactoryOptions,

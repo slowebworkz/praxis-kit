@@ -27,8 +27,8 @@ export interface ContractModel<
   Props extends AnyRecord = AnyRecord,
   V extends Readonly<VariantMap> = Readonly<VariantMap>,
   // Fixed to `RecipeMap<VariantMap>` (the widest `V`), not the self-referential `RecipeMap<V>`
-  // `FactoryOptions`/`StylingOptions` use — matching `AnyFactoryOptions`'s own established fix for
-  // this exact issue. `TPreset extends RecipeMap<V>` is fine when every generic here is already
+  // `FactoryOptions`/`StylingOptions` use — the same widest-bound fix a fully type-erased instance
+  // needs generally. `TPreset extends RecipeMap<V>` is fine when every generic here is already
   // concrete (as it is everywhere `ContractModel` is actually *used*), but referencing this
   // interface's own still-abstract `V` from a still-abstract call site (`defineContract`'s own
   // return-type annotation, before any real call resolves its generics) hits a TypeScript

@@ -21,9 +21,9 @@ export * from '@praxis-kit/core/props'
 
 /**
  * Factory-authoring types for defining framework-neutral components and their
- * contracts: `FactoryOptions`, `AnyFactoryOptions`, `EnforcementOptions`,
- * `StylingOptions`, `NormalizeFn`, `PropNormalizer`, `ResolvedFactoryOptions`,
- * `ContractInput`, `DefinedContract`, and the `Contract*Of` accessor family.
+ * contracts: `FactoryOptions`, `EnforcementOptions`, `StylingOptions`,
+ * `NormalizeFn`, `PropNormalizer`, `ResolvedFactoryOptions`, `ContractInput`,
+ * `DefinedContract`, and the `Contract*Of` accessor family.
  */
 export type * from '@praxis-kit/primitive/types/factory'
 

@@ -26,8 +26,8 @@ import type {
  * no fields are added or removed. Its value is entirely at the type level: (1) `O` is inferred
  * once from the literal argument, the same single-generic-pinning `defineContractComponent`
  * already uses; (2) `ContractInput`'s bound requires `tag` and `name`, each a non-empty string —
- * nothing else in `FactoryOptions`/`AnyFactoryOptions` enforces either, and `{}` satisfies both
- * today; (3) `TDefault`/`Props`/`V`/`TPreset`/`TPlugin`/`TAllowed` are each derived from `O`'s own
+ * nothing else in `FactoryOptions` enforces either, and `{}` satisfies it today; (3)
+ * `TDefault`/`Props`/`V`/`TPreset`/`TPlugin`/`TAllowed` are each derived from `O`'s own
  * literal shape (`ExtractContract*`, `contract-model.ts`) and carried forward as the
  * `ContractModel` phantom marker — established here, once, rather than re-derived independently
  * (and, per an earlier draft, unreliably) at every later stage. See `contract-model.ts`'s own doc

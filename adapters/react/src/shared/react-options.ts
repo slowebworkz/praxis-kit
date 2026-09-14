@@ -22,7 +22,7 @@ export interface CompiledArtifact {
  * slotComponent is intentionally not in core — it is a React rendering concern.
  *
  * Every generic parameter has a default (widened to that parameter's own *bound*, matching
- * `AnyFactoryOptions`'s philosophy, not `FactoryOptions`'s own narrower `EmptyRecord`-style
+ * a wide-bound, type-erased philosophy, not `FactoryOptions`'s own narrower `EmptyRecord`-style
  * defaults) so `ReactFactoryOptions` can be used bare, as `createContractComponent`'s single
  * `C extends ReactFactoryOptions` constraint — a real contract's non-empty `variants`/`presets`
  * must structurally satisfy that bound, which narrow defaults would reject (confirmed while

@@ -281,11 +281,7 @@ interface AdapterInfo {
   hasSSRTests: boolean
 }
 
-const GENERIC_FACTORY_OPTIONS_NAMES = new Set([
-  'FactoryOptions',
-  'AnyFactoryOptions',
-  'ResolvedFactoryOptions',
-])
+const GENERIC_FACTORY_OPTIONS_NAMES = new Set(['FactoryOptions', 'ResolvedFactoryOptions'])
 
 function findOptionsTypeName(types: string[]): string | undefined {
   return types.find((t) => t.endsWith('FactoryOptions') && !GENERIC_FACTORY_OPTIONS_NAMES.has(t))

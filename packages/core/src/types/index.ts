@@ -29,7 +29,6 @@ export type * from './class'
 export type * from './contract'
 export type {
   AllowedOf,
-  AnyFactoryOptions,
   ClassPluginResolution,
   DefaultOf,
   EnforcementOptions,

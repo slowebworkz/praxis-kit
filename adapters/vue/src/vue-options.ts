@@ -11,7 +11,7 @@ import type { UnknownProps } from './types/primitives'
 // Vue achieves the same via `cloneVNode` directly in the render layer, so no component is needed.
 /**
  * Every generic parameter has a default (widened to that parameter's own *bound*, matching
- * `AnyFactoryOptions`'s philosophy, not `FactoryOptions`'s own narrower `EmptyRecord`-style
+ * a wide-bound, type-erased philosophy, not `FactoryOptions`'s own narrower `EmptyRecord`-style
  * defaults) so `VueFactoryOptions` can be used bare, as `createContractComponent`'s single
  * `C extends VueFactoryOptions` constraint — see `ReactFactoryOptions`'s identical fix for the
  * same reason.

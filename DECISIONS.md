@@ -89,6 +89,22 @@ implementation is. User confirmed 2026-09-11: this is post-0.1.1 work. Revisit o
 is stable and there's room to touch `FactoryOptions`/`createContractComponent`'s call sites across
 every adapter.
 
+**Update — `AnyFactoryOptions`, resolved (2026-09-13): eliminated, not kept.** The reconsideration
+flagged above landed differently than an earlier draft of this entry assumed: user confirmed, once
+Phases 0–4 (`defineContract`, per-adapter single-generic `createContractComponent`, `__contract`
+retention, `ContractProps` rewire) actually proved the type architecture out, that `AnyFactoryOptions`
+should be deleted outright, not kept as a documented erasure escape hatch. Every adapter's re-export,
+the `packages/core`/`packages/kit` barrels, the `factory-options.compounds.test.ts` erasure test
+(rewritten against a plain `FactoryOptions<'textarea', Props, VariantMap>` instantiation — the same
+erasure, no separate named type needed to demonstrate it), the `TYPE_CHECK_ENTRIES` name in
+`packages/kit/scripts/smoke-test.ts` (→ `FactoryOptions`), the `GENERIC_FACTORY_OPTIONS_NAMES`
+exclusion set in `scripts/generate-repo-state.ts`, and the one real test usage (Svelte's
+`define-contract-component.test.ts`, where the `satisfies AnyFactoryOptions` annotation was already
+redundant with `defineContractComponent<O extends FactoryOptions>`'s own constraint) were all updated
+or removed accordingly. No replacement type was introduced — nothing in this repo has a live need
+for one today; if a genuine erasure need surfaces later, scope it to that one call site rather than
+reintroducing a general-purpose one.
+
 ### `spikes/*` — deferred
 
 `../pk` keeps a `spikes/*` glob for throwaway experiments (currently empty).
@@ -1501,9 +1517,10 @@ packages, where the docs also live:
 
 - `@praxis-kit/contract/props` (the 8 state-prop normalizers) → re-exported by
   `@praxis-kit/core/props`
-- `@praxis-kit/primitive/types/factory` (the factory-authoring types) — `FactoryOptions` /
-  `AnyFactoryOptions` now carry the "`satisfies` this to narrow `styling.compounds`" doc on the type
-  itself, not in a `packages/kit` comment
+- `@praxis-kit/primitive/types/factory` (the factory-authoring types) — `FactoryOptions` (at the
+  time this was written, also `AnyFactoryOptions` — removed 2026-09-13, see the `defineContract`
+  entry above) carries the "`satisfies` this to narrow `styling.compounds`" doc on the type itself,
+  not in a `packages/kit` comment
 - `@praxis-kit/core/state` (the 8 state contracts + `mergeContracts`)
 - `@praxis-kit/core/aria` (**new** — the ARIA-rule authoring surface: the fix factories +
   rule/result types; the one place that still curates a list, since the source barrels are broader
