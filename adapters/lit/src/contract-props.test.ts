@@ -28,7 +28,7 @@ const buttonVariants = { intent: { primary: 'btn-primary', ghost: 'btn-ghost' } 
 // refactor), not from an explicit `TProps` generic argument — `createContractComponent` dropped
 // that parameter entirely (see its own doc comment / DECISIONS.md: no real call site ever supplied
 // `Props` alone, and `const O`'s literal-preserving inference only engages with zero explicit type
-// arguments). `false` is widened to `boolean` by `ExtractContractProps`'s own `WidenShallow` step —
+// arguments). `false` is widened to `boolean` by `ContractPropsFrom`'s own `WidenShallow` step —
 // a *default* value, not the only legal one.
 const Button = createContractComponent({
   tag: 'button',

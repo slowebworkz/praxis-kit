@@ -1,4 +1,3 @@
-export { defineContractComponent } from '@praxis-kit/adapter-utils'
 export { createContractComponent } from './create-contract-component'
 export { Slottable } from '../shared'
 export type { SlottableProps } from '../shared'

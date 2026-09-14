@@ -107,12 +107,11 @@ could ever upgrade in place even if it tried.
 
 ## Exports
 
-| Export                        | Description                                                         |
-| ----------------------------- | ------------------------------------------------------------------- |
-| `createContractComponent`     | Factory: styling + ARIA enforcement + children validation           |
-| `defineContractComponent`     | Curries a factory's options so multiple call sites share one config |
-| `renderContractToString`      | Serializes the resolved contract to HTML — not Custom Element SSR   |
-| `LitFactoryOptions` (type)    | Factory options with Lit-specific extensions                        |
-| `LitContractComponent` (type) | Return type of the factory                                          |
-| `ContractProps<T>` (type)     | A built component's full prop contract, recovered from `typeof X`   |
-| `GenericsOf<T>` (type)        | Recovers the `PolymorphicGenerics` a component was built from       |
+| Export                        | Description                                                       |
+| ----------------------------- | ----------------------------------------------------------------- |
+| `createContractComponent`     | Factory: styling + ARIA enforcement + children validation         |
+| `renderContractToString`      | Serializes the resolved contract to HTML — not Custom Element SSR |
+| `LitFactoryOptions` (type)    | Factory options with Lit-specific extensions                      |
+| `LitContractComponent` (type) | Return type of the factory                                        |
+| `ContractProps<T>` (type)     | A built component's full prop contract, recovered from `typeof X` |
+| `GenericsOf<T>` (type)        | Recovers the `PolymorphicGenerics` a component was built from     |

@@ -1,5 +1,4 @@
 export { createContractComponent } from './create-contract-component'
-export { defineContractComponent } from '@praxis-kit/adapter-utils'
 export { renderContractToString } from './render-to-string'
 export type {
   FactoryOptions,

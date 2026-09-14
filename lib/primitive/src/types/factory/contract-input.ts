@@ -22,25 +22,17 @@ import type { FactoryOptions } from './factory-options'
  * field directly, so there's nothing for an author to supply here in the first place.
  *
  * `Props` is `ContractInput`'s first type parameter (matching `FactoryOptions`'s own field-order
- * intuition, even though `FactoryOptions` itself puts `TDefault` first) purely for readability —
- * `defineContract` does not thread an explicit `Props` type argument through its own call (see
- * that function's doc comment for why: mixing one explicit type argument with a `const`-inferred
- * later one silently disables `const` inference in this TypeScript version, and no real call site
- * in this codebase needs to give `Props` explicitly today — every `createContractComponent` call
- * across every adapter already relies on full inference, zero explicit generics). `Props` stays a
- * parameter here regardless, since `ContractInput<Props, ...>` is useful as a type annotation in
- * its own right independent of `defineContract`'s specific calling convention.
+ * intuition, even though `FactoryOptions` itself puts `TDefault` first) purely for readability as a
+ * standalone type annotation — `defineContract` itself constrains its own `const O` against the
+ * bare, all-defaulted `ContractInput` (see that function's own doc comment), never
+ * `ContractInput<Props>` with `Props` given explicitly.
  *
  * Every other parameter's default widens to that parameter's own *bound* (`Readonly<VariantMap>`,
- * `RecipeMap<V>`, `AnyClassPluginFactory`, `ElementType`) — a wide-bound, type-erased philosophy,
- * not `FactoryOptions`'s narrower `EmptyRecord`-style defaults. This is deliberate and load-bearing:
- * `ContractInput<Props>` (only `Props` given) is used as *another* type parameter's constraint —
- * `defineContract`'s `const O extends ContractInput<Props>` — and a real author's contract (real
- * variants, a real preset, a real plugin) must structurally satisfy that fixed bound. Narrow
- * defaults there would only accept an empty-variants, no-preset, no-plugin contract; a real
- * literal with a real `styling.variants` object fails `Readonly<EmptyRecord>`, silently widening
- * `O`'s inference to the bound itself (an easy, non-obvious trap — confirmed by writing this
- * exact bug once and catching it via `defineContract`'s own round-trip test).
+ * `RecipeMap<V>`, `AnyClassPluginFactory`, `ElementType`), not `FactoryOptions`'s narrower
+ * `EmptyRecord`-style defaults — deliberate and load-bearing: a real author's contract (real
+ * variants, a real preset, a real plugin) must structurally satisfy whatever bound this type
+ * presents, and a narrow bound would only accept an empty-variants, no-preset, no-plugin contract.
+ * See `DECISIONS.md`'s `defineContract` entry for the concrete bug this bound choice fixes.
  */
 export type ContractInput<
   Props extends AnyRecord = AnyRecord,
