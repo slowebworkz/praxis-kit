@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, it } from 'vitest'
-import type { AnyFactoryOptions, EmptyRecord, PolymorphicGenerics } from '@praxis-kit/core'
+import type { EmptyRecord, PolymorphicGenerics } from '@praxis-kit/core'
 import type { AnyBuiltRuntime, BuiltRuntime } from './types'
 import { createContractComponent } from './create-contract-component'
 import { defineContractComponent } from '@praxis-kit/adapter-utils'
@@ -17,7 +17,7 @@ describe('defineContractComponent — Svelte integration', () => {
       tag: 'div' as const,
       name: 'Box',
       styling: { variants },
-    } satisfies AnyFactoryOptions
+    }
 
     const bundle = defineContractComponent(options)(createContractComponent)
 
@@ -26,7 +26,7 @@ describe('defineContractComponent — Svelte integration', () => {
   })
 
   it('satisfies AnyBuiltRuntime structural shape', () => {
-    const options = { tag: 'a' as const, name: 'Link' } satisfies AnyFactoryOptions
+    const options = { tag: 'a' as const, name: 'Link' }
     const bundle = defineContractComponent(options)(createContractComponent)
 
     expectTypeOf(bundle).toMatchTypeOf<AnyBuiltRuntime>()
@@ -37,7 +37,7 @@ describe('defineContractComponent — Svelte integration', () => {
       tag: 'button' as const,
       name: 'Button',
       styling: { variants },
-    } satisfies AnyFactoryOptions
+    }
 
     const createButton = defineContractComponent(options)
     const bundleA = createButton(createContractComponent)

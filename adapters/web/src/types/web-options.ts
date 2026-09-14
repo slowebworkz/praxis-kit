@@ -15,7 +15,7 @@ import type { FilterPredicate } from '@praxis-kit/adapter-utils'
  * no framework dependency. Light DOM only; Shadow DOM is out of scope.
  *
  * Every generic parameter has a default (widened to that parameter's own *bound*, matching
- * `AnyFactoryOptions`'s philosophy, not `FactoryOptions`'s own narrower `EmptyRecord`-style
+ * a wide-bound, type-erased philosophy, not `FactoryOptions`'s own narrower `EmptyRecord`-style
  * defaults) so `WebFactoryOptions` can be used bare, as `createContractComponent`'s single
  * `C extends WebFactoryOptions` constraint — see `ReactFactoryOptions`'s identical fix for the
  * same reason.

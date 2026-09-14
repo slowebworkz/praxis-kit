@@ -10,12 +10,11 @@ import type { FactoryOptions } from './factory-options'
  * removed entirely.
  *
  * `tag`/`name` are required here, not just conventionally recommended, because nothing in
- * `FactoryOptions` itself enforces either: today `{}` satisfies `FactoryOptions` (and
- * `AnyFactoryOptions`), and an absent `tag` silently resolves to `'div'` inside
- * `resolveFactoryOptions` — a contract author who forgets `tag` gets no signal at all. Requiring
- * both here, at the one boundary every contract passes through before construction, closes that
- * gap without touching `FactoryOptions` itself (which stays permissive, since it's also the type
- * erased contexts like `AnyFactoryOptions` still need to describe).
+ * `FactoryOptions` itself enforces either: today `{}` satisfies `FactoryOptions`, and an absent
+ * `tag` silently resolves to `'div'` inside `resolveFactoryOptions` — a contract author who forgets
+ * `tag` gets no signal at all. Requiring both here, at the one boundary every contract passes
+ * through before construction, closes that gap without touching `FactoryOptions` itself (which
+ * stays permissive, since it's also the type any type-erased context still needs to describe).
  *
  * `diagnostics` is omitted, not just left optional: per `FactoryOptions.diagnostics`'s own doc
  * comment, it's adapter-resolved only ("spread in by `resolveAdapterCommonOptions`") — a contract
@@ -33,7 +32,7 @@ import type { FactoryOptions } from './factory-options'
  * its own right independent of `defineContract`'s specific calling convention.
  *
  * Every other parameter's default widens to that parameter's own *bound* (`Readonly<VariantMap>`,
- * `RecipeMap<V>`, `AnyClassPluginFactory`, `ElementType`) — `AnyFactoryOptions`'s own philosophy,
+ * `RecipeMap<V>`, `AnyClassPluginFactory`, `ElementType`) — a wide-bound, type-erased philosophy,
  * not `FactoryOptions`'s narrower `EmptyRecord`-style defaults. This is deliberate and load-bearing:
  * `ContractInput<Props>` (only `Props` given) is used as *another* type parameter's constraint —
  * `defineContract`'s `const O extends ContractInput<Props>` — and a real author's contract (real

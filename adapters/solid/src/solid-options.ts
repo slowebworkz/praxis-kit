@@ -9,7 +9,7 @@ import type { UnknownProps } from './types/primitives'
 
 /**
  * Every generic parameter has a default (widened to that parameter's own *bound*, matching
- * `AnyFactoryOptions`'s philosophy, not `FactoryOptions`'s own narrower `EmptyRecord`-style
+ * a wide-bound, type-erased philosophy, not `FactoryOptions`'s own narrower `EmptyRecord`-style
  * defaults) so `SolidFactoryOptions` can be used bare, as `createContractComponent`'s single
  * `C extends SolidFactoryOptions` constraint — see `ReactFactoryOptions`'s identical fix for the
  * same reason.

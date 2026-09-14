@@ -21,23 +21,6 @@ export type NormalizeFn<Props extends AnyRecord = AnyRecord> = {
 }['normalize']
 
 /**
- * The type-erased shape of {@link FactoryOptions} — every generic parameter widened to its bound.
- *
- * Use it for a value that must hold *any* factory config (a registry, a generic wrapper). It
- * cannot check `styling.compounds` conditions against the real variant keys/values, because it
- * has forgotten what they are — for that, annotate against `FactoryOptions<...>` with the concrete
- * generics (or `satisfies FactoryOptions<'button', Props, typeof variants>`), which keeps an
- * invalid compound condition a type error rather than a silent no-op.
- */
-export type AnyFactoryOptions = FactoryOptions<
-  ElementType,
-  AnyRecord,
-  VariantMap,
-  RecipeMap<VariantMap>,
-  AnyClassPluginFactory
->
-
-/**
  * The framework-neutral component-authoring config passed to `createContractComponent` in every
  * adapter: default tag + name, own-prop defaults, a `normalize` transform, `styling` (variants,
  * base classes, presets, class plugin), `enforcement` (ARIA + children contracts), `subComponents`,
@@ -46,7 +29,9 @@ export type AnyFactoryOptions = FactoryOptions<
  * `satisfies FactoryOptions<TDefault, Props, typeof variants, ...>` on a config object narrows
  * `styling.compounds` conditions to the real per-variant-key shape — including resolving a
  * boolean-shaped axis (`{ true, false }`) to a real `boolean` — so a condition naming a variant or
- * value that does not exist is a compile error. `AnyFactoryOptions` cannot do this.
+ * value that does not exist is a compile error. Leaving `V` at the bare `VariantMap` instead
+ * (whether via `FactoryOptions`'s own default or an explicit erased instantiation) forgets that
+ * shape entirely, so the same invalid condition becomes a silent no-op instead.
  */
 export type FactoryOptions<
   TDefault extends ElementType = ElementType,
