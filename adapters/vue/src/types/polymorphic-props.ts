@@ -2,8 +2,10 @@ import type { AllowedComponentProps } from 'vue'
 import type { Simplify } from 'type-fest'
 import type {
   ClassName,
+  ContractGenericsOf,
   DefaultOf,
   ElementType,
+  FactoryOptions,
   PolymorphicGenerics,
   RecipeOf,
   PropsOf,
@@ -11,6 +13,7 @@ import type {
   VariantsOf,
 } from '@praxis-kit/core'
 import type { StringMap } from '@praxis-kit/primitive'
+import type { HasContract } from '@praxis-kit/contract-props'
 import type { UnknownProps } from './primitives'
 
 type ControlProps<G extends PolymorphicGenerics, TAs extends ElementType> = PropsOf<G> &
@@ -55,10 +58,25 @@ export type PolymorphicWithAsChild<
  * inference for `as`, so HTML attribute narrowing based on the `as` value is
  * not available — `UnknownProps` captures the open-ended attribute surface instead.
  */
-export type PolymorphicComponent<G extends PolymorphicGenerics> = {
+export type PolymorphicComponent<
+  G extends PolymorphicGenerics,
+  C extends FactoryOptions = FactoryOptions,
+> = {
   new (): {
     $props: PolymorphicProps<G> | PolymorphicWithAsChild<G>
   }
+  /**
+   * Type-only; never assigned at runtime — same rationale as React's/Preact's `__contract` (see
+   * `HasContract<C>`, `@praxis-kit/contract-props`). Carries the *complete* contract this
+   * component was built from (`C`, the argument `createContractComponent<C extends
+   * VueFactoryOptions>` was actually called with). Unlike `G` (which was already an ordinary,
+   * directly-visible type parameter here — Vue's `new()` construct signature has no
+   * overload-resolution ceiling forcing a marker the way React's/Preact's overloaded callables
+   * do), `C` still needs one: nothing else on this type exposes the *complete* contract, only its
+   * `PolymorphicGenerics` projection. Defaults to the widest `FactoryOptions` so every existing
+   * one-argument `PolymorphicComponent<G>` reference keeps resolving exactly as before.
+   */
+  readonly __contract?: C
   displayName?: string
 }
 
@@ -78,13 +96,23 @@ export type CompoundComponent<
 }
 
 /**
- * A component's full prop contract, both render modes at once — naming symmetry with React's/
- * Preact's `ContractProps<T, Mode>`, not a fix for a gap: Vue has
- * no version of the overload-resolution ceiling those two adapters need a marker to work around.
- * `PolymorphicComponent<G>`'s single `new()` construct signature already exposes both modes
- * unioned together (`$props: PolymorphicProps<G> | PolymorphicWithAsChild<G>`), so this alias is
- * just that same union under a familiar name — no phantom marker involved, `G` is already an
- * ordinary, ambient type parameter.
+ * A component's full prop contract, both render modes at once — `PolymorphicComponent<G>`'s
+ * single `new()` construct signature already exposes both modes unioned together (`$props:
+ * PolymorphicProps<G> | PolymorphicWithAsChild<G>`), so this is that same union, projected from
+ * the component's retained `__contract` rather than a bare `G` the caller must already have in
+ * hand — `ContractProps<typeof Box>`, matching every other adapter, not `ContractProps<SomeG>`.
+ *
+ * An earlier version of this type took `G` directly (`ContractProps<G extends
+ * PolymorphicGenerics>`) — a genuinely different public shape, not a bug fix here: Vue's `new()`
+ * construct signature never had React's/Preact's overload-resolution ceiling, so there was no
+ * *forced* reason for a marker. Unified to `ContractProps<typeof Component>` now that `__contract`
+ * exists anyway (Phase 3 retention, needed regardless of this decision) and to match what this
+ * adapter's own README already documented — closing that doc/implementation mismatch rather than
+ * leaving it as a documentation-only fix.
  */
-export type ContractProps<G extends PolymorphicGenerics> =
-  PolymorphicProps<G> | PolymorphicWithAsChild<G>
+export type ContractProps<T extends HasContract<FactoryOptions>> =
+  T extends HasContract<infer C extends FactoryOptions>
+    ? ContractGenericsOf<C> extends infer G extends PolymorphicGenerics
+      ? PolymorphicProps<G> | PolymorphicWithAsChild<G>
+      : never
+    : never

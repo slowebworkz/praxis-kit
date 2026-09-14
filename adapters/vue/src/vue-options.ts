@@ -2,7 +2,6 @@ import type {
   AnyClassPluginFactory,
   ElementType,
   FactoryOptions,
-  NoPreset,
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
@@ -10,11 +9,18 @@ import type { UnknownProps } from './types/primitives'
 
 // No `slotComponent` field: React delegates asChild rendering to an intermediate Slot component;
 // Vue achieves the same via `cloneVNode` directly in the render layer, so no component is needed.
+/**
+ * Every generic parameter has a default (widened to that parameter's own *bound*, matching
+ * `AnyFactoryOptions`'s philosophy, not `FactoryOptions`'s own narrower `EmptyRecord`-style
+ * defaults) so `VueFactoryOptions` can be used bare, as `createContractComponent`'s single
+ * `C extends VueFactoryOptions` constraint — see `ReactFactoryOptions`'s identical fix for the
+ * same reason.
+ */
 export type VueFactoryOptions<
-  TDefault extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends RecipeMap<Variants> = NoPreset,
+  TDefault extends ElementType = ElementType,
+  Props extends UnknownProps = UnknownProps,
+  Variants extends Readonly<VariantMap> = Readonly<VariantMap>,
+  TPreset extends RecipeMap<Variants> = RecipeMap<Variants>,
   TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 > = FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> & {
   /**

@@ -1,10 +1,12 @@
-import type { NonEmptyTuple, Simplify } from 'type-fest'
+import type { NonEmptyTuple, OmitIndexSignature, Simplify } from 'type-fest'
 import type { JSX, ReactElement, ReactNode, Ref } from 'react'
 import type {
   AllowedOf,
   ClassName,
+  ContractGenericsWithAllowedOf,
   DefaultOf,
   ElementType,
+  FactoryOptions,
   IntrinsicTag,
   PolymorphicGenerics,
   RecipeOf,
@@ -14,7 +16,7 @@ import type {
 } from '@praxis-kit/core'
 import type { StringMap } from '@praxis-kit/primitive'
 import type { LayoutKeyName } from '@praxis-kit/tailwind'
-import type { HasGenerics, Mode, PickMode } from '@praxis-kit/contract-props'
+import type { HasContract, Mode, PickMode } from '@praxis-kit/contract-props'
 import type { RenderCallbackProps } from './props'
 import type { UnknownProps } from './primitives'
 
@@ -39,23 +41,16 @@ type IntrinsicJSXProps<T extends ElementType> = T extends IntrinsicTag
   ? JSX.IntrinsicElements[T]
   : UnknownProps
 
-/**
- * Removes index signatures while preserving explicitly declared
- * properties.
+/** Props explicitly declared by the component.
  *
- * Prevents broad index signatures (for example `Record<string, unknown>`)
- * from causing `keyof T` to become `string`, which would otherwise erase
- * every intrinsic prop during `Omit`.
- */
-type StripIndexSignature<T> = {
-  [K in keyof T as string extends K ? never : K]: T[K]
-}
-
-/** Props explicitly declared by the component. */
-type ComponentProps<G extends PolymorphicGenerics> = StripIndexSignature<PropsOf<G>>
+ * `OmitIndexSignature` (type-fest) — not a hand-rolled version — matches every other adapter's
+ * own `polymorphic-props.ts` (Preact/Vue/Solid all import the same utility for this exact
+ * purpose): strips a broad index signature (e.g. `Record<string, unknown>`) so `keyof T` doesn't
+ * become `string`, which would otherwise erase every intrinsic prop during the `Omit` below. */
+type ComponentProps<G extends PolymorphicGenerics> = OmitIndexSignature<PropsOf<G>>
 
 /** Variant props generated from the component's variant definitions. */
-type ComponentVariants<G extends PolymorphicGenerics> = StripIndexSignature<
+type ComponentVariants<G extends PolymorphicGenerics> = OmitIndexSignature<
   VariantProps<VariantsOf<G>>
 >
 
@@ -206,21 +201,45 @@ export type PolymorphicWithRender<
 > = Simplify<BaseProps<G, TAs> & CallbackRenderMode>
 
 /**
+ * Whether a single (already-distributed) union member `M` declares `K` as exactly `true` — the
+ * "this key is the active one *on this member*" check `KeyTrueInAnyMember` runs once per member.
+ * `K extends keyof M` first, so a member that doesn't declare `K` at all (not even `?: never`)
+ * answers `false` rather than erroring on the indexed access. `[M[K]] extends [true]` (not a bare
+ * `M[K] extends true`) rejects plain `boolean` — a component's *own* same-named prop or the
+ * intrinsic `hidden` attribute — so only the literal `true` `ExclusiveTrueProp` itself produces
+ * counts, matching `LayoutPluginKeys`'s own contract.
+ */
+type IsKeyTrueOn<M, K extends PropertyKey> = K extends keyof M
+  ? [M[K]] extends [true]
+    ? true
+    : false
+  : false
+
+/**
+ * Whether *any* member of the (possibly still-union) `P` sets `K` to `true` — `K` itself if so,
+ * `never` otherwise. `P extends infer M ? ... : never` distributes the check across each member
+ * of `P` individually via `IsKeyTrueOn`, rather than computing `keyof`/an indexed access over the
+ * union as a whole (which only sees keys common to *every* member, via `keyof`'s intersection
+ * rule for unions — confirmed empirically: a union with one member that omits a key entirely,
+ * rather than declaring it `?: never`, silently loses that key everywhere if checked against
+ * `keyof P` directly). `ExclusiveTrueProp` (`@praxis-kit/tailwind`) happens to declare every
+ * layout key on every member today, so that particular gap isn't live — but per-member
+ * distribution costs nothing extra and doesn't depend on that continuing to hold.
+ */
+type KeyTrueInAnyMember<P, K extends PropertyKey> = P extends infer M
+  ? IsKeyTrueOn<M, K> extends true
+    ? K
+    : never
+  : never
+
+/**
  * The layout keys a prop-union actually carries as the tailwind plugin's mutually-exclusive
- * shape: distributed over every member of `P`, a key counts when its value there is exactly
- * `true` (the active member) or `never` (a suppressed one) — the two shapes `ExclusiveTrueProp`
- * produces. `[M[K]] extends [true]` matches both and rejects `boolean`, so a component's *own*
- * same-named prop and the intrinsic `hidden` attribute (both `boolean`) are not counted, and a
- * component with no `styling.plugin` yields `never`.
+ * shape: for each known layout key, keep it only if `KeyTrueInAnyMember` finds it `true`
+ * somewhere in `P`. A component with no `styling.plugin` yields `never` (no member of a
+ * plugin-less `P` ever sets a layout key `true`).
  */
 type LayoutPluginKeys<P> = {
-  [K in LayoutKeyName]-?: P extends infer M
-    ? K extends keyof M
-      ? [M[K]] extends [true]
-        ? K
-        : never
-      : never
-    : never
+  [K in LayoutKeyName]-?: KeyTrueInAnyMember<P, K>
 }[LayoutKeyName]
 
 /**
@@ -262,7 +281,10 @@ type FlattenLayout<P> = [P] extends [never]
  * - `asChild`  — slot rendering
  * - default    — standard polymorphic rendering
  */
-export type PolymorphicComponent<G extends PolymorphicGenerics> = {
+export type PolymorphicComponent<
+  G extends PolymorphicGenerics,
+  C extends FactoryOptions = FactoryOptions,
+> = {
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicWithRender<G, TAs>): ReactElement
 
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicWithAsChild<G, TAs>): ReactElement
@@ -292,15 +314,33 @@ export type PolymorphicComponent<G extends PolymorphicGenerics> = {
    * the full rationale — kept as an inline field rather than `HasGenerics<G> & {...}` because
    * intersecting it onto this callable type changes how `PolymorphicComponent<any>` (used by
    * test helpers like `box()`) resolves against concrete instantiations; structurally identical
-   * to `HasGenerics<G>` either way, which is what lets `ContractProps` constrain against it.
+   * to `HasGenerics<G>` either way.
+   *
+   * `ContractProps` no longer reads this field directly (Phase 4: it projects `G` from the
+   * retained `__contract` below instead) — kept per Phase 3's migration policy (added alongside
+   * `__contract`, not replaced by it, until every adapter and test proves the new relationship
+   * out), and because other code may still constrain against `HasGenerics<G>` directly.
    */
   readonly __generics?: G
+
+  /**
+   * Type-only; never assigned at runtime — same rationale as `__generics` above, and the same
+   * "inline field, not intersected" reason (see `HasContract<C>`, `@praxis-kit/contract-props`).
+   * Carries the *complete* contract this component was built from (`C`, the argument
+   * `createContractComponent<C extends ReactFactoryOptions>` was actually called with) —
+   * deliberately a second, separate marker from `__generics`, not `__generics` broadened to do
+   * both jobs: `G` answers "what does the adapter need to implement this component," `C` answers
+   * "what was this component configured with" — related questions, different answers (see
+   * `DECISIONS.md`'s `defineContract` entry). Defaults to the widest `FactoryOptions` so every
+   * existing two-argument `PolymorphicComponent<G>` reference keeps resolving exactly as before.
+   */
+  readonly __contract?: C
 
   displayName?: string
 }
 
 /**
- * Recovers a built `PolymorphicComponent<G>`'s prop shape for a specific render mode, from
+ * Recovers a built `PolymorphicComponent<G, C>`'s prop shape for a specific render mode, from
  * outside the file that built it — the missing piece `React.ComponentProps<typeof Component>`
  * can't provide, since it always resolves against `PolymorphicComponent`'s normal-mode fallback
  * overload (see that type's own doc comment).
@@ -316,10 +356,21 @@ export type PolymorphicComponent<G extends PolymorphicGenerics> = {
  * type ContainerAsChildProps = ContractProps<typeof Container, 'asChild'>
  * ```
  *
- * `T` accepts any built component value (`PolymorphicComponent<G>` or `CompoundComponent<G, S>` —
- * the latter's sub-component intersection doesn't disturb `__generics`, which lives on the root
- * call signature) via its own `__generics` marker; the `never` branch below only fires for a
- * non-praxis-kit component, which has no `__generics` field to infer from at all.
+ * Projects off the component's retained `__contract` (`C`, via `HasContract<C>` —
+ * `@praxis-kit/contract-props`), not `__generics` (`G`) — a deliberate Phase 4 rewire, not a new
+ * mechanism: `G` is *derived* from `C` (`ContractGenericsWithAllowedOf<C>`, the same canonical
+ * projection `createContractComponent`'s own return type already uses), so reading `C` and
+ * projecting `G` from it recovers exactly the same `G` `__generics` would have, without needing a
+ * second, independently-populated marker to stay in sync with the first. `FlattenLayout`,
+ * `PickMode`, `Mode`, and the three `Polymorphic*` prop-shape types below are unchanged — only
+ * where `G` comes from moved. `__generics` itself is untouched (Phase 3's migration policy: added
+ * alongside `__contract`, not replaced by it, until every adapter and test proves the new
+ * relationship out — see that field's own doc comment).
+ *
+ * `T` accepts any built component value (`PolymorphicComponent<G, C>` or `CompoundComponent<G, S>`
+ * — the latter's sub-component intersection doesn't disturb `__contract`, which lives on the root
+ * call signature) via its own `__contract` marker; the `never` branch below only fires for a
+ * non-praxis-kit component, which has no `__contract` field to infer from at all.
  *
  * Always resolves against the component's *default* element (`PolymorphicWithAsChild<G,
  * DefaultOf<G>>`, etc.) — the same ceiling `React.ComponentProps<typeof Component>` already has
@@ -328,14 +379,16 @@ export type PolymorphicComponent<G extends PolymorphicGenerics> = {
  * `PolymorphicProps<G, 'a'>` when a caller needs a specific non-default `as` — those remain two
  * different questions with two different answers.
  */
-export type ContractProps<T extends HasGenerics<PolymorphicGenerics>, M extends Mode = 'normal'> =
-  T extends HasGenerics<infer G extends PolymorphicGenerics>
-    ? PickMode<
-        M,
-        FlattenLayout<PolymorphicProps<G, DefaultOf<G>>>,
-        FlattenLayout<PolymorphicWithAsChild<G, DefaultOf<G>>>,
-        FlattenLayout<PolymorphicWithRender<G, DefaultOf<G>>>
-      >
+export type ContractProps<T extends HasContract<FactoryOptions>, M extends Mode = 'normal'> =
+  T extends HasContract<infer C extends FactoryOptions>
+    ? ContractGenericsWithAllowedOf<C> extends infer G extends PolymorphicGenerics
+      ? PickMode<
+          M,
+          FlattenLayout<PolymorphicProps<G, DefaultOf<G>>>,
+          FlattenLayout<PolymorphicWithAsChild<G, DefaultOf<G>>>,
+          FlattenLayout<PolymorphicWithRender<G, DefaultOf<G>>>
+        >
+      : never
     : never
 
 /**

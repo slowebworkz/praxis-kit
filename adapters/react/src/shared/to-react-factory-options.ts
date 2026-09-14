@@ -1,15 +1,8 @@
-import type {
-  AnyClassPluginFactory,
-  ElementType,
-  FactoryOptions,
-  RecipeMap,
-  VariantMap,
-} from '@praxis-kit/core'
+import type { FactoryOptions } from '@praxis-kit/core'
 import { isFunction, isObject } from '@praxis-kit/primitive'
 import type { StringMap } from '@praxis-kit/primitive'
 import { isFactoryOptionsLike } from '@praxis-kit/adapter-utils'
 import type { ReactFactoryOptions } from './react-options'
-import type { UnknownProps } from './types'
 
 /** React-specific additions on top of `FactoryOptions`. */
 const REACT_FIELD_VALIDATORS: StringMap<(value: unknown) => boolean> = {
@@ -19,19 +12,13 @@ const REACT_FIELD_VALIDATORS: StringMap<(value: unknown) => boolean> = {
 }
 
 /**
- * Type guard narrowing the generic `FactoryOptions` shape down to
- * `ReactFactoryOptions` — the type `buildRuntime` is declared against. See
- * `isFactoryOptionsLike` for what this does and doesn't validate.
+ * Type guard narrowing a concrete contract `C` down to `C & ReactFactoryOptions` — the type
+ * `buildRuntime` is declared against. Single-generic, matching `createContractComponent`'s own
+ * `C extends ReactFactoryOptions` (Phase 2 of the `defineContract` refactor — was 6 independent
+ * generics). See `isFactoryOptionsLike` for what this does and doesn't validate.
  */
-export function isReactFactoryOptions<
-  TDefault extends ElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends RecipeMap<Variants>,
-  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
-  TAllowed extends ElementType = ElementType,
->(
-  options: FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin, TAllowed>,
-): options is ReactFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin, TAllowed> {
+export function isReactFactoryOptions<C extends FactoryOptions>(
+  options: C,
+): options is C & ReactFactoryOptions {
   return isFactoryOptionsLike(options, REACT_FIELD_VALIDATORS)
 }

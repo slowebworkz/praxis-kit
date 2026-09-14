@@ -16,9 +16,15 @@
  * **Safety conditions** — the transform is skipped if any of these are true:
  *   1. The child has a dynamic `className` expression (cannot merge safely).
  *      A string-literal `className` IS handled: the transform generates
- *      `{..._p, className: _p.className + ' childCls'}`.
- *   2. The child has a bare `style` or `on*` attribute without an initializer.
- *      Static object-literal and expression-valued `style` props are merged:
+ *      `className={_p.className ? `${_p.className} childCls` : 'childCls'}` — see
+ *      `buildClassNameMerge`'s own doc comment for why the guard is load-bearing, not defensive
+ *      styling.
+ *   2. The child has a bare `style` or `on*` attribute without an initializer, or an `on*`
+ *      attribute whose value is provably not callable (`undefined`, `null`, `true`/`false`, a
+ *      numeric/string/bigint literal — see `isObviouslyNotCallable`'s own doc comment for why:
+ *      the composed handler calls the child's expression unconditionally, so `onClick={undefined}`
+ *      — valid, type-checked JSX — would otherwise throw `undefined is not a function` at
+ *      runtime). Static object-literal and expression-valued `style` props are merged:
  *      `style={{..._p.style, ...childStyle}}`.  Event handlers are composed:
  *      `onClick={(_e) => { (childHandler)(_e); _p.onClick?.(_e); }}`.
  *   3. The component name starts with a lowercase letter (HTML intrinsic — not
@@ -27,17 +33,18 @@
  *
  * The transform is conservative: any condition that is not statically clear
  * causes the node to be left unchanged.
+ *
+ * The three generated-expression shapes above (`buildClassNameMerge`, `buildStyleMerge`,
+ * `buildEventMerge`) are each their own named function, isolated from the JSX-parsing helpers
+ * above them (`getStaticClassName`, `getStyleInfo`, `getEventHandlers`, …) — the parsing side
+ * already had that boundary; the generation side didn't.
  */
-import { iterate } from '@praxis-kit/primitive'
+import { iterate, isDefined, isUndefined } from '@praxis-kit/primitive'
 import ts from 'typescript'
 import { walk } from './ast'
+import { getJsxTagName, isComponentTagName } from './jsx'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Returns true when the first character of `s` is an uppercase ASCII letter (A–Z). */
-function isUpperCase(s: string): boolean {
-  return s.charCodeAt(0) >= 65 && s.charCodeAt(0) <= 90
-}
 
 /** Returns the attribute name string; empty string for namespaced names. */
 function jsxAttrName(attr: ts.JsxAttribute): string {
@@ -68,7 +75,7 @@ function getStaticClassName(
     if (ts.isStringLiteral(init)) return { absent: false, value: init.text }
     if (
       ts.isJsxExpression(init) &&
-      init.expression !== undefined &&
+      isDefined(init.expression) &&
       ts.isStringLiteral(init.expression)
     )
       return { absent: false, value: init.expression.text }
@@ -96,7 +103,7 @@ function getStyleInfo(child: ts.JsxElement | ts.JsxSelfClosingElement): StyleRes
     const init = attr.initializer
     // Bare `style` or string-literal style — not a valid style shape; bail.
     if (!init || ts.isStringLiteral(init)) return null
-    if (ts.isJsxExpression(init) && init.expression !== undefined)
+    if (ts.isJsxExpression(init) && isDefined(init.expression))
       return { absent: false, expr: init.expression }
     return null
   }
@@ -104,11 +111,36 @@ function getStyleInfo(child: ts.JsxElement | ts.JsxSelfClosingElement): StyleRes
 }
 
 /**
+ * Whether `expr` is a literal/keyword that is *provably* not callable — `undefined`, `null`,
+ * `true`/`false`, or a numeric/string/bigint literal. `buildEventMerge`'s generated code calls
+ * the child's own handler expression unconditionally (`(childHandler)(_e)`), so a handler prop
+ * whose value is one of these throws at runtime (`undefined is not a function`) even though
+ * `onClick={undefined}` is itself perfectly valid, type-checked JSX (an optional handler prop
+ * left unset via an explicit value rather than omitted). Deliberately narrow: an identifier,
+ * member access, call expression, or arrow/function expression is left alone and treated as
+ * callable — that's the overwhelming common case this transform exists to optimize, and this
+ * transform has no type checker available to verify any of those further. This only catches the
+ * subset of "not callable" that's provable from syntax alone.
+ */
+function isObviouslyNotCallable(expr: ts.Expression): boolean {
+  if (ts.isIdentifier(expr) && expr.text === 'undefined') return true
+  switch (expr.kind) {
+    case ts.SyntaxKind.NullKeyword:
+    case ts.SyntaxKind.TrueKeyword:
+    case ts.SyntaxKind.FalseKeyword:
+      return true
+    default:
+      return ts.isNumericLiteral(expr) || ts.isStringLiteral(expr) || ts.isBigIntLiteral(expr)
+  }
+}
+
+/**
  * Collects all `on*` event handler props from the child element.
  *
  * Returns:
  * - Array of `{ name, expr }` for each handler (may be empty when none present)
- * - `null` when any handler lacks an expression initializer (bail)
+ * - `null` when any handler lacks an expression initializer, or is a value
+ *   `isObviouslyNotCallable` rejects (bail — see that function's own doc comment)
  */
 type HandlerEntry = { name: string; expr: ts.Expression }
 
@@ -123,7 +155,8 @@ function getEventHandlers(child: ts.JsxElement | ts.JsxSelfClosingElement): Hand
     if (!/^on[A-Z]/.test(name)) continue
     const init = attr.initializer
     if (!init) return null // bare on* without value — bail
-    if (ts.isJsxExpression(init) && init.expression !== undefined) {
+    if (ts.isJsxExpression(init) && isDefined(init.expression)) {
+      if (isObviouslyNotCallable(init.expression)) return null
       handlers.push({ name, expr: init.expression })
       continue
     }
@@ -138,10 +171,10 @@ function hasAsChild(opening: ts.JsxOpeningElement): boolean {
     if (!ts.isJsxAttribute(attr)) continue
     if (jsxAttrName(attr) !== 'asChild') continue
     // bare `asChild` or `asChild={true}`
-    if (attr.initializer === undefined) return true
+    if (isUndefined(attr.initializer)) return true
     if (
       ts.isJsxExpression(attr.initializer) &&
-      attr.initializer.expression !== undefined &&
+      isDefined(attr.initializer.expression) &&
       attr.initializer.expression.kind === ts.SyntaxKind.TrueKeyword
     )
       return true
@@ -175,14 +208,102 @@ function getTagName(child: ts.JsxElement | ts.JsxSelfClosingElement): string | u
   return ts.isIdentifier(tag) ? tag.text : undefined
 }
 
+// ─── Generated-expression builders ──────────────────────────────────────────
+//
+// Each of these owns one piece of runtime prop-merging semantics, isolated from both the
+// JSX-parsing helpers above and the attribute-list assembly below — a boundary the parsing side
+// already had (getStaticClassName/getStyleInfo/getEventHandlers), the generation side didn't.
+
+/**
+ * Builds the merged `className` expression.
+ *
+ * `_p.className` can genuinely be `undefined` at runtime — `resolveClasses`
+ * (`lib/styling/src/create-class-pipeline.ts`) resolves to `undefined`, not `''`, for a component
+ * with no base/variant classes and no caller-supplied `className` (confirmed by reading that
+ * function directly, not assumed). An unconditional `_p.className + ' childCls'` would then
+ * concatenate onto `undefined`, producing the literal string `"undefined childCls"` on the DOM —
+ * a real bug this guard closes, not defensive styling. Generates
+ * `_p.className ? `${_p.className} childCls` : 'childCls'`.
+ */
+function buildClassNameMerge(factory: ts.NodeFactory, childClassName: string): ts.Expression {
+  const pClassName = (): ts.PropertyAccessExpression =>
+    factory.createPropertyAccessExpression(factory.createIdentifier('_p'), 'className')
+  const whenTrue = factory.createTemplateExpression(factory.createTemplateHead(''), [
+    factory.createTemplateSpan(pClassName(), factory.createTemplateTail(` ${childClassName}`)),
+  ])
+  const whenFalse = factory.createStringLiteral(childClassName)
+  return factory.createConditionalExpression(
+    pClassName(),
+    factory.createToken(ts.SyntaxKind.QuestionToken),
+    whenTrue,
+    factory.createToken(ts.SyntaxKind.ColonToken),
+    whenFalse,
+  )
+}
+
+/**
+ * Builds the merged `style` object expression: `{ ..._p.style, ...childStyle }` — the child's own
+ * object-literal properties are inlined directly after the `_p.style` spread when the child's
+ * style is itself an object literal (readable output, e.g. `{ ..._p.style, color: 'red' }`);
+ * a non-literal style expression (a variable reference) is spread instead, since its own shape
+ * isn't known statically.
+ */
+function buildStyleMerge(
+  factory: ts.NodeFactory,
+  styleExpr: ts.Expression,
+): ts.ObjectLiteralExpression {
+  const pStyleSpread = factory.createSpreadAssignment(
+    factory.createPropertyAccessExpression(factory.createIdentifier('_p'), 'style'),
+  )
+  if (ts.isObjectLiteralExpression(styleExpr)) {
+    return factory.createObjectLiteralExpression([pStyleSpread, ...styleExpr.properties], false)
+  }
+  return factory.createObjectLiteralExpression(
+    [pStyleSpread, factory.createSpreadAssignment(styleExpr)],
+    false,
+  )
+}
+
+/** Builds one composed event-handler arrow function: `(_e) => { (childHandler)(_e); _p.name?.(_e); }` —
+ *  the child's own handler always runs, then the parent's (if any) via an optional-chain call, so
+ *  a parent that never set this handler doesn't throw. */
+function buildEventMerge(
+  factory: ts.NodeFactory,
+  name: string,
+  childHandlerExpr: ts.Expression,
+): ts.ArrowFunction {
+  const eParam = factory.createParameterDeclaration(undefined, undefined, '_e')
+  const callChild = factory.createExpressionStatement(
+    factory.createCallExpression(
+      factory.createParenthesizedExpression(childHandlerExpr),
+      undefined,
+      [factory.createIdentifier('_e')],
+    ),
+  )
+  const callParent = factory.createExpressionStatement(
+    factory.createCallChain(
+      factory.createPropertyAccessExpression(factory.createIdentifier('_p'), name),
+      factory.createToken(ts.SyntaxKind.QuestionDotToken),
+      undefined,
+      [factory.createIdentifier('_e')],
+    ),
+  )
+  return factory.createArrowFunction(
+    undefined,
+    undefined,
+    [eParam],
+    undefined,
+    factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+    factory.createBlock([callChild, callParent], true),
+  )
+}
+
 /**
  * Builds the attribute list for the transformed parent, omitting `asChild`
  * and adding `render={(_p) => <childTag ...childAttrs {..._p} />}`.
  *
- * Merged props are placed after the `{..._p}` spread so they override _p:
- * - Static `className` → `className={_p.className + ' childCls'}`
- * - `style` → `style={{..._p.style, ...childStyleExpr}}`
- * - `on*` handlers → `onClick={(_e) => { (childHandler)(_e); _p.onClick?.(_e); }}`
+ * Merged props are placed after the `{..._p}` spread so they override _p — see
+ * `buildClassNameMerge`/`buildStyleMerge`/`buildEventMerge` for each merge's own shape.
  */
 function buildTransformedAttributes(
   factory: ts.NodeFactory,
@@ -227,77 +348,29 @@ function buildTransformedAttributes(
   // Extra attrs placed after spread so they override _p values.
   const extraAttrs: ts.JsxAttributeLike[] = []
 
-  // Merged className: `_p.className + ' childCls'`
   if (hasStaticCls && clsResult.value !== '') {
-    const mergedExpr = factory.createBinaryExpression(
-      factory.createPropertyAccessExpression(factory.createIdentifier('_p'), 'className'),
-      ts.SyntaxKind.PlusToken,
-      factory.createStringLiteral(` ${clsResult.value}`),
-    )
     extraAttrs.push(
       factory.createJsxAttribute(
         factory.createIdentifier('className'),
-        factory.createJsxExpression(undefined, mergedExpr),
+        factory.createJsxExpression(undefined, buildClassNameMerge(factory, clsResult.value)),
       ),
     )
   }
 
-  // Merged style: `{..._p.style, ...childStyleExpr}` or inlined object properties.
   if (hasStyle) {
-    const styleExpr = styleInfo.expr
-    const pStyleSpread = factory.createSpreadAssignment(
-      factory.createPropertyAccessExpression(factory.createIdentifier('_p'), 'style'),
-    )
-    let mergedStyleObj: ts.ObjectLiteralExpression
-    if (ts.isObjectLiteralExpression(styleExpr)) {
-      // Inline child's properties directly after _p.style spread.
-      mergedStyleObj = factory.createObjectLiteralExpression(
-        [pStyleSpread, ...styleExpr.properties],
-        false,
-      )
-    } else {
-      // Non-literal expression: spread it.
-      mergedStyleObj = factory.createObjectLiteralExpression(
-        [pStyleSpread, factory.createSpreadAssignment(styleExpr)],
-        false,
-      )
-    }
     extraAttrs.push(
       factory.createJsxAttribute(
         factory.createIdentifier('style'),
-        factory.createJsxExpression(undefined, mergedStyleObj),
+        factory.createJsxExpression(undefined, buildStyleMerge(factory, styleInfo.expr)),
       ),
     )
   }
 
-  // Composed event handlers: `(_e) => { (childHandler)(_e); _p.name?.(_e); }`
   for (const { name, expr } of handlers) {
-    const eParam = factory.createParameterDeclaration(undefined, undefined, '_e')
-    const callChild = factory.createExpressionStatement(
-      factory.createCallExpression(factory.createParenthesizedExpression(expr), undefined, [
-        factory.createIdentifier('_e'),
-      ]),
-    )
-    const callParent = factory.createExpressionStatement(
-      factory.createCallChain(
-        factory.createPropertyAccessExpression(factory.createIdentifier('_p'), name),
-        factory.createToken(ts.SyntaxKind.QuestionDotToken),
-        undefined,
-        [factory.createIdentifier('_e')],
-      ),
-    )
-    const composedFn = factory.createArrowFunction(
-      undefined,
-      undefined,
-      [eParam],
-      undefined,
-      factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-      factory.createBlock([callChild, callParent], true),
-    )
     extraAttrs.push(
       factory.createJsxAttribute(
         factory.createIdentifier(name),
-        factory.createJsxExpression(undefined, composedFn),
+        factory.createJsxExpression(undefined, buildEventMerge(factory, name, expr)),
       ),
     )
   }
@@ -356,9 +429,9 @@ function createAsChildTransformer(factory: ts.NodeFactory): ts.TransformerFactor
       if (!ts.isJsxElement(node)) return ts.visitEachChild(node, visit, context)
 
       const opening = node.openingElement
-      const tagName = ts.isIdentifier(opening.tagName) ? opening.tagName.text : undefined
+      const tagName = getJsxTagName(opening.tagName)
 
-      if (!tagName || !isUpperCase(tagName)) {
+      if (!tagName || !isComponentTagName(tagName)) {
         return ts.visitEachChild(node, visit, context)
       }
 

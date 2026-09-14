@@ -69,7 +69,11 @@ describe('subComponents (compound component generation, legacy)', () => {
     type Expected = PolymorphicComponent<
       PolymorphicGenerics<'div', EmptyRecord, Readonly<EmptyRecord>>
     >
-    expectTypeOf(Plain).toEqualTypeOf({} as Expected)
+    // toMatchTypeOf (structural, one-directional), not toEqualTypeOf: Plain's real __contract is
+    // the specific literal it was built from (Phase 3's contract-retention marker), narrower than
+    // Expected's default (widest FactoryOptions) — this test's intent is "matches the expected G
+    // shape," not "has this exact literal __contract," so assignability is what matters here.
+    expectTypeOf(Plain).toMatchTypeOf({} as Expected)
 
     expect(() =>
       dom.mount(createElement(box(Plain), null, createElement('span', { key: 'x' }))),

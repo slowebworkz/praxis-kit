@@ -18,11 +18,11 @@ import type { WebContractComponent } from './types/index'
  * there's no `HTMLElement` to check `instanceof` against there, so that part
  * of the check is skipped when `HTMLElement` doesn't exist.
  *
- * `WebContractComponent`'s third parameter, `G` (the phantom `__generics`
- * marker `GenericsOf`/`ContractProps` read back — `./types/contract-props`), is
- * left at its default here: it carries no runtime signal for this guard to
- * check, and `createContractComponent` supplies the real `G` itself when it
- * casts this function's narrowed result to its public return type.
+ * `WebContractComponent`'s third and fourth parameters, `G` and `C` (the phantom `__generics`/
+ * `__contract` markers `GenericsOf`/`ContractProps` read back — `./types/contract-props`), are
+ * left at their defaults here: neither carries a runtime signal for this guard to check, and
+ * `createContractComponent` supplies the real `G`/`C` itself when it casts this function's
+ * narrowed result to its public return type.
  */
 export function isWebContractComponent<
   TVariants extends Readonly<VariantMap> = NoVariants,

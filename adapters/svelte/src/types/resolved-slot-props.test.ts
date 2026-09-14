@@ -17,12 +17,12 @@ import type { GenericsOf, ResolvedSlotProps } from './resolved-slot-props'
 
 describe('GenericsOf<T>', () => {
   it('recovers a real bundle’s own props, not the widest PolymorphicGenerics fallback', () => {
-    // `Props` isn't inferred from `defaults` alone — `FactoryOptions.defaults` is typed
-    // `Partial<NoInfer<Props>>` specifically so contract-props inference goes through the
-    // explicit `Props` type argument, not the defaults object's own shape (see NoInfer's usage
-    // note in lib/primitive). An explicit `Props` argument here is what a real strongly-typed
-    // component author would write.
-    const buttonBundle = createContractComponent<'button', { type?: string }>({
+    // `Props` is recovered from `defaults` (`ContractPropsOf<C>`, Phase 0/1 of the `defineContract`
+    // refactor), not from an explicit `Props` generic argument — `createContractComponent` dropped
+    // that parameter entirely (see its own doc comment / DECISIONS.md: no real call site ever
+    // supplied `Props` alone, and `const O`'s literal-preserving inference only engages with zero
+    // explicit type arguments — matching every other adapter's identical fix).
+    const buttonBundle = createContractComponent({
       tag: 'button',
       defaults: { type: 'button' },
     })
@@ -38,12 +38,13 @@ describe('GenericsOf<T>', () => {
   it('recovers the exact G, not merely some PolymorphicGenerics — checked against PropsOf directly', () => {
     // A distinctive property PropsOf<PolymorphicGenerics> (the widest fallback) could never have,
     // so this only passes if GenericsOf<T> actually threaded the real, specific G through the
-    // conditional-type inference rather than silently falling back. Optional, not required — a
-    // required own prop makes the bundle's own onElement.getProps parameter type invariant in a
-    // way that breaks assignability to the AnyBuiltRuntime constraint entirely, a separate,
-    // pre-existing generic-variance concern unrelated to what this test is checking.
-    const cardBundle = createContractComponent<'div', { distinctiveOwnProp?: true }>({
+    // conditional-type inference rather than silently falling back. Declared via `defaults` (see
+    // the test above) rather than an explicit generic — `true` widens to `boolean` via
+    // `ExtractContractProps`'s own `WidenShallow` step, which is fine: this test only needs the
+    // property to exist, not to be the narrow literal `true`.
+    const cardBundle = createContractComponent({
       tag: 'div',
+      defaults: { distinctiveOwnProp: true },
     })
     void cardBundle
     type CardProps = PropsOf<GenericsOf<typeof cardBundle>>
