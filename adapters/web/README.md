@@ -21,8 +21,9 @@ No peer dependencies — this is the zero-framework path.
 
 ```ts
 import { createContractComponent } from '@praxis-kit/web'
+import { defineContract } from '@praxis-kit/adapter-utils'
 
-const Button = createContractComponent({
+export const buttonContract = defineContract({
   tag: 'button',
   name: 'Button',
   styling: {
@@ -33,8 +34,17 @@ const Button = createContractComponent({
   enforcement: { strict: 'warn' },
 })
 
+const Button = createContractComponent(buttonContract)
+
 customElements.define('praxis-button', Button)
 ```
+
+`defineContract` pins the config object to its own concrete type before it reaches
+`createContractComponent` — the same object works unchanged if you pass it to another adapter's
+`createContractComponent` instead, and it's what lets `ContractProps<typeof Button>` (below) recover
+the exact prop shape later. Skipping it and passing a plain object literal straight to
+`createContractComponent` still works — `defineContract` is a naming/reuse convenience, not a
+requirement.
 
 ```html
 <praxis-button size="lg">Click me</praxis-button>

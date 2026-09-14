@@ -24,8 +24,9 @@ pnpm add svelte
 ```ts
 // button.ts
 import { createContractComponent } from '@praxis-kit/svelte'
+import { defineContract } from '@praxis-kit/adapter-utils'
 
-export const buttonBundle = createContractComponent({
+export const buttonContract = defineContract({
   tag: 'button',
   name: 'Button',
   defaults: { type: 'button' },
@@ -39,7 +40,15 @@ export const buttonBundle = createContractComponent({
     aria: [{ rule: 'no-redundant-role' }],
   },
 })
+
+export const buttonBundle = createContractComponent(buttonContract)
 ```
+
+`defineContract` pins the config object to its own concrete type before it reaches
+`createContractComponent` — the same object works unchanged if you pass it to another adapter's
+`createContractComponent` instead. Skipping it and passing a plain object literal straight to
+`createContractComponent` still works — `defineContract` is a naming/reuse convenience, not a
+requirement.
 
 Unlike the other adapters, **`createContractComponent` returns a plain bundle, not a component** —
 Svelte components must come from `.svelte` files, a compile-time constraint. Render the bundle
