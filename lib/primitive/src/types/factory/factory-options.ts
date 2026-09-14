@@ -48,6 +48,33 @@ export type FactoryOptions<
   /** Values used for the component's own (non-variant) props when the consumer omits them. */
   readonly defaults?: Partial<NoInfer<Props>>
   /**
+   * Optional, type-only declaration of this component's complete own-prop shape — present purely
+   * for type recovery, never read at runtime (see `declareProps` in `@praxis-kit/adapter-utils`).
+   *
+   * `defaults` alone can only prove a prop *has a default*, not that it's the complete prop model
+   * a component accepts — a `defaults: { size: 'md' }` component may still take `onClick`,
+   * `disabled`, and other props with no default at all, none of which a `defaults`-only recovery
+   * can see (see `ContractPropsFrom`'s own doc comment for the general shape of this problem).
+   * `props` closes that gap: when present, `ContractPropsOf<C>` / `ContractProps<typeof Component>`
+   * recover this declared type directly and exactly, in place of the necessarily-partial,
+   * literal-widened recovery `defaults` alone allows.
+   *
+   * Typed as `object | undefined`, not `NoInfer<Props> | undefined` like `defaults`/`onElement` —
+   * deliberately decoupled from this interface's own `Props` generic, unlike those two fields.
+   * `defaults`/`onElement` are tied to `Props` because real runtime code reads them against a
+   * concretely-resolved `Props` for a real call; `props` is never read at runtime at all (see
+   * above), so it has no such need, and tying it to `Props extends AnyRecord` would force every
+   * hand-declared prop `interface`/`type` an author passes through `declareProps<Props>()` to
+   * structurally satisfy `Record<string, unknown>` — a real TypeScript limitation (a named type
+   * without an index signature never satisfies that, even via plain assignment, only a fresh
+   * object literal does) that would make this field far more awkward to use for its one real job:
+   * carrying an author's own already-precise prop type through untouched. `ContractPropsFrom`
+   * (`contract-model.ts`) recovers the real value here structurally, straight off `O`'s own
+   * literal type — independent of this field's declared type, same as every other `Contract*From`
+   * derivation in that file.
+   */
+  readonly props?: object | undefined
+  /**
    * A pure `(props) => props` transform run on every render, after `enforcement.props`'s
    * normalizers see the same input. Use this for component-specific prop shaping — anything
    * that depends on live instance state or the real DOM element belongs in `onElement` instead.

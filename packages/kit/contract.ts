@@ -34,6 +34,13 @@ export type * from '@praxis-kit/primitive/types/factory'
  */
 export { defineContract } from '@praxis-kit/adapter-utils'
 
+/**
+ * Type-only helper for a contract's optional `props` field — declares a component's complete prop
+ * shape inline when `defaults` alone doesn't capture it. See `@praxis-kit/adapter-utils`'s
+ * `declare-props.ts` for the full rationale.
+ */
+export { declareProps } from '@praxis-kit/adapter-utils'
+
 /** Props supported by intrinsic HTML elements. */
 export type { IntrinsicProps } from '@praxis-kit/primitive/types'
 

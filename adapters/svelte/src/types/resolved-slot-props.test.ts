@@ -40,7 +40,7 @@ describe('GenericsOf<T>', () => {
     // so this only passes if GenericsOf<T> actually threaded the real, specific G through the
     // conditional-type inference rather than silently falling back. Declared via `defaults` (see
     // the test above) rather than an explicit generic — `true` widens to `boolean` via
-    // `ExtractContractProps`'s own `WidenShallow` step, which is fine: this test only needs the
+    // `ContractPropsFrom`'s own `WidenShallow` step, which is fine: this test only needs the
     // property to exist, not to be the narrow literal `true`.
     const cardBundle = createContractComponent({
       tag: 'div',

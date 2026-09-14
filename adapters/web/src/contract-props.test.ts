@@ -24,7 +24,7 @@ const buttonVariants = { intent: { primary: 'btn-primary', ghost: 'btn-ghost' } 
 // `loading` is recovered from `defaults` (`ContractPropsOf<C>`), not an explicit `TProps` generic
 // argument — `createContractComponent` dropped that parameter entirely, mirroring the Lit adapter's
 // identical fix (see that adapter's own `contract-props.test.ts` for the full reasoning). `false`
-// is widened to `boolean` by `ExtractContractProps`'s own `WidenShallow` step.
+// is widened to `boolean` by `ContractPropsFrom`'s own `WidenShallow` step.
 const Button = createContractComponent({
   tag: 'button',
   name: 'WebContractPropsButton',

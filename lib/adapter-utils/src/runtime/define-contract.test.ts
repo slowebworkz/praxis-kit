@@ -1,6 +1,8 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { defineContract } from './define-contract'
+import { declareProps } from './declare-props'
 import type {
+  AnyRecord,
   ContractAllowedOf,
   ContractPresetOf,
   ContractPropsOf,
@@ -74,7 +76,7 @@ describe('defineContract — establishes the ContractModel exactly, from real ev
       readonly cta: { readonly size: 'lg' }
     }>()
     expectTypeOf<ContractAllowedOf<typeof buttonContract>>().toEqualTypeOf<'a' | 'button'>()
-    // Props: recovered from `defaults`'s own shape — see ExtractContractProps's doc comment for
+    // Props: recovered from `defaults`'s own shape — see ContractPropsFrom's doc comment for
     // why this is only ever as complete as `defaults` itself (not a general recovery of some
     // independently-declared, wider Props type), why matching against O's own literal type
     // (rather than FactoryOptions's declared, NoInfer-wrapped field type) sidesteps the NoInfer
@@ -89,21 +91,62 @@ describe('defineContract — establishes the ContractModel exactly, from real ev
 })
 
 /**
- * `ContractPropsOf<C>` — documenting a real, load-bearing limitation found while writing these
- * tests, not a defineContract bug: `FactoryOptions.defaults` is declared as
- * `Partial<NoInfer<Props>>`, and `NoInfer` blocks that occurrence from contributing to *any*
- * infer-based extraction of `Props` (not just call-site inference) — so `ContractPropsOf<C>`
- * cannot recover a component's own props from `defaults` alone, only from `onElement`'s
- * `getProps` (the one `Props`-bearing field FactoryOptions does *not* wrap in `NoInfer`). Most
- * contracts declare props via `defaults`, not `onElement`, so `ContractPropsOf<C>` alone is not a
- * reliable general-purpose Props-recovery mechanism for an arbitrary already-built `C`.
- *
- * This does not block Phase 1 (defineContract has no `Props`-recovery responsibility — see its own
- * doc comment) but is a real finding for Phase 2/3: `createContractComponent` must keep inferring
- * `Props` fresh at its own call site (the same unblocked mechanism `defaults` already relies on
- * today), and retain that resolved `Props` explicitly alongside `__contract` — not assume
- * `ContractPropsOf<C>` can re-derive it later from an opaque retained `C`.
+ * `ContractPropsOf<C>` — the `defaults`-only gap documented above (`defaults` reveals only
+ * "props with a default," not a component's complete prop set) is real, but not the end state:
+ * `FactoryOptions.props` + `declareProps<Props>()` close it. An author who needs precise recovery
+ * declares the full type once, inline in the same object literal `defineContract`'s `const O`
+ * already infers from — no curried API, no explicit generic argument at the
+ * `defineContract`/`createContractComponent` call site itself. See `ContractPropsFrom`'s
+ * (`lib/primitive`) own doc comment for the two-path precedence this relies on.
  */
-describe.todo(
-  'ContractPropsOf — known limitation: cannot recover Props from `defaults` alone (NoInfer)',
-)
+describe('defineContract — Props recovery beyond `defaults` (declareProps)', () => {
+  it('defaults-only recovery sees only what defaults reveals — real props with no default vanish', () => {
+    const buttonContract = defineContract({
+      tag: 'button',
+      name: 'Button',
+      defaults: { type: 'button' },
+    })
+    void buttonContract
+    // `onClick`/`disabled` are real props a `<button>` accepts, but nothing here names them —
+    // defaults-only recovery has no way to know about them. This is the gap declareProps closes.
+    expectTypeOf<ContractPropsOf<typeof buttonContract>>().toEqualTypeOf<{
+      readonly type?: string
+    }>()
+  })
+
+  it('an explicit `props` declaration recovers the complete type exactly, not just what defaults reveals', () => {
+    interface ButtonProps {
+      readonly type?: 'button' | 'submit' | 'reset'
+      readonly onClick?: () => void
+      readonly disabled?: boolean
+    }
+
+    const buttonContract = defineContract({
+      tag: 'button',
+      name: 'Button',
+      props: declareProps<ButtonProps>(),
+      defaults: { type: 'button' },
+    })
+    void buttonContract
+    // `& AnyRecord`: a no-op on ButtonProps's own declared fields, present purely so the recovered
+    // type structurally satisfies `Props extends AnyRecord` downstream — see ContractPropsFrom's
+    // own doc comment (lib/primitive) for why a hand-declared interface needs this.
+    expectTypeOf<ContractPropsOf<typeof buttonContract>>().toEqualTypeOf<ButtonProps & AnyRecord>()
+  })
+
+  it('an explicit `props` declaration is used as-is — not Partial-wrapped, not widened', () => {
+    interface StrictProps {
+      readonly requiredLabel: string
+    }
+
+    const labeledContract = defineContract({
+      tag: 'div',
+      name: 'Labeled',
+      props: declareProps<StrictProps>(),
+    })
+    void labeledContract
+    // `requiredLabel` stays required, proving this recovery path is NOT routed through the
+    // defaults-based Partial<WidenShallow<...>> pipeline (which would make it optional).
+    expectTypeOf<ContractPropsOf<typeof labeledContract>>().toEqualTypeOf<StrictProps & AnyRecord>()
+  })
+})

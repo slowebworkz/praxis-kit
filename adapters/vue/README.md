@@ -78,7 +78,6 @@ Pass `asChild` to merge props onto the single child element:
 | Export                                                                                         | Description                                                                           |
 | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `createContractComponent`                                                                      | Factory: styling + ARIA enforcement + children validation                             |
-| `defineContractComponent`                                                                      | Curries a factory's options so multiple call sites share one config                   |
 | `Slottable`                                                                                    | Marks the composition target child for `asChild`                                      |
 | `VueFactoryOptions` (type)                                                                     | Factory options with Vue-specific extensions                                          |
 | `ContractProps<T>` (type)                                                                      | A built component's full prop contract (both render modes), recovered from `typeof X` |

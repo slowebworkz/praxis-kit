@@ -129,7 +129,7 @@ describe('ContractXOf — fallback path: a real literal, no defineContract marke
     }>()
     expectTypeOf<ContractAllowedOf<typeof full>>().toEqualTypeOf<'a' | 'button'>()
     // Props: best-effort only, widened back to `string` from the literal `'#'` this `const`
-    // literal actually infers, and optional — see ExtractContractProps's own doc comment for why:
+    // literal actually infers, and optional — see ContractPropsFrom's own doc comment for why:
     // `defaults` supplies a default value, which is by definition optional to the caller.
     expectTypeOf<ContractPropsOf<typeof full>>().toEqualTypeOf<{ readonly href?: string }>()
   })

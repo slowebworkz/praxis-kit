@@ -29,20 +29,28 @@ pipeline). Everything else is opt-in tooling or power-user surface.
 
 ### Stable — the adoption path
 
-| Subpath                                                          | For                                                                                                                                                                                                                                                 |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `praxis-kit/react`, `/react/legacy` (React 18)                   | The React adapter.                                                                                                                                                                                                                                  |
-| `praxis-kit/preact`, `/vue`, `/solid`, `/svelte`, `/lit`, `/web` | The other six adapters. Same `defineContract` / `createContractComponent` entry points, but real per-adapter differences — see the export breakdown below, not "identical."                                                                         |
-| `praxis-kit/svelte/Polymorphic.svelte`                           | The Svelte render component — a Svelte bundle is rendered via `<Polymorphic bundle={…}>`. Required for the Svelte adapter.                                                                                                                          |
-| `praxis-kit/contract`                                            | Framework-neutral contract authoring: `defineContract`, `FactoryOptions` / `ContractInput` / `DefinedContract` / `EnforcementOptions` / `StylingOptions` types, the eight state contracts, the state-prop normalizers, the ARIA-rule fix factories. |
-| `praxis-kit/tailwind`, `praxis-kit/tailwind.css`                 | `createTailwindPipeline` (the flex/grid-aware class pipeline) + `layoutKeys` + `LayoutProps` / `LayoutKey` types, and the safelist stylesheet.                                                                                                      |
+| Subpath                                                          | For                                                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `praxis-kit/react`, `/react/legacy` (React 18)                   | The React adapter.                                                                                                                                                                                                                                                  |
+| `praxis-kit/preact`, `/vue`, `/solid`, `/svelte`, `/lit`, `/web` | The other six adapters. Same `defineContract` / `createContractComponent` entry points, but real per-adapter differences — see the export breakdown below, not "identical."                                                                                         |
+| `praxis-kit/svelte/Polymorphic.svelte`                           | The Svelte render component — a Svelte bundle is rendered via `<Polymorphic bundle={…}>`. Required for the Svelte adapter.                                                                                                                                          |
+| `praxis-kit/contract`                                            | Framework-neutral contract authoring: `defineContract`, `declareProps`, `FactoryOptions` / `ContractInput` / `DefinedContract` / `EnforcementOptions` / `StylingOptions` types, the eight state contracts, the state-prop normalizers, the ARIA-rule fix factories. |
+| `praxis-kit/tailwind`, `praxis-kit/tailwind.css`                 | `createTailwindPipeline` (the flex/grid-aware class pipeline) + `layoutKeys` + `LayoutProps` / `LayoutKey` types, and the safelist stylesheet.                                                                                                                      |
 
-**Every adapter exports** `createContractComponent`, `defineContractComponent`, its own
-`*FactoryOptions` type, and `ContractProps<T>` (recover a built component's prop contract from
-`typeof MyComponent`) — except **Svelte**, see below. `defineContract` (`praxis-kit/contract`,
-above) is the recommended way to author a contract before passing it to any adapter's
-`createContractComponent`; `defineContractComponent`'s curried form still works but doesn't need a
-second call once a contract is already pinned to its own concrete type.
+**Every adapter exports** `createContractComponent`, its own `*FactoryOptions` type, and
+`ContractProps<T>` (recover a built component's prop contract from `typeof MyComponent`) — except
+**Svelte**, see below. `defineContract` (`praxis-kit/contract`, above) is the way to author a
+contract before passing it to any adapter's `createContractComponent`:
+
+```ts
+const buttonContract = defineContract({ tag: 'button', name: 'Button' })
+const Button = createContractComponent(buttonContract)
+```
+
+`defineContractComponent` — the curried predecessor this superseded — has been **removed entirely**,
+not deprecated. This is a breaking change for any consumer still using the curried
+`defineContractComponent(options)(createContractComponent)` pattern; migrate to the two-step form
+above.
 
 React, Preact, and Vue export `Slottable` (and `SlottableProps`, React and Vue only — Preact's
 `Slottable` has no separate props type to export) for `asChild` composition, plus the `Polymorphic*`

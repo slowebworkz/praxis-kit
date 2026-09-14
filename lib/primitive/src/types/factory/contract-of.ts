@@ -12,15 +12,15 @@ import type { ContractModelOf } from './contract-model'
  *
  * Each accessor is a trivial projection off `ContractModelOf<C>` (`contract-model.ts`) — the one
  * place that resolves "does `C` carry a real `ContractModel` (via `defineContract`) or does one
- * need reconstructing from `C`'s raw shape." An earlier draft had each accessor repeat that
- * resolution independently; centralizing it here means every accessor shares one implementation of
- * the tricky part (see `contract-model.ts`'s own doc comment for why that reconstruction has to be
- * a required-pattern match, not the more obvious optional-field `infer`).
+ * need reconstructing from `C`'s raw shape," so every accessor shares one implementation of that
+ * resolution rather than repeating it. See `contract-model.ts`'s own doc comments for the
+ * `ContractXFrom<O>` derivation each of these ultimately reads through, and `DECISIONS.md`'s
+ * `defineContract` entry for the design history behind the required-pattern-match technique.
  */
 export type ContractTagOf<C extends FactoryOptions> = ContractModelOf<C>['tag']
 
 /** See this file's own doc comment. Best-effort when `C` has no `ContractModel` marker — see
- *  `ExtractContractProps`'s own doc comment for why. */
+ *  `ContractPropsFrom`'s own doc comment for why. */
 export type ContractPropsOf<C extends FactoryOptions> = ContractModelOf<C>['props']
 
 /** See this file's own doc comment. */
