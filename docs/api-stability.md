@@ -29,23 +29,32 @@ pipeline). Everything else is opt-in tooling or power-user surface.
 
 ### Stable — the adoption path
 
-| Subpath                                                          | For                                                                                                                                                                                         |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `praxis-kit/react`, `/react/legacy` (React 18)                   | The React adapter.                                                                                                                                                                          |
-| `praxis-kit/preact`, `/vue`, `/solid`, `/svelte`, `/lit`, `/web` | The other six adapters. Identical factory API.                                                                                                                                              |
-| `praxis-kit/svelte/Polymorphic.svelte`                           | The Svelte render component — a Svelte bundle is rendered via `<Polymorphic bundle={…}>`. Required for the Svelte adapter.                                                                  |
-| `praxis-kit/contract`                                            | Framework-neutral contract authoring: `FactoryOptions` / `EnforcementOptions` / `StylingOptions` types, the eight state contracts, the state-prop normalizers, the ARIA-rule fix factories. |
-| `praxis-kit/tailwind`, `praxis-kit/tailwind.css`                 | `createTailwindPipeline` (the flex/grid-aware class pipeline) + `layoutKeys` + `LayoutProps` / `LayoutKey` types, and the safelist stylesheet.                                              |
+| Subpath                                                          | For                                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `praxis-kit/react`, `/react/legacy` (React 18)                   | The React adapter.                                                                                                                                                                                                                                  |
+| `praxis-kit/preact`, `/vue`, `/solid`, `/svelte`, `/lit`, `/web` | The other six adapters. Same `defineContract` / `createContractComponent` entry points, but real per-adapter differences — see the export breakdown below, not "identical."                                                                         |
+| `praxis-kit/svelte/Polymorphic.svelte`                           | The Svelte render component — a Svelte bundle is rendered via `<Polymorphic bundle={…}>`. Required for the Svelte adapter.                                                                                                                          |
+| `praxis-kit/contract`                                            | Framework-neutral contract authoring: `defineContract`, `FactoryOptions` / `ContractInput` / `DefinedContract` / `EnforcementOptions` / `StylingOptions` types, the eight state contracts, the state-prop normalizers, the ARIA-rule fix factories. |
+| `praxis-kit/tailwind`, `praxis-kit/tailwind.css`                 | `createTailwindPipeline` (the flex/grid-aware class pipeline) + `layoutKeys` + `LayoutProps` / `LayoutKey` types, and the safelist stylesheet.                                                                                                      |
 
 **Every adapter exports** `createContractComponent`, `defineContractComponent`, its own
 `*FactoryOptions` type, and `ContractProps<T>` (recover a built component's prop contract from
-`typeof MyComponent`). The VDOM adapters (React, Preact, Vue, Solid) additionally export `Slottable`
-for `asChild` composition (React/Preact/Vue also `SlottableProps`) and the `Polymorphic*` prop
-types; React adds `mergeRefs` and, with `render` mode, `RenderCallbackProps`. **Lit and Web** take
-no `as` / `asChild` and their SSR helper is `renderContractToString`. **Svelte** returns a bundle
-(not a component), rendered through `Polymorphic.svelte`, so it exports `BuiltRuntime` /
-`GenericsOf` / `ResolvedSlotProps` for typing that bundle and its `asChild` snippet rather than
-`ContractProps`.
+`typeof MyComponent`) — except **Svelte**, see below. `defineContract` (`praxis-kit/contract`,
+above) is the recommended way to author a contract before passing it to any adapter's
+`createContractComponent`; `defineContractComponent`'s curried form still works but doesn't need a
+second call once a contract is already pinned to its own concrete type.
+
+React, Preact, and Vue export `Slottable` (and `SlottableProps`, React and Vue only — Preact's
+`Slottable` has no separate props type to export) for `asChild` composition, plus the `Polymorphic*`
+prop types; React adds `mergeRefs` and, with `render` mode, `RenderCallbackProps`. React is also the
+only adapter that threads `enforcement.allowedAs` into its exported types today, so only React's
+`as` prop narrows to the contract's own allowed-tag union — the other five accept any `ElementType`
+there. **Solid** takes a different, non-`Slottable` approach to the same composition problem: pass
+`asChild` with a render-prop function as `children` (see the Solid adapter's own README), so it
+exports no `Slottable` at all. **Lit and Web** take no `as` / `asChild` and their SSR helper is
+`renderContractToString`. **Svelte** returns a bundle (not a component), rendered through
+`Polymorphic.svelte`, so it exports `BuiltRuntime` / `GenericsOf` / `ResolvedSlotProps` for typing
+that bundle and its `asChild` snippet rather than `ContractProps`.
 
 The `createContractComponent` / `FactoryOptions` contract is **frozen for 0.1** (architecture
 freeze). See [ARCHITECTURE.md](../ARCHITECTURE.md).
