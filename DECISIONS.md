@@ -3421,18 +3421,14 @@ API stability is a prerequisite for Sponsors here, not a substitute for the usag
 **Revisit trigger:** real signal of external usage — an issue, a PR, or a star from an account
 that isn't the maintainer's — or the next version tag, whichever comes first.
 
-### npm version collision — `1.0.0` skipped, shipped as `1.0.1` (2026-09-14)
+### npm version collision — `1.0.0` and `1.0.1` both blocked, shipped as `1.0.2` (2026-09-14)
 
 The `changeset version` release plan for the `defineContract` / `defineContractComponent`-removal
 work (breaking) computed `praxis-kit` `0.1.1` → `1.0.0` — a literal major bump, this changesets
 config has no pre-1.0 dampening. Tagging and pushing `v1.0.0` ran `publish.yml` three times: the
 first two failed on the OIDC trusted-publisher exchange (404, no trusted publisher registered yet);
 once that was fixed on npmjs.com, the fourth attempt authenticated fine and then failed at the
-registry itself:
-
-```
-Cannot publish over previously published version "1.0.0".
-```
+registry itself: `Cannot publish over previously published version "1.0.0".`
 
 `1.0.0` was already published on the `praxis-kit` name on 2026-02-24 — by the same unrelated,
 pre-existing package line `npm-deprecate.yml` deprecates (`1.1.0`–`7.8.1`). That entry's "1.x–7.x"
@@ -3444,26 +3440,37 @@ no credential or config fix for this.
 registry's `versions` document — it's been unpublished from listing (npm allows that; the old line's
 `1.1.0`–`7.8.1` are visible-but-deprecated, so `1.0.0` took a different path, most likely a within-
 72h unpublish). But it is still permanently blocked at the registry — confirmed directly by the
-`publish.yml` failure above, not by a stale/cached read. **Checking `npm view` before picking a
-version number is not sufficient** — a hidden, unpublished-but-blocked version won't show there.
+`publish.yml` failure, not by a stale/cached read. **Checking `npm view` before picking a version
+number is not sufficient** — a hidden, unpublished-but-blocked version won't show there.
 
-Shipped as `1.0.1` instead — the old line has no `1.0.x` patch releases, so the whole `1.0.x` series
-is clear. Chose the minimal fix (skip just the one blocked number, keep the intended `1.0` line)
-over jumping above `7.8.1` entirely, since the collision is with one specific number, not a range.
-`v1.0.0` was tagged, found unpublishable, and deleted (both locally and on `origin`) before
-`v1.0.1` replaced it — `v1.0.0` never corresponds to a published version of this codebase.
+Reasoned (wrongly, as it turned out) that the old line had no other `1.0.x` releases and shipped
+`v1.0.1` next. Same failure, same shape: `Cannot publish over previously published version "1.0.1".`
+— a _second_ hidden version, invisible the same way `1.0.0` was. The old line evidently had more
+than one pre-`1.1.0` release that got unpublished before its visible history starts; there is no way
+to enumerate them short of a real publish attempt failing. **Do not assume a `1.0.x` (or any) number
+is clear just because it's absent from `npm view` and absent from the known-blocked list below** —
+that list is only what's been hit so far, not a verified-clear set.
 
-**Every version number permanently blocked on the `praxis-kit` name, for future changesets to check
-against before picking a target version** (32 total — the visible 31 from `npm view praxis-kit
-versions`, plus the hidden `1.0.0` confirmed above; `0.1.0` / `0.1.1` / `1.0.1` are this codebase's
-own releases, not blocked):
+Shipped as `1.0.2` — chose to keep probing the `1.0.x` line one number at a time rather than jump
+above `7.8.1` outright, accepting the risk of a third collision (and a third `publish.yml` cycle) to
+stay in the intended `1.0` line. If `1.0.2` also collides, jumping to `8.0.0` (strictly above every
+known old-line number) is the fallback that ends the guessing for good. Both `v1.0.0` and `v1.0.1`
+were tagged, found unpublishable, and deleted (both locally and on `origin`) — neither corresponds
+to a published version of this codebase.
 
-`1.0.0` (hidden — won't show in `npm view`), `1.1.0`, `1.1.1`, `2.0.0`, `2.0.1`, `2.0.2`, `3.0.0`,
-`3.1.0`, `3.1.1`, `4.0.0`, `4.0.1`, `4.0.3`, `4.1.0`, `4.1.1`, `4.1.2`, `4.1.3`, `5.0.0`, `6.0.0`,
-`6.1.0`, `6.1.1`, `6.2.0`, `6.2.1`, `6.2.3`, `6.5.0`, `6.6.0`, `6.6.1`, `7.0.0`, `7.3.0`, `7.4.0`,
-`7.5.0`, `7.8.0`, `7.8.1`.
+**Every version number confirmed permanently blocked on the `praxis-kit` name, for future
+changesets to check against before picking a target version** (33 total — the visible 31 from
+`npm view praxis-kit versions`, plus the hidden `1.0.0` and `1.0.1` confirmed above; `0.1.0` /
+`0.1.1` / `1.0.2` are this codebase's own releases, not blocked). **This list is not exhaustive** —
+see the trap above:
 
-**Standing risk:** the next *ordinary* release that happens to land on one of these by coincidence
-hits this same wall. No mitigation implemented — noting it here, with the full list above, so it's
-recognized immediately (not re-debugged as a fresh credentials issue, and not missed because
-`1.0.0` doesn't show in `npm view`) if it recurs.
+`1.0.0` (hidden), `1.0.1` (hidden), `1.1.0`, `1.1.1`, `2.0.0`, `2.0.1`, `2.0.2`, `3.0.0`, `3.1.0`,
+`3.1.1`, `4.0.0`, `4.0.1`, `4.0.3`, `4.1.0`, `4.1.1`, `4.1.2`, `4.1.3`, `5.0.0`, `6.0.0`, `6.1.0`,
+`6.1.1`, `6.2.0`, `6.2.1`, `6.2.3`, `6.5.0`, `6.6.0`, `6.6.1`, `7.0.0`, `7.3.0`, `7.4.0`, `7.5.0`,
+`7.8.0`, `7.8.1`.
+
+**Standing risk:** the next _ordinary_ release that happens to land on one of these by coincidence
+hits this same wall — and, per the trap above, could also land on a hidden version not yet in this
+list. No mitigation implemented — noting it here, with the full list above, so it's recognized
+immediately (not re-debugged as a fresh credentials issue) if it recurs. If this happens a third
+time, stop guessing and jump to `8.0.0`.
