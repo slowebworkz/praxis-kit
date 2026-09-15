@@ -3420,3 +3420,34 @@ API stability is a prerequisite for Sponsors here, not a substitute for the usag
 
 **Revisit trigger:** real signal of external usage — an issue, a PR, or a star from an account
 that isn't the maintainer's — or the next version tag, whichever comes first.
+
+### npm version collision — `1.0.0` skipped, shipped as `1.0.1` (2026-09-14)
+
+The `changeset version` release plan for the `defineContract` / `defineContractComponent`-removal
+work (breaking) computed `praxis-kit` `0.1.1` → `1.0.0` — a literal major bump, this changesets
+config has no pre-1.0 dampening. Tagging and pushing `v1.0.0` ran `publish.yml` three times: the
+first two failed on the OIDC trusted-publisher exchange (404, no trusted publisher registered yet);
+once that was fixed on npmjs.com, the fourth attempt authenticated fine and then failed at the
+registry itself:
+
+```
+Cannot publish over previously published version "1.0.0".
+```
+
+`1.0.0` was already published on the `praxis-kit` name on 2026-02-24 — by the same unrelated,
+pre-existing package line `npm-deprecate.yml` deprecates (`1.1.0`–`7.8.1`). That entry's "1.x–7.x"
+description undersells it: the old line's first release was `1.0.0` itself, and unlike the rest of
+the line it was never deprecated. npm permanently blocks republishing any version number a name has
+ever carried, regardless of current ownership — there is no credential or config fix for this, and
+it will recur for any of the old line's other 32 version numbers (`1.1.0`, `1.1.1`, `2.0.0`, …,
+`7.8.1`) if this codebase's version ever lands on one by coincidence.
+
+Shipped as `1.0.1` instead — the old line has no `1.0.x` patch releases, so the whole `1.0.x` series
+is clear. Chose the minimal fix (skip just the one blocked number, keep the intended `1.0` line)
+over jumping above `7.8.1` entirely, since the collision is with one specific number, not a range.
+`v1.0.0` was tagged, found unpublishable, and deleted (both locally and on `origin`) before
+`v1.0.1` replaced it — `v1.0.0` never corresponds to a published version of this codebase.
+
+**Standing risk:** the next *ordinary* release that happens to land on one of the old line's other
+32 version numbers hits this same wall. No mitigation implemented — noting it here so it's
+recognized immediately (not re-debugged as a fresh credentials issue) if it recurs.
