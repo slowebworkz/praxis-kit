@@ -3399,3 +3399,24 @@ is already assertable in the conformance suite without a Proxy.
 
 **Cross-cutting:** none of these should turn a property read into a reactive dependency edge — any
 Proxy here stays a transparent resolution / tracking mechanism, never a magical dependency graph.
+
+### GitHub Sponsors — not yet, reassess at the next tag (2026-09-14)
+
+Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule, ahead of the `v1.0.0` tag (the
+first breaking release — `defineContractComponent` removed, `defineContract` takes its place).
+Conclusion: **not yet.**
+
+What's there: `praxis-kit` on npm since `0.1.0`, ~1,100 downloads/month (`api.npmjs.org`,
+2026-08-13 → 2026-09-11) — but that window is registry-mirror/CI noise on a two-week-old package,
+not evidence of adoption, and the npm name still carries a deprecated `1.1.0`-`7.8.1` line from an
+unrelated earlier publisher (`npm-deprecate.yml`) that `v1.0.0` will sit awkwardly next to in the
+version list.
+
+What's not there: repo created 2026-08-31 (two weeks old), 0 stars, 0 forks, 0 watchers, one human
+contributor (the maintainer — `dependabot[bot]` is the only other), no external issues or PRs ever
+opened (`gh api repos/slowebworkz/praxis-kit`, `gh issue list`, 2026-09-14). No `.github/FUNDING.yml`
+exists yet. There's no community to ask for support from, and 1.0.0 itself doesn't change that —
+API stability is a prerequisite for Sponsors here, not a substitute for the usage signal.
+
+**Revisit trigger:** real signal of external usage — an issue, a PR, or a star from an account
+that isn't the maintainer's — or the next version tag, whichever comes first.
