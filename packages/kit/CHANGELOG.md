@@ -1,6 +1,10 @@
 # praxis-kit
 
-## 1.0.0
+## 1.0.1
+
+Published as `1.0.1`, not `1.0.0` — `1.0.0` was already taken on the `praxis-kit` npm name by the
+unrelated pre-existing package line (see `DECISIONS.md`, "npm version collision"). No `1.0.0` of
+this codebase exists or ever will.
 
 ### Major Changes
 
