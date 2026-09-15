@@ -1,24 +1,23 @@
 // Packed-tarball smoke test for packages/kit.
 //
-// `publint` + a workspace typecheck check dist/ *shape* and source *types* — neither one actually
-// installs the published package the way a real consumer would. Two real bugs (a missing
-// `shims: true`, and a pre-existing `tooling/codemod` bin-symlink defect — see DECISIONS.md's
-// "Review pass — packaging fixes" entry) were invisible to both and only surfaced by doing exactly
-// what this script automates: build → pack → install the tarball into an isolated fixture, outside
-// this repo's own pnpm workspace (so nothing resolves via workspace hoisting) → exercise every
-// public entry the way a consumer's code actually would.
+// Builds and packs the real tarball, installs it into an isolated consumer fixture outside this
+// repo's own pnpm workspace (no workspace hoisting to mask a gap), then exercises runtime
+// imports, declaration resolution, Svelte packaging, and the codemod CLI the way a real consumer
+// would. `publint` + a workspace typecheck check dist/ shape and source types but don't actually
+// install anything — see DECISIONS.md's "Review pass — packaging fixes" entry for the real bugs
+// this script's approach found that those two missed.
 //
 // Run: pnpm --filter ./packages/kit test:pack (from anywhere — a *path* filter; the root
 // workspace package.json is also named "praxis-kit", so a name filter matches both and runs both
 // their scripts), or `tsx scripts/smoke-test.ts` from this directory. Exits non-zero on any
 // failure — safe to wire into CI once CI itself is ported (see .vscode/MIGRATION.md).
 
-import { spawnSync } from 'node:child_process'
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync, existsSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import type { StringMap } from '@praxis-kit/primitive'
+import { spawnSync } from 'node:child_process'
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const KIT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -69,18 +68,18 @@ const PEERS = [
 // Confirmed with a negative control: renaming one of these to a nonexistent export makes this step
 // fail with a real `tsc` TS2305 "has no exported member" error, not a silent pass.
 const TYPE_CHECK_ENTRIES: StringMap<string> = {
-  react: 'AnyFactoryOptions',
-  'react/legacy': 'AnyFactoryOptions',
-  preact: 'AnyFactoryOptions',
-  vue: 'AnyFactoryOptions',
-  solid: 'AnyFactoryOptions',
-  lit: 'AnyFactoryOptions',
-  web: 'AnyFactoryOptions',
-  svelte: 'AnyFactoryOptions',
+  react: 'FactoryOptions',
+  'react/legacy': 'FactoryOptions',
+  preact: 'FactoryOptions',
+  vue: 'FactoryOptions',
+  solid: 'FactoryOptions',
+  lit: 'FactoryOptions',
+  web: 'FactoryOptions',
+  svelte: 'FactoryOptions',
   tailwind: 'createTailwindPipeline',
   eslint: 'plugin',
   'vite-plugin': 'PluginOptions',
-  contract: 'AnyFactoryOptions',
+  contract: 'FactoryOptions',
   guards: 'COMPONENT_DEFAULT_TAG',
   html: 'ANCHOR_RULES',
   utils: 'memoize',
@@ -111,13 +110,19 @@ function main(): void {
   const tarballPath = join(KIT_DIR, tarballName)
   if (!existsSync(tarballPath)) throw new Error(`pnpm pack did not produce ${tarballPath}`)
 
-  // Outside this repo's pnpm workspace entirely — inside it, `npm`/`pnpm` would resolve
-  // `@praxis-kit/*`-adjacent things via workspace hoisting and mask exactly the class of bug this
-  // script exists to catch.
-  const fixture = mkdtempSync(join(tmpdir(), 'praxis-kit-smoke-'))
-  console.log(`smoke-test: fixture at ${fixture}`)
+  // Declared before the try so `finally` can clean it up even if something between the tarball
+  // existing and the fixture being created throws — e.g. mkdtempSync itself failing (disk full,
+  // permissions). Previously the fixture was created *before* the try/finally, so a throw in that
+  // narrow window would have left the tarball behind with nothing to clean it up.
+  let fixture: string | undefined
 
   try {
+    // Outside this repo's pnpm workspace entirely — inside it, `npm`/`pnpm` would resolve
+    // `@praxis-kit/*`-adjacent things via workspace hoisting and mask exactly the class of bug
+    // this script exists to catch.
+    fixture = mkdtempSync(join(tmpdir(), 'praxis-kit-smoke-'))
+    console.log(`smoke-test: fixture at ${fixture}`)
+
     run('npm', ['init', '-y'], fixture)
     console.log(
       'smoke-test: installing tarball + peers (isolated fixture, no workspace hoisting) …',
@@ -245,7 +250,7 @@ console.log('Polymorphic.svelte compiles (client + server) and every import reso
 
     console.log('smoke-test: PASS')
   } finally {
-    rmSync(fixture, { recursive: true, force: true })
+    if (fixture) rmSync(fixture, { recursive: true, force: true })
     rmSync(tarballPath, { force: true })
   }
 }

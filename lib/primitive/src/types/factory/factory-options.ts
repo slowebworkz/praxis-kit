@@ -21,23 +21,6 @@ export type NormalizeFn<Props extends AnyRecord = AnyRecord> = {
 }['normalize']
 
 /**
- * The type-erased shape of {@link FactoryOptions} — every generic parameter widened to its bound.
- *
- * Use it for a value that must hold *any* factory config (a registry, a generic wrapper). It
- * cannot check `styling.compounds` conditions against the real variant keys/values, because it
- * has forgotten what they are — for that, annotate against `FactoryOptions<...>` with the concrete
- * generics (or `satisfies FactoryOptions<'button', Props, typeof variants>`), which keeps an
- * invalid compound condition a type error rather than a silent no-op.
- */
-export type AnyFactoryOptions = FactoryOptions<
-  ElementType,
-  AnyRecord,
-  VariantMap,
-  RecipeMap<VariantMap>,
-  AnyClassPluginFactory
->
-
-/**
  * The framework-neutral component-authoring config passed to `createContractComponent` in every
  * adapter: default tag + name, own-prop defaults, a `normalize` transform, `styling` (variants,
  * base classes, presets, class plugin), `enforcement` (ARIA + children contracts), `subComponents`,
@@ -46,7 +29,9 @@ export type AnyFactoryOptions = FactoryOptions<
  * `satisfies FactoryOptions<TDefault, Props, typeof variants, ...>` on a config object narrows
  * `styling.compounds` conditions to the real per-variant-key shape — including resolving a
  * boolean-shaped axis (`{ true, false }`) to a real `boolean` — so a condition naming a variant or
- * value that does not exist is a compile error. `AnyFactoryOptions` cannot do this.
+ * value that does not exist is a compile error. Leaving `V` at the bare `VariantMap` instead
+ * (whether via `FactoryOptions`'s own default or an explicit erased instantiation) forgets that
+ * shape entirely, so the same invalid condition becomes a silent no-op instead.
  */
 export type FactoryOptions<
   TDefault extends ElementType = ElementType,
@@ -62,6 +47,33 @@ export type FactoryOptions<
   readonly name?: string
   /** Values used for the component's own (non-variant) props when the consumer omits them. */
   readonly defaults?: Partial<NoInfer<Props>>
+  /**
+   * Optional, type-only declaration of this component's complete own-prop shape — present purely
+   * for type recovery, never read at runtime (see `declareProps` in `@praxis-kit/adapter-utils`).
+   *
+   * `defaults` alone can only prove a prop *has a default*, not that it's the complete prop model
+   * a component accepts — a `defaults: { size: 'md' }` component may still take `onClick`,
+   * `disabled`, and other props with no default at all, none of which a `defaults`-only recovery
+   * can see (see `ContractPropsFrom`'s own doc comment for the general shape of this problem).
+   * `props` closes that gap: when present, `ContractPropsOf<C>` / `ContractProps<typeof Component>`
+   * recover this declared type directly and exactly, in place of the necessarily-partial,
+   * literal-widened recovery `defaults` alone allows.
+   *
+   * Typed as `object | undefined`, not `NoInfer<Props> | undefined` like `defaults`/`onElement` —
+   * deliberately decoupled from this interface's own `Props` generic, unlike those two fields.
+   * `defaults`/`onElement` are tied to `Props` because real runtime code reads them against a
+   * concretely-resolved `Props` for a real call; `props` is never read at runtime at all (see
+   * above), so it has no such need, and tying it to `Props extends AnyRecord` would force every
+   * hand-declared prop `interface`/`type` an author passes through `declareProps<Props>()` to
+   * structurally satisfy `Record<string, unknown>` — a real TypeScript limitation (a named type
+   * without an index signature never satisfies that, even via plain assignment, only a fresh
+   * object literal does) that would make this field far more awkward to use for its one real job:
+   * carrying an author's own already-precise prop type through untouched. `ContractPropsFrom`
+   * (`contract-model.ts`) recovers the real value here structurally, straight off `O`'s own
+   * literal type — independent of this field's declared type, same as every other `Contract*From`
+   * derivation in that file.
+   */
+  readonly props?: object | undefined
   /**
    * A pure `(props) => props` transform run on every render, after `enforcement.props`'s
    * normalizers see the same input. Use this for component-specific prop shaping — anything
@@ -116,8 +128,15 @@ export type FactoryOptions<
    *
    * Return a cleanup function to run when the instance unmounts.
    */
-  readonly onElement?: (
-    element: ElementForTag<TDefault | TAllowed>,
-    getProps: () => Readonly<Props>,
-  ) => void | (() => void)
+  // method-signature form gives bivariant assignability — same fix, same reason as `NormalizeFn`
+  // above: without it, a concrete contract (non-default `TAllowed`/`Props`) fails structural
+  // assignability against a *defaulted* `FactoryOptions<...>` instantiation (e.g. `defineContract`'s
+  // `ContractInput<Props>` bound), since a plain arrow-property type-checks `onElement`'s parameters
+  // contravariantly.
+  readonly onElement?: {
+    onElement(
+      element: ElementForTag<TDefault | TAllowed>,
+      getProps: () => Readonly<Props>,
+    ): void | (() => void)
+  }['onElement']
 }

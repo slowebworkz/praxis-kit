@@ -9,12 +9,16 @@ import {
 import type {
   AnyClassPluginFactory,
   AnyRecord,
+  ContractGenericsOf,
+  ContractPluginOf,
+  ContractPresetOf,
+  ContractPropsOf,
+  ContractTagOf,
+  ContractVariantsOf,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
   MergeRecords,
-  NoPreset,
-  NoVariants,
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
@@ -25,7 +29,7 @@ import { buildRuntime } from './build-runtime'
 import { isLitContractComponent } from './is-lit-contract-component'
 import { registerForSsr } from './render-to-string'
 import { isLitFactoryOptions } from './to-lit-factory-options'
-import type { LitContractComponent, LitFactoryOptions, RuntimeG, UnknownProps } from './types'
+import type { LitContractComponent, LitFactoryOptions, UnknownProps } from './types'
 
 /**
  * Creates a Lit custom element class with praxis-kit contracts applied.
@@ -96,28 +100,35 @@ import type { LitContractComponent, LitFactoryOptions, RuntimeG, UnknownProps } 
  * tag polymorphism, but SSR quietly provided a fake, DOM-inconsistent form of it until now. Need
  * different semantics for one instance? Register a second component with a different `tag`, or
  * set `role` directly — both already work today, unaffected by this.
+ *
+ * `TDefault`/`TProps`/`TVariants`/`TPreset`/`TPlugin` are each `ContractXOf<C>`-derived *defaults*
+ * on this function's own type parameter list, mirroring every other adapter's identical fix — see
+ * `@praxis-kit/react`'s own doc comment for why (computed as function type-parameter defaults, not
+ * inline body computations, which doesn't resolve for a still-abstract `C`).
  */
 export function createContractComponent<
-  TDefault extends ElementType,
-  TProps extends UnknownProps = EmptyRecord,
-  TVariants extends Readonly<VariantMap> = NoVariants,
-  TPreset extends RecipeMap<TVariants> = NoPreset,
-  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
+  C extends LitFactoryOptions,
+  TDefault extends ElementType = ContractTagOf<C>,
+  TProps extends UnknownProps = ContractPropsOf<C>,
+  TVariants extends Readonly<VariantMap> = ContractVariantsOf<C>,
+  TPreset extends RecipeMap<VariantMap> = ContractPresetOf<C>,
+  TPlugin extends AnyClassPluginFactory = ContractPluginOf<C>,
   TSubComponents extends Readonly<AnyRecord> = EmptyRecord,
 >(
-  options: LitFactoryOptions<TDefault, TProps, TVariants, TPreset, TPlugin> & {
+  options: C & {
     readonly subComponents?: TSubComponents
   },
 ): MergeRecords<
-  LitContractComponent<
-    TVariants,
-    ExtractPluginProps<TPlugin>,
-    RuntimeG<TDefault, TProps, TVariants, TPreset>
-  >,
+  LitContractComponent<TVariants, ExtractPluginProps<TPlugin>, ContractGenericsOf<C>, C>,
   TSubComponents
 > {
   invariant(isLitFactoryOptions(options), 'options is not a valid LitFactoryOptions object')
-  const bundle = buildRuntime(options)
+  // `options` (a single, formally independent type parameter `C`) no longer sufficiently
+  // overlaps with the reconstructed `LitFactoryOptions<...>` for a direct cast the way the old,
+  // separately-threaded generics did — see `@praxis-kit/react`'s identical comment.
+  const bundle = buildRuntime(
+    options as unknown as LitFactoryOptions<TDefault, TProps, TVariants, TPreset>,
+  )
   const looseBundle = toLooseBundle(bundle)
 
   const variantKeys = options.styling?.variants ? Object.keys(options.styling.variants) : []
@@ -294,17 +305,13 @@ export function createContractComponent<
 
   const assembled = assembleCompoundComponent(PolymorphicLitElement, options.subComponents)
 
-  // TVariants/TPlugin/G are all erased at runtime and can't be checked by any
+  // TVariants/TPlugin/G/C are all erased at runtime and can't be checked by any
   // guard — the check above already proves the class shape genuinely, this
-  // just bridges the erased generics (including the phantom __generics
-  // marker, never assigned above — see LitContractComponent's own doc
+  // just bridges the erased generics (including the phantom __generics/__contract
+  // markers, never assigned above — see LitContractComponent's own doc
   // comment) onto the specific public type.
   return assembled as unknown as MergeRecords<
-    LitContractComponent<
-      TVariants,
-      ExtractPluginProps<TPlugin>,
-      RuntimeG<TDefault, TProps, TVariants, TPreset>
-    >,
+    LitContractComponent<TVariants, ExtractPluginProps<TPlugin>, ContractGenericsOf<C>, C>,
     TSubComponents
   >
 }

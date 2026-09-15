@@ -1,5 +1,4 @@
 export type {
-  AnyFactoryOptions,
   EnforcementOptions,
   FactoryOptions,
   NormalizeFn,
@@ -14,6 +13,21 @@ export type {
   ResolveInput,
   ResolveOutput,
   ResolverOptions,
+  ContractInput,
+  DefinedContract,
+  ContractDimensions,
+  ContractModel,
+  ContractModelFrom,
+  ContractModelOf,
+  HasContractModel,
+  ContractAllowedOf,
+  ContractGenericsOf,
+  ContractGenericsWithAllowedOf,
+  ContractPluginOf,
+  ContractPresetOf,
+  ContractPropsOf,
+  ContractTagOf,
+  ContractVariantsOf,
 } from '@praxis-kit/primitive'
 export type { ResolvedFactoryShape } from './resolved-factory-shape'
 export type { RenderPipeline } from './render-pipeline'

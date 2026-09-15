@@ -14,11 +14,11 @@ import type { LitContractComponent } from './types'
  * boundaries: the value is a function whose prototype chain includes
  * `LitElement`, exactly what `createContractComponent` always produces.
  *
- * `LitContractComponent`'s third parameter, `G` (the phantom `__generics`
- * marker `GenericsOf`/`ContractProps` read back — `./types/contract-props`),
- * is left at its default here: it carries no runtime signal for this guard to
- * check, and `createContractComponent` supplies the real `G` itself when it
- * casts this function's narrowed result to its public return type.
+ * `LitContractComponent`'s third and fourth parameters, `G` and `C` (the phantom `__generics`/
+ * `__contract` markers `GenericsOf`/`ContractProps` read back — `./types/contract-props`), are
+ * left at their defaults here: neither carries a runtime signal for this guard to check, and
+ * `createContractComponent` supplies the real `G`/`C` itself when it casts this function's
+ * narrowed result to its public return type.
  */
 export function isLitContractComponent<
   TVariants extends Readonly<VariantMap> = NoVariants,

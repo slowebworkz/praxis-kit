@@ -26,8 +26,9 @@ pnpm add react
 
 ```ts
 import { createContractComponent } from '@praxis-kit/react'
+import { defineContract } from '@praxis-kit/adapter-utils'
 
-const Button = createContractComponent({
+export const buttonContract = defineContract({
   tag: 'button',
   name: 'Button',
   defaults: { type: 'button' },
@@ -41,7 +42,16 @@ const Button = createContractComponent({
     aria: [{ rule: 'no-redundant-role' }],
   },
 })
+
+const Button = createContractComponent(buttonContract)
 ```
+
+`defineContract` pins the config object to its own concrete type before it reaches
+`createContractComponent` — the same object works unchanged if you pass it to another adapter's
+`createContractComponent` instead, and it's what lets `ContractProps<typeof Button>` (below) recover
+the exact prop shape later. Skipping it and passing a plain object literal straight to
+`createContractComponent` still works — `defineContract` is a naming/reuse convenience, not a
+requirement.
 
 The returned component is a standard React component. Pass `as` to change the rendered element:
 
@@ -103,7 +113,6 @@ Without `Slottable`, the first child receives the merged props.
 | Export                                                                                                                                                       | Description                                                                                                         |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
 | `createContractComponent`                                                                                                                                    | Factory: styling + ARIA enforcement + children validation                                                           |
-| `defineContractComponent`                                                                                                                                    | Curries a factory's options so multiple call sites share one config                                                 |
 | `Slottable`                                                                                                                                                  | Marks the composition target child for `asChild`                                                                    |
 | `mergeRefs`                                                                                                                                                  | Utility for combining multiple React refs                                                                           |
 | `ReactFactoryOptions` (type)                                                                                                                                 | Factory options with React-specific extensions                                                                      |

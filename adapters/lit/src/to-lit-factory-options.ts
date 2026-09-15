@@ -1,11 +1,4 @@
-import type {
-  AnyClassPluginFactory,
-  AnyRecord,
-  ElementType,
-  FactoryOptions,
-  RecipeMap,
-  VariantMap,
-} from '@praxis-kit/core'
+import type { FactoryOptions } from '@praxis-kit/core'
 import { isFunction } from '@praxis-kit/primitive'
 import type { StringMap } from '@praxis-kit/primitive'
 import { isFactoryOptionsLike } from '@praxis-kit/adapter-utils'
@@ -17,18 +10,13 @@ const LIT_FIELD_VALIDATORS: StringMap<(value: unknown) => boolean> = {
 }
 
 /**
- * Type guard narrowing the generic `FactoryOptions` shape down to
- * `LitFactoryOptions` — the type `buildRuntime` is declared against. See
- * `isFactoryOptionsLike` for what this does and doesn't validate.
+ * Type guard narrowing a concrete contract `C` down to `C & LitFactoryOptions` — the type
+ * `buildRuntime` is declared against. Single-generic, matching `createContractComponent`'s own
+ * `C extends LitFactoryOptions` (Phase 2 of the `defineContract` refactor — was 4 independent
+ * generics). See `isFactoryOptionsLike` for what this does and doesn't validate.
  */
-export function isLitFactoryOptions<
-  TDefault extends ElementType,
-  Props extends AnyRecord,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends RecipeMap<Variants>,
-  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
->(
-  options: FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin>,
-): options is LitFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> {
+export function isLitFactoryOptions<C extends FactoryOptions>(
+  options: C,
+): options is C & LitFactoryOptions {
   return isFactoryOptionsLike(options, LIT_FIELD_VALIDATORS)
 }

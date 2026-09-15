@@ -5,25 +5,31 @@
  * limitations" note atop `conformance.test.ts`), so no `Mode` parameter and no asChild-mode section.
  *
  * `createContractComponent`'s return type erases `TDefault`/`TProps`/`TPreset` entirely — nothing
- * short of the phantom `__generics` marker on `WebContractComponent` (`./types/primitives`) could
- * recover them from outside this file. These tests exist to catch a regression in that recovery,
- * not to re-test `PropsOf`/`VariantProps`/etc. themselves (covered in `@praxis-kit/core`).
+ * short of the phantom `__contract` marker on `WebContractComponent` (`./types/primitives`) could
+ * recover them from outside this file. `GenericsOf<T>`/`ContractProps<T>` derive `G` from
+ * `__contract` via `ContractGenericsOf<C>` (Phase 4 of the `defineContract` refactor — was a
+ * separately-computed `__generics` field that never folded in plugin-contributed props; see
+ * `./types/contract-props.ts`'s own doc comment). These tests exist to catch a regression in that
+ * recovery, not to re-test `PropsOf`/`VariantProps`/etc. themselves (covered in `@praxis-kit/core`).
  *
  * No runtime assertions are made — `expectTypeOf` only.
  */
 import { describe, it, expectTypeOf } from 'vitest'
-import type { DefaultOf, EmptyRecord, PolymorphicGenerics, PropsOf } from '@praxis-kit/core'
+import type { ClassPluginFactory, DefaultOf, EmptyRecord, PropsOf } from '@praxis-kit/core'
 import { createContractComponent } from './create-contract-component'
 import type { ContractProps, GenericsOf } from './types'
 
-type ButtonProps = { readonly loading?: boolean }
-
 const buttonVariants = { intent: { primary: 'btn-primary', ghost: 'btn-ghost' } } as const
 
-const Button = createContractComponent<'button', ButtonProps, typeof buttonVariants>({
+// `loading` is recovered from `defaults` (`ContractPropsOf<C>`), not an explicit `TProps` generic
+// argument — `createContractComponent` dropped that parameter entirely, mirroring the Lit adapter's
+// identical fix (see that adapter's own `contract-props.test.ts` for the full reasoning). `false`
+// is widened to `boolean` by `ContractPropsFrom`'s own `WidenShallow` step.
+const Button = createContractComponent({
   tag: 'button',
   name: 'WebContractPropsButton',
   styling: { base: 'btn-base', variants: buttonVariants, defaults: { intent: 'ghost' } },
+  defaults: { loading: false },
 })
 
 const Header = createContractComponent({ tag: 'header', name: 'WebContractPropsCardHeader' })
@@ -40,15 +46,18 @@ void Card
 
 describe('GenericsOf', () => {
   it('recovers the PolymorphicGenerics a component was built from', () => {
-    expectTypeOf<PropsOf<GenericsOf<typeof Button>>>().toEqualTypeOf<ButtonProps>()
+    expectTypeOf<PropsOf<GenericsOf<typeof Button>>>().toEqualTypeOf<{ loading?: boolean }>()
     expectTypeOf<DefaultOf<GenericsOf<typeof Button>>>().toEqualTypeOf<'button'>()
   })
 
-  it('falls back to the widest PolymorphicGenerics for a value with no marker', () => {
-    // `{}` structurally satisfies `HasGenerics<PolymorphicGenerics>` — `__generics` is optional —
-    // the same "no marker, nothing to recover" case documented on the type itself.
-    expectTypeOf<GenericsOf<object>>().toEqualTypeOf<PolymorphicGenerics>()
-  })
+  // No "falls back to the widest PolymorphicGenerics for a value with no marker" test here — see
+  // the Lit adapter's identical, more-detailed comment in its own `contract-props.test.ts` for why
+  // this specific edge case (a value with no `__contract` field declared *at all*) isn't asserted
+  // post-Phase-4: `object` structurally satisfies `HasContract`'s optional field either way, but
+  // the positional-`infer`-against-an-absent-optional-field limitation on `ContractModelOf` means
+  // the recovered `C` resolves to the declared constraint `FactoryOptions`, not a clean "nothing to
+  // recover" case. No other migrated adapter's tests assert this either — real components always
+  // carry the field.
 })
 
 describe('ContractProps', () => {
@@ -79,6 +88,22 @@ describe('ContractProps', () => {
   it("resolves the root's own props on a compound component, unaffected by subComponents", () => {
     expectTypeOf<PropsOf<GenericsOf<typeof Card>>>().toEqualTypeOf<EmptyRecord>()
     expectTypeOf<ContractProps<typeof Card>['as']>().toEqualTypeOf<undefined>()
+  })
+
+  it('includes plugin-contributed props (finding #44 — previously missing entirely for Lit/Web)', () => {
+    // Mirrors the Lit adapter's identical fixture/regression test — see that adapter's own
+    // `contract-props.test.ts` for the full before/after explanation.
+    type PluginProps = { readonly highlighted?: boolean }
+    const stubPlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<PluginProps>
+
+    const Chip = createContractComponent({
+      tag: 'span',
+      name: 'WebChip',
+      styling: { base: 'chip-base', plugin: stubPlugin },
+    })
+    void Chip
+
+    expectTypeOf<ContractProps<typeof Chip>['highlighted']>().toEqualTypeOf<boolean | undefined>()
   })
 
   it('passes data-* attributes through (finding #43)', () => {

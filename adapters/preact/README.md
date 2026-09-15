@@ -23,8 +23,9 @@ pnpm add preact
 
 ```ts
 import { createContractComponent } from '@praxis-kit/preact'
+import { defineContract } from '@praxis-kit/adapter-utils'
 
-const Button = createContractComponent({
+export const buttonContract = defineContract({
   tag: 'button',
   name: 'Button',
   defaults: { type: 'button' },
@@ -38,7 +39,16 @@ const Button = createContractComponent({
     aria: [{ rule: 'no-redundant-role' }],
   },
 })
+
+const Button = createContractComponent(buttonContract)
 ```
+
+`defineContract` pins the config object to its own concrete type before it reaches
+`createContractComponent` — the same object works unchanged if you pass it to another adapter's
+`createContractComponent` instead, and it's what lets `ContractProps<typeof Button>` (below) recover
+the exact prop shape later. Skipping it and passing a plain object literal straight to
+`createContractComponent` still works — `defineContract` is a naming/reuse convenience, not a
+requirement.
 
 The returned component is a standard Preact component. Pass `as` to change the rendered element:
 
@@ -60,11 +70,10 @@ Pass `asChild` to merge props onto the single child element:
 
 ## Exports
 
-| Export                                                                                     | Description                                                         |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| `createContractComponent`                                                                  | Factory: styling + ARIA enforcement + children validation           |
-| `defineContractComponent`                                                                  | Curries a factory's options so multiple call sites share one config |
-| `Slottable`                                                                                | Marks the composition target child for `asChild`                    |
-| `PreactFactoryOptions` (type)                                                              | Factory options with Preact-specific extensions                     |
-| `ContractProps<T, Mode>` (type)                                                            | A built component's prop contract, recovered from `typeof X`        |
-| `PolymorphicComponent`, `PolymorphicProps`, `PolymorphicWithAsChild`, `ElementRef` (types) | Component / prop shapes for typing wrappers                         |
+| Export                                                                                     | Description                                                  |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| `createContractComponent`                                                                  | Factory: styling + ARIA enforcement + children validation    |
+| `Slottable`                                                                                | Marks the composition target child for `asChild`             |
+| `PreactFactoryOptions` (type)                                                              | Factory options with Preact-specific extensions              |
+| `ContractProps<T, Mode>` (type)                                                            | A built component's prop contract, recovered from `typeof X` |
+| `PolymorphicComponent`, `PolymorphicProps`, `PolymorphicWithAsChild`, `ElementRef` (types) | Component / prop shapes for typing wrappers                  |

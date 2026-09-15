@@ -21,10 +21,25 @@ export * from '@praxis-kit/core/props'
 
 /**
  * Factory-authoring types for defining framework-neutral components and their
- * contracts: `FactoryOptions`, `AnyFactoryOptions`, `EnforcementOptions`,
- * `StylingOptions`, `NormalizeFn`, `PropNormalizer`, `ResolvedFactoryOptions`.
+ * contracts: `FactoryOptions`, `EnforcementOptions`, `StylingOptions`,
+ * `NormalizeFn`, `PropNormalizer`, `ResolvedFactoryOptions`, `ContractInput`,
+ * `DefinedContract`, and the `Contract*Of` accessor family.
  */
 export type * from '@praxis-kit/primitive/types/factory'
+
+/**
+ * The contract-definition boundary — pins a plain configuration object to its own concrete type
+ * and requires `tag`/`name`. See `@praxis-kit/adapter-utils`'s `define-contract.ts` for the full
+ * rationale.
+ */
+export { defineContract } from '@praxis-kit/adapter-utils'
+
+/**
+ * Type-only helper for a contract's optional `props` field — declares a component's complete prop
+ * shape inline when `defaults` alone doesn't capture it. See `@praxis-kit/adapter-utils`'s
+ * `declare-props.ts` for the full rationale.
+ */
+export { declareProps } from '@praxis-kit/adapter-utils'
 
 /** Props supported by intrinsic HTML elements. */
 export type { IntrinsicProps } from '@praxis-kit/primitive/types'

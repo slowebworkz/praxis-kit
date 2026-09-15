@@ -2,10 +2,7 @@ import type {
   AnyClassPluginFactory,
   AnyRecord,
   ElementType,
-  EmptyRecord,
   FactoryOptions,
-  NoPreset,
-  NoVariants,
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
@@ -21,12 +18,18 @@ import type { FilterPredicate } from '@praxis-kit/adapter-utils'
  *
  * Note: this adapter targets Light DOM composition only. Shadow DOM slot
  * protocol is intentionally out of scope.
+ *
+ * Every generic parameter has a default (widened to that parameter's own *bound*, matching
+ * a wide-bound, type-erased philosophy, not `FactoryOptions`'s own narrower `EmptyRecord`-style
+ * defaults) so `LitFactoryOptions` can be used bare, as `createContractComponent`'s single
+ * `C extends LitFactoryOptions` constraint — see `ReactFactoryOptions`'s identical fix for the
+ * same reason.
  */
 export type LitFactoryOptions<
   TDefault extends ElementType = ElementType,
-  TProps extends AnyRecord = EmptyRecord,
-  TVariants extends Readonly<VariantMap> = NoVariants,
-  TPreset extends RecipeMap<TVariants> = NoPreset,
+  TProps extends AnyRecord = AnyRecord,
+  TVariants extends Readonly<VariantMap> = Readonly<VariantMap>,
+  TPreset extends RecipeMap<TVariants> = RecipeMap<TVariants>,
   TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
 > = FactoryOptions<TDefault, TProps, TVariants, TPreset, TPlugin> & {
   readonly filterProps?: FilterPredicate

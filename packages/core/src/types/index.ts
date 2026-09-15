@@ -29,7 +29,6 @@ export type * from './class'
 export type * from './contract'
 export type {
   AllowedOf,
-  AnyFactoryOptions,
   ClassPluginResolution,
   DefaultOf,
   EnforcementOptions,
@@ -46,4 +45,19 @@ export type {
   ResolverOptions,
   StylingOptions,
   VariantsOf,
+  ContractInput,
+  DefinedContract,
+  ContractDimensions,
+  ContractModel,
+  ContractModelFrom,
+  ContractModelOf,
+  HasContractModel,
+  ContractAllowedOf,
+  ContractGenericsOf,
+  ContractGenericsWithAllowedOf,
+  ContractPluginOf,
+  ContractPresetOf,
+  ContractPropsOf,
+  ContractTagOf,
+  ContractVariantsOf,
 } from './factory'

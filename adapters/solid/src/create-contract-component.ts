@@ -1,12 +1,15 @@
 import type {
   AnyClassPluginFactory,
   AnyRecord,
+  ContractPluginOf,
+  ContractPresetOf,
+  ContractPropsOf,
+  ContractTagOf,
+  ContractVariantsOf,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
   MergeRecords,
-  NoPreset,
-  NoVariants,
   PolymorphicGenerics,
   RecipeMap,
   VariantMap,
@@ -40,16 +43,23 @@ import type { KnownProps, PolymorphicComponent, SolidElement, UnknownProps } fro
  *
  * `ref` is forwarded as an ordinary Solid ref callback. Pass `subComponents` to attach named
  * sub-components (`Card.Header`) and `onElement` to run setup once the real DOM element exists.
+ *
+ * `TDefault`/`Props`/`Variants`/`TPreset`/`TPlugin` are each `ContractXOf<C>`-derived *defaults*
+ * on this function's own type parameter list, mirroring `@praxis-kit/react`'s identical fix — see
+ * that adapter's own doc comment for why (computed as function type-parameter defaults, not inline
+ * body computations, which doesn't resolve for a still-abstract `C`). No `TAllowed` here, matching
+ * this adapter's pre-refactor behavior — Solid never threaded it as its own generic.
  */
 export function createContractComponent<
-  TDefault extends ElementType,
-  Props extends UnknownProps = EmptyRecord,
-  Variants extends Readonly<VariantMap> = NoVariants,
-  TPreset extends RecipeMap<Variants> = NoPreset,
-  TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
+  C extends SolidFactoryOptions,
+  TDefault extends ElementType = ContractTagOf<C>,
+  Props extends UnknownProps = ContractPropsOf<C>,
+  Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
+  TPreset extends RecipeMap<VariantMap> = ContractPresetOf<C>,
+  TPlugin extends AnyClassPluginFactory = ContractPluginOf<C>,
   TSubComponents extends Readonly<AnyRecord> = EmptyRecord,
 >(
-  options: SolidFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin> & {
+  options: C & {
     readonly subComponents?: TSubComponents
   },
 ): MergeRecords<
@@ -59,7 +69,8 @@ export function createContractComponent<
       MergeRecords<Props, ExtractPluginProps<TPlugin>>,
       Variants,
       TPreset
-    >
+    >,
+    C
   >,
   TSubComponents
 > {
@@ -72,8 +83,14 @@ export function createContractComponent<
   // generic invariance; see the NormalizeFn bivariance note elsewhere in this
   // codebase). TPlugin is erased at runtime regardless, so no guard could
   // ever check this gap — it needs an assertion the same way buildRuntime's
-  // TPlugin elision does in every other adapter.
-  const bundle = buildRuntime(options as SolidFactoryOptions<TDefault, Props, Variants, TPreset>)
+  // TPlugin elision does in every other adapter. `as unknown as`, not the
+  // original narrower `as`, since `C` (a single, formally independent type
+  // parameter — see `@praxis-kit/react`'s identical comment) no longer
+  // sufficiently overlaps with the reconstructed `SolidFactoryOptions<...>`
+  // for a direct cast the way the old, separately-threaded generics did.
+  const bundle = buildRuntime(
+    options as unknown as SolidFactoryOptions<TDefault, Props, Variants, TPreset>,
+  )
   const { onElement } = options
 
   const Component = (props: UnknownProps): SolidElement => {
@@ -127,6 +144,8 @@ export function createContractComponent<
   // prove that the assembled value satisfies the same conditional expression used by the
   // declared return type. Once the generics are instantiated at a call site, the conditional
   // simplifies correctly. The invariant above validates the runtime shape; this assertion
-  // bridges the gap in the compiler's type reasoning.
-  return assembled as MergeRecords<PolymorphicComponent<G>, TSubComponents>
+  // bridges the gap in the compiler's type reasoning. Also where `__contract`'s `C` is attached —
+  // type-only, matching `__generics`: `assembled` never actually gains a `__contract` property at
+  // runtime, only in the type this assertion claims.
+  return assembled as unknown as MergeRecords<PolymorphicComponent<G, C>, TSubComponents>
 }

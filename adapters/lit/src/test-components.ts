@@ -1,7 +1,6 @@
 // Shared test component definitions.
 // Each component is registered once per test run in beforeAll.
 
-import type { EmptyRecord } from '@praxis-kit/core'
 import { throwDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from './create-contract-component'
 
@@ -12,7 +11,7 @@ const boxVariants = {
   gap: { sm: 'gap-2', md: 'gap-4', lg: 'gap-8' },
 } as const
 
-export const BoxElement = createContractComponent<'div', EmptyRecord, typeof boxVariants>({
+export const BoxElement = createContractComponent({
   tag: 'div',
   name: 'Box',
   styling: {
@@ -32,7 +31,7 @@ const buttonVariants = {
   size: { sm: 'btn-sm', md: 'btn-md', lg: 'btn-lg' },
 } as const
 
-export const ButtonElement = createContractComponent<'button', EmptyRecord, typeof buttonVariants>({
+export const ButtonElement = createContractComponent({
   tag: 'button',
   name: 'Button',
   styling: {

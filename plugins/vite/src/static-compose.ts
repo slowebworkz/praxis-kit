@@ -34,25 +34,30 @@
  * - Dev-mode ordering: definition file may not yet be transformed when consumer runs
  * All three degrade gracefully to the runtime path — no error, no broken output.
  */
+import type { StringMap } from '@praxis-kit/primitive'
+import { isDefined, isUndefined, iterate } from '@praxis-kit/primitive'
 import ts from 'typescript'
 import { asObject, firstObjectArg, getProperty, isFactoryCall, walkEach } from './ast'
 import { buildCacheKey } from './class-extract'
-import { iterate } from '@praxis-kit/primitive'
-import type { StringMap } from '@praxis-kit/primitive'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+/** Structural props stripped from a usage site's output attributes — every variant key plus the
+ *  four fixed names the transform itself consumes rather than forwards. Precomputed once per
+ *  component in {@link extractStaticComponents}, since it depends only on `variantKeys` and is
+ *  otherwise identical for every usage site of that component. */
 export type StaticComponent = {
   readonly defaultTag: string
   readonly variantKeys: ReadonlySet<string>
   readonly precomputedClasses: Readonly<StringMap<string>>
+  readonly strippedProps: ReadonlySet<string>
 }
 
 // ─── Phase 1: collect factory call metadata ───────────────────────────────────
 
 /** Returns the text of a string literal node, or undefined. */
 function asStringLiteral(node: ts.Node | undefined): string | undefined {
-  return node !== undefined && ts.isStringLiteral(node) ? node.text : undefined
+  return isDefined(node) && ts.isStringLiteral(node) ? node.text : undefined
 }
 
 /**
@@ -98,30 +103,31 @@ export function extractStaticComponents(
     const precomputedNode = asObject(getProperty(stylingObj, 'precomputedClasses'))
     if (!precomputedNode) return
 
-    // Extract precomputedClasses as a plain Record.
+    // Extract precomputedClasses as a plain Record. A straightforward loop reads more directly
+    // here than `iterate.find` would — this isn't a search for one matching element, it's
+    // "extract every entry, bailing the whole component if any one is malformed."
     const precomputedClasses: StringMap<string> = {}
-
-    const isNotPrecomputed = iterate.find<ts.ObjectLiteralElementLike, true>(
-      precomputedNode.properties,
-      (prop) => {
-        if (!ts.isPropertyAssignment(prop)) return true
-
-        const { initializer, name } = prop
-        const key = ts.isStringLiteral(name) ? name.text : undefined
-        const val = asStringLiteral(initializer)
-
-        if (key === undefined || val === undefined) return true
-        precomputedClasses[key] = val
-
-        return null
-      },
-    )
-    if (isNotPrecomputed) return
+    let sawMalformedEntry = false
+    for (const prop of precomputedNode.properties) {
+      if (!ts.isPropertyAssignment(prop)) {
+        sawMalformedEntry = true
+        break
+      }
+      const { initializer, name } = prop
+      const key = ts.isStringLiteral(name) ? name.text : undefined
+      const val = asStringLiteral(initializer)
+      if (isUndefined(key) || isUndefined(val)) {
+        sawMalformedEntry = true
+        break
+      }
+      precomputedClasses[key] = val
+    }
+    if (sawMalformedEntry) return
 
     // Bail if the component has top-level `defaults` or `enforcement`:
     // those involve prop merging or ARIA normalization that inlining would skip.
-    if (getProperty(arg, 'defaults') !== undefined) return
-    if (getProperty(arg, 'enforcement') !== undefined) return
+    if (isDefined(getProperty(arg, 'defaults'))) return
+    if (isDefined(getProperty(arg, 'enforcement'))) return
 
     // Extract variant dimension keys (top-level keys of `styling.variants`).
     const variantKeys = new Set<string>()
@@ -137,7 +143,8 @@ export function extractStaticComponents(
       })
     }
 
-    result.set(varName, { defaultTag, variantKeys, precomputedClasses })
+    const strippedProps = new Set([...variantKeys, 'as', 'asChild', 'render', 'className'])
+    result.set(varName, { defaultTag, variantKeys, precomputedClasses, strippedProps })
   })
 
   return result
@@ -145,19 +152,41 @@ export function extractStaticComponents(
 
 // ─── Phase 2: per-usage-site analysis ────────────────────────────────────────
 
-type AttrValue = { kind: 'absent' } | { kind: 'string'; value: string } | { kind: 'dynamic' }
+/** The transform's static-value subset for a JSX attribute: absent, a compile-time-known string,
+ *  or dynamic (anything the transform can't reason about at compile time — including a bare
+ *  shorthand attribute; see {@link readStaticAttribute}'s own note on why that's `'dynamic'`, not
+ *  a fourth "boolean" case). */
+type StaticAttributeValue =
+  { kind: 'absent' } | { kind: 'static'; value: string } | { kind: 'dynamic' }
 
-/** Reads the value of a named JSX attribute from the attribute list: absent, a static string, or dynamic. */
-function readAttrValue(attrs: ts.NodeArray<ts.JsxAttributeLike>, name: string): AttrValue {
+/**
+ * Reads the value of a named JSX attribute from the attribute list: absent, a static string, or
+ * dynamic.
+ *
+ * A bare shorthand attribute (`<Button size />`) is `'dynamic'`, not `'static'` with an empty
+ * string: JSX gives a bare attribute the runtime value `true` (boolean), never `''`. Every
+ * consumer of this function that reasons about a variant/tag/className value only ever expects a
+ * *string* — `true` can never satisfy a `size:s:sm`-style precomputed-class cache key or a real
+ * variant's string-keyed value map, so treating it as truly unknown (rather than silently
+ * collapsing it to `''`) is both the more accurate representation of what the runtime actually
+ * sees and the conservative choice: it bails to the runtime path instead of risking a wrong
+ * inlined class string for a `variants: { size: { '': ... } }`-shaped config, where the old `''`
+ * representation could have coincidentally matched a real (if unusual) empty-string variant
+ * value.
+ */
+function readStaticAttribute(
+  attrs: ts.NodeArray<ts.JsxAttributeLike>,
+  name: string,
+): StaticAttributeValue {
   for (const attr of attrs) {
     if (!ts.isJsxAttribute(attr)) continue
     if (!(ts.isIdentifier(attr.name) && attr.name.text === name)) continue
     const init = attr.initializer
-    if (!init) return { kind: 'string', value: '' } // bare attribute
-    if (ts.isStringLiteral(init)) return { kind: 'string', value: init.text }
+    if (!init) return { kind: 'dynamic' } // bare attribute — runtime value is `true`, not `''`
+    if (ts.isStringLiteral(init)) return { kind: 'static', value: init.text }
     if (ts.isJsxExpression(init) && init.expression !== undefined) {
       if (ts.isStringLiteral(init.expression))
-        return { kind: 'string', value: init.expression.text }
+        return { kind: 'static', value: init.expression.text }
       return { kind: 'dynamic' }
     }
     return { kind: 'dynamic' }
@@ -196,22 +225,22 @@ function createStaticCompositionTransformer(
       if (attrList.some(ts.isJsxSpreadAttribute)) return ts.visitEachChild(node, visit, context)
 
       // Bail if asChild or render prop is present.
-      if (readAttrValue(attrList, 'asChild').kind !== 'absent')
+      if (readStaticAttribute(attrList, 'asChild').kind !== 'absent')
         return ts.visitEachChild(node, visit, context)
-      if (readAttrValue(attrList, 'render').kind !== 'absent')
+      if (readStaticAttribute(attrList, 'render').kind !== 'absent')
         return ts.visitEachChild(node, visit, context)
 
       // Resolve output tag: static `as` overrides defaultTag; dynamic `as` bails.
-      const asVal = readAttrValue(attrList, 'as')
+      const asVal = readStaticAttribute(attrList, 'as')
       if (asVal.kind === 'dynamic') return ts.visitEachChild(node, visit, context)
-      const outputTag = asVal.kind === 'string' ? asVal.value : info.defaultTag
+      const outputTag = asVal.kind === 'static' ? asVal.value : info.defaultTag
 
       // Collect variant prop values; bail on any dynamic variant prop.
       const variantProps: StringMap<string> = {}
       for (const propName of info.variantKeys) {
-        const val = readAttrValue(attrList, propName)
+        const val = readStaticAttribute(attrList, propName)
         if (val.kind === 'absent') continue
-        if (val.kind === 'string') {
+        if (val.kind === 'static') {
           variantProps[propName] = val.value
           continue
         }
@@ -221,16 +250,15 @@ function createStaticCompositionTransformer(
       // Look up precomputed class for this variant combination.
       const cacheKey = buildCacheKey(variantProps)
       const baseClass = info.precomputedClasses[cacheKey]
-      if (baseClass === undefined) return ts.visitEachChild(node, visit, context)
+      if (isUndefined(baseClass)) return ts.visitEachChild(node, visit, context)
 
       // Resolve caller className; bail on dynamic className.
-      const clsVal = readAttrValue(attrList, 'className')
+      const clsVal = readStaticAttribute(attrList, 'className')
       if (clsVal.kind === 'dynamic') return ts.visitEachChild(node, visit, context)
       const finalClass =
-        clsVal.kind === 'string' && clsVal.value ? `${baseClass} ${clsVal.value}` : baseClass
+        clsVal.kind === 'static' && clsVal.value ? `${baseClass} ${clsVal.value}` : baseClass
 
       // Build output attr list: className first, then all non-variant/non-structural props.
-      const strip = new Set([...info.variantKeys, 'as', 'asChild', 'render', 'className'])
       const outputAttrs: ts.JsxAttributeLike[] = [
         factory.createJsxAttribute(
           factory.createIdentifier('className'),
@@ -241,7 +269,7 @@ function createStaticCompositionTransformer(
         if (ts.isJsxSpreadAttribute(attr)) continue
         if (!ts.isJsxAttribute(attr)) continue
         const name = ts.isIdentifier(attr.name) ? attr.name.text : ''
-        if (strip.has(name)) continue
+        if (info.strippedProps.has(name)) continue
         outputAttrs.push(attr)
       }
 

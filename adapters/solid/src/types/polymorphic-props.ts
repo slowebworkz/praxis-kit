@@ -2,8 +2,10 @@ import type { JSX } from 'solid-js'
 import type { OmitIndexSignature, Simplify } from 'type-fest'
 import type {
   ClassName,
+  ContractGenericsOf,
   DefaultOf,
   ElementType,
+  FactoryOptions,
   IntrinsicTag,
   PolymorphicGenerics,
   RecipeOf,
@@ -12,6 +14,7 @@ import type {
   VariantsOf,
 } from '@praxis-kit/core'
 import type { StringMap } from '@praxis-kit/primitive'
+import type { HasContract } from '@praxis-kit/contract-props'
 import type { SolidElement, UnknownProps } from './primitives'
 
 export type ElementRef<T extends ElementType> = T extends IntrinsicTag
@@ -82,7 +85,10 @@ export type PolymorphicProps<
   TAs extends ElementType = DefaultOf<G>,
 > = Simplify<(SharedProps<G, TAs> & { asChild?: false; children?: unknown }) | AsChildProps<G>>
 
-export type PolymorphicComponent<G extends PolymorphicGenerics> = {
+export type PolymorphicComponent<
+  G extends PolymorphicGenerics,
+  C extends FactoryOptions = FactoryOptions,
+> = {
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicProps<G, TAs>): JSX.Element
 
   /**
@@ -94,6 +100,20 @@ export type PolymorphicComponent<G extends PolymorphicGenerics> = {
    * inference for tools such as Storybook and `ComponentProps`.
    */
   (props: PolymorphicProps<G, DefaultOf<G>>): JSX.Element
+
+  /**
+   * Type-only; never assigned at runtime — same rationale as React's/Preact's `__contract` (see
+   * `HasContract<C>`, `@praxis-kit/contract-props`). Carries the *complete* contract this
+   * component was built from (`C`, the argument `createContractComponent<C extends
+   * SolidFactoryOptions>` was actually called with). Unlike React's/Preact's `__generics` (which
+   * this adapter never needed — `PolymorphicProps<G, TAs>` already folds both render modes into
+   * one type, with no overload-resolution ceiling forcing a marker for `G` the way those two
+   * adapters need), `C` still needs one: nothing else on this type exposes the *complete*
+   * contract, only its `PolymorphicGenerics` projection. Defaults to the widest `FactoryOptions`
+   * so every existing one-argument `PolymorphicComponent<G>` reference keeps resolving exactly as
+   * before.
+   */
+  readonly __contract?: C
 
   displayName?: string
 }
@@ -114,11 +134,23 @@ export type CompoundComponent<
 }
 
 /**
- * A component's full prop contract — naming symmetry with React's/Preact's `ContractProps<T,
- * Mode>`, not a fix for a gap: Solid has no version of the
- * overload-resolution ceiling those two adapters need a marker to work around. `PolymorphicProps<G,
- * TAs>` already folds both render modes into one unioned type (rather than two separate types the
- * way React/Preact split them), and `PolymorphicComponent<G>`'s fallback overload already returns
- * that whole union — so this alias is just `PolymorphicProps<G>` under a familiar name.
+ * A component's full prop contract — `PolymorphicProps<G, TAs>` already folds both render modes
+ * into one unioned type (rather than two separate types the way React/Preact split them), and
+ * `PolymorphicComponent<G>`'s fallback overload already returns that whole union, so this is that
+ * same shape, projected from the component's retained `__contract` rather than a bare `G` the
+ * caller must already have in hand — `ContractProps<typeof Box>`, matching every other adapter,
+ * not `ContractProps<SomeG>`.
+ *
+ * An earlier version of this type took `G` directly (`ContractProps<G extends
+ * PolymorphicGenerics>`) — a genuinely different public shape, not a bug fix here: Solid's
+ * `PolymorphicProps<G, TAs>` never had React's/Preact's overload-resolution ceiling, so there was
+ * no *forced* reason for a marker. Unified to `ContractProps<typeof Component>` now that
+ * `__contract` exists anyway (Phase 3 retention, needed regardless of this decision), mirroring
+ * Vue's identical Phase 4 decision for the identical reason.
  */
-export type ContractProps<G extends PolymorphicGenerics> = PolymorphicProps<G>
+export type ContractProps<T extends HasContract<FactoryOptions>> =
+  T extends HasContract<infer C extends FactoryOptions>
+    ? ContractGenericsOf<C> extends infer G extends PolymorphicGenerics
+      ? PolymorphicProps<G>
+      : never
+    : never

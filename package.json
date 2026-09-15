@@ -37,6 +37,7 @@
   "devDependencies": {
     "@changesets/cli": "catalog:",
     "@eslint/js": "catalog:",
+    "@praxis-kit/foundation": "workspace:*",
     "@types/aria-query": "catalog:",
     "@types/node": "catalog:",
     "@vitest/ui": "catalog:",
@@ -60,7 +61,7 @@
     "typescript-eslint": "catalog:",
     "vitest": "catalog:"
   },
-  "packageManager": "pnpm@11.0.4",
+  "packageManager": "pnpm@12.3.4",
   "engines": {
     "node": ">=22"
   },

@@ -23,15 +23,21 @@
 // linear pass over ~10 steps doesn't need one anyway. Same call already made for
 // packages/kit/scripts/postbuild.ts and the root `verify` script. See DECISIONS.md.
 
+import type { AnyRecord, StringMap } from '@praxis-kit/primitive'
+// iterate comes from @praxis-kit/foundation directly, not the @praxis-kit/primitive re-export —
+// primitive's own barrel (`export * from './tag'`, etc.) uses directory-style exports Node's
+// native ESM loader can't resolve, and this script runs via `node --experimental-strip-types`,
+// not a bundler. foundation is a flat, no-internal-deps package built specifically to be safe for
+// direct Node execution — see its own package.json description.
+import { iterate } from '@praxis-kit/foundation'
+import { ESLint } from 'eslint'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { ESLint } from 'eslint'
-import { Project, SyntaxKind, Node } from 'ts-morph'
-import type { SourceFile, TypeAliasDeclaration, InterfaceDeclaration } from 'ts-morph'
+import type { InterfaceDeclaration, SourceFile, TypeAliasDeclaration } from 'ts-morph'
+import { Node, Project, SyntaxKind } from 'ts-morph'
 import tseslint from 'typescript-eslint'
-import type { AnyRecord, StringMap } from '@praxis-kit/primitive'
 import architecture from '../configs/architecture.ts'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -145,7 +151,7 @@ function buildPackageGraph(packages: PackageMeta[]) {
     peerDeps: string[]
   }> = {}
 
-  for (const { name, version, dir, pkg } of packages) {
+  iterate.forEach(packages, ({ name, version, dir, pkg }) => {
     const allDeps = {
       ...((pkg.dependencies as StringMap<string>) ?? {}),
       ...((pkg.devDependencies as StringMap<string>) ?? {}),
@@ -156,12 +162,12 @@ function buildPackageGraph(packages: PackageMeta[]) {
       (d) => !internalNames.has(d) && !d.startsWith('@types/'),
     )
     pkgMap[name] = { path: relative(ROOT, dir), version, internalDeps, externalDeps, peerDeps }
-  }
+  })
 
   const dependencyGraph: DependencyGraph = {}
-  for (const [name, info] of Object.entries(pkgMap)) {
+  iterate.forEachEntry(pkgMap, (name, info) => {
     dependencyGraph[name] = info.internalDeps
-  }
+  })
 
   return { packages: pkgMap, dependencyGraph, cycles: detectCycles(dependencyGraph) }
 }
@@ -275,11 +281,7 @@ interface AdapterInfo {
   hasSSRTests: boolean
 }
 
-const GENERIC_FACTORY_OPTIONS_NAMES = new Set([
-  'FactoryOptions',
-  'AnyFactoryOptions',
-  'ResolvedFactoryOptions',
-])
+const GENERIC_FACTORY_OPTIONS_NAMES = new Set(['FactoryOptions', 'ResolvedFactoryOptions'])
 
 function findOptionsTypeName(types: string[]): string | undefined {
   return types.find((t) => t.endsWith('FactoryOptions') && !GENERIC_FACTORY_OPTIONS_NAMES.has(t))
@@ -311,7 +313,7 @@ function deriveFrameworkSpecificOptions(indexFile: SourceFile, optionsTypeName: 
   const fields: string[] = []
   for (const member of typeNode.getTypeNodes()) {
     if (!Node.isTypeLiteral(member)) continue
-    for (const prop of member.getProperties()) fields.push(prop.getName())
+    iterate.forEach(member.getProperties(), (prop) => fields.push(prop.getName()))
   }
   return fields
 }
@@ -337,10 +339,10 @@ function buildAdaptersMap(
 
     const pkgExports = (meta.pkg.exports ?? {}) as AnyRecord
     const entryPoints: StringMap<string> = {}
-    for (const [key, val] of Object.entries(pkgExports)) {
+    iterate.forEachEntry(pkgExports, (key, val) => {
       const ep = (val as StringMap<string> | null)?.import
       if (ep) entryPoints[key === '.' ? 'main' : key.replace('./', '')] = ep
-    }
+    })
 
     adapters[meta.name] = {
       framework,
@@ -480,7 +482,7 @@ async function findBoundaryViolations(packages: PackageMeta[]): Promise<Dependen
   const results = await eslint.lintFiles(patterns)
 
   const violations: DependencyViolation[] = []
-  for (const result of results) {
+  iterate.forEach(results, (result) => {
     for (const message of result.messages) {
       if (message.ruleId !== 'boundaries/dependencies') continue
       violations.push({
@@ -492,7 +494,7 @@ async function findBoundaryViolations(packages: PackageMeta[]): Promise<Dependen
         message: message.message,
       })
     }
-  }
+  })
   return violations
 }
 
@@ -607,7 +609,7 @@ async function main(): Promise<void> {
 
   if (pkgGraph.cycles.length > 0) {
     console.error(`\n⚠  ${pkgGraph.cycles.length} dependency cycle(s) detected:`)
-    for (const cycle of pkgGraph.cycles) console.error('   ' + cycle.join(' → '))
+    iterate.forEach(pkgGraph.cycles, (cycle) => console.error('   ' + cycle.join(' → ')))
   }
 
   if (depGraph.status === 'ERROR') {
@@ -615,11 +617,11 @@ async function main(): Promise<void> {
     process.exitCode = 1
   } else if (depGraph.status === 'VIOLATIONS') {
     console.error(`\n✗  ${depGraph.violations.length} architectural violation(s):`)
-    for (const v of depGraph.violations) {
+    iterate.forEach(depGraph.violations, (v) => {
       console.error(
         `   [${v.severity}] ${v.package} (${v.file}:${v.line}:${v.column}) — ${v.message}`,
       )
-    }
+    })
     process.exitCode = 1
   } else {
     console.log('\n✓  .repo-state/ written')

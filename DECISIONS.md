@@ -38,6 +38,133 @@ systems. Remaining work is correctness, documentation, and release mechanics.
 
 ## Open
 
+### `defineContract` — proposed contract-definition boundary — deferred past 0.1.1
+
+External proposal (2026-09-11): introduce `defineContract(options): O` as the standard entry point
+for authoring a contract, exported from `praxis-kit/contract`. Establishes a named boundary between
+_defining_ a contract (`defineContract`) and _creating a framework component from it_
+(`createContractComponent`), replacing:
+
+```ts
+export const Box = defineContractComponent(boxContract)((opts) => createContractComponent(opts))
+```
+
+with:
+
+```ts
+export const boxContract = defineContract({ tag: 'div', name: 'Box' /* ... */ })
+export const Box = createContractComponent(boxContract)
+```
+
+**The core technical claim checked out against the real code.** `defineContractComponent`
+(`lib/adapter-utils/src/runtime/define-component.ts`) is exactly what the proposal says — a pure
+currying trick (`<O>(options: O) => <R>(factory: (options: O) => R): R => factory(options)`), no
+runtime behavior. It exists because `createContractComponent` has seven generic parameters
+(`TDefault, Props, Variants, TPreset, TPlugin, TAllowed, TSubComponents`) all meant to be inferred
+from different sub-paths of one `options` object — fragile as a single-shot inference, reliable once
+`options` is already pinned to a concrete type `O` (which is all the first curried call does).
+`defineContract(options): O` performs the identical pinning without the second call, so
+`createContractComponent(boxContract)` should infer exactly as well as it does today inside the
+curried callback. The "one contract, multiple adapters" goal (§9 of the proposal) isn't new —
+`defineContractComponent` already lives in the framework-neutral `@praxis-kit/adapter-utils` and is
+already shared across adapters — so the actual delta is narrower than the proposal's framing:
+dropping the second curried call, and repositioning the concept from "define a component" to "define
+a contract."
+
+**Why it's a real diagnosis, not just a naming exercise.** The proposal's §11 (`ContractProps`
+should be a derived view of a defined contract, not the contract's representation) names the exact
+root cause behind finding #44's `ContractProps` layout-union collapse
+(`fix/contractprops-layout-union-collapse`, PR #95): `ContractProps<T>` has to recover the concrete
+contract shape from an _already-built_ component via the `HasGenerics<G>`/`__generics`
+phantom-marker trick, because nothing upstream still carries that type by the time a consumer needs
+it. If `defineContract` preserved the concrete type at the definition site, adapters could type off
+that directly instead of doing generics-archaeology on the built component afterward. Worth
+reconsidering `ContractProps`/`AnyFactoryOptions` against this once `defineContract` lands, per the
+proposal's own §14 Step 5 — not before.
+
+**Deferred, not rejected.** Even the proposal's own Step 1 (a typed identity function) is a new
+public export and a new named type (`DefinedContract<O>`) on the framework-neutral core — a new
+abstraction by the letter of the frozen-architecture rule above, regardless of how small its first
+implementation is. User confirmed 2026-09-11: this is post-0.1.1 work. Revisit once the 0.1.x line
+is stable and there's room to touch `FactoryOptions`/`createContractComponent`'s call sites across
+every adapter.
+
+**Update — `AnyFactoryOptions`, resolved (2026-09-13): eliminated, not kept.** The reconsideration
+flagged above landed differently than an earlier draft of this entry assumed: user confirmed, once
+Phases 0–4 (`defineContract`, per-adapter single-generic `createContractComponent`, `__contract`
+retention, `ContractProps` rewire) actually proved the type architecture out, that
+`AnyFactoryOptions` should be deleted outright, not kept as a documented erasure escape hatch. Every
+adapter's re-export, the `packages/core`/`packages/kit` barrels, the
+`factory-options.compounds.test.ts` erasure test (rewritten against a plain
+`FactoryOptions<'textarea', Props, VariantMap>` instantiation — the same erasure, no separate named
+type needed to demonstrate it), the `TYPE_CHECK_ENTRIES` name in
+`packages/kit/scripts/smoke-test.ts` (→ `FactoryOptions`), the `GENERIC_FACTORY_OPTIONS_NAMES`
+exclusion set in `scripts/generate-repo-state.ts`, and the one real test usage (Svelte's
+`define-contract-component.test.ts`, where the `satisfies AnyFactoryOptions` annotation was already
+redundant with `defineContractComponent<O extends FactoryOptions>`'s own constraint) were all
+updated or removed accordingly. No replacement type was introduced — nothing in this repo has a live
+need for one today; if a genuine erasure need surfaces later, scope it to that one call site rather
+than reintroducing a general-purpose one.
+
+**TypeScript limitations hit while building `defineContract`/`ContractModel`, and the fixes they
+forced** — moved here from inline code comments (2026-09-14) to keep the type files themselves
+readable; the _why_ behind each design choice stays in the code, the debugging narrative lives here:
+
+- **Explicit type arguments disable `const` type-parameter inference for later, defaulted
+  parameters.** A `const T` type parameter only preserves an argument's literal type when a call
+  supplies _zero_ explicit type arguments — giving even one explicit argument (e.g.
+  `defineContract<ButtonProps>(...)`) silently falls every later, defaulted parameter back to its
+  own declared bound instead of inferring from the real literal. Confirmed via a minimal repro early
+  in Phase 1; the fix was dropping `defineContract`'s once-planned explicit `Props` type argument
+  entirely, relying on zero-generic inference only (matching every real `createContractComponent`
+  call site in this repo, none of which ever supplies explicit generics).
+- **A required (non-optional) `infer` pattern is the only reliable way to detect a genuinely absent
+  field.** An earlier `ContractModel` draft re-derived each dimension from `FactoryOptions`'s own
+  _optional_ nested fields at every accessor call, matching via `{ tag?: infer T }`-style patterns.
+  Confirmed broken for the common case of a field being genuinely absent: TypeScript resolves an
+  evidence-free `infer` to the field's declared _constraint_, not a tight empty default, silently
+  reopening the "everything permitted" hole `defineContract`'s `tag`/`name` requirement exists to
+  close, one layer down for every other field. Every `*From<O>` derivation in `contract-model.ts`
+  matches a _required_ pattern instead (`{ tag: infer T }`), which fails the whole `extends` check
+  cleanly when the field is genuinely absent, routing to the explicit empty-fallback branch.
+- **A narrow default on a type parameter used as another parameter's constraint bound silently
+  widens inference when a real value doesn't fit that narrow default.** `ContractInput`'s
+  `V`/`TPreset`/`TPlugin`/`TAllowed` parameters default to their own wide _bound_
+  (`Readonly<VariantMap>`, `RecipeMap<V>`, etc.), not `FactoryOptions`'s narrower
+  `EmptyRecord`-style defaults. This was hit as a real bug once, not designed defensively upfront:
+  an earlier draft used the narrow defaults, and `defineContract`'s own round-trip test caught a
+  real contract (non-empty `styling.variants`) silently widening its inferred `O` to
+  `ContractInput`'s own bound instead of the real literal, because the narrow default failed to
+  structurally satisfy the constraint check.
+- **Referencing a still-abstract sibling generic parameter from within a type's own default fails
+  assignability verification.** `ContractModel`'s `TPreset` parameter is fixed to the widest
+  `RecipeMap<VariantMap>`, not the self-referential `RecipeMap<V>` `FactoryOptions`/`StylingOptions`
+  use — verifying `RecipeMap<V>`'s assignability for a still-abstract `V` (as it is at
+  `defineContract`'s own return-type-annotation call site, before any real call resolves the
+  generics) hits a TypeScript limitation over that type's `keyof V[K]` mapped-type position. Every
+  place this pattern recurs (`ContractModel.TPreset`, `ContractPresetFrom`) decouples from the
+  still-abstract sibling the same way, for the identical reason.
+
+**Update — `defineContractComponent`, resolved (2026-09-14): removed entirely, not relocated.** The
+curried predecessor `defineContract` supersedes went through two positions before landing here:
+first kept on every adapter's primary entry point (its original, pre-refactor state); then, once
+real evidence surfaced — `../praxis-components` (a real downstream consumer) uses the curried
+`defineContractComponent(options)(createContractComponent)` pattern across its entire component
+library, 100+ files, as a live workspace dependency, not in tests — relocated to
+`praxis-kit/contract` as a clearly marked legacy/compat surface, matching the "if backward
+compatibility is required, move it rather than keep it on every primary entry point" fallback. User
+confirmed, with that evidence in hand: remove it entirely anyway, accepting that `praxis-components`
+breaks until its own separate migration (already out of scope for this refactor, per this entry's
+own earlier framing) lands. Removed: `lib/adapter-utils/src/runtime/define-component.ts` and its
+test, the `defineContractComponent` export from `lib/adapter-utils/src/runtime/index.ts` and
+`packages/kit/contract.ts`, and every mention from `docs/api-stability.md` and the seven adapter
+READMEs (now documented as a breaking change instead of a relocation). Svelte's
+`define-contract-component.test.ts` — the one file still exercising the curried pattern for real
+coverage (no equivalent `defineContract`-based test existed for Svelte; every other adapter already
+got its Phase 5a conversion) — was rewritten as `define-contract.test.ts` against `defineContract` +
+a direct `createContractComponent` call, rather than simply deleted, so the real coverage
+(`BuiltRuntime` shape, `AnyBuiltRuntime` structural check, independent calls) isn't lost.
+
 ### `spikes/*` — deferred
 
 `../pk` keeps a `spikes/*` glob for throwaway experiments (currently empty).
@@ -1450,9 +1577,10 @@ packages, where the docs also live:
 
 - `@praxis-kit/contract/props` (the 8 state-prop normalizers) → re-exported by
   `@praxis-kit/core/props`
-- `@praxis-kit/primitive/types/factory` (the factory-authoring types) — `FactoryOptions` /
-  `AnyFactoryOptions` now carry the "`satisfies` this to narrow `styling.compounds`" doc on the type
-  itself, not in a `packages/kit` comment
+- `@praxis-kit/primitive/types/factory` (the factory-authoring types) — `FactoryOptions` (at the
+  time this was written, also `AnyFactoryOptions` — removed 2026-09-13, see the `defineContract`
+  entry above) carries the "`satisfies` this to narrow `styling.compounds`" doc on the type itself,
+  not in a `packages/kit` comment
 - `@praxis-kit/core/state` (the 8 state contracts + `mergeContracts`)
 - `@praxis-kit/core/aria` (**new** — the ARIA-rule authoring surface: the fix factories +
   rule/result types; the one place that still curates a list, since the source barrels are broader
@@ -3207,42 +3335,40 @@ An exploration of where JS `Proxy` could earn a place now that 0.1.0 has shipped
 architecture freeze no longer applies. Four distinct applications, evaluated against the actual
 resolution path and adapter code. **Verdicts, most to least promising:**
 
-**1. State-mutation facade over `createObservable` — approved in shape, blocked on a consumer.**
-A `createReactive({ expanded: false })` facade so consumers write `state.expanded = true` instead
-of `state.set('expanded', true)`. This sits off the render hot path (state changes are
+**1. State-mutation facade over `createObservable` — approved in shape, blocked on a consumer.** A
+`createReactive({ expanded: false })` facade so consumers write `state.expanded = true` instead of
+`state.set('expanded', true)`. This sits off the render hot path (state changes are
 user-event-driven), is purely additive, and the layering is right: `createObservable`
 (`lib/foundation/src/create-observable.ts`) stays the minimal `get`/`set`/`subscribe` primitive,
 `createReactive` is a thin facade on top. **Not built now — there is no consumer.** The one
 candidate consumer was praxis-components finding #28's `FactoryOptions.controller` option; that was
 _declined_ (2026-09-09) after its reference design (`DialogController`) was abandoned in favour of
-"the adapter owns interaction," so there is nothing that would hand a `createReactive` bag back to
-a caller. `createObservable` and `wrapMethodForDetection` sit in `lib/foundation`, tested and
-unused, for whenever a real controller-shaped need reappears. Design constraints when eventually
-built: a reserved `Symbol` for `subscribe`/snapshot access (a string key collides with a state
-field), **referentially-stable snapshot identity** (the `useSyncExternalStore` footgun — a fresh
-object per `getSnapshot()` infinite-loops React), per-key `Object.is` diffing in the `set` trap,
-and shallow only (no deep proxying). ~40-line flat file in `lib/foundation` next to
-`createObservable`, respecting that package's no-subdirectory / `node --experimental-strip-types`
-constraint.
+"the adapter owns interaction," so there is nothing that would hand a `createReactive` bag back to a
+caller. `createObservable` and `wrapMethodForDetection` sit in `lib/foundation`, tested and unused,
+for whenever a real controller-shaped need reappears. Design constraints when eventually built: a
+reserved `Symbol` for `subscribe`/snapshot access (a string key collides with a state field),
+**referentially-stable snapshot identity** (the `useSyncExternalStore` footgun — a fresh object per
+`getSnapshot()` infinite-loops React), per-key `Object.is` diffing in the `set` trap, and shallow
+only (no deep proxying). ~40-line flat file in `lib/foundation` next to `createObservable`,
+respecting that package's no-subdirectory / `node --experimental-strip-types` constraint.
 
-**2. Lazy / derived prop resolution at render time — skeptical, benchmark-gated.**
-A `createPropsProxy(input, pipeline)` exposing resolved props as a lazy view, resolving
-`props.class` / `props['aria-expanded']` only on access. Mechanically feasible (per-render
-resolution is already synchronous — `resolveProps` → `resolveNormalizedProps` → `resolveClasses`
-→ `resolveAria`, `lib/adapter-utils/src/render/host-state.ts`), but three problems:
+**2. Lazy / derived prop resolution at render time — skeptical, benchmark-gated.** A
+`createPropsProxy(input, pipeline)` exposing resolved props as a lazy view, resolving `props.class`
+/ `props['aria-expanded']` only on access. Mechanically feasible (per-render resolution is already
+synchronous — `resolveProps` → `resolveNormalizedProps` → `resolveClasses` → `resolveAria`,
+`lib/adapter-utils/src/render/host-state.ts`), but three problems:
 
-- **Props are not independently resolvable at render time.** Reading almost any derived key drags
-  in the whole normalize pass; the only genuinely skippable work is class computation (if `class`
-  is never read) and ARIA resolution (if no `aria-*` is read).
+- **Props are not independently resolvable at render time.** Reading almost any derived key drags in
+  the whole normalize pass; the only genuinely skippable work is class computation (if `class` is
+  never read) and ARIA resolution (if no `aria-*` is read).
 - **`resolveAria` doubles as validation** — it emits the `enforcement.aria` diagnostics and
-  redundant-role checks. Gate it on `aria-*` access and enforcement becomes access-dependent,
-  which breaks praxis-kit's core guarantee; run it eagerly for correctness and most of the lazy
-  win is gone.
-- **Adapters read everything** — VDOM `{...finalProps}` spread hits every key; SSR serializes
-  every attribute. Lazy only helps a selective consumer, and JSX spread is not selective. Proxy
-  spread also costs more than a plain-object spread (no V8 inline caching) and needs `ownKeys` +
-  `getOwnPropertyDescriptor` traps for spread / `Object.keys` / `onElement(getProps)` not to
-  break.
+  redundant-role checks. Gate it on `aria-*` access and enforcement becomes access-dependent, which
+  breaks praxis-kit's core guarantee; run it eagerly for correctness and most of the lazy win is
+  gone.
+- **Adapters read everything** — VDOM `{...finalProps}` spread hits every key; SSR serializes every
+  attribute. Lazy only helps a selective consumer, and JSX spread is not selective. Proxy spread
+  also costs more than a plain-object spread (no V8 inline caching) and needs `ownKeys` +
+  `getOwnPropertyDescriptor` traps for spread / `Object.keys` / `onElement(getProps)` not to break.
 
 The freeze-compatible ~80% alternative, no Proxy: an internal "was `class` / `aria` actually
 consumed?" skip flag on the host-state path (which already half-gestures at this,
@@ -3250,28 +3376,47 @@ consumed?" skip flag on the host-state path (which already half-gestures at this
 spike benched with `qa/bench`'s `render-pipeline.bench.ts` across small vs. large prop surfaces ×
 client vs. SSR, proceed only on a measured win that doesn't regress the common small-prop case.
 
-**3. Framework-neutral dependency tracking (`trackable`) — declined.**
-A `get`-trap primitive recording which keys a computation read, for fine-grained invalidation. The
-adapters that could use it **already do this with their own reactivity, wrapped around the
-`resolve*` seams**: Solid (`adapters/solid/src/render.tsx` — `createMemo(() => runtime.resolveProps(...))`,
+**3. Framework-neutral dependency tracking (`trackable`) — declined.** A `get`-trap primitive
+recording which keys a computation read, for fine-grained invalidation. The adapters that could use
+it **already do this with their own reactivity, wrapped around the `resolve*` seams**: Solid
+(`adapters/solid/src/render.tsx` — `createMemo(() => runtime.resolveProps(...))`,
 `createMemo(() => resolvedClass)`, `createEffect` for enforcement), Vue
 (`adapters/vue/src/create-contract-component.ts:79` — "Cache derived render state using Vue's
-dependency tracking"). A praxis-neutral tracker would be strictly redundant with — and worse than
-— `createMemo` / Vue reactivity (compile-time-optimized / hardened respectively), and is the first
+dependency tracking"). A praxis-neutral tracker would be strictly redundant with — and worse than —
+`createMemo` / Vue reactivity (compile-time-optimized / hardened respectively), and is the first
 step toward the reactive runtime praxis-kit deliberately is not (`trackable` + invalidation grows
-cleanup / ownership / batching / cycle handling — cf. Solid's `createRoot` / `onCleanup`).
-**Revisit trigger:** a _measured_ case where an adapter's native tracker cannot express "praxis
-resolved X, only Y changed" and it costs real render work. Not seen — the `resolve*` seams are
-already memo boundaries.
+cleanup / ownership / batching / cycle handling — cf. Solid's `createRoot` / `onCleanup`). **Revisit
+trigger:** a _measured_ case where an adapter's native tracker cannot express "praxis resolved X,
+only Y changed" and it costs real render work. Not seen — the `resolve*` seams are already memo
+boundaries.
 
-**4. Dev-only debug/inspection Proxy — declined (optional, not prioritized).**
-A dev-mode `get`-trap surfacing unknown / deprecated / accidentally-consumed-internal prop reads.
-Existing infra covers it framework-neutrally at build/render time — diagnostics, `enforcement`,
-the ARIA engine, and `filterProps` + owned-key sets (which _define_ "internal/owned prop"). A
-get-trap only catches bad _reads_, not the more common "forgot to forward"; the one niche
-(an adapter consuming an owned key) is already assertable in the conformance suite without a
-Proxy.
+**4. Dev-only debug/inspection Proxy — declined (optional, not prioritized).** A dev-mode `get`-trap
+surfacing unknown / deprecated / accidentally-consumed-internal prop reads. Existing infra covers it
+framework-neutrally at build/render time — diagnostics, `enforcement`, the ARIA engine, and
+`filterProps` + owned-key sets (which _define_ "internal/owned prop"). A get-trap only catches bad
+_reads_, not the more common "forgot to forward"; the one niche (an adapter consuming an owned key)
+is already assertable in the conformance suite without a Proxy.
 
-**Cross-cutting:** none of these should turn a property read into a reactive dependency edge —
-any Proxy here stays a transparent resolution / tracking mechanism, never a magical dependency
-graph.
+**Cross-cutting:** none of these should turn a property read into a reactive dependency edge — any
+Proxy here stays a transparent resolution / tracking mechanism, never a magical dependency graph.
+
+### GitHub Sponsors — not yet, reassess at the next tag (2026-09-14)
+
+Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule, ahead of the `v1.0.0` tag (the
+first breaking release — `defineContractComponent` removed, `defineContract` takes its place).
+Conclusion: **not yet.**
+
+What's there: `praxis-kit` on npm since `0.1.0`, ~1,100 downloads/month (`api.npmjs.org`,
+2026-08-13 → 2026-09-11) — but that window is registry-mirror/CI noise on a two-week-old package,
+not evidence of adoption, and the npm name still carries a deprecated `1.1.0`-`7.8.1` line from an
+unrelated earlier publisher (`npm-deprecate.yml`) that `v1.0.0` will sit awkwardly next to in the
+version list.
+
+What's not there: repo created 2026-08-31 (two weeks old), 0 stars, 0 forks, 0 watchers, one human
+contributor (the maintainer — `dependabot[bot]` is the only other), no external issues or PRs ever
+opened (`gh api repos/slowebworkz/praxis-kit`, `gh issue list`, 2026-09-14). No `.github/FUNDING.yml`
+exists yet. There's no community to ask for support from, and 1.0.0 itself doesn't change that —
+API stability is a prerequisite for Sponsors here, not a substitute for the usage signal.
+
+**Revisit trigger:** real signal of external usage — an issue, a PR, or a star from an account
+that isn't the maintainer's — or the next version tag, whichever comes first.

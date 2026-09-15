@@ -1,26 +1,38 @@
 import type { OmitIndexSignature, Simplify } from 'type-fest'
 import type {
+  ContractGenericsOf,
+  FactoryOptions,
   PolymorphicGenerics,
   PropsOf,
   RecipeOf,
   VariantProps,
   VariantsOf,
 } from '@praxis-kit/core'
-import type { HasGenerics } from '@praxis-kit/contract-props'
+import type { HasContract } from '@praxis-kit/contract-props'
 
 /**
  * Recovers a `WebContractComponent`'s `PolymorphicGenerics` descriptor from its own value type —
  * identical to the Lit adapter's `GenericsOf<T>` (`adapters/lit/src/types/contract-props.ts`),
  * since both adapters build a fixed-identity custom element with the same erased return type.
- * Needs the phantom `__generics` marker (unlike Svelte's `GenericsOf<T>`) because
- * `createContractComponent` here returns `WebContractComponent<TVariants, TPluginProps, G>`, not a
- * `BuiltRuntime<G, TOptions>` — `TDefault`/`TProps`/`TPreset` are genuinely erased from the return
- * type, so there is no ordinary type parameter left to `infer` them back out of.
- * `WebContractComponent`'s own `__generics` field (`./primitives`) exists purely to make this
- * recovery possible. Falls back to the widest `PolymorphicGenerics` for any non-praxis-kit value.
+ * Needs a marker (unlike Svelte's `GenericsOf<T>`) because `createContractComponent` here returns
+ * `WebContractComponent<TVariants, TPluginProps, G, C>`, not a `BuiltRuntime<G, TOptions>` —
+ * `TDefault`/`TProps`/`TPreset` are genuinely erased from the return type, so there is no ordinary
+ * type parameter left to `infer` them back out of.
+ *
+ * Re-pointed at `__contract` (Phase 4 of the `defineContract` refactor) rather than the
+ * separately-computed `__generics` field it used to read — see the Lit adapter's identical doc
+ * comment for the full reasoning: `__generics`'s own `G` never folded in plugin-contributed props
+ * (`findings.md` #44), and `ContractGenericsOf<C>` fixes that for free by folding
+ * `ExtractPluginProps<TPlugin>` into `props` once, at the canonical projection point.
+ *
+ * Falls back to the widest `PolymorphicGenerics` for any non-praxis-kit value.
  */
-export type GenericsOf<T extends HasGenerics<PolymorphicGenerics>> =
-  T extends HasGenerics<infer G extends PolymorphicGenerics> ? G : PolymorphicGenerics
+export type GenericsOf<T extends HasContract<FactoryOptions>> =
+  T extends HasContract<infer C extends FactoryOptions>
+    ? ContractGenericsOf<C> extends infer G extends PolymorphicGenerics
+      ? G
+      : PolymorphicGenerics
+    : PolymorphicGenerics
 
 /**
  * A component's full prop contract — the attributes a caller can set on the custom element,
@@ -51,7 +63,7 @@ export type GenericsOf<T extends HasGenerics<PolymorphicGenerics>> =
  * type ButtonProps = ContractProps<typeof Button>
  * ```
  */
-export type ContractProps<T extends HasGenerics<PolymorphicGenerics>> = Simplify<
+export type ContractProps<T extends HasContract<FactoryOptions>> = Simplify<
   OmitIndexSignature<PropsOf<GenericsOf<T>>> &
     OmitIndexSignature<VariantProps<VariantsOf<GenericsOf<T>>>> &
     DataAttributes & {

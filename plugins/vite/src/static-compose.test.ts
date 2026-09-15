@@ -280,6 +280,99 @@ describe('composeStatically — safety conditions prevent inlining', () => {
 })
 
 // ---------------------------------------------------------------------------
+// JSX static-value semantics for a variant prop: bare vs empty-string vs
+// wrapped-literal vs dynamic must exactly match runtime normalization.
+// ---------------------------------------------------------------------------
+
+// A variant map with a real empty-string value, distinct from BUTTON_WITH_PRECOMPUTED — proves
+// `size=""` is treated as its own genuine static value, not conflated with the bare/boolean case.
+const BUTTON_WITH_EMPTY_VARIANT = `
+  const Button = createContractComponent({
+    tag: 'button',
+    styling: {
+      base: 'btn',
+      variants: { size: { '': 'btn-none', sm: 'btn-sm' } },
+      precomputedClasses: {
+        '__none__:': 'btn',
+        '__none__:size:s:': 'btn btn-none',
+        '__none__:size:s:sm': 'btn btn-sm',
+      },
+    },
+  })
+`
+
+describe('composeStatically — JSX static-value semantics for a variant prop', () => {
+  it('does not inline a bare shorthand attribute (`<Button size />`) — runtime value is `true`, not `""`', () => {
+    const result = compose(`
+      ${BUTTON_WITH_PRECOMPUTED}
+      function App() { return <Button size>x</Button> }
+    `)
+    // Bare `size` is boolean `true` at runtime, which can never match a string-keyed variant
+    // value — must fall back to the runtime path, not silently resolve as `size: ''`.
+    if (result !== null) {
+      expect(result).toContain('Button')
+    }
+  })
+
+  it('a bare shorthand attribute does not incorrectly match a real empty-string variant value', () => {
+    // The regression case: if a bare attribute were still treated as `size: ''` (the old, wrong
+    // behavior), this would inline against the `''` variant's precomputed class below — silently
+    // producing `className="btn btn-none"` for a component whose real runtime prop value is
+    // `size: true`, not `size: ''`. Must fall back to the runtime path instead.
+    const result = compose(`
+      ${BUTTON_WITH_EMPTY_VARIANT}
+      function App() { return <Button size>x</Button> }
+    `)
+    if (result !== null) {
+      expect(result).toContain('Button')
+      expect(result).not.toContain('btn-none')
+    }
+  })
+
+  it('inlines an explicit empty-string literal (`size=""`) when the variant map declares one', () => {
+    const result = compose(`
+      ${BUTTON_WITH_EMPTY_VARIANT}
+      function App() { return <Button size="">x</Button> }
+    `)
+    expect(result).not.toBeNull()
+    expect(result).toContain('className="btn btn-none"')
+    expect(result).not.toContain('<Button')
+  })
+
+  it('does not inline an empty-string literal when no matching precomputed key exists', () => {
+    const result = compose(`
+      ${BUTTON_WITH_PRECOMPUTED}
+      function App() { return <Button size="">x</Button> }
+    `)
+    // '' is a genuine static value here, just not one BUTTON_WITH_PRECOMPUTED's variants declare
+    // — falls back to the runtime path via the missing-cache-key check, not the dynamic check.
+    if (result !== null) {
+      expect(result).toContain('Button')
+    }
+  })
+
+  it("inlines a JSX-expression-wrapped string literal (`size={'lg'}`) the same as a plain string attribute", () => {
+    const result = compose(`
+      ${BUTTON_WITH_PRECOMPUTED}
+      function App() { return <Button size={'lg'}>x</Button> }
+    `)
+    expect(result).not.toBeNull()
+    expect(result).toContain('className="btn btn-lg"')
+    expect(result).not.toContain('<Button')
+  })
+
+  it('does not inline a JSX-expression-wrapped dynamic value (`size={expr}`)', () => {
+    const result = compose(`
+      ${BUTTON_WITH_PRECOMPUTED}
+      function App({ s }) { return <Button size={s}>x</Button> }
+    `)
+    if (result !== null) {
+      expect(result).toContain('Button')
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
 // Nested transforms — children also get inlined
 // ---------------------------------------------------------------------------
 
@@ -315,6 +408,7 @@ const BUTTON_IMPORTED: StaticComponent = {
     '__none__:size:s:sm': 'btn btn-sm',
     '__none__:size:s:lg': 'btn btn-lg',
   },
+  strippedProps: new Set(['size', 'as', 'asChild', 'render', 'className']),
 }
 
 function composeWithImports(
@@ -361,6 +455,7 @@ describe('composeStatically — cross-file (importedComponents)', () => {
           defaultTag: 'span',
           variantKeys: new Set(),
           precomputedClasses: { '__none__:': 'imported-class' },
+          strippedProps: new Set(['as', 'asChild', 'render', 'className']),
         },
       ],
     ])

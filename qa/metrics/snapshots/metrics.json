@@ -1,27 +1,27 @@
 {
-  "generated": "2026-09-07T23:14:01.724Z",
+  "generated": "2026-09-10T04:25:37.437Z",
   "bundles": {
-    "package/contract-only": 917,
-    "package/guards-only": 353,
-    "package/html-only": 8221,
-    "package/lit-minimal": 20484,
-    "package/preact-minimal": 21660,
-    "package/react-minimal": 21921,
-    "package/solid-minimal": 20644,
+    "package/contract-only": 960,
+    "package/guards-only": 356,
+    "package/html-only": 8638,
+    "package/lit-minimal": 21337,
+    "package/preact-minimal": 22504,
+    "package/react-minimal": 22754,
+    "package/solid-minimal": 21464,
     "package/utils-only": 118,
-    "package/vue-minimal": 21218,
-    "package/web-minimal": 20450,
-    "source/aria-only": 21202,
-    "source/contracts-only": 21266,
-    "source/full-runtime": 21425,
-    "source/minimal-polymorphic": 21155,
-    "source/pk2-engine-only": 792,
-    "source/polymorphic-validation": 21225,
-    "source/preact-minimal": 20901,
-    "source/react-minimal": 21155,
-    "source/solid-minimal": 19796,
-    "source/svelte-minimal": 18589,
-    "source/vue-minimal": 20459
+    "package/vue-minimal": 22044,
+    "package/web-minimal": 21303,
+    "source/aria-only": 22011,
+    "source/contracts-only": 22076,
+    "source/full-runtime": 22236,
+    "source/minimal-polymorphic": 21948,
+    "source/pk2-engine-only": 793,
+    "source/polymorphic-validation": 22033,
+    "source/preact-minimal": 21706,
+    "source/react-minimal": 21948,
+    "source/solid-minimal": 20612,
+    "source/svelte-minimal": 19409,
+    "source/vue-minimal": 21281
   },
   "architecture": {
     "status": "CLEAN",
@@ -36,8 +36,8 @@
         "types": 0
       },
       "@praxis-kit/contract": {
-        "values": 31,
-        "types": 38
+        "values": 32,
+        "types": 39
       },
       "@praxis-kit/contract-props": {
         "values": 0,
@@ -56,12 +56,12 @@
         "types": 0
       },
       "@praxis-kit/foundation": {
-        "values": 7,
-        "types": 4
+        "values": 19,
+        "types": 5
       },
       "@praxis-kit/lit": {
         "values": 3,
-        "types": 6
+        "types": 9
       },
       "@praxis-kit/pipeline": {
         "values": 8,
@@ -80,11 +80,11 @@
         "types": 11
       },
       "@praxis-kit/primitive": {
-        "values": 68,
+        "values": 70,
         "types": 127
       },
       "@praxis-kit/react": {
-        "values": 8,
+        "values": 4,
         "types": 14
       },
       "@praxis-kit/runtime": {
@@ -101,19 +101,19 @@
       },
       "@praxis-kit/svelte": {
         "values": 2,
-        "types": 29
+        "types": 11
       },
       "@praxis-kit/tailwind": {
-        "values": 7,
-        "types": 17
+        "values": 2,
+        "types": 3
       },
       "@praxis-kit/typescript-plugin": {
         "values": 0,
         "types": 0
       },
       "@praxis-kit/vite-plugin": {
-        "values": 16,
-        "types": 9
+        "values": 7,
+        "types": 4
       },
       "@praxis-kit/vue": {
         "values": 3,
@@ -121,20 +121,20 @@
       },
       "@praxis-kit/web": {
         "values": 3,
-        "types": 4
+        "types": 9
       }
     }
   },
   "complexity": {
     "lib/primitive": {
-      "files": 137,
-      "functions": 62,
-      "loc": 2097
+      "files": 132,
+      "functions": 51,
+      "loc": 2184
     },
     "lib/diagnostics": {
       "files": 18,
       "functions": 23,
-      "loc": 450
+      "loc": 453
     },
     "lib/contract-props": {
       "files": 4,
@@ -142,9 +142,9 @@
       "loc": 61
     },
     "lib/contract": {
-      "files": 57,
-      "functions": 131,
-      "loc": 2441
+      "files": 51,
+      "functions": 126,
+      "loc": 2468
     },
     "lib/styling": {
       "files": 18,
@@ -154,7 +154,7 @@
     "lib/tailwind": {
       "files": 15,
       "functions": 25,
-      "loc": 606
+      "loc": 600
     },
     "lib/pipeline-kit": {
       "files": 8,
@@ -168,13 +168,13 @@
     },
     "lib/adapter-utils": {
       "files": 48,
-      "functions": 51,
-      "loc": 2378
+      "functions": 52,
+      "loc": 2395
     },
     "packages/core": {
-      "files": 72,
-      "functions": 58,
-      "loc": 2464
+      "files": 74,
+      "functions": 60,
+      "loc": 2537
     }
   }
 }

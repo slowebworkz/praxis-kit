@@ -2,7 +2,6 @@ import type {
   AnyClassPluginFactory,
   ElementType as CoreElementType,
   FactoryOptions,
-  NoPreset,
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
@@ -21,12 +20,19 @@ export interface CompiledArtifact {
 /**
  * Extends FactoryOptions with React-specific configuration.
  * slotComponent is intentionally not in core — it is a React rendering concern.
+ *
+ * Every generic parameter has a default (widened to that parameter's own *bound*, matching
+ * a wide-bound, type-erased philosophy, not `FactoryOptions`'s own narrower `EmptyRecord`-style
+ * defaults) so `ReactFactoryOptions` can be used bare, as `createContractComponent`'s single
+ * `C extends ReactFactoryOptions` constraint — a real contract's non-empty `variants`/`presets`
+ * must structurally satisfy that bound, which narrow defaults would reject (confirmed while
+ * building `ContractInput`, the same fix applied there for the same reason).
  */
 export type ReactFactoryOptions<
-  TDefault extends CoreElementType,
-  Props extends UnknownProps,
-  Variants extends Readonly<VariantMap>,
-  TPreset extends RecipeMap<Variants> = NoPreset,
+  TDefault extends CoreElementType = CoreElementType,
+  Props extends UnknownProps = UnknownProps,
+  Variants extends Readonly<VariantMap> = Readonly<VariantMap>,
+  TPreset extends RecipeMap<Variants> = RecipeMap<Variants>,
   TPlugin extends AnyClassPluginFactory = AnyClassPluginFactory,
   TAllowed extends CoreElementType = CoreElementType,
 > = FactoryOptions<TDefault, Props, Variants, TPreset, TPlugin, TAllowed> & {

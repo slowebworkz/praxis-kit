@@ -35,3 +35,15 @@ export const layoutKeys = [
   'table-row-group',
   'table-row',
 ] as const
+
+/**
+ * The concrete union of layout prop names — the pre-resolved form of
+ * `LayoutKey<typeof layoutKeys>`, colocated with the tuple it derives from.
+ *
+ * For code that needs to *name* the layout keys in a type without also importing the runtime
+ * tuple. A framework adapter uses it to collapse the mutually-exclusive `LayoutProps` union back
+ * out of an *extracted* prop type (`ContractProps<typeof Component>`): there a caller wants "the
+ * layout props exist and are optional `true`s", not the ~22-member discriminated union that the
+ * component's own call signature carries — where "only one may be `true`" is a useful error.
+ */
+export type LayoutKeyName = (typeof layoutKeys)[number]

@@ -3,8 +3,10 @@ import type { AnyVNode, UnknownProps } from './primitives'
 import type { OmitIndexSignature, Simplify } from 'type-fest'
 import type {
   ClassName,
+  ContractGenericsOf,
   DefaultOf,
   ElementType,
+  FactoryOptions,
   IntrinsicTag,
   PolymorphicGenerics,
   RecipeOf,
@@ -13,7 +15,8 @@ import type {
   VariantsOf,
 } from '@praxis-kit/core'
 import type { StringMap } from '@praxis-kit/primitive'
-import type { HasGenerics, Mode, PickMode } from '@praxis-kit/contract-props'
+import type { LayoutKeyName } from '@praxis-kit/tailwind'
+import type { HasContract, Mode, PickMode } from '@praxis-kit/contract-props'
 
 export type ElementRef<T extends ElementType> = T extends IntrinsicTag
   ? HTMLElementTagNameMap[T]
@@ -55,7 +58,53 @@ export type PolymorphicWithAsChild<
   }
 >
 
-export type PolymorphicComponent<G extends PolymorphicGenerics> = {
+/**
+ * The layout keys a prop-union actually carries as the tailwind plugin's mutually-exclusive
+ * shape: distributed over every member of `P`, a key counts when its value there is exactly
+ * `true` or `never` — the two shapes `ExclusiveTrueProp` produces. `[M[K]] extends [true]`
+ * matches both and rejects `boolean`, so a component's own same-named prop and the intrinsic
+ * `hidden` attribute are not counted, and a plugin-less component yields `never`.
+ */
+type LayoutPluginKeys<P> = {
+  [K in LayoutKeyName]-?: P extends infer M
+    ? K extends keyof M
+      ? [M[K]] extends [true]
+        ? K
+        : never
+      : never
+    : never
+}[LayoutKeyName]
+
+/**
+ * Collapses the mutually-exclusive `LayoutProps` union down to one flat shape — every layout key
+ * an optional `true` — for the **type-extraction** path (`ContractProps<T>`) only. Mirrors the
+ * React adapter's `FlattenLayout` (`adapters/react/src/shared/types/polymorphic-props.ts`), where
+ * the full rationale lives.
+ *
+ * `styling.plugin: createTailwindPipeline` contributes `ExclusiveTrueProp<LayoutKey>` — a ~22-way
+ * union (`{ flex: true } | { grid: true } | …`) that distributes through `PropsOf<G>` and
+ * everything built from it, so a `ContractProps<T>` built from it becomes a ~22-member union
+ * whose members share no common layout key: hostile to a spread (matches no member), to
+ * `Omit`/`Pick`/`Merge` (`TS2590 union too complex`) and to a rest-destructure (`TS2700`). A
+ * consumer extracting props for a wrapper wants "the layout props exist and are optional", not
+ * the discriminated union. The strict union stays on `PolymorphicComponent<G>`'s call overloads.
+ * See finding #44 / `praxis-kit-0.1.x-contractprops-regression.md` item #2.
+ *
+ * `Omit<P, LayoutKeyName>` (a static key set) drops every layout key from every member so the
+ * union dedupes to one; the flat `{ flex?: true; … }` is added back from just the keys the union
+ * really had. The `LayoutPluginKeys<P> extends never` fast-path returns `P` untouched for a
+ * plugin-less component, so the `Omit` never runs on its large intrinsic-prop object.
+ */
+type FlattenLayout<P> = [P] extends [never]
+  ? never
+  : [LayoutPluginKeys<P>] extends [never]
+    ? P
+    : Simplify<Omit<P, LayoutKeyName> & { [K in LayoutPluginKeys<P>]?: true }>
+
+export type PolymorphicComponent<
+  G extends PolymorphicGenerics,
+  C extends FactoryOptions = FactoryOptions,
+> = {
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicWithAsChild<G, TAs>): AnyVNode
   <TAs extends ElementType = DefaultOf<G>>(props: PolymorphicProps<G, TAs>): AnyVNode
 
@@ -70,14 +119,31 @@ export type PolymorphicComponent<G extends PolymorphicGenerics> = {
   (props: PolymorphicProps<G, DefaultOf<G>>): AnyVNode
 
   /**
-   * Type-only; never assigned at runtime. See `HasGenerics<G>` for
+   * Type-only; never assigned at runtime. See `HasGenerics<G>` (`@praxis-kit/contract-props`) for
    * the full rationale — kept as an inline field rather than `HasGenerics<G> & {...}` because
    * intersecting it onto this callable type changes how `PolymorphicComponent<any>` resolves
    * against concrete instantiations (confirmed for React's identical shape,
    * `adapters/react/src/shared/types/polymorphic-props.test.ts`); structurally identical to
-   * `HasGenerics<G>` either way, which is what lets `ContractProps` constrain against it.
+   * `HasGenerics<G>` either way.
+   *
+   * `ContractProps` no longer reads this field directly (it projects `G` from the retained
+   * `__contract` below instead, mirroring React's identical Phase 4 rewire) — kept per the same
+   * migration policy: added alongside `__contract`, not replaced by it, until every adapter and
+   * test proves the new relationship out, and because other code may still constrain against
+   * `HasGenerics<G>` directly.
    */
   readonly __generics?: G
+
+  /**
+   * Type-only; never assigned at runtime — same rationale as `__generics` above. Carries the
+   * *complete* contract this component was built from (`C`, the argument
+   * `createContractComponent<C extends PreactFactoryOptions>` was actually called with) —
+   * deliberately a second, separate marker from `__generics`, not `__generics` broadened to do
+   * both jobs: `G` answers "what does the adapter need to implement this component," `C` answers
+   * "what was this component configured with." Defaults to the widest `FactoryOptions` so every
+   * existing two-argument `PolymorphicComponent<G>` reference keeps resolving exactly as before.
+   */
+  readonly __contract?: C
 
   displayName?: string
 }
@@ -119,9 +185,16 @@ export type CompoundComponent<
  * ```
  */
 export type ContractProps<
-  T extends HasGenerics<PolymorphicGenerics>,
+  T extends HasContract<FactoryOptions>,
   M extends Exclude<Mode, 'render'> = 'normal',
 > =
-  T extends HasGenerics<infer G extends PolymorphicGenerics>
-    ? PickMode<M, PolymorphicProps<G, DefaultOf<G>>, PolymorphicWithAsChild<G, DefaultOf<G>>, never>
+  T extends HasContract<infer C extends FactoryOptions>
+    ? ContractGenericsOf<C> extends infer G extends PolymorphicGenerics
+      ? PickMode<
+          M,
+          FlattenLayout<PolymorphicProps<G, DefaultOf<G>>>,
+          FlattenLayout<PolymorphicWithAsChild<G, DefaultOf<G>>>,
+          never
+        >
+      : never
     : never
