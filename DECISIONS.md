@@ -3436,11 +3436,16 @@ Cannot publish over previously published version "1.0.0".
 
 `1.0.0` was already published on the `praxis-kit` name on 2026-02-24 — by the same unrelated,
 pre-existing package line `npm-deprecate.yml` deprecates (`1.1.0`–`7.8.1`). That entry's "1.x–7.x"
-description undersells it: the old line's first release was `1.0.0` itself, and unlike the rest of
-the line it was never deprecated. npm permanently blocks republishing any version number a name has
-ever carried, regardless of current ownership — there is no credential or config fix for this, and
-it will recur for any of the old line's other 32 version numbers (`1.1.0`, `1.1.1`, `2.0.0`, …,
-`7.8.1`) if this codebase's version ever lands on one by coincidence.
+description undersells it: the old line's first release was `1.0.0` itself. npm permanently blocks
+republishing any version number a name has ever carried, regardless of current ownership — there is
+no credential or config fix for this.
+
+**Trap, confirmed the hard way:** `1.0.0` does _not_ appear in `npm view praxis-kit versions` or the
+registry's `versions` document — it's been unpublished from listing (npm allows that; the old line's
+`1.1.0`–`7.8.1` are visible-but-deprecated, so `1.0.0` took a different path, most likely a within-
+72h unpublish). But it is still permanently blocked at the registry — confirmed directly by the
+`publish.yml` failure above, not by a stale/cached read. **Checking `npm view` before picking a
+version number is not sufficient** — a hidden, unpublished-but-blocked version won't show there.
 
 Shipped as `1.0.1` instead — the old line has no `1.0.x` patch releases, so the whole `1.0.x` series
 is clear. Chose the minimal fix (skip just the one blocked number, keep the intended `1.0` line)
@@ -3448,6 +3453,17 @@ over jumping above `7.8.1` entirely, since the collision is with one specific nu
 `v1.0.0` was tagged, found unpublishable, and deleted (both locally and on `origin`) before
 `v1.0.1` replaced it — `v1.0.0` never corresponds to a published version of this codebase.
 
-**Standing risk:** the next *ordinary* release that happens to land on one of the old line's other
-32 version numbers hits this same wall. No mitigation implemented — noting it here so it's
-recognized immediately (not re-debugged as a fresh credentials issue) if it recurs.
+**Every version number permanently blocked on the `praxis-kit` name, for future changesets to check
+against before picking a target version** (32 total — the visible 31 from `npm view praxis-kit
+versions`, plus the hidden `1.0.0` confirmed above; `0.1.0` / `0.1.1` / `1.0.1` are this codebase's
+own releases, not blocked):
+
+`1.0.0` (hidden — won't show in `npm view`), `1.1.0`, `1.1.1`, `2.0.0`, `2.0.1`, `2.0.2`, `3.0.0`,
+`3.1.0`, `3.1.1`, `4.0.0`, `4.0.1`, `4.0.3`, `4.1.0`, `4.1.1`, `4.1.2`, `4.1.3`, `5.0.0`, `6.0.0`,
+`6.1.0`, `6.1.1`, `6.2.0`, `6.2.1`, `6.2.3`, `6.5.0`, `6.6.0`, `6.6.1`, `7.0.0`, `7.3.0`, `7.4.0`,
+`7.5.0`, `7.8.0`, `7.8.1`.
+
+**Standing risk:** the next *ordinary* release that happens to land on one of these by coincidence
+hits this same wall. No mitigation implemented — noting it here, with the full list above, so it's
+recognized immediately (not re-debugged as a fresh credentials issue, and not missed because
+`1.0.0` doesn't show in `npm view`) if it recurs.
