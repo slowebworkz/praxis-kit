@@ -30,7 +30,7 @@ catalog:
   "@testing-library/svelte": ^5.4.2
   "@types/node": ^26.4.1
   "@types/react": ^19.2.18
-  "@types/react-dom": ^19.2.7
+  "@types/react-dom": ^19.3.0
   "@typescript-eslint/rule-tester": 8.68.0
   "@typescript-eslint/utils": 8.68.0
   # WAI-ARIA reference data — dev-only, drives the role→attribute-support fixture
@@ -70,7 +70,7 @@ catalog:
 
   # React
   react: ^19.2.8
-  react-dom: ^19.2.8
+  react-dom: ^19.3.0
 
   # Solid
   solid-js: ^1.9.15
