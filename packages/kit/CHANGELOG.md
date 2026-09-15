@@ -1,5 +1,82 @@
 # praxis-kit
 
+## 1.0.0
+
+### Major Changes
+
+- Remove `defineContractComponent`, the curried
+  `defineContractComponent(options)(createContractComponent)` API superseded by `defineContract`
+  (see the accompanying `defineContract` changeset). It is not relocated or deprecated — it is gone
+  from every adapter's exports and from `praxis-kit/contract`.
+
+  Migrate a call site from:
+
+  ```ts
+  const Button = defineContractComponent({
+    tag: 'button',
+    name: 'Button',
+    defaults: { type: 'button' },
+  })(createContractComponent)
+  ```
+
+  to:
+
+  ```ts
+  const buttonContract = defineContract({
+    tag: 'button',
+    name: 'Button',
+    defaults: { type: 'button' },
+  })
+
+  const Button = createContractComponent(buttonContract)
+  ```
+
+  Also removes `AnyFactoryOptions`, the type-erased escape hatch re-exported alongside it from every
+  adapter and from `praxis-kit/contract`. It has no replacement — the `defineContract` /
+  `ContractModel` architecture that replaces `defineContractComponent` doesn't need a separate
+  erased-options type.
+
+### Minor Changes
+
+- Add `defineContract` as a typed identity boundary — a standalone declaration step ahead of
+  `createContractComponent`, ported through all seven adapters (React current/legacy, Preact, Vue,
+  Solid, Lit, Web, Svelte):
+
+  ```ts
+  const buttonContract = defineContract({
+    tag: 'button',
+    name: 'Button',
+    props: declareProps<ButtonProps>(),
+    defaults: { type: 'button' },
+  })
+
+  const Button = createContractComponent(buttonContract)
+  ```
+
+  `createContractComponent` now takes a single `ContractModel` generic instead of the previous
+  multi-generic `FactoryOptions` signature, and retains the defining contract on the built component
+  (`__contract`) so `ContractProps<typeof Button>` and related type helpers resolve against it
+  directly. A new `declareProps<Props>()` helper (re-exported from `praxis-kit/contract`) lets a
+  contract declare its complete prop shape inline — independent of, and taking precedence over,
+  props inferred from `defaults` — closing a gap where a hand-declared prop interface without an
+  index signature couldn't otherwise satisfy the props contract.
+
+  Also fixes a Lit/Web plugin-props gap (`styling.plugin`-contributed props were missing from
+  `ContractProps`) surfaced while porting the Lit and Web adapters through this change.
+
+### Patch Changes
+
+- Fix `ContractProps<typeof Component>` (React and Preact) breaking under a `styling.plugin` that
+  contributes a mutually-exclusive layout union — `createTailwindPipeline`'s
+  `ExclusiveTrueProp<LayoutKey>` (`{ flex: true } | { grid: true } | …`, ~22 members) distributed
+  through `ContractProps<T, M>`, tripping `TS2590` ("union too complex") on `Omit`/`Pick`/`Merge`
+  and `TS2700` on a rest-destructure, and hiding common props like `data-slot`.
+
+  `ContractProps` now collapses that union to one flat shape (every layout key optional `true`)
+  before resolving the type — call-site overloads on the component itself are unaffected, so
+  `<Component flex grid />` still errors as it should, and `React.ComponentProps<typeof X>` keeps
+  its existing strict union. Lit, Web, Solid, and Vue were unaffected and are unchanged.
+
 ## 0.1.1
 
 ### Patch Changes
