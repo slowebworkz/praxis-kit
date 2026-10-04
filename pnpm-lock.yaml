@@ -150,8 +150,8 @@ catalogs:
       specifier: 8.70.0
       version: 8.70.0
     '@typescript-eslint/utils':
-      specifier: 8.68.0
-      version: 8.68.0
+      specifier: 8.70.0
+      version: 8.70.0
     '@vitejs/plugin-react':
       specifier: ^6.1.1
       version: 6.1.1
@@ -886,7 +886,7 @@ importers:
         version: 19.2.7(@types/react@19.2.18)
       '@typescript-eslint/utils':
         specifier: 'catalog:'
-        version: 8.68.0(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
+        version: 8.70.0(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
       lit:
         specifier: 'catalog:'
         version: 3.3.3
@@ -937,7 +937,7 @@ importers:
         version: link:../../lib/primitive
       '@typescript-eslint/utils':
         specifier: 'catalog:'
-        version: 8.68.0(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
+        version: 8.70.0(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
       type-fest:
         specifier: 'catalog:'
         version: 5.9.0
