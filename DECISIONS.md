@@ -3473,3 +3473,53 @@ hits this same wall — and, per the trap above, could also land on a hidden ver
 list. No mitigation implemented — noting it here, with the full list above, so it's recognized
 immediately (not re-debugged as a fresh credentials issue) if it recurs. If this happens a third
 time, stop guessing and jump to `8.0.0`.
+
+### Runtime performance audit — caches, Proxy, and the fresh-component cost (2026-10-05)
+
+A benchmark-driven review of the runtime's caching and the case for `Proxy`. Numbers come from
+`qa/bench` (Node, SSR via `renderToString`), taken on a machine under load (1-minute load 7–17).
+Ratios within a single run are the meaningful signal; absolute times shift between sessions.
+
+**Decisions:**
+
+- **`definePipeline`'s WeakMap cache — removed.** It keyed each pipeline on the `resolved` object,
+  which `createPolymorphic` builds fresh on every call, and each key was used once. It never hit, so
+  it only added overhead per component definition. Removed in #121; no behavior change.
+- **Variant-class cache — kept.** Under a controlled comparison (stable vs rotating props on the
+  same Button), the cache saves about 17 µs per client render (39.7 µs vs 57.1 µs). It is the only
+  cache-on vs cache-off pair measured, and it shows a material benefit. Retain pending broader
+  profiling.
+- **`Proxy` — not justified for the current runtime.** Benchmarks identify neither property access
+  nor lazy resolution as a meaningful bottleneck. Class and prop resolution together are about 2 µs
+  per render, and `Reflect.get` in the guards is not on a measured path. Proxy would add per-access
+  cost to code that doesn't need it.
+- **`memoize` in `praxis-kit/utils` — described accurately.** It is not used internally, and its
+  cache is unbounded, so it is for bounded input spaces only. `docs/api-stability.md` says so.
+
+**Findings (provisional, from repeated runs):**
+
+- **Component boundary is a minority of the SSR cost.** A plain function component adds about 4 µs
+  over an intrinsic `div`. Praxis `Box` adds about 7 µs over `RawBox`; `Button` adds about 10 µs
+  over `RawButton` with explicit defaults.
+- **Enforcement costs about 13 µs per `Button` render** (explicit defaults, `diagnostics: 'warn'`).
+  An earlier single-run figure of about 18 µs was withdrawn as noise.
+- **Fresh-component cost is mostly React's, not Praxis's.** A new component costs about 2.6x a
+  reused one in the first measurements; in a later run the first-render residual was about 12 µs,
+  and a plain React control (no Praxis) reproduces about 10 µs of it. Praxis adds about 2 µs of
+  first-render setup on top. The second render of a fresh instance costs the same as a reused one.
+- **Implicit vs explicit default variants — not settled.** An earlier SSR run showed implicit
+  defaults about 5 µs slower, but a later run did not reproduce it, and per-stage timings showed
+  explicit props spending more time in class resolution. The resolver alone is faster for implicit
+  props. Treat the gap as unconfirmed until a quieter machine reproduces it.
+
+**Open:**
+
+- Rerun the implicit-vs-explicit comparison on an idle machine, with several passes, before any
+  change is made to default merging or the variant cache.
+- Profile the Praxis-specific part of the first-render setup (about 2 µs) only if it matters for
+  real applications.
+- Re-measure the Tabs client-render gap (about 1.3–2.1x vanilla React) with the same method before
+  attributing it to any part of the runtime.
+
+**Benchmarks backing this entry:** `construction-ssr.bench.ts`, `residual.bench.ts`,
+`fresh-react-type.bench.ts` (control), and `defaults-trace.bench.ts`.
