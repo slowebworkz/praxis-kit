@@ -424,8 +424,8 @@ This is a genuine maintenance commitment, not a solved problem.
 
 - [docs/](docs/index.md) — concepts, the worked `Box` / `Tabs` examples, the API-stability tiers,
   and the HTML/ARIA audit
-- [docs/api-stability.md](docs/api-stability.md) — which of the ~19 subpaths are stable for 0.1 and
-  which may still move
+- [docs/api-stability.md](docs/api-stability.md) — which of the ~19 subpaths are stable for 1.x and
+  which remain experimental
 - [ARCHITECTURE.md](ARCHITECTURE.md) — internal runtime pipeline, data flow, execution phases, and
   debugging guide (`diagnoseClassPipeline`, ARIA violation messages, child evaluator traces)
 - [ADAPTER_AUTHORING.md](ADAPTER_AUTHORING.md) — writing a new framework adapter against the core

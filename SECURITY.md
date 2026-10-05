@@ -2,11 +2,10 @@
 
 ## Supported Versions
 
-Praxis Kit ships as a single published package,
-[`praxis-kit`](https://www.npmjs.com/package/praxis-kit), on npm. **Not yet published** — the
-package is still under active development (`packages/kit` is `private: true`; see `DECISIONS.md` for
-current status). Once a first version ships, only the latest published major version will receive
-security fixes.
+Praxis Kit is published as a single package,
+[`praxis-kit`](https://www.npmjs.com/package/praxis-kit), on npm. The current supported release line
+is **1.x** (latest: `praxis-kit@1.0.2`). Only the latest published major version receives security
+fixes.
 
 ## Reporting a Vulnerability
 

@@ -10,17 +10,21 @@ Framework-neutral UI infrastructure with enforceable structural and accessibilit
 | [Architecture](../ARCHITECTURE.md)                    | Layer model, dependency graph, runtime lifecycle                                                 |
 | [Examples](./examples.md)                             | Where to see praxis-kit exercised end to end today                                               |
 | [Concepts](./concepts.md)                             | Core abstractions: polymorphism, contracts, styling                                              |
-| [API stability](./api-stability.md)                   | Which of the ~19 subpaths are stable for 0.1, and which may still move                           |
+| [API stability](./api-stability.md)                   | Which of the ~19 subpaths are stable for 1.x, and which remain experimental                      |
 | [Adapter authoring](../ADAPTER_AUTHORING.md)          | Building a new framework adapter                                                                 |
 | [HTML/ARIA audit](./accessibility/html-aria-audit.md) | Normative source, rule, interpretation, test and deviation for every accessibility contract rule |
 | [Release gate](./releasing/verify-release.md)         | What `pnpm verify:release` runs and why the order matters                                        |
 | [Decisions](../DECISIONS.md)                          | Decision log; the **Status** section at the top is the current-state snapshot                    |
 | [Security policy](../SECURITY.md)                     | Supported versions, how to report a vulnerability                                                |
 
-`packages/kit/CHANGELOG.md` starts at `praxis-kit@0.1.0` — the first release of this codebase. (The
-`praxis-kit` npm name previously carried a separate `1.x`–`7.x` line from an earlier repo; `0.1.0`
-is a deliberate reset, not a continuation.) There is no `MIGRATING.md` yet — it appears when there
-is a breaking change between published `0.x` versions to migrate across.
+**History:** `0.1.0` → `0.1.1` → `1.0.2`, all recorded in
+[`packages/kit/CHANGELOG.md`](../packages/kit/CHANGELOG.md). The `praxis-kit` npm name previously
+carried a separate `1.x`–`7.x` line from an earlier repo; `0.1.0` is a deliberate reset, not a
+continuation.
+
+**Current stability policy:** 1.x, beginning with `1.0.2` — see [API stability](./api-stability.md).
+There is no `MIGRATING.md` yet — it appears when there is a breaking change between published
+versions to migrate across.
 
 ## Layer overview
 
