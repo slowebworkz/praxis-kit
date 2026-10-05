@@ -1,4 +1,4 @@
-# @praxis-kit/vue
+# praxis-kit/vue
 
 Vue 3 adapter for praxis-kit — polymorphic components with ARIA contracts, variant composition, and
 structural child validation.
@@ -8,7 +8,7 @@ structural child validation.
 ## Installation
 
 ```bash
-pnpm add @praxis-kit/vue
+pnpm add praxis-kit
 ```
 
 Vue is a peer dependency:
@@ -22,8 +22,8 @@ pnpm add vue
 ## Usage
 
 ```ts
-import { createContractComponent } from '@praxis-kit/vue'
-import { defineContract } from '@praxis-kit/adapter-utils'
+import { createContractComponent } from 'praxis-kit/vue'
+import { defineContract } from 'praxis-kit/contract'
 
 export const buttonContract = defineContract({
   tag: 'button',

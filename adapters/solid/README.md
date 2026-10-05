@@ -1,4 +1,4 @@
-# @praxis-kit/solid
+# praxis-kit/solid
 
 SolidJS adapter for praxis-kit — polymorphic components with ARIA contracts, variant composition,
 and structural child validation.
@@ -8,7 +8,7 @@ and structural child validation.
 ## Installation
 
 ```bash
-pnpm add @praxis-kit/solid
+pnpm add praxis-kit
 ```
 
 SolidJS is a peer dependency:
@@ -22,8 +22,8 @@ pnpm add solid-js
 ## Usage
 
 ```ts
-import { createContractComponent } from '@praxis-kit/solid'
-import { defineContract } from '@praxis-kit/adapter-utils'
+import { createContractComponent } from 'praxis-kit/solid'
+import { defineContract } from 'praxis-kit/contract'
 
 export const buttonContract = defineContract({
   tag: 'button',

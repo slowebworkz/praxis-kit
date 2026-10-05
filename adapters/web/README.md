@@ -1,16 +1,16 @@
-# @praxis-kit/web
+# praxis-kit/web
 
 Vanilla Custom Elements adapter for praxis-kit — a Custom Element host carrying a Praxis semantic
 contract: styling, ARIA policy, and structural child validation. No framework dependency, no
-`@praxis-kit/runtime` or any other rendering library — a plain `HTMLElement` subclass. Not a
-reimplementation of native HTML element behavior — see "What `tag` means" below.
+rendering library — a plain `HTMLElement` subclass. Not a reimplementation of native HTML element
+behavior — see "What `tag` means" below.
 
 ---
 
 ## Installation
 
 ```bash
-pnpm add @praxis-kit/web
+pnpm add praxis-kit
 ```
 
 No peer dependencies — this is the zero-framework path.
@@ -20,8 +20,8 @@ No peer dependencies — this is the zero-framework path.
 ## Usage
 
 ```ts
-import { createContractComponent } from '@praxis-kit/web'
-import { defineContract } from '@praxis-kit/adapter-utils'
+import { createContractComponent } from 'praxis-kit/web'
+import { defineContract } from 'praxis-kit/contract'
 
 export const buttonContract = defineContract({
   tag: 'button',

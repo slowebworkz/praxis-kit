@@ -1,4 +1,4 @@
-# @praxis-kit/svelte
+# praxis-kit/svelte
 
 Svelte 5 adapter for praxis-kit — polymorphic components with ARIA contracts, variant composition,
 and structural child validation.
@@ -8,7 +8,7 @@ and structural child validation.
 ## Installation
 
 ```bash
-pnpm add @praxis-kit/svelte
+pnpm add praxis-kit
 ```
 
 Svelte is a peer dependency:
@@ -23,8 +23,8 @@ pnpm add svelte
 
 ```ts
 // button.ts
-import { createContractComponent } from '@praxis-kit/svelte'
-import { defineContract } from '@praxis-kit/adapter-utils'
+import { createContractComponent } from 'praxis-kit/svelte'
+import { defineContract } from 'praxis-kit/contract'
 
 export const buttonContract = defineContract({
   tag: 'button',
@@ -57,7 +57,7 @@ through the shared `<Polymorphic>` component instead:
 ```svelte
 <!-- Button.svelte -->
 <script lang="ts">
-  import Polymorphic from '@praxis-kit/svelte/Polymorphic.svelte'
+  import Polymorphic from 'praxis-kit/svelte/Polymorphic.svelte'
   import { buttonBundle } from './button'
 </script>
 

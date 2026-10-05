@@ -1,4 +1,4 @@
-# @praxis-kit/preact
+# praxis-kit/preact
 
 Preact adapter for praxis-kit — polymorphic components with ARIA contracts, variant composition, and
 structural child validation.
@@ -8,7 +8,7 @@ structural child validation.
 ## Installation
 
 ```bash
-pnpm add @praxis-kit/preact
+pnpm add praxis-kit
 ```
 
 Preact is a peer dependency:
@@ -22,8 +22,8 @@ pnpm add preact
 ## Usage
 
 ```ts
-import { createContractComponent } from '@praxis-kit/preact'
-import { defineContract } from '@praxis-kit/adapter-utils'
+import { createContractComponent } from 'praxis-kit/preact'
+import { defineContract } from 'praxis-kit/contract'
 
 export const buttonContract = defineContract({
   tag: 'button',

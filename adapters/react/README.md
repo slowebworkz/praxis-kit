@@ -1,4 +1,4 @@
-# @praxis-kit/react
+# praxis-kit/react
 
 React adapter for praxis-kit — polymorphic components with ARIA contracts, variant composition, and
 structural child validation.
@@ -11,7 +11,7 @@ are handled internally.
 ## Installation
 
 ```bash
-pnpm add @praxis-kit/react
+pnpm add praxis-kit
 ```
 
 React is a peer dependency:
@@ -25,8 +25,8 @@ pnpm add react
 ## Usage
 
 ```ts
-import { createContractComponent } from '@praxis-kit/react'
-import { defineContract } from '@praxis-kit/adapter-utils'
+import { createContractComponent } from 'praxis-kit/react'
+import { defineContract } from 'praxis-kit/contract'
 
 export const buttonContract = defineContract({
   tag: 'button',
@@ -83,7 +83,7 @@ The root entry targets React 19 (plain `ref` prop). For React 18, import from th
 sub-entry:
 
 ```ts
-import { createContractComponent } from '@praxis-kit/react/legacy'
+import { createContractComponent } from 'praxis-kit/react/legacy'
 ```
 
 Both entries export the same API. The legacy entry wraps components in `forwardRef` internally.
