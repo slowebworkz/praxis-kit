@@ -861,8 +861,7 @@ Kept separate. The two are different abstractions:
   sequential/parallel strategies.
 - **`lib/pipeline-kit`** — a bare _callable-function_ composition toolkit:
   `Pipeline<TArgs, TOutput> = (...args) => TOutput`, plus `composePipelines` (chain), `allPipelines`
-  (tuple, `Promise.all`-shaped), `anyPipeline` (first defined wins), and `definePipeline` (a
-  `PipelineFactory` memoized by the resolved-config object identity via a `WeakMap`). ~140 LOC, zero
+  (tuple, `Promise.all`-shaped), `anyPipeline` (first defined wins), ~140 LOC, zero
   `@praxis-kit` deps (only `type-fest`).
 
 `packages/core` imports `definePipeline` / `PipelineFactory` / `Arguments` directly for its render
