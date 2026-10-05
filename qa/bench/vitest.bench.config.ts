@@ -7,7 +7,8 @@ export default defineConfig({
   test: {
     name: 'bench',
     include: ['src/**/*.bench.ts'],
-    // pipeline.bench.ts / react-compiler.bench.ts: not yet implemented (render-level benches).
+    // pipeline.bench.ts / react-compiler.bench.ts: render-level benches; excluded here because
+    // they require jsdom and run through bench:render.
     // tabs.bench.ts: a real DOM benchmark (mounts React Tabs) — this config has no DOM
     // environment configured, unlike vitest.render.bench.config.ts (the `bench:render` script),
     // which does and is where this file actually runs.

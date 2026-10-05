@@ -1,7 +1,7 @@
 // These benchmarks isolate class resolution, tag dispatch, and prop merging
 // independent of framework rendering. They do not measure allocations, GC
 // pressure, React reconciliation, or JSX transform overhead — those require
-// a render-level bench (pipeline.bench.ts, not yet implemented).
+// a render-level bench (pipeline.bench.ts, run through bench:render).
 import { bench, describe } from 'vitest'
 import { createPolymorphic } from '@praxis-kit/core'
 import { cva } from 'class-variance-authority'
