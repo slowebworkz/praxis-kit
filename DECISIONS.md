@@ -861,8 +861,8 @@ Kept separate. The two are different abstractions:
   sequential/parallel strategies.
 - **`lib/pipeline-kit`** — a bare _callable-function_ composition toolkit:
   `Pipeline<TArgs, TOutput> = (...args) => TOutput`, plus `composePipelines` (chain), `allPipelines`
-  (tuple, `Promise.all`-shaped), `anyPipeline` (first defined wins), ~140 LOC, zero
-  `@praxis-kit` deps (only `type-fest`).
+  (tuple, `Promise.all`-shaped), `anyPipeline` (first defined wins), ~140 LOC, zero `@praxis-kit`
+  deps (only `type-fest`).
 
 `packages/core` imports `definePipeline` / `PipelineFactory` / `Arguments` directly for its render
 pipelines. Folding pipeline-kit into `lib/pipeline` would mean reconciling two unrelated `Pipeline`
@@ -3405,20 +3405,21 @@ Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule, ahead of the
 first breaking release — `defineContractComponent` removed, `defineContract` takes its place).
 Conclusion: **not yet.**
 
-What's there: `praxis-kit` on npm since `0.1.0`, ~1,100 downloads/month (`api.npmjs.org`,
-2026-08-13 → 2026-09-11) — but that window is registry-mirror/CI noise on a two-week-old package,
-not evidence of adoption, and the npm name still carries a deprecated `1.1.0`-`7.8.1` line from an
-unrelated earlier publisher (`npm-deprecate.yml`) that `v1.0.0` will sit awkwardly next to in the
-version list.
+What's there: `praxis-kit` on npm since `0.1.0`, ~1,100 downloads/month (`api.npmjs.org`, 2026-08-13
+→ 2026-09-11) — but that window is registry-mirror/CI noise on a two-week-old package, not evidence
+of adoption, and the npm name still carries a deprecated `1.1.0`-`7.8.1` line from an unrelated
+earlier publisher (`npm-deprecate.yml`) that `v1.0.0` will sit awkwardly next to in the version
+list.
 
 What's not there: repo created 2026-08-31 (two weeks old), 0 stars, 0 forks, 0 watchers, one human
 contributor (the maintainer — `dependabot[bot]` is the only other), no external issues or PRs ever
-opened (`gh api repos/slowebworkz/praxis-kit`, `gh issue list`, 2026-09-14). No `.github/FUNDING.yml`
-exists yet. There's no community to ask for support from, and 1.0.0 itself doesn't change that —
-API stability is a prerequisite for Sponsors here, not a substitute for the usage signal.
+opened (`gh api repos/slowebworkz/praxis-kit`, `gh issue list`, 2026-09-14). No
+`.github/FUNDING.yml` exists yet. There's no community to ask for support from, and 1.0.0 itself
+doesn't change that — API stability is a prerequisite for Sponsors here, not a substitute for the
+usage signal.
 
-**Revisit trigger:** real signal of external usage — an issue, a PR, or a star from an account
-that isn't the maintainer's — or the next version tag, whichever comes first.
+**Revisit trigger:** real signal of external usage — an issue, a PR, or a star from an account that
+isn't the maintainer's — or the next version tag, whichever comes first.
 
 ### npm version collision — `1.0.0` and `1.0.1` both blocked, shipped as `1.0.2` (2026-09-14)
 
@@ -3457,8 +3458,8 @@ known old-line number) is the fallback that ends the guessing for good. Both `v1
 were tagged, found unpublishable, and deleted (both locally and on `origin`) — neither corresponds
 to a published version of this codebase.
 
-**Every version number confirmed permanently blocked on the `praxis-kit` name, for future
-changesets to check against before picking a target version** (33 total — the visible 31 from
+**Every version number confirmed permanently blocked on the `praxis-kit` name, for future changesets
+to check against before picking a target version** (33 total — the visible 31 from
 `npm view praxis-kit versions`, plus the hidden `1.0.0` and `1.0.1` confirmed above; `0.1.0` /
 `0.1.1` / `1.0.2` are this codebase's own releases, not blocked). **This list is not exhaustive** —
 see the trap above:

@@ -94,7 +94,9 @@ describe('ContractProps', () => {
     // Mirrors the Lit adapter's identical fixture/regression test — see that adapter's own
     // `contract-props.test.ts` for the full before/after explanation.
     type PluginProps = { readonly highlighted?: boolean }
-    const stubPlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<PluginProps>
+    const stubPlugin = (() => ({
+      pipeline: () => '',
+    })) as unknown as ClassPluginFactory<PluginProps>
 
     const Chip = createContractComponent({
       tag: 'span',

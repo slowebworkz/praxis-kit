@@ -195,7 +195,10 @@ describe('validate() — aria-label / aria-labelledby on a Name-Prohibited role'
         role,
         'aria-labelledby': 'x',
       })
-      expect(violations.some((v) => v.attribute === 'aria-labelledby'), role).toBe(true)
+      expect(
+        violations.some((v) => v.attribute === 'aria-labelledby'),
+        role,
+      ).toBe(true)
     }
   })
 
