@@ -14,26 +14,26 @@ class is meant to keep a single nominal identity across entry points once the pu
 exists — construction stays internal, the _type_ is re-exported where callers need to name it.
 
 > Ported from `../pk` mostly verbatim. Adaptations: the old single `types.ts` was promoted to a
-> `types/` folder + barrel (repo default — see `DECISIONS.md`); `ThrowingReporter` was removed
-> (dead — the policy owns throwing); `debug()` / `fatal()` added for severity-facade symmetry;
-> `active` renamed `warnActive`; `DefaultPolicy` now validates its thresholds.
+> `types/` folder + barrel (repo default — see `DECISIONS.md`); `ThrowingReporter` was removed (dead
+> — the policy owns throwing); `debug()` / `fatal()` added for severity-facade symmetry; `active`
+> renamed `warnActive`; `DefaultPolicy` now validates its thresholds.
 
 ---
 
 ## Core pieces
 
-| Export                                                                                              | Purpose                                                              |
-| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `Diagnostics`                                                                     | Facade: `debug`/`info`/`warn`/`error`/`fatal` stamp severity, route via policy |
-| `Severity`, `isAtLeast`                                                           | Severity scale and comparisons                                       |
-| `DiagnosticCode`, `DiagnosticCategory`                                            | Stable codes and categories for every diagnostic                     |
-| `DefaultPolicy`, `Enforcement`                                                    | Policy: which severities are ignored, reported, or throw             |
-| `ConsoleReporter`, `AsyncConsoleReporter`, `CollectingReporter`, `nullReporter`   | Reporter implementations                                             |
-| `PraxisError`                                                                     | Structured error type carrying a diagnostic                          |
-| `ok` / `err`, `Result`, `ValidationResult`                                        | Result helpers for validation flows                                  |
-| `formatDiagnostic`, `Formatter`                                                   | Message formatting                                                   |
-| `silentDiagnostics` / `warnDiagnostics` / `throwDiagnostics`, `resolveDiagnostics`| Ready-made presets + name→instance resolver                          |
-| `SourceLocation`, `DiagnosticSuggestion`                                          | Location + fix-suggestion metadata                                   |
+| Export                                                                             | Purpose                                                                        |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `Diagnostics`                                                                      | Facade: `debug`/`info`/`warn`/`error`/`fatal` stamp severity, route via policy |
+| `Severity`, `isAtLeast`                                                            | Severity scale and comparisons                                                 |
+| `DiagnosticCode`, `DiagnosticCategory`                                             | Stable codes and categories for every diagnostic                               |
+| `DefaultPolicy`, `Enforcement`                                                     | Policy: which severities are ignored, reported, or throw                       |
+| `ConsoleReporter`, `AsyncConsoleReporter`, `CollectingReporter`, `nullReporter`    | Reporter implementations                                                       |
+| `PraxisError`                                                                      | Structured error type carrying a diagnostic                                    |
+| `ok` / `err`, `Result`, `ValidationResult`                                         | Result helpers for validation flows                                            |
+| `formatDiagnostic`, `Formatter`                                                    | Message formatting                                                             |
+| `silentDiagnostics` / `warnDiagnostics` / `throwDiagnostics`, `resolveDiagnostics` | Ready-made presets + name→instance resolver                                    |
+| `SourceLocation`, `DiagnosticSuggestion`                                           | Location + fix-suggestion metadata                                             |
 
 ## Design notes
 
@@ -50,11 +50,12 @@ exists — construction stays internal, the _type_ is re-exported where callers 
   warning-level validation work. Scoped to Warning — not a general "diagnostics on" flag.
 - `DefaultPolicy` requires `throwThreshold >= reportThreshold` (throws `RangeError` otherwise) — a
   throw band below the report band is always a misconfiguration.
-- `DiagnosticInput` is the write-side shape (`Diagnostic` minus `severity`). Planned direction:
-  grow structured `context` fields so formatters derive messages instead of callers pre-formatting
-  them — do not add fields without a concrete consumer.
-- `context`/`metadata` are typed via `@praxis-kit/primitive`'s `AnyRecord`. `primitive` also
-  imports the `Diagnostics` type from here — a **type-only** package cycle, erased at build, that
-  is accepted to keep one source of truth for the primitive types (see `DECISIONS.md`).
+- `DiagnosticInput` is the write-side shape (`Diagnostic` minus `severity`). Planned direction: grow
+  structured `context` fields so formatters derive messages instead of callers pre-formatting them —
+  do not add fields without a concrete consumer.
+- `context`/`metadata` are typed via `@praxis-kit/primitive`'s `AnyRecord`. `primitive` also imports
+  the `Diagnostics` type from here — a **type-only** package cycle, erased at build, that is
+  accepted to keep one source of truth for the primitive types (see `DECISIONS.md`).
 
-Development: `pnpm --filter @praxis-kit/diagnostics test`, `pnpm --filter @praxis-kit/diagnostics typecheck`.
+Development: `pnpm --filter @praxis-kit/diagnostics test`,
+`pnpm --filter @praxis-kit/diagnostics typecheck`.

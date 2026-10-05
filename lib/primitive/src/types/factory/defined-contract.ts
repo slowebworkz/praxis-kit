@@ -10,7 +10,5 @@ import type { ContractModel, HasContractModel } from './contract-model'
  * `M` is exactly that establishment, made concrete and inspectable rather than left implicit in
  * `O`'s own nested optional fields.
  */
-export type DefinedContract<
-  O extends ContractInput,
-  M extends ContractModel = ContractModel,
-> = O & HasContractModel<M>
+export type DefinedContract<O extends ContractInput, M extends ContractModel = ContractModel> = O &
+  HasContractModel<M>

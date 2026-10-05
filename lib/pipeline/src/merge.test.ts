@@ -74,9 +74,7 @@ describe('shallowDiff', () => {
 
 describe('detectConflicts', () => {
   it('returns keys written by more than one patch', () => {
-    expect(
-      detectConflicts<Ctx>([{ count: 1 }, { tag: 'p' }, { count: 2 }]),
-    ).toEqual(['count'])
+    expect(detectConflicts<Ctx>([{ count: 1 }, { tag: 'p' }, { count: 2 }])).toEqual(['count'])
   })
 
   it('returns an empty array for disjoint patches', () => {
@@ -84,8 +82,6 @@ describe('detectConflicts', () => {
   })
 
   it('reports each conflicting key once', () => {
-    expect(
-      detectConflicts<Ctx>([{ count: 1 }, { count: 2 }, { count: 3 }]),
-    ).toEqual(['count'])
+    expect(detectConflicts<Ctx>([{ count: 1 }, { count: 2 }, { count: 3 }])).toEqual(['count'])
   })
 })

@@ -7,8 +7,8 @@ adapter re-deriving the mechanism from scratch.
 
 Private workspace, bundled into whichever `praxis-kit` adapter entries need it.
 
-> Ported verbatim from `../pk` — pure type utilities, no `@praxis-kit/*` dependencies. Its
-> consumers (the framework adapters) are not ported yet.
+> Ported verbatim from `../pk` — pure type utilities, no `@praxis-kit/*` dependencies. Its consumers
+> (the framework adapters) are not ported yet.
 
 ---
 

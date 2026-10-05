@@ -130,8 +130,12 @@ describe('ContractProps — layout-union collapse (finding #44)', () => {
   })
 
   it('Omit / Pick / Merge over ContractProps no longer trip TS2590', () => {
-    expectTypeOf<Omit<ContractProps<typeof Box>, 'flex'>['grid']>().toEqualTypeOf<true | undefined>()
-    expectTypeOf<Pick<ContractProps<typeof Box>, 'grid'>['grid']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<Omit<ContractProps<typeof Box>, 'flex'>['grid']>().toEqualTypeOf<
+      true | undefined
+    >()
+    expectTypeOf<Pick<ContractProps<typeof Box>, 'grid'>['grid']>().toEqualTypeOf<
+      true | undefined
+    >()
     type Merged = ContractProps<typeof Box> & { extra?: string }
     expectTypeOf<Merged['extra']>().toEqualTypeOf<string | undefined>()
   })

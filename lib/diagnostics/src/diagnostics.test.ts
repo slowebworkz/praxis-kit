@@ -78,14 +78,20 @@ describe('Diagnostics facade', () => {
 
   it('drops a diagnostic the policy ignores', () => {
     const reporter = new CollectingReporter()
-    const diagnostics = new Diagnostics(reporter, new DefaultPolicy({ reportThreshold: Severity.Error }))
+    const diagnostics = new Diagnostics(
+      reporter,
+      new DefaultPolicy({ reportThreshold: Severity.Error }),
+    )
     diagnostics.warn(input)
     expect(reporter.diagnostics).toHaveLength(0)
   })
 
   it('throws before the reporter is consulted when the policy says Throw', () => {
     const reporter = new CollectingReporter()
-    const diagnostics = new Diagnostics(reporter, new DefaultPolicy({ throwThreshold: Severity.Error }))
+    const diagnostics = new Diagnostics(
+      reporter,
+      new DefaultPolicy({ throwThreshold: Severity.Error }),
+    )
     expect(() => diagnostics.error(input)).toThrow(PraxisError)
     expect(reporter.diagnostics).toHaveLength(0)
   })

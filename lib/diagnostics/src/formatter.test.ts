@@ -21,7 +21,13 @@ describe('formatDiagnostic', () => {
   })
 
   it('names the severity for every level', () => {
-    for (const s of [Severity.Debug, Severity.Info, Severity.Warning, Severity.Error, Severity.Fatal]) {
+    for (const s of [
+      Severity.Debug,
+      Severity.Info,
+      Severity.Warning,
+      Severity.Error,
+      Severity.Fatal,
+    ]) {
       expect(formatDiagnostic({ ...base, severity: s })).toContain(`${Severity[s]} `)
     }
   })

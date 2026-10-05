@@ -133,7 +133,12 @@ describe('normalizeChildRule() — invalid cardinality', () => {
 describe('normalizeChildRule() — positional cardinality invariant', () => {
   it('throws for position="first" with an explicit max > 1', () => {
     expect(() =>
-      normalizeChildRule({ name: 'header', match: matchAll, position: 'first', cardinality: { max: 2 } }),
+      normalizeChildRule({
+        name: 'header',
+        match: matchAll,
+        position: 'first',
+        cardinality: { max: 2 },
+      }),
     ).toThrow(RangeError)
   })
 
@@ -150,7 +155,12 @@ describe('normalizeChildRule() — positional cardinality invariant', () => {
 
   it('names the offending rule and position in the message', () => {
     expect(() =>
-      normalizeChildRule({ name: 'header', match: matchAll, position: 'first', cardinality: { max: 3 } }),
+      normalizeChildRule({
+        name: 'header',
+        match: matchAll,
+        position: 'first',
+        cardinality: { max: 3 },
+      }),
     ).toThrow('"header"')
   })
 

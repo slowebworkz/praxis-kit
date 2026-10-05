@@ -21,11 +21,7 @@
       "tree",
       "treegrid"
     ],
-    "aria-autocomplete": [
-      "combobox",
-      "searchbox",
-      "textbox"
-    ],
+    "aria-autocomplete": ["combobox", "searchbox", "textbox"],
     "aria-checked": [
       "checkbox",
       "menuitemcheckbox",
@@ -35,24 +31,9 @@
       "switch",
       "treeitem"
     ],
-    "aria-colcount": [
-      "grid",
-      "table",
-      "treegrid"
-    ],
-    "aria-colindex": [
-      "cell",
-      "columnheader",
-      "gridcell",
-      "row",
-      "rowheader"
-    ],
-    "aria-colspan": [
-      "cell",
-      "columnheader",
-      "gridcell",
-      "rowheader"
-    ],
+    "aria-colcount": ["grid", "table", "treegrid"],
+    "aria-colindex": ["cell", "columnheader", "gridcell", "row", "rowheader"],
+    "aria-colspan": ["cell", "columnheader", "gridcell", "rowheader"],
     "aria-expanded": [
       "application",
       "button",
@@ -107,28 +88,10 @@
       "tree",
       "treegrid"
     ],
-    "aria-level": [
-      "heading",
-      "listitem",
-      "row",
-      "tablist",
-      "treeitem"
-    ],
-    "aria-modal": [
-      "alertdialog",
-      "dialog"
-    ],
-    "aria-multiline": [
-      "searchbox",
-      "textbox"
-    ],
-    "aria-multiselectable": [
-      "grid",
-      "listbox",
-      "tablist",
-      "tree",
-      "treegrid"
-    ],
+    "aria-level": ["heading", "listitem", "row", "tablist", "treeitem"],
+    "aria-modal": ["alertdialog", "dialog"],
+    "aria-multiline": ["searchbox", "textbox"],
+    "aria-multiselectable": ["grid", "listbox", "tablist", "tree", "treegrid"],
     "aria-orientation": [
       "listbox",
       "menu",
@@ -142,10 +105,7 @@
       "tree",
       "treegrid"
     ],
-    "aria-placeholder": [
-      "searchbox",
-      "textbox"
-    ],
+    "aria-placeholder": ["searchbox", "textbox"],
     "aria-posinset": [
       "article",
       "listitem",
@@ -158,9 +118,7 @@
       "tab",
       "treeitem"
     ],
-    "aria-pressed": [
-      "button"
-    ],
+    "aria-pressed": ["button"],
     "aria-readonly": [
       "checkbox",
       "columnheader",
@@ -196,24 +154,9 @@
       "tree",
       "treegrid"
     ],
-    "aria-rowcount": [
-      "grid",
-      "table",
-      "treegrid"
-    ],
-    "aria-rowindex": [
-      "cell",
-      "columnheader",
-      "gridcell",
-      "row",
-      "rowheader"
-    ],
-    "aria-rowspan": [
-      "cell",
-      "columnheader",
-      "gridcell",
-      "rowheader"
-    ],
+    "aria-rowcount": ["grid", "table", "treegrid"],
+    "aria-rowindex": ["cell", "columnheader", "gridcell", "row", "rowheader"],
+    "aria-rowspan": ["cell", "columnheader", "gridcell", "rowheader"],
     "aria-selected": [
       "columnheader",
       "gridcell",
@@ -235,10 +178,7 @@
       "tab",
       "treeitem"
     ],
-    "aria-sort": [
-      "columnheader",
-      "rowheader"
-    ],
+    "aria-sort": ["columnheader", "rowheader"],
     "aria-valuemax": [
       "meter",
       "progressbar",
@@ -273,89 +213,30 @@
     ]
   },
   "requiredByRole": {
-    "checkbox": [
-      "aria-checked"
-    ],
-    "combobox": [
-      "aria-controls",
-      "aria-expanded"
-    ],
-    "heading": [
-      "aria-level"
-    ],
-    "menuitemcheckbox": [
-      "aria-checked"
-    ],
-    "menuitemradio": [
-      "aria-checked"
-    ],
-    "meter": [
-      "aria-valuenow"
-    ],
-    "option": [
-      "aria-selected"
-    ],
-    "radio": [
-      "aria-checked"
-    ],
-    "scrollbar": [
-      "aria-controls",
-      "aria-valuenow"
-    ],
-    "slider": [
-      "aria-valuenow"
-    ],
-    "switch": [
-      "aria-checked"
-    ],
-    "treeitem": [
-      "aria-selected"
-    ]
+    "checkbox": ["aria-checked"],
+    "combobox": ["aria-controls", "aria-expanded"],
+    "heading": ["aria-level"],
+    "menuitemcheckbox": ["aria-checked"],
+    "menuitemradio": ["aria-checked"],
+    "meter": ["aria-valuenow"],
+    "option": ["aria-selected"],
+    "radio": ["aria-checked"],
+    "scrollbar": ["aria-controls", "aria-valuenow"],
+    "slider": ["aria-valuenow"],
+    "switch": ["aria-checked"],
+    "treeitem": ["aria-selected"]
   },
   "prohibitedByRole": {
-    "caption": [
-      "aria-label",
-      "aria-labelledby"
-    ],
-    "code": [
-      "aria-label",
-      "aria-labelledby"
-    ],
-    "deletion": [
-      "aria-label",
-      "aria-labelledby"
-    ],
-    "emphasis": [
-      "aria-label",
-      "aria-labelledby"
-    ],
-    "generic": [
-      "aria-label",
-      "aria-labelledby"
-    ],
-    "insertion": [
-      "aria-label",
-      "aria-labelledby"
-    ],
-    "paragraph": [
-      "aria-label",
-      "aria-labelledby"
-    ],
-    "presentation": [
-      "aria-label",
-      "aria-labelledby"
-    ],
-    "strong": [
-      "aria-label",
-      "aria-labelledby"
-    ],
-    "subscript": [
-      "aria-label",
-      "aria-labelledby"
-    ],
-    "superscript": [
-      "aria-label",
-      "aria-labelledby"
-    ]
+    "caption": ["aria-label", "aria-labelledby"],
+    "code": ["aria-label", "aria-labelledby"],
+    "deletion": ["aria-label", "aria-labelledby"],
+    "emphasis": ["aria-label", "aria-labelledby"],
+    "generic": ["aria-label", "aria-labelledby"],
+    "insertion": ["aria-label", "aria-labelledby"],
+    "paragraph": ["aria-label", "aria-labelledby"],
+    "presentation": ["aria-label", "aria-labelledby"],
+    "strong": ["aria-label", "aria-labelledby"],
+    "subscript": ["aria-label", "aria-labelledby"],
+    "superscript": ["aria-label", "aria-labelledby"]
   }
 }
