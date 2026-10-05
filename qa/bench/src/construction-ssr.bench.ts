@@ -42,9 +42,12 @@ describe('1. contract construction', () => {
   })
 })
 
-// ─── 2. Component construction + render (the anti-pattern) ─────────────────────
+// ─── 2. Fresh component construction + render ──────────────────────────────────
+// Models the cost of defining a component during a render rather than benchmarking
+// an actual React render callback: each iteration runs createContractComponent
+// and then renderToString.
 
-describe('2. construction inside render', () => {
+describe('2. fresh component construction + render', () => {
   bench('new Praxis component (no styling) + render each iteration', () => {
     const LocalBox = createContractComponent({ tag: 'div', name: 'Box' })
     renderToString(createElement(LocalBox, null, 'Save'))
@@ -64,7 +67,7 @@ describe('2. construction inside render', () => {
 
 describe('3. reused Praxis component', () => {
   bench('createElement — module-level Button (element creation only)', () => {
-    createElement(Button, { size: 'md', intent: 'primary' }, 'Save')
+    return createElement(Button, { size: 'md', intent: 'primary' }, 'Save')
   })
 
   bench('Box (praxis, no variants)', () => {
@@ -72,11 +75,11 @@ describe('3. reused Praxis component', () => {
   })
 
   bench('Button (praxis, default variants)', () => {
-    renderToString(createElement(Button, null, 'Save'))
+    renderToString(createElement(Button, { type: 'button' }, 'Save'))
   })
 
   bench('Button (praxis, explicit non-default variants)', () => {
-    renderToString(createElement(Button, { size: 'sm', intent: 'ghost' }, 'Save'))
+    renderToString(createElement(Button, { type: 'button', size: 'sm', intent: 'ghost' }, 'Save'))
   })
 })
 
