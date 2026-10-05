@@ -18,6 +18,8 @@
     "metrics:report": "pnpm --filter @praxis-kit/metrics report",
     "metrics:assert": "pnpm --filter @praxis-kit/metrics assert",
     "check": "pnpm lint:check && pnpm typecheck && pnpm test",
+    "bench": "pnpm --filter @praxis-kit/bench bench",
+    "bench:render": "pnpm --filter @praxis-kit/bench bench:render",
     "verify": "pnpm --filter ./packages/kit build && pnpm check && pnpm repo-state",
     "verify:release": "pnpm verify && pnpm --filter ./packages/kit lint:pkg && pnpm --filter ./packages/kit test:pack && pnpm --filter @praxis-kit/tree-shaking-tests test && pnpm --filter @praxis-kit/bundle-analysis test && pnpm metrics:collect && pnpm metrics:assert",
     "lint": "NODE_OPTIONS=--max-old-space-size=8192 eslint . --fix",
