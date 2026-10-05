@@ -1,5 +1,4 @@
 import { AriaPolicyEngine } from '@praxis-kit/contract'
-import { definePipeline } from '@praxis-kit/pipeline-kit'
 import type {
   AriaPipelineResult,
   AriaRule,
@@ -31,9 +30,7 @@ export const createAriaPipeline: RenderPipeline<
   return (tag, props, extraProps) => engine.validate(tag, props, extraProps)
 }
 
-export const memoizedAriaPipeline = definePipeline(createAriaPipeline)
-
-// Used in place of memoizedAriaPipeline's result when a component has no `enforcement` option
+// Used in place of createAriaPipeline's result when a component has no `enforcement` option
 // configured at all — a no-op that echoes props back unchanged, keeping resolveAria's shape
 // uniform regardless of whether enforcement is active.
 export function resolveAriaPassthrough<P extends IntrinsicProps>(

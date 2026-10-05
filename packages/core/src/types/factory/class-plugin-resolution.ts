@@ -3,7 +3,7 @@ import type { AnyClassPlugin, ClassPipelineArgs } from '../class'
 /** The resolved styling pipeline and, when styling is supplied by a plugin, the validated
  *  plugin result that produced it.
  *
- *  Without a plugin, `pluginResult` is `undefined` and `classPipeline` is the built-in memoized
+ *  Without a plugin, `pluginResult` is `undefined` and `classPipeline` is the built-in
  *  class pipeline. With a plugin, `pluginResult` holds the validated plugin result and
  *  `classPipeline` is its guarded pipeline.
  *
