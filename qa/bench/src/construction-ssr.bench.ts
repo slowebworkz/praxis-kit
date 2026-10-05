@@ -48,7 +48,8 @@ function RawButton(props: { className?: string; children?: unknown }) {
   return createElement('button', { type: 'button', ...props }, props.children as never)
 }
 
-let elementSink: unknown
+// Written inside the bench so the element creation can't be optimized away.
+const elementSink = { value: undefined as unknown }
 
 // ─── 1. Contract construction ──────────────────────────────────────────────────
 
@@ -88,7 +89,7 @@ describe('2. fresh component construction + render', () => {
 describe('3. reused Praxis component', () => {
   bench('createElement — module-level Button (element creation only)', () => {
     // Stored in a module-level sink so the optimizer can't drop the element creation.
-    elementSink = createElement(Button, { size: 'md', intent: 'primary' }, 'Save')
+    elementSink.value = createElement(Button, { size: 'md', intent: 'primary' }, 'Save')
   })
 
   bench('Box (praxis, no variants)', () => {
