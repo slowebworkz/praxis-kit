@@ -219,8 +219,11 @@ function mapValues<T extends object, U>(
 ): { [K in OwnKey<T>]: U } {
   const result = {} as { [K in OwnKey<T>]: U }
 
-  for (const [key, value] of entries(object)) {
-    result[key] = callback(value, key)
+  // Plain for-in loop: the generator-based entries() allocates an iterator per step, which
+  // dominates render-path cost. Same iteration order and own-property filter.
+  for (const key in object) {
+    if (!hasOwn(object, key)) continue
+    result[key] = callback(object[key], key)
   }
 
   return result
@@ -230,8 +233,9 @@ function forEachEntry<T extends object>(
   object: T,
   callback: <K extends OwnKey<T>>(key: K, value: T[K]) => void,
 ): void {
-  for (const [key, value] of entries(object)) {
-    callback(key, value)
+  for (const key in object) {
+    if (!hasOwn(object, key)) continue
+    callback(key, object[key])
   }
 }
 
