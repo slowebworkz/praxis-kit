@@ -9,7 +9,7 @@
     "./factory": "./src/factory/index.ts"
   },
   "sideEffects": false,
-  "description": "Generic pipeline building block — a shared callable `Pipeline` shape plus compose/all/any and a memoized resolved-config factory pattern, reused by concrete pipelines across the workspace",
+  "description": "Generic pipeline building block — a shared callable `Pipeline` shape plus compose/all/any and a resolved-config factory type, reused by concrete pipelines across the workspace",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

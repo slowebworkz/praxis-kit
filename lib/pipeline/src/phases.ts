@@ -18,9 +18,7 @@ export type PipelinePhase = (typeof PIPELINE_PHASES)[number]
 /** The nodes to run in each phase. Every phase is optional; a phase with no
  *  nodes (absent or empty) is left out of the built pipeline entirely rather
  *  than run as an empty sub-pipeline. */
-export type PhaseNodes<TContext> = Partial<
-  Record<PipelinePhase, readonly PipelineNode<TContext>[]>
->
+export type PhaseNodes<TContext> = Partial<Record<PipelinePhase, readonly PipelineNode<TContext>[]>>
 
 /** Build a `Pipeline` from per-phase node lists. Phases always run in
  *  `PIPELINE_PHASES` order regardless of the key order of `phases`, and each

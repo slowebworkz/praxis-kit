@@ -1,6 +1,6 @@
 # Decisions
 
-## Status — 2026-09-08
+## Status — 2026-10-05
 
 This file is a chronological decision log, not a spec. Read it top-down for what is still live:
 unresolved questions live in the **`## Open`** section below; everything under **`## Resolved`** is
@@ -9,31 +9,22 @@ instead:
 
 | Question                                                | Authoritative source                                                             |
 | ------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| What's public, and how stable is it for 0.1?            | [`docs/api-stability.md`](docs/api-stability.md)                                 |
+| What's public, and how stable is it for 1.x?            | [`docs/api-stability.md`](docs/api-stability.md)                                 |
 | Which HTML/ARIA rules does the engine enforce, and why? | [`docs/accessibility/html-aria-audit.md`](docs/accessibility/html-aria-audit.md) |
 | How do I build a component?                             | [`GETTING_STARTED.md`](GETTING_STARTED.md), [`docs/`](docs/index.md)             |
 | Internal runtime pipeline                               | [`ARCHITECTURE.md`](ARCHITECTURE.md)                                             |
 
-**Milestone: 0.1.0. The architecture is frozen for it** — no new abstractions, no new tooling
-systems. Remaining work is correctness, documentation, and release mechanics.
+**Current release:** `praxis-kit@1.0.2` on npm (public). History: `0.1.0` → `0.1.1` → `1.0.2`.
+**Current stability policy:** 1.x, beginning with 1.0.2 — see `docs/api-stability.md`.
+**Integration branch:** `develop` (repository default). `main` tracks the last release.
 
-- **Decided and shipped.** Public-API surface classified into four stability tiers; state/ARIA
-  normalization semantics settled (per-prop `falseState`, Model B for `expanded`/`pressed`/
-  `selected`); the HTML/ARIA conformance audit closed for 0.1 (F2/F3/F4/F5/F6/F9 — see the audit
-  ledger); the single release gate (`pnpm verify:release`) wired into CI; the published-package
-  artifact validated from a real tarball install. `develop` is the integration branch and the repo
-  default; `main` tracks the last stable point.
-- **Still open (tracked in `## Open`).** `qa/*` tooling-dependency placement; `spikes/*` location.
-  Neither blocks the 0.1 tag.
-- **Remaining before the tag, beyond `## Open`.** A deliberate audit of what each public subpath
-  exports; the dependency / license / package-metadata audits; then the release steps — create the
-  0.1.0 changeset, flip `packages/kit` off `private`, publish, and re-verify from npm. (The
-  consumer-facing documentation pass and the `*.spike.test.*` review are done — see `## Resolved`.)
-- **Explicitly deferred past 0.1.** `runtime/compiler`; additional framework adapters; a large
-  component catalog (real components live in the separate `praxis-components` library); the
-  widget-contract APG audit (F7); contextual `<header>`/`<footer>` roles (deviation D4 — needs
-  ancestry the ARIA context deliberately omits); 1.0-level API guarantees.
+The architecture is frozen for the 1.x line: no new abstractions or tooling systems without a
+decision recorded here. Items below the historical entries that refer to 0.1 milestones (the 0.1.0
+tag, flipping `packages/kit` off `private`, first publish) are done; the entries are kept for the
+reasoning behind them.
 
+The live items are in **`## Open`**. Decisions below are historical and are not rewritten to match
+the current state.
 ---
 
 ## Open
@@ -861,9 +852,8 @@ Kept separate. The two are different abstractions:
   sequential/parallel strategies.
 - **`lib/pipeline-kit`** — a bare _callable-function_ composition toolkit:
   `Pipeline<TArgs, TOutput> = (...args) => TOutput`, plus `composePipelines` (chain), `allPipelines`
-  (tuple, `Promise.all`-shaped), `anyPipeline` (first defined wins), and `definePipeline` (a
-  `PipelineFactory` memoized by the resolved-config object identity via a `WeakMap`). ~140 LOC, zero
-  `@praxis-kit` deps (only `type-fest`).
+  (tuple, `Promise.all`-shaped), `anyPipeline` (first defined wins), ~140 LOC, zero `@praxis-kit`
+  deps (only `type-fest`).
 
 `packages/core` imports `definePipeline` / `PipelineFactory` / `Arguments` directly for its render
 pipelines. Folding pipeline-kit into `lib/pipeline` would mean reconciling two unrelated `Pipeline`
@@ -3406,20 +3396,21 @@ Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule, ahead of the
 first breaking release — `defineContractComponent` removed, `defineContract` takes its place).
 Conclusion: **not yet.**
 
-What's there: `praxis-kit` on npm since `0.1.0`, ~1,100 downloads/month (`api.npmjs.org`,
-2026-08-13 → 2026-09-11) — but that window is registry-mirror/CI noise on a two-week-old package,
-not evidence of adoption, and the npm name still carries a deprecated `1.1.0`-`7.8.1` line from an
-unrelated earlier publisher (`npm-deprecate.yml`) that `v1.0.0` will sit awkwardly next to in the
-version list.
+What's there: `praxis-kit` on npm since `0.1.0`, ~1,100 downloads/month (`api.npmjs.org`, 2026-08-13
+→ 2026-09-11) — but that window is registry-mirror/CI noise on a two-week-old package, not evidence
+of adoption, and the npm name still carries a deprecated `1.1.0`-`7.8.1` line from an unrelated
+earlier publisher (`npm-deprecate.yml`) that `v1.0.0` will sit awkwardly next to in the version
+list.
 
 What's not there: repo created 2026-08-31 (two weeks old), 0 stars, 0 forks, 0 watchers, one human
 contributor (the maintainer — `dependabot[bot]` is the only other), no external issues or PRs ever
-opened (`gh api repos/slowebworkz/praxis-kit`, `gh issue list`, 2026-09-14). No `.github/FUNDING.yml`
-exists yet. There's no community to ask for support from, and 1.0.0 itself doesn't change that —
-API stability is a prerequisite for Sponsors here, not a substitute for the usage signal.
+opened (`gh api repos/slowebworkz/praxis-kit`, `gh issue list`, 2026-09-14). No
+`.github/FUNDING.yml` exists yet. There's no community to ask for support from, and 1.0.0 itself
+doesn't change that — API stability is a prerequisite for Sponsors here, not a substitute for the
+usage signal.
 
-**Revisit trigger:** real signal of external usage — an issue, a PR, or a star from an account
-that isn't the maintainer's — or the next version tag, whichever comes first.
+**Revisit trigger:** real signal of external usage — an issue, a PR, or a star from an account that
+isn't the maintainer's — or the next version tag, whichever comes first.
 
 ### npm version collision — `1.0.0` and `1.0.1` both blocked, shipped as `1.0.2` (2026-09-14)
 
@@ -3458,8 +3449,8 @@ known old-line number) is the fallback that ends the guessing for good. Both `v1
 were tagged, found unpublishable, and deleted (both locally and on `origin`) — neither corresponds
 to a published version of this codebase.
 
-**Every version number confirmed permanently blocked on the `praxis-kit` name, for future
-changesets to check against before picking a target version** (33 total — the visible 31 from
+**Every version number confirmed permanently blocked on the `praxis-kit` name, for future changesets
+to check against before picking a target version** (33 total — the visible 31 from
 `npm view praxis-kit versions`, plus the hidden `1.0.0` and `1.0.1` confirmed above; `0.1.0` /
 `0.1.1` / `1.0.2` are this codebase's own releases, not blocked). **This list is not exhaustive** —
 see the trap above:
@@ -3474,3 +3465,53 @@ hits this same wall — and, per the trap above, could also land on a hidden ver
 list. No mitigation implemented — noting it here, with the full list above, so it's recognized
 immediately (not re-debugged as a fresh credentials issue) if it recurs. If this happens a third
 time, stop guessing and jump to `8.0.0`.
+
+### Runtime performance audit — caches, Proxy, and the fresh-component cost (2026-10-05)
+
+A benchmark-driven review of the runtime's caching and the case for `Proxy`. Numbers come from
+`qa/bench` (Node, SSR via `renderToString`), taken on a machine under load (1-minute load 7–17).
+Ratios within a single run are the meaningful signal; absolute times shift between sessions.
+
+**Decisions:**
+
+- **`definePipeline`'s WeakMap cache — removed.** It keyed each pipeline on the `resolved` object,
+  which `createPolymorphic` builds fresh on every call, and each key was used once. It never hit, so
+  it only added overhead per component definition. Removed in #121; no behavior change.
+- **Variant-class cache — kept.** Under a controlled comparison (stable vs rotating props on the
+  same Button), the cache saves about 17 µs per client render (39.7 µs vs 57.1 µs). It is the only
+  cache-on vs cache-off pair measured, and it shows a material benefit. Retain pending broader
+  profiling.
+- **`Proxy` — not justified for the current runtime.** Benchmarks identify neither property access
+  nor lazy resolution as a meaningful bottleneck. Class and prop resolution together are about 2 µs
+  per render, and `Reflect.get` in the guards is not on a measured path. Proxy would add per-access
+  cost to code that doesn't need it.
+- **`memoize` in `praxis-kit/utils` — described accurately.** It is not used internally, and its
+  cache is unbounded, so it is for bounded input spaces only. `docs/api-stability.md` says so.
+
+**Findings (provisional, from repeated runs):**
+
+- **Component boundary is a minority of the SSR cost.** A plain function component adds about 4 µs
+  over an intrinsic `div`. Praxis `Box` adds about 7 µs over `RawBox`; `Button` adds about 10 µs
+  over `RawButton` with explicit defaults.
+- **Enforcement costs about 13 µs per `Button` render** (explicit defaults, `diagnostics: 'warn'`).
+  An earlier single-run figure of about 18 µs was withdrawn as noise.
+- **Fresh-component cost is mostly React's, not Praxis's.** A new component costs about 2.6x a
+  reused one in the first measurements; in a later run the first-render residual was about 12 µs,
+  and a plain React control (no Praxis) reproduces about 10 µs of it. Praxis adds about 2 µs of
+  first-render setup on top. The second render of a fresh instance costs the same as a reused one.
+- **Implicit vs explicit default variants — not settled.** An earlier SSR run showed implicit
+  defaults about 5 µs slower, but a later run did not reproduce it, and per-stage timings showed
+  explicit props spending more time in class resolution. The resolver alone is faster for implicit
+  props. Treat the gap as unconfirmed until a quieter machine reproduces it.
+
+**Open:**
+
+- Rerun the implicit-vs-explicit comparison on an idle machine, with several passes, before any
+  change is made to default merging or the variant cache.
+- Profile the Praxis-specific part of the first-render setup (about 2 µs) only if it matters for
+  real applications.
+- Re-measure the Tabs client-render gap (about 1.3–2.1x vanilla React) with the same method before
+  attributing it to any part of the runtime.
+
+**Benchmarks backing this entry:** `construction-ssr.bench.ts`, `residual.bench.ts`,
+`fresh-react-type.bench.ts` (control), and `defaults-trace.bench.ts`.

@@ -15,11 +15,11 @@ import type {
   VariantMap,
 } from '../types'
 import {
-  memoizedAriaPipeline,
-  memoizedHtmlChildrenEvaluatorPipeline,
-  memoizedHtmlPropNormalizersPipeline,
-  memoizedPropsPipeline,
-  memoizedTagPipeline,
+  createAriaPipeline,
+  createHtmlChildrenEvaluatorPipeline,
+  createHtmlPropNormalizersPipeline,
+  createPropsPipeline,
+  createTagPipeline,
   resolveAriaPassthrough,
   resolveClassPlugin,
 } from './pipelines'
@@ -62,8 +62,8 @@ export function createPolymorphic<
   const anyBaseResolved = eraseResolvedShape(baseResolved)
   const resolved = Object.freeze({
     ...baseResolved,
-    htmlPropNormalizersFn: memoizedHtmlPropNormalizersPipeline(anyBaseResolved),
-    htmlChildrenEvaluatorFn: memoizedHtmlChildrenEvaluatorPipeline(anyBaseResolved),
+    htmlPropNormalizersFn: createHtmlPropNormalizersPipeline(anyBaseResolved),
+    htmlChildrenEvaluatorFn: createHtmlChildrenEvaluatorPipeline(anyBaseResolved),
   })
   const anyResolved = eraseResolvedShape(resolved)
 
@@ -76,10 +76,10 @@ export function createPolymorphic<
     anyResolved,
     resolved.diagnostics,
   )
-  const resolveTag = memoizedTagPipeline(anyResolved)
-  const resolveProps = memoizedPropsPipeline(anyResolved)
+  const resolveTag = createTagPipeline(anyResolved)
+  const resolveProps = createPropsPipeline(anyResolved)
   const resolveAriaFn =
-    options.enforcement !== undefined ? memoizedAriaPipeline(anyResolved) : resolveAriaPassthrough
+    options.enforcement !== undefined ? createAriaPipeline(anyResolved) : resolveAriaPassthrough
 
   // `packages/core` resolves the render-time capabilities and hands them to the adapter layer;
   // it does not run a full render itself. In particular `resolveProps` is a *component-level*

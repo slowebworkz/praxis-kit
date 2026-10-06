@@ -111,7 +111,9 @@ describe('ContractProps', () => {
     // parameter) but never `ContractProps`. Routing through `__contract`/`ContractGenericsOf<C>`
     // (which folds `ExtractPluginProps<TPlugin>` into `props` once, pre-flattened) fixes this.
     type PluginProps = { readonly highlighted?: boolean }
-    const stubPlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<PluginProps>
+    const stubPlugin = (() => ({
+      pipeline: () => '',
+    })) as unknown as ClassPluginFactory<PluginProps>
 
     const Chip = createContractComponent({
       tag: 'span',

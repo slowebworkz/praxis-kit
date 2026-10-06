@@ -13,9 +13,9 @@ Built (`tsdown`). The public `exports` surface, the framework-neutral entry file
 `guards.ts` / `html.ts` / `utils.ts` — thin re-exports of `@praxis-kit/core`, `primitive`, and
 `diagnostics`), and Changesets (this is the only package it versions) are all in place. All 7
 framework adapters are ready, including Solid and Svelte's declaration file — both formerly deferred
-gaps, now resolved (see below). **Not yet published** (`private: true`) — pending review of the
-build itself and the release-process wiring (CI release job, `private: false` flip, first tag), not
-on any remaining source gap.
+gaps, now resolved. Published to npm as `praxis-kit` (latest: 1.0.2). The support level for each
+subpath is in
+[docs/api-stability.md](https://github.com/slowebworkz/praxis-kit/blob/main/docs/api-stability.md).
 
 | Entry                                     | Bundles                    | State                                                                                                                     |
 | ----------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |

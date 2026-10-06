@@ -217,7 +217,7 @@ describe('factory — with variants + compounds (cold path)', () => {
 // call. The normalization pipeline may become monomorphic and near-zero after
 // warmup. Contrast with rotated configs to expose any deopt from shape mutation.
 describe('factory — repeated identical config (V8 shape stability)', () => {
-  bench('createPolymorphic — same config every call', () => {
+  bench('createPolymorphic — fresh config literal each call (cold construction)', () => {
     createPolymorphic({ tag: 'button', styling: { base: 'btn' } })
   })
 

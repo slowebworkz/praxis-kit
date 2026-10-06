@@ -15,9 +15,7 @@ type HasEvaluator<E> =
 
 describe('BuiltChildrenEvaluator', () => {
   it('includes the evaluator when child rules are declared', () => {
-    expectTypeOf<
-      HasEvaluator<{ children: readonly [ChildRuleInput] }>
-    >().toEqualTypeOf<true>()
+    expectTypeOf<HasEvaluator<{ children: readonly [ChildRuleInput] }>>().toEqualTypeOf<true>()
   })
 
   it('includes the evaluator for exclusiveChildren: true with no rules', () => {

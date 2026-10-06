@@ -1,5 +1,12 @@
 # praxis-kit
 
+## 1.0.3
+
+### Patch Changes
+
+- 963dff2: Improve runtime performance by removing an ineffective pipeline cache and optimizing
+  foundation iteration, with no public API changes.
+
 ## 1.0.2
 
 Published as `1.0.2`, not `1.0.0` or `1.0.1` — both were already taken on the `praxis-kit` npm name

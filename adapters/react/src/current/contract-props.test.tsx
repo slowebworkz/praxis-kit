@@ -130,7 +130,10 @@ describe('ContractProps — data-* passthrough (finding #43)', () => {
   )
 
   it('a data-* key is destructurable and forwardable from ContractProps', () => {
-    function Avatar({ 'data-slot': slot = 'avatar', ...rest }: ContractProps<typeof Img>): ReactElement {
+    function Avatar({
+      'data-slot': slot = 'avatar',
+      ...rest
+    }: ContractProps<typeof Img>): ReactElement {
       return <Img {...rest} data-slot={slot} />
     }
     const _el = <Avatar data-slot="custom" />
@@ -144,10 +147,10 @@ describe('ContractProps — data-* passthrough (finding #43)', () => {
     // `FlattenLayout` then collapses the union entirely, so `data-slot` is a plain member here.
     // Shape matches `LayoutProps`: one-of the exclusive `true`s, or none of them.
     type LayoutUnion =
-      | { flex: true; grid?: never }
-      | { grid: true; flex?: never }
-      | { flex?: never; grid?: never }
-    const layoutPlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<LayoutUnion>
+      { flex: true; grid?: never } | { grid: true; flex?: never } | { flex?: never; grid?: never }
+    const layoutPlugin = (() => ({
+      pipeline: () => '',
+    })) as unknown as ClassPluginFactory<LayoutUnion>
 
     const Box = createContractComponent(
       defineContract({

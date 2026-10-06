@@ -1,5 +1,4 @@
 import type { PipelineFactory } from '@praxis-kit/pipeline-kit'
-import { definePipeline } from '@praxis-kit/pipeline-kit'
 import { makeResolveTag, mergeProps } from '@praxis-kit/primitive'
 import { createClassPipeline } from '@praxis-kit/styling'
 import type { ChildrenEvaluator } from '../../children'
@@ -44,18 +43,10 @@ export const createHtmlChildrenEvaluatorPipeline: RenderPipeline<
 // ResolvedFactoryShape (it lacks defaultTag/diagnostics/variantKeys, which are always present on
 // a real ResolvedFactoryShape but aren't guaranteed by every ClassPipelineOptions caller, e.g.
 // resolveClassPlugin's own `resolved` parameter). Forcing this to RenderPipeline would make
-// resolveClassPlugin's call into memoizedClassPipeline a type error under
+// resolveClassPlugin's call into createStylingClassPipeline a type error under
 // exactOptionalPropertyTypes — the two resolved shapes aren't interchangeable here.
 export const createStylingClassPipeline: PipelineFactory<
   ClassPipelineOptions<VariantMap>,
   ClassPipelineArgs,
   string | undefined
 > = (resolved) => createClassPipeline(resolved)
-
-export const memoizedTagPipeline = definePipeline(createTagPipeline)
-export const memoizedPropsPipeline = definePipeline(createPropsPipeline)
-export const memoizedHtmlPropNormalizersPipeline = definePipeline(createHtmlPropNormalizersPipeline)
-export const memoizedHtmlChildrenEvaluatorPipeline = definePipeline(
-  createHtmlChildrenEvaluatorPipeline,
-)
-export const memoizedClassPipeline = definePipeline(createStylingClassPipeline)

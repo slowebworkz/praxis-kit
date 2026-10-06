@@ -323,8 +323,8 @@ import { createContractComponent } from 'praxis-kit/react' // /vue, /solid, /sve
 ```
 
 Everything else (`/contract`, `/tailwind`, `/eslint`, `/vite-plugin`, `/codemod`, …) is opt-in.
-[docs/api-stability.md](./docs/api-stability.md) says which subpaths are stable for 0.1 and which
-may still move.
+[docs/api-stability.md](./docs/api-stability.md) says which subpaths are stable for 1.x and which
+remain experimental.
 
 ---
 

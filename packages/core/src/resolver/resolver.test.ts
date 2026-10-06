@@ -67,7 +67,10 @@ describe('createResolverPipeline()', () => {
   })
 
   it('merges defaultProps under caller props', () => {
-    const resolve = createResolverPipeline(opts({ defaultProps: { type: 'submit', id: 'x' } }), classPipeline)
+    const resolve = createResolverPipeline(
+      opts({ defaultProps: { type: 'submit', id: 'x' } }),
+      classPipeline,
+    )
     const out = resolve({ props: { id: 'y' } })
     expect(out.props).toMatchObject({ type: 'submit', id: 'y' })
   })

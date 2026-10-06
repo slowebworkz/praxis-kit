@@ -127,7 +127,11 @@ function getLiveInputPaths(metafile: Metafile): string[] {
   return live
 }
 
-function checkLiveFileLeak(group: 'source' | 'package', name: string, metafile: Metafile): string[] {
+function checkLiveFileLeak(
+  group: 'source' | 'package',
+  name: string,
+  metafile: Metafile,
+): string[] {
   const owner = OWNERS[name]
   if (!owner) return []
   const ownDir = group === 'source' ? owner.sourceDir : owner.distDir

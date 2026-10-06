@@ -38,9 +38,7 @@ interface NodeOutcome<TContext> {
   metadata: MetadataMap
 }
 
-function isPipeline<TContext>(
-  node: PipelineNode<TContext>,
-): node is Pipeline<TContext> {
+function isPipeline<TContext>(node: PipelineNode<TContext>): node is Pipeline<TContext> {
   return 'nodes' in node
 }
 
@@ -111,9 +109,7 @@ async function runParallel<TContext>(
   pipeline: Pipeline<TContext>,
   input: TContext,
 ): Promise<RunResult<TContext>> {
-  const outcomes = await Promise.all(
-    pipeline.nodes.map((node) => runNode(node, input)),
-  )
+  const outcomes = await Promise.all(pipeline.nodes.map((node) => runNode(node, input)))
 
   const conflicts = detectConflicts(outcomes.map((outcome) => outcome.patch))
   if (conflicts.length > 0) {

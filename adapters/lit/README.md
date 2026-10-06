@@ -1,4 +1,4 @@
-# @praxis-kit/lit
+# praxis-kit/lit
 
 Lit adapter for praxis-kit — a Custom Element host carrying a Praxis semantic contract: styling,
 variant composition, ARIA policy, and structural child validation. Not a reimplementation of native
@@ -9,7 +9,7 @@ HTML element behavior — see "What `tag` means" below.
 ## Installation
 
 ```bash
-pnpm add @praxis-kit/lit
+pnpm add praxis-kit
 ```
 
 Lit is a peer dependency:
@@ -23,8 +23,8 @@ pnpm add lit
 ## Usage
 
 ```ts
-import { createContractComponent } from '@praxis-kit/lit'
-import { defineContract } from '@praxis-kit/adapter-utils'
+import { createContractComponent } from 'praxis-kit/lit'
+import { defineContract } from 'praxis-kit/contract'
 
 export const buttonContract = defineContract({
   tag: 'button',
