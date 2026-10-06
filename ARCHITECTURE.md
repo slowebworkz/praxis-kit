@@ -149,7 +149,7 @@ flowchart TD
     ─────────────
     unpacks styling / enforcement
     into flat ResolvedFactoryOptions;
-    also memoizes htmlPropNormalizersFn
+    also builds htmlPropNormalizersFn
     and htmlChildrenEvaluatorFn"]
 
     validate["validateFactoryOptions()
@@ -173,9 +173,8 @@ flowchart TD
 ```
 
 `createPolymorphic(options)` unpacks the namespaced `FactoryOptions` into a flat
-`ResolvedFactoryOptions`, freezes it, memoizes the built-in HTML prop-normalizer and
-children-evaluator pipelines onto it once, builds the class pipeline once, and returns a lightweight
-runtime object. `validateFactoryOptions` (dev-only, `NODE_ENV !== 'production'`) checks the
+`ResolvedFactoryOptions`, freezes it, builds the built-in HTML prop-normalizer and children-evaluator
+pipelines onto it once, builds the class pipeline once, and returns a lightweight runtime object. `validateFactoryOptions` (dev-only, `NODE_ENV !== 'production'`) checks the
 _configuration itself_ for mistakes a component author could make — an `enforcement.aria`/
 `children` rule naming an unknown variant dimension, a compound condition naming an invalid variant
 value — independent of any particular render. `resolveClasses` similarly runs `validateRenderProps`
@@ -371,7 +370,7 @@ element is a violation and whether text/number children are permitted at all.
 
 `packages/core/src/html` exports `htmlContracts`, a keyed map of ready-made `EnforcementOptions`
 objects for HTML elements whose content model restricts direct children. `createPolymorphic` folds
-these in automatically via the memoized `htmlChildrenEvaluatorFn` — a component author never
+these in automatically via the `htmlChildrenEvaluatorFn` built for each component — a component author never
 constructs one directly; `runtime.options.htmlChildrenEvaluatorFn?.(tag)` gives the adapter the
 right evaluator for whatever tag the render resolved to.
 
@@ -498,7 +497,7 @@ adapter — not by core itself.
 
 | What runs                                                                                                                                                         | Where           |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| `resolveFactoryOptions` — unpacks `FactoryOptions` → frozen `ResolvedFactoryOptions`; memoizes the built-in HTML prop-normalizer and children-evaluator pipelines | `packages/core` |
+| `resolveFactoryOptions` — unpacks `FactoryOptions` → frozen `ResolvedFactoryOptions`; builds the built-in HTML prop-normalizer and children-evaluator pipelines | `packages/core` |
 | `validateFactoryOptions` — dev-only sanity checks against the config itself                                                                                       | `packages/core` |
 | `createClassPipeline` — constructs `StaticClassResolver` (LRU 200) + `VariantClassResolver` (LRU 1 000)                                                           | `lib/styling`   |
 | `AriaPolicyEngine` — instantiated only when `enforcement` is declared; holds its own LRU plan cache (cap 100)                                                     | `lib/contract`  |
