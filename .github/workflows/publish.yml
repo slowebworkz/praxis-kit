@@ -7,7 +7,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  # contents: write — needed to create the GitHub release for the tag (see "Create GitHub release").
+  contents: write
   # Required for npm publish provenance — mints a short-lived OIDC token GitHub Actions exchanges
   # with npm to cryptographically attest that this tarball was built from this repo at this commit.
   id-token: write
@@ -81,3 +82,28 @@ jobs:
           else
             (cd packages/kit && pnpm publish --access public --no-git-checks --provenance --tag ${{ steps.dist_tag.outputs.tag }})
           fi
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          if gh release view "$TAG" &>/dev/null; then
+            echo "Release $TAG already exists — skipping"
+            exit 0
+          fi
+          # Body = the CHANGELOG section for this version (from its "## <version>" heading to the next "## ").
+          notes=$(mktemp)
+          awk -v v="$version" '
+            $0 ~ "^## "v"$" { on=1; next }
+            on && /^## / { exit }
+            on { print }
+          ' packages/kit/CHANGELOG.md > "$notes"
+          if [ ! -s "$notes" ]; then
+            echo "ERROR: no CHANGELOG section for $version"
+            exit 1
+          fi
+          prerelease=""
+          if echo "$version" | grep -qE '-(alpha|beta|rc)'; then prerelease="--prerelease"; fi
+          gh release create "$TAG" --title "praxis-kit $TAG" --notes-file "$notes" $prerelease --verify-tag
