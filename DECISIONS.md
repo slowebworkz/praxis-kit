@@ -1,6 +1,6 @@
 # Decisions
 
-## Status — 2026-09-08
+## Status — 2026-10-05
 
 This file is a chronological decision log, not a spec. Read it top-down for what is still live:
 unresolved questions live in the **`## Open`** section below; everything under **`## Resolved`** is
@@ -9,31 +9,22 @@ instead:
 
 | Question                                                | Authoritative source                                                             |
 | ------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| What's public, and how stable is it for 0.1?            | [`docs/api-stability.md`](docs/api-stability.md)                                 |
+| What's public, and how stable is it for 1.x?            | [`docs/api-stability.md`](docs/api-stability.md)                                 |
 | Which HTML/ARIA rules does the engine enforce, and why? | [`docs/accessibility/html-aria-audit.md`](docs/accessibility/html-aria-audit.md) |
 | How do I build a component?                             | [`GETTING_STARTED.md`](GETTING_STARTED.md), [`docs/`](docs/index.md)             |
 | Internal runtime pipeline                               | [`ARCHITECTURE.md`](ARCHITECTURE.md)                                             |
 
-**Milestone: 0.1.0. The architecture is frozen for it** — no new abstractions, no new tooling
-systems. Remaining work is correctness, documentation, and release mechanics.
+**Current release:** `praxis-kit@1.0.2` on npm (public). History: `0.1.0` → `0.1.1` → `1.0.2`.
+**Current stability policy:** 1.x, beginning with 1.0.2 — see `docs/api-stability.md`.
+**Integration branch:** `develop` (repository default). `main` tracks the last release.
 
-- **Decided and shipped.** Public-API surface classified into four stability tiers; state/ARIA
-  normalization semantics settled (per-prop `falseState`, Model B for `expanded`/`pressed`/
-  `selected`); the HTML/ARIA conformance audit closed for 0.1 (F2/F3/F4/F5/F6/F9 — see the audit
-  ledger); the single release gate (`pnpm verify:release`) wired into CI; the published-package
-  artifact validated from a real tarball install. `develop` is the integration branch and the repo
-  default; `main` tracks the last stable point.
-- **Still open (tracked in `## Open`).** `qa/*` tooling-dependency placement; `spikes/*` location.
-  Neither blocks the 0.1 tag.
-- **Remaining before the tag, beyond `## Open`.** A deliberate audit of what each public subpath
-  exports; the dependency / license / package-metadata audits; then the release steps — create the
-  0.1.0 changeset, flip `packages/kit` off `private`, publish, and re-verify from npm. (The
-  consumer-facing documentation pass and the `*.spike.test.*` review are done — see `## Resolved`.)
-- **Explicitly deferred past 0.1.** `runtime/compiler`; additional framework adapters; a large
-  component catalog (real components live in the separate `praxis-components` library); the
-  widget-contract APG audit (F7); contextual `<header>`/`<footer>` roles (deviation D4 — needs
-  ancestry the ARIA context deliberately omits); 1.0-level API guarantees.
+The architecture is frozen for the 1.x line: no new abstractions or tooling systems without a
+decision recorded here. Items below the historical entries that refer to 0.1 milestones (the 0.1.0
+tag, flipping `packages/kit` off `private`, first publish) are done; the entries are kept for the
+reasoning behind them.
 
+The live items are in **`## Open`**. Decisions below are historical and are not rewritten to match
+the current state.
 ---
 
 ## Open
