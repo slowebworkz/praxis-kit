@@ -42,7 +42,7 @@ catalog:
   "@vitest/ui": ^4.1.11
   "@vue/compiler-dom": ^3.5.43
   "@vue/server-renderer": ^3.5.42
-  "@vue/test-utils": ^2.5.0
+  "@vue/test-utils": ^2.5.1
   class-variance-authority: ^0.7.1
 
   # Styling
