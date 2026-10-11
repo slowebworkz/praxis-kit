@@ -1,0 +1,28 @@
+{
+  "name": "@praxis-kit/guards",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "description": "Guard functions",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/foundation": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "guardz": "^1.14.0",
+    "type-fest": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "vitest": "catalog:"
+  }
+}
