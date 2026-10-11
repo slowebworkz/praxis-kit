@@ -14,6 +14,7 @@ export type { NormalizedOptions } from './normalized-options'
 export type {
   ElementRef,
   PolymorphicProps,
+  PolymorphicWithAllowedAs,
   PolymorphicComponent,
   CompoundComponent,
   ContractProps,

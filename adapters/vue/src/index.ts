@@ -10,6 +10,7 @@ export { Slottable } from './slot'
 export type { SlottableProps } from './slot'
 export type {
   PolymorphicProps,
+  PolymorphicWithAllowedAs,
   PolymorphicWithAsChild,
   PolymorphicComponent,
   ContractProps,

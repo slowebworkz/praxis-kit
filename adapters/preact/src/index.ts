@@ -10,6 +10,7 @@ export type { PreactFactoryOptions } from './preact-options'
 export type {
   PolymorphicComponent,
   PolymorphicProps,
+  PolymorphicWithAllowedAs,
   PolymorphicWithAsChild,
   ContractProps,
   ElementRef,
