@@ -65,6 +65,20 @@ export type EnforcementOptions<TAllowed extends ElementType = ElementType> = {
    * (a consumer who genuinely needs a non-allowed element can still proceed). Default: false —
    * ordinary polymorphic components that restrict `allowedAs` for semantic/ARIA reasons with no
    * tag-dependent native behavior (e.g. `Box`) should leave this unset to avoid false positives.
+   *
+   * This field itself is framework-neutral and honored by every adapter's resolved options, but
+   * the runtime check it enables is **only implemented for React, Preact, and Vue** — the three
+   * adapters whose `asChild` clones the merged props onto a real, consumer-supplied child element.
+   * Solid's and Svelte's `asChild` instead hands resolved props to a caller-authored render
+   * callback/snippet that owns its own output directly, so there is no cloned child element for
+   * this check to inspect at render time — setting `nativeTagBehavior` on a Solid or Svelte
+   * contract has no effect. Lit and Web have no `asChild` at all (see
+   * [concepts.md](../../../../../docs/concepts.md#aschild-composition) for the full adapter
+   * matrix). Within the three adapters that do implement it, the check is also best-effort, not a
+   * guarantee: it's silently skipped whenever the child's tag can't be statically resolved — a
+   * multi-element `Slottable` composition, or a child that is itself a custom component never
+   * stamped with `markComponentTag` (see `isTag`/`getTag`) — so a real mismatch can still go
+   * unwarned in those cases.
    */
   readonly nativeTagBehavior?: boolean
 }

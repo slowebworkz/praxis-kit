@@ -92,6 +92,33 @@ genuinely needs a non-allowed element can still proceed) if the resolved child's
 `allowedAs` for unrelated reasons (semantics, ARIA) with no tag-dependent native behavior — setting
 it there would just produce noise.
 
+**Adapter support.** `nativeTagBehavior` is a framework-neutral field — it's accepted and resolved
+on every adapter — but the warning it enables is only **implemented on React, Preact, and Vue**:
+
+| Adapter            | `asChild` model                                                                                                                                     | Checks `nativeTagBehavior`?         |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| React, Preact, Vue | Clones the merged props onto a real, consumer-supplied child element                                                                                | Yes                                 |
+| Solid, Svelte      | Hands resolved props to a caller-authored render callback/snippet, which owns its own output directly — there is no cloned child element to inspect | No — setting the flag has no effect |
+| Lit, Web           | No `asChild` at all                                                                                                                                 | N/A                                 |
+
+Solid's and Svelte's `asChild` was never an oversight to extend this to — their render-callback
+shape has nothing resembling a resolved child element at the point this check would run, so there is
+nothing to inspect. A contract shared across adapters that sets `nativeTagBehavior: true` still gets
+the warning on React/Preact/Vue consumers and simply gets no check at all on Solid/Svelte — not a
+silent partial implementation, a structural consequence of each adapter's own composition model.
+
+**Even on the three adapters that do implement it, the check is best-effort.** It's silently skipped
+— no warning, regardless of whether a real mismatch exists — whenever the child's tag can't be
+statically resolved:
+
+- A multi-element `asChild` composition (a `Slottable`-wrapped merge target plus pass-through
+  siblings) — the array has no single resolved tag at this layer.
+- A child that is itself a custom component never stamped with `markComponentTag` (see `isTag`/
+  `getTag` in `praxis-kit/guards`) — its rendered tag isn't knowable without actually rendering it.
+
+Both cases degrade to "no warning," not a false warning — the check only ever fires on a tag it can
+actually resolve.
+
 ## Contracts
 
 A contract is a structural rule attached to a component at definition time. There are two kinds.
