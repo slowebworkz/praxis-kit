@@ -204,6 +204,43 @@ describe('createContractComponent (Preact adapter)', () => {
     warnSpy.mockRestore()
   })
 
+  it('asChild warns when nativeTagBehavior is set and the child tag is outside allowedAs', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: { diagnostics: warnDiagnostics, allowedAs: ['button'], nativeTagBehavior: true },
+    })
+
+    mount(h(box(Trigger), { asChild: true }, h('a', null)))
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"a"'))
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"button"'))
+    warnSpy.mockRestore()
+  })
+
+  it('asChild does not warn when the child tag is within allowedAs', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: { diagnostics: warnDiagnostics, allowedAs: ['button'], nativeTagBehavior: true },
+    })
+
+    mount(h(box(Trigger), { asChild: true }, h('button', null)))
+
+    expect(warnSpy).not.toHaveBeenCalled()
+    warnSpy.mockRestore()
+  })
+
+  it('asChild never warns when nativeTagBehavior is unset, regardless of the child tag', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Box = createContractComponent({
+      enforcement: { diagnostics: warnDiagnostics, allowedAs: ['button'] },
+    })
+
+    mount(h(box(Box), { asChild: true }, h('a', null)))
+
+    expect(warnSpy).not.toHaveBeenCalled()
+    warnSpy.mockRestore()
+  })
+
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
     const Box = createContractComponent({
       filterProps: (key: string) => key === 'size',

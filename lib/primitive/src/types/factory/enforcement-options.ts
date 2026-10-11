@@ -53,4 +53,18 @@ export type EnforcementOptions<TAllowed extends ElementType = ElementType> = {
   readonly props?: readonly PropNormalizer[]
   /** Restricts the `as` prop to this set of tags. Violations route through diagnostics. */
   readonly allowedAs?: readonly TAllowed[]
+  /**
+   * Declares that this component's *behavior* — not just its styling — depends on the resolved
+   * tag being one of `allowedAs` (e.g. a native invoker attribute like `popoverTarget`, which
+   * only functions on button-like elements per the HTML Living Standard). `allowedAs` alone only
+   * constrains the `as` prop; it has no effect on `asChild`, which is specifically designed to
+   * bypass `allowedAs` so a consumer can compose this component's props onto any element. When
+   * both `nativeTagBehavior` and `allowedAs` are set, `asChild` additionally warns if the
+   * consumer's child resolves to a tag outside `allowedAs` — catching the case where merging
+   * silently breaks the native behavior this flag describes, without blocking the composition
+   * (a consumer who genuinely needs a non-allowed element can still proceed). Default: false —
+   * ordinary polymorphic components that restrict `allowedAs` for semantic/ARIA reasons with no
+   * tag-dependent native behavior (e.g. `Box`) should leave this unset to avoid false positives.
+   */
+  readonly nativeTagBehavior?: boolean
 }

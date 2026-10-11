@@ -14,6 +14,84 @@ Every component created with `createContractComponent` can render as a different
 The `as` value changes the rendered element but preserves all variant classes, ARIA processing, and
 prop filtering. This is the entry point; the contract layer is the deeper value.
 
+## `asChild` composition
+
+Where `as` picks from a fixed set of tags, `asChild` lets the consumer supply the rendered element
+directly — the contract component merges its own props onto whatever single child it's given,
+instead of rendering its own tag:
+
+```tsx
+<Tooltip.Trigger asChild>
+  <MyButton>Hover me</MyButton>
+</Tooltip.Trigger>
+```
+
+`as` and `asChild` are mutually exclusive on the same component.
+
+### Prop merging
+
+Each prop on the merged result is resolved by a fixed, per-key policy — the child's own value never
+just silently disappears, but it also doesn't blindly win everywhere:
+
+| Prop kind                     | Policy                                                                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Event handlers (`onClick`, …) | Chained — the child's handler runs first, then the contract component's, unless the child's call left `event.defaultPrevented` |
+| `className`                   | Concatenated — both classes are kept                                                                                           |
+| `style`                       | Shallow-merged — the child's value wins per CSS property                                                                       |
+| Everything else               | Child wins — an explicit prop on the child overrides the contract component's own value                                        |
+
+Refs are merged too: zero refs resolves to `null`, one is passed through unchanged, and two or more
+are combined into a single callback ref that sets all of them — so `asChild` composes cleanly with a
+consumer's own `ref` as well as with nested `asChild` (each level's ref keeps working).
+
+A render-prop (`render={(props) => ...}`) child, where supported, takes precedence over `asChild`.
+
+### Multiple children (`Slottable`)
+
+`asChild` normally requires exactly one element child. Wrapping the real merge target in `Slottable`
+allows other plain siblings to pass through untouched alongside it:
+
+```tsx
+<Tooltip.Trigger asChild>
+  <Slottable>
+    <MyButton>Hover me</MyButton>
+  </Slottable>
+  <Icon />
+</Tooltip.Trigger>
+```
+
+### Diagnostics
+
+`asChild` reports through the same `enforcement.diagnostics` mode as every other contract check (see
+[Diagnostics](#diagnostics)): a missing or multiple children, `as`+`asChild` both set, a
+render-function child where one is required, and non-element siblings dropped without a `Slottable`
+wrapper.
+
+**Tag-dependent native behavior.** Some components' _behavior_ — not just styling — depends on the
+resolved tag being one of `allowedAs`: a `popoverTarget` invoker, for instance, only functions on
+button-like elements per the HTML Living Standard. `allowedAs` alone has no effect on `asChild` —
+it's specifically designed to bypass `allowedAs` so a consumer can compose onto any element — so
+merging such a component's props onto, say, an `<a>` type-checks and renders with no warning, and
+the native behavior just silently doesn't work.
+
+A contract author who knows this applies opts in with `enforcement.nativeTagBehavior: true`:
+
+```ts
+createContractComponent({
+  tag: 'button',
+  enforcement: {
+    allowedAs: ['button'],
+    nativeTagBehavior: true,
+  },
+})
+```
+
+With both `allowedAs` and `nativeTagBehavior` set, `asChild` warns (never blocks — a consumer who
+genuinely needs a non-allowed element can still proceed) if the resolved child's tag falls outside
+`allowedAs`. Leave `nativeTagBehavior` unset for ordinary polymorphic components that restrict
+`allowedAs` for unrelated reasons (semantics, ARIA) with no tag-dependent native behavior — setting
+it there would just produce noise.
+
 ## Contracts
 
 A contract is a structural rule attached to a component at definition time. There are two kinds.

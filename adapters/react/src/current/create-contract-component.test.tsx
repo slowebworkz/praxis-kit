@@ -355,6 +355,53 @@ describe('createContractComponent (current / React 19)', () => {
     expect(() => dom.mount(createElement(box(Box), { as: 'div' }))).toThrow(/"div"/)
   })
 
+  // ── asChild + nativeTagBehavior/allowedAs mismatch ──────────────────────────
+
+  it('asChild: warns when nativeTagBehavior is set and the child tag is outside allowedAs', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: {
+        diagnostics: warnDiagnostics,
+        allowedAs: ['button'],
+        nativeTagBehavior: true,
+      },
+    })
+
+    dom.mount(createElement(box(Trigger), { asChild: true }, createElement('a')))
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"a"'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"button"'))
+    warn.mockRestore()
+  })
+
+  it('asChild: does not warn when the child tag is within allowedAs', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: {
+        diagnostics: warnDiagnostics,
+        allowedAs: ['button'],
+        nativeTagBehavior: true,
+      },
+    })
+
+    dom.mount(createElement(box(Trigger), { asChild: true }, createElement('button')))
+
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('asChild: never warns when nativeTagBehavior is unset, regardless of the child tag — avoids false positives on ordinary polymorphic components', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Box = createContractComponent({
+      enforcement: { diagnostics: warnDiagnostics, allowedAs: ['button'] },
+    })
+
+    dom.mount(createElement(box(Box), { asChild: true }, createElement('a')))
+
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
   // ── custom aria rule enforcement ────────────────────────────────────────────
 
   it('aria: throws by default (no enforcement.diagnostics override) on a severity: "error" violation', () => {

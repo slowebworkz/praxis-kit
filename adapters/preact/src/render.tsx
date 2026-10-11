@@ -9,6 +9,7 @@ import type { Ref } from 'preact'
 import type { Writable } from 'type-fest'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
+import { getTag } from '@praxis-kit/primitive'
 import { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
 import type { SlotValidator } from './slot'
 import { isSlottableElement } from './slot'
@@ -157,6 +158,23 @@ function renderResolvedSlot(
   })
 }
 
+/** See React's identical `checkAllowedAsMismatch` in `adapters/react/src/shared/render.ts` for
+ *  the full rationale. */
+function checkAllowedAsMismatch(
+  child: AnyVNode | readonly AnyVNode[],
+  allowedAs: readonly ElementType[] | undefined,
+  nativeTagBehavior: boolean | undefined,
+  validator: SlotValidator,
+): void {
+  if (!nativeTagBehavior || allowedAs === undefined) return
+  if (Array.isArray(child)) return
+
+  const childTag = getTag(child)
+  if (childTag !== undefined && !allowedAs.includes(childTag)) {
+    validator.warnAllowedAsMismatch(childTag, allowedAs)
+  }
+}
+
 function tryRenderAsChild(
   state: ResolvedRenderState,
   ref: Ref<unknown> | null,
@@ -164,9 +182,14 @@ function tryRenderAsChild(
   getNormalizedChildren: () => readonly NormalizedChild[],
   getSlotChildren: () => AnyVNode[],
   validator: SlotValidator,
+  allowedAs: readonly ElementType[] | undefined,
+  nativeTagBehavior: boolean | undefined,
 ): AnyVNode | null {
   const slotRender = resolveSlotRender(state, getNormalizedChildren, getSlotChildren, validator)
   if (slotRender === null) return null
+  if (process.env.NODE_ENV !== 'production') {
+    checkAllowedAsMismatch(slotRender.child, allowedAs, nativeTagBehavior, validator)
+  }
   return renderResolvedSlot(slotComponent, state, slotRender, ref)
 }
 
@@ -240,6 +263,8 @@ export function render<TProps extends KnownProps>({
     getNormalizedChildren,
     getSlotChildren,
     slotValidator,
+    runtime.options.allowedAs,
+    runtime.options.nativeTagBehavior,
   )
 
   return slotResult ?? renderIntrinsic(state, ref, runtime)

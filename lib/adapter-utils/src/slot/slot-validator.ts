@@ -27,4 +27,8 @@ export class SlotValidator extends InvariantBase {
         : SlotDiagnostics.singleChildExceeded(this.#name, this.#elementTerm, count),
     )
   }
+
+  warnAllowedAsMismatch(childTag: string, allowedAs: readonly unknown[]): void {
+    this.warn(SlotDiagnostics.allowedAsMismatch(this.#name, childTag, allowedAs))
+  }
 }

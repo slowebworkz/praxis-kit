@@ -132,6 +132,61 @@ describe('createContractComponent — asChild', () => {
     ).toThrow('"as" and "asChild" are mutually exclusive')
   })
 
+  // `allowedAs` includes the component's own default tag ('div') so Vue's separate,
+  // pre-existing `enforceAllowedAs` call in `prepareRenderState` — which (unlike React/Preact)
+  // checks the resolved tag against `allowedAs` unconditionally rather than only when a
+  // caller-supplied `as` is present — doesn't also fire here and confound the assertion. 'div'
+  // also carries no restrictive built-in HTML content-model evaluator, so an `<a>`/`<button>`
+  // slot child doesn't separately trip `htmlChildrenEvaluatorFn`'s own check, which (also unlike
+  // React) Vue evaluates against the resolved tag unconditionally, asChild notwithstanding.
+  it('warns when nativeTagBehavior is set and the slot child tag is outside allowedAs', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: {
+        diagnostics: warnDiagnostics,
+        allowedAs: ['div', 'button'],
+        nativeTagBehavior: true,
+      },
+    })
+    mount(box(Trigger), {
+      props: { asChild: true },
+      slots: { default: () => [h('a')] },
+    })
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"a"'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"button"'))
+    warn.mockRestore()
+  })
+
+  it('does not warn when the slot child tag is within allowedAs', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: {
+        diagnostics: warnDiagnostics,
+        allowedAs: ['div', 'button'],
+        nativeTagBehavior: true,
+      },
+    })
+    mount(box(Trigger), {
+      props: { asChild: true },
+      slots: { default: () => [h('button')] },
+    })
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('never warns when nativeTagBehavior is unset, regardless of the slot child tag', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Box = createContractComponent({
+      enforcement: { diagnostics: warnDiagnostics, allowedAs: ['div', 'button'] },
+    })
+    mount(box(Box), {
+      props: { asChild: true },
+      slots: { default: () => [h('a')] },
+    })
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
   it('nested asChild: both components compose their classes onto the inner element', () => {
     const BoxA = createContractComponent({ styling: { base: 'class-a' } })
     const BoxB = createContractComponent({ styling: { base: 'class-b' } })
