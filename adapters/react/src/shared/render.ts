@@ -13,7 +13,7 @@ import { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
 import { getTag, isFunction, lazy } from '@praxis-kit/primitive'
 
-import { isSlottableElement } from './slot'
+import { extractSlottable, isSlottableElement } from './slot'
 
 import type { ReactElement, Ref } from 'react'
 import type { Writable } from 'type-fest'
@@ -232,6 +232,13 @@ function renderResolvedSlot(
  * which only functions on button-like elements). Gated on `nativeTagBehavior` specifically so
  * ordinary polymorphic components that restrict `allowedAs` for unrelated (e.g. semantic/ARIA)
  * reasons don't false-positive — `allowedAs` alone doesn't imply this check applies.
+ *
+ * A multi-element `resolved.child` (a `Slottable`-wrapped merge target plus pass-through
+ * siblings) still has exactly one real merge target — the same one `extractSlottable` identifies
+ * for Slot's own downstream clone-merge — so this reuses that lookup rather than skipping the
+ * array case outright. `extractSlottable` returns `null` only when the array holds no `Slottable`
+ * marker at all, which can't happen here: `resolveSlotChildren` only ever returns a multi-element
+ * array when `getSlotChildren().some(isSlottableElement)` already held.
  */
 function checkAllowedAsMismatch(
   child: ReactElement | ReactElement[],
@@ -240,12 +247,11 @@ function checkAllowedAsMismatch(
   validator: SlotValidator,
 ): void {
   if (!nativeTagBehavior || allowedAs === undefined) return
-  // Multi-element asChild (a Slottable-wrapped merge target plus pass-through siblings) has no
-  // single resolved tag to check here — Slot's own clone-merge logic (downstream of this check)
-  // is what actually identifies the merge target within the array. Skip rather than guess.
-  if (Array.isArray(child)) return
 
-  const childTag = getTag(child)
+  const target = Array.isArray(child) ? extractSlottable(child)?.child : child
+  if (target === undefined) return
+
+  const childTag = getTag(target)
   if (childTag !== undefined && !allowedAs.includes(childTag)) {
     validator.warnAllowedAsMismatch(childTag, allowedAs)
   }

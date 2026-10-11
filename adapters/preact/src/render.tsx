@@ -12,7 +12,7 @@ import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
 import { getTag } from '@praxis-kit/primitive'
 import { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
 import type { SlotValidator } from './slot'
-import { isSlottableElement } from './slot'
+import { extractSlottable, isSlottableElement } from './slot'
 import type {
   SlotComponent,
   Runtime,
@@ -159,7 +159,8 @@ function renderResolvedSlot(
 }
 
 /** See React's identical `checkAllowedAsMismatch` in `adapters/react/src/shared/render.ts` for
- *  the full rationale. */
+ *  the full rationale, including why the multi-element (`Slottable`) case resolves its real merge
+ *  target via `extractSlottable` rather than skipping. */
 function checkAllowedAsMismatch(
   child: AnyVNode | readonly AnyVNode[],
   allowedAs: readonly ElementType[] | undefined,
@@ -167,9 +168,11 @@ function checkAllowedAsMismatch(
   validator: SlotValidator,
 ): void {
   if (!nativeTagBehavior || allowedAs === undefined) return
-  if (Array.isArray(child)) return
 
-  const childTag = getTag(child)
+  const target = Array.isArray(child) ? extractSlottable(child)?.child : child
+  if (target === undefined) return
+
+  const childTag = getTag(target)
   if (childTag !== undefined && !allowedAs.includes(childTag)) {
     validator.warnAllowedAsMismatch(childTag, allowedAs)
   }

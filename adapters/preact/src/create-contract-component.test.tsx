@@ -5,6 +5,7 @@ import { forwardRef } from 'preact/compat'
 import type { ComponentType, ComponentProps } from 'preact'
 import { silentDiagnostics, throwDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
 import type { AnyVNode, UnknownProps } from './types'
+import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
 
 // Cast to bypass the PolymorphicComponent union in h() overloads.
@@ -236,6 +237,39 @@ describe('createContractComponent (Preact adapter)', () => {
     })
 
     mount(h(box(Box), { asChild: true }, h('a', null)))
+
+    expect(warnSpy).not.toHaveBeenCalled()
+    warnSpy.mockRestore()
+  })
+
+  it('asChild checks the real Slottable merge target, not the pass-through siblings around it', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: { diagnostics: warnDiagnostics, allowedAs: ['button'], nativeTagBehavior: true },
+    })
+
+    mount(
+      h(box(Trigger), { asChild: true }, h(Slottable, null, h('a', null)), h('span', null, 'icon')),
+    )
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"a"'))
+    warnSpy.mockRestore()
+  })
+
+  it('asChild does not warn when the Slottable merge target is within allowedAs, pass-through siblings notwithstanding', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: { diagnostics: warnDiagnostics, allowedAs: ['button'], nativeTagBehavior: true },
+    })
+
+    mount(
+      h(
+        box(Trigger),
+        { asChild: true },
+        h(Slottable, null, h('button', null)),
+        h('span', null, 'icon'),
+      ),
+    )
 
     expect(warnSpy).not.toHaveBeenCalled()
     warnSpy.mockRestore()

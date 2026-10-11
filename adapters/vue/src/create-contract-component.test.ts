@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { Comment, createTextVNode, defineComponent, h, ref } from 'vue'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
+import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
 
@@ -182,6 +183,47 @@ describe('createContractComponent — asChild', () => {
     mount(box(Box), {
       props: { asChild: true },
       slots: { default: () => [h('a')] },
+    })
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('checks the real Slottable merge target, not the pass-through siblings around it', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: {
+        diagnostics: warnDiagnostics,
+        allowedAs: ['div', 'button'],
+        nativeTagBehavior: true,
+      },
+    })
+    mount(box(Trigger), {
+      props: { asChild: true },
+      slots: {
+        default: () => [h(Slottable, null, { default: () => [h('a')] }), h('span', null, 'icon')],
+      },
+    })
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"a"'))
+    warn.mockRestore()
+  })
+
+  it('does not warn when the Slottable merge target is within allowedAs, pass-through siblings notwithstanding', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: {
+        diagnostics: warnDiagnostics,
+        allowedAs: ['div', 'button'],
+        nativeTagBehavior: true,
+      },
+    })
+    mount(box(Trigger), {
+      props: { asChild: true },
+      slots: {
+        default: () => [
+          h(Slottable, null, { default: () => [h('button')] }),
+          h('span', null, 'icon'),
+        ],
+      },
     })
     expect(warn).not.toHaveBeenCalled()
     warn.mockRestore()

@@ -86,11 +86,12 @@ createContractComponent({
 })
 ```
 
-With both `allowedAs` and `nativeTagBehavior` set, `asChild` warns (never blocks — a consumer who
-genuinely needs a non-allowed element can still proceed) if the resolved child's tag falls outside
-`allowedAs`. Leave `nativeTagBehavior` unset for ordinary polymorphic components that restrict
-`allowedAs` for unrelated reasons (semantics, ARIA) with no tag-dependent native behavior — setting
-it there would just produce noise.
+With both `allowedAs` and `nativeTagBehavior` set, `asChild` warns on React, Preact, and Vue (never
+blocks — a consumer who genuinely needs a non-allowed element can still proceed) if the resolved
+child's tag falls outside `allowedAs` — see **Adapter support** just below for why those three
+specifically, and for the cases even they can't catch. Leave `nativeTagBehavior` unset for ordinary
+polymorphic components that restrict `allowedAs` for unrelated reasons (semantics, ARIA) with no
+tag-dependent native behavior — setting it there would just produce noise.
 
 **Adapter support.** `nativeTagBehavior` is a framework-neutral field — it's accepted and resolved
 on every adapter — but the warning it enables is only **implemented on React, Preact, and Vue**:
@@ -107,14 +108,16 @@ nothing to inspect. A contract shared across adapters that sets `nativeTagBehavi
 the warning on React/Preact/Vue consumers and simply gets no check at all on Solid/Svelte — not a
 silent partial implementation, a structural consequence of each adapter's own composition model.
 
-**Even on the three adapters that do implement it, the check is best-effort.** It's silently skipped
-— no warning, regardless of whether a real mismatch exists — whenever the child's tag can't be
-statically resolved:
+A multi-element `asChild` composition (a `Slottable`-wrapped merge target plus pass-through siblings
+— see **Multiple children** above) is still checked correctly on all three: the real merge target is
+resolved via the same `extractSlottable` lookup Slot's own downstream clone-merge uses, not skipped
+or guessed at.
 
-- A multi-element `asChild` composition (a `Slottable`-wrapped merge target plus pass-through
-  siblings) — the array has no single resolved tag at this layer.
-- A child that is itself a custom component never stamped with `markComponentTag` (see `isTag`/
-  `getTag` in `praxis-kit/guards`) — its rendered tag isn't knowable without actually rendering it.
+**Even on the three adapters that do implement it, the check is best-effort.** It's silently skipped
+— no warning, regardless of whether a real mismatch exists — when the child's tag can't be
+statically resolved at all: a child that is itself a custom component never stamped with
+`markComponentTag` (see `isTag`/`getTag` in `praxis-kit/guards`) has no rendered tag knowable
+without actually rendering it.
 
 Both cases degrade to "no warning," not a false warning — the check only ever fires on a tag it can
 actually resolve.

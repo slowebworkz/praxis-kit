@@ -6,6 +6,7 @@ import { warnDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
 import type { AriaRule } from '@praxis-kit/core/contract'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import { box, useReactDom } from '../shared/test-utils'
+import { Slottable } from '../shared'
 import { createContractComponent } from './create-contract-component'
 
 const dom = useReactDom()
@@ -397,6 +398,92 @@ describe('createContractComponent (current / React 19)', () => {
     })
 
     dom.mount(createElement(box(Box), { asChild: true }, createElement('a')))
+
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('asChild: resolves a praxis-kit child component\'s tag via its own "as" override, not its default tag', () => {
+    // Link's own default tag is 'a' — composing it as-is onto Trigger should warn. Overriding it
+    // with as="button" should resolve to 'button' instead and suppress the warning. This exercises
+    // `getTag()`'s `getAsProp` branch (a wrapped praxis-kit component, not a plain intrinsic
+    // element), confirming the mismatch check reads the child's *resolved* tag, not its defaultTag.
+    const Link = createContractComponent({ tag: 'a' })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: {
+        diagnostics: warnDiagnostics,
+        allowedAs: ['button'],
+        nativeTagBehavior: true,
+      },
+    })
+
+    dom.mount(createElement(box(Trigger), { asChild: true }, createElement(box(Link), null)))
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"a"'))
+    warn.mockRestore()
+  })
+
+  it('asChild: does not warn when a praxis-kit child component\'s "as" override lands inside allowedAs', () => {
+    const Link = createContractComponent({ tag: 'a' })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: {
+        diagnostics: warnDiagnostics,
+        allowedAs: ['button'],
+        nativeTagBehavior: true,
+      },
+    })
+
+    dom.mount(
+      createElement(box(Trigger), { asChild: true }, createElement(box(Link), { as: 'button' })),
+    )
+
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('asChild: checks the real Slottable merge target, not the pass-through siblings around it', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: {
+        diagnostics: warnDiagnostics,
+        allowedAs: ['button'],
+        nativeTagBehavior: true,
+      },
+    })
+
+    dom.mount(
+      createElement(
+        box(Trigger),
+        { asChild: true },
+        createElement(Slottable, null, createElement('a')),
+        createElement('span', null, 'icon'),
+      ),
+    )
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"a"'))
+    warn.mockRestore()
+  })
+
+  it('asChild: does not warn when the Slottable merge target is within allowedAs, pass-through siblings notwithstanding', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: {
+        diagnostics: warnDiagnostics,
+        allowedAs: ['button'],
+        nativeTagBehavior: true,
+      },
+    })
+
+    dom.mount(
+      createElement(
+        box(Trigger),
+        { asChild: true },
+        createElement(Slottable, null, createElement('button')),
+        createElement('span', null, 'icon'),
+      ),
+    )
 
     expect(warn).not.toHaveBeenCalled()
     warn.mockRestore()
