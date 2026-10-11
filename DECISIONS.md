@@ -15,8 +15,8 @@ instead:
 | Internal runtime pipeline                               | [`ARCHITECTURE.md`](ARCHITECTURE.md)                                             |
 
 **Current release:** `praxis-kit@1.0.2` on npm (public). History: `0.1.0` → `0.1.1` → `1.0.2`.
-**Current stability policy:** 1.x, beginning with 1.0.2 — see `docs/api-stability.md`.
-**Integration branch:** `develop` (repository default). `main` tracks the last release.
+**Current stability policy:** 1.x, beginning with 1.0.2 — see `docs/api-stability.md`. **Integration
+branch:** `develop` (repository default). `main` tracks the last release.
 
 The architecture is frozen for the 1.x line: no new abstractions or tooling systems without a
 decision recorded here. Items below the historical entries that refer to 0.1 milestones (the 0.1.0
@@ -3515,3 +3515,39 @@ Ratios within a single run are the meaningful signal; absolute times shift betwe
 
 **Benchmarks backing this entry:** `construction-ssr.bench.ts`, `residual.bench.ts`,
 `fresh-react-type.bench.ts` (control), and `defaults-trace.bench.ts`.
+
+### `as`/`allowedAs` accept a component reference — adapter boundary (2026-10-11)
+
+`as`/`allowedAs` now accept a reference to another praxis-kit component, not just a tag-name string
+(`<Button as={Link}>`, `allowedAs: ['a', Link]`, strict by-reference enumeration, no bypass
+semantics). This already worked mechanically on React, Preact, and Solid before this change — only
+the type layer (`ElementType = IntrinsicTag | (string & {})`) rejected it; proven by an existing
+Preact test that previously needed an `as never` cast to exercise exactly this path. `ElementType`
+was widened once, in `lib/primitive/src/types/element-type.ts`, to add a `ComponentReference` member
+— every other bound sharing `ElementType` (`TDefault`/`TAllowed`, `PolymorphicControlProps .as`,
+`IntrinsicJSXProps`/`ElementRef`) already had a safe fallback branch for "not a known intrinsic
+tag," exercised today by `asChild`, so no further type plumbing was needed.
+
+Two real, pre-existing runtime defects were found and fixed along the way — not artifacts of this
+feature, independently reproducible before it with a type cast:
+
+- **Vue** (`adapters/vue/src/render.ts`, `prepareRenderState`): discarded a non-string `as`,
+  silently falling back to `defaultTag`, and separately omitted a non-string `as` from
+  `directives.as`, which skipped the `as`+`asChild` mutual-exclusion diagnostic. Both fixed with a
+  two-line change (`as ?? defaultTag`, `as !== undefined && { as }`).
+- **Svelte** (`adapters/svelte/src/Polymorphic.svelte`): `<svelte:element this={tag as string}>` can
+  only ever accept a tag-name string — handing it a function today threw
+  `svelte_element_invalid_this_value`, confirmed by temporarily reverting the fix and re-running the
+  new test against the unfixed template. Needed a real added branch rendering the component directly
+  (`{@const Comp = tag}<Comp {...props}>`), using the same `buildSlotProps` (not `domProps`) the
+  existing `asChild` branch already uses — a nested component expects idiomatic props, not
+  DOM-serialized ones (lowercased event names, a stringified `style` attribute).
+
+**Lit and Web are explicitly out of scope — not a gap.** Both adapters already have no `as` prop at
+all, a prior, intentional, documented decision (`adapters/lit/src/create-contract-component.ts`'s
+own doc comment: a custom element's tag is fixed at `customElements.define()` time, so there's
+nothing for `as` to switch). `allowedAs` doesn't exist in either adapter's source. There is
+consequently no SSR-specific work anywhere for this feature: `renderContractToString`'s from-scratch
+string serializer is used only by Lit and Web, which never receive a component-reference `as` to
+begin with; the other five adapters' SSR runs through their real frameworks' own renderers, which
+already recurse through genuine component calls the same way CSR does.

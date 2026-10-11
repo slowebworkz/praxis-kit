@@ -32,6 +32,18 @@ describe('createContractComponent (Solid adapter)', () => {
     expect(container.querySelector('div')).toBeNull()
   })
 
+  it('as={Component}: renders through the referenced component via <Dynamic>, not the default tag', () => {
+    // Solid already handles a component-valued `as` mechanically — `resolveTag`/`<Dynamic
+    // component={tag()}>` are reference-safe with no special casing needed. This test is the
+    // type-level proof (it compiles and renders with no cast), mirroring the equivalent React/
+    // Preact tests.
+    const Inner = (props: Record<string, unknown>) => <button data-testid="inner" {...props} />
+    const Comp = createContractComponent({ tag: 'div' })
+    const { container } = solidRender(() => <Comp as={Inner} />)
+    expect(container.querySelector('[data-testid="inner"]')).toBeTruthy()
+    expect(container.querySelector('div')).toBeNull()
+  })
+
   it('applies base class', () => {
     const Comp = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
     const { container } = solidRender(() => <Comp />)

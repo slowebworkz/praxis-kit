@@ -55,7 +55,25 @@ export type SsrBundle = {
 // declare.
 const SAFE_TAG_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/
 
-function assertSerializableTag(tag: string): void {
+/**
+ * `tag` is typed `ElementType` because `resolveTag()`'s return type is shared with the VDOM
+ * adapters, which (as of the `as`/`allowedAs` component-reference feature) may resolve to a
+ * component reference rather than a string. This SSR serializer has no framework reconciler to
+ * hand a component reference to — it only ever writes a literal `<${tag}...>` — so a non-string
+ * tag is rejected here just as unconditionally as a syntactically invalid string, not silently
+ * coerced via `String(tag)` (which would print a function's source into the markup). In practice
+ * this adapter's own `as` is always filtered out before it reaches `resolveTag` (Lit and Web
+ * don't support `as` at all — see `docs/concepts.md`), so `tag` is always a string today; this
+ * check exists so that remains true by construction, not by convention.
+ */
+function assertSerializableTag(tag: ElementType): asserts tag is string {
+  if (typeof tag !== 'string') {
+    throw new Error(
+      '[renderBundleToString] refusing to serialize a non-string tag — this SSR renderer has no ' +
+        'way to render a component reference; only React/Preact/Vue/Solid/Svelte support a ' +
+        'component-valued `as`, and none of them render through this string-serialization path.',
+    )
+  }
   if (!SAFE_TAG_NAME.test(tag)) {
     throw new Error(
       `[renderBundleToString] refusing to serialize invalid tag name "${tag}" — an SSR tag must ` +

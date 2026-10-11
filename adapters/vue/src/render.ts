@@ -2,7 +2,7 @@ import { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
 import type { ElementType } from '@praxis-kit/core'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
 import type { AnyRecord } from '@praxis-kit/primitive'
-import type { Slots, VNode, VNodeRef } from 'vue'
+import type { Component, Slots, VNode, VNodeRef } from 'vue'
 import { cloneVNode, h } from 'vue'
 import { normalizeChildren } from './normalize-children'
 import type { SlotValidator } from './slot'
@@ -74,7 +74,7 @@ export function prepareRenderState(
 ): ResolvedRenderState {
   const { as, asChild, class: callerClass, recipe, ...rest } = attrs
 
-  const tag: ElementType = typeof as === 'string' ? as : runtime.options.defaultTag
+  const tag: ElementType = as ?? runtime.options.defaultTag
   if (runtime.options.allowedAs !== undefined) {
     enforceAllowedAs(
       tag,
@@ -93,7 +93,7 @@ export function prepareRenderState(
   return {
     tag,
     directives: {
-      ...(typeof as === 'string' && { as }),
+      ...(as !== undefined && { as }),
       ...(asChild !== undefined && { asChild }),
     },
     props: filteredProps,
@@ -136,7 +136,17 @@ function renderIntrinsic(
     elementProps,
     state.normalizedProps,
   ).props
-  return h(state.tag, domProps, slots.default ? { default: slots.default } : undefined)
+  // `state.tag` is `ElementType` — a tag-name string or, as of the `as`/`allowedAs`
+  // component-reference feature, a reference to another praxis-kit component. `h()`'s own
+  // overloads want a string or a precisely-typed `Component`, which a generically-typed
+  // `ElementType` can't statically prove — the real guarantee (it's always one or the other,
+  // never an arbitrary value) is enforced by `resolveTag`/`enforceAllowedAs` upstream, not
+  // expressible here without a cast.
+  return h(
+    state.tag as string | Component,
+    domProps,
+    slots.default ? { default: slots.default } : undefined,
+  )
 }
 
 function validateSlotDirectives(directives: RenderDirectives, validator: SlotValidator): boolean {

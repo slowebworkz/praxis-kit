@@ -40,6 +40,40 @@ describe('createContractComponent — tag rendering', () => {
     const wrapper = mount(box(Box))
     expect(wrapper.element.tagName.toLowerCase()).toBe('span')
   })
+
+  it('renders through a component reference passed as "as", not just a tag-name string', () => {
+    // The `as never` cast mirrors the exact pattern an existing Preact test already uses
+    // (`adapters/preact/src/create-contract-component.test.tsx`) to prove this already works
+    // mechanically on React/Preact/Solid — only the type layer currently rejects it. This test
+    // is the Vue-side proof; `prepareRenderState`'s own `typeof as === 'string'` guard
+    // (render.ts) discards a non-string `as`, silently falling back to `defaultTag`, so without
+    // the fix this renders a <div>, not a <button>.
+    const Inner = defineComponent({
+      name: 'Inner',
+      setup(_, { attrs }) {
+        return () => h('button', attrs)
+      },
+    })
+    const Box = createContractComponent({})
+    const wrapper = mount(box(Box), { props: { as: Inner } as never })
+    expect(wrapper.element.tagName.toLowerCase()).toBe('button')
+  })
+
+  it('"as" + "asChild" together are still mutually exclusive when "as" is a component reference', () => {
+    const Inner = defineComponent({
+      name: 'Inner',
+      setup(_, { attrs }) {
+        return () => h('button', attrs)
+      },
+    })
+    const Box = createContractComponent({})
+    expect(() =>
+      mount(box(Box), {
+        props: { as: Inner, asChild: true } as never,
+        slots: { default: () => [h('a', { href: '/' })] },
+      }),
+    ).toThrow('"as" and "asChild" are mutually exclusive')
+  })
 })
 
 describe('createContractComponent — class merging', () => {

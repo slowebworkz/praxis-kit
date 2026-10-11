@@ -183,8 +183,24 @@
   {#if children}
     {@render (children as Snippet<[UnknownProps]>)(buildSlotProps(filteredProps, resolvedClass))}
   {/if}
-{:else}
-  <svelte:element this={tag as string} bind:this={hostEl} {...domProps}>
+{:else if isString(tag)}
+  <svelte:element this={tag} bind:this={hostEl} {...domProps}>
     {@render (children as Snippet | undefined)?.()}
   </svelte:element>
+{:else}
+  <!--
+    `tag` resolved to a praxis-kit component reference rather than a tag name (the
+    `as`/`allowedAs` component-reference feature). `<svelte:element>`'s `this` can only ever be a
+    tag-name string, so this is a genuinely separate render path, not a cosmetic variant of the
+    one above. Uses `buildSlotProps` — the same call the `asChild` branch above makes — not
+    `domProps`: a nested component expects idiomatic props (caller-cased event names, a `style`
+    object if that's what it wants), not the DOM-serialized shape `buildDomProps` produces for a
+    literal element (lowercased event names, a stringified `style` attribute). There is no host
+    element for `bind:this` to target here, same as the `asChild` branch — the `$effect`s above
+    already guard on `!hostEl`.
+  -->
+  {@const Comp = tag}
+  <Comp {...buildSlotProps(filteredProps, resolvedClass)}>
+    {@render (children as Snippet | undefined)?.()}
+  </Comp>
 {/if}

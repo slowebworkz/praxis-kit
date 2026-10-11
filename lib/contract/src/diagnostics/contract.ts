@@ -1,5 +1,19 @@
 import type { DiagnosticInput } from '@praxis-kit/diagnostics'
+import type { ElementType } from '@praxis-kit/primitive'
 import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
+
+/**
+ * Renders an `ElementType` for a diagnostic message. A plain `String(tag)` works fine for the
+ * tag-name-string case but, for a component reference (the `as`/`allowedAs` component-reference
+ * feature), prints the entire function/class source into the message — a confusing, often huge
+ * diagnostic. Prefers a component's `displayName`/`name`, falling back to a generic placeholder
+ * rather than ever stringifying the reference itself.
+ */
+export function describeElementType(tag: ElementType): string {
+  if (typeof tag === 'string') return tag
+  const named = tag as { displayName?: string; name?: string }
+  return named.displayName ?? named.name ?? '[component]'
+}
 
 export const ContractDiagnostics = {
   unexpectedChild(typeName: string, index: number, context: string): DiagnosticInput {
@@ -97,16 +111,16 @@ export const ContractDiagnostics = {
   },
 
   allowedAsViolation(
-    tag: string,
-    allowedAs: readonly unknown[],
+    tag: ElementType,
+    allowedAs: readonly ElementType[],
     component: string,
   ): DiagnosticInput {
-    const allowed = allowedAs.map((t) => `"${String(t)}"`).join(', ')
+    const allowed = allowedAs.map((t) => `"${describeElementType(t)}"`).join(', ')
     return {
       code: DiagnosticCode.AllowedAsViolation,
       category: DiagnosticCategory.Contract,
       component,
-      message: `<${component}>: "as" prop received "${tag}" but only [${allowed}] are allowed.`,
+      message: `<${component}>: "as" prop received "${describeElementType(tag)}" but only [${allowed}] are allowed.`,
     }
   },
 }
