@@ -4,6 +4,7 @@ export type {
   CompoundComponent,
   PolymorphicComponent,
   PolymorphicProps,
+  PolymorphicWithAllowedAs,
   PolymorphicWithAsChild,
   ContractProps,
 } from './polymorphic-props'

@@ -1,6 +1,7 @@
 import type { AllowedComponentProps } from 'vue'
 import type { Simplify } from 'type-fest'
 import type {
+  AllowedOf,
   ClassName,
   ContractGenericsOf,
   DefaultOf,
@@ -48,6 +49,19 @@ export type PolymorphicWithAsChild<
       asChild: true
       as?: never
     } & UnknownProps
+>
+
+/**
+ * Standard polymorphic props with `as` widened to every tag the component allows, not just its
+ * default — the type-level equivalent of what real JSX/template usage already gets through
+ * `createContractComponent`'s call signature. `PolymorphicProps<G>` (one type argument) can't do
+ * this: `TAs` defaults to `DefaultOf<G>`, a single tag, so a `<Name>Props` alias built from it only
+ * accepts that one default tag. Opt in here instead of hand-deriving `AllowedOf<G>` at each call
+ * site.
+ */
+export type PolymorphicWithAllowedAs<G extends PolymorphicGenerics> = PolymorphicProps<
+  G,
+  AllowedOf<G>
 >
 
 /**

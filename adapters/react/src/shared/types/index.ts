@@ -6,6 +6,7 @@ export type {
   ElementRef,
   PolymorphicComponent,
   PolymorphicProps,
+  PolymorphicWithAllowedAs,
   PolymorphicWithAsChild,
   PolymorphicWithRender,
 } from './polymorphic-props'

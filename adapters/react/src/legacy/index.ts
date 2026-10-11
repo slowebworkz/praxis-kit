@@ -3,6 +3,7 @@ export { Slottable } from '../shared'
 export type { SlottableProps } from '../shared'
 export type {
   PolymorphicProps,
+  PolymorphicWithAllowedAs,
   PolymorphicWithAsChild,
   PolymorphicWithRender,
   PolymorphicComponent,

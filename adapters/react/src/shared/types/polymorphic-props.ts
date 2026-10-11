@@ -201,6 +201,19 @@ export type PolymorphicWithRender<
 > = Simplify<BaseProps<G, TAs> & CallbackRenderMode>
 
 /**
+ * Standard polymorphic props with `as` widened to every tag the component allows, not just its
+ * default — the type-level equivalent of what real JSX usage (`<Box as="nav">`) already gets
+ * through `createContractComponent`'s call signature. `PolymorphicProps<G>` (one type argument)
+ * can't do this: `TAs` defaults to `DefaultOf<G>`, a single tag, so a `<Name>Props` alias built
+ * from it only accepts that one default tag. Opt in here instead of hand-deriving `AllowedOf<G>`
+ * at each call site.
+ */
+export type PolymorphicWithAllowedAs<G extends PolymorphicGenerics> = PolymorphicProps<
+  G,
+  AllowedOf<G>
+>
+
+/**
  * Whether a single (already-distributed) union member `M` declares `K` as exactly `true` — the
  * "this key is the active one *on this member*" check `KeyTrueInAnyMember` runs once per member.
  * `K extends keyof M` first, so a member that doesn't declare `K` at all (not even `?: never`)

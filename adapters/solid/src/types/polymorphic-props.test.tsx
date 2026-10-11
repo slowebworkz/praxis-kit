@@ -19,7 +19,9 @@
  */
 import { describe, it, expectTypeOf } from 'vitest'
 import type { ComponentProps, JSX } from 'solid-js'
+import type { EmptyRecord, PolymorphicGenerics } from '@praxis-kit/core'
 import { createContractComponent } from '../create-contract-component'
+import type { PolymorphicProps, PolymorphicWithAllowedAs } from './polymorphic-props'
 
 describe('PolymorphicComponent<G> overload ordering', () => {
   it('ComponentProps<typeof Component> resolves to the default element’s own shape, not never/unknown', () => {
@@ -103,5 +105,34 @@ describe('PolymorphicComponent<G> overload ordering', () => {
       </Link>
     )
     void _el
+  })
+})
+
+/**
+ * Finding #47: `PolymorphicProps<G>` (one type argument) silently narrows `as` to just `G`'s
+ * default tag instead of the full `allowedAs` union, because `TAs` defaults to `DefaultOf<G>` —
+ * a single tag literal — not `AllowedOf<G>`. `PolymorphicWithAllowedAs<G>` is the additive opt-in
+ * that widens it; it must not change `PolymorphicProps<G>`'s own existing, intentional default.
+ */
+describe('PolymorphicWithAllowedAs<G>', () => {
+  type GWithAllowed = PolymorphicGenerics<
+    'div',
+    EmptyRecord,
+    Readonly<EmptyRecord>,
+    Readonly<EmptyRecord>,
+    'div' | 'nav' | 'section'
+  >
+
+  it("PolymorphicProps<G> (one type argument) stays narrowed to G's default tag", () => {
+    // PolymorphicProps<G, TAs> unions the normal-mode and asChild-mode shapes — see this file's
+    // own `NormalModeProps` extraction above — so `as` is only reachable off the normal-mode
+    // branch.
+    type NormalModeProps = Extract<PolymorphicProps<GWithAllowed>, { asChild?: false }>
+    expectTypeOf<NormalModeProps['as']>().toEqualTypeOf<'div' | undefined>()
+  })
+
+  it("PolymorphicWithAllowedAs<G> widens `as` to G's full allowed-tag union", () => {
+    type NormalModeProps = Extract<PolymorphicWithAllowedAs<GWithAllowed>, { asChild?: false }>
+    expectTypeOf<NormalModeProps['as']>().toEqualTypeOf<'div' | 'nav' | 'section' | undefined>()
   })
 })
