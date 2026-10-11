@@ -24,6 +24,7 @@ export type RuntimeOptions = Readonly<
     | 'variantKeys'
     | 'childRules'
     | 'allowedAs'
+    | 'nativeTagBehavior'
     | 'normalizeFn'
     | 'htmlPropNormalizersFn'
     | 'htmlChildrenEvaluatorFn'
