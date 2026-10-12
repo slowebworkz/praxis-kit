@@ -115,6 +115,7 @@ export function resolveFactoryOptions<
     ...whenDefined('exclusiveChildren', enforcement?.exclusiveChildren),
     ...whenDefined('allowText', enforcement?.allowText),
     ...whenDefined('allowedAs', enforcement?.allowedAs),
+    ...whenDefined('nativeTagBehavior', enforcement?.nativeTagBehavior),
     ...whenDefined('precomputedClasses', styling?.precomputedClasses),
   })
 }

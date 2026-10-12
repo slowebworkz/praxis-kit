@@ -9,10 +9,12 @@ export function mergeContracts(...contracts: readonly EnforcementOptions[]): Enf
 
   let diagnostics: EnforcementOptions['diagnostics']
   let allowedAs: EnforcementOptions['allowedAs']
+  let nativeTagBehavior: EnforcementOptions['nativeTagBehavior']
 
   iterate.forEach(contracts, (c) => {
     if (c.diagnostics !== undefined) diagnostics = c.diagnostics
     if (c.allowedAs !== undefined) allowedAs = c.allowedAs
+    if (c.nativeTagBehavior !== undefined) nativeTagBehavior = c.nativeTagBehavior
   })
 
   return {
@@ -22,5 +24,6 @@ export function mergeContracts(...contracts: readonly EnforcementOptions[]): Enf
     ...(children.length > 0 && { children }),
     ...(diagnostics !== undefined && { diagnostics }),
     ...(allowedAs !== undefined && { allowedAs }),
+    ...(nativeTagBehavior !== undefined && { nativeTagBehavior }),
   }
 }

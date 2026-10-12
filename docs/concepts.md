@@ -14,6 +14,114 @@ Every component created with `createContractComponent` can render as a different
 The `as` value changes the rendered element but preserves all variant classes, ARIA processing, and
 prop filtering. This is the entry point; the contract layer is the deeper value.
 
+## `asChild` composition
+
+Where `as` picks from a fixed set of tags, `asChild` lets the consumer supply the rendered element
+directly — the contract component merges its own props onto whatever single child it's given,
+instead of rendering its own tag:
+
+```tsx
+<Tooltip.Trigger asChild>
+  <MyButton>Hover me</MyButton>
+</Tooltip.Trigger>
+```
+
+`as` and `asChild` are mutually exclusive on the same component.
+
+### Prop merging
+
+Each prop on the merged result is resolved by a fixed, per-key policy — the child's own value never
+just silently disappears, but it also doesn't blindly win everywhere:
+
+| Prop kind                     | Policy                                                                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Event handlers (`onClick`, …) | Chained — the child's handler runs first, then the contract component's, unless the child's call left `event.defaultPrevented` |
+| `className`                   | Concatenated — both classes are kept                                                                                           |
+| `style`                       | Shallow-merged — the child's value wins per CSS property                                                                       |
+| Everything else               | Child wins — an explicit prop on the child overrides the contract component's own value                                        |
+
+Refs are merged too: zero refs resolves to `null`, one is passed through unchanged, and two or more
+are combined into a single callback ref that sets all of them — so `asChild` composes cleanly with a
+consumer's own `ref` as well as with nested `asChild` (each level's ref keeps working).
+
+A render-prop (`render={(props) => ...}`) child, where supported, takes precedence over `asChild`.
+
+### Multiple children (`Slottable`)
+
+`asChild` normally requires exactly one element child. Wrapping the real merge target in `Slottable`
+allows other plain siblings to pass through untouched alongside it:
+
+```tsx
+<Tooltip.Trigger asChild>
+  <Slottable>
+    <MyButton>Hover me</MyButton>
+  </Slottable>
+  <Icon />
+</Tooltip.Trigger>
+```
+
+### Diagnostics
+
+`asChild` reports through the same `enforcement.diagnostics` mode as every other contract check (see
+[Diagnostics](#diagnostics)): a missing or multiple children, `as`+`asChild` both set, a
+render-function child where one is required, and non-element siblings dropped without a `Slottable`
+wrapper.
+
+**Tag-dependent native behavior.** Some components' _behavior_ — not just styling — depends on the
+resolved tag being one of `allowedAs`: a `popoverTarget` invoker, for instance, only functions on
+button-like elements per the HTML Living Standard. `allowedAs` alone has no effect on `asChild` —
+it's specifically designed to bypass `allowedAs` so a consumer can compose onto any element — so
+merging such a component's props onto, say, an `<a>` type-checks and renders with no warning, and
+the native behavior just silently doesn't work.
+
+A contract author who knows this applies opts in with `enforcement.nativeTagBehavior: true`:
+
+```ts
+createContractComponent({
+  tag: 'button',
+  enforcement: {
+    allowedAs: ['button'],
+    nativeTagBehavior: true,
+  },
+})
+```
+
+With both `allowedAs` and `nativeTagBehavior` set, `asChild` warns on React, Preact, and Vue (never
+blocks — a consumer who genuinely needs a non-allowed element can still proceed) if the resolved
+child's tag falls outside `allowedAs` — see **Adapter support** just below for why those three
+specifically, and for the cases even they can't catch. Leave `nativeTagBehavior` unset for ordinary
+polymorphic components that restrict `allowedAs` for unrelated reasons (semantics, ARIA) with no
+tag-dependent native behavior — setting it there would just produce noise.
+
+**Adapter support.** `nativeTagBehavior` is a framework-neutral field — it's accepted and resolved
+on every adapter — but the warning it enables is only **implemented on React, Preact, and Vue**:
+
+| Adapter            | `asChild` model                                                                                                                                     | Checks `nativeTagBehavior`?         |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| React, Preact, Vue | Clones the merged props onto a real, consumer-supplied child element                                                                                | Yes                                 |
+| Solid, Svelte      | Hands resolved props to a caller-authored render callback/snippet, which owns its own output directly — there is no cloned child element to inspect | No — setting the flag has no effect |
+| Lit, Web           | No `asChild` at all                                                                                                                                 | N/A                                 |
+
+Solid's and Svelte's `asChild` was never an oversight to extend this to — their render-callback
+shape has nothing resembling a resolved child element at the point this check would run, so there is
+nothing to inspect. A contract shared across adapters that sets `nativeTagBehavior: true` still gets
+the warning on React/Preact/Vue consumers and simply gets no check at all on Solid/Svelte — not a
+silent partial implementation, a structural consequence of each adapter's own composition model.
+
+A multi-element `asChild` composition (a `Slottable`-wrapped merge target plus pass-through siblings
+— see **Multiple children** above) is still checked correctly on all three: the real merge target is
+resolved via the same `extractSlottable` lookup Slot's own downstream clone-merge uses, not skipped
+or guessed at.
+
+**Even on the three adapters that do implement it, the check is best-effort.** It's silently skipped
+— no warning, regardless of whether a real mismatch exists — when the child's tag can't be
+statically resolved at all: a child that is itself a custom component never stamped with
+`markComponentTag` (see `isTag`/`getTag` in `praxis-kit/guards`) has no rendered tag knowable
+without actually rendering it.
+
+Both cases degrade to "no warning," not a false warning — the check only ever fires on a tag it can
+actually resolve.
+
 ## Contracts
 
 A contract is a structural rule attached to a component at definition time. There are two kinds.

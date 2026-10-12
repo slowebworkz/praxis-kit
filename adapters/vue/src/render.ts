@@ -1,6 +1,7 @@
 import { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
 import type { ElementType } from '@praxis-kit/core'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
+import { getTag } from '@praxis-kit/guards'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import type { Slots, VNode, VNodeRef } from 'vue'
 import { cloneVNode, h } from 'vue'
@@ -167,12 +168,30 @@ function reportDiscarded(
   if (total > 0) validator.warnDiscardedChildren(total)
 }
 
+/** See React's identical `checkAllowedAsMismatch` in `adapters/react/src/shared/render.ts` for
+ *  the full rationale. */
+function checkAllowedAsMismatch(
+  child: VNode,
+  allowedAs: readonly ElementType[] | undefined,
+  nativeTagBehavior: boolean | undefined,
+  validator: SlotValidator,
+): void {
+  if (!nativeTagBehavior || allowedAs === undefined) return
+
+  const childTag = getTag(child)
+  if (childTag !== undefined && !allowedAs.includes(childTag)) {
+    validator.warnAllowedAsMismatch(childTag, allowedAs)
+  }
+}
+
 function tryRenderAsChild(
   state: ResolvedRenderState,
   children: VNode[],
   discarded: number,
   validator: SlotValidator,
   elementRef: ((element: Element | null) => void) | undefined,
+  allowedAs: readonly ElementType[] | undefined,
+  nativeTagBehavior: boolean | undefined,
 ): VNode | null {
   if (!validateSlotDirectives(state.directives, validator)) return null
 
@@ -181,6 +200,9 @@ function tryRenderAsChild(
   const slottable = extractSlottable(children)
   if (slottable) {
     reportDiscarded(children, [slottable.child], discarded, validator)
+    if (process.env.NODE_ENV !== 'production') {
+      checkAllowedAsMismatch(slottable.child, allowedAs, nativeTagBehavior, validator)
+    }
     return slottable.rebuild(cloneVNode(slottable.child, attrs))
   }
 
@@ -190,6 +212,9 @@ function tryRenderAsChild(
   reportDiscarded(children, elementChildren, discarded, validator)
 
   if (elementChildren.length === 1 && elementChildren[0] !== undefined) {
+    if (process.env.NODE_ENV !== 'production') {
+      checkAllowedAsMismatch(elementChildren[0], allowedAs, nativeTagBehavior, validator)
+    }
     return cloneVNode(elementChildren[0], attrs)
   }
 
@@ -215,6 +240,14 @@ export function render({
       ?.evaluate(children, { tag: state.tag, props: state.normalizedProps })
   }
 
-  const slotResult = tryRenderAsChild(state, children, discarded, slotValidator, elementRef)
+  const slotResult = tryRenderAsChild(
+    state,
+    children,
+    discarded,
+    slotValidator,
+    elementRef,
+    runtime.options.allowedAs,
+    runtime.options.nativeTagBehavior,
+  )
   return slotResult ?? renderIntrinsic(state, runtime, slots, elementRef)
 }
