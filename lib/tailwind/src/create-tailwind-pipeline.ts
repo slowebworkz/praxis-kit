@@ -1,7 +1,8 @@
 import { cn, createClassPipeline } from '@praxis-kit/core'
 import { ConsoleReporter, DefaultPolicy, Diagnostics, Severity } from '@praxis-kit/diagnostics'
 import { composePipelines } from '@praxis-kit/pipeline-kit'
-import { VOID_TAGS, isString, iterate } from '@praxis-kit/primitive'
+import { VOID_TAGS, iterate } from '@praxis-kit/primitive'
+import { isString } from '@praxis-kit/guards'
 
 import { ClassBuilder } from './class-builder'
 import { ClassClassifier } from './class-classifier'

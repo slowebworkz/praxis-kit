@@ -7,7 +7,8 @@
  * cache storage (an `LRUCache` instance) stays owned by `AriaPolicyEngine` itself, since it's
  * per-engine-instance state, not something this module needs to hold.
  */
-import { isDefined, isNonNull, isNumber, isString, iterate } from '@praxis-kit/primitive'
+import { iterate } from '@praxis-kit/primitive'
+import { isDefined, isNonNull, isNumber, isString } from '@praxis-kit/guards'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import type { AnyTag, AriaRule, IntrinsicProps } from '../types'
 

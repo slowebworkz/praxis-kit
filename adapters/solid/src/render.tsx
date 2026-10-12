@@ -1,7 +1,7 @@
 import { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
-import { isString } from '@praxis-kit/primitive'
+import { isString } from '@praxis-kit/guards'
 import { createEffect, createMemo, splitProps } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import type { SlotValidator } from './slot'

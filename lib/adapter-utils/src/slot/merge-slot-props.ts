@@ -1,5 +1,6 @@
 import type { AnyRecord } from '@praxis-kit/primitive'
-import { iterate, EVENT_HANDLER_RE, isFunction } from '@praxis-kit/primitive'
+import { iterate, EVENT_HANDLER_RE } from '@praxis-kit/primitive'
+import { isFunction } from '@praxis-kit/guards'
 import type { PropMergePolicy } from './policies'
 import { policyHandlers } from './policies'
 

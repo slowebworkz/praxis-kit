@@ -1,4 +1,4 @@
-import { isFunction, isObject, isString } from '@praxis-kit/primitive'
+import { isFunction, isObject, isString } from '@praxis-kit/guards'
 import type { StringMap } from '@praxis-kit/primitive'
 
 /**

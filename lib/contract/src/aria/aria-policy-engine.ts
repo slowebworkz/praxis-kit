@@ -1,12 +1,5 @@
-import {
-  isDefined,
-  isNonNull,
-  isNull,
-  isString,
-  isUndefined,
-  iterate,
-  LRUCache,
-} from '@praxis-kit/primitive'
+import { iterate, LRUCache } from '@praxis-kit/primitive'
+import { isDefined, isNonNull, isNull, isString, isUndefined } from '@praxis-kit/guards'
 
 import { AriaDiagnostics, HtmlDiagnostics } from '../diagnostics'
 import { InvariantBase } from '../strict'
@@ -41,7 +34,7 @@ import type {
   ValidationResult,
   ValidationViolation,
 } from '../types'
-export { isInvalid } from '@praxis-kit/primitive'
+export { isInvalid } from '@praxis-kit/guards'
 
 // The shared "valid, no violations" return for a rule with nothing to report. An array (not a
 // bare `[]`) because it's typed as `readonly AriaResult[]` and every rule returns this exact

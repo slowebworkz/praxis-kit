@@ -35,7 +35,8 @@
  * All three degrade gracefully to the runtime path — no error, no broken output.
  */
 import type { StringMap } from '@praxis-kit/primitive'
-import { isDefined, isUndefined, iterate } from '@praxis-kit/primitive'
+import { iterate } from '@praxis-kit/primitive'
+import { isDefined, isUndefined } from '@praxis-kit/guards'
 import ts from 'typescript'
 import { asObject, firstObjectArg, getProperty, isFactoryCall, walkEach } from './ast'
 import { buildCacheKey } from './class-extract'

@@ -8,7 +8,7 @@ import {
 } from './factories'
 import { AriaPolicyEngine } from './aria-policy-engine'
 import { DiagnosticCategory, DiagnosticCode, silentDiagnostics } from '@praxis-kit/diagnostics'
-import { isString } from '@praxis-kit/primitive'
+import { isString } from '@praxis-kit/guards'
 
 import type { AriaContext } from '../types'
 

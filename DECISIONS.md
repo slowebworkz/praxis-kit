@@ -3515,3 +3515,38 @@ Ratios within a single run are the meaningful signal; absolute times shift betwe
 
 **Benchmarks backing this entry:** `construction-ssr.bench.ts`, `residual.bench.ts`,
 `fresh-react-type.bench.ts` (control), and `defaults-trace.bench.ts`.
+
+### Guards migration to `guardz` — accepted bundle-size cost (2026-10-11)
+
+All guard functions used across the workspace now live in a new `@praxis-kit/guards` package
+(moved out of `lib/primitive/src/guards/` and `lib/foundation/src/type-guards.ts`), and every
+foundational guard (`isString`, `isNumber`, `isFunction`, `isDefined`, etc.) is now sourced from
+`guardz` rather than hand-rolled, re-exported from `@praxis-kit/guards` alongside the
+domain-specific guards (ARIA, children, contract, variants) that were only relocated, not
+rewritten. `lib/primitive` and `lib/diagnostics` import `guardz` directly instead of through
+`@praxis-kit/guards`, since both sit below it in the dependency graph (`@praxis-kit/guards`
+depends on `@praxis-kit/primitive`) — importing through it would be a package-graph cycle.
+
+**Cost, measured, not assumed:** `guardz@1.14.0` publishes as plain CommonJS — no `"type":
+"module"`, no `"exports"` map, no `"sideEffects": false`. No bundler can tree-shake its named
+exports; importing a single function from it pulls its entire compiled module graph into the
+bundle. `qa/tree-shaking-tests`' `source/*` scenarios (which build from this repo's real
+TypeScript source, the path an app actually bundles) regressed 41–47%, about +9.1–9.2KB gzipped
+per scenario, the moment any guard import touched `guardz`. `package/*` scenarios (testing the
+already-published `praxis-kit` dist) were unaffected — this is purely a source-bundling-time cost
+for consumers who build from source or alongside this monorepo, not a published-package
+regression today.
+
+**Decision: accept the cost, update the baseline.** Presented directly as a tradeoff — accept the
+~9KB and move `qa/tree-shaking-tests/snapshots/gzip.json`'s `source/*` baselines to the new sizes,
+or revert the `guardz` adoption specifically (keep the file reorganization into
+`@praxis-kit/guards`, but source its foundational guards from hand-rolled code again). Chose to
+accept: `guardz` gives richer runtime validation (schema composition, consistent `TypeGuardFnConfig`
+error reporting) than the hand-rolled guards it replaces, and the `package/*` scenarios — the
+actual published-dist numbers a `praxis-kit` consumer sees — show no regression at all.
+
+**Left open:** a `guardz/dist/typeguards/<name>` deep import bypasses the CJS barrel and would
+likely restore tree-shaking, but isn't backed by `guardz`'s `package.json` `exports` map, so a
+future `guardz` patch release could silently break it. Not pursued this round; revisit if `guardz`
+ships proper ESM/`exports` support, or if the `source/*` cost becomes a real complaint from a
+from-source consumer.

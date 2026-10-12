@@ -25,7 +25,7 @@
  */
 
 export { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
-export { isObject, isString } from '@praxis-kit/primitive'
+export { isObject, isString } from '@praxis-kit/guards'
 export { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
 
 // Structural aliases (`ElementType` is a string union; `IntrinsicProps` is `AnyRecord & {…}`) —

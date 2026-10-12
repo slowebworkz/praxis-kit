@@ -201,6 +201,7 @@
   "devDependencies": {
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/guards": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
     "@typescript-eslint/utils": "catalog:",
     "@types/node": "catalog:",

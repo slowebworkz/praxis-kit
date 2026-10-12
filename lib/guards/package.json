@@ -7,22 +7,17 @@
     ".": "./src/index.ts"
   },
   "sideEffects": false,
-  "description": "Guard functions",
+  "description": "Runtime type guards for praxis-kit's children/ARIA/contract/variant domains, built on guardz",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@praxis-kit/diagnostics": "workspace:*",
-    "@praxis-kit/foundation": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
-    "guardz": "^1.14.0",
-    "type-fest": "catalog:"
+    "guardz": "catalog:"
   },
   "devDependencies": {
-    "@types/react": "catalog:",
-    "@types/react-dom": "catalog:",
     "vitest": "catalog:"
   }
 }

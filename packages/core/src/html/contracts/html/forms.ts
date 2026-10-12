@@ -1,5 +1,6 @@
 import type { AnyRecord, ChildRuleContext } from '@praxis-kit/primitive'
-import { dynamic, getTag, isNumber, isString, isTag } from '@praxis-kit/primitive'
+import { dynamic } from '@praxis-kit/primitive'
+import { getTag, isNumber, isString, isTag } from '@praxis-kit/guards'
 import {
   INTERACTIVE_CONTENT_TAGS,
   LABELABLE_TAGS,

@@ -1,5 +1,5 @@
 import { isFunction, isObject } from '../foundational'
-import type { WithComponentMetadata } from '../../types/guards/with-component-id'
+import type { WithComponentMetadata } from '@praxis-kit/primitive'
 
 /**
  * Well-known Symbol stamped onto every component created by praxis-kit factories.

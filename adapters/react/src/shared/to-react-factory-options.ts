@@ -1,5 +1,5 @@
 import type { FactoryOptions } from '@praxis-kit/core'
-import { isFunction, isObject } from '@praxis-kit/primitive'
+import { isFunction, isObject } from '@praxis-kit/guards'
 import type { StringMap } from '@praxis-kit/primitive'
 import { isFactoryOptionsLike } from '@praxis-kit/adapter-utils'
 import type { ReactFactoryOptions } from './react-options'

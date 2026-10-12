@@ -1,4 +1,4 @@
-import type { ValidationResult, ValidationViolation } from '../../types'
+import type { ValidationResult, ValidationViolation } from '@praxis-kit/primitive'
 import { isArray, isRecord, isString } from '../foundational'
 
 export function isValidationViolation(value: unknown): value is ValidationViolation {

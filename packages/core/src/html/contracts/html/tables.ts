@@ -1,4 +1,4 @@
-import { isTag } from '@praxis-kit/primitive'
+import { isTag } from '@praxis-kit/guards'
 import { METADATA_TAGS } from '../categories'
 import { closedContract, firstOptional } from '../helpers'
 

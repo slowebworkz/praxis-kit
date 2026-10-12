@@ -194,6 +194,9 @@ catalogs:
     eslint-plugin-unicorn:
       specifier: ^75.0.0
       version: 75.0.0
+    guardz:
+      specifier: ^1.14.0
+      version: 1.14.0
     husky:
       specifier: ^9.1.7
       version: 9.1.7
@@ -369,6 +372,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../../lib/guards
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -400,6 +406,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../../lib/guards
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -440,6 +449,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../../lib/guards
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -498,6 +510,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../../lib/guards
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -532,6 +547,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../../lib/guards
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -569,6 +587,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../../lib/guards
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -621,6 +642,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../../lib/guards
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -646,6 +670,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../guards
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../primitive
@@ -674,6 +701,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../guards
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../primitive
@@ -696,6 +726,9 @@ importers:
       '@praxis-kit/foundation':
         specifier: workspace:*
         version: link:../foundation
+      guardz:
+        specifier: 'catalog:'
+        version: 1.14.0
     devDependencies:
       vitest:
         specifier: 'catalog:'
@@ -713,28 +746,13 @@ importers:
 
   lib/guards:
     dependencies:
-      '@praxis-kit/diagnostics':
-        specifier: workspace:*
-        version: link:../diagnostics
-      '@praxis-kit/foundation':
-        specifier: workspace:*
-        version: link:../foundation
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../primitive
       guardz:
-        specifier: ^1.14.0
+        specifier: 'catalog:'
         version: 1.14.0
-      type-fest:
-        specifier: 'catalog:'
-        version: 5.10.0
     devDependencies:
-      '@types/react':
-        specifier: 'catalog:'
-        version: 19.2.18
-      '@types/react-dom':
-        specifier: 'catalog:'
-        version: 19.3.0(@types/react@19.2.18)
       vitest:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@26.5.1)(@vitest/ui@4.1.11)(jsdom@30.1.1)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
@@ -786,6 +804,9 @@ importers:
       '@praxis-kit/foundation':
         specifier: workspace:*
         version: link:../foundation
+      guardz:
+        specifier: 'catalog:'
+        version: 1.14.0
       type-fest:
         specifier: 'catalog:'
         version: 5.10.0
@@ -837,6 +858,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../guards
       '@praxis-kit/pipeline-kit':
         specifier: workspace:*
         version: link:../pipeline-kit
@@ -862,6 +886,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../../lib/guards
       '@praxis-kit/pipeline-kit':
         specifier: workspace:*
         version: link:../../lib/pipeline-kit
@@ -900,6 +927,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../../lib/guards
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -960,6 +990,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../../lib/guards
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -1000,6 +1033,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../../lib/guards
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive
@@ -1031,6 +1067,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/guards':
+        specifier: workspace:*
+        version: link:../../lib/guards
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../lib/primitive

@@ -1,6 +1,6 @@
 import type { ReadonlyDeep } from 'type-fest'
 import type { AnyRecord } from '@praxis-kit/primitive'
-import { isDefined } from '@praxis-kit/primitive'
+import { isDefined } from '@praxis-kit/guards'
 import type {
   AriaContext,
   AriaFix,

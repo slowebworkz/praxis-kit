@@ -5,7 +5,7 @@ import {
   STANDALONE_ROLES_SET,
 } from '@praxis-kit/primitive'
 import type { InputType, Tag } from '@praxis-kit/primitive'
-import { isNil, isNumber, isString } from 'guardz'
+import { isNullish, isString } from '../foundational'
 
 function lookupImplicitRole(tag: string): string | undefined {
   return IMPLICIT_ROLE_RECORD[tag as Tag]
@@ -19,7 +19,7 @@ function lookupImplicitRole(tag: string): string | undefined {
  */
 export function isStrongImplicitRole(tag: string): boolean {
   const role = lookupImplicitRole(tag)
-  return !isNil(role) && STRONG_ROLES_SET.has(role)
+  return !isNullish(role) && STRONG_ROLES_SET.has(role)
 }
 
 /**
@@ -28,7 +28,7 @@ export function isStrongImplicitRole(tag: string): boolean {
  */
 export function hasStandaloneRole(tag: string): boolean {
   const role = lookupImplicitRole(tag)
-  return !isNil(role) && STANDALONE_ROLES_SET.has(role)
+  return !isNullish(role) && STANDALONE_ROLES_SET.has(role)
 }
 
 /**
@@ -54,22 +54,24 @@ const LIST_ELIGIBLE_INPUT_TYPES = new Set<InputType>(['text', 'search', 'tel', '
  * ARIA role (for example `color`, `date`, or `hidden`).
  */
 export function getInputImplicitRole(type: unknown, list?: unknown): string | undefined {
-  const resolvedType = isNil(type) ? 'text' : type
+  const resolvedType = isNullish(type) ? 'text' : type
   if (!isString(resolvedType)) return undefined
 
-  const role = INPUT_TYPE_ROLE_MAP[resolvedType as InputType]
+  const role = INPUT_TYPE_ROLE_MAP[resolvedType as keyof typeof INPUT_TYPE_ROLE_MAP]
   if (!role) return undefined
 
-  if (!isNil(list) && LIST_ELIGIBLE_INPUT_TYPES.has(resolvedType as InputType)) {
+  if (!isNullish(list) && LIST_ELIGIBLE_INPUT_TYPES.has(resolvedType as InputType)) {
     return 'combobox'
   }
+
+  return role
 }
 
 // A boolean HTML attribute is "on" when present with any value except a literal `false`
 // (JSX authors write `multiple={false}` to mean "off"). `""`, `"multiple"`, `true` are all on.
 function isBooleanAttrOn(value: unknown): boolean {
-  if (value === false || isNil(value)) return false
-  if (isString(value)) return value.toLowerCase() !== 'false'
+  if (value === false || value === undefined || value === null) return false
+  if (typeof value === 'string') return value.toLowerCase() !== 'false'
   return true
 }
 
@@ -86,7 +88,8 @@ function isBooleanAttrOn(value: unknown): boolean {
  */
 export function getSelectImplicitRole(multiple?: unknown, size?: unknown): string {
   if (isBooleanAttrOn(multiple)) return 'listbox'
-  const sizeNum = isNumber(size) ? size : isString(size) ? Number(size) : Number.NaN
+  const sizeNum =
+    typeof size === 'number' ? size : typeof size === 'string' ? Number(size) : Number.NaN
   if (Number.isFinite(sizeNum) && sizeNum > 1) return 'listbox'
   return 'combobox'
 }
@@ -103,7 +106,7 @@ export function getSelectImplicitRole(multiple?: unknown, size?: unknown): strin
  * A `href=""` (empty string) still counts — it is a valid same-page link.
  */
 export function getAnchorImplicitRole(href?: unknown): string {
-  return isNil(href) ? 'generic' : 'link'
+  return isNullish(href) ? 'generic' : 'link'
 }
 
 /**

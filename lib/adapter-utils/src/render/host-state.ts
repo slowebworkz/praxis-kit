@@ -1,6 +1,6 @@
 import type { AnyRecord, ElementType } from '@praxis-kit/core'
 import { enforceAllowedAs } from '@praxis-kit/core'
-import { isObject } from '@praxis-kit/primitive'
+import { isObject } from '@praxis-kit/guards'
 import { applyFilter, resolveNormalizedProps } from '../props'
 import type { SsrBundle } from './render-to-string'
 
