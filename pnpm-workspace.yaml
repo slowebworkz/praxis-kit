@@ -13,7 +13,7 @@ allowBuilds:
 
 catalog:
   # Release
-  "@changesets/cli": ^3.0.2
+  "@changesets/cli": ^3.0.3
 
   # Playwright
   "@axe-core/playwright": ^4.13.0
@@ -28,20 +28,20 @@ catalog:
   "@sveltejs/vite-plugin-svelte": ^7.3.1
   "@testing-library/preact": ^3.2.4
   "@testing-library/svelte": ^5.4.2
-  "@types/node": ^26.5.1
+  "@types/node": ^26.6.5
   "@types/react": ^19.2.18
   "@types/react-dom": ^19.3.0
-  "@typescript-eslint/rule-tester": 8.71.0
-  "@typescript-eslint/utils": 8.71.0
+  "@typescript-eslint/rule-tester": 8.71.1
+  "@typescript-eslint/utils": 8.71.1
   # WAI-ARIA reference data — dev-only, drives the role→attribute-support fixture
   # (scripts/generate-aria-support.ts). A bump means: regenerate the fixture and re-review.
   "@types/aria-query": ^5.0.4
   "aria-query": ^5.3.2
-  "@vitejs/plugin-react": ^6.1.1
-  "@vitejs/plugin-vue": ^6.0.8
+  "@vitejs/plugin-react": ^6.1.2
+  "@vitejs/plugin-vue": ^6.0.10
   "@vitest/ui": ^4.1.11
   "@vue/compiler-dom": ^3.5.43
-  "@vue/server-renderer": ^3.5.42
+  "@vue/server-renderer": ^3.5.43
   "@vue/test-utils": ^2.5.1
   class-variance-authority: ^0.7.1
 
@@ -90,7 +90,7 @@ catalog:
   vite: ^8.2.2
   vite-plugin-solid: ^2.11.14
   vitest: ^4.1.11
-  vue: ^3.5.42
+  vue: ^3.5.43
 
 overrides:
   # Security-advisory floors. Verified against the GitHub Advisory DB on
