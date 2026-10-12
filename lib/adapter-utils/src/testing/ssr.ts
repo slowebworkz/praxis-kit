@@ -14,7 +14,7 @@ export type { SsrConformanceAdapter } from '../types'
 export function ssrConformanceSuite<C extends ConformanceComponent = ConformanceComponent>(
   adapter: SsrConformanceAdapter<C>,
 ): void {
-  const caps = { tagPolymorphism: true, ...adapter.capabilities }
+  const caps = { tagPolymorphism: true, compose: true, ...adapter.capabilities }
 
   // ── basic rendering ─────────────────────────────────────────────────────────
 
@@ -110,6 +110,44 @@ export function ssrConformanceSuite<C extends ConformanceComponent = Conformance
       expect(classAttr.split(' ')).toContain('btn-lg-ghost')
     })
   })
+
+  // ── compose ───────────────────────────────────────────────────────────────────
+
+  if (caps.compose)
+    describe('ssr — compose', () => {
+      it('renders through "with" on the server, composing classes the same way asChild does', async () => {
+        const BoxA = adapter.createComponent({
+          styling: { base: 'class-a' },
+          enforcement: { diagnostics: silentDiagnostics },
+        })
+        const BoxB = adapter.createComponent({
+          tag: 'button',
+          compose: { with: BoxA },
+          styling: { base: 'class-b' },
+          enforcement: { diagnostics: silentDiagnostics },
+        })
+        const html = await adapter.renderToString(BoxB)
+        expect(html).toMatch(/<button[\s>]/)
+        expect(html).toContain('class-a')
+        expect(html).toContain('class-b')
+      })
+
+      if (caps.tagPolymorphism)
+        it('when both components declare a tag, the composing component\'s own tag wins', async () => {
+          const BoxA = adapter.createComponent({
+            tag: 'nav',
+            enforcement: { diagnostics: silentDiagnostics },
+          })
+          const BoxB = adapter.createComponent({
+            tag: 'button',
+            compose: { with: BoxA },
+            enforcement: { diagnostics: silentDiagnostics },
+          })
+          const html = await adapter.renderToString(BoxB)
+          expect(html).toMatch(/<button[\s>]/)
+          expect(html).not.toMatch(/<nav[\s>]/)
+        })
+    })
 
   // ── prop forwarding ───────────────────────────────────────────────────────────
 

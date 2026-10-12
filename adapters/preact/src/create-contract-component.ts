@@ -15,6 +15,9 @@ import type {
   VariantMap,
 } from '@praxis-kit/core'
 import { finalizeComponent, invariant } from '@praxis-kit/adapter-utils'
+import { isFunction } from '@praxis-kit/guards'
+import { h } from 'preact'
+import type { ComponentType } from 'preact'
 import { forwardRef } from 'preact/compat'
 import type { ForwardedRef } from 'preact/compat'
 import { useCallback, useRef } from 'preact/hooks'
@@ -88,7 +91,7 @@ export function createContractComponent<
   const bundle = buildRuntime(
     options as unknown as PreactFactoryOptions<TDefault, Props, Variants, TPreset>,
   )
-  const { onElement } = options
+  const { onElement, compose } = options
 
   const Component = forwardRef(function Component(
     props: UnknownProps,
@@ -131,6 +134,19 @@ export function createContractComponent<
     }, [])
 
     const mergedRef = onElement ? mergeRefs(ref, onElementRef) : ref
+
+    // See `@praxis-kit/react`'s identical block for the full explanation — `compose` makes this
+    // component always render `asChild` into `compose.with` unless the consumer already took
+    // explicit control via their own `asChild`.
+    if (compose?.with !== undefined && props.asChild === undefined && !isFunction(props.render)) {
+      const innerElement = render({ ...bundle, props, ref: null })
+      return h(compose.with as ComponentType<UnknownProps>, {
+        asChild: true,
+        ref: mergedRef,
+        children: innerElement,
+      })
+    }
+
     return render({ ...bundle, props, ref: mergedRef })
   })
 

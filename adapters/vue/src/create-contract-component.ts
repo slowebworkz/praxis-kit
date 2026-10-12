@@ -1,4 +1,5 @@
-import { computed, defineComponent } from 'vue'
+import { computed, defineComponent, h } from 'vue'
+import type { Component as VueComponent } from 'vue'
 import type {
   AnyClassPluginFactory,
   AnyRecord,
@@ -87,7 +88,7 @@ export function createContractComponent<
   const bundle = buildRuntime(
     options as unknown as VueFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin>,
   )
-  const { onElement } = options
+  const { onElement, compose } = options
 
   const Component = defineComponent({
     // normalizeOptions always supplies `name`, so displayName is always defined here —
@@ -133,7 +134,22 @@ export function createContractComponent<
           }
         : undefined
 
-      return () => render({ ...bundle, state: state.value, slots, elementRef: onElementRef })
+      return () => {
+        const innerVNode = render({ ...bundle, state: state.value, slots, elementRef: onElementRef })
+
+        // `compose` makes this component always render `asChild` into `compose.with`, as if the
+        // consumer had hand-written `<With asChild><ThisComponent v-bind="attrs" /></With>` — but
+        // only when the consumer didn't already take explicit control via their own `asChild`.
+        // `innerVNode` is this component's own normal-mode output (computed above exactly as it
+        // already is today); `with` is then rendered as an ordinary Vue component with
+        // `asChild: true`, so `with`'s own generated component runs its own `render()` from here,
+        // exactly as it already does for a hand-written nested `asChild` call.
+        if (compose?.with !== undefined && attrs['asChild'] === undefined) {
+          return h(compose.with as VueComponent, { asChild: true }, { default: () => innerVNode })
+        }
+
+        return innerVNode
+      }
     },
   })
 

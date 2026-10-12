@@ -1,4 +1,10 @@
-import type { AnyRecord, ChildRuleContext, ChildRuleMatch, Rule } from '@praxis-kit/core'
+import type {
+  AnyRecord,
+  ChildRuleContext,
+  ChildRuleMatch,
+  ComponentReference,
+  Rule,
+} from '@praxis-kit/core'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 import type { StringMap } from '@praxis-kit/primitive'
 
@@ -46,4 +52,11 @@ export type ConformanceFactoryOptions = {
    * normalizers on every adapter, so it can observe and override their output.
    */
   normalize?: (props: AnyRecord) => AnyRecord
+  /**
+   * Declares that this component always renders composed `asChild` into another conformance
+   * component. Typed as the real `ComponentReference` (not a loosened `unknown`) so this
+   * assigns cleanly against `BareFactoryOptions`'s own `compose.with` field, which every
+   * adapter's `createComponent(options as BareFactoryOptions)` cast is checked against.
+   */
+  compose?: { with: ComponentReference }
 }

@@ -182,6 +182,10 @@ describe('createContractComponent (Preact adapter)', () => {
     expect(ref.current).toBe(container.querySelector('button'))
   })
 
+  // `compose` (declarative asChild composition) is covered by the shared conformance suite
+  // (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`, "conformance —
+  // compose") rather than duplicated here — same convention as `asChild` itself.
+
   it('asChild warns when it drops a text sibling it cannot compose onto the slotted element', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const Box = createContractComponent({ diagnostics: warnDiagnostics })

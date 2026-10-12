@@ -19,8 +19,14 @@
   import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
   import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
   import { isObject, isString } from '@praxis-kit/guards'
-  import { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
+  import {
+    applyFilter,
+    mergeClassNames,
+    mergeSlotProps,
+    resolveNormalizedProps,
+  } from '@praxis-kit/adapter-utils'
   import type { Snippet } from 'svelte'
+  import Polymorphic from './Polymorphic.svelte'
   import type {
     PolymorphicComponentProps,
     ResolvedAttributes,
@@ -115,6 +121,20 @@
     }
   }
 
+  // `mergeSlotProps` special-cases `className` (React/Preact's prop name) for concatenation —
+  // Svelte (like Solid and Vue) uses `class` instead, which would otherwise fall through
+  // `mergeSlotProps`'s own policy as an ordinary "child wins" key rather than concatenating.
+  // Used by the `compose` branch below, which (unlike Vue's native `cloneVNode` merge) has to
+  // merge these prop bags itself.
+  function mergeComposedProps(withProps: UnknownProps, innerProps: UnknownProps): UnknownProps {
+    const merged = mergeSlotProps(withProps, innerProps)
+    const mergedClass = mergeClassNames(
+      (withProps as ResolvedAttributes)['class'],
+      (innerProps as ResolvedAttributes)['class'],
+    )
+    return { ...merged, ...(mergedClass && { class: mergedClass }) }
+  }
+
   const tag = $derived(bundle.runtime.resolveTag(asProp as ElementType | undefined))
   const mergedProps = $derived(bundle.runtime.resolveProps(rest as UnknownProps))
   const normalizedProps = $derived.by(() => {
@@ -179,7 +199,43 @@
   }
 </script>
 
-{#if useAsChild}
+{#if bundle.compose?.with !== undefined && !asChild}
+  <!--
+    `compose` makes this component always render `asChild` into `compose.with`, as if the
+    consumer had hand-written `<With asChild><ThisComponent {...props} /></With>` — but only when
+    the consumer didn't already take explicit control via their own `asChild` (checked above).
+    Svelte has no clone step to piggyback on (unlike React/Preact/Vue's `cloneElement`/
+    `cloneVNode`), so this synthesizes the same shape natively: `With` always renders through its
+    own `asChild` render-callback mode, and the callback — this component's own normal-mode
+    output — merges `With`'s handed-back slot props onto itself via `mergeComposedProps`, the
+    same policy `mergeSlotProps` already gives every other adapter.
+
+    `ownChildren` captures the real, script-level `children` *before* the nested `{#snippet
+    children(...)}` block below declares its own same-named binding for `With`'s own asChild
+    contract — referencing `children` directly inside that block would resolve to the snippet
+    itself, not this component's real consumer-supplied content.
+  -->
+  {@const With = bundle.compose.with}
+  {@const ownChildren = children}
+  <Polymorphic bundle={With} asChild>
+    {#snippet children(withProps)}
+      {#if isString(tag)}
+        <svelte:element
+          this={tag}
+          bind:this={hostEl}
+          {...mergeComposedProps(withProps as UnknownProps, domProps)}
+        >
+          {@render (ownChildren as Snippet | undefined)?.()}
+        </svelte:element>
+      {:else}
+        {@const Comp = tag}
+        <Comp {...mergeComposedProps(withProps as UnknownProps, buildSlotProps(filteredProps, resolvedClass))}>
+          {@render (ownChildren as Snippet | undefined)?.()}
+        </Comp>
+      {/if}
+    {/snippet}
+  </Polymorphic>
+{:else if useAsChild}
   {#if children}
     {@render (children as Snippet<[UnknownProps]>)(buildSlotProps(filteredProps, resolvedClass))}
   {/if}

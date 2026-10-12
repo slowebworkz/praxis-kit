@@ -39,7 +39,16 @@ function childSpecToHTML(specs: ChildSpec[]): string {
 
 const adapter: ConformanceAdapter<SvelteComponent> = {
   createComponent: (options): SvelteComponent => {
-    const bundle = createContractComponent(options as BareFactoryOptions) as AnyBuiltRuntime
+    // compose.with arrives as this adapter's own opaque component value (whatever an earlier
+    // adapter.createComponent() call returned) — on Svelte, that's the { displayName, _bundle }
+    // wrapper below, not the raw bundle createContractComponent/Polymorphic.svelte actually
+    // expect for compose.with. Unwrap it before handing options to the real implementation.
+    const compose = options.compose
+    const unwrappedOptions =
+      compose !== undefined
+        ? { ...options, compose: { with: (compose.with as SvelteComponent)._bundle } }
+        : options
+    const bundle = createContractComponent(unwrappedOptions as BareFactoryOptions) as AnyBuiltRuntime
     return {
       displayName: options.name ?? 'PolymorphicComponent',
       _bundle: bundle,

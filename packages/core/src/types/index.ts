@@ -2,6 +2,7 @@ export type { AriaRole, KnownAriaRole } from '@praxis-kit/contract'
 export type {
   AnyRecord,
   ClassName,
+  ComponentReference,
   DefaultProps,
   DefaultVariants,
   ElementForTag,
@@ -30,6 +31,7 @@ export type * from './contract'
 export type {
   AllowedOf,
   ClassPluginResolution,
+  ComposeOptions,
   DefaultOf,
   EnforcementOptions,
   FactoryOptions,

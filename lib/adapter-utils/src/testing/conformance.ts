@@ -18,6 +18,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
 ): void {
   const caps = {
     asChild: true,
+    compose: true,
     tagPolymorphism: true,
     domPropFiltering: true,
     dynamicChildRules: false,
@@ -290,6 +291,71 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(element.className).toContain('class-b')
         expect(element.tagName.toLowerCase()).toBe('button')
       })
+    })
+
+  // ── compose ───────────────────────────────────────────────────────────────────
+  //
+  // compose: { with: Component } makes a component always render composed `asChild` into
+  // `with`, as if the consumer had hand-written the exact nested-`asChild` shape the suite
+  // above already proves works — these tests assert `compose` produces identical output,
+  // not a new mechanism. No `ChildSpec`/render-function support is needed from the harness
+  // (the consumer never supplies children), so this runs for every adapter registered here,
+  // including ones that set `asChild: false` for harness-compatibility reasons (Solid, Svelte).
+
+  if (caps.compose)
+    describe('conformance — compose', () => {
+      it('renders through "with", composing classes the same way nested asChild does', () => {
+        const BoxA = adapter.createComponent({ styling: { base: 'class-a' } })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA },
+          styling: { base: 'class-b' },
+        })
+        const { element } = adapter.render(BoxB)
+        expect(element.className).toContain('class-a')
+        expect(element.className).toContain('class-b')
+      })
+
+      if (caps.tagPolymorphism)
+        it('when both components declare a tag, the composing component\'s own tag wins', () => {
+          const BoxA = adapter.createComponent({ tag: 'nav', styling: { base: 'class-a' } })
+          const BoxB = adapter.createComponent({
+            tag: 'button',
+            compose: { with: BoxA },
+            styling: { base: 'class-b' },
+          })
+          const { element } = adapter.render(BoxB)
+          expect(element.tagName.toLowerCase()).toBe('button')
+        })
+
+      it('consumer props land on the composing component itself, not on "with"', () => {
+        const BoxA = adapter.createComponent({})
+        const BoxB = adapter.createComponent({ compose: { with: BoxA } })
+        const { element } = adapter.render(BoxB, { 'data-testid': 'inner' })
+        expect(element.getAttribute('data-testid')).toBe('inner')
+      })
+
+      if (caps.asChild)
+        it('an explicit asChild from the consumer wins over compose', () => {
+          const BoxA = adapter.createComponent({ styling: { base: 'class-a' } })
+          const BoxB = adapter.createComponent({
+            compose: { with: BoxA },
+            styling: { base: 'class-b' },
+          })
+          const { element } = adapter.render(BoxB, { asChild: true }, [{ tag: 'a' }])
+          expect(element.tagName.toLowerCase()).toBe('a')
+          expect(element.className).toContain('class-b')
+          expect(element.className).not.toContain('class-a')
+        })
+
+      if (adapter.createRef)
+        it('forwards ref through compose to the composing component\'s own real element', () => {
+          const ref = adapter.createRef!()
+          const BoxA = adapter.createComponent({ tag: 'nav' })
+          const BoxB = adapter.createComponent({ tag: 'button', compose: { with: BoxA } })
+          adapter.render(BoxB, { ref })
+          expect(ref.current).toBeInstanceOf(HTMLElement)
+          expect(ref.current!.tagName.toLowerCase()).toBe('button')
+        })
     })
 
   // ── variants ──────────────────────────────────────────────────────────────────

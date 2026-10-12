@@ -256,4 +256,54 @@ describe('Polymorphic (Svelte adapter)', () => {
       expect(() => render(Polymorphic, { bundle, as: InnerButton as never })).toThrow(/allowed/i)
     })
   })
+
+  describe('compose: declarative asChild composition', () => {
+    // `compose`'s renders-through/tag-conflict/props-land cases are covered by the shared
+    // conformance suite (`conformance.test.ts` → `lib/adapter-utils/src/testing/conformance.ts`,
+    // "conformance — compose"). That suite can't express two cases for Svelte: "explicit asChild
+    // wins" (its own `asChild: false` capability — Svelte's asChild needs a literal snippet
+    // child) and ref-forwarding (Svelte has no `createRef`-style contract; `onElement` is this
+    // adapter's real one) — those two stay adapter-specific below, same convention `asChild`
+    // itself already uses.
+
+    it('onElement receives the composing component\'s own real element, not "with"\'s default tag', () => {
+      let received: Element | undefined
+      const boxA = createContractComponent({ tag: 'nav' })
+      const boxB = createContractComponent({
+        tag: 'button',
+        compose: { with: boxA },
+        onElement: (el) => {
+          received = el
+        },
+      })
+
+      render(Polymorphic, { bundle: boxB })
+
+      expect(received?.tagName.toLowerCase()).toBe('button')
+    })
+
+    it('an explicit asChild from the consumer wins over compose', () => {
+      const boxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
+      const boxB = createContractComponent({
+        tag: 'button',
+        compose: { with: boxA },
+        styling: { base: 'class-b' },
+      })
+
+      let receivedProps: AnyRecord = {}
+      const children = createRawSnippet<[AnyRecord]>((getProps) => ({
+        render() {
+          receivedProps = getProps()
+          return `<a>link</a>`
+        },
+      }))
+
+      const { container } = render(Polymorphic, { bundle: boxB, asChild: true, children })
+
+      // Only boxB's own asChild composes onto <a> — compose doesn't fire, so boxA never renders.
+      expect(receivedProps['class']).toContain('class-b')
+      expect(receivedProps['class']).not.toContain('class-a')
+      expect(container.querySelector('button')).toBeNull()
+    })
+  })
 })

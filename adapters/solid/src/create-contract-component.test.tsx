@@ -209,6 +209,31 @@ describe('createContractComponent (Solid adapter)', () => {
     expect(el).toBeInstanceOf(HTMLAnchorElement)
   })
 
+  // `compose`'s renders-through/tag-conflict/props-land/ref cases are covered by the shared
+  // conformance suite (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`,
+  // "conformance — compose"). That suite can't express the "explicit asChild wins" case for
+  // Solid, though (its own `asChild: false` capability — Solid's asChild needs a literal
+  // render-function child, incompatible with the harness's `ChildSpec`), so this one case stays
+  // adapter-specific, same convention `asChild` itself already uses.
+
+  it('compose: an explicit asChild from the consumer wins over compose', () => {
+    const BoxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
+    const BoxB = createContractComponent({
+      tag: 'button',
+      compose: { with: BoxA },
+      styling: { base: 'class-b' },
+    })
+
+    const { container } = solidRender(() => (
+      <BoxB asChild>{(props: AnyRecord) => <a {...props} />}</BoxB>
+    ))
+
+    const el = container.querySelector('a')!
+    expect(el.className).toContain('class-b')
+    expect(el.className).not.toContain('class-a')
+    expect(container.querySelector('button')).toBeNull()
+  })
+
   it('asChild throws when as and asChild are both set (strict: throw default)', () => {
     const Comp = createContractComponent({ tag: 'div' })
     expect(() =>

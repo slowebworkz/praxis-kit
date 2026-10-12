@@ -3598,3 +3598,52 @@ likely restore tree-shaking, but isn't backed by `guardz`'s `package.json` `expo
 future `guardz` patch release could silently break it. Not pursued this round; revisit if `guardz`
 ships proper ESM/`exports` support, or if the now-confirmed +15KB/entry-point cost becomes a real
 complaint from a published-package consumer.
+
+### `compose: { with: Component }` — declarative `asChild` composition (2026-10-12)
+
+Added `compose` to `FactoryOptions`, following finding #50 in `praxis-components`'
+`PRAXIS-KIT-FINDINGS.md` (foundational `asChild` composition — the `Surface`+`Box`→`Card`
+proposal). `compose: { with: Button }` makes an ordinary consumer call of a component render
+exactly as a hand-written `<Button asChild><ThisComponent {...props} /></Button>` already does —
+confirmed before implementing that this nested-component-into-component `asChild` shape was
+already real, tested machinery (not something new to build): `mergeSlotProps`/`SlotValidator`
+operate purely on prop objects and `isValidElement`-style checks, agnostic to whether the `asChild`
+target is a DOM tag or another contract component.
+
+**Scope decisions, confirmed with the requester before implementing:**
+
+- All consumer props land on the composing component's own contract exactly as today — nothing
+  routes to `with`, which always renders bare. This matches the existing hand-written pattern
+  exactly (`<Button asChild>` receives no props in that pattern either).
+- Synthesized natively per adapter, not through one shared mechanism: React/Preact/Vue reuse their
+  existing clone-based `asChild` (render `with` with `asChild: true` and this component's own
+  normal output as its child — zero new merge logic, it's the same path a hand-written nested
+  `asChild` call already takes). Solid/Svelte have no clone step at all, so `compose` instead
+  renders `with` through its own render-callback/snippet mode, with a synthesized callback that
+  merges `with`'s handed-back props onto this component's own resolved output — discovered and
+  fixed along the way: `mergeSlotProps` special-cases `className` (React/Preact's prop name) for
+  concatenation, which silently fails to concatenate `class` (Solid's/Svelte's own prop name) —
+  worked around with a small `mergeComposedProps` wrapper in each of those two adapters that
+  overrides just that one key via `mergeClassNames` directly. Lit/Web have no `asChild` concept at
+  all, so `compose` is accepted (shared `FactoryOptions` field) but has no effect there.
+- An explicit `asChild`/`render` from the consumer always wins over `compose` — same precedence
+  `as` already has over `defaultTag`. Implemented as a conditional guard in each adapter's
+  generated component, checked before dispatching to `render()`/the adapter's own render pipeline.
+- No new runtime validation or narrower type (e.g. a `HasContract`-based constraint) for `with` —
+  follows `FactoryOptions.subComponents`' own existing precedent of trusting an unvalidated
+  component-reference value. `compose.with` reuses the existing `ComponentReference` type (added
+  for the `as`/`allowedAs` component-reference feature), kept at `lib/primitive`'s level with no
+  change to `resolveFactoryOptions`/`ResolvedFactoryOptions` — like `subComponents`/`onElement`,
+  each adapter reads `options.compose` directly off the raw options object, since it's a
+  render-dispatch concern, not a tag/props/class/aria pipeline concern.
+- **Multi-level chaining is explicitly out of scope.** `with` is always invoked with
+  `asChild: true`, which — per the conflict rule above — means `with`'s own `compose` check never
+  fires for that invocation. Composing three or more components through nested `compose.with`
+  references does not cascade automatically with this design; shipping one-hop composition first
+  matches the original proposal's own "small proof of concept, not a broad redesign" framing.
+
+**Svelte-specific note:** unlike the other four adapters, Svelte's `createContractComponent`
+returns a plain bundle object, not a component (Svelte components must come from `.svelte` files)
+— so `compose.with` on this adapter is a bundle, not a component reference, and `Polymorphic.svelte`
+renders it by importing and recursing into itself (`<Polymorphic bundle={with} asChild>`), a
+standard, supported Svelte pattern for this kind of structural composition.

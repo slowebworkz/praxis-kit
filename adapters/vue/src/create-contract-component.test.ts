@@ -285,6 +285,31 @@ describe('createContractComponent — asChild', () => {
     expect(el.element.className).toContain('class-a')
     expect(el.element.className).toContain('class-b')
   })
+
+  // `compose`'s renders-through/tag-conflict/props-land/explicit-asChild-wins cases are covered
+  // by the shared conformance suite (`conformance.test.ts` → `lib/adapter-utils/src/testing/
+  // conformance.ts`, "conformance — compose"). This adapter keeps only the one case that suite
+  // can't express generically: Vue's `ref` resolves to the component instance, not the host
+  // element, so `onElement` (not `createRef`) is this adapter's real contract for reaching it.
+
+  it('compose: onElement receives the composing component\'s own real element, not "with"\'s default tag', () => {
+    // A plain `ref` on a Vue component resolves to the component instance, not the host
+    // element — onElement is this adapter's actual contract for reaching the real DOM node
+    // (see on-element.test.ts's own matrix, which this mirrors).
+    let received: Element | undefined
+    const BoxA = createContractComponent({ tag: 'nav' })
+    const BoxB = createContractComponent({
+      tag: 'button',
+      compose: { with: BoxA },
+      onElement: (el) => {
+        received = el
+      },
+    })
+
+    mount(box(BoxB))
+
+    expect(received?.tagName.toLowerCase()).toBe('button')
+  })
 })
 
 describe('createContractComponent — asChild VNode classification', () => {
