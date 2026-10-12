@@ -1,6 +1,6 @@
 import { isObject, isString } from '../foundational'
 import { COMPONENT_ID, createComponentId } from './component-id'
-import type { RestrictedPropertyKey } from '../../types'
+import type { RestrictedPropertyKey } from '@praxis-kit/primitive'
 
 // After hasComponentId() / isComponent() succeeds the symbol is guaranteed present.
 export type ComponentChild = {

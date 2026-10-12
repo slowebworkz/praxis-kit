@@ -1,4 +1,4 @@
-import { isNonNull, isNumber, isString } from '@praxis-kit/primitive'
+import { isNonNull, isNumber, isString } from '@praxis-kit/guards'
 import type { HtmlElementSpec } from '../types'
 import { ALLOWED_SELECT_ROLES } from '../roles/select'
 

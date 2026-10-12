@@ -5,7 +5,7 @@ import {
   createRemoveAttributeRule,
   invalidWithoutFix,
 } from '@praxis-kit/contract'
-import { isString } from '@praxis-kit/primitive'
+import { isString } from '@praxis-kit/guards'
 
 // URI schemes that execute or render attacker-controlled content when navigated to — the classic
 // anchor-tag XSS vector. `data:` is included because `data:text/html` opens attacker-controlled

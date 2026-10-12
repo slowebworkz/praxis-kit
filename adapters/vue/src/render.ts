@@ -1,7 +1,7 @@
 import { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
 import type { ElementType } from '@praxis-kit/core'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
-import { getTag } from '@praxis-kit/primitive'
+import { getTag } from '@praxis-kit/guards'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import type { Slots, VNode, VNodeRef } from 'vue'
 import { cloneVNode, h } from 'vue'

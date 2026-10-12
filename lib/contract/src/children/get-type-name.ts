@@ -1,4 +1,4 @@
-import { isString } from '@praxis-kit/primitive'
+import { isString } from '@praxis-kit/guards'
 
 export function getTypeName(value: unknown): string {
   if (value === null) return 'null'

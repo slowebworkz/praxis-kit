@@ -54,6 +54,7 @@ catalog:
   eslint-plugin-unicorn: ^75.0.0
 
   # Tooling
+  guardz: ^1.14.0
   husky: ^9.1.7
 
   jiti: ^2.7.0

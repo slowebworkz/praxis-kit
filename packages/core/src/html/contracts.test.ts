@@ -40,7 +40,8 @@ import {
   widgetContracts,
 } from './contracts'
 import { landmarkAccessibleNameRule } from './aria-rules'
-import { iterate, COMPONENT_DEFAULT_TAG } from '@praxis-kit/primitive'
+import { iterate } from '@praxis-kit/primitive'
+import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/guards'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

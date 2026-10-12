@@ -1,4 +1,4 @@
-import type { InvalidResult, ValidResult } from '../../types'
+import type { InvalidResult, ValidResult } from '@praxis-kit/primitive'
 
 type AriaResult = ValidResult | InvalidResult
 

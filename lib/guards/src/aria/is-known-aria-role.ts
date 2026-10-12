@@ -1,5 +1,5 @@
-import { KNOWN_ARIA_ROLES_SET } from '../../constants/aria'
-import type { KnownAriaRole } from '../../types'
+import { KNOWN_ARIA_ROLES_SET } from '@praxis-kit/primitive'
+import type { KnownAriaRole } from '@praxis-kit/primitive'
 import { isString } from '../foundational'
 
 export type { KnownAriaRole }

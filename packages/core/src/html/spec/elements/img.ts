@@ -1,4 +1,4 @@
-import { isNullish } from '@praxis-kit/primitive'
+import { isNullish } from '@praxis-kit/guards'
 import type { HtmlElementSpec } from '../types'
 import { IMG_DECORATIVE_ROLES, IMG_NAMED_ROLES } from '../roles/img'
 

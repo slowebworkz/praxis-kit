@@ -1,4 +1,4 @@
-import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/primitive'
+import { COMPONENT_DEFAULT_TAG } from '@praxis-kit/guards'
 import type { SubComponentMap } from '@praxis-kit/primitive'
 import { assembleCompoundComponent } from './assemble-compound-component'
 

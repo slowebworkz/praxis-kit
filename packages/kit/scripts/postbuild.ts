@@ -43,8 +43,8 @@ function copyTailwindSafelist(): void {
 // (`private: true`, never published) `@praxis-kit/*` packages and from `./types`; none of those
 // resolve in a consumer project.
 //
-//   - `@praxis-kit/core` / `@praxis-kit/primitive` / `@praxis-kit/adapter-utils` → the bundled
-//     `./_polymorphic-runtime.js` entry (see ../svelte-polymorphic-runtime.ts).
+//   - `@praxis-kit/core` / `@praxis-kit/primitive` / `@praxis-kit/guards` / `@praxis-kit/adapter-utils`
+//     → the bundled `./_polymorphic-runtime.js` entry (see ../svelte-polymorphic-runtime.ts).
 //   - `./types` → `./index.js`, the real `praxis-kit/svelte` entry, which already re-exports the
 //     four names the component needs. Routing there (not through the runtime shim) keeps the
 //     `bundle` prop's nominal runtime types identical to a consumer's own bundle.
@@ -55,6 +55,7 @@ const POLYMORPHIC_RUNTIME_SPECIFIER = './_polymorphic-runtime.js'
 const POLYMORPHIC_IMPORT_REWRITES: ReadonlyArray<readonly [from: string, to: string]> = [
   ['@praxis-kit/core', POLYMORPHIC_RUNTIME_SPECIFIER],
   ['@praxis-kit/primitive', POLYMORPHIC_RUNTIME_SPECIFIER],
+  ['@praxis-kit/guards', POLYMORPHIC_RUNTIME_SPECIFIER],
   ['@praxis-kit/adapter-utils', POLYMORPHIC_RUNTIME_SPECIFIER],
   ['./types', './index.js'],
 ]

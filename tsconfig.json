@@ -13,6 +13,7 @@
     { "path": "./lib/contract-props" },
     { "path": "./lib/diagnostics" },
     { "path": "./lib/foundation" },
+    { "path": "./lib/guards" },
     { "path": "./lib/pipeline" },
     { "path": "./lib/playwright" },
     { "path": "./lib/pipeline-kit" },

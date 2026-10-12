@@ -18,7 +18,7 @@
 <script lang="ts">
   import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
   import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
-  import { isObject, isString } from '@praxis-kit/primitive'
+  import { isObject, isString } from '@praxis-kit/guards'
   import { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
   import type { Snippet } from 'svelte'
   import type {

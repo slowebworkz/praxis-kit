@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { isObject } from '@praxis-kit/primitive'
+import { isObject } from '@praxis-kit/guards'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import type { ChildRuleMatch, NormalizedChildRule } from '../types'
 import type { MatchResult } from './rules-matcher'

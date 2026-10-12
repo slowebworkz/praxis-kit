@@ -1,5 +1,5 @@
 import type { PolymorphicGenerics } from '@praxis-kit/core'
-import { isFunction, isString } from '@praxis-kit/primitive'
+import { isFunction, isString } from '@praxis-kit/guards'
 import type { PolymorphicComponent } from './types'
 
 /**

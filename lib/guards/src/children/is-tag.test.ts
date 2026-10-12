@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { COMPONENT_DEFAULT_TAG } from './component-id'
 import { getTag, isFlowContent, isTag } from './is-tag'
-import type { ChildRuleInput } from '../../types/contracts'
-import type { AnyRecord } from '../../types'
+import type { AnyRecord, ChildRuleInput } from '@praxis-kit/primitive'
 
 function nativeVnode(tag: string, props: AnyRecord = {}) {
   return { type: tag, props }

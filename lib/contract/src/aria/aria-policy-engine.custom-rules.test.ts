@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { AriaPolicyEngine } from './aria-policy-engine'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
-import { isString } from '@praxis-kit/primitive'
+import { isString } from '@praxis-kit/guards'
 import type { AnyRecord } from '@praxis-kit/primitive'
 
 // A hand-rolled scheme check (startsWith, regex, or manual whitespace/case normalization) is

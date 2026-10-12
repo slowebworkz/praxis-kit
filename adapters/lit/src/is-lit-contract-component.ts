@@ -1,5 +1,5 @@
 import type { AnyRecord, EmptyRecord, NoVariants, VariantMap } from '@praxis-kit/core'
-import { isFunction } from '@praxis-kit/primitive'
+import { isFunction } from '@praxis-kit/guards'
 import { LitElement } from 'lit'
 import type { LitContractComponent } from './types'
 
