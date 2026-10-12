@@ -286,37 +286,29 @@ describe('createContractComponent — asChild', () => {
     expect(el.element.className).toContain('class-b')
   })
 
-  it('compose: renders through "with", composing classes the same way hand-written nested asChild does', () => {
-    const BoxA = createContractComponent({ styling: { base: 'class-a' } })
+  // `compose`'s renders-through/tag-conflict/props-land/explicit-asChild-wins cases are covered
+  // by the shared conformance suite (`conformance.test.ts` → `lib/adapter-utils/src/testing/
+  // conformance.ts`, "conformance — compose"). This adapter keeps only the one case that suite
+  // can't express generically: Vue's `ref` resolves to the component instance, not the host
+  // element, so `onElement` (not `createRef`) is this adapter's real contract for reaching it.
+
+  it('compose: onElement receives the composing component\'s own real element, not "with"\'s default tag', () => {
+    // A plain `ref` on a Vue component resolves to the component instance, not the host
+    // element — onElement is this adapter's actual contract for reaching the real DOM node
+    // (see on-element.test.ts's own matrix, which this mirrors).
+    let received: Element | undefined
+    const BoxA = createContractComponent({ tag: 'nav' })
     const BoxB = createContractComponent({
       tag: 'button',
       compose: { with: BoxA },
-      styling: { base: 'class-b' },
+      onElement: (el) => {
+        received = el
+      },
     })
 
-    const wrapper = mount(box(BoxB))
-    const el = wrapper.find('button')
-    expect(el.element.className).toContain('class-a')
-    expect(el.element.className).toContain('class-b')
-  })
+    mount(box(BoxB))
 
-  it('compose: an explicit asChild from the consumer wins over compose', () => {
-    const BoxA = createContractComponent({ styling: { base: 'class-a' } })
-    const BoxB = createContractComponent({
-      tag: 'button',
-      compose: { with: BoxA },
-      styling: { base: 'class-b' },
-    })
-
-    const wrapper = mount(box(BoxB), {
-      props: { asChild: true },
-      slots: { default: () => [h('a')] },
-    })
-
-    const el = wrapper.find('a')
-    expect(el.element.className).toContain('class-b')
-    expect(el.element.className).not.toContain('class-a')
-    expect(wrapper.find('button').exists()).toBe(false)
+    expect(received?.tagName.toLowerCase()).toBe('button')
   })
 })
 

@@ -186,62 +186,9 @@ describe('createContractComponent (current / React 19)', () => {
     expect(ref.current).toBe(dom.container.querySelector('button'))
   })
 
-  // ── compose: declarative asChild composition ────────────────────────────────
-
-  it('compose: renders through "with", composing classes the same way hand-written nested asChild does', () => {
-    const BoxA = createContractComponent({
-      styling: { base: 'class-a' },
-    })
-
-    const BoxB = createContractComponent({
-      tag: 'button',
-      compose: { with: BoxA },
-      styling: { base: 'class-b' },
-    })
-
-    dom.mount(createElement(box(BoxB), null))
-
-    const el = dom.container.querySelector('button')!
-
-    expect(el.className).toContain('class-a')
-    expect(el.className).toContain('class-b')
-  })
-
-  it('compose: ref reaches the composed component\'s own real element', () => {
-    const BoxA = createContractComponent({})
-    const BoxB = createContractComponent({ tag: 'button', compose: { with: BoxA } })
-    const ref = createRef<HTMLButtonElement>()
-
-    dom.mount(createElement(box(BoxB), { ref }))
-
-    expect(ref.current).toBe(dom.container.querySelector('button'))
-  })
-
-  it('compose: consumer props land on the composing component itself, not on "with"', () => {
-    const BoxA = createContractComponent({})
-    const BoxB = createContractComponent({ tag: 'button', compose: { with: BoxA } })
-
-    dom.mount(createElement(box(BoxB), { 'data-testid': 'inner' }))
-
-    expect(dom.container.querySelector('[data-testid="inner"]')).toBeTruthy()
-  })
-
-  it('compose: an explicit asChild from the consumer wins over compose', () => {
-    const BoxA = createContractComponent({ styling: { base: 'class-a' } })
-    const BoxB = createContractComponent({
-      tag: 'button',
-      compose: { with: BoxA },
-      styling: { base: 'class-b' },
-    })
-
-    dom.mount(createElement(box(BoxB), { asChild: true }, createElement('a')))
-
-    const el = dom.container.querySelector('a')!
-    // Only BoxB's own asChild composes onto <a> — compose doesn't fire, so BoxA never renders.
-    expect(el.className).toContain('class-b')
-    expect(el.className).not.toContain('class-a')
-    expect(dom.container.querySelector('button')).toBeNull()
-  })
+  // `compose` (declarative asChild composition) is covered by the shared conformance suite
+  // (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`, "conformance —
+  // compose") rather than duplicated here — same convention as `asChild` itself.
 
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
     const Box = createContractComponent({

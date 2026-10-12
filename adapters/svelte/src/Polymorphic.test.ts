@@ -258,19 +258,28 @@ describe('Polymorphic (Svelte adapter)', () => {
   })
 
   describe('compose: declarative asChild composition', () => {
-    it('renders through "with", composing classes the same way hand-written asChild composition does', () => {
-      const boxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
+    // `compose`'s renders-through/tag-conflict/props-land cases are covered by the shared
+    // conformance suite (`conformance.test.ts` → `lib/adapter-utils/src/testing/conformance.ts`,
+    // "conformance — compose"). That suite can't express two cases for Svelte: "explicit asChild
+    // wins" (its own `asChild: false` capability — Svelte's asChild needs a literal snippet
+    // child) and ref-forwarding (Svelte has no `createRef`-style contract; `onElement` is this
+    // adapter's real one) — those two stay adapter-specific below, same convention `asChild`
+    // itself already uses.
+
+    it('onElement receives the composing component\'s own real element, not "with"\'s default tag', () => {
+      let received: Element | undefined
+      const boxA = createContractComponent({ tag: 'nav' })
       const boxB = createContractComponent({
         tag: 'button',
         compose: { with: boxA },
-        styling: { base: 'class-b' },
+        onElement: (el) => {
+          received = el
+        },
       })
 
-      const { container } = render(Polymorphic, { bundle: boxB })
-      const el = container.querySelector('button')!
+      render(Polymorphic, { bundle: boxB })
 
-      expect(el.className).toContain('class-a')
-      expect(el.className).toContain('class-b')
+      expect(received?.tagName.toLowerCase()).toBe('button')
     })
 
     it('an explicit asChild from the consumer wins over compose', () => {

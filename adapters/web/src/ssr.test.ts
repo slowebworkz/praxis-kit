@@ -27,7 +27,7 @@ ssrConformanceSuite({
 
   renderToString: (component, props = {}) => renderContractToString(component, props),
 
-  capabilities: { tagPolymorphism: false },
+  capabilities: { tagPolymorphism: false, compose: false },
 })
 
 describe('renderContractToString — web-specific', () => {

@@ -209,38 +209,12 @@ describe('createContractComponent (Solid adapter)', () => {
     expect(el).toBeInstanceOf(HTMLAnchorElement)
   })
 
-  // ── compose: declarative asChild composition ────────────────────────────────
-
-  it('compose: renders through "with", composing classes the same way hand-written asChild composition does', () => {
-    const BoxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
-    const BoxB = createContractComponent({
-      tag: 'button',
-      compose: { with: BoxA },
-      styling: { base: 'class-b' },
-    })
-
-    const { container } = solidRender(() => <BoxB />)
-    const el = container.querySelector('button')!
-
-    expect(el.className).toContain('class-a')
-    expect(el.className).toContain('class-b')
-  })
-
-  it('compose: ref reaches the composed component\'s own real element', () => {
-    const BoxA = createContractComponent({ tag: 'div' })
-    const BoxB = createContractComponent({ tag: 'button', compose: { with: BoxA } })
-    let el: HTMLButtonElement | undefined
-
-    solidRender(() => (
-      <BoxB
-        ref={(e: HTMLButtonElement) => {
-          el = e
-        }}
-      />
-    ))
-
-    expect(el).toBeInstanceOf(HTMLButtonElement)
-  })
+  // `compose`'s renders-through/tag-conflict/props-land/ref cases are covered by the shared
+  // conformance suite (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`,
+  // "conformance — compose"). That suite can't express the "explicit asChild wins" case for
+  // Solid, though (its own `asChild: false` capability — Solid's asChild needs a literal
+  // render-function child, incompatible with the harness's `ChildSpec`), so this one case stays
+  // adapter-specific, same convention `asChild` itself already uses.
 
   it('compose: an explicit asChild from the consumer wins over compose', () => {
     const BoxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })

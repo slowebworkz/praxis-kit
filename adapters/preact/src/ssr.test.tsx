@@ -86,6 +86,9 @@ describe('createContractComponent — SSR (preact-render-to-string)', () => {
     expect(html).toContain('slot-cls')
     expect(html).toContain('child-cls')
   })
+
+  // `compose` SSR coverage comes from the shared `ssrConformanceSuite` registration below
+  // ("ssr — compose"), not a separate test here.
 })
 
 ssrConformanceSuite({

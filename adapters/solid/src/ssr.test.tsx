@@ -48,6 +48,9 @@ describe('createContractComponent — SSR (solid-js/web renderToString)', () => 
     expect(html).toContain('<section')
     expect(html).not.toContain('<div')
   })
+
+  // `compose` SSR coverage comes from the shared `ssrConformanceSuite` registration below
+  // ("ssr — compose"), not a separate test here.
 })
 
 ssrConformanceSuite({

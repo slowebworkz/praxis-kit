@@ -48,6 +48,16 @@ export type ConformanceAdapter<C extends ConformanceComponent = ConformanceCompo
     /** false for Solid, which uses a render-function asChild pattern. */
     asChild?: boolean
     /**
+     * false for adapters with no `asChild` concept at all for `compose` to compose into (Lit,
+     * Web — neither participates in this suite today, but the flag exists for symmetry with
+     * `asChild` above). Unlike `asChild`, `compose` needs no `ChildSpec`/render-function support
+     * from the harness — the consumer never supplies children — so this defaults to `true` even
+     * for adapters that set `asChild: false` for harness-compatibility reasons (Solid, Svelte),
+     * whose own `compose` implementation works through this suite's plain `adapter.render(Box,
+     * props)` call just like any other non-`asChild` case.
+     */
+    compose?: boolean
+    /**
      * false for adapters where the rendered element tag is fixed at registration
      * time (e.g. Lit custom elements). Skips tests that assert element.tagName
      * matches options.tag or the as prop value.

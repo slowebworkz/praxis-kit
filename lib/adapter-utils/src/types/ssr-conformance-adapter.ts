@@ -31,5 +31,11 @@ export type SsrConformanceAdapter<C extends ConformanceComponent = ConformanceCo
      * asserting `as` changes the rendered tag.
      */
     tagPolymorphism?: boolean
+    /**
+     * false for adapters with no `asChild` concept at all for `compose` to compose into (Lit,
+     * Web). Defaults to true — `compose`'s SSR path needs no `asChild`-specific adapter support
+     * beyond `createComponent`/`renderToString`, which every registered adapter already has.
+     */
+    compose?: boolean
   }
 }

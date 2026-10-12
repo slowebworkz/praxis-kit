@@ -182,49 +182,9 @@ describe('createContractComponent (Preact adapter)', () => {
     expect(ref.current).toBe(container.querySelector('button'))
   })
 
-  // ── compose: declarative asChild composition ────────────────────────────────
-
-  it('compose: renders through "with", composing classes the same way hand-written nested asChild does', () => {
-    const BoxA = createContractComponent({ styling: { base: 'class-a' } })
-    const BoxB = createContractComponent({
-      tag: 'button',
-      compose: { with: BoxA },
-      styling: { base: 'class-b' },
-    })
-
-    mount(h(box(BoxB), null))
-
-    const el = container.querySelector('button')!
-
-    expect(el.className).toContain('class-a')
-    expect(el.className).toContain('class-b')
-  })
-
-  it('compose: ref reaches the composed component\'s own real element', () => {
-    const BoxA = createContractComponent({})
-    const BoxB = createContractComponent({ tag: 'button', compose: { with: BoxA } })
-    const ref = createRef<HTMLButtonElement>()
-
-    mount(h(box(BoxB), { ref }))
-
-    expect(ref.current).toBe(container.querySelector('button'))
-  })
-
-  it('compose: an explicit asChild from the consumer wins over compose', () => {
-    const BoxA = createContractComponent({ styling: { base: 'class-a' } })
-    const BoxB = createContractComponent({
-      tag: 'button',
-      compose: { with: BoxA },
-      styling: { base: 'class-b' },
-    })
-
-    mount(h(box(BoxB), { asChild: true }, h('a', null)))
-
-    const el = container.querySelector('a')!
-    expect(el.className).toContain('class-b')
-    expect(el.className).not.toContain('class-a')
-    expect(container.querySelector('button')).toBeNull()
-  })
+  // `compose` (declarative asChild composition) is covered by the shared conformance suite
+  // (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`, "conformance —
+  // compose") rather than duplicated here — same convention as `asChild` itself.
 
   it('asChild warns when it drops a text sibling it cannot compose onto the slotted element', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
