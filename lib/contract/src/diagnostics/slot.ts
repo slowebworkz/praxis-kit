@@ -49,4 +49,20 @@ export const SlotDiagnostics = {
       message: `${name}: asChild requires a render function as children, got ${received}`,
     }
   },
+
+  allowedAsMismatch(
+    name: string,
+    childTag: string,
+    allowedAs: readonly unknown[],
+  ): DiagnosticInput {
+    const allowed = allowedAs.map((t) => `"${String(t)}"`).join(', ')
+    return {
+      code: DiagnosticCode.SlotAllowedAsMismatch,
+      category: DiagnosticCategory.Contract,
+      component: name,
+      message:
+        `${name}: asChild composed onto "${childTag}", which is not one of [${allowed}] — ` +
+        `${name}'s behavior depends on the resolved tag, so native functionality may not work.`,
+    }
+  },
 }

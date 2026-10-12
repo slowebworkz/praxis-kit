@@ -11,9 +11,9 @@ import { jsx } from 'react/jsx-runtime'
 
 import { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
-import { isFunction, lazy } from '@praxis-kit/primitive'
+import { getTag, isFunction, lazy } from '@praxis-kit/primitive'
 
-import { isSlottableElement } from './slot'
+import { extractSlottable, isSlottableElement } from './slot'
 
 import type { ComponentType, ReactElement, Ref } from 'react'
 import type { Writable } from 'type-fest'
@@ -226,6 +226,38 @@ function renderResolvedSlot(
 }
 
 /**
+ * Warns when `asChild` composes onto a child whose resolved tag falls outside `allowedAs`, for a
+ * component that has declared `enforcement.nativeTagBehavior` — i.e. its behavior (not just
+ * styling) depends on the resolved tag being one of `allowedAs` (e.g. a `popoverTarget` invoker,
+ * which only functions on button-like elements). Gated on `nativeTagBehavior` specifically so
+ * ordinary polymorphic components that restrict `allowedAs` for unrelated (e.g. semantic/ARIA)
+ * reasons don't false-positive — `allowedAs` alone doesn't imply this check applies.
+ *
+ * A multi-element `resolved.child` (a `Slottable`-wrapped merge target plus pass-through
+ * siblings) still has exactly one real merge target — the same one `extractSlottable` identifies
+ * for Slot's own downstream clone-merge — so this reuses that lookup rather than skipping the
+ * array case outright. `extractSlottable` returns `null` only when the array holds no `Slottable`
+ * marker at all, which can't happen here: `resolveSlotChildren` only ever returns a multi-element
+ * array when `getSlotChildren().some(isSlottableElement)` already held.
+ */
+function checkAllowedAsMismatch(
+  child: ReactElement | ReactElement[],
+  allowedAs: readonly ElementType[] | undefined,
+  nativeTagBehavior: boolean | undefined,
+  validator: SlotValidator,
+): void {
+  if (!nativeTagBehavior || allowedAs === undefined) return
+
+  const target = Array.isArray(child) ? extractSlottable(child)?.child : child
+  if (target === undefined) return
+
+  const childTag = getTag(target)
+  if (childTag !== undefined && !allowedAs.includes(childTag)) {
+    validator.warnAllowedAsMismatch(childTag, allowedAs)
+  }
+}
+
+/**
  * Attempts the `asChild` render path.
  *
  * Returns the rendered Slot when `asChild` is valid and its child contract succeeds. Returns
@@ -238,10 +270,16 @@ function tryRenderAsChild(
   getNormalizedChildren: () => readonly NormalizedChild[],
   getSlotChildren: () => ReactElement[],
   validator: SlotValidator,
+  allowedAs: readonly ElementType[] | undefined,
+  nativeTagBehavior: boolean | undefined,
 ): ReactElement | null {
   const resolved = resolveSlotRender(state, getNormalizedChildren, getSlotChildren, validator)
 
   if (resolved === null) return null
+
+  if (!isProduction) {
+    checkAllowedAsMismatch(resolved.child, allowedAs, nativeTagBehavior, validator)
+  }
 
   return renderResolvedSlot(slotComponent, state, resolved, ref)
 }
@@ -380,6 +418,8 @@ export function render<TProps extends KnownProps>({
     getNormalizedChildren,
     getSlotChildren,
     slotValidator,
+    runtime.options.allowedAs,
+    runtime.options.nativeTagBehavior,
   )
 
   return slotResult ?? renderIntrinsic(state, ref, runtime)

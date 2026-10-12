@@ -83,4 +83,5 @@ const Button = createContractComponent({
 Swap `praxis-kit/react` for the subpath matching your framework — the factory API is identical
 across all seven adapters, with small documented exceptions on Lit and Web (no `as` or `asChild`
 render props; SSR is `renderContractToString`; see
-[GETTING_STARTED.md](../GETTING_STARTED.md#step-5--polymorphic-rendering)).
+[GETTING_STARTED.md](../GETTING_STARTED.md#step-5--polymorphic-rendering)). For `asChild`'s prop-
+merging, ref, and diagnostics contract, see [concepts.md](./concepts.md#aschild-composition).

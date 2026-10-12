@@ -48,4 +48,23 @@ describe('mergeContracts', () => {
     expect(merged.diagnostics).toBe(warnDiagnostics)
     expect(merged.allowedAs).toEqual(['button'])
   })
+
+  it('takes the last-declared nativeTagBehavior, same as diagnostics/allowedAs', () => {
+    const merged = mergeContracts(
+      { allowedAs: ['button'], nativeTagBehavior: true },
+      { allowedAs: ['button'], nativeTagBehavior: false },
+    )
+    expect(merged.nativeTagBehavior).toBe(false)
+  })
+
+  it('a later contract with nativeTagBehavior unset does not clear an earlier true value', () => {
+    // Matches allowedAs's own last-*declared*-wins semantics (not last-object-in-the-list): a
+    // contract that never mentions the field shouldn't reset it to undefined.
+    const merged = mergeContracts({ nativeTagBehavior: true }, { allowedAs: ['button'] })
+    expect(merged.nativeTagBehavior).toBe(true)
+  })
+
+  it('omits nativeTagBehavior when no contract declares it', () => {
+    expect(mergeContracts({ allowedAs: ['button'] })).not.toHaveProperty('nativeTagBehavior')
+  })
 })

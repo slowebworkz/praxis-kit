@@ -26,6 +26,7 @@ export enum DiagnosticCode {
   SlotSingleChild = 'SLOT1002',
   SlotDiscardedChildren = 'SLOT1003',
   SlotRenderFn = 'SLOT1004',
+  SlotAllowedAsMismatch = 'SLOT1005',
 
   // ARIA
   MissingAriaRelationship = 'ARIA2001',

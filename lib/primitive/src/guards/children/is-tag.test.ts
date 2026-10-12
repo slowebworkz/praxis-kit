@@ -54,6 +54,17 @@ describe('getTag', () => {
       expect(getTag(componentVnode('source', { as: '' }))).toBe('source')
     })
 
+    it('resolves a component-reference "as" prop through its own COMPONENT_DEFAULT_TAG', () => {
+      function Link() {}
+      Object.assign(Link, { [COMPONENT_DEFAULT_TAG]: 'a' })
+      expect(getTag(componentVnode('button', { as: Link }))).toBe('a')
+    })
+
+    it('returns undefined for a component-reference "as" prop with no COMPONENT_DEFAULT_TAG of its own', () => {
+      function Untagged() {}
+      expect(getTag(componentVnode('button', { as: Untagged }))).toBeUndefined()
+    })
+
     it('handles missing props', () => {
       function Component() {}
       Object.assign(Component, { [COMPONENT_DEFAULT_TAG]: 'img' })
