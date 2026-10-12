@@ -1,6 +1,7 @@
 import type {
   AllowedOf,
   ChildrenEvaluator,
+  ComposeOptions,
   DefaultOf,
   ElementForTag,
   PolymorphicGenerics,
@@ -31,6 +32,7 @@ export type BuiltRuntime<
   filterProps: FilterPredicate
   slotValidator: SlotValidator
   onElement?: OnElementFn<G>
+  compose?: ComposeOptions
 }
 
 // Structural alias used when generic precision is not needed (e.g. as a prop type).
@@ -43,4 +45,5 @@ export type AnyBuiltRuntime = {
   slotValidator: SlotValidator
   childrenEvaluator?: ChildrenEvaluator
   onElement?: OnElementFn
+  compose?: ComposeOptions
 }

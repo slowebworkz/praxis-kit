@@ -285,6 +285,39 @@ describe('createContractComponent — asChild', () => {
     expect(el.element.className).toContain('class-a')
     expect(el.element.className).toContain('class-b')
   })
+
+  it('compose: renders through "with", composing classes the same way hand-written nested asChild does', () => {
+    const BoxA = createContractComponent({ styling: { base: 'class-a' } })
+    const BoxB = createContractComponent({
+      tag: 'button',
+      compose: { with: BoxA },
+      styling: { base: 'class-b' },
+    })
+
+    const wrapper = mount(box(BoxB))
+    const el = wrapper.find('button')
+    expect(el.element.className).toContain('class-a')
+    expect(el.element.className).toContain('class-b')
+  })
+
+  it('compose: an explicit asChild from the consumer wins over compose', () => {
+    const BoxA = createContractComponent({ styling: { base: 'class-a' } })
+    const BoxB = createContractComponent({
+      tag: 'button',
+      compose: { with: BoxA },
+      styling: { base: 'class-b' },
+    })
+
+    const wrapper = mount(box(BoxB), {
+      props: { asChild: true },
+      slots: { default: () => [h('a')] },
+    })
+
+    const el = wrapper.find('a')
+    expect(el.element.className).toContain('class-b')
+    expect(el.element.className).not.toContain('class-a')
+    expect(wrapper.find('button').exists()).toBe(false)
+  })
 })
 
 describe('createContractComponent — asChild VNode classification', () => {

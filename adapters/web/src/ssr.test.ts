@@ -134,4 +134,20 @@ describe('renderContractToString — `as` has no effect', () => {
     const html = renderContractToString(Nav, { as: 'not-a-real-tag' })
     expect(html).toMatch(/^<nav[\s>]/)
   })
+
+  it('ignores `compose` entirely — this adapter has no `asChild` concept for it to compose into', () => {
+    const Inner = createContractComponent({ tag: 'section' })
+    const Box = createContractComponent({
+      tag: 'div',
+      compose: { with: Inner },
+      styling: { base: 'base' },
+    })
+    const withoutCompose = renderContractToString(
+      createContractComponent({ tag: 'div', styling: { base: 'base' } }),
+      {},
+    )
+    const withCompose = renderContractToString(Box, {})
+    expect(withCompose).toBe(withoutCompose)
+    expect(withCompose).not.toContain('<section')
+  })
 })

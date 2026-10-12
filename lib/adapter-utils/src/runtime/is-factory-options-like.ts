@@ -23,6 +23,7 @@ export const FACTORY_OPTIONS_FIELD_VALIDATORS: StringMap<(value: unknown) => boo
   enforcement: (v) => v === undefined || isObject(v),
   diagnostics: (v) => v === undefined || isObject(v),
   subComponents: (v) => v === undefined || isObject(v),
+  compose: (v) => v === undefined || isObject(v),
   onElement: (v) => v === undefined || isFunction(v),
 }
 

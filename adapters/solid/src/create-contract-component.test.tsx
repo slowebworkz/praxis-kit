@@ -209,6 +209,57 @@ describe('createContractComponent (Solid adapter)', () => {
     expect(el).toBeInstanceOf(HTMLAnchorElement)
   })
 
+  // ── compose: declarative asChild composition ────────────────────────────────
+
+  it('compose: renders through "with", composing classes the same way hand-written asChild composition does', () => {
+    const BoxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
+    const BoxB = createContractComponent({
+      tag: 'button',
+      compose: { with: BoxA },
+      styling: { base: 'class-b' },
+    })
+
+    const { container } = solidRender(() => <BoxB />)
+    const el = container.querySelector('button')!
+
+    expect(el.className).toContain('class-a')
+    expect(el.className).toContain('class-b')
+  })
+
+  it('compose: ref reaches the composed component\'s own real element', () => {
+    const BoxA = createContractComponent({ tag: 'div' })
+    const BoxB = createContractComponent({ tag: 'button', compose: { with: BoxA } })
+    let el: HTMLButtonElement | undefined
+
+    solidRender(() => (
+      <BoxB
+        ref={(e: HTMLButtonElement) => {
+          el = e
+        }}
+      />
+    ))
+
+    expect(el).toBeInstanceOf(HTMLButtonElement)
+  })
+
+  it('compose: an explicit asChild from the consumer wins over compose', () => {
+    const BoxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
+    const BoxB = createContractComponent({
+      tag: 'button',
+      compose: { with: BoxA },
+      styling: { base: 'class-b' },
+    })
+
+    const { container } = solidRender(() => (
+      <BoxB asChild>{(props: AnyRecord) => <a {...props} />}</BoxB>
+    ))
+
+    const el = container.querySelector('a')!
+    expect(el.className).toContain('class-b')
+    expect(el.className).not.toContain('class-a')
+    expect(container.querySelector('button')).toBeNull()
+  })
+
   it('asChild throws when as and asChild are both set (strict: throw default)', () => {
     const Comp = createContractComponent({ tag: 'div' })
     expect(() =>

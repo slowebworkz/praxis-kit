@@ -139,6 +139,53 @@ without actually rendering it.
 Both cases degrade to "no warning," not a false warning — the check only ever fires on a tag it can
 actually resolve.
 
+## `compose`: declarative `asChild` composition
+
+`compose: { with: Component }` on `FactoryOptions` makes a component always render composed
+`asChild` into another praxis-kit component, declaratively — no hand-written wrapper needed:
+
+```tsx
+const Surface = createContractComponent({ styling: { base: 'surface' } })
+
+const Card = createContractComponent({
+  tag: 'article',
+  compose: { with: Surface },
+  styling: { base: 'card' },
+})
+
+<Card>Content</Card>
+```
+
+renders exactly as if the consumer had hand-written:
+
+```tsx
+<Surface asChild>
+  <article className="card">Content</article>
+</Surface>
+```
+
+All consumer props land on the composing component's own contract exactly as an ordinary call
+would — `with` always renders bare, contributing only its own resolved classes/handlers/attributes
+onto whatever the composing component renders as, via the same merge policy `asChild` already
+uses. If the consumer explicitly passes `asChild` or `render` themselves, that always wins —
+`compose` only applies to an otherwise-ordinary call, the same precedence `as` already has over
+`defaultTag`.
+
+**Adapter support.** `compose` is accepted by every adapter's `FactoryOptions`, but synthesized
+natively per adapter rather than through one shared mechanism, matching each adapter's own
+`asChild` composition model:
+
+| Adapter            | How `compose` is synthesized                                                                        |
+| ------------------- | ----------------------------------------------------------------------------------------------------- |
+| React, Preact, Vue | Clone-based, same as a hand-written nested `asChild` call — `with` renders with `asChild: true` and this component's own normal output as its single child |
+| Solid, Svelte      | `with` renders through its own render-callback/snippet `asChild` mode; the synthesized callback merges `with`'s handed-back props onto this component's own resolved output |
+| Lit, Web           | No effect — these adapters have no `asChild` concept for `compose` to compose into                   |
+
+Multi-level `compose` chaining (`with` itself also declaring its own `compose.with`) does not
+cascade automatically — `with` is always invoked with `asChild: true`, so its own `compose` check
+never fires for that invocation. Composing through more than one hop currently requires an
+explicit intermediate layer.
+
 ## Contracts
 
 A contract is a structural rule attached to a component at definition time. There are two kinds.

@@ -1,4 +1,5 @@
 export type {
+  ComposeOptions,
   EnforcementOptions,
   FactoryOptions,
   NormalizeFn,

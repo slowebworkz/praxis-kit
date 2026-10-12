@@ -9,6 +9,7 @@ import type {
 } from '../primitives'
 import type { RecipeMap, VariantMap } from '../variants'
 import type { AnyClassPluginFactory } from '../class'
+import type { ComposeOptions } from './compose-options'
 import type { EnforcementOptions } from './enforcement-options'
 import type { StylingOptions } from './styling-options'
 import type { PropNormalizer } from './prop-normalizer'
@@ -103,6 +104,12 @@ export type FactoryOptions<
    * needs to validate its children.
    */
   readonly subComponents?: SubComponentMap
+  /**
+   * Declares that this component always renders composed `asChild` into another praxis-kit
+   * component — see `ComposeOptions`'s own doc comment for the full semantics, adapter support
+   * matrix, and the explicit-`asChild`-always-wins conflict rule.
+   */
+  readonly compose?: ComposeOptions
   /**
    * Called once per instance, when the real underlying DOM element first
    * exists, in every adapter — via that adapter's own native mount

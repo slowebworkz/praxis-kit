@@ -256,4 +256,45 @@ describe('Polymorphic (Svelte adapter)', () => {
       expect(() => render(Polymorphic, { bundle, as: InnerButton as never })).toThrow(/allowed/i)
     })
   })
+
+  describe('compose: declarative asChild composition', () => {
+    it('renders through "with", composing classes the same way hand-written asChild composition does', () => {
+      const boxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
+      const boxB = createContractComponent({
+        tag: 'button',
+        compose: { with: boxA },
+        styling: { base: 'class-b' },
+      })
+
+      const { container } = render(Polymorphic, { bundle: boxB })
+      const el = container.querySelector('button')!
+
+      expect(el.className).toContain('class-a')
+      expect(el.className).toContain('class-b')
+    })
+
+    it('an explicit asChild from the consumer wins over compose', () => {
+      const boxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
+      const boxB = createContractComponent({
+        tag: 'button',
+        compose: { with: boxA },
+        styling: { base: 'class-b' },
+      })
+
+      let receivedProps: AnyRecord = {}
+      const children = createRawSnippet<[AnyRecord]>((getProps) => ({
+        render() {
+          receivedProps = getProps()
+          return `<a>link</a>`
+        },
+      }))
+
+      const { container } = render(Polymorphic, { bundle: boxB, asChild: true, children })
+
+      // Only boxB's own asChild composes onto <a> — compose doesn't fire, so boxA never renders.
+      expect(receivedProps['class']).toContain('class-b')
+      expect(receivedProps['class']).not.toContain('class-a')
+      expect(container.querySelector('button')).toBeNull()
+    })
+  })
 })

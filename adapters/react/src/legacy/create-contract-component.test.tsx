@@ -89,6 +89,41 @@ describe('createContractComponent (legacy / React 18)', () => {
     expect(ref.current).toBe(dom.container.querySelector('button'))
   })
 
+  it('compose: renders through "with", composing classes the same way hand-written nested asChild does', () => {
+    const BoxA = createContractComponent({ styling: { base: 'class-a' } })
+    const BoxB = createContractComponent({
+      tag: 'button',
+      compose: { with: BoxA },
+      styling: { base: 'class-b' },
+    })
+    dom.mount(createElement(box(BoxB), null))
+    const el = dom.container.querySelector('button')!
+    expect(el.className).toContain('class-a')
+    expect(el.className).toContain('class-b')
+  })
+
+  it('compose: ref reaches the composed component\'s own real element', () => {
+    const BoxA = createContractComponent({})
+    const BoxB = createContractComponent({ tag: 'button', compose: { with: BoxA } })
+    const ref = createRef<HTMLButtonElement>()
+    dom.mount(createElement(box(BoxB), { ref }))
+    expect(ref.current).toBe(dom.container.querySelector('button'))
+  })
+
+  it('compose: an explicit asChild from the consumer wins over compose', () => {
+    const BoxA = createContractComponent({ styling: { base: 'class-a' } })
+    const BoxB = createContractComponent({
+      tag: 'button',
+      compose: { with: BoxA },
+      styling: { base: 'class-b' },
+    })
+    dom.mount(createElement(box(BoxB), { asChild: true }, createElement('a')))
+    const el = dom.container.querySelector('a')!
+    expect(el.className).toContain('class-b')
+    expect(el.className).not.toContain('class-a')
+    expect(dom.container.querySelector('button')).toBeNull()
+  })
+
   it('applies filterProps', () => {
     const Box = createContractComponent({
       filterProps: (key: string) => key === 'size',

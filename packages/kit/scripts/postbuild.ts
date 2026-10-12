@@ -48,6 +48,10 @@ function copyTailwindSafelist(): void {
 //   - `./types` → `./index.js`, the real `praxis-kit/svelte` entry, which already re-exports the
 //     four names the component needs. Routing there (not through the runtime shim) keeps the
 //     `bundle` prop's nominal runtime types identical to a consumer's own bundle.
+//   - `./Polymorphic.svelte` (the component's own `compose`-support self-import, for recursive
+//     rendering) needs no rewrite at all — both files land in `dist/svelte/` together, so the
+//     specifier already resolves correctly once copied, unlike every other workspace-internal
+//     import here.
 //
 // The post-rewrite leak check asserts no unresolvable specifier survives, so a new import in the
 // adapter source can't silently ship broken.
@@ -59,7 +63,11 @@ const POLYMORPHIC_IMPORT_REWRITES: ReadonlyArray<readonly [from: string, to: str
   ['@praxis-kit/adapter-utils', POLYMORPHIC_RUNTIME_SPECIFIER],
   ['./types', './index.js'],
 ]
-const POLYMORPHIC_RESOLVABLE_SPECIFIERS = new Set([POLYMORPHIC_RUNTIME_SPECIFIER, './index.js'])
+const POLYMORPHIC_RESOLVABLE_SPECIFIERS = new Set([
+  POLYMORPHIC_RUNTIME_SPECIFIER,
+  './index.js',
+  './Polymorphic.svelte',
+])
 
 function copyPolymorphicSvelte(): void {
   mkdirSync(join(DIST, 'svelte'), { recursive: true })
