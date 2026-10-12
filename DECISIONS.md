@@ -3532,21 +3532,33 @@ depends on `@praxis-kit/primitive`) — importing through it would be a package-
 exports; importing a single function from it pulls its entire compiled module graph into the
 bundle. `qa/tree-shaking-tests`' `source/*` scenarios (which build from this repo's real
 TypeScript source, the path an app actually bundles) regressed 41–47%, about +9.1–9.2KB gzipped
-per scenario, the moment any guard import touched `guardz`. `package/*` scenarios (testing the
-already-published `praxis-kit` dist) were unaffected — this is purely a source-bundling-time cost
-for consumers who build from source or alongside this monorepo, not a published-package
-regression today.
+per scenario, the moment any guard import touched `guardz`.
 
-**Decision: accept the cost, update the baseline.** Presented directly as a tradeoff — accept the
-~9KB and move `qa/tree-shaking-tests/snapshots/gzip.json`'s `source/*` baselines to the new sizes,
-or revert the `guardz` adoption specifically (keep the file reorganization into
-`@praxis-kit/guards`, but source its foundational guards from hand-rolled code again). Chose to
-accept: `guardz` gives richer runtime validation (schema composition, consistent `TypeGuardFnConfig`
-error reporting) than the hand-rolled guards it replaces, and the `package/*` scenarios — the
-actual published-dist numbers a `praxis-kit` consumer sees — show no regression at all.
+**Correction (2026-10-12): the `package/*` numbers above were wrong — measured against a broken
+build, not the real one.** `tsconfig.paths.json` never got a `@praxis-kit/guards` path mapping
+added alongside its `tsconfig.json` `references` entry (the omission CI later caught as PR #141's
+"`[MISSING_EXPORT] isObject is not exported by lib/guards/src/index.d.ts`" build failure — see the
+fix commit for the root cause). With that mapping missing, `packages/kit`'s own build was silently
+failing/stale, so what `qa/tree-shaking-tests`/`qa/bundle-analysis` measured as the "`package/*`
+baseline" was leftover dist output from before the guards migration existed on disk — not the real
+thing. Once the path mapping (and a second miss — `postbuild.ts`'s `POLYMORPHIC_IMPORT_REWRITES`
+not yet knowing about the new `@praxis-kit/guards` specifier) were both fixed and `packages/kit`
+actually built end-to-end, the real published-package cost turned out to be **every
+`praxis-kit/*` entry point gaining roughly +15KB gzipped (+66–70%)** — `react-minimal` 22.7KB →
+37.8KB, `vue-minimal` 22.0KB → 36.9KB, and so on across every adapter, plus `guards`-only
+(356B → 7.8KB) and `contract-only` (969B → 8.5KB) ballooning even harder since they're otherwise
+tiny. Only `package/utils-only`, which never touches a guard, is unaffected. This is **not** a
+from-source-only dev cost — it ships to every consumer installing `praxis-kit` from npm.
+
+**Decision: accept the cost, update the baseline — reconfirmed with the real numbers.** Put
+directly to the same tradeoff as before, now with the corrected ~+15KB/entry-point figure instead
+of the originally-reported "`package/*` unaffected": accept and move
+`qa/tree-shaking-tests`/`qa/bundle-analysis`'s `snapshots/gzip.json` baselines to the real sizes, or
+revert the `guardz` adoption (keep the `@praxis-kit/guards` file reorganization, source its
+foundational guards from hand-rolled code again). Reconfirmed accept.
 
 **Left open:** a `guardz/dist/typeguards/<name>` deep import bypasses the CJS barrel and would
 likely restore tree-shaking, but isn't backed by `guardz`'s `package.json` `exports` map, so a
 future `guardz` patch release could silently break it. Not pursued this round; revisit if `guardz`
-ships proper ESM/`exports` support, or if the `source/*` cost becomes a real complaint from a
-from-source consumer.
+ships proper ESM/`exports` support, or if the now-confirmed +15KB/entry-point cost becomes a real
+complaint from a published-package consumer.

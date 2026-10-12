@@ -27,42 +27,42 @@
     "gzip": 30199
   },
   "package/contract": {
-    "gzip": 1606
+    "gzip": 9122
   },
   "package/guards": {
-    "gzip": 606
+    "gzip": 8051
   },
   "package/html": {
-    "gzip": 8874
+    "gzip": 23620
   },
   "package/lit": {
-    "gzip": 21844
+    "gzip": 36669
   },
   "package/preact": {
-    "gzip": 22454
+    "gzip": 37439
   },
   "package/react": {
-    "gzip": 22747
+    "gzip": 37785
   },
   "package/react-legacy": {
-    "gzip": 22679
+    "gzip": 37722
   },
   "package/solid": {
-    "gzip": 21422
+    "gzip": 36343
   },
   "package/svelte": {
-    "gzip": 20235
+    "gzip": 35165
   },
   "package/tailwind": {
-    "gzip": 5801
+    "gzip": 20400
   },
   "package/utils": {
     "gzip": 118
   },
   "package/vue": {
-    "gzip": 22004
+    "gzip": 36951
   },
   "package/web": {
-    "gzip": 21800
+    "gzip": 36635
   }
 }
