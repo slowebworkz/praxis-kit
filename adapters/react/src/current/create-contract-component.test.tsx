@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { createElement, Fragment, createRef } from 'react'
+import { createElement, Fragment, createRef, forwardRef } from 'react'
 import type { RenderCallbackProps } from '../shared'
 import { warnDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
 import type { AriaRule } from '@praxis-kit/core/contract'
@@ -354,6 +354,54 @@ describe('createContractComponent (current / React 19)', () => {
     })
 
     expect(() => dom.mount(createElement(box(Box), { as: 'div' }))).toThrow(/"div"/)
+  })
+
+  // ── component-reference "as"/"allowedAs" ────────────────────────────────────
+
+  it('as={Component}: renders through the referenced component, not the default tag', () => {
+    const Inner = (props: { 'data-testid'?: string }) =>
+      createElement('button', { ...props, 'data-testid': 'inner' })
+    const Box = createContractComponent({})
+
+    dom.mount(createElement(box(Box), { as: Inner }))
+
+    expect(dom.container.querySelector('[data-testid="inner"]')).toBeTruthy()
+    expect(dom.container.querySelector('div')).toBeNull()
+  })
+
+  it('as={forwardRef component}: ref reaches the component-forwarded element', () => {
+    const Inner = forwardRef<HTMLButtonElement, AnyRecord>((props, ref) =>
+      createElement('button', { ...props, ref }),
+    )
+    const Box = createContractComponent({})
+    const ref = createRef<HTMLButtonElement>()
+
+    dom.mount(createElement(box(Box), { as: Inner, ref }))
+
+    expect(ref.current).toBe(dom.container.querySelector('button'))
+  })
+
+  it('allowedAs: allows an "as" component reference listed by reference', () => {
+    const Inner = (props: { 'data-testid'?: string }) =>
+      createElement('button', { ...props, 'data-testid': 'inner' })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Box = createContractComponent({
+      enforcement: { diagnostics: warnDiagnostics, allowedAs: ['a', Inner] },
+    })
+
+    dom.mount(createElement(box(Box), { as: Inner }))
+
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('allowedAs: rejects an "as" component reference not listed in allowedAs', () => {
+    const Inner = () => createElement('button', null)
+    const Box = createContractComponent({
+      enforcement: { allowedAs: ['a'] },
+    })
+
+    expect(() => dom.mount(createElement(box(Box), { as: Inner }))).toThrow()
   })
 
   // ── asChild + nativeTagBehavior/allowedAs mismatch ──────────────────────────

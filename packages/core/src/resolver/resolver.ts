@@ -1,5 +1,5 @@
 import { mergeProps, resolveTag } from '@praxis-kit/primitive'
-import { AriaPolicyEngine, ContractDiagnostics } from '@praxis-kit/contract'
+import { AriaPolicyEngine, ContractDiagnostics, describeElementType } from '@praxis-kit/contract'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 import type {
@@ -20,8 +20,8 @@ export function enforceAllowedAs(
 ): void {
   if (allowedAs.includes(tag)) return
   if (!diagnostics) return
-  const component = displayName ?? String(tag)
-  diagnostics.error(ContractDiagnostics.allowedAsViolation(String(tag), allowedAs, component))
+  const component = displayName ?? describeElementType(tag)
+  diagnostics.error(ContractDiagnostics.allowedAsViolation(tag, allowedAs, component))
 }
 
 /**

@@ -348,7 +348,7 @@ describe('ref forwarding — DOM, as, component-as, asChild, replacement, unmoun
     const Box = createContractComponent({})
     const ref = createRef<HTMLButtonElement>()
 
-    mount(h(box(Box), { as: Inner, ref } as never))
+    mount(h(box(Box), { as: Inner, ref }))
 
     expect(ref.current).toBe(container.querySelector('button'))
   })

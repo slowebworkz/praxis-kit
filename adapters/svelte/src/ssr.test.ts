@@ -5,6 +5,7 @@ import { ssrConformanceSuite } from '@praxis-kit/adapter-utils/testing'
 import type { BareFactoryOptions, ConformanceComponent } from '@praxis-kit/adapter-utils/testing'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import Polymorphic from './Polymorphic.svelte'
+import InnerButton from './component-reference-as.test-host.svelte'
 import { createContractComponent } from './create-contract-component'
 import type { AnyBuiltRuntime } from './types/built-runtime'
 
@@ -20,6 +21,17 @@ describe('Polymorphic — SSR (svelte/server render)', () => {
     const bundle = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
     const { html } = render(Polymorphic, { props: { bundle } })
     expect(html).toContain('base-class')
+  })
+
+  it('renders through a component-reference "as" in server-rendered HTML, not the default tag', () => {
+    // Svelte has no custom SSR string-serialization path (unlike Lit/Web) — this renders through
+    // the real `svelte/server` compiler output, exercising the same template branch
+    // `Polymorphic.test.ts`'s DOM-side tests do, not a separate code path.
+    const bundle = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
+    const { html } = render(Polymorphic, { props: { bundle, as: InnerButton as never } })
+    expect(html).toContain('data-testid="inner"')
+    expect(html).toContain('base-class')
+    expect(html).not.toMatch(/^<div/)
   })
 
   it('strips redundant ARIA role in server-rendered HTML', () => {

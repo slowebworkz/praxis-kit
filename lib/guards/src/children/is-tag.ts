@@ -1,18 +1,21 @@
 import { isObject, isString, isNumber } from '../foundational'
 import { COMPONENT_DEFAULT_TAG } from './component-id'
 
-function getAsProp(child: unknown): string | undefined {
+function getAsProp(child: unknown): unknown {
   if (!isObject(child) || !('props' in child)) return undefined
   const { props } = child
   if (!isObject(props)) return undefined
   const as = Reflect.get(props, 'as')
-  return isString(as) && as !== '' ? as : undefined
+  return isString(as) && as === '' ? undefined : as
 }
 
 /**
  * Resolves the effective HTML tag for a vnode:
  *   - native element: returns its type string directly
- *   - praxis-kit component: resolves `as ?? defaultTag`, mirroring render-time logic
+ *   - praxis-kit component: resolves `as ?? defaultTag`, mirroring render-time logic — when `as`
+ *     is itself a component reference (not a tag-name string), resolves through *its* stamped
+ *     `COMPONENT_DEFAULT_TAG` rather than silently falling back to the outer component's own
+ *     `defaultTag`, which would report the wrong tag as if no override existed
  *   - anything else: returns undefined
  */
 export function getTag(child: unknown): string | undefined {
@@ -22,7 +25,13 @@ export function getTag(child: unknown): string | undefined {
   if (typeof t === 'function' || isObject(t)) {
     const defaultTag = Reflect.get(t, COMPONENT_DEFAULT_TAG)
     if (!isString(defaultTag)) return undefined
-    return getAsProp(child) ?? defaultTag
+    const as = getAsProp(child)
+    if (isString(as)) return as
+    if (typeof as === 'function' || isObject(as)) {
+      const asDefaultTag = Reflect.get(as, COMPONENT_DEFAULT_TAG)
+      return isString(asDefaultTag) ? asDefaultTag : undefined
+    }
+    return defaultTag
   }
   return undefined
 }

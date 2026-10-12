@@ -5,7 +5,7 @@
  * dispatched to one of two render paths: Slot (`asChild`) or intrinsic element.
  */
 import { h, isValidElement } from 'preact'
-import type { Ref } from 'preact'
+import type { ComponentType, Ref } from 'preact'
 import type { Writable } from 'type-fest'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
@@ -223,7 +223,15 @@ function renderIntrinsic(
     typeof state.tag === 'string'
       ? runtime.resolveAria(state.tag, elementProps, state.normalizedProps).props
       : elementProps
-  return h(state.tag, domProps)
+  // `state.tag` is `ElementType` — a tag-name string or, as of the `as`/`allowedAs`
+  // component-reference feature, a reference to another praxis-kit component. `h()`'s own
+  // overloads want a string or a precisely-typed `ComponentType<P>`, which a generically-typed
+  // `ElementType` can't statically prove — the real guarantee (it's always one or the other, never
+  // an arbitrary value) is enforced by `resolveTag`/`enforceAllowedAs` upstream, not expressible
+  // here without a cast. `domProps`' shape depends on which concrete component `state.tag`
+  // resolves to; `ComponentType<any>` is the honest bound.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return h(state.tag as string | ComponentType<any>, domProps)
 }
 
 export function render<TProps extends KnownProps>({

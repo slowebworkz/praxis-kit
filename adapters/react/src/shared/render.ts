@@ -16,7 +16,7 @@ import { getTag, isFunction } from '@praxis-kit/guards'
 
 import { extractSlottable, isSlottableElement } from './slot'
 
-import type { ReactElement, Ref } from 'react'
+import type { ComponentType, ReactElement, Ref } from 'react'
 import type { Writable } from 'type-fest'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
 import type { SlotValidator } from './slot'
@@ -326,7 +326,15 @@ function renderIntrinsic(
       ? runtime.resolveAria(state.tag, elementProps, state.normalizedProps).props
       : elementProps
 
-  return createElement(state.tag, domProps)
+  // `state.tag` is `ElementType` — a tag-name string or, as of the `as`/`allowedAs`
+  // component-reference feature, a reference to another praxis-kit component.
+  // `createElement`'s own overloads want a string or a precisely-typed component, which a
+  // generically-typed `ElementType` can't statically prove — the real guarantee (it's always one
+  // or the other, never an arbitrary value) is enforced by `resolveTag`/`enforceAllowedAs`
+  // upstream, not expressible here without a cast. `domProps`' shape depends on which concrete
+  // component `state.tag` resolves to; `ComponentType<any>` is the honest bound.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return createElement(state.tag as string | ComponentType<any>, domProps)
 }
 
 /**

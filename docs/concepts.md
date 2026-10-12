@@ -14,6 +14,23 @@ Every component created with `createContractComponent` can render as a different
 The `as` value changes the rendered element but preserves all variant classes, ARIA processing, and
 prop filtering. This is the entry point; the contract layer is the deeper value.
 
+`as` also accepts a reference to another praxis-kit component, not just a tag-name string:
+
+```tsx
+<Button as={Link} href="/dashboard">
+  Go to dashboard
+</Button>
+```
+
+`allowedAs` enumerates components by reference the same way it enumerates tag names — no bypass
+semantics, just strict, by-reference matching:
+
+```ts
+enforcement: {
+  allowedAs: ['a', 'button', Link],
+}
+```
+
 ## `asChild` composition
 
 Where `as` picks from a fixed set of tags, `asChild` lets the consumer supply the rendered element

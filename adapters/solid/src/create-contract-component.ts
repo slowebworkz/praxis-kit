@@ -123,9 +123,10 @@ export function createContractComponent<
   }
 
   applyDisplayName(Component, options.name)
+  const { defaultTag } = bundle.runtime.options
   const assembled = finalizeComponent(
     Component,
-    bundle.runtime.options.defaultTag,
+    typeof defaultTag === 'string' ? defaultTag : undefined,
     options.subComponents,
   )
 
