@@ -5,7 +5,8 @@ import type {
   NormalizedChildRule,
   ChildViolation,
 } from '../types'
-import { isDynamicRule, isNumber, isString, iterate, resolveRule } from '@praxis-kit/primitive'
+import { isDynamicRule, iterate, resolveRule } from '@praxis-kit/primitive'
+import { isNumber, isString } from '@praxis-kit/guards'
 import { normalizeChildRule } from './normalize-child-rule'
 import { RuleMatcher } from './rules-matcher'
 import { getTypeName } from './get-type-name'

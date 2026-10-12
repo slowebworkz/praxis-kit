@@ -15,17 +15,3 @@ export type { Observable } from './create-observable.ts'
 export { LRUCache } from './lru-cache.ts'
 export { wrapMethodForDetection } from './wrap-method-for-detection.ts'
 export type { WrappedMethod } from './wrap-method-for-detection.ts'
-export {
-  isString,
-  isNumber,
-  isBoolean,
-  isFunction,
-  isArray,
-  isObject,
-  isPlainObject,
-  isDefined,
-  isUndefined,
-  isNull,
-  isNonNull,
-  isNullish,
-} from './type-guards.ts'

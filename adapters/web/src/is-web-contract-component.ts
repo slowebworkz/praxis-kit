@@ -1,5 +1,5 @@
 import type { AnyRecord, EmptyRecord, NoVariants, VariantMap } from '@praxis-kit/core'
-import { isFunction, isObject } from '@praxis-kit/primitive'
+import { isFunction, isObject } from '@praxis-kit/guards'
 import type { WebContractComponent } from './types/index'
 
 /**

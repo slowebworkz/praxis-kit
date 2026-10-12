@@ -15,5 +15,5 @@ export {
   isComponent,
   isTag,
   markComponentTag,
-} from '@praxis-kit/primitive'
-export type { WithComponentId } from '@praxis-kit/primitive'
+} from '@praxis-kit/guards'
+export type { WithComponentId } from '@praxis-kit/guards'

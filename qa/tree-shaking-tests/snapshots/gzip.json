@@ -1,65 +1,65 @@
 {
   "source/aria-only": {
-    "gzip": 22229
+    "gzip": 31400
   },
   "source/contracts-only": {
-    "gzip": 22292
+    "gzip": 31466
   },
   "source/full-runtime": {
-    "gzip": 22452
+    "gzip": 31630
   },
   "source/minimal-polymorphic": {
-    "gzip": 22189
+    "gzip": 31355
   },
   "source/pk2-engine-only": {
     "gzip": 793
   },
   "source/polymorphic-validation": {
-    "gzip": 22251
+    "gzip": 31422
   },
   "source/preact-minimal": {
-    "gzip": 21866
+    "gzip": 31048
   },
   "source/react-minimal": {
-    "gzip": 22189
+    "gzip": 31355
   },
   "source/solid-minimal": {
-    "gzip": 20755
+    "gzip": 29880
   },
   "source/svelte-minimal": {
-    "gzip": 19556
+    "gzip": 28694
   },
   "source/vue-minimal": {
-    "gzip": 21429
+    "gzip": 30582
   },
   "package/contract-only": {
-    "gzip": 969
+    "gzip": 8450
   },
   "package/guards-only": {
-    "gzip": 388
+    "gzip": 7837
   },
   "package/html-only": {
-    "gzip": 8650
+    "gzip": 23385
   },
   "package/lit-minimal": {
-    "gzip": 21393
+    "gzip": 36124
   },
   "package/preact-minimal": {
-    "gzip": 22667
+    "gzip": 37433
   },
   "package/react-minimal": {
-    "gzip": 23000
+    "gzip": 37768
   },
   "package/solid-minimal": {
-    "gzip": 21594
+    "gzip": 36342
   },
   "package/utils-only": {
     "gzip": 118
   },
   "package/vue-minimal": {
-    "gzip": 22195
+    "gzip": 36946
   },
   "package/web-minimal": {
-    "gzip": 21353
+    "gzip": 36092
   }
 }

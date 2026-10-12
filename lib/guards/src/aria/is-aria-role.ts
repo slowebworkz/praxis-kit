@@ -3,8 +3,8 @@ import {
   INPUT_TYPE_ROLE_MAP,
   STRONG_ROLES_SET,
   STANDALONE_ROLES_SET,
-} from '../../constants'
-import type { InputType, Tag } from '../../constants'
+} from '@praxis-kit/primitive'
+import type { InputType, Tag } from '@praxis-kit/primitive'
 import { isNullish, isString } from '../foundational'
 
 function lookupImplicitRole(tag: string): string | undefined {

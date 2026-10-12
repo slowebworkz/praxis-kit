@@ -1,4 +1,4 @@
-import type { VariantMap } from '../../types'
+import type { VariantMap } from '@praxis-kit/primitive'
 import { isRecord } from '../foundational'
 
 export function isVariantMap(value: unknown): value is VariantMap {

@@ -1,6 +1,6 @@
 import { bench, describe } from 'vitest'
 import { ChildrenEvaluator, diagnoseChildren } from '@praxis-kit/core'
-import { isObject } from '@praxis-kit/primitive'
+import { isObject } from '@praxis-kit/guards'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
 
 // warnDiagnostics — evaluate() runs the full match cycle. Unbounded-cardinality rules

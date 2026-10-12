@@ -1,6 +1,11 @@
-import { isString, isUndefined } from '@praxis-kit/foundation'
+// lib/diagnostics sits below @praxis-kit/guards in the dependency graph — see formatter.ts's
+// identical note. isUndefined has no native guardz guard; isEqualTo(undefined) is guardz's own
+// documented composition for it.
+import { isEqualTo, isString } from 'guardz'
 import type { Diagnostics } from './diagnostics'
 import { silentDiagnostics, throwDiagnostics, warnDiagnostics } from './presets'
+
+const isUndefined = isEqualTo(undefined)
 
 export type DiagnosticsMode = 'warn' | 'throw' | 'silent'
 

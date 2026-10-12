@@ -11,7 +11,8 @@ import { jsx } from 'react/jsx-runtime'
 
 import { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
-import { getTag, isFunction, lazy } from '@praxis-kit/primitive'
+import { lazy } from '@praxis-kit/primitive'
+import { getTag, isFunction } from '@praxis-kit/guards'
 
 import { extractSlottable, isSlottableElement } from './slot'
 

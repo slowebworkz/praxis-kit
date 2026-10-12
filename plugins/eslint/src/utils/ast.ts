@@ -1,5 +1,6 @@
 import type { TSESTree } from '@typescript-eslint/utils'
-import { iterate, isNumber, isObject, isString, isUndefined } from '@praxis-kit/primitive'
+import { iterate } from '@praxis-kit/primitive'
+import { isNumber, isObject, isString, isUndefined } from '@praxis-kit/guards'
 
 type NullableNode = TSESTree.Node | null | undefined
 

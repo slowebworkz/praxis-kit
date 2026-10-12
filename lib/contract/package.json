@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/guards": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
     "type-fest": "catalog:"
   },

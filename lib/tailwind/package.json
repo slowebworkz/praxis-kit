@@ -17,6 +17,7 @@
   "dependencies": {
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/guards": "workspace:*",
     "@praxis-kit/pipeline-kit": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
     "type-fest": "catalog:"

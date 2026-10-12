@@ -3551,3 +3551,50 @@ consequently no SSR-specific work anywhere for this feature: `renderContractToSt
 string serializer is used only by Lit and Web, which never receive a component-reference `as` to
 begin with; the other five adapters' SSR runs through their real frameworks' own renderers, which
 already recurse through genuine component calls the same way CSR does.
+
+### Guards migration to `guardz` — accepted bundle-size cost (2026-10-11)
+
+All guard functions used across the workspace now live in a new `@praxis-kit/guards` package
+(moved out of `lib/primitive/src/guards/` and `lib/foundation/src/type-guards.ts`), and every
+foundational guard (`isString`, `isNumber`, `isFunction`, `isDefined`, etc.) is now sourced from
+`guardz` rather than hand-rolled, re-exported from `@praxis-kit/guards` alongside the
+domain-specific guards (ARIA, children, contract, variants) that were only relocated, not
+rewritten. `lib/primitive` and `lib/diagnostics` import `guardz` directly instead of through
+`@praxis-kit/guards`, since both sit below it in the dependency graph (`@praxis-kit/guards`
+depends on `@praxis-kit/primitive`) — importing through it would be a package-graph cycle.
+
+**Cost, measured, not assumed:** `guardz@1.14.0` publishes as plain CommonJS — no `"type":
+"module"`, no `"exports"` map, no `"sideEffects": false`. No bundler can tree-shake its named
+exports; importing a single function from it pulls its entire compiled module graph into the
+bundle. `qa/tree-shaking-tests`' `source/*` scenarios (which build from this repo's real
+TypeScript source, the path an app actually bundles) regressed 41–47%, about +9.1–9.2KB gzipped
+per scenario, the moment any guard import touched `guardz`.
+
+**Correction (2026-10-12): the `package/*` numbers above were wrong — measured against a broken
+build, not the real one.** `tsconfig.paths.json` never got a `@praxis-kit/guards` path mapping
+added alongside its `tsconfig.json` `references` entry (the omission CI later caught as PR #141's
+"`[MISSING_EXPORT] isObject is not exported by lib/guards/src/index.d.ts`" build failure — see the
+fix commit for the root cause). With that mapping missing, `packages/kit`'s own build was silently
+failing/stale, so what `qa/tree-shaking-tests`/`qa/bundle-analysis` measured as the "`package/*`
+baseline" was leftover dist output from before the guards migration existed on disk — not the real
+thing. Once the path mapping (and a second miss — `postbuild.ts`'s `POLYMORPHIC_IMPORT_REWRITES`
+not yet knowing about the new `@praxis-kit/guards` specifier) were both fixed and `packages/kit`
+actually built end-to-end, the real published-package cost turned out to be **every
+`praxis-kit/*` entry point gaining roughly +15KB gzipped (+66–70%)** — `react-minimal` 22.7KB →
+37.8KB, `vue-minimal` 22.0KB → 36.9KB, and so on across every adapter, plus `guards`-only
+(356B → 7.8KB) and `contract-only` (969B → 8.5KB) ballooning even harder since they're otherwise
+tiny. Only `package/utils-only`, which never touches a guard, is unaffected. This is **not** a
+from-source-only dev cost — it ships to every consumer installing `praxis-kit` from npm.
+
+**Decision: accept the cost, update the baseline — reconfirmed with the real numbers.** Put
+directly to the same tradeoff as before, now with the corrected ~+15KB/entry-point figure instead
+of the originally-reported "`package/*` unaffected": accept and move
+`qa/tree-shaking-tests`/`qa/bundle-analysis`'s `snapshots/gzip.json` baselines to the real sizes, or
+revert the `guardz` adoption (keep the `@praxis-kit/guards` file reorganization, source its
+foundational guards from hand-rolled code again). Reconfirmed accept.
+
+**Left open:** a `guardz/dist/typeguards/<name>` deep import bypasses the CJS barrel and would
+likely restore tree-shaking, but isn't backed by `guardz`'s `package.json` `exports` map, so a
+future `guardz` patch release could silently break it. Not pursued this round; revisit if `guardz`
+ships proper ESM/`exports` support, or if the now-confirmed +15KB/entry-point cost becomes a real
+complaint from a published-package consumer.

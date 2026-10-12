@@ -6,7 +6,7 @@
  * alongside every other rule implementation — see that file's own pipeline) is now just a thin
  * caller of {@link isValidAriaValue}/{@link describeExpected}.
  */
-import { isDefined, isNumber, isString, isUndefined } from '@praxis-kit/primitive'
+import { isDefined, isNumber, isString, isUndefined } from '@praxis-kit/guards'
 import type { AriaValueType } from '../types'
 
 /**

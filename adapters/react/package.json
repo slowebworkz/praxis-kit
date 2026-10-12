@@ -20,6 +20,7 @@
     "@praxis-kit/contract-props": "workspace:*",
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/guards": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
     "@praxis-kit/runtime": "workspace:*",
     "@praxis-kit/tailwind": "workspace:*",

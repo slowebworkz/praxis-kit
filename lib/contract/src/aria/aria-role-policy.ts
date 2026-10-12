@@ -1,5 +1,6 @@
 import type { IntrinsicTag, Tag } from '@praxis-kit/primitive'
 import type { IntrinsicProps } from '../types'
+import { IMPLICIT_ROLE_RECORD } from '@praxis-kit/primitive'
 import {
   getAnchorImplicitRole,
   getConditionalImplicitRole,
@@ -7,8 +8,7 @@ import {
   getSelectImplicitRole,
   hasStandaloneRole,
   isStrongImplicitRole,
-  IMPLICIT_ROLE_RECORD,
-} from '@praxis-kit/primitive'
+} from '@praxis-kit/guards'
 
 export { hasStandaloneRole, isStrongImplicitRole }
 
