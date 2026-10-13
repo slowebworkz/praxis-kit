@@ -57,6 +57,8 @@ export type ConformanceFactoryOptions = {
    * component. Typed as the real `ComponentReference` (not a loosened `unknown`) so this
    * assigns cleanly against `BareFactoryOptions`'s own `compose.with` field, which every
    * adapter's `createComponent(options as BareFactoryOptions)` cast is checked against.
+   * `allProps` mirrors `ComposeOptions.allProps` — opt-in forwarding of this component's own raw
+   * props onto `with`.
    */
-  compose?: { with: ComponentReference }
+  compose?: { with: ComponentReference; allProps?: boolean }
 }

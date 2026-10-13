@@ -356,6 +356,35 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           expect(ref.current).toBeInstanceOf(HTMLElement)
           expect(ref.current!.tagName.toLowerCase()).toBe('button')
         })
+
+      it('without allProps, "with" does not see the composing component\'s own props', () => {
+        const BoxA = adapter.createComponent({
+          styling: { variants: { intent: { ghost: 'intent-ghost' } } },
+        })
+        const BoxB = adapter.createComponent({ compose: { with: BoxA } })
+        const { element } = adapter.render(BoxB, { intent: 'ghost' })
+        expect(element.className).not.toContain('intent-ghost')
+      })
+
+      it('with allProps: true, "with" resolves its own variants from the forwarded props', () => {
+        const BoxA = adapter.createComponent({
+          styling: { variants: { intent: { ghost: 'intent-ghost' } } },
+        })
+        const BoxB = adapter.createComponent({ compose: { with: BoxA, allProps: true } })
+        const { element } = adapter.render(BoxB, { intent: 'ghost' })
+        expect(element.className).toContain('intent-ghost')
+      })
+
+      it('with allProps: true, explicit asChild/ref/children still win over forwarded props', () => {
+        const BoxA = adapter.createComponent({ tag: 'nav' })
+        const BoxB = adapter.createComponent({
+          tag: 'button',
+          compose: { with: BoxA, allProps: true },
+        })
+        const { element } = adapter.render(BoxB, { 'data-testid': 'inner' })
+        expect(element.tagName.toLowerCase()).toBe('button')
+        expect(element.getAttribute('data-testid')).toBe('inner')
+      })
     })
 
   // ── variants ──────────────────────────────────────────────────────────────────

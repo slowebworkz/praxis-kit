@@ -3662,3 +3662,16 @@ returns a plain bundle object, not a component (Svelte components must come from
 — so `compose.with` on this adapter is a bundle, not a component reference, and `Polymorphic.svelte`
 renders it by importing and recursing into itself (`<Polymorphic bundle={with} asChild>`), a
 standard, supported Svelte pattern for this kind of structural composition.
+
+### GitHub Sponsors — still not yet, reassessed at `v1.1.2` (2026-10-12)
+
+Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule. Conclusion unchanged from the
+`v1.0.0` reassessment above: **not yet**, and the revisit trigger from that entry still hasn't
+fired — checked directly (`gh api repos/.../praxis-kit`, `gh issue list`, `gh pr list`, 2026-10-12):
+0 stars, 0 forks, 0 watchers, no external issues, no external PRs. `npm` downloads for the trailing
+month sit at 523 (`api.npmjs.org`, 2026-09-12 → 2026-10-11) — still indistinguishable from
+registry-mirror/CI noise on a package with no known external consumers, not a usage signal. The
+package itself is healthier than at `v1.0.0` (three releases shipped on schedule, a real
+dependency-upgrade cadence, growing adapter parity) but that's maintenance velocity, not adoption —
+Sponsors needs the latter. **Revisit trigger unchanged:** a star/issue/PR from a non-maintainer
+account, or the next version tag.
