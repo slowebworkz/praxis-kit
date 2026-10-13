@@ -78,6 +78,23 @@ describe('mergeProps', () => {
     expect(result['style']).toBe('invalid')
   })
 
+  it('keeps slot style when child style is explicitly undefined', () => {
+    const slotStyle = { color: 'red' }
+    const result = mergeProps({ style: slotStyle }, { style: undefined })
+    expect(result['style']).toBe(slotStyle)
+  })
+
+  it('keeps slot style when child style is explicitly null', () => {
+    const slotStyle = { color: 'red' }
+    const result = mergeProps({ style: slotStyle }, { style: null as never })
+    expect(result['style']).toBe(slotStyle)
+  })
+
+  it('concatenates class (Vue/Solid/Svelte naming) the same way as className', () => {
+    const result = mergeProps({ class: 'a' }, { class: 'b' })
+    expect(result['class']).toBe('a b')
+  })
+
   it('does not mutate either input', () => {
     const slot = { className: 'a', onClick: () => {} }
     const child = { className: 'b' }
