@@ -1,11 +1,46 @@
 # praxis-kit
 
+## 1.2.0
+
+### Minor Changes
+
+- dee0fa7: `compose: { with }` now accepts an opt-in `allProps?: boolean` flag. When set, the
+  composing component's own raw props are forwarded onto `with` (alongside the
+  `asChild`/`ref`/`children` it already receives), letting `with`'s own contract resolve its
+  variants/`compounds` against them — the same prop surface a hand-written
+  `<With {...props} asChild><ThisComponent {...props} /></With>` would give it. Defaults to `false`,
+  so existing `compose.with` consumers keep today's exact behavior (`with` renders with its own
+  fixed defaults) with no change required. Supported on every adapter `compose` already works on:
+  React (current and legacy), Preact, Vue, and Solid/ Svelte's synthesized composition model.
+
+### Patch Changes
+
+- 0dd55a7: Fixed a handful of merge-semantics bugs found during an audit of prop/class/style
+  merging:
+
+  - `compose.allProps` (Solid): previously excluded `as`/`class`/`recipe` from the props forwarded
+    onto `with`, unlike every other adapter's `allProps`, which forwards the full prop set. Solid
+    now forwards the same keys as React/Preact/Vue/Svelte.
+  - The shared `asChild`/slot prop-merge policy only recognized the literal key `className` for
+    concatenation — Vue/Solid/Svelte's `class` fell through to "child wins" instead of
+    concatenating. Both key names now get the same concat policy, and Solid's now-redundant local
+    `class`-merge patch was removed.
+  - The same merge policy wiped a slot's entire `style` object when the child's `style` was
+    explicitly `null`/`undefined` (e.g. from `style={cond ? styleObj : undefined}`), unlike the
+    analogous `className: undefined` case, which already degraded gracefully. Both now behave the
+    same way.
+  - The core `defaults`-vs-caller-props merge (`mergeProps` in `@praxis-kit/primitive`, which runs
+    on every render of every component) previously let an explicitly `null`/`undefined` caller prop
+    silently overwrite a real configured default. It now falls back to the default in that case,
+    matching the common real-world case of a prop forwarded through an intermediate spread with no
+    value set.
+
 ## 1.1.2
 
 Published as `1.1.2`, not `1.1.0` — the version `changeset` actually computed from the minor
 changesets below — because `1.1.0` and `1.1.1` are both already permanently taken on the
-`praxis-kit` npm name by the same unrelated, pre-existing package line described under `1.0.2`
-below (visible in `npm view praxis-kit versions`, published 2026-06-16). Same shape as that
+`praxis-kit` npm name by the same unrelated, pre-existing package line described under `1.0.2` below
+(visible in `npm view praxis-kit versions`, published 2026-06-16). Same shape as that
 `1.0.0`/`1.0.1` collision: probed the next number up until one was free. That line jumps straight
 from `1.1.1` to `2.0.0`, so `1.1.2` was never published by either line.
 
