@@ -17,8 +17,9 @@ import type {
   VariantMap,
 } from '@praxis-kit/core'
 import { finalizeComponent, invariant } from '@praxis-kit/adapter-utils'
-import { useCallback, useRef } from 'react'
-import type { Ref } from 'react'
+import { isFunction } from '@praxis-kit/guards'
+import { createElement, useCallback, useRef } from 'react'
+import type { ComponentType, Ref } from 'react'
 import type { PolymorphicComponent, ReactFactoryOptions, UnknownProps } from '../shared'
 import {
   applyDisplayName,
@@ -105,7 +106,7 @@ export function createContractComponent<
     >,
   )
   /** Captured once from the factory options so the callback ref below can remain stable. */
-  const { onElement } = options
+  const { onElement, compose } = options
 
   function Component({ ref, ...props }: UnknownProps & { ref?: Ref<unknown> }) {
     /**
@@ -153,13 +154,34 @@ export function createContractComponent<
     }, [])
 
     const mergedRef = onElement ? mergeRefs(ref, onElementRef) : ref
+
+    /**
+     * `compose` makes this component always render `asChild` into `compose.with`, as if the
+     * consumer had hand-written `<With asChild><ThisComponent {...props} /></With>` — but only
+     * when the consumer didn't already take explicit control via their own `asChild`/`render`.
+     * `render({ ...bundle, props, ref: null })` produces this component's own normal-mode output
+     * (no ref — the ref belongs on `with`'s own Slot, not the inner element); `with` is then
+     * rendered as an ordinary element with `asChild: true`, so `with`'s own generated component
+     * runs its own `render()` pipeline from here, exactly as it already does for a hand-written
+     * nested `asChild` call (including its own `allowedAs`/`nativeTagBehavior` checks).
+     */
+    if (compose?.with !== undefined && props.asChild === undefined && !isFunction(props.render)) {
+      const innerElement = render({ ...bundle, props, ref: null })
+      return createElement(compose.with as ComponentType<UnknownProps>, {
+        asChild: true,
+        ref: mergedRef ?? null,
+        children: innerElement,
+      })
+    }
+
     return render({ ...bundle, props, ref: mergedRef ?? null })
   }
 
   applyDisplayName(Component, options.name)
+  const { defaultTag } = bundle.runtime.options
   const assembled = finalizeComponent(
     Component,
-    bundle.runtime.options.defaultTag,
+    typeof defaultTag === 'string' ? defaultTag : undefined,
     options.subComponents,
   )
 

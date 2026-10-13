@@ -1,4 +1,4 @@
-import { isFunction, isObject, isString } from '@praxis-kit/primitive'
+import { isFunction, isObject, isString } from '@praxis-kit/guards'
 import type { StringMap } from '@praxis-kit/primitive'
 
 /**
@@ -23,6 +23,7 @@ export const FACTORY_OPTIONS_FIELD_VALIDATORS: StringMap<(value: unknown) => boo
   enforcement: (v) => v === undefined || isObject(v),
   diagnostics: (v) => v === undefined || isObject(v),
   subComponents: (v) => v === undefined || isObject(v),
+  compose: (v) => v === undefined || isObject(v),
   onElement: (v) => v === undefined || isFunction(v),
 }
 

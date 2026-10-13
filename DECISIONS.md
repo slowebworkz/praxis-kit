@@ -15,8 +15,8 @@ instead:
 | Internal runtime pipeline                               | [`ARCHITECTURE.md`](ARCHITECTURE.md)                                             |
 
 **Current release:** `praxis-kit@1.0.2` on npm (public). History: `0.1.0` → `0.1.1` → `1.0.2`.
-**Current stability policy:** 1.x, beginning with 1.0.2 — see `docs/api-stability.md`.
-**Integration branch:** `develop` (repository default). `main` tracks the last release.
+**Current stability policy:** 1.x, beginning with 1.0.2 — see `docs/api-stability.md`. **Integration
+branch:** `develop` (repository default). `main` tracks the last release.
 
 The architecture is frozen for the 1.x line: no new abstractions or tooling systems without a
 decision recorded here. Items below the historical entries that refer to 0.1 milestones (the 0.1.0
@@ -3466,6 +3466,21 @@ list. No mitigation implemented — noting it here, with the full list above, so
 immediately (not re-debugged as a fresh credentials issue) if it recurs. If this happens a third
 time, stop guessing and jump to `8.0.0`.
 
+**Third occurrence (2026-10-12): happened exactly as predicted, resolved by probing, not by
+jumping.** The next `changeset`-computed bump from `1.0.3` was `1.1.0` (minor) — landing squarely
+on a _known_-blocked number from the list above, not even a fresh hidden one. Re-reading this
+entry's own "if this happens a third time, stop guessing and jump to `8.0.0`" literally would have
+meant a major-version jump for a release with zero breaking changes — reconsidered: the old line's
+visible history jumps straight from `1.1.1` to `2.0.0`, meaning nothing between them was ever
+published, so `1.1.2` was almost certainly free without guessing blindly. Published as `1.1.2`
+instead — same incremental-probing approach as the original `1.0.0`/`1.0.1` → `1.0.2` resolution,
+preserving the real semver meaning (still a minor-level bump) instead of a major-version number
+that would have falsely signaled breaking changes and contradicted `docs/api-stability.md`'s "1.x"
+framing. **Revised guidance:** before jumping to `8.0.0`, always check whether the old line's
+_next_ visible version after the collision is a different major (as it was here) — that gap is
+very likely unpublished-and-safe, and probing it first avoids an unnecessarily large, misleading
+version jump. Only fall back to `8.0.0` if that gap number _also_ collides.
+
 ### Runtime performance audit — caches, Proxy, and the fresh-component cost (2026-10-05)
 
 A benchmark-driven review of the runtime's caching and the case for `Proxy`. Numbers come from
@@ -3515,3 +3530,135 @@ Ratios within a single run are the meaningful signal; absolute times shift betwe
 
 **Benchmarks backing this entry:** `construction-ssr.bench.ts`, `residual.bench.ts`,
 `fresh-react-type.bench.ts` (control), and `defaults-trace.bench.ts`.
+
+### `as`/`allowedAs` accept a component reference — adapter boundary (2026-10-11)
+
+`as`/`allowedAs` now accept a reference to another praxis-kit component, not just a tag-name string
+(`<Button as={Link}>`, `allowedAs: ['a', Link]`, strict by-reference enumeration, no bypass
+semantics). This already worked mechanically on React, Preact, and Solid before this change — only
+the type layer (`ElementType = IntrinsicTag | (string & {})`) rejected it; proven by an existing
+Preact test that previously needed an `as never` cast to exercise exactly this path. `ElementType`
+was widened once, in `lib/primitive/src/types/element-type.ts`, to add a `ComponentReference` member
+— every other bound sharing `ElementType` (`TDefault`/`TAllowed`, `PolymorphicControlProps .as`,
+`IntrinsicJSXProps`/`ElementRef`) already had a safe fallback branch for "not a known intrinsic
+tag," exercised today by `asChild`, so no further type plumbing was needed.
+
+Two real, pre-existing runtime defects were found and fixed along the way — not artifacts of this
+feature, independently reproducible before it with a type cast:
+
+- **Vue** (`adapters/vue/src/render.ts`, `prepareRenderState`): discarded a non-string `as`,
+  silently falling back to `defaultTag`, and separately omitted a non-string `as` from
+  `directives.as`, which skipped the `as`+`asChild` mutual-exclusion diagnostic. Both fixed with a
+  two-line change (`as ?? defaultTag`, `as !== undefined && { as }`).
+- **Svelte** (`adapters/svelte/src/Polymorphic.svelte`): `<svelte:element this={tag as string}>` can
+  only ever accept a tag-name string — handing it a function today threw
+  `svelte_element_invalid_this_value`, confirmed by temporarily reverting the fix and re-running the
+  new test against the unfixed template. Needed a real added branch rendering the component directly
+  (`{@const Comp = tag}<Comp {...props}>`), using the same `buildSlotProps` (not `domProps`) the
+  existing `asChild` branch already uses — a nested component expects idiomatic props, not
+  DOM-serialized ones (lowercased event names, a stringified `style` attribute).
+
+**Lit and Web are explicitly out of scope — not a gap.** Both adapters already have no `as` prop at
+all, a prior, intentional, documented decision (`adapters/lit/src/create-contract-component.ts`'s
+own doc comment: a custom element's tag is fixed at `customElements.define()` time, so there's
+nothing for `as` to switch). `allowedAs` doesn't exist in either adapter's source. There is
+consequently no SSR-specific work anywhere for this feature: `renderContractToString`'s from-scratch
+string serializer is used only by Lit and Web, which never receive a component-reference `as` to
+begin with; the other five adapters' SSR runs through their real frameworks' own renderers, which
+already recurse through genuine component calls the same way CSR does.
+
+### Guards migration to `guardz` — accepted bundle-size cost (2026-10-11)
+
+All guard functions used across the workspace now live in a new `@praxis-kit/guards` package
+(moved out of `lib/primitive/src/guards/` and `lib/foundation/src/type-guards.ts`), and every
+foundational guard (`isString`, `isNumber`, `isFunction`, `isDefined`, etc.) is now sourced from
+`guardz` rather than hand-rolled, re-exported from `@praxis-kit/guards` alongside the
+domain-specific guards (ARIA, children, contract, variants) that were only relocated, not
+rewritten. `lib/primitive` and `lib/diagnostics` import `guardz` directly instead of through
+`@praxis-kit/guards`, since both sit below it in the dependency graph (`@praxis-kit/guards`
+depends on `@praxis-kit/primitive`) — importing through it would be a package-graph cycle.
+
+**Cost, measured, not assumed:** `guardz@1.14.0` publishes as plain CommonJS — no `"type":
+"module"`, no `"exports"` map, no `"sideEffects": false`. No bundler can tree-shake its named
+exports; importing a single function from it pulls its entire compiled module graph into the
+bundle. `qa/tree-shaking-tests`' `source/*` scenarios (which build from this repo's real
+TypeScript source, the path an app actually bundles) regressed 41–47%, about +9.1–9.2KB gzipped
+per scenario, the moment any guard import touched `guardz`.
+
+**Correction (2026-10-12): the `package/*` numbers above were wrong — measured against a broken
+build, not the real one.** `tsconfig.paths.json` never got a `@praxis-kit/guards` path mapping
+added alongside its `tsconfig.json` `references` entry (the omission CI later caught as PR #141's
+"`[MISSING_EXPORT] isObject is not exported by lib/guards/src/index.d.ts`" build failure — see the
+fix commit for the root cause). With that mapping missing, `packages/kit`'s own build was silently
+failing/stale, so what `qa/tree-shaking-tests`/`qa/bundle-analysis` measured as the "`package/*`
+baseline" was leftover dist output from before the guards migration existed on disk — not the real
+thing. Once the path mapping (and a second miss — `postbuild.ts`'s `POLYMORPHIC_IMPORT_REWRITES`
+not yet knowing about the new `@praxis-kit/guards` specifier) were both fixed and `packages/kit`
+actually built end-to-end, the real published-package cost turned out to be **every
+`praxis-kit/*` entry point gaining roughly +15KB gzipped (+66–70%)** — `react-minimal` 22.7KB →
+37.8KB, `vue-minimal` 22.0KB → 36.9KB, and so on across every adapter, plus `guards`-only
+(356B → 7.8KB) and `contract-only` (969B → 8.5KB) ballooning even harder since they're otherwise
+tiny. Only `package/utils-only`, which never touches a guard, is unaffected. This is **not** a
+from-source-only dev cost — it ships to every consumer installing `praxis-kit` from npm.
+
+**Decision: accept the cost, update the baseline — reconfirmed with the real numbers.** Put
+directly to the same tradeoff as before, now with the corrected ~+15KB/entry-point figure instead
+of the originally-reported "`package/*` unaffected": accept and move
+`qa/tree-shaking-tests`/`qa/bundle-analysis`'s `snapshots/gzip.json` baselines to the real sizes, or
+revert the `guardz` adoption (keep the `@praxis-kit/guards` file reorganization, source its
+foundational guards from hand-rolled code again). Reconfirmed accept.
+
+**Left open:** a `guardz/dist/typeguards/<name>` deep import bypasses the CJS barrel and would
+likely restore tree-shaking, but isn't backed by `guardz`'s `package.json` `exports` map, so a
+future `guardz` patch release could silently break it. Not pursued this round; revisit if `guardz`
+ships proper ESM/`exports` support, or if the now-confirmed +15KB/entry-point cost becomes a real
+complaint from a published-package consumer.
+
+### `compose: { with: Component }` — declarative `asChild` composition (2026-10-12)
+
+Added `compose` to `FactoryOptions`, following finding #50 in `praxis-components`'
+`PRAXIS-KIT-FINDINGS.md` (foundational `asChild` composition — the `Surface`+`Box`→`Card`
+proposal). `compose: { with: Button }` makes an ordinary consumer call of a component render
+exactly as a hand-written `<Button asChild><ThisComponent {...props} /></Button>` already does —
+confirmed before implementing that this nested-component-into-component `asChild` shape was
+already real, tested machinery (not something new to build): `mergeSlotProps`/`SlotValidator`
+operate purely on prop objects and `isValidElement`-style checks, agnostic to whether the `asChild`
+target is a DOM tag or another contract component.
+
+**Scope decisions, confirmed with the requester before implementing:**
+
+- All consumer props land on the composing component's own contract exactly as today — nothing
+  routes to `with`, which always renders bare. This matches the existing hand-written pattern
+  exactly (`<Button asChild>` receives no props in that pattern either).
+- Synthesized natively per adapter, not through one shared mechanism: React/Preact/Vue reuse their
+  existing clone-based `asChild` (render `with` with `asChild: true` and this component's own
+  normal output as its child — zero new merge logic, it's the same path a hand-written nested
+  `asChild` call already takes). Solid/Svelte have no clone step at all, so `compose` instead
+  renders `with` through its own render-callback/snippet mode, with a synthesized callback that
+  merges `with`'s handed-back props onto this component's own resolved output — discovered and
+  fixed along the way: `mergeSlotProps` special-cases `className` (React/Preact's prop name) for
+  concatenation, which silently fails to concatenate `class` (Solid's/Svelte's own prop name) —
+  worked around with a small `mergeComposedProps` wrapper in each of those two adapters that
+  overrides just that one key via `mergeClassNames` directly. Lit/Web have no `asChild` concept at
+  all, so `compose` is accepted (shared `FactoryOptions` field) but has no effect there.
+- An explicit `asChild`/`render` from the consumer always wins over `compose` — same precedence
+  `as` already has over `defaultTag`. Implemented as a conditional guard in each adapter's
+  generated component, checked before dispatching to `render()`/the adapter's own render pipeline.
+- No new runtime validation or narrower type (e.g. a `HasContract`-based constraint) for `with` —
+  follows `FactoryOptions.subComponents`' own existing precedent of trusting an unvalidated
+  component-reference value. `compose.with` reuses the existing `ComponentReference` type (added
+  for the `as`/`allowedAs` component-reference feature), kept at `lib/primitive`'s level with no
+  change to `resolveFactoryOptions`/`ResolvedFactoryOptions` — like `subComponents`/`onElement`,
+  each adapter reads `options.compose` directly off the raw options object, since it's a
+  render-dispatch concern, not a tag/props/class/aria pipeline concern.
+- **Multi-level chaining is explicitly out of scope.** `with` is always invoked with
+  `asChild: true`, which — per the conflict rule above — means `with`'s own `compose` check never
+  fires for that invocation. Composing three or more components through nested `compose.with`
+  references does not cascade automatically with this design; shipping one-hop composition first
+  matches the original proposal's own "small proof of concept, not a broad redesign" framing.
+
+**Svelte-specific note:** unlike the other four adapters, Svelte's `createContractComponent`
+returns a plain bundle object, not a component (Svelte components must come from `.svelte` files)
+— so `compose.with` on this adapter is a bundle, not a component reference, and `Polymorphic.svelte`
+renders it by importing and recursing into itself (`<Polymorphic bundle={with} asChild>`), a
+standard, supported Svelte pattern for this kind of structural composition.

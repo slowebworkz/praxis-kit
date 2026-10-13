@@ -1,4 +1,4 @@
-import { isNonNull, isString } from '@praxis-kit/primitive'
+import { isNonNull, isString } from '@praxis-kit/guards'
 import type { InputAttributeName } from '../attributes/input'
 import { INPUT_ATTRIBUTE_TYPE_POLICIES } from '../attributes/input'
 import { INPUT_MUTUALLY_EXCLUSIVE_POLICIES } from '../constraints/input'

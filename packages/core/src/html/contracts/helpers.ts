@@ -6,7 +6,7 @@ import type {
   HtmlTag,
   VNodeLike,
 } from './types'
-import { getTag, isObject, isTag } from '@praxis-kit/primitive'
+import { getTag, isObject, isTag } from '@praxis-kit/guards'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
 import { METADATA_TAGS } from './categories'
 

@@ -1,5 +1,6 @@
 import type { ChildRuleContext, ChildRuleInput, NormalizedChildRule } from '../types'
-import { isDynamicRule, isNumber, isString, iterate, resolveRule } from '@praxis-kit/primitive'
+import { isDynamicRule, iterate, resolveRule } from '@praxis-kit/primitive'
+import { isNumber, isString } from '@praxis-kit/guards'
 import { InvariantBase } from '../strict'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 import { ContractDiagnostics } from '../diagnostics'

@@ -39,7 +39,8 @@
  * above them (`getStaticClassName`, `getStyleInfo`, `getEventHandlers`, …) — the parsing side
  * already had that boundary; the generation side didn't.
  */
-import { iterate, isDefined, isUndefined } from '@praxis-kit/primitive'
+import { iterate } from '@praxis-kit/primitive'
+import { isDefined, isUndefined } from '@praxis-kit/guards'
 import ts from 'typescript'
 import { walk } from './ast'
 import { getJsxTagName, isComponentTagName } from './jsx'

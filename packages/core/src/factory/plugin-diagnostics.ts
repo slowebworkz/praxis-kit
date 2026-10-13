@@ -1,6 +1,6 @@
 import type { DiagnosticInput } from '@praxis-kit/diagnostics'
 import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
-import { isNull } from '@praxis-kit/primitive'
+import { isNull } from '@praxis-kit/guards'
 
 export const PluginDiagnostics = {
   invalidShape(received: unknown): DiagnosticInput {

@@ -1,6 +1,7 @@
 import type { JSX } from 'solid-js'
 import type { OmitIndexSignature, Simplify } from 'type-fest'
 import type {
+  AllowedOf,
   ClassName,
   ContractGenericsOf,
   DefaultOf,
@@ -84,6 +85,19 @@ export type PolymorphicProps<
   G extends PolymorphicGenerics,
   TAs extends ElementType = DefaultOf<G>,
 > = Simplify<(SharedProps<G, TAs> & { asChild?: false; children?: unknown }) | AsChildProps<G>>
+
+/**
+ * Standard polymorphic props with `as` widened to every tag the component allows, not just its
+ * default — the type-level equivalent of what real JSX usage already gets through
+ * `createContractComponent`'s call signature. `PolymorphicProps<G>` (one type argument) can't do
+ * this: `TAs` defaults to `DefaultOf<G>`, a single tag, so a `<Name>Props` alias built from it only
+ * accepts that one default tag. Opt in here instead of hand-deriving `AllowedOf<G>` at each call
+ * site.
+ */
+export type PolymorphicWithAllowedAs<G extends PolymorphicGenerics> = PolymorphicProps<
+  G,
+  AllowedOf<G>
+>
 
 export type PolymorphicComponent<
   G extends PolymorphicGenerics,

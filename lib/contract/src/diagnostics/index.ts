@@ -1,6 +1,6 @@
 export { AnchorAccessibilityDiagnostics } from './anchor-accessibility'
 export { AriaDiagnostics } from './aria'
-export { ContractDiagnostics } from './contract'
+export { ContractDiagnostics, describeElementType } from './contract'
 export { HtmlDiagnostics } from './html'
 export type { InputIgnoredAttribute } from './html'
 export { InputAccessibilityDiagnostics } from './input-accessibility'

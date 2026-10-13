@@ -49,5 +49,6 @@ export type ResolvedFactoryOptions<
   readonly allowText?: boolean
   readonly ariaRules?: readonly AriaRule[]
   readonly allowedAs?: readonly ElementType[]
+  readonly nativeTagBehavior?: boolean
   readonly precomputedClasses?: Readonly<StringMap<string>>
 }

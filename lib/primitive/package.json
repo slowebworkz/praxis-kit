@@ -25,6 +25,7 @@
   "dependencies": {
     "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/foundation": "workspace:*",
+    "guardz": "catalog:",
     "type-fest": "catalog:"
   },
   "devDependencies": {

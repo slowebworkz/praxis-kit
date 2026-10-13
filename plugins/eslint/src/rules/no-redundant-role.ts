@@ -1,7 +1,8 @@
 import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
 import type { TSESTree } from '@typescript-eslint/utils'
 import { IMPLICIT_ROLES } from '../utils'
-import { iterate, isString } from '@praxis-kit/primitive'
+import { iterate } from '@praxis-kit/primitive'
+import { isString } from '@praxis-kit/guards'
 import { EslintDiagnosticTemplates } from '../diagnostics'
 
 const createRule = RuleCreator((name) => `https://praxis-kit.dev/eslint-rules/${name}`)

@@ -5,6 +5,7 @@ import { ssrConformanceSuite } from '@praxis-kit/adapter-utils/testing'
 import type { BareFactoryOptions, ConformanceComponent } from '@praxis-kit/adapter-utils/testing'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import Polymorphic from './Polymorphic.svelte'
+import InnerButton from './component-reference-as.test-host.svelte'
 import { createContractComponent } from './create-contract-component'
 import type { AnyBuiltRuntime } from './types/built-runtime'
 
@@ -20,6 +21,17 @@ describe('Polymorphic — SSR (svelte/server render)', () => {
     const bundle = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
     const { html } = render(Polymorphic, { props: { bundle } })
     expect(html).toContain('base-class')
+  })
+
+  it('renders through a component-reference "as" in server-rendered HTML, not the default tag', () => {
+    // Svelte has no custom SSR string-serialization path (unlike Lit/Web) — this renders through
+    // the real `svelte/server` compiler output, exercising the same template branch
+    // `Polymorphic.test.ts`'s DOM-side tests do, not a separate code path.
+    const bundle = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
+    const { html } = render(Polymorphic, { props: { bundle, as: InnerButton as never } })
+    expect(html).toContain('data-testid="inner"')
+    expect(html).toContain('base-class')
+    expect(html).not.toMatch(/^<div/)
   })
 
   it('strips redundant ARIA role in server-rendered HTML', () => {
@@ -80,6 +92,11 @@ describe('Polymorphic — SSR (svelte/server render)', () => {
     render(Polymorphic, { props: { bundle } })
     expect(evaluateSpy).not.toHaveBeenCalled()
   })
+
+  // `compose` SSR coverage — including the self-recursive <Polymorphic> import this adapter's
+  // compose.with needs (see DECISIONS.md, "compose: declarative asChild composition") — comes
+  // from the shared `ssrConformanceSuite` registration at the bottom of this file ("ssr —
+  // compose"), which exercises this exact adapter/render path, not a separate one.
 })
 
 // Note on client hydration: this file proves SSR output is correct and that DOM-only lifecycle
@@ -91,10 +108,21 @@ describe('Polymorphic — SSR (svelte/server render)', () => {
 // assumed covered — see DECISIONS.md.
 
 ssrConformanceSuite<SvelteSSRComponent>({
-  createComponent: (options): SvelteSSRComponent => ({
-    displayName: options.name ?? 'PolymorphicComponent',
-    _bundle: createContractComponent(options as BareFactoryOptions) as AnyBuiltRuntime,
-  }),
+  createComponent: (options): SvelteSSRComponent => {
+    // compose.with arrives as this adapter's own opaque component value — on Svelte, that's the
+    // { displayName, _bundle } wrapper below, not the raw bundle createContractComponent/
+    // Polymorphic.svelte actually expect for compose.with. Unwrap it (see conformance.test.ts's
+    // identical fix for the CSR suite).
+    const compose = options.compose
+    const unwrappedOptions =
+      compose !== undefined
+        ? { ...options, compose: { with: (compose.with as SvelteSSRComponent)._bundle } }
+        : options
+    return {
+      displayName: options.name ?? 'PolymorphicComponent',
+      _bundle: createContractComponent(unwrappedOptions as BareFactoryOptions) as AnyBuiltRuntime,
+    }
+  },
   renderToString: (component, props = {}) => {
     const { html } = render(Polymorphic, {
       props: { bundle: component._bundle, ...props },

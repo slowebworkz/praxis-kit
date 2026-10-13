@@ -4,6 +4,7 @@ import { render, cleanup } from '@testing-library/svelte'
 import { createRawSnippet } from 'svelte'
 import { silentDiagnostics, throwDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
 import Polymorphic from './Polymorphic.svelte'
+import InnerButton from './component-reference-as.test-host.svelte'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
 
@@ -21,6 +22,32 @@ describe('Polymorphic (Svelte adapter)', () => {
     const { container } = render(Polymorphic, { bundle, as: 'section' })
     expect(container.querySelector('section')).toBeTruthy()
     expect(container.querySelector('div')).toBeNull()
+  })
+
+  it('renders through a component reference passed as "as", not just a tag-name string', () => {
+    const bundle = createContractComponent({ tag: 'div' })
+    const { container } = render(Polymorphic, { bundle, as: InnerButton as never })
+    expect(container.querySelector('[data-testid="inner"]')).toBeTruthy()
+    expect(container.querySelector('div')).toBeNull()
+  })
+
+  it('merges base class onto a component-reference "as" target, same as a tag target', () => {
+    const bundle = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
+    const { container } = render(Polymorphic, { bundle, as: InnerButton as never })
+    expect(container.querySelector('[data-testid="inner"]')?.className).toBe('base-class')
+  })
+
+  it('"as" + "asChild" together are still mutually exclusive when "as" is a component reference', () => {
+    const bundle = createContractComponent({
+      tag: 'div',
+      enforcement: { diagnostics: throwDiagnostics },
+    })
+    const children = createRawSnippet<[AnyRecord]>(() => ({
+      render: () => '<a href="/home">Home</a>',
+    }))
+    expect(() =>
+      render(Polymorphic, { bundle, as: InnerButton as never, asChild: true, children }),
+    ).toThrow('"as" and "asChild" are mutually exclusive')
   })
 
   it('applies base class', () => {
@@ -205,6 +232,78 @@ describe('Polymorphic (Svelte adapter)', () => {
       expect(container.querySelector('section')).toBeTruthy()
       expect(container.querySelector('div')).toBeNull()
       warn.mockRestore()
+    })
+  })
+
+  describe('allowedAs — component references', () => {
+    it('allows an "as" component reference that is listed by reference in allowedAs', () => {
+      const bundle = createContractComponent({
+        tag: 'div',
+        enforcement: { diagnostics: throwDiagnostics, allowedAs: [InnerButton] },
+      })
+      expect(() => render(Polymorphic, { bundle, as: InnerButton as never })).not.toThrow()
+    })
+
+    it('rejects an "as" component reference not listed in allowedAs', () => {
+      // Reuses the same real, renderable `InnerButton` fixture as the passing case above —
+      // deliberately not a bare placeholder function — so the only variable between the two
+      // tests is whether the reference appears in `allowedAs`, not whether Svelte's own dynamic-
+      // component resolution can do anything with the value at all.
+      const bundle = createContractComponent({
+        tag: 'div',
+        enforcement: { diagnostics: throwDiagnostics, allowedAs: ['section'] },
+      })
+      expect(() => render(Polymorphic, { bundle, as: InnerButton as never })).toThrow(/allowed/i)
+    })
+  })
+
+  describe('compose: declarative asChild composition', () => {
+    // `compose`'s renders-through/tag-conflict/props-land cases are covered by the shared
+    // conformance suite (`conformance.test.ts` → `lib/adapter-utils/src/testing/conformance.ts`,
+    // "conformance — compose"). That suite can't express two cases for Svelte: "explicit asChild
+    // wins" (its own `asChild: false` capability — Svelte's asChild needs a literal snippet
+    // child) and ref-forwarding (Svelte has no `createRef`-style contract; `onElement` is this
+    // adapter's real one) — those two stay adapter-specific below, same convention `asChild`
+    // itself already uses.
+
+    it('onElement receives the composing component\'s own real element, not "with"\'s default tag', () => {
+      let received: Element | undefined
+      const boxA = createContractComponent({ tag: 'nav' })
+      const boxB = createContractComponent({
+        tag: 'button',
+        compose: { with: boxA },
+        onElement: (el) => {
+          received = el
+        },
+      })
+
+      render(Polymorphic, { bundle: boxB })
+
+      expect(received?.tagName.toLowerCase()).toBe('button')
+    })
+
+    it('an explicit asChild from the consumer wins over compose', () => {
+      const boxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
+      const boxB = createContractComponent({
+        tag: 'button',
+        compose: { with: boxA },
+        styling: { base: 'class-b' },
+      })
+
+      let receivedProps: AnyRecord = {}
+      const children = createRawSnippet<[AnyRecord]>((getProps) => ({
+        render() {
+          receivedProps = getProps()
+          return `<a>link</a>`
+        },
+      }))
+
+      const { container } = render(Polymorphic, { bundle: boxB, asChild: true, children })
+
+      // Only boxB's own asChild composes onto <a> — compose doesn't fire, so boxA never renders.
+      expect(receivedProps['class']).toContain('class-b')
+      expect(receivedProps['class']).not.toContain('class-a')
+      expect(container.querySelector('button')).toBeNull()
     })
   })
 })

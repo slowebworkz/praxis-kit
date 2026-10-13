@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { COMPONENT_DEFAULT_TAG } from './component-id'
 import { getTag, isFlowContent, isTag } from './is-tag'
-import type { ChildRuleInput } from '../../types/contracts'
-import type { AnyRecord } from '../../types'
+import type { AnyRecord, ChildRuleInput } from '@praxis-kit/primitive'
 
 function nativeVnode(tag: string, props: AnyRecord = {}) {
   return { type: tag, props }
@@ -52,6 +51,17 @@ describe('getTag', () => {
 
     it('ignores an empty string "as" prop', () => {
       expect(getTag(componentVnode('source', { as: '' }))).toBe('source')
+    })
+
+    it('resolves a component-reference "as" prop through its own COMPONENT_DEFAULT_TAG', () => {
+      function Link() {}
+      Object.assign(Link, { [COMPONENT_DEFAULT_TAG]: 'a' })
+      expect(getTag(componentVnode('button', { as: Link }))).toBe('a')
+    })
+
+    it('returns undefined for a component-reference "as" prop with no COMPONENT_DEFAULT_TAG of its own', () => {
+      function Untagged() {}
+      expect(getTag(componentVnode('button', { as: Untagged }))).toBeUndefined()
     })
 
     it('handles missing props', () => {

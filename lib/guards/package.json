@@ -1,0 +1,23 @@
+{
+  "name": "@praxis-kit/guards",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "description": "Runtime type guards for praxis-kit's children/ARIA/contract/variant domains, built on guardz",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "@praxis-kit/primitive": "workspace:*",
+    "guardz": "catalog:"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
+}

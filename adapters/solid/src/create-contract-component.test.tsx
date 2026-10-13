@@ -32,6 +32,18 @@ describe('createContractComponent (Solid adapter)', () => {
     expect(container.querySelector('div')).toBeNull()
   })
 
+  it('as={Component}: renders through the referenced component via <Dynamic>, not the default tag', () => {
+    // Solid already handles a component-valued `as` mechanically — `resolveTag`/`<Dynamic
+    // component={tag()}>` are reference-safe with no special casing needed. This test is the
+    // type-level proof (it compiles and renders with no cast), mirroring the equivalent React/
+    // Preact tests.
+    const Inner = (props: Record<string, unknown>) => <button data-testid="inner" {...props} />
+    const Comp = createContractComponent({ tag: 'div' })
+    const { container } = solidRender(() => <Comp as={Inner} />)
+    expect(container.querySelector('[data-testid="inner"]')).toBeTruthy()
+    expect(container.querySelector('div')).toBeNull()
+  })
+
   it('applies base class', () => {
     const Comp = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
     const { container } = solidRender(() => <Comp />)
@@ -195,6 +207,31 @@ describe('createContractComponent (Solid adapter)', () => {
       </Comp>
     ))
     expect(el).toBeInstanceOf(HTMLAnchorElement)
+  })
+
+  // `compose`'s renders-through/tag-conflict/props-land/ref cases are covered by the shared
+  // conformance suite (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`,
+  // "conformance — compose"). That suite can't express the "explicit asChild wins" case for
+  // Solid, though (its own `asChild: false` capability — Solid's asChild needs a literal
+  // render-function child, incompatible with the harness's `ChildSpec`), so this one case stays
+  // adapter-specific, same convention `asChild` itself already uses.
+
+  it('compose: an explicit asChild from the consumer wins over compose', () => {
+    const BoxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
+    const BoxB = createContractComponent({
+      tag: 'button',
+      compose: { with: BoxA },
+      styling: { base: 'class-b' },
+    })
+
+    const { container } = solidRender(() => (
+      <BoxB asChild>{(props: AnyRecord) => <a {...props} />}</BoxB>
+    ))
+
+    const el = container.querySelector('a')!
+    expect(el.className).toContain('class-b')
+    expect(el.className).not.toContain('class-a')
+    expect(container.querySelector('button')).toBeNull()
   })
 
   it('asChild throws when as and asChild are both set (strict: throw default)', () => {

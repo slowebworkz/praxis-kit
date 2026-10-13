@@ -17,8 +17,9 @@ import type {
   VariantMap,
 } from '@praxis-kit/core'
 import { finalizeComponent, invariant } from '@praxis-kit/adapter-utils'
-import type { ReactElement, Ref } from 'react'
-import { forwardRef, useCallback, useRef } from 'react'
+import { isFunction } from '@praxis-kit/guards'
+import type { ComponentType, ReactElement, Ref } from 'react'
+import { createElement, forwardRef, useCallback, useRef } from 'react'
 import type { PolymorphicComponent, ReactFactoryOptions, UnknownProps } from '../shared'
 import { applyDisplayName, isReactFactoryOptions, mergeRefs, render } from '../shared'
 import { buildRuntime } from './build-runtime'
@@ -96,7 +97,7 @@ export function createContractComponent<
       TAllowed
     >,
   )
-  const { onElement } = options
+  const { onElement, compose } = options
 
   // React 18: ref is not available as a plain prop — forwardRef is required.
   const Component = forwardRef<unknown, UnknownProps>(function Component(
@@ -140,13 +141,27 @@ export function createContractComponent<
     }, [])
 
     const mergedRef = onElement ? mergeRefs(ref, onElementRef) : ref
+
+    // See `current/create-contract-component.ts`'s identical block for the full explanation —
+    // `compose` makes this component always render `asChild` into `compose.with` unless the
+    // consumer already took explicit control via their own `asChild`/`render`.
+    if (compose?.with !== undefined && props.asChild === undefined && !isFunction(props.render)) {
+      const innerElement = render({ ...bundle, props, ref: null })
+      return createElement(compose.with as ComponentType<UnknownProps>, {
+        asChild: true,
+        ref: mergedRef,
+        children: innerElement,
+      })
+    }
+
     return render({ ...bundle, props, ref: mergedRef })
   })
 
   applyDisplayName(Component, options.name)
+  const { defaultTag } = bundle.runtime.options
   const assembled = finalizeComponent(
     Component,
-    bundle.runtime.options.defaultTag,
+    typeof defaultTag === 'string' ? defaultTag : undefined,
     options.subComponents,
   )
 

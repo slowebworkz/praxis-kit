@@ -1,5 +1,5 @@
 import type { PropNormalizer, StringMap } from '@praxis-kit/primitive'
-import { isNullish, isUndefined } from '@praxis-kit/primitive'
+import { isNullish, isUndefined } from '@praxis-kit/guards'
 
 export interface StateNormalizerConfig {
   /** The sugar prop this normalizer reads, e.g. `expanded` or `readOnly`. */

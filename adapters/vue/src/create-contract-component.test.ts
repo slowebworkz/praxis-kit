@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { Comment, createTextVNode, defineComponent, h, ref } from 'vue'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
+import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
 
@@ -39,6 +40,40 @@ describe('createContractComponent — tag rendering', () => {
     const Box = createContractComponent({ tag: 'span' })
     const wrapper = mount(box(Box))
     expect(wrapper.element.tagName.toLowerCase()).toBe('span')
+  })
+
+  it('renders through a component reference passed as "as", not just a tag-name string', () => {
+    // The `as never` cast mirrors the exact pattern an existing Preact test already uses
+    // (`adapters/preact/src/create-contract-component.test.tsx`) to prove this already works
+    // mechanically on React/Preact/Solid — only the type layer currently rejects it. This test
+    // is the Vue-side proof; `prepareRenderState`'s own `typeof as === 'string'` guard
+    // (render.ts) discards a non-string `as`, silently falling back to `defaultTag`, so without
+    // the fix this renders a <div>, not a <button>.
+    const Inner = defineComponent({
+      name: 'Inner',
+      setup(_, { attrs }) {
+        return () => h('button', attrs)
+      },
+    })
+    const Box = createContractComponent({})
+    const wrapper = mount(box(Box), { props: { as: Inner } as never })
+    expect(wrapper.element.tagName.toLowerCase()).toBe('button')
+  })
+
+  it('"as" + "asChild" together are still mutually exclusive when "as" is a component reference', () => {
+    const Inner = defineComponent({
+      name: 'Inner',
+      setup(_, { attrs }) {
+        return () => h('button', attrs)
+      },
+    })
+    const Box = createContractComponent({})
+    expect(() =>
+      mount(box(Box), {
+        props: { as: Inner, asChild: true } as never,
+        slots: { default: () => [h('a', { href: '/' })] },
+      }),
+    ).toThrow('"as" and "asChild" are mutually exclusive')
   })
 })
 
@@ -132,6 +167,102 @@ describe('createContractComponent — asChild', () => {
     ).toThrow('"as" and "asChild" are mutually exclusive')
   })
 
+  // `allowedAs` includes the component's own default tag ('div') so Vue's separate,
+  // pre-existing `enforceAllowedAs` call in `prepareRenderState` — which (unlike React/Preact)
+  // checks the resolved tag against `allowedAs` unconditionally rather than only when a
+  // caller-supplied `as` is present — doesn't also fire here and confound the assertion. 'div'
+  // also carries no restrictive built-in HTML content-model evaluator, so an `<a>`/`<button>`
+  // slot child doesn't separately trip `htmlChildrenEvaluatorFn`'s own check, which (also unlike
+  // React) Vue evaluates against the resolved tag unconditionally, asChild notwithstanding.
+  it('warns when nativeTagBehavior is set and the slot child tag is outside allowedAs', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: {
+        diagnostics: warnDiagnostics,
+        allowedAs: ['div', 'button'],
+        nativeTagBehavior: true,
+      },
+    })
+    mount(box(Trigger), {
+      props: { asChild: true },
+      slots: { default: () => [h('a')] },
+    })
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"a"'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"button"'))
+    warn.mockRestore()
+  })
+
+  it('does not warn when the slot child tag is within allowedAs', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: {
+        diagnostics: warnDiagnostics,
+        allowedAs: ['div', 'button'],
+        nativeTagBehavior: true,
+      },
+    })
+    mount(box(Trigger), {
+      props: { asChild: true },
+      slots: { default: () => [h('button')] },
+    })
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('never warns when nativeTagBehavior is unset, regardless of the slot child tag', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Box = createContractComponent({
+      enforcement: { diagnostics: warnDiagnostics, allowedAs: ['div', 'button'] },
+    })
+    mount(box(Box), {
+      props: { asChild: true },
+      slots: { default: () => [h('a')] },
+    })
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('checks the real Slottable merge target, not the pass-through siblings around it', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: {
+        diagnostics: warnDiagnostics,
+        allowedAs: ['div', 'button'],
+        nativeTagBehavior: true,
+      },
+    })
+    mount(box(Trigger), {
+      props: { asChild: true },
+      slots: {
+        default: () => [h(Slottable, null, { default: () => [h('a')] }), h('span', null, 'icon')],
+      },
+    })
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"a"'))
+    warn.mockRestore()
+  })
+
+  it('does not warn when the Slottable merge target is within allowedAs, pass-through siblings notwithstanding', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Trigger = createContractComponent({
+      enforcement: {
+        diagnostics: warnDiagnostics,
+        allowedAs: ['div', 'button'],
+        nativeTagBehavior: true,
+      },
+    })
+    mount(box(Trigger), {
+      props: { asChild: true },
+      slots: {
+        default: () => [
+          h(Slottable, null, { default: () => [h('button')] }),
+          h('span', null, 'icon'),
+        ],
+      },
+    })
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
   it('nested asChild: both components compose their classes onto the inner element', () => {
     const BoxA = createContractComponent({ styling: { base: 'class-a' } })
     const BoxB = createContractComponent({ styling: { base: 'class-b' } })
@@ -153,6 +284,31 @@ describe('createContractComponent — asChild', () => {
     const el = wrapper.find('button')
     expect(el.element.className).toContain('class-a')
     expect(el.element.className).toContain('class-b')
+  })
+
+  // `compose`'s renders-through/tag-conflict/props-land/explicit-asChild-wins cases are covered
+  // by the shared conformance suite (`conformance.test.ts` → `lib/adapter-utils/src/testing/
+  // conformance.ts`, "conformance — compose"). This adapter keeps only the one case that suite
+  // can't express generically: Vue's `ref` resolves to the component instance, not the host
+  // element, so `onElement` (not `createRef`) is this adapter's real contract for reaching it.
+
+  it('compose: onElement receives the composing component\'s own real element, not "with"\'s default tag', () => {
+    // A plain `ref` on a Vue component resolves to the component instance, not the host
+    // element — onElement is this adapter's actual contract for reaching the real DOM node
+    // (see on-element.test.ts's own matrix, which this mirrors).
+    let received: Element | undefined
+    const BoxA = createContractComponent({ tag: 'nav' })
+    const BoxB = createContractComponent({
+      tag: 'button',
+      compose: { with: BoxA },
+      onElement: (el) => {
+        received = el
+      },
+    })
+
+    mount(box(BoxB))
+
+    expect(received?.tagName.toLowerCase()).toBe('button')
   })
 })
 

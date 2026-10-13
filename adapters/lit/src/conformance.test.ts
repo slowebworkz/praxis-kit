@@ -155,7 +155,7 @@ function buildChild(spec: ChildSpec): HTMLElement {
 let container: HTMLElement
 
 const adapter: ConformanceAdapter<LitConformanceComponent> = {
-  capabilities: { asChild: false, tagPolymorphism: false, domPropFiltering: false },
+  capabilities: { asChild: false, compose: false, tagPolymorphism: false, domPropFiltering: false },
   testSuites: { ssr: true },
 
   createComponent(options: ConformanceFactoryOptions): LitConformanceComponent {

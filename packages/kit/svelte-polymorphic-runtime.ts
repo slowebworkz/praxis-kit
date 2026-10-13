@@ -4,12 +4,13 @@
  * `Polymorphic.svelte` ships into `dist/svelte/` as **raw source** — the consumer's own Svelte
  * compiler processes it at their build time (see `scripts/postbuild.ts` → `copyPolymorphicSvelte`).
  * Its `<script>` block imports helpers from `@praxis-kit/core` / `@praxis-kit/primitive` /
- * `@praxis-kit/adapter-utils` and types from `./types` — all workspace-internal (`private: true`)
- * modules that are never published, so those specifiers cannot resolve in a consumer project.
+ * `@praxis-kit/guards` / `@praxis-kit/adapter-utils` and types from `./types` — all
+ * workspace-internal (`private: true`) modules that are never published, so those specifiers
+ * cannot resolve in a consumer project.
  *
  * This module re-exports the runtime helpers (and the two structural type aliases) that block
- * imports from `@praxis-kit/core` / `@praxis-kit/primitive` / `@praxis-kit/adapter-utils`.
- * `postbuild.ts` rewrites those three specifiers in the copied `.svelte` to
+ * imports from `@praxis-kit/core` / `@praxis-kit/primitive` / `@praxis-kit/guards` /
+ * `@praxis-kit/adapter-utils`. `postbuild.ts` rewrites those four specifiers in the copied `.svelte` to
  * `./_polymorphic-runtime.js` (this file, built as a bundled `svelte/_polymorphic-runtime`
  * entry — not a public subpath, reachable only by relative path from the sibling `.svelte`, the
  * same pattern as `_shared/diagnostics`).
@@ -25,7 +26,7 @@
  */
 
 export { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
-export { isObject, isString } from '@praxis-kit/primitive'
+export { isObject, isString } from '@praxis-kit/guards'
 export { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
 
 // Structural aliases (`ElementType` is a string union; `IntrinsicProps` is `AnyRecord & {…}`) —

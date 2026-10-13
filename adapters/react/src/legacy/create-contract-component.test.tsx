@@ -89,6 +89,10 @@ describe('createContractComponent (legacy / React 18)', () => {
     expect(ref.current).toBe(dom.container.querySelector('button'))
   })
 
+  // `compose` (declarative asChild composition) is covered by the shared conformance suite
+  // (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`, "conformance —
+  // compose") rather than duplicated here — same convention as `asChild` itself.
+
   it('applies filterProps', () => {
     const Box = createContractComponent({
       filterProps: (key: string) => key === 'size',

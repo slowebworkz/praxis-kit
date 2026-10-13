@@ -1,4 +1,5 @@
-import { isDefined, isUndefined, iterate } from '@praxis-kit/primitive'
+import { iterate } from '@praxis-kit/primitive'
+import { isDefined, isUndefined } from '@praxis-kit/guards'
 import ts from 'typescript'
 import { walkEach } from './ast'
 import { getJsxTagName, isComponentTagName } from './jsx'

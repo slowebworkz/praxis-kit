@@ -5,13 +5,14 @@
  * dispatched to one of two render paths: Slot (`asChild`) or intrinsic element.
  */
 import { h, isValidElement } from 'preact'
-import type { Ref } from 'preact'
+import type { ComponentType, Ref } from 'preact'
 import type { Writable } from 'type-fest'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
+import { getTag } from '@praxis-kit/guards'
 import { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
 import type { SlotValidator } from './slot'
-import { isSlottableElement } from './slot'
+import { extractSlottable, isSlottableElement } from './slot'
 import type {
   SlotComponent,
   Runtime,
@@ -157,6 +158,26 @@ function renderResolvedSlot(
   })
 }
 
+/** See React's identical `checkAllowedAsMismatch` in `adapters/react/src/shared/render.ts` for
+ *  the full rationale, including why the multi-element (`Slottable`) case resolves its real merge
+ *  target via `extractSlottable` rather than skipping. */
+function checkAllowedAsMismatch(
+  child: AnyVNode | readonly AnyVNode[],
+  allowedAs: readonly ElementType[] | undefined,
+  nativeTagBehavior: boolean | undefined,
+  validator: SlotValidator,
+): void {
+  if (!nativeTagBehavior || allowedAs === undefined) return
+
+  const target = Array.isArray(child) ? extractSlottable(child)?.child : child
+  if (target === undefined) return
+
+  const childTag = getTag(target)
+  if (childTag !== undefined && !allowedAs.includes(childTag)) {
+    validator.warnAllowedAsMismatch(childTag, allowedAs)
+  }
+}
+
 function tryRenderAsChild(
   state: ResolvedRenderState,
   ref: Ref<unknown> | null,
@@ -164,9 +185,14 @@ function tryRenderAsChild(
   getNormalizedChildren: () => readonly NormalizedChild[],
   getSlotChildren: () => AnyVNode[],
   validator: SlotValidator,
+  allowedAs: readonly ElementType[] | undefined,
+  nativeTagBehavior: boolean | undefined,
 ): AnyVNode | null {
   const slotRender = resolveSlotRender(state, getNormalizedChildren, getSlotChildren, validator)
   if (slotRender === null) return null
+  if (process.env.NODE_ENV !== 'production') {
+    checkAllowedAsMismatch(slotRender.child, allowedAs, nativeTagBehavior, validator)
+  }
   return renderResolvedSlot(slotComponent, state, slotRender, ref)
 }
 
@@ -197,7 +223,15 @@ function renderIntrinsic(
     typeof state.tag === 'string'
       ? runtime.resolveAria(state.tag, elementProps, state.normalizedProps).props
       : elementProps
-  return h(state.tag, domProps)
+  // `state.tag` is `ElementType` — a tag-name string or, as of the `as`/`allowedAs`
+  // component-reference feature, a reference to another praxis-kit component. `h()`'s own
+  // overloads want a string or a precisely-typed `ComponentType<P>`, which a generically-typed
+  // `ElementType` can't statically prove — the real guarantee (it's always one or the other, never
+  // an arbitrary value) is enforced by `resolveTag`/`enforceAllowedAs` upstream, not expressible
+  // here without a cast. `domProps`' shape depends on which concrete component `state.tag`
+  // resolves to; `ComponentType<any>` is the honest bound.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return h(state.tag as string | ComponentType<any>, domProps)
 }
 
 export function render<TProps extends KnownProps>({
@@ -240,6 +274,8 @@ export function render<TProps extends KnownProps>({
     getNormalizedChildren,
     getSlotChildren,
     slotValidator,
+    runtime.options.allowedAs,
+    runtime.options.nativeTagBehavior,
   )
 
   return slotResult ?? renderIntrinsic(state, ref, runtime)

@@ -19,7 +19,7 @@ import { mergeProps, onCleanup } from 'solid-js'
 import { applyDisplayName } from './apply-display-name'
 import { buildRuntime } from './build-runtime'
 import { isPolymorphicComponent } from './is-polymorphic-component'
-import { render } from './render'
+import { render, renderComposed } from './render'
 import { isSolidFactoryOptions } from './to-solid-factory-options'
 import type { SolidFactoryOptions } from './solid-options'
 import type { KnownProps, PolymorphicComponent, SolidElement, UnknownProps } from './types'
@@ -91,7 +91,7 @@ export function createContractComponent<
   const bundle = buildRuntime(
     options as unknown as SolidFactoryOptions<TDefault, Props, Variants, TPreset>,
   )
-  const { onElement } = options
+  const { onElement, compose } = options
 
   const Component = (props: UnknownProps): SolidElement => {
     // Solid ref callbacks fire once, at element creation — a natural fit for "mount". They
@@ -116,6 +116,14 @@ export function createContractComponent<
         })
       : props
 
+    // `compose` makes this component always render `asChild` into `compose.with`, synthesized
+    // natively for Solid's render-callback composition model — see `renderComposed`'s own doc
+    // comment. Only applies when the consumer didn't already take explicit control themselves.
+    if (compose?.with !== undefined && !(propsWithRef as KnownProps).asChild) {
+      const known = propsWithRef as KnownProps
+      return renderComposed(compose.with, bundle.runtime, known, bundle.filterProps, known.ref)
+    }
+
     return render({
       ...bundle,
       props: propsWithRef as KnownProps,
@@ -123,9 +131,10 @@ export function createContractComponent<
   }
 
   applyDisplayName(Component, options.name)
+  const { defaultTag } = bundle.runtime.options
   const assembled = finalizeComponent(
     Component,
-    bundle.runtime.options.defaultTag,
+    typeof defaultTag === 'string' ? defaultTag : undefined,
     options.subComponents,
   )
 

@@ -58,5 +58,6 @@ export function buildRuntime<
     slotValidator,
     ...(childrenEvaluator !== undefined && { childrenEvaluator }),
     ...(options.onElement !== undefined && { onElement: options.onElement }),
+    ...(options.compose !== undefined && { compose: options.compose }),
   } as BuiltRuntime<G, TOptions>
 }

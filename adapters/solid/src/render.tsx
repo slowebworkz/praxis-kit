@@ -1,11 +1,17 @@
-import { applyFilter, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
+import {
+  applyFilter,
+  mergeClassNames,
+  mergeSlotProps,
+  resolveNormalizedProps,
+} from '@praxis-kit/adapter-utils'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
-import { isString } from '@praxis-kit/primitive'
+import { isString } from '@praxis-kit/guards'
 import { createEffect, createMemo, splitProps } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import type { SlotValidator } from './slot'
 import type {
+  FilterPredicate,
   KnownProps,
   RenderInput,
   ResolvedProps,
@@ -98,6 +104,71 @@ function tryRenderAsChild(
   // createMemo tracks filteredProps() and resolvedClass() so slot props stay reactive.
   return createMemo(() =>
     renderFn(buildSlotProps(filteredProps(), resolvedClass(), known.ref)),
+  ) as unknown as SolidElement
+}
+
+/**
+ * `mergeSlotProps` special-cases `className` (React/Preact's prop name) for concatenation —
+ * Solid (like Vue) uses `class` instead, which falls through `mergeSlotProps`'s own policy as an
+ * ordinary "child wins" key rather than concatenating. `mergeSlotProps` otherwise already does
+ * the right thing for every other key (chained handlers, shallow-merged `style`, child-wins
+ * elsewhere), so this only overrides the one key it gets wrong for this adapter's prop naming.
+ */
+function mergeComposedProps(withProps: UnknownProps, innerProps: UnknownProps): UnknownProps {
+  const merged = mergeSlotProps(withProps, innerProps)
+  const mergedClass = mergeClassNames(withProps['class'], innerProps['class'])
+  return { ...merged, ...(mergedClass && { class: mergedClass }) }
+}
+
+/**
+ * Renders `compose`'s synthesized composition: `withComponent` always as if given an `asChild`
+ * render callback whose output is this component's own normal (non-`asChild`) output, merged
+ * with whatever slot props `withComponent` hands back — the Solid-native equivalent of the
+ * clone-based synthesis React/Preact/Vue use, since Solid has no cheap clone-and-merge-props
+ * primitive to bolt extra props onto an already-built `SolidElement` after the fact. Resolves
+ * this component's own tag/DOM props directly (mirroring `render()`'s own intrinsic-path
+ * computation) rather than calling `render()` itself, since the merge has to happen *before* the
+ * final `<Dynamic>` is created, not after.
+ */
+export function renderComposed<TProps extends KnownProps>(
+  withComponent: unknown,
+  runtime: Runtime,
+  props: TProps,
+  filterProps: FilterPredicate,
+  ref: unknown,
+): SolidElement {
+  const [knownRaw, rest] = splitProps(props, SPLIT_KEYS)
+  const known = knownRaw as unknown as KnownProps
+
+  const tag = createMemo(() => resolveTag(runtime, known.as))
+  const mergedProps = createMemo(() => runtime.resolveProps(rest as UnknownProps))
+  const normalizedProps = createMemo(() =>
+    resolveNormalizedProps(runtime.options, tag(), mergedProps()),
+  )
+  const resolvedClass = createMemo(() =>
+    runtime.resolveClasses(
+      tag(),
+      normalizedProps(),
+      known.class as string | undefined,
+      known.recipe as string | undefined,
+    ),
+  )
+  const filteredProps = createMemo(() =>
+    applyFilter(normalizedProps(), filterProps, runtime.options.variantKeys),
+  )
+  const domProps = createMemo(() => {
+    const ep = buildElementProps(filteredProps(), resolvedClass(), known.ref, known.children)
+    return resolveDomProps(tag(), ep, runtime, normalizedProps())
+  })
+
+  return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <Dynamic component={withComponent as any} asChild ref={ref}>
+      {(withProps: UnknownProps) => (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        <Dynamic component={tag() as any} {...(mergeComposedProps(withProps, domProps()) as any)} />
+      )}
+    </Dynamic>
   ) as unknown as SolidElement
 }
 

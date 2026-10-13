@@ -1,4 +1,4 @@
-import type { Cardinality } from '../../types'
+import type { Cardinality } from '@praxis-kit/primitive'
 import { isNumber, isRecord } from '../foundational'
 
 export function isCardinality(value: unknown): value is Cardinality {

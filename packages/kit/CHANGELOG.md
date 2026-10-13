@@ -1,5 +1,38 @@
 # praxis-kit
 
+## 1.1.2
+
+Published as `1.1.2`, not `1.1.0` — the version `changeset` actually computed from the minor
+changesets below — because `1.1.0` and `1.1.1` are both already permanently taken on the
+`praxis-kit` npm name by the same unrelated, pre-existing package line described under `1.0.2`
+below (visible in `npm view praxis-kit versions`, published 2026-06-16). Same shape as that
+`1.0.0`/`1.0.1` collision: probed the next number up until one was free. That line jumps straight
+from `1.1.1` to `2.0.0`, so `1.1.2` was never published by either line.
+
+### Minor Changes
+
+- b09e15c: Add `enforcement.nativeTagBehavior` — an opt-in flag for components whose behavior (not
+  just styling) depends on the resolved tag being one of `allowedAs`, e.g. a `popoverTarget` invoker
+  that only functions on button-like elements. When set alongside `allowedAs`, `asChild` now warns
+  if the consumer's child resolves to a tag outside `allowedAs`, in the React, Preact, and Vue
+  adapters, catching compositions that would silently lose native tag-dependent behavior.
+- 3a2bedb: Add `PolymorphicWithAllowedAs<G>` to the React, Preact, Solid, and Vue adapters — a
+  `PolymorphicProps<G, TAs>` variant with `as` widened to every tag in `AllowedOf<G>` instead of
+  defaulting to a single tag, for consumers building wrapper/forwarding prop types.
+- 6fb490b: `as`/`allowedAs` now accept a reference to another praxis-kit component, not just a
+  tag-name string — `<Button as={Link}>` works the same way `<Button as="a">` does, with `allowedAs`
+  enumerating specific components by reference exactly like it enumerates tag names
+  (`allowedAs: ['a', 'button', Link]`, strict enumeration, no bypass). Supported on React, Preact,
+  Vue, Solid, and Svelte; Lit and Web don't support `as` at all, so they're unaffected.
+- 1ff5e0e: Add `compose: { with: Component }` to `FactoryOptions` — declares that a component always
+  renders composed `asChild` into another praxis-kit component, as if the consumer had hand-written
+  `<With asChild><ThisComponent {...props} /></With>`. All consumer props land on the composing
+  component's own contract exactly as today; `with` always renders bare. Supported on React, Preact,
+  Vue, Solid, and Svelte, each synthesized natively for that adapter's own composition model
+  (clone-based on React/Preact/Vue, render-callback/snippet-based on Solid/Svelte). Has no effect on
+  Lit/Web, which have no `asChild` concept. An explicit `asChild`/`render` from the consumer always
+  wins over `compose`.
+
 ## 1.0.3
 
 ### Patch Changes

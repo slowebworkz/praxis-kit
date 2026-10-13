@@ -1,7 +1,7 @@
 import type { AnyRecord, ClassPlugin, ClassPipelineFn } from '../types'
 import { throwDiagnostics } from '@praxis-kit/diagnostics'
 import { PluginDiagnostics } from './plugin-diagnostics'
-import { isFunction, isNull, isObject, isString } from '@praxis-kit/primitive'
+import { isFunction, isNull, isObject, isString } from '@praxis-kit/guards'
 
 export function assertPluginShape(result: unknown): asserts result is ClassPlugin {
   if (isNull(result) || !isObject(result))

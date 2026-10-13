@@ -1,4 +1,4 @@
-import { GLOBAL_ARIA_ATTRIBUTES, ROLE_RESTRICTED_ATTRIBUTES } from '../../constants/aria'
+import { GLOBAL_ARIA_ATTRIBUTES, ROLE_RESTRICTED_ATTRIBUTES } from '@praxis-kit/primitive'
 import { isUndefined } from '../foundational'
 
 export function isGlobalAriaAttribute(attr: string): boolean {
