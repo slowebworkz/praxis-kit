@@ -137,10 +137,13 @@ export function createContractComponent<
 
     // See `@praxis-kit/react`'s identical block for the full explanation — `compose` makes this
     // component always render `asChild` into `compose.with` unless the consumer already took
-    // explicit control via their own `asChild`.
+    // explicit control via their own `asChild`. `compose.allProps` additionally spreads this
+    // component's own raw props onto `with` (before the `asChild`/`ref`/`children` overrides, so
+    // those three always win) — opt-in.
     if (compose?.with !== undefined && props.asChild === undefined && !isFunction(props.render)) {
       const innerElement = render({ ...bundle, props, ref: null })
       return h(compose.with as ComponentType<UnknownProps>, {
+        ...(compose.allProps ? props : undefined),
         asChild: true,
         ref: mergedRef,
         children: innerElement,

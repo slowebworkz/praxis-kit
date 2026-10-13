@@ -214,10 +214,14 @@
     children(...)}` block below declares its own same-named binding for `With`'s own asChild
     contract — referencing `children` directly inside that block would resolve to the snippet
     itself, not this component's real consumer-supplied content.
+
+    `bundle.compose.allProps` additionally spreads this component's own raw `rest` props onto
+    `With` (before the `asChild` prop below, so that always wins) — opt-in, mirroring the same
+    `compose.allProps` flag on every other adapter.
   -->
   {@const With = bundle.compose.with}
   {@const ownChildren = children}
-  <Polymorphic bundle={With} asChild>
+  <Polymorphic bundle={With} {...(bundle.compose.allProps ? rest : {})} asChild>
     {#snippet children(withProps)}
       {#if isString(tag)}
         <svelte:element

@@ -119,9 +119,17 @@ export function createContractComponent<
     // `compose` makes this component always render `asChild` into `compose.with`, synthesized
     // natively for Solid's render-callback composition model — see `renderComposed`'s own doc
     // comment. Only applies when the consumer didn't already take explicit control themselves.
+    // `compose.allProps` additionally forwards this component's own raw props onto `with` — opt-in.
     if (compose?.with !== undefined && !(propsWithRef as KnownProps).asChild) {
       const known = propsWithRef as KnownProps
-      return renderComposed(compose.with, bundle.runtime, known, bundle.filterProps, known.ref)
+      return renderComposed(
+        compose.with,
+        bundle.runtime,
+        known,
+        bundle.filterProps,
+        known.ref,
+        compose.allProps,
+      )
     }
 
     return render({

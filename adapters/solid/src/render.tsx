@@ -129,6 +129,11 @@ function mergeComposedProps(withProps: UnknownProps, innerProps: UnknownProps): 
  * this component's own tag/DOM props directly (mirroring `render()`'s own intrinsic-path
  * computation) rather than calling `render()` itself, since the merge has to happen *before* the
  * final `<Dynamic>` is created, not after.
+ *
+ * `allProps` additionally spreads this component's own raw `rest` props onto `withComponent`
+ * (before the `asChild`/`ref` it's always given, so those two still win) so `withComponent`'s own
+ * contract can resolve variants/`compounds` against them — opt-in, mirroring the same
+ * `compose.allProps` flag on every other adapter.
  */
 export function renderComposed<TProps extends KnownProps>(
   withComponent: unknown,
@@ -136,6 +141,7 @@ export function renderComposed<TProps extends KnownProps>(
   props: TProps,
   filterProps: FilterPredicate,
   ref: unknown,
+  allProps?: boolean,
 ): SolidElement {
   const [knownRaw, rest] = splitProps(props, SPLIT_KEYS)
   const known = knownRaw as unknown as KnownProps
@@ -163,7 +169,7 @@ export function renderComposed<TProps extends KnownProps>(
 
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <Dynamic component={withComponent as any} asChild ref={ref}>
+    <Dynamic component={withComponent as any} {...(allProps ? rest : undefined)} asChild ref={ref}>
       {(withProps: UnknownProps) => (
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         <Dynamic component={tag() as any} {...(mergeComposedProps(withProps, domProps()) as any)} />

@@ -144,10 +144,13 @@ export function createContractComponent<
 
     // See `current/create-contract-component.ts`'s identical block for the full explanation —
     // `compose` makes this component always render `asChild` into `compose.with` unless the
-    // consumer already took explicit control via their own `asChild`/`render`.
+    // consumer already took explicit control via their own `asChild`/`render`. `compose.allProps`
+    // additionally spreads this component's own raw props onto `with` (before the
+    // `asChild`/`ref`/`children` overrides, so those three always win) — opt-in.
     if (compose?.with !== undefined && props.asChild === undefined && !isFunction(props.render)) {
       const innerElement = render({ ...bundle, props, ref: null })
       return createElement(compose.with as ComponentType<UnknownProps>, {
+        ...(compose.allProps ? props : undefined),
         asChild: true,
         ref: mergedRef,
         children: innerElement,

@@ -164,10 +164,15 @@ export function createContractComponent<
      * rendered as an ordinary element with `asChild: true`, so `with`'s own generated component
      * runs its own `render()` pipeline from here, exactly as it already does for a hand-written
      * nested `asChild` call (including its own `allowedAs`/`nativeTagBehavior` checks).
+     * `compose.allProps` additionally spreads this component's own raw props onto `with` (before
+     * the `asChild`/`ref`/`children` overrides below, so those three always win) — opt-in, since
+     * it lets `with`'s own contract resolve variants/`compounds` against props it wasn't
+     * necessarily written to expect.
      */
     if (compose?.with !== undefined && props.asChild === undefined && !isFunction(props.render)) {
       const innerElement = render({ ...bundle, props, ref: null })
       return createElement(compose.with as ComponentType<UnknownProps>, {
+        ...(compose.allProps ? props : undefined),
         asChild: true,
         ref: mergedRef ?? null,
         children: innerElement,

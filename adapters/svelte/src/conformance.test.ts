@@ -46,7 +46,7 @@ const adapter: ConformanceAdapter<SvelteComponent> = {
     const compose = options.compose
     const unwrappedOptions =
       compose !== undefined
-        ? { ...options, compose: { with: (compose.with as SvelteComponent)._bundle } }
+        ? { ...options, compose: { ...compose, with: (compose.with as SvelteComponent)._bundle } }
         : options
     const bundle = createContractComponent(unwrappedOptions as BareFactoryOptions) as AnyBuiltRuntime
     return {
