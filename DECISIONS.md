@@ -3675,3 +3675,16 @@ package itself is healthier than at `v1.0.0` (three releases shipped on schedule
 dependency-upgrade cadence, growing adapter parity) but that's maintenance velocity, not adoption —
 Sponsors needs the latter. **Revisit trigger unchanged:** a star/issue/PR from a non-maintainer
 account, or the next version tag.
+
+### GitHub Sponsors — still not yet, reassessed at `v1.2.0` (2026-10-13)
+
+Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule. Conclusion unchanged from the
+`v1.1.2` reassessment above: **not yet**, and the revisit trigger still hasn't fired — checked
+directly (`gh api repos/.../praxis-kit`, `gh issue list`, `gh pr list`, 2026-10-13): 0 stars, 0
+forks, 0 watchers, no external issues, and the only non-maintainer PRs are five Dependabot
+dependency bumps (not community contributions). `npm` downloads for the trailing month sit at 513
+(`api.npmjs.org`, 2026-09-13 → 2026-10-12) — flat versus the 523 recorded at `v1.1.2`, still
+indistinguishable from registry-mirror/CI noise. Shipped since the last reassessment: `v1.2.0`
+(`compose.allProps` cross-adapter feature plus a dedicated merge-semantics audit and fix pass) —
+real engineering progress, but adoption signals haven't moved. **Revisit trigger unchanged:** a
+star/issue/PR from a non-maintainer account, or the next version tag.
