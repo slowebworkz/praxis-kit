@@ -1,9 +1,4 @@
-import {
-  applyFilter,
-  mergeClassNames,
-  mergeSlotProps,
-  resolveNormalizedProps,
-} from '@praxis-kit/adapter-utils'
+import { applyFilter, mergeSlotProps, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
 import { isString } from '@praxis-kit/guards'
@@ -108,19 +103,6 @@ function tryRenderAsChild(
 }
 
 /**
- * `mergeSlotProps` special-cases `className` (React/Preact's prop name) for concatenation —
- * Solid (like Vue) uses `class` instead, which falls through `mergeSlotProps`'s own policy as an
- * ordinary "child wins" key rather than concatenating. `mergeSlotProps` otherwise already does
- * the right thing for every other key (chained handlers, shallow-merged `style`, child-wins
- * elsewhere), so this only overrides the one key it gets wrong for this adapter's prop naming.
- */
-function mergeComposedProps(withProps: UnknownProps, innerProps: UnknownProps): UnknownProps {
-  const merged = mergeSlotProps(withProps, innerProps)
-  const mergedClass = mergeClassNames(withProps['class'], innerProps['class'])
-  return { ...merged, ...(mergedClass && { class: mergedClass }) }
-}
-
-/**
  * Renders `compose`'s synthesized composition: `withComponent` always as if given an `asChild`
  * render callback whose output is this component's own normal (non-`asChild`) output, merged
  * with whatever slot props `withComponent` hands back — the Solid-native equivalent of the
@@ -129,6 +111,14 @@ function mergeComposedProps(withProps: UnknownProps, innerProps: UnknownProps): 
  * this component's own tag/DOM props directly (mirroring `render()`'s own intrinsic-path
  * computation) rather than calling `render()` itself, since the merge has to happen *before* the
  * final `<Dynamic>` is created, not after.
+ *
+ * `allProps` additionally spreads this component's own raw props onto `withComponent` (minus
+ * `asChild`/`ref`/`children`, which it's always given explicitly below, so those three still
+ * win) so `withComponent`'s own contract can resolve variants/`compounds` against them — opt-in,
+ * mirroring the same `compose.allProps` flag on every other adapter. Deliberately the *full*
+ * prop set, not `rest` (which also excludes `as`/`class`/`recipe` — correct for this function's
+ * own intrinsic-path rendering below, but those three are ordinary forwardable props from
+ * `withComponent`'s point of view, and every other adapter's `allProps` forwards them too).
  */
 export function renderComposed<TProps extends KnownProps>(
   withComponent: unknown,
@@ -136,9 +126,14 @@ export function renderComposed<TProps extends KnownProps>(
   props: TProps,
   filterProps: FilterPredicate,
   ref: unknown,
+  allProps?: boolean,
 ): SolidElement {
   const [knownRaw, rest] = splitProps(props, SPLIT_KEYS)
   const known = knownRaw as unknown as KnownProps
+  // `splitProps`, not plain destructuring — Solid's props are reactive proxies, and destructuring
+  // one directly (outside a tracking scope) would read it eagerly and break that reactivity, the
+  // same reason `known`/`rest` above go through `splitProps` rather than `const { as, ... } = props`.
+  const [, forwardableProps] = splitProps(props, ['asChild', 'ref', 'children'])
 
   const tag = createMemo(() => resolveTag(runtime, known.as))
   const mergedProps = createMemo(() => runtime.resolveProps(rest as UnknownProps))
@@ -163,10 +158,10 @@ export function renderComposed<TProps extends KnownProps>(
 
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <Dynamic component={withComponent as any} asChild ref={ref}>
+    <Dynamic component={withComponent as any} {...(allProps ? forwardableProps : undefined)} asChild ref={ref}>
       {(withProps: UnknownProps) => (
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        <Dynamic component={tag() as any} {...(mergeComposedProps(withProps, domProps()) as any)} />
+        <Dynamic component={tag() as any} {...(mergeSlotProps(withProps, domProps()) as any)} />
       )}
     </Dynamic>
   ) as unknown as SolidElement

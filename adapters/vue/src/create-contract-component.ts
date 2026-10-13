@@ -143,9 +143,15 @@ export function createContractComponent<
         // `innerVNode` is this component's own normal-mode output (computed above exactly as it
         // already is today); `with` is then rendered as an ordinary Vue component with
         // `asChild: true`, so `with`'s own generated component runs its own `render()` from here,
-        // exactly as it already does for a hand-written nested `asChild` call.
+        // exactly as it already does for a hand-written nested `asChild` call. `compose.allProps`
+        // additionally spreads this component's own raw `attrs` onto `with` (before the
+        // `asChild` override, so that always wins) — opt-in.
         if (compose?.with !== undefined && attrs['asChild'] === undefined) {
-          return h(compose.with as VueComponent, { asChild: true }, { default: () => innerVNode })
+          return h(
+            compose.with as VueComponent,
+            { ...(compose.allProps ? attrs : undefined), asChild: true },
+            { default: () => innerVNode },
+          )
         }
 
         return innerVNode
