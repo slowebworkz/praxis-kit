@@ -1,27 +1,27 @@
 {
-  "generated": "2026-10-05T17:28:09.261Z",
+  "generated": "2026-10-13T00:52:30.224Z",
   "bundles": {
-    "package/contract-only": 960,
-    "package/guards-only": 356,
-    "package/html-only": 8638,
-    "package/lit-minimal": 21337,
-    "package/preact-minimal": 22504,
-    "package/react-minimal": 22754,
-    "package/solid-minimal": 21464,
+    "package/contract-only": 8450,
+    "package/guards-only": 7837,
+    "package/html-only": 23385,
+    "package/lit-minimal": 36124,
+    "package/preact-minimal": 37433,
+    "package/react-minimal": 37768,
+    "package/solid-minimal": 36342,
     "package/utils-only": 118,
-    "package/vue-minimal": 22044,
-    "package/web-minimal": 21303,
-    "source/aria-only": 22011,
-    "source/contracts-only": 22076,
-    "source/full-runtime": 22236,
-    "source/minimal-polymorphic": 21948,
+    "package/vue-minimal": 36946,
+    "package/web-minimal": 36092,
+    "source/aria-only": 31400,
+    "source/contracts-only": 31466,
+    "source/full-runtime": 31630,
+    "source/minimal-polymorphic": 31355,
     "source/pk2-engine-only": 793,
-    "source/polymorphic-validation": 22033,
-    "source/preact-minimal": 21706,
-    "source/react-minimal": 21948,
-    "source/solid-minimal": 20612,
-    "source/svelte-minimal": 19409,
-    "source/vue-minimal": 21281
+    "source/polymorphic-validation": 31422,
+    "source/preact-minimal": 31048,
+    "source/react-minimal": 31355,
+    "source/solid-minimal": 29880,
+    "source/svelte-minimal": 28694,
+    "source/vue-minimal": 30582
   },
   "architecture": {
     "status": "CLEAN",
@@ -36,7 +36,7 @@
         "types": 0
       },
       "@praxis-kit/contract": {
-        "values": 32,
+        "values": 33,
         "types": 39
       },
       "@praxis-kit/contract-props": {
@@ -45,7 +45,7 @@
       },
       "@praxis-kit/core": {
         "values": 84,
-        "types": 115
+        "types": 117
       },
       "@praxis-kit/diagnostics": {
         "values": 19,
@@ -56,7 +56,11 @@
         "types": 0
       },
       "@praxis-kit/foundation": {
-        "values": 19,
+        "values": 7,
+        "types": 5
+      },
+      "@praxis-kit/guards": {
+        "values": 39,
         "types": 5
       },
       "@praxis-kit/lit": {
@@ -68,7 +72,7 @@
         "types": 11
       },
       "@praxis-kit/pipeline-kit": {
-        "values": 4,
+        "values": 3,
         "types": 10
       },
       "@praxis-kit/playwright": {
@@ -77,15 +81,15 @@
       },
       "@praxis-kit/preact": {
         "values": 2,
-        "types": 10
+        "types": 11
       },
       "@praxis-kit/primitive": {
-        "values": 70,
-        "types": 141
+        "values": 31,
+        "types": 139
       },
       "@praxis-kit/react": {
         "values": 3,
-        "types": 13
+        "types": 14
       },
       "@praxis-kit/runtime": {
         "values": 8,
@@ -93,7 +97,7 @@
       },
       "@praxis-kit/solid": {
         "values": 1,
-        "types": 11
+        "types": 12
       },
       "@praxis-kit/styling": {
         "values": 8,
@@ -117,7 +121,7 @@
       },
       "@praxis-kit/vue": {
         "values": 2,
-        "types": 10
+        "types": 11
       },
       "@praxis-kit/web": {
         "values": 2,
@@ -127,14 +131,14 @@
   },
   "complexity": {
     "lib/primitive": {
-      "files": 137,
-      "functions": 51,
-      "loc": 2476
+      "files": 120,
+      "functions": 15,
+      "loc": 2118
     },
     "lib/diagnostics": {
       "files": 18,
       "functions": 23,
-      "loc": 453
+      "loc": 450
     },
     "lib/contract-props": {
       "files": 5,
@@ -143,8 +147,8 @@
     },
     "lib/contract": {
       "files": 53,
-      "functions": 126,
-      "loc": 2527
+      "functions": 128,
+      "loc": 2553
     },
     "lib/styling": {
       "files": 18,
@@ -154,12 +158,12 @@
     "lib/tailwind": {
       "files": 15,
       "functions": 25,
-      "loc": 612
+      "loc": 613
     },
     "lib/pipeline-kit": {
-      "files": 8,
-      "functions": 5,
-      "loc": 143
+      "files": 7,
+      "functions": 4,
+      "loc": 117
     },
     "lib/runtime": {
       "files": 22,
@@ -168,13 +172,13 @@
     },
     "lib/adapter-utils": {
       "files": 49,
-      "functions": 53,
-      "loc": 2466
+      "functions": 54,
+      "loc": 2604
     },
     "packages/core": {
       "files": 74,
       "functions": 60,
-      "loc": 2565
+      "loc": 2559
     }
   }
 }
