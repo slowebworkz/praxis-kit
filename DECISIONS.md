@@ -3466,6 +3466,21 @@ list. No mitigation implemented — noting it here, with the full list above, so
 immediately (not re-debugged as a fresh credentials issue) if it recurs. If this happens a third
 time, stop guessing and jump to `8.0.0`.
 
+**Third occurrence (2026-10-12): happened exactly as predicted, resolved by probing, not by
+jumping.** The next `changeset`-computed bump from `1.0.3` was `1.1.0` (minor) — landing squarely
+on a _known_-blocked number from the list above, not even a fresh hidden one. Re-reading this
+entry's own "if this happens a third time, stop guessing and jump to `8.0.0`" literally would have
+meant a major-version jump for a release with zero breaking changes — reconsidered: the old line's
+visible history jumps straight from `1.1.1` to `2.0.0`, meaning nothing between them was ever
+published, so `1.1.2` was almost certainly free without guessing blindly. Published as `1.1.2`
+instead — same incremental-probing approach as the original `1.0.0`/`1.0.1` → `1.0.2` resolution,
+preserving the real semver meaning (still a minor-level bump) instead of a major-version number
+that would have falsely signaled breaking changes and contradicted `docs/api-stability.md`'s "1.x"
+framing. **Revised guidance:** before jumping to `8.0.0`, always check whether the old line's
+_next_ visible version after the collision is a different major (as it was here) — that gap is
+very likely unpublished-and-safe, and probing it first avoids an unnecessarily large, misleading
+version jump. Only fall back to `8.0.0` if that gap number _also_ collides.
+
 ### Runtime performance audit — caches, Proxy, and the fresh-component cost (2026-10-05)
 
 A benchmark-driven review of the runtime's caching and the case for `Proxy`. Numbers come from
