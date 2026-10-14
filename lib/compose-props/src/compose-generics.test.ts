@@ -148,6 +148,7 @@ describe('ContractGenericsWithComposeOf against real FactoryOptions-shaped contr
       name: 'Surface',
       props: undefined as unknown as { radius: 'sm' | 'lg' },
     } satisfies FactoryOptions
+    void surfaceContract
     type SurfaceContract = typeof surfaceContract
     type SurfaceComponent = BuiltComponent<SurfaceContract>
 

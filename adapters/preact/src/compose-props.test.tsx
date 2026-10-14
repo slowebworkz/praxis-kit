@@ -36,6 +36,7 @@ const cardOptions = {
   compose: { allProps: true, with: Surface },
 } satisfies PreactFactoryOptions
 const Card = createContractComponent(cardOptions)
+void Card
 type CardContract = typeof cardOptions
 
 describe('ContractProps<typeof Card> through the real, wired extraction path', () => {
@@ -85,6 +86,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       props: undefined as unknown as { label?: string },
     } satisfies PreactFactoryOptions
     const Plain = createContractComponent(plainOptions)
+    void Plain
 
     type HasOnlyLabel = keyof Pick<ContractProps<typeof Plain>, 'label'>
     expectTypeOf<HasOnlyLabel>().toEqualTypeOf<'label'>()
@@ -115,6 +117,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       compose: { allProps: true, with: SurfaceComposingBase },
     } satisfies PreactFactoryOptions
     const NestedCard = createContractComponent(nestedCardOptions)
+    void NestedCard
 
     type HasVariant = 'variant' extends keyof ContractProps<typeof NestedCard> ? true : false
     type HasRadius = 'radius' extends keyof ContractProps<typeof NestedCard, 'asChild'>
@@ -141,6 +144,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       compose: { allProps: true, with: CollidingSurface },
     } satisfies PreactFactoryOptions
     const CollidingCard = createContractComponent(collidingCardOptions)
+    void CollidingCard
 
     type RadiusType = ContractProps<typeof CollidingCard>['radius']
     expectTypeOf<RadiusType>().toEqualTypeOf<CollisionError<'radius'> | undefined>()
@@ -168,6 +172,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       compose: { allProps: false, with: NoForwardSurface },
     } satisfies PreactFactoryOptions
     const NoForwardCard = createContractComponent(noForwardCardOptions)
+    void NoForwardCard
 
     type HasRadius = 'radius' extends keyof ContractProps<typeof NoForwardCard> ? true : false
     expectTypeOf<HasRadius>().toEqualTypeOf<false>()
@@ -198,6 +203,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       compose: { allProps: true, with: VariantCollidingSurface },
     } satisfies PreactFactoryOptions
     const VariantCollidingCard = createContractComponent(variantCollidingCardOptions)
+    void VariantCollidingCard
 
     type HasSize = 'size' extends keyof ContractProps<typeof VariantCollidingCard> ? true : false
     type HasColor = 'color' extends keyof ContractProps<typeof VariantCollidingCard>

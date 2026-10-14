@@ -46,6 +46,7 @@ const cardOptions = {
   compose: { allProps: true, with: Surface },
 } satisfies ReactFactoryOptions
 const Card = createContractComponent(cardOptions)
+void Card
 type CardContract = typeof cardOptions
 
 describe('ContractProps<typeof Card> through the real, wired extraction path', () => {
@@ -112,6 +113,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       props: undefined as unknown as { label?: string },
     } satisfies ReactFactoryOptions
     const Plain = createContractComponent(plainOptions)
+    void Plain
 
     type HasOnlyLabel = keyof Pick<ContractProps<typeof Plain>, 'label'>
     expectTypeOf<HasOnlyLabel>().toEqualTypeOf<'label'>()
@@ -150,6 +152,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       compose: { allProps: true, with: SurfaceComposingBase },
     } satisfies ReactFactoryOptions
     const NestedCard = createContractComponent(nestedCardOptions)
+    void NestedCard
 
     // All three levels' own props reach the outermost component's real ContractProps, checked
     // against all three render modes this type supports (normal/asChild/render) -- not just the
@@ -201,6 +204,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       compose: { allProps: true, with: CollidingSurface },
     } satisfies ReactFactoryOptions
     const CollidingCard = createContractComponent(collidingCardOptions)
+    void CollidingCard
 
     // (2) The collision is recorded as a diagnostic value at that one key, reachable through the
     // real public ContractProps<T> extraction path...
@@ -232,6 +236,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       compose: { allProps: false, with: NoForwardSurface },
     } satisfies ReactFactoryOptions
     const NoForwardCard = createContractComponent(noForwardCardOptions)
+    void NoForwardCard
 
     type HasRadius = 'radius' extends keyof ContractProps<typeof NoForwardCard> ? true : false
     expectTypeOf<HasRadius>().toEqualTypeOf<false>()
@@ -264,6 +269,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       compose: { allProps: true, with: VariantCollidingSurface },
     } satisfies ReactFactoryOptions
     const VariantCollidingCard = createContractComponent(variantCollidingCardOptions)
+    void VariantCollidingCard
 
     // Non-colliding variant keys from both sides still reach the real ContractProps, same as
     // the standalone helper's own "variants collision" test already proved in isolation --

@@ -61,8 +61,7 @@ type MergeComposedValue<Own, Composed, K extends PropertyKey> = K extends keyof 
  *  by a real-component test (`adapters/react/src/current/compose-props.test.tsx`) once an actual
  *  contract used an optional prop, which every one of this package's own earlier (required-only)
  *  test fixtures had never exercised. */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- the empty-object-literal
-// idiom for "this key can be omitted", not a real empty-interface declaration
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- the empty-object-literal idiom for "this key can be omitted", not a real empty-interface declaration
 type OptionalKeysOf<T> = { [K in keyof T]-?: {} extends Pick<T, K> ? K : never }[keyof T]
 
 /** Whether `K` is optional *as declared on `T` specifically* — `true` both when `T` marks it

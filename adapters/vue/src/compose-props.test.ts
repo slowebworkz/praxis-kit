@@ -52,6 +52,7 @@ const cardOptions = {
   compose: { allProps: true, with: Surface },
 } satisfies VueFactoryOptions
 const Card = createContractComponent(cardOptions)
+void Card
 type CardContract = typeof cardOptions
 
 describe('ContractProps<typeof Card> through the real, wired extraction path', () => {
@@ -97,6 +98,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       props: undefined as unknown as { label?: string },
     } satisfies VueFactoryOptions
     const Plain = createContractComponent(plainOptions)
+    void Plain
 
     type HasOnlyLabel = keyof Pick<ContractProps<typeof Plain>, 'label'>
     expectTypeOf<HasOnlyLabel>().toEqualTypeOf<'label'>()
@@ -127,6 +129,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       compose: { allProps: true, with: SurfaceComposingBase },
     } satisfies VueFactoryOptions
     const NestedCard = createContractComponent(nestedCardOptions)
+    void NestedCard
 
     type HasVariant = 'variant' extends keyof NamedKeysOf<ContractProps<typeof NestedCard>> ? true : false
     type HasRadius = 'radius' extends keyof NamedKeysOf<ContractProps<typeof NestedCard>> ? true : false
@@ -151,6 +154,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       compose: { allProps: true, with: CollidingSurface },
     } satisfies VueFactoryOptions
     const CollidingCard = createContractComponent(collidingCardOptions)
+    void CollidingCard
 
     type RadiusType = ContractProps<typeof CollidingCard>['radius']
     expectTypeOf<RadiusType>().toEqualTypeOf<CollisionError<'radius'> | undefined>()
@@ -178,6 +182,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       compose: { allProps: false, with: NoForwardSurface },
     } satisfies VueFactoryOptions
     const NoForwardCard = createContractComponent(noForwardCardOptions)
+    void NoForwardCard
 
     type HasRadius = 'radius' extends keyof NamedKeysOf<ContractProps<typeof NoForwardCard>>
       ? true
@@ -210,6 +215,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       compose: { allProps: true, with: VariantCollidingSurface },
     } satisfies VueFactoryOptions
     const VariantCollidingCard = createContractComponent(variantCollidingCardOptions)
+    void VariantCollidingCard
 
     type HasSize = 'size' extends keyof NamedKeysOf<ContractProps<typeof VariantCollidingCard>>
       ? true
