@@ -78,7 +78,7 @@ catalog:
   unplugin-solid: ^2.0.0
 
   # Svelte
-  svelte: ^5.57.0
+  svelte: ^5.57.2
 
   # Architecture tooling
   ts-morph: ^28.0.0
