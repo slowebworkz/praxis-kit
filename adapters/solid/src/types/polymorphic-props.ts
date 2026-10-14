@@ -3,7 +3,6 @@ import type { OmitIndexSignature, Simplify } from 'type-fest'
 import type {
   AllowedOf,
   ClassName,
-  ContractGenericsOf,
   DefaultOf,
   ElementType,
   FactoryOptions,
@@ -16,6 +15,7 @@ import type {
 } from '@praxis-kit/core'
 import type { StringMap } from '@praxis-kit/primitive'
 import type { HasContract } from '@praxis-kit/contract-props'
+import type { ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
 import type { SolidElement, UnknownProps } from './primitives'
 
 export type ElementRef<T extends ElementType> = T extends IntrinsicTag
@@ -161,10 +161,16 @@ export type CompoundComponent<
  * no *forced* reason for a marker. Unified to `ContractProps<typeof Component>` now that
  * `__contract` exists anyway (Phase 3 retention, needed regardless of this decision), mirroring
  * Vue's identical Phase 4 decision for the identical reason.
+ *
+ * Projects `G` via `ContractGenericsWithComposeOf<C>` (`@praxis-kit/compose-props`), not the
+ * plainer `ContractGenericsOf<C>` — folds a `compose.with` partner's props/variants in when
+ * `allProps: true`, falling back to the same projection `createContractComponent`'s own return
+ * type uses when there's nothing to compose. Mirrors React's/Preact's/Vue's identical wiring;
+ * see `docs/design/compose-props-typing.md`.
  */
 export type ContractProps<T extends HasContract<FactoryOptions>> =
   T extends HasContract<infer C extends FactoryOptions>
-    ? ContractGenericsOf<C> extends infer G extends PolymorphicGenerics
+    ? ContractGenericsWithComposeOf<C> extends infer G extends PolymorphicGenerics
       ? PolymorphicProps<G>
       : never
     : never

@@ -2,9 +2,9 @@
 "praxis-kit": minor
 ---
 
-`ContractProps<T>` (React — current and legacy — Preact, and Vue) now reflects what a component
-actually forwards when it declares `compose: { with, allProps: true }`. A composing component's
-extracted props previously only ever included its own contract — `with`'s forwarded
+`ContractProps<T>` (React — current and legacy — Preact, Vue, and Solid) now reflects what a
+component actually forwards when it declares `compose: { with, allProps: true }`. A composing
+component's extracted props previously only ever included its own contract — `with`'s forwarded
 props/variants were reachable at runtime but invisible to the type system, so a type-safe
 consumer had no way to pass them without `as any`.
 
@@ -19,4 +19,4 @@ be checked first.
 
 Svelte is not included — its extraction mechanism retains only the already-projected generics,
 never the full contract `compose` lives on, so there is no type-only path to the same fix there.
-Solid and Lit/Web are not yet assessed.
+Lit/Web are out of scope (`compose` has no effect on either).

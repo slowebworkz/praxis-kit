@@ -1,8 +1,9 @@
 # Design proposal: compose-aware prop typing
 
 **Status:** implemented in `lib/compose-props` (`@praxis-kit/compose-props`) and wired into
-React, Preact, and Vue's `ContractProps`. Svelte is confirmed blocked without a runtime-shape
-change (not merely unverified); Solid and Lit/Web remain — see "Next steps" and section 6.
+React, Preact, Vue, and Solid's `ContractProps`. Svelte is confirmed blocked without a
+runtime-shape change (not merely unverified); Lit/Web are out of scope by design — see "Next
+steps" and section 6.
 
 ## 1. Problem statement and precedent
 
@@ -337,9 +338,19 @@ not an invented ownership model:
   `BuiltRuntime` (undoing the "no marker needed" design the current approach is built on) or a
   changed return-type shape threading `C` through inferably — a real runtime-bundle-shape
   change, not a type-only swap in a `ContractProps`-equivalent file (Svelte doesn't have one to
-  swap in the first place, since `GenericsOf<T>` is the whole mechanism). Solid was not
-  separately investigated in this pass — audit it independently before assuming it shares
-  Svelte's shape or React's.
+  swap in the first place, since `GenericsOf<T>` is the whole mechanism).
+- **Solid — done.** `adapters/solid/src/types/polymorphic-props.ts`: investigated independently
+  (not assumed to share Svelte's shape or React's) and confirmed, by reading the actual source,
+  that Solid's `PolymorphicComponent<G, C>` carries `readonly __contract?: C` and
+  `createContractComponent`'s return type threads the full `C` through inferably — the identical
+  `HasContract`/`__contract` mechanism React/Preact/Vue use, and the opposite of Svelte's
+  `BuiltRuntime<G, TOptions>` (where `TOptions` is only ever a conditional-type scrutinee, never
+  stored). `compose` is live runtime data there too (`renderComposed`, `adapters/solid/src/render.tsx`).
+  Same pre-change `ContractGenericsOf<C>` projection, same safe swap, same validation coverage
+  (adapted for Solid's `ContractProps<T>` having no `Mode` parameter, same reason as Vue — Solid's
+  `PolymorphicProps<G>` already folds both render modes into one unioned type). `OmitIndexSignature`
+  is already applied to `PropsOf<G>` in Solid's own `ControlProps`, so it does not share Vue's
+  index-signature test wrinkle.
 - **Lit, Web**: explicitly out of scope. `ComposeOptions`'s own doc comment states `compose` has
   no effect on these adapters — no `asChild` concept exists for either. Documented as a non-goal,
   not an oversight.
@@ -459,11 +470,11 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
   `pnpm --filter @praxis-kit/compose-props typecheck && test` passes (9/9 as of this writing; the
   count will keep growing as regressions get their own named test), and a full workspace
   `pnpm -r typecheck` confirms no existing component's `ContractProps<T>` extraction changed.
-  **Now true, not aspirational:** `ContractProps<T>` in React, Preact, and Vue
-  (`adapters/{react,preact,vue}/src/.../polymorphic-props.ts`) all consume
+  **Now true, not aspirational:** `ContractProps<T>` in React, Preact, Vue, and Solid
+  (`adapters/{react,preact,vue,solid}/src/.../polymorphic-props.ts`) all consume
   `ContractGenericsWithComposeOf<C>` directly — `praxis-components`' `CardProps` pattern can drop
   its hand-extension once it upgrades to a release containing this change. Svelte is confirmed
-  blocked (section 6); Solid and Lit/Web remain (see "Next steps").
+  blocked (section 6); Lit/Web are out of scope by design.
 
 ## Alternatives considered
 
@@ -495,8 +506,8 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
 4. ~~Decide the collision-validation acceptance criterion.~~ Done — section 8's own entry: a
    downstream diagnostic, not declaration-site rejection, locked in by a dedicated test.
 5. ~~Add a real-component integration test for nested composition.~~ Done — `Card → Surface →
-   Base` validated through the real public `ContractProps` extraction path in React, Preact, and
-   Vue.
+   Base` validated through the real public `ContractProps` extraction path in React, Preact,
+   Vue, and Solid.
 6. ~~Audit Svelte's extraction path.~~ Done — confirmed blocked, not merely unverified (section 6
    has the full investigation). Reaching `compose` there needs a runtime-bundle-shape change
    (threading `C` itself through `createContractComponent`'s return type, or a new marker field),
@@ -505,5 +516,9 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
    pre-change `ContractGenericsOf<C>` projection, same safe swap, validated independently per
    adapter rather than assumed. Vue surfaced one adapter-specific, pre-existing test wrinkle
    (section 6) unrelated to this change's own correctness.
-8. **Remaining:** audit Solid independently before assuming it shares Svelte's blocked shape or
-   React/Preact/Vue's safe-swap shape — not yet investigated in this pass.
+8. ~~Audit Solid independently.~~ Done — confirmed safe, same mechanism as React/Preact/Vue, not
+   Svelte's blocked shape. Swapped and validated the same way; no Vue-style index-signature
+   wrinkle (Solid's own `ControlProps` already applies `OmitIndexSignature`).
+9. **Remaining:** Lit/Web are out of scope by design (`ComposeOptions`'s own doc comment — no
+   `asChild` concept exists for either). No further adapters to assess; this proposal's rollout
+   is complete modulo Svelte's separately-tracked runtime-shape decision.

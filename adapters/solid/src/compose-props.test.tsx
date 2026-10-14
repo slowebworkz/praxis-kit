@@ -1,0 +1,212 @@
+/**
+ * Real-component validation for the actual public extraction path, `ContractProps<T>`
+ * (`adapters/solid/src/types/polymorphic-props.ts`), now wired to
+ * `ContractGenericsWithComposeOf<C>` (`@praxis-kit/compose-props`) instead of plain
+ * `ContractGenericsOf<C>` — mirrors `adapters/react/src/current/compose-props.test.tsx`, adapted
+ * for Solid's own `ContractProps<T>` shape (no `Mode` parameter — `PolymorphicProps<G>` already
+ * folds both render modes into one unioned type, the same reason Vue's `ContractProps<T>` has no
+ * `Mode` parameter either).
+ *
+ * `satisfies SolidFactoryOptions` is not just documentation here — confirmed elsewhere in this
+ * change by direct bisection that without it, `ContractAllowedOf<C>` resolves differently inside
+ * `ContractGenericsWithComposeOf`'s own self-referential conditional than it does for the
+ * identical object checked this way (a fresh-literal-vs-checked-literal TypeScript quirk around
+ * recursive conditional types). Always author contracts this way when feeding them to
+ * `ContractGenericsWithComposeOf` (directly or via `ContractProps`).
+ *
+ * `expectTypeOf().toEqualTypeOf()` is used for every object-shaped comparison rather than
+ * `@ts-expect-error` against a literal assignment: confirmed directly (in the React adapter's own
+ * version of this file) that excess-property checking does not reliably fire against these
+ * conditional-type-derived prop shapes, so an extra/missing key check needs an exact
+ * `keyof`/value comparison to be trustworthy. Plain union comparisons (`as`) don't have this
+ * problem and use a direct assignment where it reads more naturally.
+ *
+ * No runtime assertions are made. These tests exist to catch type regressions.
+ */
+import { describe, it, expectTypeOf } from 'vitest'
+import type { SolidFactoryOptions } from './solid-options'
+import { createContractComponent } from './create-contract-component'
+import type { ContractProps, PolymorphicWithAllowedAs } from './types'
+import type { CollisionError, ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
+
+const surfaceOptions = {
+  tag: 'div',
+  name: 'Surface',
+  props: undefined as unknown as { radius?: 'sm' | 'lg' },
+  styling: { variants: { shadow: { true: 'shadow-sm', false: 'shadow-none' } } },
+} satisfies SolidFactoryOptions
+const Surface = createContractComponent(surfaceOptions)
+
+const cardOptions = {
+  tag: 'section',
+  name: 'Card',
+  props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+  enforcement: { allowedAs: ['section', 'article'] as const },
+  compose: { allProps: true, with: Surface },
+} satisfies SolidFactoryOptions
+const Card = createContractComponent(cardOptions)
+type CardContract = typeof cardOptions
+
+describe('ContractProps<typeof Card> through the real, wired extraction path', () => {
+  it('(1) ContractProps<typeof Card> now sees Surface’s forwarded props', () => {
+    type HasRadius = 'radius' extends keyof ContractProps<typeof Card> ? true : false
+    expectTypeOf<HasRadius>().toEqualTypeOf<true>()
+  })
+
+  it('(2) exact own-key values through the real ContractProps<typeof Card>', () => {
+    type OwnKeys = 'variant' | 'radius' | 'shadow'
+    type Picked = Pick<ContractProps<typeof Card>, OwnKeys>
+    expectTypeOf<Picked>().toEqualTypeOf<{
+      variant?: 'elevated' | 'flat'
+      radius?: 'sm' | 'lg'
+      shadow?: boolean
+    }>()
+  })
+
+  it('(3a) `as` still only accepts Card’s own default tag through ContractProps, unchanged by composing', () => {
+    const asSection: ContractProps<typeof Card>['as'] = 'section'
+    void asSection
+    // @ts-expect-error — ContractProps narrows `as` to the component's own default tag, the
+    // same ceiling PolymorphicProps<G> (single type argument) already has uncomposed
+    const _asArticle: ContractProps<typeof Card>['as'] = 'article'
+    void _asArticle
+  })
+
+  it('(3b) the full allowedAs union is still reachable via PolymorphicWithAllowedAs<G>, not ContractProps', () => {
+    type G = ContractGenericsWithComposeOf<CardContract>
+    const asSection: PolymorphicWithAllowedAs<G>['as'] = 'section'
+    const asArticle: PolymorphicWithAllowedAs<G>['as'] = 'article'
+    void asSection
+    void asArticle
+    // @ts-expect-error — 'div' is Surface's own tag, not in Card's declared allowedAs
+    const _asDiv: PolymorphicWithAllowedAs<G>['as'] = 'div'
+    void _asDiv
+  })
+
+  it('(4) a plain, non-composing component’s ContractProps is provably unchanged by this wiring', () => {
+    const plainOptions = {
+      tag: 'div',
+      name: 'Plain',
+      props: undefined as unknown as { label?: string },
+    } satisfies SolidFactoryOptions
+    const Plain = createContractComponent(plainOptions)
+
+    type HasOnlyLabel = keyof Pick<ContractProps<typeof Plain>, 'label'>
+    expectTypeOf<HasOnlyLabel>().toEqualTypeOf<'label'>()
+    type HasRadius = 'radius' extends keyof ContractProps<typeof Plain> ? true : false
+    expectTypeOf<HasRadius>().toEqualTypeOf<false>()
+  })
+
+  it('(5) nested composition through the real extraction path: Card → Surface → Base', () => {
+    const baseOptions = {
+      tag: 'span',
+      name: 'Base',
+      props: undefined as unknown as { tone?: 'light' | 'dark' },
+    } satisfies SolidFactoryOptions
+    const Base = createContractComponent(baseOptions)
+
+    const surfaceComposingBaseOptions = {
+      tag: 'div',
+      name: 'SurfaceComposingBase',
+      props: undefined as unknown as { radius?: 'sm' | 'lg' },
+      compose: { allProps: true, with: Base },
+    } satisfies SolidFactoryOptions
+    const SurfaceComposingBase = createContractComponent(surfaceComposingBaseOptions)
+
+    const nestedCardOptions = {
+      tag: 'article',
+      name: 'NestedCard',
+      props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+      compose: { allProps: true, with: SurfaceComposingBase },
+    } satisfies SolidFactoryOptions
+    const NestedCard = createContractComponent(nestedCardOptions)
+
+    type HasVariant = 'variant' extends keyof ContractProps<typeof NestedCard> ? true : false
+    type HasRadius = 'radius' extends keyof ContractProps<typeof NestedCard> ? true : false
+    type HasTone = 'tone' extends keyof ContractProps<typeof NestedCard> ? true : false
+    expectTypeOf<HasVariant>().toEqualTypeOf<true>()
+    expectTypeOf<HasRadius>().toEqualTypeOf<true>()
+    expectTypeOf<HasTone>().toEqualTypeOf<true>()
+  })
+
+  it('(6) design decision — collision validation is a downstream diagnostic, not declaration-site rejection', () => {
+    const collidingSurfaceOptions = {
+      tag: 'div',
+      name: 'CollidingSurface',
+      props: undefined as unknown as { radius?: 'sm' | 'lg' },
+    } satisfies SolidFactoryOptions
+    const CollidingSurface = createContractComponent(collidingSurfaceOptions)
+
+    const collidingCardOptions = {
+      tag: 'article',
+      name: 'CollidingCard',
+      props: undefined as unknown as { radius?: 'thin' | 'thick' },
+      compose: { allProps: true, with: CollidingSurface },
+    } satisfies SolidFactoryOptions
+    const CollidingCard = createContractComponent(collidingCardOptions)
+
+    type RadiusType = ContractProps<typeof CollidingCard>['radius']
+    expectTypeOf<RadiusType>().toEqualTypeOf<CollisionError<'radius'> | undefined>()
+
+    function ConsumesEverythingExceptRadius(
+      props: Omit<ContractProps<typeof CollidingCard>, 'radius'>,
+    ): void {
+      void props
+    }
+    ConsumesEverythingExceptRadius({})
+  })
+
+  it('(7) regression — compose present but allProps: false leaves the partner’s props unreachable, same as no compose at all', () => {
+    const noForwardSurfaceOptions = {
+      tag: 'div',
+      name: 'NoForwardSurface',
+      props: undefined as unknown as { radius?: 'sm' | 'lg' },
+    } satisfies SolidFactoryOptions
+    const NoForwardSurface = createContractComponent(noForwardSurfaceOptions)
+
+    const noForwardCardOptions = {
+      tag: 'article',
+      name: 'NoForwardCard',
+      props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+      compose: { allProps: false, with: NoForwardSurface },
+    } satisfies SolidFactoryOptions
+    const NoForwardCard = createContractComponent(noForwardCardOptions)
+
+    type HasRadius = 'radius' extends keyof ContractProps<typeof NoForwardCard> ? true : false
+    expectTypeOf<HasRadius>().toEqualTypeOf<false>()
+  })
+
+  it('(8) a real variant collision surfaces as a diagnostic at that key; non-colliding variants on either side survive', () => {
+    const variantCollidingSurfaceOptions = {
+      tag: 'div',
+      name: 'VariantCollidingSurface',
+      styling: {
+        variants: {
+          shadow: { true: 'shadow-sm', false: 'shadow-none' },
+          size: { sm: 'text-sm', lg: 'text-lg' },
+        },
+      },
+    } satisfies SolidFactoryOptions
+    const VariantCollidingSurface = createContractComponent(variantCollidingSurfaceOptions)
+
+    const variantCollidingCardOptions = {
+      tag: 'article',
+      name: 'VariantCollidingCard',
+      styling: {
+        variants: {
+          shadow: { yes: 'shadow-yes', no: 'shadow-no' },
+          color: { red: 'text-red', blue: 'text-blue' },
+        },
+      },
+      compose: { allProps: true, with: VariantCollidingSurface },
+    } satisfies SolidFactoryOptions
+    const VariantCollidingCard = createContractComponent(variantCollidingCardOptions)
+
+    type HasSize = 'size' extends keyof ContractProps<typeof VariantCollidingCard> ? true : false
+    type HasColor = 'color' extends keyof ContractProps<typeof VariantCollidingCard>
+      ? true
+      : false
+    expectTypeOf<HasSize>().toEqualTypeOf<true>()
+    expectTypeOf<HasColor>().toEqualTypeOf<true>()
+  })
+})
