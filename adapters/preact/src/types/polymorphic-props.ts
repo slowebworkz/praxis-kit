@@ -4,7 +4,6 @@ import type { OmitIndexSignature, Simplify } from 'type-fest'
 import type {
   AllowedOf,
   ClassName,
-  ContractGenericsOf,
   DefaultOf,
   ElementType,
   FactoryOptions,
@@ -18,6 +17,7 @@ import type {
 import type { StringMap } from '@praxis-kit/primitive'
 import type { LayoutKeyName } from '@praxis-kit/tailwind'
 import type { HasContract, Mode, PickMode } from '@praxis-kit/contract-props'
+import type { ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
 
 export type ElementRef<T extends ElementType> = T extends IntrinsicTag
   ? HTMLElementTagNameMap[T]
@@ -187,6 +187,12 @@ export type CompoundComponent<
  *
  * No `'render'` mode — Preact has no render-callback render strategy, unlike React.
  *
+ * Projects `G` via `ContractGenericsWithComposeOf<C>` (`@praxis-kit/compose-props`), not the
+ * plainer `ContractGenericsOf<C>` — folds a `compose.with` partner's props/variants in when
+ * `allProps: true`, falling back to the same projection `createContractComponent`'s own return
+ * type uses when there's nothing to compose. Mirrors React's identical wiring; see
+ * `docs/design/compose-props-typing.md`.
+ *
  * ```tsx
  * const Container = createContractComponent({ tag: 'div', name: 'Container', /* ... *\/ })
  *
@@ -203,7 +209,7 @@ export type ContractProps<
   M extends Exclude<Mode, 'render'> = 'normal',
 > =
   T extends HasContract<infer C extends FactoryOptions>
-    ? ContractGenericsOf<C> extends infer G extends PolymorphicGenerics
+    ? ContractGenericsWithComposeOf<C> extends infer G extends PolymorphicGenerics
       ? PickMode<
           M,
           FlattenLayout<PolymorphicProps<G, DefaultOf<G>>>,

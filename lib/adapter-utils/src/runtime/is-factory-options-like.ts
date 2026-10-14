@@ -18,6 +18,13 @@ export const FACTORY_OPTIONS_FIELD_VALIDATORS: StringMap<(value: unknown) => boo
   tag: (v) => v === undefined || isString(v),
   name: (v) => v === undefined || isString(v),
   defaults: (v) => v === undefined || isObject(v),
+  // `props` (`declareProps<Props>()`, @praxis-kit/adapter-utils) is type-only — always
+  // `undefined` at runtime by design (see that function's own doc comment) — but its *key*
+  // being present on `options` still makes it an own enumerable property `Object.entries`
+  // walks below, so it needs an entry here too, same as every other optional field. Missing
+  // until now because no existing test actually exercised `props: declareProps<Props>()` at
+  // runtime through `createContractComponent` — confirmed by grepping the whole repo.
+  props: (v) => v === undefined || isObject(v),
   normalize: (v) => v === undefined || isFunction(v),
   styling: (v) => v === undefined || isObject(v),
   enforcement: (v) => v === undefined || isObject(v),

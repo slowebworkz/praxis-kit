@@ -9,6 +9,7 @@
     { "path": "./adapters/vue" },
     { "path": "./adapters/web" },
     { "path": "./lib/adapter-utils" },
+    { "path": "./lib/compose-props" },
     { "path": "./lib/contract" },
     { "path": "./lib/contract-props" },
     { "path": "./lib/diagnostics" },
