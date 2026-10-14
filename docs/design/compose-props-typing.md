@@ -1,8 +1,8 @@
 # Design proposal: compose-aware prop typing
 
-**Status:** implemented in `lib/compose-props` (`@praxis-kit/compose-props`), validated against
-real `FactoryOptions`-shaped contracts. Not yet wired into any adapter's `ContractProps`/
-`GenericsOf` — see "Next steps."
+**Status:** implemented in `lib/compose-props` (`@praxis-kit/compose-props`) and wired into
+React, Preact, and Vue's `ContractProps`. Svelte is confirmed blocked without a runtime-shape
+change (not merely unverified); Solid and Lit/Web remain — see "Next steps" and section 6.
 
 ## 1. Problem statement and precedent
 
@@ -291,19 +291,55 @@ not an invented ownership model:
 
 ## 6. Adapter impact assessment
 
-- **React, Preact, Vue** (clone-based `asChild`): expected to be covered by the shared
-  `lib/primitive` projection change with no further adapter-specific code, since their
-  `ContractProps`/`GenericsOf` wrappers already funnel through the shared `ContractGenericsOf`/
-  `ContractGenericsWithAllowedOf` family (confirmed identical shape for Web and Lit in this
-  investigation). **Before rollout, confirm Preact and Vue read the same shared functions** rather
-  than a parallel reimplementation — not yet verified independently.
-- **Solid, Svelte** (own render-callback/snippet composition model): need a dedicated verification
-  pass, not an assumed pass-through. Svelte's `adapters/svelte/src` has **no `__contract` field
-  anywhere** (confirmed by search) — its `createContractComponent` return type appears to retain
-  `G` as a live, inferable type parameter instead of erasing it behind a marker the way the other
-  five adapters do. This section's open item: audit whether Svelte's extraction path can reach
-  `C['compose']` at all today, or needs its own small addition before
-  `ContractGenericsWithComposeOf` means anything there.
+- **React — done.** `ContractProps<T, Mode>` (`adapters/react/src/shared/types/polymorphic-props.ts`)
+  swapped to `ContractGenericsWithComposeOf<C>`. Validated against two and three real
+  `createContractComponent` components, all three render modes, `as` narrowing in both
+  directions, a non-composing control case, and the adapter's full existing suite (zero
+  regressions). This is the reference implementation the other adapters' swaps were checked
+  against.
+- **Preact — done.** `adapters/preact/src/types/polymorphic-props.ts`: confirmed, by reading the
+  actual source (not assumed), that Preact's pre-change projection was plain `ContractGenericsOf<C>`
+  (not `ContractGenericsWithAllowedOf<C>` — that variant was React-only; Preact was already one
+  step behind React's own prior state), recovered via the identical `HasContract`/`__contract`
+  mechanism. Swapped the same way, validated the same way (real components, all available render
+  modes — Preact has no `'render'` mode to begin with — `as` narrowing, a non-composing control
+  case, nested composition, the collision decision), zero regressions in the existing suite.
+- **Vue — done, with one adapter-specific test wrinkle worth recording.** `adapters/vue/src/types/polymorphic-props.ts`:
+  same `HasContract`/`__contract` recovery, same pre-change `ContractGenericsOf<C>` projection,
+  same safe swap, same validation coverage (adapted for Vue's `ContractProps<T>` having no `Mode`
+  parameter — a flat union of both render-mode shapes, not a mode-selected single shape). One
+  real finding along the way: Vue's `ControlProps`/`NormalProps`/`AsChildProps` never strip the
+  index signature `UnknownProps` (`= AnyRecord`) intersects in, unlike React's/Preact's own
+  `ComponentProps<G> = OmitIndexSignature<PropsOf<G>>` — a pre-existing characteristic of this
+  adapter, not something this change introduced, but one that makes a bare `'key' extends keyof
+  ContractProps<T>` presence check vacuously `true` for *any* key on *any* Vue component,
+  composing or not. The adapter's own validation test wraps every such check in an explicit
+  `OmitIndexSignature` for this reason (`adapters/vue/src/compose-props.test.ts`) — confirmed,
+  by deliberately breaking the fixed version, that the unwrapped check really was a false
+  positive before the fix.
+- **Svelte — confirmed blocked, not merely unverified.** Investigated directly (not inferred):
+  Svelte's analog, `GenericsOf<T>` (`adapters/svelte/src/types/resolved-slot-props.ts`), is
+
+  ```ts
+  export type GenericsOf<T extends AnyBuiltRuntime> =
+    T extends BuiltRuntime<infer G, WithChildRules> ? G : PolymorphicGenerics
+  ```
+
+  — it recovers the already-projected `G` directly as a live type parameter (no marker needed,
+  per that type's own doc comment, since `createContractComponent` returns `BuiltRuntime<G,
+  TOptions>` un-erased), never `C` itself. `createContractComponent`'s actual return type
+  (`adapters/svelte/src/create-contract-component.ts`) is `BuiltRuntime<ContractGenericsOf<C>,
+  C>` — `C` is passed in, but `BuiltRuntime`'s own fields (`runtime`, `filterProps`,
+  `slotValidator`, `onElement`, a bare non-generic `compose?: ComposeOptions`,
+  `childrenEvaluator`) consume it only as the scrutinee of `BuiltChildrenEvaluator<TOptions>`'s
+  conditional type — never stored in an `infer`-able position. There is no field anywhere that
+  retains `C` itself. Reaching `compose` for Svelte needs either a new marker field on
+  `BuiltRuntime` (undoing the "no marker needed" design the current approach is built on) or a
+  changed return-type shape threading `C` through inferably — a real runtime-bundle-shape
+  change, not a type-only swap in a `ContractProps`-equivalent file (Svelte doesn't have one to
+  swap in the first place, since `GenericsOf<T>` is the whole mechanism). Solid was not
+  separately investigated in this pass — audit it independently before assuming it shares
+  Svelte's shape or React's.
 - **Lit, Web**: explicitly out of scope. `ComposeOptions`'s own doc comment states `compose` has
   no effect on these adapters — no `asChild` concept exists for either. Documented as a non-goal,
   not an oversight.
@@ -423,11 +459,11 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
   `pnpm --filter @praxis-kit/compose-props typecheck && test` passes (9/9 as of this writing; the
   count will keep growing as regressions get their own named test), and a full workspace
   `pnpm -r typecheck` confirms no existing component's `ContractProps<T>` extraction changed.
-  **Now true, not aspirational:** `ContractProps<T>` in the React adapter
-  (`adapters/react/src/shared/types/polymorphic-props.ts`) consumes
+  **Now true, not aspirational:** `ContractProps<T>` in React, Preact, and Vue
+  (`adapters/{react,preact,vue}/src/.../polymorphic-props.ts`) all consume
   `ContractGenericsWithComposeOf<C>` directly — `praxis-components`' `CardProps` pattern can drop
-  its hand-extension once it upgrades to a release containing this change. Other adapters are not
-  yet migrated (see "Next steps").
+  its hand-extension once it upgrades to a release containing this change. Svelte is confirmed
+  blocked (section 6); Solid and Lit/Web remain (see "Next steps").
 
 ## Alternatives considered
 
@@ -458,14 +494,16 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
    regressions). React is the reference implementation for the remaining adapters.
 4. ~~Decide the collision-validation acceptance criterion.~~ Done — section 8's own entry: a
    downstream diagnostic, not declaration-site rejection, locked in by a dedicated test.
-5. Add a real-component integration test for **nested** composition (three components,
-   `Card → Surface → Base`) through the actual public `ContractProps` extraction path — the
-   helper-level test (`lib/compose-props`'s own "step 5") proves the type function resolves
-   correctly in isolation; it doesn't yet prove the full adapter-level path preserves that for a
-   multi-level chain the way the two-component case is now proven for.
-6. Audit Svelte's extraction path per section 6 before claiming any adapter parity there — its
-   `GenericsOf<T>` has no `__contract` marker to recover a composed partner's contract from in the
-   first place, so this is a real open question, not an assumed pass-through.
-7. Only once 5 and 6 are settled, extend the same swap to Preact and Vue (same clone-based
-   `asChild` family as React) — validate each adapter's own `ContractProps` path and render modes
-   independently rather than assuming React's result transfers automatically.
+5. ~~Add a real-component integration test for nested composition.~~ Done — `Card → Surface →
+   Base` validated through the real public `ContractProps` extraction path in React, Preact, and
+   Vue.
+6. ~~Audit Svelte's extraction path.~~ Done — confirmed blocked, not merely unverified (section 6
+   has the full investigation). Reaching `compose` there needs a runtime-bundle-shape change
+   (threading `C` itself through `createContractComponent`'s return type, or a new marker field),
+   not a type-only swap — out of scope for this proposal as written.
+7. ~~Extend the swap to Preact and Vue.~~ Done — same `HasContract`/`__contract` mechanism, same
+   pre-change `ContractGenericsOf<C>` projection, same safe swap, validated independently per
+   adapter rather than assumed. Vue surfaced one adapter-specific, pre-existing test wrinkle
+   (section 6) unrelated to this change's own correctness.
+8. **Remaining:** audit Solid independently before assuming it shares Svelte's blocked shape or
+   React/Preact/Vue's safe-swap shape — not yet investigated in this pass.
