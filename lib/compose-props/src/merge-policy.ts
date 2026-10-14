@@ -1,3 +1,5 @@
+import type { OptionalKeysOf } from 'type-fest'
+
 /**
  * Type-level mirror of the runtime slot-merge policy (`classifyProp`,
  * `lib/adapter-utils/src/slot/merge-slot-props.ts`) that `compose: { with, allProps: true }`
@@ -33,69 +35,82 @@ export type ClassifyPropKey<K extends PropertyKey> = K extends 'className' | 'cl
 export type CollisionError<K extends PropertyKey> =
   `compose: '${K & string}' is declared by both this component and its composed partner with incompatible types`
 
-/** The value a merged key resolves to, independent of whether that key ends up optional or
- *  required in the final result — split out so optionality (below) can be computed separately
- *  from the value itself. */
-type MergeComposedValue<Own, Composed, K extends PropertyKey> = K extends keyof Own
+/**
+ * `CollisionError<K>` wrapped as a single-key `VariantStates`-shaped object, for use at a
+ * *variant's* value position instead of the raw string `CollisionError<K>` props use — a raw
+ * string there isn't structurally a `VariantStates` (`Record<string, VariantValue>` requires an
+ * object), which poisons the whole merged variants object, not just the colliding key (see
+ * `docs/design/compose-props-typing.md` for the confirmed failure mode and fix history). The
+ * wrapped shape keeps the surrounding object valid; `VariantKey<V, K>` (`@praxis-kit/primitive`)
+ * reads `keyof V[K]`, recovering the message itself, so the consumer-facing prop still ends up
+ * `CollisionError<K> | undefined` — the same outward result as a props collision.
+ */
+type VariantCollisionError<K extends PropertyKey> = Record<CollisionError<K>, never>
+
+/**
+ * The value a merged key resolves to, independent of whether that key ends up optional or
+ * required in the final result — split out so optionality (below) can be computed separately
+ * from the value itself. `AsVariants` selects which collision shape applies; every call site in
+ * this package passes a literal (`true` for variants, omitted/`false` for props) — passing a
+ * non-literal `boolean` would let this conditional distribute and produce a union of both
+ * shapes, so keep it literal at any new call site too.
+ */
+type MergeComposedValue<
+  Own,
+  Composed,
+  K extends PropertyKey,
+  AsVariants extends boolean = false,
+> = K extends keyof Own
   ? K extends keyof Composed
     ? ClassifyPropKey<K> extends 'child-wins'
       ? Own[K] extends Composed[K]
         ? Own[K]
         : Composed[K] extends Own[K]
           ? Composed[K]
-          : CollisionError<K>
+          : AsVariants extends true
+            ? VariantCollisionError<K>
+            : CollisionError<K>
       : Own[K] | Composed[K]
     : Own[K]
   : K extends keyof Composed
     ? Composed[K]
     : never
 
-/** Every key `T` declares with a `?` modifier — the standard "collect optional keys" idiom
- *  (`{} extends Pick<T, K>` is true exactly when `K` can be omitted). Needed because
- *  `MergeComposedProps`'s key set (`keyof Own | keyof Composed`) isn't a plain `keyof` of a
- *  single type, so it isn't a *homomorphic* mapped type — TypeScript only auto-preserves a
- *  source type's own `?`/`readonly` modifiers for a mapped type written as `{ [K in keyof
- *  T]: ... }` for one concrete `T`, not for a key union assembled from two different types. A
- *  naive `{ [K in keyof Own | keyof Composed]: ... }` silently drops every `?`, turning a
- *  genuinely optional own-prop into a required-but-possibly-`undefined` one — confirmed directly
- *  by a real-component test (`adapters/react/src/current/compose-props.test.tsx`) once an actual
- *  contract used an optional prop, which every one of this package's own earlier (required-only)
- *  test fixtures had never exercised. */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- the empty-object-literal idiom for "this key can be omitted", not a real empty-interface declaration
-type OptionalKeysOf<T> = { [K in keyof T]-?: {} extends Pick<T, K> ? K : never }[keyof T]
-
-/** Whether `K` is optional *as declared on `T` specifically* — `true` both when `T` marks it
- *  optional and when `T` doesn't declare `K` at all (nothing to require from that side). Only
- *  meaningful combined with the other side's own answer below; on its own it can't distinguish
- *  "optional" from "absent," which is exactly why `IsMergedKeyOptional` below checks presence
- *  before consulting this. */
-type IsOptionalOn<T, K extends PropertyKey> = K extends keyof T
+/**
+ * Whether `K` is optional *as declared on `T` specifically* — `true` both when `T` marks it
+ * optional and when `T` doesn't declare `K` at all. Only meaningful combined with the other
+ * side's own answer below; `IsMergedKeyOptional` checks presence on each side before consulting
+ * this, since on its own it can't distinguish "optional" from "absent." Uses `type-fest`'s own
+ * `OptionalKeysOf`, which is why `T` is constrained to `object` here and propagated up through
+ * every type below that reaches it.
+ */
+type IsOptionalOn<T extends object, K extends PropertyKey> = K extends keyof T
   ? K extends OptionalKeysOf<T>
     ? true
     : false
   : true
 
-/** A merged key is optional iff it's optional (or simply absent) on *every* side that actually
- *  declares it — required on at least one declaring side makes the merged result required too,
- *  since a caller composing both components still owes that value to whichever side requires
- *  it. Checking presence on each side separately (rather than reusing one combined check) is
- *  what makes a key declared `required` only on `Composed` (and absent from `Own` entirely)
- *  correctly stay required — the first version of this type collapsed "absent from Own" and
- *  "optional on Own" into the same answer, silently turning every composed-only required prop
- *  optional. */
-type IsMergedKeyOptional<Own, Composed, K extends PropertyKey> = K extends keyof Own
-  ? K extends keyof Composed
-    ? IsOptionalOn<Own, K> extends true
+/**
+ * A merged key is optional iff it's optional (or absent) on *every* side that actually declares
+ * it — required on at least one declaring side makes the merged result required too, since a
+ * caller composing both components still owes that value to whichever side requires it.
+ * Checking presence on each side separately (rather than one combined check) is what keeps a key
+ * required-only-on-`Composed`-and-absent-from-`Own` correctly required.
+ */
+type IsMergedKeyOptional<Own extends object, Composed extends object, K extends PropertyKey> =
+  K extends keyof Own
+    ? K extends keyof Composed
+      ? IsOptionalOn<Own, K> extends true
+        ? IsOptionalOn<Composed, K>
+        : false
+      : IsOptionalOn<Own, K>
+    : K extends keyof Composed
       ? IsOptionalOn<Composed, K>
-      : false
-    : IsOptionalOn<Own, K>
-  : K extends keyof Composed
-    ? IsOptionalOn<Composed, K>
-    : true
+      : true
 
-type AllMergedKeys<Own, Composed> = keyof Own | keyof Composed
+type AllMergedKeys<Own extends object, Composed extends object> = keyof Own | keyof Composed
 
-type MergedOptionalKeys<Own, Composed> = {
+type MergedOptionalKeys<Own extends object, Composed extends object> = {
   [K in AllMergedKeys<Own, Composed>]: IsMergedKeyOptional<Own, Composed, K> extends true
     ? K
     : never
@@ -106,17 +121,20 @@ type MergedOptionalKeys<Own, Composed> = {
  * `'shallow-merge'` keys are safe to coexist on both sides (the runtime combinator makes sense
  * for two different values, hence the union rather than a collision check); a `'child-wins'` key
  * on both sides is only safe when the two types agree — otherwise it's a real authoring conflict,
- * surfaced as `CollisionError<K>` rather than resolved either direction. Built as two separate
- * mapped types (required keys, then optional keys) rather than one, so each half can apply its
- * own `?` modifier explicitly — see `OptionalKeysOf`'s own comment for why a single mapped type
- * over `keyof Own | keyof Composed` can't do this automatically.
+ * surfaced as a collision placeholder rather than resolved either direction (`CollisionError<K>`
+ * for props, `VariantCollisionError<K>` for variants via `AsVariants: true`). Built as two
+ * separate mapped types (required keys, then optional keys) rather than one, so each half can
+ * apply its own `?` modifier explicitly.
  */
-export type MergeComposedProps<Own, Composed> = {
-  [K in Exclude<AllMergedKeys<Own, Composed>, MergedOptionalKeys<Own, Composed>>]: MergeComposedValue<
-    Own,
-    Composed,
-    K
-  >
+export type MergeComposedProps<
+  Own extends object,
+  Composed extends object,
+  AsVariants extends boolean = false,
+> = {
+  [K in Exclude<
+    AllMergedKeys<Own, Composed>,
+    MergedOptionalKeys<Own, Composed>
+  >]: MergeComposedValue<Own, Composed, K, AsVariants>
 } & {
-  [K in MergedOptionalKeys<Own, Composed>]?: MergeComposedValue<Own, Composed, K>
+  [K in MergedOptionalKeys<Own, Composed>]?: MergeComposedValue<Own, Composed, K, AsVariants>
 }

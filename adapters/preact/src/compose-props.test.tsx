@@ -178,7 +178,12 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     expectTypeOf<HasRadius>().toEqualTypeOf<false>()
   })
 
-  it('(9) a real variant collision surfaces as a diagnostic at that key; non-colliding variants on either side survive', () => {
+  it('(9) a real variant collision surfaces as a diagnostic at that exact key; non-colliding variants on either side keep their real values', () => {
+    // Regression: the first version of this test only checked `extends keyof ContractProps<T>`
+    // for the non-colliding keys, which passed even when the underlying bug made the *entire*
+    // merged variants object resolve to `never` (not just the colliding key), because `keyof
+    // never` is `string | number | symbol` in TypeScript -- see
+    // `adapters/react/src/current/compose-props.test.tsx`'s identical fix for the full story.
     const variantCollidingSurfaceOptions = {
       tag: 'div',
       name: 'VariantCollidingSurface',
@@ -205,11 +210,12 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     const VariantCollidingCard = createContractComponent(variantCollidingCardOptions)
     void VariantCollidingCard
 
-    type HasSize = 'size' extends keyof ContractProps<typeof VariantCollidingCard> ? true : false
-    type HasColor = 'color' extends keyof ContractProps<typeof VariantCollidingCard>
-      ? true
-      : false
-    expectTypeOf<HasSize>().toEqualTypeOf<true>()
-    expectTypeOf<HasColor>().toEqualTypeOf<true>()
+    type ShadowType = ContractProps<typeof VariantCollidingCard>['shadow']
+    expectTypeOf<ShadowType>().toEqualTypeOf<CollisionError<'shadow'> | undefined>()
+
+    type SizeType = ContractProps<typeof VariantCollidingCard>['size']
+    type ColorType = ContractProps<typeof VariantCollidingCard>['color']
+    expectTypeOf<SizeType>().toEqualTypeOf<'sm' | 'lg' | undefined>()
+    expectTypeOf<ColorType>().toEqualTypeOf<'red' | 'blue' | undefined>()
   })
 })

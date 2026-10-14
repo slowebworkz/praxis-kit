@@ -242,7 +242,17 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     expectTypeOf<HasRadius>().toEqualTypeOf<false>()
   })
 
-  it('(9) a real variant collision surfaces as a diagnostic at that key; non-colliding variants on either side survive', () => {
+  it('(9) a real variant collision surfaces as a diagnostic at that exact key; non-colliding variants on either side keep their real values', () => {
+    // Regression: the first version of this test only checked `'size'/'color' extends keyof
+    // ContractProps<T>` — which passed even when the underlying bug made the *entire* merged
+    // variants object resolve to `never` (not just the colliding key), because `keyof never` is
+    // `string | number | symbol` in TypeScript, so that presence check is vacuously `true`
+    // against a `never`-typed object regardless of whether anything actually survived. Confirmed
+    // directly: before the fix (`MergeComposedProps`'s `AsVariants` parameter,
+    // `lib/compose-props/src/merge-policy.ts`), `ContractProps<typeof VariantCollidingCard>['shadow']`
+    // was `never`, not `CollisionError<'shadow'>` — a real `string` failed to assign to it with
+    // "Type 'string' is not assignable to type 'never'", not the collision message. This test now
+    // asserts the actual value at the colliding key, not just presence of its neighbors.
     const variantCollidingSurfaceOptions = {
       tag: 'div',
       name: 'VariantCollidingSurface',
@@ -271,14 +281,14 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     const VariantCollidingCard = createContractComponent(variantCollidingCardOptions)
     void VariantCollidingCard
 
-    // Non-colliding variant keys from both sides still reach the real ContractProps, same as
-    // the standalone helper's own "variants collision" test already proved in isolation --
-    // this is the adapter-level confirmation that holds through the real extraction path too.
-    type HasSize = 'size' extends keyof ContractProps<typeof VariantCollidingCard> ? true : false
-    type HasColor = 'color' extends keyof ContractProps<typeof VariantCollidingCard>
-      ? true
-      : false
-    expectTypeOf<HasSize>().toEqualTypeOf<true>()
-    expectTypeOf<HasColor>().toEqualTypeOf<true>()
+    // The colliding key itself: a real diagnostic value, not `never`.
+    type ShadowType = ContractProps<typeof VariantCollidingCard>['shadow']
+    expectTypeOf<ShadowType>().toEqualTypeOf<CollisionError<'shadow'> | undefined>()
+
+    // Non-colliding variant keys from both sides keep their own real, usable value types.
+    type SizeType = ContractProps<typeof VariantCollidingCard>['size']
+    type ColorType = ContractProps<typeof VariantCollidingCard>['color']
+    expectTypeOf<SizeType>().toEqualTypeOf<'sm' | 'lg' | undefined>()
+    expectTypeOf<ColorType>().toEqualTypeOf<'red' | 'blue' | undefined>()
   })
 })

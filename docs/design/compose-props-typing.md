@@ -274,14 +274,29 @@ not an invented ownership model:
      others with a real, unresolved collision can pass CI indefinitely as long as nothing happens
      to read that specific prop — this is not a hypothetical edge case, it's the default outcome
      for most of a composing component's own lifetime.
-  3. **A variants collision does not necessarily erase every variant** — confirmed directly against
-     the earlier, more alarming claim: non-colliding variant keys on either side (`color`, `size`
-     in a test fixture) survive a `shadow` collision between them; `shadow` itself still appears as
-     a key (carrying the same per-key `CollisionError` shape props get), not the whole `variants`
-     map collapsing to `never`. The variants-specific `never`-fallback guard described in section 3
-     exists for the case where the *merged object as a whole* fails `Readonly<VariantMap>`'s
-     structural constraint — a narrower trigger than "any one colliding key" and one this proposal
-     has not fully characterized across every shape a colliding variant's value could take.
+  3. **A variants collision was a real, separate bug, not a documentation nicety — now fixed and
+     confirmed correctly, not assumed.** The original version of this entry claimed "non-colliding
+     variant keys survive a `shadow` collision," backed by a test that checked
+     `'size' extends keyof ContractProps<T>`. That test was a false positive: a real variant
+     collision made the *entire* merged `variants` object resolve to `never` (a raw
+     `CollisionError<K>` string isn't structurally a `VariantStates`, so `PolymorphicGenerics`'s
+     own `Variants extends Readonly<VariantMap>` constraint failed for the whole object, not just
+     the colliding key) — and `keyof never` is `string | number | symbol` in TypeScript, so
+     `'size' extends keyof never` is vacuously `true` regardless of whether `size` ever actually
+     survived. Confirmed directly: before the fix, `ContractProps<typeof Card>['shadow']` was
+     `never` (a real `string` failed to assign to it with "not assignable to type `never`", not
+     the collision message). Fixed by giving `MergeComposedProps` a third parameter
+     (`AsVariants`, `lib/compose-props/src/merge-policy.ts`) that wraps a variant collision as
+     `VariantCollisionError<K>` — a single-key `Record<CollisionError<K>, never>`, which *is* a
+     valid `VariantStates` — instead of the raw string. Every call site audited (only two exist,
+     `lib/compose-props/src/compose-generics.ts`): props merging omits the argument (defaults to
+     `false`), variants merging passes the literal `true`. Every test that relied on the
+     `extends keyof` presence check (all four wired adapters, this package's own suite) was
+     rewritten to assert the colliding key's *exact* value — `CollisionError<K> | undefined` — and
+     the non-colliding keys' real values, through the real `ContractProps<typeof Component>`
+     extraction path, not just the standalone helper. Each corrected assertion was itself
+     sanity-checked by deliberately reverting to the old (wrong) expectation and confirming it now
+     fails to compile.
   
   **Net effect:** read "resolves to `CollisionError<K>`" as "the type system can describe a known
   collision if asked," not "the type system rejects an invalid composition." Those are different
@@ -423,18 +438,23 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
      per-key logic to iterating over `string` instead of each contract's real declared keys.
      Fixed by running both sides through `OmitIndexSignature` (`type-fest`) **before** merging,
      not after.
-  2. `MergeComposedProps` can legitimately produce a `CollisionError<K>` string for a colliding
+  2. **A real bug, not a documentation gap, caught by a false-positive test before it was caught
+     for real.** `MergeComposedProps` can produce a `CollisionError<K>` string for a colliding
      key — not a valid `VariantStates<string>`. Since `PolymorphicGenerics`'s own
-     `Variants extends Readonly<VariantMap>` constraint is checked against
-     `ContractGenericsWithComposeOf`'s declaration for *every* possible `C`, not only
-     collision-free ones, the merged variants result needs its own
-     `extends infer M extends Readonly<VariantMap> ? M : never` guard. Confirmed by direct test
-     that this guard's `never` fallback triggers only when the *whole* merged variants object
-     fails the constraint, not per colliding key — a fixture with one colliding variant axis
-     alongside two non-colliding ones kept all three keys, the colliding one carrying its own
-     `CollisionError` value rather than the entire map collapsing. The exact boundary of when the
-     whole-object guard *does* trigger `never` instead is not fully characterized (see section 5's
-     own correction to this point).
+     `Variants extends Readonly<VariantMap>` constraint is checked against the *whole* merged
+     variants object, a raw string at one key's position failed that check for the entire object,
+     collapsing every variant — not just the colliding one — to `never`. The first regression
+     test written for this ("non-colliding variants survive") passed anyway, because it asserted
+     `'size' extends keyof ContractProps<T>`, and `keyof never` is `string | number | symbol` in
+     TypeScript — a vacuous pass that caught nothing. Caught for real only once the assertion was
+     rewritten to check the colliding key's *actual value* via `tsc`'s own error message (`Type
+     'string' is not assignable to type 'never'`, not the collision text). Fixed with a third
+     parameter on `MergeComposedProps` (`AsVariants`, `merge-policy.ts`) that wraps a variant
+     collision as `VariantCollisionError<K>` — a single-key `Record<CollisionError<K>, never>`,
+     which *is* a valid `VariantStates` — instead of the raw string, so the surrounding object
+     stays valid and only the colliding key itself becomes unusable. See section 5's own entry for
+     the full account and the corrected tests across every wired adapter plus this package's own
+     suite.
   3. The same "guard every argument, not only the one with an obvious constraint violation"
      lesson from point 2 generalized further than first thought: `TAllowed`/`enforcement.allowedAs`
      hit an identical failure mode unguarded (silently widening to the full default `ElementType`),

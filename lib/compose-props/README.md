@@ -41,9 +41,20 @@ merged type.
 | `CollisionError<K>`                  | The literal error type a `'child-wins'` key with incompatible types on both sides resolves to, instead of a silently-wrong merged value.                      |
 | `MergeComposedProps<Own, Composed>`  | The per-key merge itself, dispatched by `ClassifyPropKey`.                                                                                                     |
 
-Adoption: each adapter's own `ContractProps<T>`/`GenericsOf<T>` swaps its internal
-`ContractGenericsWithAllowedOf<C>` read for `ContractGenericsWithComposeOf<C>` — no change to any
-adapter's actual callable signature. Not yet wired into any adapter; see
-`docs/design/compose-props-typing.md`'s "Next steps."
+## Adoption
+
+Each adapter's own `ContractProps<T>` swaps its internal `ContractGenericsOf<C>` (or
+`ContractGenericsWithAllowedOf<C>`) read for `ContractGenericsWithComposeOf<C>` — no change to any
+adapter's actual callable signature.
+
+- **Wired: React (current and legacy), Preact, Vue, Solid.** Each audited and validated
+  independently against real `createContractComponent` components, not assumed to transfer from
+  another adapter — see `docs/design/compose-props-typing.md`, section 6.
+- **Svelte: confirmed blocked, not merely unverified.** Its extraction path (`GenericsOf<T>`)
+  recovers only the already-projected generics, never retains the full contract `compose` lives
+  on, in any inferable position — closing this gap needs a runtime-bundle-shape change, not a
+  type-only swap. See the design doc's section 6 for the full investigation.
+- **Lit, Web: out of scope by design.** `ComposeOptions`'s own doc comment states `compose` has no
+  effect on either adapter — neither has an `asChild` concept.
 
 Development: `pnpm --filter @praxis-kit/compose-props test`, `typecheck`, `lint`.

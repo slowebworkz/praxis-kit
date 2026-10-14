@@ -284,4 +284,56 @@ describe('ContractGenericsWithComposeOf against real FactoryOptions-shaped contr
       required: 'x' | 'y'
     }>()
   })
+
+  it('regression — a real variant collision resolves only that key, not the whole variants map, to a diagnostic', () => {
+    // Confirmed as a real bug, not a documentation gap: before this fix, a colliding variant's
+    // raw `CollisionError<K>` string isn't structurally a `VariantStates` (`Record<string,
+    // VariantValue>` requires an object, not a string), so the whole-object
+    // `extends Readonly<VariantMap> ? ... : never` guard in `ContractGenericsWithComposeOf`
+    // collapsed the *entire* merged variants object to `never` — not just the colliding key.
+    // `MergeComposedProps`'s `AsVariants` parameter wraps a variant collision as a single-key
+    // `VariantStates`-shaped placeholder instead (`VariantCollisionError<K>`, `merge-policy.ts`)
+    // so the surrounding object stays valid and only the colliding key itself becomes unusable.
+    const surfaceContract = {
+      tag: 'div',
+      name: 'Surface',
+      styling: {
+        variants: {
+          shadow: { true: 'shadow-sm', false: 'shadow-none' },
+          size: { sm: 'text-sm', lg: 'text-lg' },
+        },
+      },
+    } satisfies FactoryOptions
+    type SurfaceContract = typeof surfaceContract
+    type Surface = BuiltComponent<SurfaceContract>
+    void surfaceContract
+
+    // Card's own `shadow` variant has a genuinely different shape than Surface's -- a real
+    // collision -- alongside a second, non-colliding `color` variant.
+    const cardContract = {
+      tag: 'article',
+      name: 'Card',
+      styling: {
+        variants: {
+          shadow: { yes: 'shadow-yes', no: 'shadow-no' },
+          color: { red: 'text-red', blue: 'text-blue' },
+        },
+      },
+      compose: { allProps: true, with: {} as Surface },
+    } satisfies FactoryOptions
+    type CardContract = typeof cardContract
+    void cardContract
+
+    type Resolved = ContractGenericsWithComposeOf<CardContract>
+    type Variants = OwnVariants<Resolved>
+
+    // The colliding key resolves to a usable, non-`never` diagnostic value (wrapped as a
+    // single-key object here, at the raw-variants-map layer — adapters convert this into a
+    // plain `CollisionError<K> | undefined` consumer-facing prop via `VariantKey`).
+    expectTypeOf<Variants['shadow']>().toEqualTypeOf<Record<CollisionError<'shadow'>, never>>()
+
+    // The non-colliding keys on both sides keep their own real, unaffected shapes.
+    expectTypeOf<Variants['size']>().toEqualTypeOf<{ sm: string; lg: string }>()
+    expectTypeOf<Variants['color']>().toEqualTypeOf<{ red: string; blue: string }>()
+  })
 })

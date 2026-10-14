@@ -110,20 +110,20 @@ type MergePropsOf<C extends FactoryOptions, CC extends FactoryOptions> = MergeCo
   : AnyRecord
 
 /**
- * `C`'s own variants merged with `CC`'s, guarded against `Readonly<VariantMap>`. Unlike
- * `MergePropsOf`, this guard is load-bearing: `MergeComposedProps` can legitimately produce a
- * `CollisionError<K>` string literal for a colliding key (by design — see `merge-policy.ts`),
- * which isn't a valid `VariantStates<string>`. `PolymorphicGenerics`'s own
- * `Variants extends Readonly<VariantMap>` constraint is checked against this alias's declaration
- * for every possible `C`, not just collision-free ones, so a real collision here resolves to
- * `never` rather than failing the whole alias's own type-check. Confirmed by direct test that this
- * `never` fallback triggers only when the *whole* merged object fails the constraint, not per
- * colliding key — non-colliding variant keys survive alongside a colliding one's own
- * `CollisionError` value (see `compose-generics.test.ts`).
+ * `C`'s own variants merged with `CC`'s, guarded against `Readonly<VariantMap>`.
+ * `MergeComposedProps`'s third argument (`AsVariants`) is set so a collision wraps as a
+ * `VariantCollisionError<K>` (a single-key `VariantStates`-shaped placeholder), not a raw
+ * `CollisionError<K>` string — load-bearing, not cosmetic: see that type's own comment
+ * (`merge-policy.ts`) and `docs/design/compose-props-typing.md` for why a raw string there once
+ * poisoned the entire merged object instead of just the colliding key. With the wrapped shape,
+ * every per-key value is always a genuine `VariantStates`, so this guard should never actually
+ * trigger for a real collision anymore — kept only for the same "guard every self-referential
+ * argument" reason every other argument in this file is guarded.
  */
 type MergeVariantsOf<C extends FactoryOptions, CC extends FactoryOptions> = MergeComposedProps<
   OwnVariantsOf<C>,
-  ComposedVariantsOf<CC>
+  ComposedVariantsOf<CC>,
+  true
 > extends infer MergedVariants extends Readonly<VariantMap>
   ? MergedVariants
   : never
