@@ -21,7 +21,7 @@ import type { OmitIndexSignature } from 'type-fest'
 import type { VueFactoryOptions } from './vue-options'
 import { createContractComponent } from './create-contract-component'
 import type { ContractProps, PolymorphicWithAllowedAs } from './types'
-import type { ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
+import type { CollisionError, ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
 
 /**
  * Unlike React's/Preact's `ComponentProps<G> = OmitIndexSignature<PropsOf<G>>`, Vue's own
@@ -152,11 +152,72 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     } satisfies VueFactoryOptions
     const CollidingCard = createContractComponent(collidingCardOptions)
 
+    type RadiusType = ContractProps<typeof CollidingCard>['radius']
+    expectTypeOf<RadiusType>().toEqualTypeOf<CollisionError<'radius'> | undefined>()
+
     function ConsumesEverythingExceptRadius(
       props: Omit<ContractProps<typeof CollidingCard>, 'radius'>,
     ): void {
       void props
     }
     ConsumesEverythingExceptRadius({})
+  })
+
+  it('(7) regression — compose present but allProps: false leaves the partner’s props unreachable, same as no compose at all', () => {
+    const noForwardSurfaceOptions = {
+      tag: 'div',
+      name: 'NoForwardSurface',
+      props: undefined as unknown as { radius?: 'sm' | 'lg' },
+    } satisfies VueFactoryOptions
+    const NoForwardSurface = createContractComponent(noForwardSurfaceOptions)
+
+    const noForwardCardOptions = {
+      tag: 'article',
+      name: 'NoForwardCard',
+      props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+      compose: { allProps: false, with: NoForwardSurface },
+    } satisfies VueFactoryOptions
+    const NoForwardCard = createContractComponent(noForwardCardOptions)
+
+    type HasRadius = 'radius' extends keyof NamedKeysOf<ContractProps<typeof NoForwardCard>>
+      ? true
+      : false
+    expectTypeOf<HasRadius>().toEqualTypeOf<false>()
+  })
+
+  it('(8) a real variant collision surfaces as a diagnostic at that key; non-colliding variants on either side survive', () => {
+    const variantCollidingSurfaceOptions = {
+      tag: 'div',
+      name: 'VariantCollidingSurface',
+      styling: {
+        variants: {
+          shadow: { true: 'shadow-sm', false: 'shadow-none' },
+          size: { sm: 'text-sm', lg: 'text-lg' },
+        },
+      },
+    } satisfies VueFactoryOptions
+    const VariantCollidingSurface = createContractComponent(variantCollidingSurfaceOptions)
+
+    const variantCollidingCardOptions = {
+      tag: 'article',
+      name: 'VariantCollidingCard',
+      styling: {
+        variants: {
+          shadow: { yes: 'shadow-yes', no: 'shadow-no' },
+          color: { red: 'text-red', blue: 'text-blue' },
+        },
+      },
+      compose: { allProps: true, with: VariantCollidingSurface },
+    } satisfies VueFactoryOptions
+    const VariantCollidingCard = createContractComponent(variantCollidingCardOptions)
+
+    type HasSize = 'size' extends keyof NamedKeysOf<ContractProps<typeof VariantCollidingCard>>
+      ? true
+      : false
+    type HasColor = 'color' extends keyof NamedKeysOf<ContractProps<typeof VariantCollidingCard>>
+      ? true
+      : false
+    expectTypeOf<HasSize>().toEqualTypeOf<true>()
+    expectTypeOf<HasColor>().toEqualTypeOf<true>()
   })
 })

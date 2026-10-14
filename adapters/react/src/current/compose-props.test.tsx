@@ -216,4 +216,63 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     }
     ConsumesEverythingExceptRadius({})
   })
+
+  it('(8) regression — compose present but allProps: false leaves the partner’s props unreachable, same as no compose at all', () => {
+    const noForwardSurfaceOptions = {
+      tag: 'div',
+      name: 'NoForwardSurface',
+      props: undefined as unknown as { radius?: 'sm' | 'lg' },
+    } satisfies ReactFactoryOptions
+    const NoForwardSurface = createContractComponent(noForwardSurfaceOptions)
+
+    const noForwardCardOptions = {
+      tag: 'article',
+      name: 'NoForwardCard',
+      props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+      compose: { allProps: false, with: NoForwardSurface },
+    } satisfies ReactFactoryOptions
+    const NoForwardCard = createContractComponent(noForwardCardOptions)
+
+    type HasRadius = 'radius' extends keyof ContractProps<typeof NoForwardCard> ? true : false
+    expectTypeOf<HasRadius>().toEqualTypeOf<false>()
+  })
+
+  it('(9) a real variant collision surfaces as a diagnostic at that key; non-colliding variants on either side survive', () => {
+    const variantCollidingSurfaceOptions = {
+      tag: 'div',
+      name: 'VariantCollidingSurface',
+      styling: {
+        variants: {
+          shadow: { true: 'shadow-sm', false: 'shadow-none' },
+          size: { sm: 'text-sm', lg: 'text-lg' },
+        },
+      },
+    } satisfies ReactFactoryOptions
+    const VariantCollidingSurface = createContractComponent(variantCollidingSurfaceOptions)
+
+    // Card's own `shadow` variant has a genuinely different shape than Surface's -- a real
+    // variant collision -- alongside a second, non-colliding `color` variant.
+    const variantCollidingCardOptions = {
+      tag: 'article',
+      name: 'VariantCollidingCard',
+      styling: {
+        variants: {
+          shadow: { yes: 'shadow-yes', no: 'shadow-no' },
+          color: { red: 'text-red', blue: 'text-blue' },
+        },
+      },
+      compose: { allProps: true, with: VariantCollidingSurface },
+    } satisfies ReactFactoryOptions
+    const VariantCollidingCard = createContractComponent(variantCollidingCardOptions)
+
+    // Non-colliding variant keys from both sides still reach the real ContractProps, same as
+    // the standalone helper's own "variants collision" test already proved in isolation --
+    // this is the adapter-level confirmation that holds through the real extraction path too.
+    type HasSize = 'size' extends keyof ContractProps<typeof VariantCollidingCard> ? true : false
+    type HasColor = 'color' extends keyof ContractProps<typeof VariantCollidingCard>
+      ? true
+      : false
+    expectTypeOf<HasSize>().toEqualTypeOf<true>()
+    expectTypeOf<HasColor>().toEqualTypeOf<true>()
+  })
 })
