@@ -3,7 +3,6 @@ import type { JSX, ReactElement, ReactNode, Ref } from 'react'
 import type {
   AllowedOf,
   ClassName,
-  ContractGenericsWithAllowedOf,
   DefaultOf,
   ElementType,
   FactoryOptions,
@@ -17,6 +16,7 @@ import type {
 import type { StringMap } from '@praxis-kit/primitive'
 import type { LayoutKeyName } from '@praxis-kit/tailwind'
 import type { HasContract, Mode, PickMode } from '@praxis-kit/contract-props'
+import type { ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
 import type { RenderCallbackProps } from './props'
 import type { UnknownProps } from './primitives'
 
@@ -371,14 +371,20 @@ export type PolymorphicComponent<
  *
  * Projects off the component's retained `__contract` (`C`, via `HasContract<C>` —
  * `@praxis-kit/contract-props`), not `__generics` (`G`) — a deliberate Phase 4 rewire, not a new
- * mechanism: `G` is *derived* from `C` (`ContractGenericsWithAllowedOf<C>`, the same canonical
- * projection `createContractComponent`'s own return type already uses), so reading `C` and
- * projecting `G` from it recovers exactly the same `G` `__generics` would have, without needing a
- * second, independently-populated marker to stay in sync with the first. `FlattenLayout`,
- * `PickMode`, `Mode`, and the three `Polymorphic*` prop-shape types below are unchanged — only
- * where `G` comes from moved. `__generics` itself is untouched (Phase 3's migration policy: added
- * alongside `__contract`, not replaced by it, until every adapter and test proves the new
- * relationship out — see that field's own doc comment).
+ * mechanism: `G` is *derived* from `C` via `ContractGenericsWithComposeOf<C>`
+ * (`@praxis-kit/compose-props`) — `C`'s own contract-derived `G` with its `compose.with` partner's
+ * props/variants folded in when `allProps: true`, falling back to the same
+ * `ContractGenericsWithAllowedOf<C>` projection `createContractComponent`'s own return type uses
+ * (`__generics`) when there's nothing to compose. **This means `ContractProps<T>` and `__generics`
+ * genuinely diverge for a composing component** — `ContractProps<typeof Card>` sees `Surface`'s
+ * forwarded props, `Card`'s own `__generics` (and therefore `React.ComponentProps<typeof Card>`)
+ * does not, by design (see `docs/design/compose-props-typing.md` — the composed surface is
+ * deliberately a type-extraction-time concern, not a change to the component's own callable
+ * signature). For every non-composing component the two still agree exactly, same as before this
+ * wiring landed. `FlattenLayout`, `PickMode`, `Mode`, and the three `Polymorphic*` prop-shape types
+ * below are unchanged — only where `G` comes from moved. `__generics` itself is untouched (Phase
+ * 3's migration policy: added alongside `__contract`, not replaced by it, until every adapter and
+ * test proves the new relationship out — see that field's own doc comment).
  *
  * `T` accepts any built component value (`PolymorphicComponent<G, C>` or `CompoundComponent<G, S>`
  * — the latter's sub-component intersection doesn't disturb `__contract`, which lives on the root
@@ -394,7 +400,7 @@ export type PolymorphicComponent<
  */
 export type ContractProps<T extends HasContract<FactoryOptions>, M extends Mode = 'normal'> =
   T extends HasContract<infer C extends FactoryOptions>
-    ? ContractGenericsWithAllowedOf<C> extends infer G extends PolymorphicGenerics
+    ? ContractGenericsWithComposeOf<C> extends infer G extends PolymorphicGenerics
       ? PickMode<
           M,
           FlattenLayout<PolymorphicProps<G, DefaultOf<G>>>,

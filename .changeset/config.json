@@ -13,6 +13,7 @@
     "@praxis-kit/bench",
     "@praxis-kit/bundle-analysis",
     "@praxis-kit/codemod",
+    "@praxis-kit/compose-props",
     "@praxis-kit/contract",
     "@praxis-kit/contract-props",
     "@praxis-kit/core",

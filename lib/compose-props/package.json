@@ -1,0 +1,24 @@
+{
+  "name": "@praxis-kit/compose-props",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "description": "Type-level resolution of a composing component's effective props/variants, folding in compose.with's own contract when allProps is set",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "dependencies": {
+    "@praxis-kit/contract-props": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "type-fest": "catalog:"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
+}

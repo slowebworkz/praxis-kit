@@ -397,6 +397,9 @@ importers:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
+      '@praxis-kit/compose-props':
+        specifier: workspace:*
+        version: link:../../lib/compose-props
       '@praxis-kit/contract-props':
         specifier: workspace:*
         version: link:../../lib/contract-props
@@ -440,6 +443,9 @@ importers:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
+      '@praxis-kit/compose-props':
+        specifier: workspace:*
+        version: link:../../lib/compose-props
       '@praxis-kit/contract-props':
         specifier: workspace:*
         version: link:../../lib/contract-props
@@ -501,6 +507,9 @@ importers:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
+      '@praxis-kit/compose-props':
+        specifier: workspace:*
+        version: link:../../lib/compose-props
       '@praxis-kit/contract-props':
         specifier: workspace:*
         version: link:../../lib/contract-props
@@ -578,6 +587,9 @@ importers:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
+      '@praxis-kit/compose-props':
+        specifier: workspace:*
+        version: link:../../lib/compose-props
       '@praxis-kit/contract-props':
         specifier: workspace:*
         version: link:../../lib/contract-props
@@ -695,6 +707,22 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@26.6.5)(@vitest/ui@4.1.11)(jsdom@29.1.1)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
+
+  lib/compose-props:
+    dependencies:
+      '@praxis-kit/contract-props':
+        specifier: workspace:*
+        version: link:../contract-props
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../primitive
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.10.0
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@types/node@26.6.5)(@vitest/ui@4.1.11)(jsdom@30.1.1)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
 
   lib/contract:
     dependencies:
