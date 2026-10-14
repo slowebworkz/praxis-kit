@@ -250,10 +250,16 @@ not an invented ownership model:
   deliberately stays on this side of that line.
 - The `child-wins` collision rule is the type-side consequence of `ComposeOptions`'s own doc
   comment: "forwarding is only safe when `with`'s own contract is known not to have variant/prop
-  names that collide with this component's own." A real collision becomes a compile error pointing
-  at the offending key (`CollisionError<K>`), not a silently-wrong merged type — resolving the open
-  design question raised earlier in favor of automatic folding with a compile-time guard, rather
-  than a second type-side opt-in flag duplicating `allProps`.
+  names that collide with this component's own." **Precisely stated, this is a lazy guarantee, not
+  an eager one:** `CollisionError<K>` lands as the *value type* at the colliding key, not as a
+  rejection of the `compose: { with, allProps: true }` declaration itself — a real collision
+  type-checks fine at the point `compose` is written. The error only surfaces once something tries
+  to *consume* that key through the composed type (e.g. `ContractProps<typeof Card>['radius']`
+  resolving to the unusable `CollisionError<'radius'>` string, so assigning any real value to it
+  fails) — not at authoring time, the way a reader might reasonably expect from "resolves to a
+  compile error." No eager rejection at the `compose` call site is proposed here; doing that would
+  mean weaving collision detection into `createContractComponent`'s own parameter type, a materially
+  bigger change than this package's scope (see "Next steps"), not a one-line addition to it.
 
 ## 6. Adapter impact assessment
 

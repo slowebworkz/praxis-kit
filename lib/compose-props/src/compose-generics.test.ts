@@ -171,4 +171,63 @@ describe('ContractGenericsWithComposeOf against real FactoryOptions-shaped contr
 
     expectTypeOf<OwnProps<Resolved>>().toEqualTypeOf<{ variant: 'elevated' | 'flat' }>()
   })
+
+  it('regression — composing does not widen `allowed` (enforcement.allowedAs) to the default ElementType', () => {
+    const cardContract = {
+      tag: 'article',
+      name: 'Card',
+      props: undefined as unknown as { variant: 'elevated' | 'flat' },
+      enforcement: { allowedAs: ['article', 'section'] as const },
+      compose: { allProps: true, with: {} as Surface },
+    } satisfies FactoryOptions
+    type CardContract = typeof cardContract
+    void cardContract
+
+    // Caught via a real-component test (adapters/react/src/current/compose-props.test.tsx):
+    // passing ContractAllowedOf<C> straight through, unguarded, silently widened this field to
+    // the full default ElementType (every intrinsic tag) instead of Card's own declared
+    // allowedAs — TypeScript falling back to a type parameter's own default rather than erroring,
+    // for a generic argument depending on this alias's own self-reference. Every argument to the
+    // internal PolymorphicGenerics<...> call is now guarded against exactly this (see
+    // compose-generics.ts's own comment) — this test exists so a regression here is caught in
+    // this package directly, not only by an adapter three layers away.
+    type Resolved = ContractGenericsWithComposeOf<CardContract>
+
+    expectTypeOf<Resolved['allowed']>().toEqualTypeOf<'article' | 'section'>()
+  })
+
+  it('regression — merging preserves per-key optionality instead of turning every optional own-prop required-but-undefined', () => {
+    const surfaceWithOptional = {
+      tag: 'div',
+      name: 'Surface',
+      props: undefined as unknown as { radius?: 'sm' | 'lg'; required: 'x' | 'y' },
+    } satisfies FactoryOptions
+    type SurfaceWithOptional = typeof surfaceWithOptional
+    type SurfaceOptional = BuiltComponent<SurfaceWithOptional>
+    void surfaceWithOptional
+
+    const cardContract = {
+      tag: 'article',
+      name: 'Card',
+      props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+      compose: { allProps: true, with: {} as SurfaceOptional },
+    } satisfies FactoryOptions
+    type CardContract = typeof cardContract
+    void cardContract
+
+    // Caught via a real-component test: a naive `{ [K in keyof Own | keyof Composed]: ... }`
+    // mapped type isn't homomorphic over a single `keyof T`, so TypeScript doesn't auto-preserve
+    // either side's own `?` modifier — every key silently became required-but-possibly-`undefined`
+    // instead. Three cases in one fixture: `variant` (optional, Card-only), `radius` (optional,
+    // Surface-only), `required` (required, Surface-only) — the last one is the one a naive "absent
+    // from Own => always optional" fix would still get wrong.
+    type Resolved = ContractGenericsWithComposeOf<CardContract>
+    type Props = OwnProps<Resolved>
+
+    expectTypeOf<Props>().toEqualTypeOf<{
+      variant?: 'elevated' | 'flat'
+      radius?: 'sm' | 'lg'
+      required: 'x' | 'y'
+    }>()
+  })
 })

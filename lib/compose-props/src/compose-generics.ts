@@ -1,14 +1,18 @@
 import type { OmitIndexSignature } from 'type-fest'
 import type {
+  AnyRecord,
   ContractAllowedOf,
   ContractGenericsOf,
   ContractPresetOf,
   ContractPropsOf,
   ContractTagOf,
   ContractVariantsOf,
+  ElementType,
+  EmptyRecord,
   FactoryOptions,
   PolymorphicGenerics,
   PropsOf,
+  RecipeMap,
   VariantMap,
   VariantsOf,
 } from '@praxis-kit/primitive'
@@ -61,6 +65,19 @@ export type ComposedContractOf<C extends FactoryOptions> = C extends {
  * instead of each contract's actual declared keys. Stripping the index signature first keeps
  * `keyof` resolved to the real literal key union on both sides, which is what the per-key
  * collision check in `MergeComposedProps` needs to work correctly at all.
+ *
+ * **Every argument to `PolymorphicGenerics` below is wrapped in its own
+ * `extends infer X extends Constraint ? X : Constraint` guard — confirmed necessary, not
+ * defensive padding.** A real-component test (`adapters/react/src/current/compose-props.test.tsx`)
+ * caught this directly: passing `ContractAllowedOf<C>` straight through (no guard) silently
+ * widened the composed type's `allowed`/`TAllowed` field to the full default `ElementType` —
+ * accepting every intrinsic tag, not just the composing component's own declared `allowedAs` —
+ * even though `ContractAllowedOf<C>` resolves correctly in total isolation, and even though the
+ * sibling `default`/`preset` arguments in the very same call resolved correctly unguarded. This
+ * is TypeScript silently falling back to a type parameter's own default rather than erroring, for
+ * a generic argument that depends on this alias's own self-reference, not a general rule about
+ * which position breaks — so every argument gets the guard, not only the one a specific test
+ * happened to catch.
  */
 export type ContractGenericsWithComposeOf<C extends FactoryOptions> =
   ComposedContractOf<C> extends infer CC
@@ -68,11 +85,13 @@ export type ContractGenericsWithComposeOf<C extends FactoryOptions> =
       ? ContractGenericsOf<C>
       : CC extends FactoryOptions
         ? PolymorphicGenerics<
-            ContractTagOf<C>,
+            ContractTagOf<C> extends infer TDefault extends ElementType ? TDefault : ElementType,
             MergeComposedProps<
               OmitIndexSignature<ContractPropsOf<C>>,
               OmitIndexSignature<PropsOf<ContractGenericsWithComposeOf<CC>>>
-            >,
+            > extends infer MergedProps extends AnyRecord
+              ? MergedProps
+              : AnyRecord,
             // `MergeComposedProps` can produce a `CollisionError<K>` string literal for a
             // colliding key (by design — see `merge-policy.ts`), which isn't a valid
             // `VariantStates<string>`. `PolymorphicGenerics`'s own `Variants extends
@@ -81,15 +100,20 @@ export type ContractGenericsWithComposeOf<C extends FactoryOptions> =
             // resolves to `never` rather than failing the whole alias's own type-check — the
             // collision is still visible (anything reading a `never` variants map immediately
             // breaks downstream), just not as a readable embedded string the way a props
-            // collision is. Props don't need this guard: `AnyRecord` accepts a string value.
+            // collision is. Props don't need this guard for that reason: `AnyRecord` accepts a
+            // string value regardless.
             MergeComposedProps<
               OmitIndexSignature<ContractVariantsOf<C>>,
               OmitIndexSignature<VariantsOf<ContractGenericsWithComposeOf<CC>>>
             > extends infer MergedVariants extends Readonly<VariantMap>
               ? MergedVariants
               : never,
-            ContractPresetOf<C>,
-            ContractAllowedOf<C>
+            ContractPresetOf<C> extends infer TPreset extends RecipeMap<Readonly<VariantMap>>
+              ? TPreset
+              : Readonly<EmptyRecord>,
+            ContractAllowedOf<C> extends infer TAllowed extends ElementType
+              ? TAllowed
+              : ElementType
           >
         : never
     : never
