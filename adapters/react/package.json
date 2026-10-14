@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@praxis-kit/adapter-utils": "workspace:*",
+    "@praxis-kit/compose-props": "workspace:*",
     "@praxis-kit/contract-props": "workspace:*",
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
@@ -31,7 +32,6 @@
   },
   "devDependencies": {
     "@playwright/experimental-ct-react": "catalog:",
-    "@praxis-kit/compose-props": "workspace:*",
     "@praxis-kit/playwright": "workspace:*",
     "@types/node": "catalog:",
     "@types/react": "catalog:",

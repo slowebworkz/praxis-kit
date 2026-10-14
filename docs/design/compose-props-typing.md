@@ -236,6 +236,16 @@ not an invented ownership model:
   named simplification, not a silent assumption — if `classifyProp`'s classification rule changes,
   `ClassifyPropKey` must be updated to match, and that drift risk should be called out at review
   time for any future change to either side.
+- **Structural compatibility is not semantic compatibility, and this proposal does not claim
+  otherwise.** The `child-wins` collision check (`Own[K] extends Composed[K] ? ... : Composed[K]
+  extends Own[K] ? ...`) only asks whether the two declared *types* are assignable — it cannot and
+  does not ask whether the two components mean the same thing by that prop. Two components can
+  both declare `size: 'sm' | 'lg'` — one meaning font size, the other meaning spacing — and this
+  check passes silently, merging them as if compatible, because they structurally are. This is a
+  real, accepted limitation of a type-level check, not a gap to close: no type system can verify
+  semantic intent. The conservative policy here only catches the *obviously* incompatible case
+  (genuinely different type shapes); it should never be read as a guarantee that two colliding
+  props sharing a type also share a meaning.
 - **Not to be conflated with** `lib/primitive/src/utils/merge-props.ts`'s *different*, unrelated
   `mergeProps<T, P>(defaultProps, props)` — a nil-aware defaults-vs-props merge, applied when a
   contract's own `styling.defaults` are resolved against incoming props. This is what makes
@@ -251,15 +261,33 @@ not an invented ownership model:
 - The `child-wins` collision rule is the type-side consequence of `ComposeOptions`'s own doc
   comment: "forwarding is only safe when `with`'s own contract is known not to have variant/prop
   names that collide with this component's own." **Precisely stated, this is a lazy guarantee, not
-  an eager one:** `CollisionError<K>` lands as the *value type* at the colliding key, not as a
-  rejection of the `compose: { with, allProps: true }` declaration itself — a real collision
-  type-checks fine at the point `compose` is written. The error only surfaces once something tries
-  to *consume* that key through the composed type (e.g. `ContractProps<typeof Card>['radius']`
-  resolving to the unusable `CollisionError<'radius'>` string, so assigning any real value to it
-  fails) — not at authoring time, the way a reader might reasonably expect from "resolves to a
-  compile error." No eager rejection at the `compose` call site is proposed here; doing that would
-  mean weaving collision detection into `createContractComponent`'s own parameter type, a materially
-  bigger change than this package's scope (see "Next steps"), not a one-line addition to it.
+  an eager one — confirmed by direct test, not assumed:**
+  1. **The `compose: { with, allProps: true }` declaration itself always type-checks, collision or
+     not.** `ComposeOptions.with: ComponentReference` has no type-level relationship to `C`'s own
+     props at all, so there is no mechanism by which a collision could ever be rejected at the
+     point `compose` is written — confirmed by a fixture with a real `radius` collision compiling
+     with zero `@ts-expect-error` suppressions anywhere on the declaration.
+  2. **A colliding key that nothing ever reads produces zero diagnostics, anywhere, ever.**
+     `CollisionError<K>` lands as the *value type* at that one key; a consumer that uses every
+     *other* key (`Omit<Resolved['props'], 'radius'>`) sees no error. A component composing two
+     others with a real, unresolved collision can pass CI indefinitely as long as nothing happens
+     to read that specific prop — this is not a hypothetical edge case, it's the default outcome
+     for most of a composing component's own lifetime.
+  3. **A variants collision does not necessarily erase every variant** — confirmed directly against
+     the earlier, more alarming claim: non-colliding variant keys on either side (`color`, `size`
+     in a test fixture) survive a `shadow` collision between them; `shadow` itself still appears as
+     a key (carrying the same per-key `CollisionError` shape props get), not the whole `variants`
+     map collapsing to `never`. The variants-specific `never`-fallback guard described in section 3
+     exists for the case where the *merged object as a whole* fails `Readonly<VariantMap>`'s
+     structural constraint — a narrower trigger than "any one colliding key" and one this proposal
+     has not fully characterized across every shape a colliding variant's value could take.
+  
+  **Net effect:** read "resolves to `CollisionError<K>`" as "the type system can describe a known
+  collision if asked," not "the type system rejects an invalid composition." Those are different
+  guarantees, and only the first is actually delivered. Eager rejection at the `compose` call site
+  would mean weaving collision detection into `createContractComponent`'s own parameter type — a
+  materially bigger change than this package's scope (see "Next steps"), not a one-line addition to
+  it, and not something this proposal currently delivers or claims to.
 
 ## 6. Adapter impact assessment
 
@@ -353,11 +381,38 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
      `Variants extends Readonly<VariantMap>` constraint is checked against
      `ContractGenericsWithComposeOf`'s declaration for *every* possible `C`, not only
      collision-free ones, the merged variants result needs its own
-     `extends infer M extends Readonly<VariantMap> ? M : never` guard so a real collision resolves
-     to `never` (still visibly broken downstream) instead of making the type alias itself fail to
-     type-check for every caller.
+     `extends infer M extends Readonly<VariantMap> ? M : never` guard. Confirmed by direct test
+     that this guard's `never` fallback triggers only when the *whole* merged variants object
+     fails the constraint, not per colliding key — a fixture with one colliding variant axis
+     alongside two non-colliding ones kept all three keys, the colliding one carrying its own
+     `CollisionError` value rather than the entire map collapsing. The exact boundary of when the
+     whole-object guard *does* trigger `never` instead is not fully characterized (see section 5's
+     own correction to this point).
+  3. The same "guard every argument, not only the one with an obvious constraint violation"
+     lesson from point 2 generalized further than first thought: `TAllowed`/`enforcement.allowedAs`
+     hit an identical failure mode unguarded (silently widening to the full default `ElementType`),
+     caught only once a *real* `createContractComponent` component with `enforcement.allowedAs`
+     entered the test matrix — neither this package's own mocked spike nor its first real-contract
+     tests used that field. Every argument to the internal `PolymorphicGenerics<...>` call is now
+     guarded for this reason, not only the ones a specific test happened to exercise.
+  4. `MergeComposedProps`'s key set (`keyof Own | keyof Composed`) isn't a plain `keyof` of one
+     type, so it isn't a homomorphic mapped type — TypeScript silently drops every `?` modifier
+     rather than preserving it, turning a genuinely optional own-prop into a required-but-possibly-
+     `undefined` one. Caught the same way as point 3: neither the mocked spike nor the first
+     real-contract tests happened to use an optional prop. Fixed by computing per-side optionality
+     explicitly (`OptionalKeysOf`, `lib/compose-props/src/merge-policy.ts`) and splitting the merge
+     into separate required/optional mapped types.
+- **Collision validation is a separate acceptance criterion from "the merge computes correct
+  values," and is only partially met — see section 5's own corrected framing.** What's actually
+  delivered: a colliding key's value becomes a self-describing `CollisionError<K>` string instead
+  of silently picking a side. What's *not* delivered, confirmed by direct test rather than assumed:
+  rejection of the `compose: {...}` declaration itself, or any guarantee that an unconsumed
+  collision will ever surface as a visible diagnostic. Do not describe this mechanism as
+  "rejecting an invalid composition" in any future summary of this work — it describes one, lazily,
+  if and only if something later tries to use the colliding key.
 - **Acceptance criteria:** all spike assertions (section 7) pass under `tsc --noEmit` — confirmed,
-  `pnpm --filter @praxis-kit/compose-props typecheck && test` passes 6/6, and a full workspace
+  `pnpm --filter @praxis-kit/compose-props typecheck && test` passes (8/8 as of this writing; the
+  count will keep growing as regressions get their own named test), and a full workspace
   `pnpm -r typecheck` confirms no existing component's `ContractProps<T>` extraction changed.
   `praxis-components`' `CardProps` pattern can drop its hand-extension once an adapter actually
   consumes `ContractGenericsWithComposeOf` (not yet true — see "Next steps").

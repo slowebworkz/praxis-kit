@@ -440,6 +440,9 @@ importers:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
+      '@praxis-kit/compose-props':
+        specifier: workspace:*
+        version: link:../../lib/compose-props
       '@praxis-kit/contract-props':
         specifier: workspace:*
         version: link:../../lib/contract-props
@@ -468,9 +471,6 @@ importers:
       '@playwright/experimental-ct-react':
         specifier: 'catalog:'
         version: 1.62.1(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))(yaml@2.9.0)
-      '@praxis-kit/compose-props':
-        specifier: workspace:*
-        version: link:../../lib/compose-props
       '@praxis-kit/playwright':
         specifier: workspace:*
         version: link:../../lib/playwright
