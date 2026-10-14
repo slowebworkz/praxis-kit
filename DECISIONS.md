@@ -3688,3 +3688,17 @@ indistinguishable from registry-mirror/CI noise. Shipped since the last reassess
 (`compose.allProps` cross-adapter feature plus a dedicated merge-semantics audit and fix pass) —
 real engineering progress, but adoption signals haven't moved. **Revisit trigger unchanged:** a
 star/issue/PR from a non-maintainer account, or the next version tag.
+
+### GitHub Sponsors — still not yet, reassessed at `v1.3.0` (2026-10-14)
+
+Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule. Conclusion unchanged from the
+`v1.2.0` reassessment above: **not yet**, and the revisit trigger still hasn't fired — checked
+directly (`gh api repos/.../praxis-kit`, `gh issue list`, `gh pr list`, 2026-10-14): 0 stars, 0
+forks, 0 watchers, 5 open issues (all maintainer-filed, not external reports), and every open/merged
+PR since the last reassessment is either mine or Dependabot's — no community contributions. `npm`
+downloads for the trailing month sit at 513 (`api.npmjs.org`, 2026-09-13 → 2026-10-12) — identical
+to the `v1.2.0` reading, still indistinguishable from registry-mirror/CI noise. Shipped since the
+last reassessment: `v1.3.0` (compose-aware `ContractProps<T>` for finding #54, across
+React/Preact/Vue/Solid) — real engineering progress, but adoption signals still haven't moved.
+**Revisit trigger unchanged:** a star/issue/PR from a non-maintainer account, or the next version
+tag.
