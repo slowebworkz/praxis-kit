@@ -123,6 +123,51 @@ describe('ContractGenericsWithComposeOf against real FactoryOptions-shaped contr
     expectTypeOf<PropsOf<Resolved>['radius']>().toEqualTypeOf<CollisionError<'radius'>>()
   })
 
+  it('design decision — collision validation is a downstream diagnostic, not declaration-site rejection, and this is intentional', () => {
+    // This is a locked-in decision, not an unverified gap: declaration-site rejection would
+    // require weaving collision detection into createContractComponent's own parameter type —
+    // every component's call to the factory, not just composing ones, would need to cross-check
+    // against compose.with's contract — a materially bigger, differently-shaped change than this
+    // package's scope, and a stronger guarantee than the runtime itself provides (ComposeOptions's
+    // own doc comment states collision safety is advisory, not enforced, at the runtime level
+    // either). See docs/design/compose-props-typing.md, section 5/8.
+    //
+    // The three facts below are the actual, chosen contract. If a future change makes any of
+    // them fail, that's either a real regression or a deliberate decision to adopt eager
+    // rejection instead — either way, this test should be updated consciously, not silently.
+    const surfaceContract = {
+      tag: 'div',
+      name: 'Surface',
+      props: undefined as unknown as { radius: 'sm' | 'lg' },
+    } satisfies FactoryOptions
+    type SurfaceContract = typeof surfaceContract
+    type SurfaceComponent = BuiltComponent<SurfaceContract>
+
+    // (1) The declaration itself always type-checks, collision or not -- no @ts-expect-error
+    // is needed anywhere on this object despite `radius` colliding with Surface's incompatible
+    // 'sm' | 'lg'.
+    const cardContract = {
+      tag: 'article',
+      name: 'Card',
+      props: undefined as unknown as { radius: 'thin' | 'thick' },
+      compose: { allProps: true, with: {} as SurfaceComponent },
+    } satisfies FactoryOptions
+    type CardContract = typeof cardContract
+    void cardContract
+
+    type Resolved = ContractGenericsWithComposeOf<CardContract>
+
+    // (2) The collision is recorded as a diagnostic value at that one key...
+    expectTypeOf<PropsOf<Resolved>['radius']>().toEqualTypeOf<CollisionError<'radius'>>()
+
+    // (3) ...but a consumer who never reads that specific key sees no error at all, and every
+    // other key on the composed type remains fully usable.
+    function consumesEverythingExceptRadius(props: Omit<PropsOf<Resolved>, 'radius'>): void {
+      void props
+    }
+    consumesEverythingExceptRadius({})
+  })
+
   it('step 5 — nested composition resolves transitively through the partner’s own __contract', () => {
     const surfaceComposingBaseContract = {
       tag: 'div',

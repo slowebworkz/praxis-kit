@@ -402,20 +402,32 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
      real-contract tests happened to use an optional prop. Fixed by computing per-side optionality
      explicitly (`OptionalKeysOf`, `lib/compose-props/src/merge-policy.ts`) and splitting the merge
      into separate required/optional mapped types.
-- **Collision validation is a separate acceptance criterion from "the merge computes correct
-  values," and is only partially met — see section 5's own corrected framing.** What's actually
-  delivered: a colliding key's value becomes a self-describing `CollisionError<K>` string instead
-  of silently picking a side. What's *not* delivered, confirmed by direct test rather than assumed:
-  rejection of the `compose: {...}` declaration itself, or any guarantee that an unconsumed
-  collision will ever surface as a visible diagnostic. Do not describe this mechanism as
+- **Collision validation — decided, not left open: a downstream diagnostic, not declaration-site
+  rejection.** What's actually delivered: a colliding key's value becomes a self-describing
+  `CollisionError<K>` string instead of silently picking a side. What's *not* delivered, and is not
+  planned for this proposal: rejection of the `compose: {...}` declaration itself, or any guarantee
+  that an unconsumed collision will ever surface as a visible diagnostic. This is a conscious
+  choice, not an unresolved gap — see section 5 for the full reasoning — because eager,
+  declaration-site rejection would require weaving collision detection into
+  `createContractComponent`'s own parameter type (every component's call to the factory, not only
+  composing ones, would need to cross-check against `compose.with`'s contract), a materially
+  bigger and differently-shaped change than this package's scope, and a stronger guarantee than the
+  runtime itself provides (`ComposeOptions`'s own doc comment states collision safety is advisory,
+  not enforced, at the runtime level either — matching the type system's guarantee to the runtime's
+  own, rather than overpromising). Locked in by a dedicated test
+  (`lib/compose-props/src/compose-generics.test.ts`, "design decision" case) so a future change to
+  this behavior is a conscious decision, not a silent regression. Do not describe this mechanism as
   "rejecting an invalid composition" in any future summary of this work — it describes one, lazily,
   if and only if something later tries to use the colliding key.
 - **Acceptance criteria:** all spike assertions (section 7) pass under `tsc --noEmit` — confirmed,
-  `pnpm --filter @praxis-kit/compose-props typecheck && test` passes (8/8 as of this writing; the
+  `pnpm --filter @praxis-kit/compose-props typecheck && test` passes (9/9 as of this writing; the
   count will keep growing as regressions get their own named test), and a full workspace
   `pnpm -r typecheck` confirms no existing component's `ContractProps<T>` extraction changed.
-  `praxis-components`' `CardProps` pattern can drop its hand-extension once an adapter actually
-  consumes `ContractGenericsWithComposeOf` (not yet true — see "Next steps").
+  **Now true, not aspirational:** `ContractProps<T>` in the React adapter
+  (`adapters/react/src/shared/types/polymorphic-props.ts`) consumes
+  `ContractGenericsWithComposeOf<C>` directly — `praxis-components`' `CardProps` pattern can drop
+  its hand-extension once it upgrades to a release containing this change. Other adapters are not
+  yet migrated (see "Next steps").
 
 ## Alternatives considered
 
@@ -439,10 +451,21 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
 ## Next steps
 
 1. ~~Decide section 8's placement question.~~ Done — `lib/compose-props`.
-2. ~~Fill the untrusted-`with` spike gap.~~ Done — covered in `compose-generics.test.ts`. Mode/`as`
-   adapter-level checks (section 7) remain open; they need a real adapter, not this package.
-3. Swap one real adapter's `ContractProps` (React, as the reference adapter) to call
-   `ContractGenericsWithComposeOf` from `@praxis-kit/compose-props` instead of
-   `ContractGenericsWithAllowedOf` directly; re-run that adapter's full existing type-test suite
-   before touching the others.
-4. Audit Svelte's extraction path per section 6 before claiming adapter parity.
+2. ~~Fill the untrusted-`with` spike gap.~~ Done — covered in `compose-generics.test.ts`.
+3. ~~Swap React's `ContractProps` to `ContractGenericsWithComposeOf`.~~ Done — validated against
+   two real `createContractComponent` components across all three render modes, `as` narrowing in
+   both directions, a non-composing control case, and the adapter's full existing suite (zero
+   regressions). React is the reference implementation for the remaining adapters.
+4. ~~Decide the collision-validation acceptance criterion.~~ Done — section 8's own entry: a
+   downstream diagnostic, not declaration-site rejection, locked in by a dedicated test.
+5. Add a real-component integration test for **nested** composition (three components,
+   `Card → Surface → Base`) through the actual public `ContractProps` extraction path — the
+   helper-level test (`lib/compose-props`'s own "step 5") proves the type function resolves
+   correctly in isolation; it doesn't yet prove the full adapter-level path preserves that for a
+   multi-level chain the way the two-component case is now proven for.
+6. Audit Svelte's extraction path per section 6 before claiming any adapter parity there — its
+   `GenericsOf<T>` has no `__contract` marker to recover a composed partner's contract from in the
+   first place, so this is a real open question, not an assumed pass-through.
+7. Only once 5 and 6 are settled, extend the same swap to Preact and Vue (same clone-based
+   `asChild` family as React) — validate each adapter's own `ContractProps` path and render modes
+   independently rather than assuming React's result transfers automatically.

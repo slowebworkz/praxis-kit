@@ -119,4 +119,61 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     type HasRadius = 'radius' extends keyof ContractProps<typeof Plain> ? true : false
     expectTypeOf<HasRadius>().toEqualTypeOf<false>()
   })
+
+  it('(6) nested composition through the real extraction path: Card → Surface → Base, three real components deep', () => {
+    // Deliberately separate component tree from the module-level Card/Surface above -- this
+    // test exists specifically to prove the *public* ContractProps<T> extraction path survives
+    // a multi-level chain, not just the standalone ContractGenericsWithComposeOf helper
+    // (already covered by lib/compose-props's own "step 5" test, which can't reach this
+    // adapter's real createContractComponent/ContractProps at all).
+    const baseOptions = {
+      tag: 'span',
+      name: 'Base',
+      // Deliberately not named `as` -- that's every PolymorphicComponent's own built-in control
+      // prop (tag selection), and colliding with it would test a collision edge case instead of
+      // plain three-level nesting.
+      props: undefined as unknown as { tone?: 'light' | 'dark' },
+    } satisfies ReactFactoryOptions
+    const Base = createContractComponent(baseOptions)
+
+    const surfaceComposingBaseOptions = {
+      tag: 'div',
+      name: 'SurfaceComposingBase',
+      props: undefined as unknown as { radius?: 'sm' | 'lg' },
+      compose: { allProps: true, with: Base },
+    } satisfies ReactFactoryOptions
+    const SurfaceComposingBase = createContractComponent(surfaceComposingBaseOptions)
+
+    const nestedCardOptions = {
+      tag: 'article',
+      name: 'NestedCard',
+      props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+      compose: { allProps: true, with: SurfaceComposingBase },
+    } satisfies ReactFactoryOptions
+    const NestedCard = createContractComponent(nestedCardOptions)
+
+    // All three levels' own props reach the outermost component's real ContractProps, across
+    // every render mode -- not just the normal-mode default this type's own doc comment anchors
+    // against.
+    type HasVariant = 'variant' extends keyof ContractProps<typeof NestedCard> ? true : false
+    type HasRadius = 'radius' extends keyof ContractProps<typeof NestedCard> ? true : false
+    type HasTone = 'tone' extends keyof ContractProps<typeof NestedCard, 'render'> ? true : false
+    expectTypeOf<HasVariant>().toEqualTypeOf<true>()
+    expectTypeOf<HasRadius>().toEqualTypeOf<true>()
+    expectTypeOf<HasTone>().toEqualTypeOf<true>()
+
+    type Picked = Pick<ContractProps<typeof NestedCard>, 'variant' | 'radius' | 'tone'>
+    expectTypeOf<Picked>().toEqualTypeOf<{
+      variant?: 'elevated' | 'flat'
+      radius?: 'sm' | 'lg'
+      tone?: 'light' | 'dark'
+    }>()
+
+    function ConsumesAllThreeLevels(
+      props: Omit<ContractProps<typeof NestedCard, 'render'>, 'render' | 'asChild' | 'children'>,
+    ): void {
+      void props
+    }
+    ConsumesAllThreeLevels({ variant: 'elevated', radius: 'sm', tone: 'light' })
+  })
 })
