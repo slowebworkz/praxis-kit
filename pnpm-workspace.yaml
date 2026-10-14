@@ -74,7 +74,7 @@ catalog:
   react-dom: ^19.3.0
 
   # Solid
-  solid-js: ^1.9.15
+  solid-js: ^1.9.17
   unplugin-solid: ^2.0.0
 
   # Svelte
