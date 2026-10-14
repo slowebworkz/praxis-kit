@@ -17,8 +17,7 @@
  * No runtime assertions are made. These tests exist to catch type regressions.
  */
 import { describe, it, expectTypeOf } from 'vitest'
-import type { OmitIndexSignature } from 'type-fest'
-import type { ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
+import type { CollisionError, ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
 import { createContractComponent } from './create-contract-component'
 import type { ContractProps, PolymorphicWithAllowedAs, ReactFactoryOptions } from '../shared'
 
@@ -152,11 +151,13 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     } satisfies ReactFactoryOptions
     const NestedCard = createContractComponent(nestedCardOptions)
 
-    // All three levels' own props reach the outermost component's real ContractProps, across
-    // every render mode -- not just the normal-mode default this type's own doc comment anchors
-    // against.
+    // All three levels' own props reach the outermost component's real ContractProps, checked
+    // against all three render modes this type supports (normal/asChild/render) -- not just the
+    // normal-mode default this type's own doc comment anchors against.
     type HasVariant = 'variant' extends keyof ContractProps<typeof NestedCard> ? true : false
-    type HasRadius = 'radius' extends keyof ContractProps<typeof NestedCard> ? true : false
+    type HasRadius = 'radius' extends keyof ContractProps<typeof NestedCard, 'asChild'>
+      ? true
+      : false
     type HasTone = 'tone' extends keyof ContractProps<typeof NestedCard, 'render'> ? true : false
     expectTypeOf<HasVariant>().toEqualTypeOf<true>()
     expectTypeOf<HasRadius>().toEqualTypeOf<true>()
@@ -175,5 +176,44 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       void props
     }
     ConsumesAllThreeLevels({ variant: 'elevated', radius: 'sm', tone: 'light' })
+  })
+
+  it('(7) design decision — collision validation is a downstream diagnostic, not declaration-site rejection, against two real createContractComponent components', () => {
+    // Same decision as lib/compose-props/src/compose-generics.test.ts's own "design decision"
+    // case, verified here against the real factory and the real ContractProps extraction path
+    // rather than a bare contract literal — that package has no dependency on any adapter, so it
+    // can't call createContractComponent itself. The two tests are deliberately not merged: they
+    // prove the same decision holds at two different, independently-useful layers.
+    const collidingSurfaceOptions = {
+      tag: 'div',
+      name: 'CollidingSurface',
+      props: undefined as unknown as { radius?: 'sm' | 'lg' },
+    } satisfies ReactFactoryOptions
+    const CollidingSurface = createContractComponent(collidingSurfaceOptions)
+
+    // (1) The declaration itself always type-checks, collision or not -- no @ts-expect-error
+    // is needed anywhere on this real createContractComponent call despite `radius` colliding
+    // with CollidingSurface's incompatible 'sm' | 'lg'.
+    const collidingCardOptions = {
+      tag: 'article',
+      name: 'CollidingCard',
+      props: undefined as unknown as { radius?: 'thin' | 'thick' },
+      compose: { allProps: true, with: CollidingSurface },
+    } satisfies ReactFactoryOptions
+    const CollidingCard = createContractComponent(collidingCardOptions)
+
+    // (2) The collision is recorded as a diagnostic value at that one key, reachable through the
+    // real public ContractProps<T> extraction path...
+    type RadiusType = ContractProps<typeof CollidingCard>['radius']
+    expectTypeOf<RadiusType>().toEqualTypeOf<CollisionError<'radius'> | undefined>()
+
+    // (3) ...but a consumer who never reads that specific key sees no error at all, through the
+    // same real extraction path.
+    function ConsumesEverythingExceptRadius(
+      props: Omit<ContractProps<typeof CollidingCard>, 'radius'>,
+    ): void {
+      void props
+    }
+    ConsumesEverythingExceptRadius({})
   })
 })

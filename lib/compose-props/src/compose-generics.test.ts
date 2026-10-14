@@ -123,7 +123,15 @@ describe('ContractGenericsWithComposeOf against real FactoryOptions-shaped contr
     expectTypeOf<PropsOf<Resolved>['radius']>().toEqualTypeOf<CollisionError<'radius'>>()
   })
 
-  it('design decision — collision validation is a downstream diagnostic, not declaration-site rejection, and this is intentional', () => {
+  it('design decision — collision validation is a downstream diagnostic, not declaration-site rejection, against the type-level mechanism in isolation', () => {
+    // This package has no dependency on any adapter, so it can only exercise
+    // ContractGenericsWithComposeOf<C> directly against a bare contract literal — it cannot call
+    // the real createContractComponent factory. The same decision, verified against two real
+    // createContractComponent-built components and the real ContractProps extraction path, is
+    // locked in by its own test: adapters/react/src/current/compose-props.test.tsx, "design
+    // decision" case. This test and that one are deliberately not merged into one — they prove
+    // the decision holds at two different, independently-useful layers.
+    //
     // This is a locked-in decision, not an unverified gap: declaration-site rejection would
     // require weaving collision detection into createContractComponent's own parameter type —
     // every component's call to the factory, not just composing ones, would need to cross-check
