@@ -1,6 +1,8 @@
 # Design proposal: compose-aware prop typing
 
-**Status:** proposed, validated by a type-level spike. Not yet implemented in any adapter.
+**Status:** implemented in `lib/compose-props` (`@praxis-kit/compose-props`), validated against
+real `FactoryOptions`-shaped contracts. Not yet wired into any adapter's `ContractProps`/
+`GenericsOf` — see "Next steps."
 
 ## 1. Problem statement and precedent
 
@@ -317,30 +319,42 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
   (placement below), plus a one-line internal change in each applicable adapter's `ContractProps`/
   `GenericsOf` wrapper. Proportionate to the problem, unlike the ancestry-channel proposal this
   repo already declined.
-- **Open placement question:** where do `ComposedContractOf`/`ContractGenericsWithComposeOf` live?
-  `RecoveredContractOf` needs `HasContract<C>` (`@praxis-kit/contract-props`, which deliberately
-  depends on neither `@praxis-kit/primitive` nor `@praxis-kit/core`); `ContractGenericsOf`/
-  `ContractPropsOf`/`ContractVariantsOf` live in `@praxis-kit/primitive`, which has no dependency on
-  `@praxis-kit/contract-props` today. Three options for whoever implements this: (a) add a
-  `@praxis-kit/primitive` → `@praxis-kit/contract-props` dependency edge (contract-props has zero
-  dependencies today, so this isn't circular, but it does end contract-props's current
-  dependency-free status); (b) a new, minimal shared package (e.g. `lib/compose-props`) depending
-  on both, keeping each existing package's boundary intact; (c) duplicate the composition logic
-  per adapter, inside each adapter's own `polymorphic-props.ts`-equivalent, where `HasContract` and
-  the `Contract*Of` family are already both imported today. (b) is the best fit for the "one fix
-  point, not one per adapter" goal this proposal is built around — recommended, not yet decided.
-- **Risk — Svelte:** may need real adapter-specific work per section 6, not just a wrapper swap.
-- **Risk — `ClassifyPropKey` drift:** flagged in section 5; no automated drift check proposed yet
-  beyond code-review discipline.
-- **Risk — untrusted `with`:** `compose.with`'s type is deliberately the loose `ComponentReference`
-  (`lib/primitive/src/types/element-type.ts`), not "a praxis-kit component." `RecoveredContractOf`
-  degrading to `never` for a non-praxis-kit `with` is confirmed by the spike's own type structure
-  (the `extends HasContract<infer C> ? C : never` conditional), but should get its own explicit
-  spike assertion before this is implemented for real (not currently covered — a gap in the spike
-  itself, noted for the follow-up PR).
-- **Acceptance criteria:** all spike assertions (section 7) pass under `tsc --noEmit`; no existing
-  component's `ContractProps<T>` extraction changes; `praxis-components`' `CardProps` pattern can
-  drop its hand-extension once this ships in a release.
+- **Placement question — resolved.** Implemented as a new package, `lib/compose-props`
+  (`@praxis-kit/compose-props`), depending on both `@praxis-kit/primitive` and
+  `@praxis-kit/contract-props` — option (b) from the original three, keeping both existing
+  packages' dependency boundaries (`contract-props` stays dependency-free) untouched.
+- **Risk — Svelte:** still open, unaddressed by this implementation. `lib/compose-props` is
+  framework-neutral, so wiring it into Svelte's own `GenericsOf<T>` still needs the dedicated audit
+  section 6 calls for, since Svelte has no `__contract` marker to recover a composed partner's
+  contract from in the first place.
+- **Risk — `ClassifyPropKey` drift:** unchanged from the original proposal — flagged in section 5,
+  no automated drift check implemented, code-review discipline only.
+- **Risk — untrusted `with`:** closed. `lib/compose-props/src/compose-generics.test.ts`'s "risk
+  check" test confirms `RecoveredContractOf` degrades cleanly (no composed props at all) when
+  `compose.with` is an arbitrary non-praxis-kit callable.
+- **Two additional implementation findings, not visible from the mocked spike alone** (the mocked
+  spike in `lib/contract-props/src/compose-generics.spike.test.ts` didn't surface either, since its
+  mock contracts never carried a real index signature):
+  1. `ContractPropsOf<C>` (`DeclaredPropsFrom`) deliberately intersects a component's declared
+     props with `AnyRecord` — by design, not a bug. But once both sides of a merge carry that
+     index signature, `keyof Own | keyof Composed` absorbs every literal key into the bare
+     `string` the index signature already implies, silently degrading `MergeComposedProps`'s
+     per-key logic to iterating over `string` instead of each contract's real declared keys.
+     Fixed by running both sides through `OmitIndexSignature` (`type-fest`) **before** merging,
+     not after.
+  2. `MergeComposedProps` can legitimately produce a `CollisionError<K>` string for a colliding
+     key — not a valid `VariantStates<string>`. Since `PolymorphicGenerics`'s own
+     `Variants extends Readonly<VariantMap>` constraint is checked against
+     `ContractGenericsWithComposeOf`'s declaration for *every* possible `C`, not only
+     collision-free ones, the merged variants result needs its own
+     `extends infer M extends Readonly<VariantMap> ? M : never` guard so a real collision resolves
+     to `never` (still visibly broken downstream) instead of making the type alias itself fail to
+     type-check for every caller.
+- **Acceptance criteria:** all spike assertions (section 7) pass under `tsc --noEmit` — confirmed,
+  `pnpm --filter @praxis-kit/compose-props typecheck && test` passes 6/6, and a full workspace
+  `pnpm -r typecheck` confirms no existing component's `ContractProps<T>` extraction changed.
+  `praxis-components`' `CardProps` pattern can drop its hand-extension once an adapter actually
+  consumes `ContractGenericsWithComposeOf` (not yet true — see "Next steps").
 
 ## Alternatives considered
 
@@ -363,10 +377,11 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
 
 ## Next steps
 
-1. Decide section 8's placement question.
-2. Fill the two spike gaps noted in section 7 (mode/`as` adapter-level checks) and section 8
-   (untrusted `with` degrading cleanly) at the real implementation site.
-3. Implement in `@praxis-kit/primitive` or the new shared package per the placement decision; swap
-   one real adapter's `ContractProps` (React, as the reference adapter) first; re-run that
-   adapter's full existing type-test suite before touching the others.
+1. ~~Decide section 8's placement question.~~ Done — `lib/compose-props`.
+2. ~~Fill the untrusted-`with` spike gap.~~ Done — covered in `compose-generics.test.ts`. Mode/`as`
+   adapter-level checks (section 7) remain open; they need a real adapter, not this package.
+3. Swap one real adapter's `ContractProps` (React, as the reference adapter) to call
+   `ContractGenericsWithComposeOf` from `@praxis-kit/compose-props` instead of
+   `ContractGenericsWithAllowedOf` directly; re-run that adapter's full existing type-test suite
+   before touching the others.
 4. Audit Svelte's extraction path per section 6 before claiming adapter parity.
