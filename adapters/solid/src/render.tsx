@@ -127,6 +127,7 @@ export function renderComposed<TProps extends KnownProps>(
   filterProps: FilterPredicate,
   ref: unknown,
   allProps?: boolean,
+  defaults?: object,
 ): SolidElement {
   const [knownRaw, rest] = splitProps(props, SPLIT_KEYS)
   const known = knownRaw as unknown as KnownProps
@@ -158,7 +159,13 @@ export function renderComposed<TProps extends KnownProps>(
 
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <Dynamic component={withComponent as any} {...(allProps ? forwardableProps : undefined)} asChild ref={ref}>
+    <Dynamic
+      component={withComponent as any}
+      {...defaults}
+      {...(allProps ? forwardableProps : undefined)}
+      asChild
+      ref={ref}
+    >
       {(withProps: UnknownProps) => (
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         <Dynamic component={tag() as any} {...(mergeSlotProps(withProps, domProps()) as any)} />

@@ -221,7 +221,7 @@
   -->
   {@const With = bundle.compose.with}
   {@const ownChildren = children}
-  <Polymorphic bundle={With} {...(bundle.compose.allProps ? rest : {})} asChild>
+  <Polymorphic bundle={With} {...bundle.compose.defaults} {...(bundle.compose.allProps ? rest : {})} asChild>
     {#snippet children(withProps)}
       {#if isString(tag)}
         <svelte:element

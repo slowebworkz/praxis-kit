@@ -18,6 +18,7 @@
  */
 import { describe, it, expectTypeOf } from 'vitest'
 import { defineContract } from '@praxis-kit/adapter-utils'
+import type { ClassPluginFactory } from '@praxis-kit/core'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import type { CollisionError, ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
 import { createContractComponent } from './create-contract-component'
@@ -39,6 +40,108 @@ const surfaceOptions = {
   styling: { variants: { shadow: { true: 'shadow-sm', false: 'shadow-none' } } },
 } satisfies ReactFactoryOptions
 const Surface = createContractComponent(surfaceOptions)
+
+// `compose.defaults` is validated against the secondary component's public props and variants.
+const ValidComposeDefaults = defineContract({
+  tag: 'section',
+  name: 'ValidComposeDefaults',
+  compose: { with: Surface, defaults: { radius: 'lg', shadow: true } },
+})
+void ValidComposeDefaults
+
+// Omitted and empty defaults are both valid and preserve the existing composition API.
+defineContract({ tag: 'section', name: 'ComposeDefaultsOmitted', compose: { with: Surface } })
+defineContract({
+  tag: 'section',
+  name: 'ComposeDefaultsEmpty',
+  compose: { with: Surface, defaults: {} },
+})
+
+// Components without a retained Praxis Kit contract intentionally skip defaults validation.
+const ExternalSurface = (_props: { external?: string }) => null
+defineContract({
+  tag: 'section',
+  name: 'ExternalComposeDefaults',
+  compose: { with: ExternalSurface, defaults: { external: 42, unknown: true } },
+})
+
+const PluginSurface = createContractComponent({
+  tag: 'div',
+  name: 'PluginSurface',
+  props: undefined as unknown as {},
+  styling: { base: '', plugin: createTailwindPipeline },
+} satisfies ReactFactoryOptions)
+
+// Plugin-contributed props participate in compose.defaults validation too.
+const ValidPluginComposeDefaults = defineContract({
+  tag: 'section',
+  name: 'ValidPluginComposeDefaults',
+  compose: { with: PluginSurface, defaults: { flex: true } },
+})
+void ValidPluginComposeDefaults
+
+// Explicitly exercise a plugin whose props are a union: keys unique to a union member must
+// remain valid composition defaults, even though `keyof` on the union contains only common keys.
+type ExclusiveLayoutProps =
+  | { flex: true; grid?: never }
+  | { grid: true; flex?: never }
+  | { flex?: never; grid?: never }
+const exclusiveLayoutPlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<
+  ExclusiveLayoutProps
+>
+const UnionPluginSurface = createContractComponent({
+  tag: 'div',
+  name: 'UnionPluginSurface',
+  props: undefined as unknown as {},
+  styling: { base: '', plugin: exclusiveLayoutPlugin },
+} satisfies ReactFactoryOptions)
+
+defineContract({
+  tag: 'section',
+  name: 'UnionPluginComposeDefaults',
+  compose: { with: UnionPluginSurface, defaults: { flex: true } },
+})
+defineContract({
+  tag: 'section',
+  name: 'UnionPluginComposeDefaultsGrid',
+  compose: { with: UnionPluginSurface, defaults: { grid: true } },
+})
+
+// @ts-expect-error — plugin-contributed union props still enforce their value types
+// (the union allows only literal `true`, not `false`).
+defineContract({
+  tag: 'section',
+  name: 'InvalidUnionPluginComposeDefaults',
+  compose: { with: UnionPluginSurface, defaults: { flex: false } },
+})
+
+// @ts-expect-error — the plugin-contributed flex prop is boolean
+defineContract({
+  tag: 'section',
+  name: 'InvalidPluginComposeDefaults',
+  compose: { with: PluginSurface, defaults: { flex: 'yes' } },
+})
+
+// @ts-expect-error — `raduis` is not a public prop of Surface
+defineContract({
+  tag: 'section',
+  name: 'InvalidComposeDefaultsKey',
+  compose: { with: Surface, defaults: { raduis: 'lg' } },
+})
+
+// @ts-expect-error — Surface's radius prop only accepts 'sm' or 'lg'
+defineContract({
+  tag: 'section',
+  name: 'InvalidComposeDefaultsValue',
+  compose: { with: Surface, defaults: { radius: 'md' } },
+})
+
+// @ts-expect-error — Surface's shadow variant only accepts booleans
+defineContract({
+  tag: 'section',
+  name: 'InvalidComposeDefaultsVariant',
+  compose: { with: Surface, defaults: { shadow: 'yes' } },
+})
 
 const cardOptions = {
   tag: 'section',

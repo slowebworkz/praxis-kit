@@ -149,7 +149,7 @@ export function createContractComponent<
         if (compose?.with !== undefined && attrs['asChild'] === undefined) {
           return h(
             compose.with as VueComponent,
-            { ...(compose.allProps ? attrs : undefined), asChild: true },
+            { ...compose.defaults, ...(compose.allProps ? attrs : undefined), asChild: true },
             { default: () => innerVNode },
           )
         }

@@ -58,3 +58,5 @@ adapter's actual callable signature.
   effect on either adapter — neither has an `asChild` concept.
 
 Development: `pnpm --filter @praxis-kit/compose-props test`, `typecheck`, `lint`.
+
+`compose.defaults` optionally supplies composition-scoped defaults to the secondary component named by `compose.with`. At the `defineContract` boundary, keys and values are checked against the secondary component's retained public props, including variant props and plugin-contributed props when available. These values are passed to that component before `compose.allProps` forwards the composing component's props, so forwarded values take precedence. The defaults do not mutate the secondary component's contract. Arbitrary external component references have no retained Praxis Kit contract to validate against, so their defaults cannot receive this contract-based checking.

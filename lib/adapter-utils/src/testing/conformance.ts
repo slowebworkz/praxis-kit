@@ -375,6 +375,29 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(element.className).toContain('intent-ghost')
       })
 
+      it('applies compose.defaults to the composed component', () => {
+        const BoxA = adapter.createComponent({
+          styling: { variants: { intent: { ghost: 'intent-ghost', solid: 'intent-solid' } } },
+        })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA, defaults: { intent: 'ghost' } },
+        })
+        const { element } = adapter.render(BoxB)
+        expect(element.className).toContain('intent-ghost')
+      })
+
+      it('forwards allProps over compose.defaults when both specify the same prop', () => {
+        const BoxA = adapter.createComponent({
+          styling: { variants: { intent: { ghost: 'intent-ghost', solid: 'intent-solid' } } },
+        })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA, allProps: true, defaults: { intent: 'ghost' } },
+        })
+        const { element } = adapter.render(BoxB, { intent: 'solid' })
+        expect(element.className).toContain('intent-solid')
+        expect(element.className).not.toContain('intent-ghost')
+      })
+
       it('with allProps: true, explicit asChild/ref/children still win over forwarded props', () => {
         const BoxA = adapter.createComponent({ tag: 'nav' })
         const BoxB = adapter.createComponent({
