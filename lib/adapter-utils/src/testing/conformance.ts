@@ -386,6 +386,41 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(element.className).toContain('intent-ghost')
       })
 
+      it('applies multiple compose.defaults together', () => {
+        const BoxA = adapter.createComponent({
+          styling: {
+            variants: {
+              intent: { ghost: 'intent-ghost', solid: 'intent-solid' },
+              size: { sm: 'size-sm', lg: 'size-lg' },
+            },
+          },
+        })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA, defaults: { intent: 'ghost', size: 'lg' } },
+        })
+        const { element } = adapter.render(BoxB)
+        expect(element.className).toContain('intent-ghost')
+        expect(element.className).toContain('size-lg')
+      })
+
+      it('allows partial compose.defaults without defaulting unspecified variants', () => {
+        const BoxA = adapter.createComponent({
+          styling: {
+            variants: {
+              intent: { ghost: 'intent-ghost', solid: 'intent-solid' },
+              size: { sm: 'size-sm', lg: 'size-lg' },
+            },
+          },
+        })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA, defaults: { intent: 'ghost' } },
+        })
+        const { element } = adapter.render(BoxB)
+        expect(element.className).toContain('intent-ghost')
+        expect(element.className).not.toContain('size-sm')
+        expect(element.className).not.toContain('size-lg')
+      })
+
       it('forwards allProps over compose.defaults when both specify the same prop', () => {
         const BoxA = adapter.createComponent({
           styling: { variants: { intent: { ghost: 'intent-ghost', solid: 'intent-solid' } } },

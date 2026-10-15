@@ -49,6 +49,15 @@ const ValidComposeDefaults = defineContract({
 })
 void ValidComposeDefaults
 
+// Defaults are partial: callers can configure one supported prop without specifying variants
+// or ordinary props that should retain their existing behavior.
+const ValidPartialComposeDefaults = defineContract({
+  tag: 'section',
+  name: 'ValidPartialComposeDefaults',
+  compose: { with: Surface, defaults: { radius: 'lg' } },
+})
+void ValidPartialComposeDefaults
+
 // Omitted and empty defaults are both valid and preserve the existing composition API.
 defineContract({ tag: 'section', name: 'ComposeDefaultsOmitted', compose: { with: Surface } })
 defineContract({
