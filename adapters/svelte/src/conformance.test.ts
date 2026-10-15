@@ -48,7 +48,9 @@ const adapter: ConformanceAdapter<SvelteComponent> = {
       compose !== undefined
         ? { ...options, compose: { ...compose, with: (compose.with as SvelteComponent)._bundle } }
         : options
-    const bundle = createContractComponent(unwrappedOptions as BareFactoryOptions) as AnyBuiltRuntime
+    const bundle = createContractComponent(
+      unwrappedOptions as BareFactoryOptions,
+    ) as AnyBuiltRuntime
     return {
       displayName: options.name ?? 'PolymorphicComponent',
       _bundle: bundle,

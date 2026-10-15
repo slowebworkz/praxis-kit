@@ -97,16 +97,19 @@ type IsOptionalOn<T extends object, K extends PropertyKey> = K extends keyof T
  * Checking presence on each side separately (rather than one combined check) is what keeps a key
  * required-only-on-`Composed`-and-absent-from-`Own` correctly required.
  */
-type IsMergedKeyOptional<Own extends object, Composed extends object, K extends PropertyKey> =
-  K extends keyof Own
-    ? K extends keyof Composed
-      ? IsOptionalOn<Own, K> extends true
-        ? IsOptionalOn<Composed, K>
-        : false
-      : IsOptionalOn<Own, K>
-    : K extends keyof Composed
+type IsMergedKeyOptional<
+  Own extends object,
+  Composed extends object,
+  K extends PropertyKey,
+> = K extends keyof Own
+  ? K extends keyof Composed
+    ? IsOptionalOn<Own, K> extends true
       ? IsOptionalOn<Composed, K>
-      : true
+      : false
+    : IsOptionalOn<Own, K>
+  : K extends keyof Composed
+    ? IsOptionalOn<Composed, K>
+    : true
 
 type AllMergedKeys<Own extends object, Composed extends object> = keyof Own | keyof Composed
 
@@ -126,15 +129,52 @@ type MergedOptionalKeys<Own extends object, Composed extends object> = {
  * separate mapped types (required keys, then optional keys) rather than one, so each half can
  * apply its own `?` modifier explicitly.
  */
+type MergeComposedPropsMember<
+  Own extends object,
+  Composed extends object,
+  AsVariants extends boolean,
+> = {
+  [
+    K in Exclude<AllMergedKeys<Own, Composed>, MergedOptionalKeys<Own, Composed>>
+  ]: MergeComposedValue<Own, Composed, K, AsVariants>
+} & {
+  [K in MergedOptionalKeys<Own, Composed>]?: MergeComposedValue<Own, Composed, K, AsVariants>
+}
+
+/**
+ * Merge each union member independently. Contracts may contribute mutually-exclusive prop unions
+ * (notably the Tailwind layout shorthand `{ flex: true } | { grid: true } | ...`). Computing
+ * `keyof Own` or mapped keys against the union as a whole only sees keys shared by every member;
+ * this can erase a valid primary prop and make it resolve to `never` when the composed partner
+ * does not declare that prop. Distribution retains the primary contract's exclusivity while still
+ * applying the same per-key collision policy to each member.
+ */
+type MergeComposedPropsDistributive<
+  Own extends object,
+  Composed extends object,
+  AsVariants extends boolean,
+> = Own extends unknown
+  ? Composed extends unknown
+    ? MergeComposedPropsMember<Own, Composed, AsVariants>
+    : never
+  : never
+
+/**
+ * Avoid a quadratic union cross-product when both sides contribute the same prop shape.
+ *
+ * Plugin-generated props can be mutually-exclusive unions (for example Tailwind's flex/grid
+ * layout props). Distributing both identical unions would compare every member against every
+ * other member, manufacturing collisions between alternatives and potentially exhausting
+ * TypeScript's instantiation depth. If the two complete types are mutually assignable, their
+ * merge is already represented by either side; otherwise retain the member-wise merge so
+ * member-specific keys and collision diagnostics continue to work for genuinely different types.
+ */
 export type MergeComposedProps<
   Own extends object,
   Composed extends object,
   AsVariants extends boolean = false,
-> = {
-  [K in Exclude<
-    AllMergedKeys<Own, Composed>,
-    MergedOptionalKeys<Own, Composed>
-  >]: MergeComposedValue<Own, Composed, K, AsVariants>
-} & {
-  [K in MergedOptionalKeys<Own, Composed>]?: MergeComposedValue<Own, Composed, K, AsVariants>
-}
+> = [Own] extends [Composed]
+  ? [Composed] extends [Own]
+    ? Own
+    : MergeComposedPropsDistributive<Own, Composed, AsVariants>
+  : MergeComposedPropsDistributive<Own, Composed, AsVariants>

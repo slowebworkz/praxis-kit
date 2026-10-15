@@ -135,7 +135,12 @@ export function createContractComponent<
         : undefined
 
       return () => {
-        const innerVNode = render({ ...bundle, state: state.value, slots, elementRef: onElementRef })
+        const innerVNode = render({
+          ...bundle,
+          state: state.value,
+          slots,
+          elementRef: onElementRef,
+        })
 
         // `compose` makes this component always render `asChild` into `compose.with`, as if the
         // consumer had hand-written `<With asChild><ThisComponent v-bind="attrs" /></With>` — but
@@ -149,7 +154,7 @@ export function createContractComponent<
         if (compose?.with !== undefined && attrs['asChild'] === undefined) {
           return h(
             compose.with as VueComponent,
-            { ...(compose.allProps ? attrs : undefined), asChild: true },
+            { ...compose.defaults, ...(compose.allProps ? attrs : undefined), asChild: true },
             { default: () => innerVNode },
           )
         }

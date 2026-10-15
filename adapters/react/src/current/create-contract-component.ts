@@ -172,6 +172,7 @@ export function createContractComponent<
     if (compose?.with !== undefined && props.asChild === undefined && !isFunction(props.render)) {
       const innerElement = render({ ...bundle, props, ref: null })
       return createElement(compose.with as ComponentType<UnknownProps>, {
+        ...compose.defaults,
         ...(compose.allProps ? props : undefined),
         asChild: true,
         ref: mergedRef ?? null,

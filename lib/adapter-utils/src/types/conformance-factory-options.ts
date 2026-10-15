@@ -60,5 +60,9 @@ export type ConformanceFactoryOptions = {
    * `allProps` mirrors `ComposeOptions.allProps` — opt-in forwarding of this component's own raw
    * props onto `with`.
    */
-  compose?: { with: ComponentReference; allProps?: boolean }
+  compose?: {
+    with: ComponentReference
+    allProps?: boolean
+    defaults?: object
+  }
 }

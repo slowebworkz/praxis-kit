@@ -3467,19 +3467,19 @@ immediately (not re-debugged as a fresh credentials issue) if it recurs. If this
 time, stop guessing and jump to `8.0.0`.
 
 **Third occurrence (2026-10-12): happened exactly as predicted, resolved by probing, not by
-jumping.** The next `changeset`-computed bump from `1.0.3` was `1.1.0` (minor) — landing squarely
-on a _known_-blocked number from the list above, not even a fresh hidden one. Re-reading this
-entry's own "if this happens a third time, stop guessing and jump to `8.0.0`" literally would have
-meant a major-version jump for a release with zero breaking changes — reconsidered: the old line's
-visible history jumps straight from `1.1.1` to `2.0.0`, meaning nothing between them was ever
-published, so `1.1.2` was almost certainly free without guessing blindly. Published as `1.1.2`
-instead — same incremental-probing approach as the original `1.0.0`/`1.0.1` → `1.0.2` resolution,
-preserving the real semver meaning (still a minor-level bump) instead of a major-version number
-that would have falsely signaled breaking changes and contradicted `docs/api-stability.md`'s "1.x"
-framing. **Revised guidance:** before jumping to `8.0.0`, always check whether the old line's
-_next_ visible version after the collision is a different major (as it was here) — that gap is
-very likely unpublished-and-safe, and probing it first avoids an unnecessarily large, misleading
-version jump. Only fall back to `8.0.0` if that gap number _also_ collides.
+jumping.** The next `changeset`-computed bump from `1.0.3` was `1.1.0` (minor) — landing squarely on
+a _known_-blocked number from the list above, not even a fresh hidden one. Re-reading this entry's
+own "if this happens a third time, stop guessing and jump to `8.0.0`" literally would have meant a
+major-version jump for a release with zero breaking changes — reconsidered: the old line's visible
+history jumps straight from `1.1.1` to `2.0.0`, meaning nothing between them was ever published, so
+`1.1.2` was almost certainly free without guessing blindly. Published as `1.1.2` instead — same
+incremental-probing approach as the original `1.0.0`/`1.0.1` → `1.0.2` resolution, preserving the
+real semver meaning (still a minor-level bump) instead of a major-version number that would have
+falsely signaled breaking changes and contradicted `docs/api-stability.md`'s "1.x" framing.
+**Revised guidance:** before jumping to `8.0.0`, always check whether the old line's _next_ visible
+version after the collision is a different major (as it was here) — that gap is very likely
+unpublished-and-safe, and probing it first avoids an unnecessarily large, misleading version jump.
+Only fall back to `8.0.0` if that gap number _also_ collides.
 
 ### Runtime performance audit — caches, Proxy, and the fresh-component cost (2026-10-05)
 
@@ -3569,41 +3569,41 @@ already recurse through genuine component calls the same way CSR does.
 
 ### Guards migration to `guardz` — accepted bundle-size cost (2026-10-11)
 
-All guard functions used across the workspace now live in a new `@praxis-kit/guards` package
-(moved out of `lib/primitive/src/guards/` and `lib/foundation/src/type-guards.ts`), and every
-foundational guard (`isString`, `isNumber`, `isFunction`, `isDefined`, etc.) is now sourced from
-`guardz` rather than hand-rolled, re-exported from `@praxis-kit/guards` alongside the
-domain-specific guards (ARIA, children, contract, variants) that were only relocated, not
-rewritten. `lib/primitive` and `lib/diagnostics` import `guardz` directly instead of through
-`@praxis-kit/guards`, since both sit below it in the dependency graph (`@praxis-kit/guards`
-depends on `@praxis-kit/primitive`) — importing through it would be a package-graph cycle.
+All guard functions used across the workspace now live in a new `@praxis-kit/guards` package (moved
+out of `lib/primitive/src/guards/` and `lib/foundation/src/type-guards.ts`), and every foundational
+guard (`isString`, `isNumber`, `isFunction`, `isDefined`, etc.) is now sourced from `guardz` rather
+than hand-rolled, re-exported from `@praxis-kit/guards` alongside the domain-specific guards (ARIA,
+children, contract, variants) that were only relocated, not rewritten. `lib/primitive` and
+`lib/diagnostics` import `guardz` directly instead of through `@praxis-kit/guards`, since both sit
+below it in the dependency graph (`@praxis-kit/guards` depends on `@praxis-kit/primitive`) —
+importing through it would be a package-graph cycle.
 
-**Cost, measured, not assumed:** `guardz@1.14.0` publishes as plain CommonJS — no `"type":
-"module"`, no `"exports"` map, no `"sideEffects": false`. No bundler can tree-shake its named
-exports; importing a single function from it pulls its entire compiled module graph into the
-bundle. `qa/tree-shaking-tests`' `source/*` scenarios (which build from this repo's real
-TypeScript source, the path an app actually bundles) regressed 41–47%, about +9.1–9.2KB gzipped
-per scenario, the moment any guard import touched `guardz`.
+**Cost, measured, not assumed:** `guardz@1.14.0` publishes as plain CommonJS — no
+`"type": "module"`, no `"exports"` map, no `"sideEffects": false`. No bundler can tree-shake its
+named exports; importing a single function from it pulls its entire compiled module graph into the
+bundle. `qa/tree-shaking-tests`' `source/*` scenarios (which build from this repo's real TypeScript
+source, the path an app actually bundles) regressed 41–47%, about +9.1–9.2KB gzipped per scenario,
+the moment any guard import touched `guardz`.
 
 **Correction (2026-10-12): the `package/*` numbers above were wrong — measured against a broken
-build, not the real one.** `tsconfig.paths.json` never got a `@praxis-kit/guards` path mapping
-added alongside its `tsconfig.json` `references` entry (the omission CI later caught as PR #141's
+build, not the real one.** `tsconfig.paths.json` never got a `@praxis-kit/guards` path mapping added
+alongside its `tsconfig.json` `references` entry (the omission CI later caught as PR #141's
 "`[MISSING_EXPORT] isObject is not exported by lib/guards/src/index.d.ts`" build failure — see the
 fix commit for the root cause). With that mapping missing, `packages/kit`'s own build was silently
 failing/stale, so what `qa/tree-shaking-tests`/`qa/bundle-analysis` measured as the "`package/*`
 baseline" was leftover dist output from before the guards migration existed on disk — not the real
-thing. Once the path mapping (and a second miss — `postbuild.ts`'s `POLYMORPHIC_IMPORT_REWRITES`
-not yet knowing about the new `@praxis-kit/guards` specifier) were both fixed and `packages/kit`
-actually built end-to-end, the real published-package cost turned out to be **every
-`praxis-kit/*` entry point gaining roughly +15KB gzipped (+66–70%)** — `react-minimal` 22.7KB →
-37.8KB, `vue-minimal` 22.0KB → 36.9KB, and so on across every adapter, plus `guards`-only
-(356B → 7.8KB) and `contract-only` (969B → 8.5KB) ballooning even harder since they're otherwise
-tiny. Only `package/utils-only`, which never touches a guard, is unaffected. This is **not** a
-from-source-only dev cost — it ships to every consumer installing `praxis-kit` from npm.
+thing. Once the path mapping (and a second miss — `postbuild.ts`'s `POLYMORPHIC_IMPORT_REWRITES` not
+yet knowing about the new `@praxis-kit/guards` specifier) were both fixed and `packages/kit`
+actually built end-to-end, the real published-package cost turned out to be **every `praxis-kit/*`
+entry point gaining roughly +15KB gzipped (+66–70%)** — `react-minimal` 22.7KB → 37.8KB,
+`vue-minimal` 22.0KB → 36.9KB, and so on across every adapter, plus `guards`-only (356B → 7.8KB) and
+`contract-only` (969B → 8.5KB) ballooning even harder since they're otherwise tiny. Only
+`package/utils-only`, which never touches a guard, is unaffected. This is **not** a from-source-only
+dev cost — it ships to every consumer installing `praxis-kit` from npm.
 
-**Decision: accept the cost, update the baseline — reconfirmed with the real numbers.** Put
-directly to the same tradeoff as before, now with the corrected ~+15KB/entry-point figure instead
-of the originally-reported "`package/*` unaffected": accept and move
+**Decision: accept the cost, update the baseline — reconfirmed with the real numbers.** Put directly
+to the same tradeoff as before, now with the corrected ~+15KB/entry-point figure instead of the
+originally-reported "`package/*` unaffected": accept and move
 `qa/tree-shaking-tests`/`qa/bundle-analysis`'s `snapshots/gzip.json` baselines to the real sizes, or
 revert the `guardz` adoption (keep the `@praxis-kit/guards` file reorganization, source its
 foundational guards from hand-rolled code again). Reconfirmed accept.
@@ -3617,13 +3617,13 @@ complaint from a published-package consumer.
 ### `compose: { with: Component }` — declarative `asChild` composition (2026-10-12)
 
 Added `compose` to `FactoryOptions`, following finding #50 in `praxis-components`'
-`PRAXIS-KIT-FINDINGS.md` (foundational `asChild` composition — the `Surface`+`Box`→`Card`
-proposal). `compose: { with: Button }` makes an ordinary consumer call of a component render
-exactly as a hand-written `<Button asChild><ThisComponent {...props} /></Button>` already does —
-confirmed before implementing that this nested-component-into-component `asChild` shape was
-already real, tested machinery (not something new to build): `mergeSlotProps`/`SlotValidator`
-operate purely on prop objects and `isValidElement`-style checks, agnostic to whether the `asChild`
-target is a DOM tag or another contract component.
+`PRAXIS-KIT-FINDINGS.md` (foundational `asChild` composition — the `Surface`+`Box`→`Card` proposal).
+`compose: { with: Button }` makes an ordinary consumer call of a component render exactly as a
+hand-written `<Button asChild><ThisComponent {...props} /></Button>` already does — confirmed before
+implementing that this nested-component-into-component `asChild` shape was already real, tested
+machinery (not something new to build): `mergeSlotProps`/`SlotValidator` operate purely on prop
+objects and `isValidElement`-style checks, agnostic to whether the `asChild` target is a DOM tag or
+another contract component.
 
 **Scope decisions, confirmed with the requester before implementing:**
 
@@ -3631,44 +3631,44 @@ target is a DOM tag or another contract component.
   routes to `with`, which always renders bare. This matches the existing hand-written pattern
   exactly (`<Button asChild>` receives no props in that pattern either).
 - Synthesized natively per adapter, not through one shared mechanism: React/Preact/Vue reuse their
-  existing clone-based `asChild` (render `with` with `asChild: true` and this component's own
-  normal output as its child — zero new merge logic, it's the same path a hand-written nested
-  `asChild` call already takes). Solid/Svelte have no clone step at all, so `compose` instead
-  renders `with` through its own render-callback/snippet mode, with a synthesized callback that
-  merges `with`'s handed-back props onto this component's own resolved output — discovered and
-  fixed along the way: `mergeSlotProps` special-cases `className` (React/Preact's prop name) for
-  concatenation, which silently fails to concatenate `class` (Solid's/Svelte's own prop name) —
-  worked around with a small `mergeComposedProps` wrapper in each of those two adapters that
-  overrides just that one key via `mergeClassNames` directly. Lit/Web have no `asChild` concept at
-  all, so `compose` is accepted (shared `FactoryOptions` field) but has no effect there.
-- An explicit `asChild`/`render` from the consumer always wins over `compose` — same precedence
-  `as` already has over `defaultTag`. Implemented as a conditional guard in each adapter's
-  generated component, checked before dispatching to `render()`/the adapter's own render pipeline.
+  existing clone-based `asChild` (render `with` with `asChild: true` and this component's own normal
+  output as its child — zero new merge logic, it's the same path a hand-written nested `asChild`
+  call already takes). Solid/Svelte have no clone step at all, so `compose` instead renders `with`
+  through its own render-callback/snippet mode, with a synthesized callback that merges `with`'s
+  handed-back props onto this component's own resolved output — discovered and fixed along the way:
+  `mergeSlotProps` special-cases `className` (React/Preact's prop name) for concatenation, which
+  silently fails to concatenate `class` (Solid's/Svelte's own prop name) — worked around with a
+  small `mergeComposedProps` wrapper in each of those two adapters that overrides just that one key
+  via `mergeClassNames` directly. Lit/Web have no `asChild` concept at all, so `compose` is accepted
+  (shared `FactoryOptions` field) but has no effect there.
+- An explicit `asChild`/`render` from the consumer always wins over `compose` — same precedence `as`
+  already has over `defaultTag`. Implemented as a conditional guard in each adapter's generated
+  component, checked before dispatching to `render()`/the adapter's own render pipeline.
 - No new runtime validation or narrower type (e.g. a `HasContract`-based constraint) for `with` —
   follows `FactoryOptions.subComponents`' own existing precedent of trusting an unvalidated
-  component-reference value. `compose.with` reuses the existing `ComponentReference` type (added
-  for the `as`/`allowedAs` component-reference feature), kept at `lib/primitive`'s level with no
-  change to `resolveFactoryOptions`/`ResolvedFactoryOptions` — like `subComponents`/`onElement`,
-  each adapter reads `options.compose` directly off the raw options object, since it's a
-  render-dispatch concern, not a tag/props/class/aria pipeline concern.
+  component-reference value. `compose.with` reuses the existing `ComponentReference` type (added for
+  the `as`/`allowedAs` component-reference feature), kept at `lib/primitive`'s level with no change
+  to `resolveFactoryOptions`/`ResolvedFactoryOptions` — like `subComponents`/`onElement`, each
+  adapter reads `options.compose` directly off the raw options object, since it's a render-dispatch
+  concern, not a tag/props/class/aria pipeline concern.
 - **Multi-level chaining is explicitly out of scope.** `with` is always invoked with
   `asChild: true`, which — per the conflict rule above — means `with`'s own `compose` check never
   fires for that invocation. Composing three or more components through nested `compose.with`
   references does not cascade automatically with this design; shipping one-hop composition first
   matches the original proposal's own "small proof of concept, not a broad redesign" framing.
 
-**Svelte-specific note:** unlike the other four adapters, Svelte's `createContractComponent`
-returns a plain bundle object, not a component (Svelte components must come from `.svelte` files)
-— so `compose.with` on this adapter is a bundle, not a component reference, and `Polymorphic.svelte`
+**Svelte-specific note:** unlike the other four adapters, Svelte's `createContractComponent` returns
+a plain bundle object, not a component (Svelte components must come from `.svelte` files) — so
+`compose.with` on this adapter is a bundle, not a component reference, and `Polymorphic.svelte`
 renders it by importing and recursing into itself (`<Polymorphic bundle={with} asChild>`), a
 standard, supported Svelte pattern for this kind of structural composition.
 
 ### GitHub Sponsors — still not yet, reassessed at `v1.1.2` (2026-10-12)
 
 Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule. Conclusion unchanged from the
-`v1.0.0` reassessment above: **not yet**, and the revisit trigger from that entry still hasn't
-fired — checked directly (`gh api repos/.../praxis-kit`, `gh issue list`, `gh pr list`, 2026-10-12):
-0 stars, 0 forks, 0 watchers, no external issues, no external PRs. `npm` downloads for the trailing
+`v1.0.0` reassessment above: **not yet**, and the revisit trigger from that entry still hasn't fired
+— checked directly (`gh api repos/.../praxis-kit`, `gh issue list`, `gh pr list`, 2026-10-12): 0
+stars, 0 forks, 0 watchers, no external issues, no external PRs. `npm` downloads for the trailing
 month sit at 523 (`api.npmjs.org`, 2026-09-12 → 2026-10-11) — still indistinguishable from
 registry-mirror/CI noise on a package with no known external consumers, not a usage signal. The
 package itself is healthier than at `v1.0.0` (three releases shipped on schedule, a real

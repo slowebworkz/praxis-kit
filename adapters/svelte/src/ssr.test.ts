@@ -116,7 +116,10 @@ ssrConformanceSuite<SvelteSSRComponent>({
     const compose = options.compose
     const unwrappedOptions =
       compose !== undefined
-        ? { ...options, compose: { ...compose, with: (compose.with as SvelteSSRComponent)._bundle } }
+        ? {
+            ...options,
+            compose: { ...compose, with: (compose.with as SvelteSSRComponent)._bundle },
+          }
         : options
     return {
       displayName: options.name ?? 'PolymorphicComponent',

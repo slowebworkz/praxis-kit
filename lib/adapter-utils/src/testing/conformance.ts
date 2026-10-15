@@ -316,7 +316,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       })
 
       if (caps.tagPolymorphism)
-        it('when both components declare a tag, the composing component\'s own tag wins', () => {
+        it("when both components declare a tag, the composing component's own tag wins", () => {
           const BoxA = adapter.createComponent({ tag: 'nav', styling: { base: 'class-a' } })
           const BoxB = adapter.createComponent({
             tag: 'button',
@@ -348,7 +348,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         })
 
       if (adapter.createRef)
-        it('forwards ref through compose to the composing component\'s own real element', () => {
+        it("forwards ref through compose to the composing component's own real element", () => {
           const ref = adapter.createRef!()
           const BoxA = adapter.createComponent({ tag: 'nav' })
           const BoxB = adapter.createComponent({ tag: 'button', compose: { with: BoxA } })
@@ -373,6 +373,150 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         const BoxB = adapter.createComponent({ compose: { with: BoxA, allProps: true } })
         const { element } = adapter.render(BoxB, { intent: 'ghost' })
         expect(element.className).toContain('intent-ghost')
+      })
+
+      it('resolves compound variants declared on the composing parent', () => {
+        const BoxA = adapter.createComponent({ styling: { base: 'child-base' } })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA },
+          styling: {
+            variants: {
+              intent: { ghost: 'parent-intent-ghost', solid: 'parent-intent-solid' },
+              size: { lg: 'parent-size-lg', sm: 'parent-size-sm' },
+            },
+            compounds: [{ intent: 'ghost', size: 'lg', class: 'parent-compound-ghost-lg' }],
+          },
+        })
+
+        const { element } = adapter.render(BoxB, { intent: 'ghost', size: 'lg' })
+        expect(element.className).toContain('parent-compound-ghost-lg')
+        expect(element.className).toContain('child-base')
+      })
+
+      it('resolves child compound variants from compose.defaults', () => {
+        const BoxA = adapter.createComponent({
+          styling: {
+            variants: {
+              intent: { ghost: 'child-intent-ghost', solid: 'child-intent-solid' },
+              size: { lg: 'child-size-lg', sm: 'child-size-sm' },
+            },
+            compounds: [{ intent: 'ghost', size: 'lg', class: 'child-compound-ghost-lg' }],
+          },
+        })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA, defaults: { intent: 'ghost', size: 'lg' } },
+        })
+
+        const { element } = adapter.render(BoxB)
+        expect(element.className).toContain('child-compound-ghost-lg')
+      })
+
+      it('resolves child compound variants from forwarded props when allProps is enabled', () => {
+        const BoxA = adapter.createComponent({
+          styling: {
+            variants: {
+              intent: { ghost: 'child-intent-ghost', solid: 'child-intent-solid' },
+              size: { lg: 'child-size-lg', sm: 'child-size-sm' },
+            },
+            compounds: [{ intent: 'ghost', size: 'lg', class: 'child-compound-ghost-lg' }],
+          },
+        })
+        const BoxB = adapter.createComponent({ compose: { with: BoxA, allProps: true } })
+
+        const { element } = adapter.render(BoxB, { intent: 'ghost', size: 'lg' })
+        expect(element.className).toContain('child-compound-ghost-lg')
+      })
+
+      it('does not resolve child compounds from parent props when allProps is disabled', () => {
+        const BoxA = adapter.createComponent({
+          styling: {
+            variants: {
+              intent: { ghost: 'child-intent-ghost' },
+              size: { lg: 'child-size-lg' },
+            },
+            compounds: [{ intent: 'ghost', size: 'lg', class: 'child-compound-ghost-lg' }],
+          },
+        })
+        const BoxB = adapter.createComponent({ compose: { with: BoxA } })
+
+        const { element } = adapter.render(BoxB, { intent: 'ghost', size: 'lg' })
+        expect(element.className).not.toContain('child-compound-ghost-lg')
+      })
+
+      it('matches child compounds using both defaults and forwarded props', () => {
+        const BoxA = adapter.createComponent({
+          styling: {
+            variants: {
+              intent: { ghost: 'child-intent-ghost', solid: 'child-intent-solid' },
+              size: { lg: 'child-size-lg', sm: 'child-size-sm' },
+            },
+            compounds: [{ intent: 'ghost', size: 'lg', class: 'child-compound-ghost-lg' }],
+          },
+        })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA, allProps: true, defaults: { intent: 'ghost' } },
+        })
+
+        const { element } = adapter.render(BoxB, { size: 'lg' })
+        expect(element.className).toContain('child-compound-ghost-lg')
+      })
+
+      it('applies compose.defaults to the composed component', () => {
+        const BoxA = adapter.createComponent({
+          styling: { variants: { intent: { ghost: 'intent-ghost', solid: 'intent-solid' } } },
+        })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA, defaults: { intent: 'ghost' } },
+        })
+        const { element } = adapter.render(BoxB)
+        expect(element.className).toContain('intent-ghost')
+      })
+
+      it('applies multiple compose.defaults together', () => {
+        const BoxA = adapter.createComponent({
+          styling: {
+            variants: {
+              intent: { ghost: 'intent-ghost', solid: 'intent-solid' },
+              size: { sm: 'size-sm', lg: 'size-lg' },
+            },
+          },
+        })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA, defaults: { intent: 'ghost', size: 'lg' } },
+        })
+        const { element } = adapter.render(BoxB)
+        expect(element.className).toContain('intent-ghost')
+        expect(element.className).toContain('size-lg')
+      })
+
+      it('allows partial compose.defaults without defaulting unspecified variants', () => {
+        const BoxA = adapter.createComponent({
+          styling: {
+            variants: {
+              intent: { ghost: 'intent-ghost', solid: 'intent-solid' },
+              size: { sm: 'size-sm', lg: 'size-lg' },
+            },
+          },
+        })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA, defaults: { intent: 'ghost' } },
+        })
+        const { element } = adapter.render(BoxB)
+        expect(element.className).toContain('intent-ghost')
+        expect(element.className).not.toContain('size-sm')
+        expect(element.className).not.toContain('size-lg')
+      })
+
+      it('forwards allProps over compose.defaults when both specify the same prop', () => {
+        const BoxA = adapter.createComponent({
+          styling: { variants: { intent: { ghost: 'intent-ghost', solid: 'intent-solid' } } },
+        })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA, allProps: true, defaults: { intent: 'ghost' } },
+        })
+        const { element } = adapter.render(BoxB, { intent: 'solid' })
+        expect(element.className).toContain('intent-solid')
+        expect(element.className).not.toContain('intent-ghost')
       })
 
       it('with allProps: true, explicit asChild/ref/children still win over forwarded props', () => {

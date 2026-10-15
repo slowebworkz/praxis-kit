@@ -129,6 +129,7 @@ export function createContractComponent<
         bundle.filterProps,
         known.ref,
         compose.allProps,
+        compose.defaults,
       )
     }
 

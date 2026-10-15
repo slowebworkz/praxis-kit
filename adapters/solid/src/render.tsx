@@ -3,6 +3,7 @@ import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
 import { isString } from '@praxis-kit/guards'
 import { createEffect, createMemo, splitProps } from 'solid-js'
+import type { ValidComponent } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import type { SlotValidator } from './slot'
 import type {
@@ -127,6 +128,7 @@ export function renderComposed<TProps extends KnownProps>(
   filterProps: FilterPredicate,
   ref: unknown,
   allProps?: boolean,
+  defaults?: object,
 ): SolidElement {
   const [knownRaw, rest] = splitProps(props, SPLIT_KEYS)
   const known = knownRaw as unknown as KnownProps
@@ -157,11 +159,18 @@ export function renderComposed<TProps extends KnownProps>(
   })
 
   return (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <Dynamic component={withComponent as any} {...(allProps ? forwardableProps : undefined)} asChild ref={ref}>
+    <Dynamic
+      component={withComponent as ValidComponent}
+      {...defaults}
+      {...(allProps ? forwardableProps : undefined)}
+      asChild
+      ref={ref}
+    >
       {(withProps: UnknownProps) => (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        <Dynamic component={tag() as any} {...(mergeSlotProps(withProps, domProps()) as any)} />
+        <Dynamic
+          component={tag() as unknown as ValidComponent}
+          {...(mergeSlotProps(withProps, domProps()) as UnknownProps)}
+        />
       )}
     </Dynamic>
   ) as unknown as SolidElement
@@ -232,6 +241,7 @@ export function render<TProps extends KnownProps>({
 
   // Dynamic dispatch — tag() and domProps() called directly in JSX so Solid's babel
   // transform wraps them in reactive getters, preserving fine-grained DOM updates.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return <Dynamic component={tag() as any} {...(domProps() as any)} />
+  return (
+    <Dynamic component={tag() as unknown as ValidComponent} {...(domProps() as UnknownProps)} />
+  )
 }

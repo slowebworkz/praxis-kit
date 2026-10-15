@@ -35,7 +35,6 @@ import type { CollisionError, ContractGenericsWithComposeOf } from '@praxis-kit/
  * always-present index signature. */
 type NamedKeysOf<T> = OmitIndexSignature<T>
 
-
 const surfaceOptions = {
   tag: 'div',
   name: 'Surface',
@@ -131,8 +130,12 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     const NestedCard = createContractComponent(nestedCardOptions)
     void NestedCard
 
-    type HasVariant = 'variant' extends keyof NamedKeysOf<ContractProps<typeof NestedCard>> ? true : false
-    type HasRadius = 'radius' extends keyof NamedKeysOf<ContractProps<typeof NestedCard>> ? true : false
+    type HasVariant = 'variant' extends keyof NamedKeysOf<ContractProps<typeof NestedCard>>
+      ? true
+      : false
+    type HasRadius = 'radius' extends keyof NamedKeysOf<ContractProps<typeof NestedCard>>
+      ? true
+      : false
     type HasTone = 'tone' extends keyof NamedKeysOf<ContractProps<typeof NestedCard>> ? true : false
     expectTypeOf<HasVariant>().toEqualTypeOf<true>()
     expectTypeOf<HasRadius>().toEqualTypeOf<true>()

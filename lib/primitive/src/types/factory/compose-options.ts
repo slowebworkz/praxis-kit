@@ -35,4 +35,11 @@ import type { ComponentReference } from '../element-type'
 export type ComposeOptions = {
   readonly with: ComponentReference
   readonly allProps?: boolean
+  /**
+   * Composition-scoped defaults for `with`. `defineContract` validates these keys and values
+   * against the secondary component's retained contract when one is available. `object` is used
+   * here so the broad `FactoryOptions` constraint doesn't erase the literal keys before that
+   * relationship can be checked.
+   */
+  readonly defaults?: object
 }
