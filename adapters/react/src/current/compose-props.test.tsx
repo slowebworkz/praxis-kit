@@ -17,6 +17,8 @@
  * No runtime assertions are made. These tests exist to catch type regressions.
  */
 import { describe, it, expectTypeOf } from 'vitest'
+import { defineContract } from '@praxis-kit/adapter-utils'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import type { CollisionError, ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
 import { createContractComponent } from './create-contract-component'
 import type { ContractProps, PolymorphicWithAllowedAs, ReactFactoryOptions } from '../shared'
@@ -290,5 +292,109 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     type ColorType = ContractProps<typeof VariantCollidingCard>['color']
     expectTypeOf<SizeType>().toEqualTypeOf<'sm' | 'lg' | undefined>()
     expectTypeOf<ColorType>().toEqualTypeOf<'red' | 'blue' | undefined>()
+  })
+})
+
+describe('compose.with preserves plugin-contributed layout props', () => {
+  // `createTailwindPipeline` contributes layout props through a mutually-exclusive union.
+  // The composed Surface intentionally has no layout plugin and does not declare `flex` or
+  // `grid`; composition must not erase the primary component's plugin-contributed props.
+  const LayoutCard = createContractComponent(
+    defineContract({
+      tag: 'section',
+      name: 'LayoutCard',
+      props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+      styling: { base: '', plugin: createTailwindPipeline },
+      enforcement: { allowedAs: ['section', 'article'] as const },
+      compose: { allProps: true, with: Surface },
+    }),
+  )
+
+  it('preserves flex and grid in the public ContractProps extraction', () => {
+    expectTypeOf<ContractProps<typeof LayoutCard>['flex']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<ContractProps<typeof LayoutCard>['grid']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<ContractProps<typeof LayoutCard>['radius']>().toEqualTypeOf<
+      'sm' | 'lg' | undefined
+    >()
+  })
+
+  it('preserves plugin-contributed layout props in every wrapper mode', () => {
+    expectTypeOf<ContractProps<typeof LayoutCard, 'asChild'>['flex']>().toEqualTypeOf<
+      true | undefined
+    >()
+    expectTypeOf<ContractProps<typeof LayoutCard, 'render'>['flex']>().toEqualTypeOf<
+      true | undefined
+    >()
+  })
+
+  it('keeps extracted layout props usable with Pick, Omit, and rest destructuring', () => {
+    type Picked = Pick<ContractProps<typeof LayoutCard>, 'flex' | 'grid' | 'radius'>
+    expectTypeOf<Picked>().toEqualTypeOf<{
+      flex?: true
+      grid?: true
+      radius?: 'sm' | 'lg'
+    }>()
+
+    type WithoutFlex = Omit<ContractProps<typeof LayoutCard>, 'flex'>
+    expectTypeOf<WithoutFlex['grid']>().toEqualTypeOf<true | undefined>()
+
+    function readProps(props: ContractProps<typeof LayoutCard>): void {
+      const { flex: _flex, grid: _grid, ...rest } = props
+      expectTypeOf(rest).toBeObject()
+    }
+    void readProps
+  })
+
+  it('does not weaken the component call signature’s mutually exclusive layout props', () => {
+    const _validFlex = <LayoutCard flex />
+    const _validGrid = <LayoutCard grid />
+    void _validFlex
+    void _validGrid
+
+    // @ts-expect-error — composition must preserve the Tailwind plugin's strict call-site union.
+    const _invalid = <LayoutCard flex grid />
+    void _invalid
+  })
+
+  it('does not widen the primary component’s allowedAs when composing a plugin-bearing partner', () => {
+    const _section = <LayoutCard as="section" />
+    const _article = <LayoutCard as="article" />
+    void _section
+    void _article
+
+    // @ts-expect-error — Surface's default `div` is not in LayoutCard's allowedAs.
+    const _div = <LayoutCard as="div" />
+    void _div
+  })
+
+  it('preserves plugin-contributed props when the composed partner owns the plugin', () => {
+    const LayoutSurface = createContractComponent(
+      defineContract({
+        tag: 'div',
+        name: 'LayoutSurface',
+        styling: { base: '', plugin: createTailwindPipeline },
+      }),
+    )
+    const ComposedLayoutCard = createContractComponent(
+      defineContract({
+        tag: 'article',
+        name: 'ComposedLayoutCard',
+        props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+        compose: { allProps: true, with: LayoutSurface },
+      }),
+    )
+
+    expectTypeOf<ContractProps<typeof ComposedLayoutCard>['flex']>().toEqualTypeOf<
+      true | undefined
+    >()
+    expectTypeOf<ContractProps<typeof ComposedLayoutCard>['grid']>().toEqualTypeOf<
+      true | undefined
+    >()
+    expectTypeOf<ContractProps<typeof ComposedLayoutCard, 'asChild'>['flex']>().toEqualTypeOf<
+      true | undefined
+    >()
+    expectTypeOf<ContractProps<typeof ComposedLayoutCard, 'render'>['flex']>().toEqualTypeOf<
+      true | undefined
+    >()
   })
 })

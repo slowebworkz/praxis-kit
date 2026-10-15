@@ -126,10 +126,10 @@ type MergedOptionalKeys<Own extends object, Composed extends object> = {
  * separate mapped types (required keys, then optional keys) rather than one, so each half can
  * apply its own `?` modifier explicitly.
  */
-export type MergeComposedProps<
+type MergeComposedPropsMember<
   Own extends object,
   Composed extends object,
-  AsVariants extends boolean = false,
+  AsVariants extends boolean,
 > = {
   [K in Exclude<
     AllMergedKeys<Own, Composed>,
@@ -138,3 +138,21 @@ export type MergeComposedProps<
 } & {
   [K in MergedOptionalKeys<Own, Composed>]?: MergeComposedValue<Own, Composed, K, AsVariants>
 }
+
+/**
+ * Merge each union member independently. Contracts may contribute mutually-exclusive prop unions
+ * (notably the Tailwind layout shorthand `{ flex: true } | { grid: true } | ...`). Computing
+ * `keyof Own` or mapped keys against the union as a whole only sees keys shared by every member;
+ * this can erase a valid primary prop and make it resolve to `never` when the composed partner
+ * does not declare that prop. Distribution retains the primary contract's exclusivity while still
+ * applying the same per-key collision policy to each member.
+ */
+export type MergeComposedProps<
+  Own extends object,
+  Composed extends object,
+  AsVariants extends boolean = false,
+> = Own extends unknown
+  ? Composed extends unknown
+    ? MergeComposedPropsMember<Own, Composed, AsVariants>
+    : never
+  : never
