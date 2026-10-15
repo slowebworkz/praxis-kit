@@ -1,6 +1,11 @@
 import { describe, it, expectTypeOf } from 'vitest'
 import type { OmitIndexSignature } from 'type-fest'
-import type { FactoryOptions, PolymorphicGenerics, PropsOf, VariantsOf } from '@praxis-kit/primitive'
+import type {
+  FactoryOptions,
+  PolymorphicGenerics,
+  PropsOf,
+  VariantsOf,
+} from '@praxis-kit/primitive'
 import type { HasContract } from '@praxis-kit/contract-props'
 import type { ContractGenericsWithComposeOf } from './compose-generics'
 import type { CollisionError } from './merge-policy'

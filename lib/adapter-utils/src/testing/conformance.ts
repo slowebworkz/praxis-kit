@@ -316,7 +316,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       })
 
       if (caps.tagPolymorphism)
-        it('when both components declare a tag, the composing component\'s own tag wins', () => {
+        it("when both components declare a tag, the composing component's own tag wins", () => {
           const BoxA = adapter.createComponent({ tag: 'nav', styling: { base: 'class-a' } })
           const BoxB = adapter.createComponent({
             tag: 'button',
@@ -348,7 +348,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         })
 
       if (adapter.createRef)
-        it('forwards ref through compose to the composing component\'s own real element', () => {
+        it("forwards ref through compose to the composing component's own real element", () => {
           const ref = adapter.createRef!()
           const BoxA = adapter.createComponent({ tag: 'nav' })
           const BoxB = adapter.createComponent({ tag: 'button', compose: { with: BoxA } })

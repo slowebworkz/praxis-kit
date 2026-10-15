@@ -19,11 +19,10 @@ const Button = createContractComponent({
 })
 
 const CASE = process.env.DEFAULTS_CASE ?? 'implicit'
-const props = (
+const props =
   CASE === 'implicit'
     ? { type: 'button' as const }
     : { type: 'button' as const, size: 'md' as const, intent: 'primary' as const }
-)
 
 describe('defaults gap', () => {
   bench(CASE, () => {

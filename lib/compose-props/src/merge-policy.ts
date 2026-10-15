@@ -97,16 +97,19 @@ type IsOptionalOn<T extends object, K extends PropertyKey> = K extends keyof T
  * Checking presence on each side separately (rather than one combined check) is what keeps a key
  * required-only-on-`Composed`-and-absent-from-`Own` correctly required.
  */
-type IsMergedKeyOptional<Own extends object, Composed extends object, K extends PropertyKey> =
-  K extends keyof Own
-    ? K extends keyof Composed
-      ? IsOptionalOn<Own, K> extends true
-        ? IsOptionalOn<Composed, K>
-        : false
-      : IsOptionalOn<Own, K>
-    : K extends keyof Composed
+type IsMergedKeyOptional<
+  Own extends object,
+  Composed extends object,
+  K extends PropertyKey,
+> = K extends keyof Own
+  ? K extends keyof Composed
+    ? IsOptionalOn<Own, K> extends true
       ? IsOptionalOn<Composed, K>
-      : true
+      : false
+    : IsOptionalOn<Own, K>
+  : K extends keyof Composed
+    ? IsOptionalOn<Composed, K>
+    : true
 
 type AllMergedKeys<Own extends object, Composed extends object> = keyof Own | keyof Composed
 
@@ -131,10 +134,9 @@ type MergeComposedPropsMember<
   Composed extends object,
   AsVariants extends boolean,
 > = {
-  [K in Exclude<
-    AllMergedKeys<Own, Composed>,
-    MergedOptionalKeys<Own, Composed>
-  >]: MergeComposedValue<Own, Composed, K, AsVariants>
+  [
+    K in Exclude<AllMergedKeys<Own, Composed>, MergedOptionalKeys<Own, Composed>>
+  ]: MergeComposedValue<Own, Composed, K, AsVariants>
 } & {
   [K in MergedOptionalKeys<Own, Composed>]?: MergeComposedValue<Own, Composed, K, AsVariants>
 }

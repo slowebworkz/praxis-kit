@@ -133,7 +133,7 @@ export function ssrConformanceSuite<C extends ConformanceComponent = Conformance
       })
 
       if (caps.tagPolymorphism)
-        it('when both components declare a tag, the composing component\'s own tag wins', async () => {
+        it("when both components declare a tag, the composing component's own tag wins", async () => {
           const BoxA = adapter.createComponent({
             tag: 'nav',
             enforcement: { diagnostics: silentDiagnostics },

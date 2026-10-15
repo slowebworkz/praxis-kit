@@ -135,7 +135,12 @@ export function createContractComponent<
         : undefined
 
       return () => {
-        const innerVNode = render({ ...bundle, state: state.value, slots, elementRef: onElementRef })
+        const innerVNode = render({
+          ...bundle,
+          state: state.value,
+          slots,
+          elementRef: onElementRef,
+        })
 
         // `compose` makes this component always render `asChild` into `compose.with`, as if the
         // consumer had hand-written `<With asChild><ThisComponent v-bind="attrs" /></With>` — but

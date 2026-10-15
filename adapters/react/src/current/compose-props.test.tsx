@@ -18,7 +18,7 @@
  */
 import { describe, it, expectTypeOf } from 'vitest'
 import { defineContract } from '@praxis-kit/adapter-utils'
-import type { ClassPluginFactory } from '@praxis-kit/core'
+import type { EmptyRecord, ClassPluginFactory } from '@praxis-kit/core'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import type { CollisionError, ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
 import { createContractComponent } from './create-contract-component'
@@ -77,7 +77,7 @@ defineContract({
 const PluginSurface = createContractComponent({
   tag: 'div',
   name: 'PluginSurface',
-  props: undefined as unknown as {},
+  props: undefined as unknown as EmptyRecord,
   styling: { base: '', plugin: createTailwindPipeline },
 } satisfies ReactFactoryOptions)
 
@@ -92,16 +92,14 @@ void ValidPluginComposeDefaults
 // Explicitly exercise a plugin whose props are a union: keys unique to a union member must
 // remain valid composition defaults, even though `keyof` on the union contains only common keys.
 type ExclusiveLayoutProps =
-  | { flex: true; grid?: never }
-  | { grid: true; flex?: never }
-  | { flex?: never; grid?: never }
-const exclusiveLayoutPlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<
-  ExclusiveLayoutProps
->
+  { flex: true; grid?: never } | { grid: true; flex?: never } | { flex?: never; grid?: never }
+const exclusiveLayoutPlugin = (() => ({
+  pipeline: () => '',
+})) as unknown as ClassPluginFactory<ExclusiveLayoutProps>
 const UnionPluginSurface = createContractComponent({
   tag: 'div',
   name: 'UnionPluginSurface',
-  props: undefined as unknown as {},
+  props: undefined as unknown as EmptyRecord,
   styling: { base: '', plugin: exclusiveLayoutPlugin },
 } satisfies ReactFactoryOptions)
 
@@ -495,6 +493,7 @@ describe('compose.with preserves plugin-contributed layout props', () => {
         compose: { allProps: true, with: LayoutSurface },
       }),
     )
+    void ComposedLayoutCard
 
     expectTypeOf<ContractProps<typeof ComposedLayoutCard>['flex']>().toEqualTypeOf<
       true | undefined
@@ -530,12 +529,8 @@ describe('compose.with preserves plugin-contributed layout props', () => {
     // Both contracts contribute the same mutually-exclusive `{ flex } | { grid } | {}` union.
     // Merging must retain the usable member props instead of resolving cross-member collisions
     // to `never` or widening the union into a shape that accepts both layout flags.
-    expectTypeOf<ContractProps<typeof SharedLayoutCard>['flex']>().toEqualTypeOf<
-      true | undefined
-    >()
-    expectTypeOf<ContractProps<typeof SharedLayoutCard>['grid']>().toEqualTypeOf<
-      true | undefined
-    >()
+    expectTypeOf<ContractProps<typeof SharedLayoutCard>['flex']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<ContractProps<typeof SharedLayoutCard>['grid']>().toEqualTypeOf<true | undefined>()
 
     const _validFlex = <SharedLayoutCard flex />
     const _validGrid = <SharedLayoutCard grid />

@@ -164,27 +164,26 @@ renders exactly as if the consumer had hand-written:
 </Surface>
 ```
 
-All consumer props land on the composing component's own contract exactly as an ordinary call
-would — `with` always renders bare, contributing only its own resolved classes/handlers/attributes
-onto whatever the composing component renders as, via the same merge policy `asChild` already
-uses. If the consumer explicitly passes `asChild` or `render` themselves, that always wins —
-`compose` only applies to an otherwise-ordinary call, the same precedence `as` already has over
-`defaultTag`.
+All consumer props land on the composing component's own contract exactly as an ordinary call would
+— `with` always renders bare, contributing only its own resolved classes/handlers/attributes onto
+whatever the composing component renders as, via the same merge policy `asChild` already uses. If
+the consumer explicitly passes `asChild` or `render` themselves, that always wins — `compose` only
+applies to an otherwise-ordinary call, the same precedence `as` already has over `defaultTag`.
 
 **Adapter support.** `compose` is accepted by every adapter's `FactoryOptions`, but synthesized
-natively per adapter rather than through one shared mechanism, matching each adapter's own
-`asChild` composition model:
+natively per adapter rather than through one shared mechanism, matching each adapter's own `asChild`
+composition model:
 
-| Adapter            | How `compose` is synthesized                                                                        |
-| ------------------- | ----------------------------------------------------------------------------------------------------- |
-| React, Preact, Vue | Clone-based, same as a hand-written nested `asChild` call — `with` renders with `asChild: true` and this component's own normal output as its single child |
+| Adapter            | How `compose` is synthesized                                                                                                                                                |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| React, Preact, Vue | Clone-based, same as a hand-written nested `asChild` call — `with` renders with `asChild: true` and this component's own normal output as its single child                  |
 | Solid, Svelte      | `with` renders through its own render-callback/snippet `asChild` mode; the synthesized callback merges `with`'s handed-back props onto this component's own resolved output |
-| Lit, Web           | No effect — these adapters have no `asChild` concept for `compose` to compose into                   |
+| Lit, Web           | No effect — these adapters have no `asChild` concept for `compose` to compose into                                                                                          |
 
 Multi-level `compose` chaining (`with` itself also declaring its own `compose.with`) does not
 cascade automatically — `with` is always invoked with `asChild: true`, so its own `compose` check
-never fires for that invocation. Composing through more than one hop currently requires an
-explicit intermediate layer.
+never fires for that invocation. Composing through more than one hop currently requires an explicit
+intermediate layer.
 
 ## Contracts
 
