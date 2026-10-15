@@ -375,6 +375,92 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(element.className).toContain('intent-ghost')
       })
 
+      it('resolves compound variants declared on the composing parent', () => {
+        const BoxA = adapter.createComponent({ styling: { base: 'child-base' } })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA },
+          styling: {
+            variants: {
+              intent: { ghost: 'parent-intent-ghost', solid: 'parent-intent-solid' },
+              size: { lg: 'parent-size-lg', sm: 'parent-size-sm' },
+            },
+            compounds: [{ intent: 'ghost', size: 'lg', class: 'parent-compound-ghost-lg' }],
+          },
+        })
+
+        const { element } = adapter.render(BoxB, { intent: 'ghost', size: 'lg' })
+        expect(element.className).toContain('parent-compound-ghost-lg')
+        expect(element.className).toContain('child-base')
+      })
+
+      it('resolves child compound variants from compose.defaults', () => {
+        const BoxA = adapter.createComponent({
+          styling: {
+            variants: {
+              intent: { ghost: 'child-intent-ghost', solid: 'child-intent-solid' },
+              size: { lg: 'child-size-lg', sm: 'child-size-sm' },
+            },
+            compounds: [{ intent: 'ghost', size: 'lg', class: 'child-compound-ghost-lg' }],
+          },
+        })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA, defaults: { intent: 'ghost', size: 'lg' } },
+        })
+
+        const { element } = adapter.render(BoxB)
+        expect(element.className).toContain('child-compound-ghost-lg')
+      })
+
+      it('resolves child compound variants from forwarded props when allProps is enabled', () => {
+        const BoxA = adapter.createComponent({
+          styling: {
+            variants: {
+              intent: { ghost: 'child-intent-ghost', solid: 'child-intent-solid' },
+              size: { lg: 'child-size-lg', sm: 'child-size-sm' },
+            },
+            compounds: [{ intent: 'ghost', size: 'lg', class: 'child-compound-ghost-lg' }],
+          },
+        })
+        const BoxB = adapter.createComponent({ compose: { with: BoxA, allProps: true } })
+
+        const { element } = adapter.render(BoxB, { intent: 'ghost', size: 'lg' })
+        expect(element.className).toContain('child-compound-ghost-lg')
+      })
+
+      it('does not resolve child compounds from parent props when allProps is disabled', () => {
+        const BoxA = adapter.createComponent({
+          styling: {
+            variants: {
+              intent: { ghost: 'child-intent-ghost' },
+              size: { lg: 'child-size-lg' },
+            },
+            compounds: [{ intent: 'ghost', size: 'lg', class: 'child-compound-ghost-lg' }],
+          },
+        })
+        const BoxB = adapter.createComponent({ compose: { with: BoxA } })
+
+        const { element } = adapter.render(BoxB, { intent: 'ghost', size: 'lg' })
+        expect(element.className).not.toContain('child-compound-ghost-lg')
+      })
+
+      it('matches child compounds using both defaults and forwarded props', () => {
+        const BoxA = adapter.createComponent({
+          styling: {
+            variants: {
+              intent: { ghost: 'child-intent-ghost', solid: 'child-intent-solid' },
+              size: { lg: 'child-size-lg', sm: 'child-size-sm' },
+            },
+            compounds: [{ intent: 'ghost', size: 'lg', class: 'child-compound-ghost-lg' }],
+          },
+        })
+        const BoxB = adapter.createComponent({
+          compose: { with: BoxA, allProps: true, defaults: { intent: 'ghost' } },
+        })
+
+        const { element } = adapter.render(BoxB, { size: 'lg' })
+        expect(element.className).toContain('child-compound-ghost-lg')
+      })
+
       it('applies compose.defaults to the composed component', () => {
         const BoxA = adapter.createComponent({
           styling: { variants: { intent: { ghost: 'intent-ghost', solid: 'intent-solid' } } },

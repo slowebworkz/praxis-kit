@@ -147,12 +147,32 @@ type MergeComposedPropsMember<
  * does not declare that prop. Distribution retains the primary contract's exclusivity while still
  * applying the same per-key collision policy to each member.
  */
-export type MergeComposedProps<
+type MergeComposedPropsDistributive<
   Own extends object,
   Composed extends object,
-  AsVariants extends boolean = false,
+  AsVariants extends boolean,
 > = Own extends unknown
   ? Composed extends unknown
     ? MergeComposedPropsMember<Own, Composed, AsVariants>
     : never
   : never
+
+/**
+ * Avoid a quadratic union cross-product when both sides contribute the same prop shape.
+ *
+ * Plugin-generated props can be mutually-exclusive unions (for example Tailwind's flex/grid
+ * layout props). Distributing both identical unions would compare every member against every
+ * other member, manufacturing collisions between alternatives and potentially exhausting
+ * TypeScript's instantiation depth. If the two complete types are mutually assignable, their
+ * merge is already represented by either side; otherwise retain the member-wise merge so
+ * member-specific keys and collision diagnostics continue to work for genuinely different types.
+ */
+export type MergeComposedProps<
+  Own extends object,
+  Composed extends object,
+  AsVariants extends boolean = false,
+> = [Own] extends [Composed]
+  ? [Composed] extends [Own]
+    ? Own
+    : MergeComposedPropsDistributive<Own, Composed, AsVariants>
+  : MergeComposedPropsDistributive<Own, Composed, AsVariants>
