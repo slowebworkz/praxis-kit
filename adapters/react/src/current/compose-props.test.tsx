@@ -509,4 +509,41 @@ describe('compose.with preserves plugin-contributed layout props', () => {
       true | undefined
     >()
   })
+
+  it('preserves mutually exclusive plugin props when both components contribute the same union', () => {
+    const LayoutSurface = createContractComponent(
+      defineContract({
+        tag: 'div',
+        name: 'SharedLayoutSurface',
+        styling: { base: '', plugin: createTailwindPipeline },
+      }),
+    )
+    const SharedLayoutCard = createContractComponent(
+      defineContract({
+        tag: 'article',
+        name: 'SharedLayoutCard',
+        styling: { base: '', plugin: createTailwindPipeline },
+        compose: { allProps: true, with: LayoutSurface },
+      }),
+    )
+
+    // Both contracts contribute the same mutually-exclusive `{ flex } | { grid } | {}` union.
+    // Merging must retain the usable member props instead of resolving cross-member collisions
+    // to `never` or widening the union into a shape that accepts both layout flags.
+    expectTypeOf<ContractProps<typeof SharedLayoutCard>['flex']>().toEqualTypeOf<
+      true | undefined
+    >()
+    expectTypeOf<ContractProps<typeof SharedLayoutCard>['grid']>().toEqualTypeOf<
+      true | undefined
+    >()
+
+    const _validFlex = <SharedLayoutCard flex />
+    const _validGrid = <SharedLayoutCard grid />
+    void _validFlex
+    void _validGrid
+
+    // @ts-expect-error — the same mutually-exclusive layout choices remain exclusive after merging.
+    const _invalid = <SharedLayoutCard flex grid />
+    void _invalid
+  })
 })
