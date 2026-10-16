@@ -1,7 +1,7 @@
 /**
  * Compile-time regression tests for `ResolvedSlotProps<G>`/`GenericsOf<T>`
- * (`resolved-slot-props.ts`). Confirms a real bundle's `G` is recoverable from its own value type
- * with no marker (unlike React's/Preact's `__generics`), and that the resulting
+ * (`resolved-slot-props.ts`). Confirms a real bundle's `G` and original options are recoverable from
+ * its own value type, including composition-aware props/variants, and that the resulting
  * `ResolvedSlotProps<G>` is a real, usable shape a snippet can be typed against — replacing the
  * bare `Record<string, unknown>` `createRawSnippet<[Record<string, unknown>]>(...)` calls used
  * elsewhere in this adapter's tests (e.g. `Polymorphic.test.ts`) before this type existed.
@@ -10,10 +10,210 @@
  */
 import { describe, it, expectTypeOf } from 'vitest'
 import { createRawSnippet } from 'svelte'
-import type { PropsOf } from '@praxis-kit/core'
+import type {
+  ComponentReference,
+  DefaultOf,
+  PropsOf,
+  RecipeOf,
+  VariantProps,
+  VariantsOf,
+} from '@praxis-kit/core'
+import type { CollisionError } from '@praxis-kit/compose-props'
+import type { OptionalKeysOf } from 'type-fest'
 import { createContractComponent } from '../create-contract-component'
 import type { AnyBuiltRuntime } from './built-runtime'
 import type { GenericsOf, ResolvedSlotProps } from './resolved-slot-props'
+
+describe('GenericsOf<T> composition projection', () => {
+  it('includes partner props and variants only when allProps is true', () => {
+    const partner = createContractComponent({
+      tag: 'button',
+      defaults: { partnerOnlyProp: 'partner' },
+      styling: { variants: { partnerTone: { calm: 'calm', bright: 'bright' } } },
+    })
+    const composed = createContractComponent({
+      tag: 'div',
+      defaults: { ownOnlyProp: 'own' },
+      styling: { variants: { ownTone: { quiet: 'quiet', loud: 'loud' } } },
+      compose: { with: partner as typeof partner & ComponentReference, allProps: true },
+    })
+    const notForwarding = createContractComponent({
+      tag: 'div',
+      defaults: { ownOnlyProp: 'own' },
+      styling: { variants: { ownTone: { quiet: 'quiet', loud: 'loud' } } },
+      compose: { with: partner as typeof partner & ComponentReference },
+    })
+    const explicitlyFalse = createContractComponent({
+      tag: 'div',
+      defaults: { ownOnlyProp: 'own' },
+      styling: { variants: { ownTone: { quiet: 'quiet', loud: 'loud' } } },
+      compose: { with: partner as typeof partner & ComponentReference, allProps: false },
+    })
+    // The bundle values are used only in type queries below; keep an explicit value use so ESLint
+    // does not report these intentionally type-only fixtures as unused variables.
+    void composed
+    void notForwarding
+    void explicitlyFalse
+
+    type ComposedProps = PropsOf<GenericsOf<typeof composed>>
+    type ComposedVariants = VariantsOf<GenericsOf<typeof composed>>
+    type ComposedSlotProps = ResolvedSlotProps<GenericsOf<typeof composed>>
+    type NotForwardingProps = PropsOf<GenericsOf<typeof notForwarding>>
+    type NotForwardingVariants = VariantsOf<GenericsOf<typeof notForwarding>>
+    type ExplicitlyFalseProps = PropsOf<GenericsOf<typeof explicitlyFalse>>
+    type ExplicitlyFalseVariants = VariantsOf<GenericsOf<typeof explicitlyFalse>>
+
+    expectTypeOf<ComposedProps>().toHaveProperty('ownOnlyProp')
+    expectTypeOf<ComposedProps>().toHaveProperty('partnerOnlyProp')
+    expectTypeOf<ComposedVariants>().toHaveProperty('ownTone')
+    expectTypeOf<ComposedVariants>().toHaveProperty('partnerTone')
+    expectTypeOf<ComposedSlotProps>().toHaveProperty('partnerOnlyProp')
+    expectTypeOf<ComposedSlotProps>().toHaveProperty('partnerTone')
+    expectTypeOf<ComposedSlotProps['partnerTone']>().toEqualTypeOf<
+      'calm' | 'bright' | undefined
+    >()
+
+    // Omitting allProps and setting it explicitly to false both preserve the original own-only
+    // type surface. Keep both cases covered: omission is the documented default, while false is
+    // an explicit opt-out that must not accidentally become truthy during type inference.
+    expectTypeOf<NotForwardingProps>().toHaveProperty('ownOnlyProp')
+    expectTypeOf<NotForwardingVariants>().toHaveProperty('ownTone')
+    expectTypeOf<ExplicitlyFalseProps>().toHaveProperty('ownOnlyProp')
+    expectTypeOf<ExplicitlyFalseVariants>().toHaveProperty('ownTone')
+    expectTypeOf<
+      'partnerOnlyProp' extends keyof NotForwardingProps ? true : false
+    >().toEqualTypeOf<false>()
+    expectTypeOf<
+      'partnerTone' extends keyof NotForwardingVariants ? true : false
+    >().toEqualTypeOf<false>()
+    expectTypeOf<
+      'partnerOnlyProp' extends keyof ExplicitlyFalseProps ? true : false
+    >().toEqualTypeOf<false>()
+    expectTypeOf<
+      'partnerTone' extends keyof ExplicitlyFalseVariants ? true : false
+    >().toEqualTypeOf<false>()
+  })
+
+  it('recursively includes a composed partner’s own composed props', () => {
+    const leaf = createContractComponent({
+      tag: 'button',
+      defaults: { leafOnlyProp: 'leaf' },
+      styling: { variants: { leafTone: { soft: 'soft', strong: 'strong' } } },
+    })
+    const middle = createContractComponent({
+      tag: 'span',
+      defaults: { middleOnlyProp: 'middle' },
+      styling: { variants: { middleTone: { soft: 'soft', strong: 'strong' } } },
+      compose: { with: leaf as typeof leaf & ComponentReference, allProps: true },
+    })
+    const root = createContractComponent({
+      tag: 'div',
+      defaults: { rootOnlyProp: 'root' },
+      compose: { with: middle as typeof middle & ComponentReference, allProps: true },
+    })
+    void root
+
+    type RootProps = PropsOf<GenericsOf<typeof root>>
+    expectTypeOf<RootProps>().toHaveProperty('rootOnlyProp')
+    expectTypeOf<RootProps>().toHaveProperty('middleOnlyProp')
+    expectTypeOf<RootProps>().toHaveProperty('leafOnlyProp')
+    expectTypeOf<VariantsOf<GenericsOf<typeof root>>>().toHaveProperty('middleTone')
+    expectTypeOf<VariantsOf<GenericsOf<typeof root>>>().toHaveProperty('leafTone')
+  })
+
+  it('stops recursive projection at a partner whose own allProps is false', () => {
+    const leaf = createContractComponent({
+      tag: 'button',
+      defaults: { leafOnlyProp: 'leaf' },
+      styling: { variants: { leafTone: { soft: 'soft', strong: 'strong' } } },
+    })
+    const middle = createContractComponent({
+      tag: 'span',
+      defaults: { middleOnlyProp: 'middle' },
+      styling: { variants: { middleTone: { soft: 'soft', strong: 'strong' } } },
+      compose: { with: leaf as typeof leaf & ComponentReference, allProps: false },
+    })
+    const root = createContractComponent({
+      tag: 'div',
+      defaults: { rootOnlyProp: 'root' },
+      compose: { with: middle as typeof middle & ComponentReference, allProps: true },
+    })
+    void root
+
+    type RootProps = PropsOf<GenericsOf<typeof root>>
+
+    expectTypeOf<RootProps>().toHaveProperty('rootOnlyProp')
+    expectTypeOf<RootProps>().toHaveProperty('middleOnlyProp')
+    expectTypeOf<VariantsOf<GenericsOf<typeof root>>>().toHaveProperty('middleTone')
+    expectTypeOf<
+      'leafOnlyProp' extends keyof RootProps ? true : false
+    >().toEqualTypeOf<false>()
+    expectTypeOf<
+      'leafTone' extends keyof VariantsOf<GenericsOf<typeof root>> ? true : false
+    >().toEqualTypeOf<false>()
+  })
+
+  it('preserves the composing bundle’s default tag, variants, and preset', () => {
+    const partner = createContractComponent({
+      tag: 'button',
+      defaults: { partnerOnlyProp: 'partner' },
+      styling: { variants: { partnerTone: { calm: 'calm', bright: 'bright' } } },
+    })
+    const composed = createContractComponent({
+      tag: 'div',
+      defaults: { ownOnlyProp: 'own' },
+      styling: {
+        variants: { ownTone: { quiet: 'quiet', loud: 'loud' } },
+        presets: { compact: { ownTone: 'quiet' } },
+      },
+      compose: { with: partner as typeof partner & ComponentReference, allProps: true },
+    })
+    void composed
+
+    type ComposedGenerics = GenericsOf<typeof composed>
+
+    expectTypeOf<DefaultOf<ComposedGenerics>>().toEqualTypeOf<'div'>()
+    expectTypeOf<VariantsOf<ComposedGenerics>>().toHaveProperty('partnerTone')
+    expectTypeOf<RecipeOf<ComposedGenerics>>().toHaveProperty('compact')
+  })
+
+  it('uses the shared merge policy for incompatible same-name own props', () => {
+    const partner = createContractComponent({
+      tag: 'button',
+      props: undefined as unknown as {
+        shared: 'partner' | 'common'
+        partnerOnlyProp: string
+        partnerOptional?: number
+      },
+      styling: { variants: { tone: { partner: 'partner-tone' } } },
+    })
+    const composed = createContractComponent({
+      tag: 'div',
+      props: undefined as unknown as {
+        shared: 'own' | 'common'
+        ownOnlyProp: string
+        ownOptional?: boolean
+      },
+      styling: { variants: { tone: { own: 'own-tone' } } },
+      compose: { with: partner as typeof partner & ComponentReference, allProps: true },
+    })
+    void composed
+
+    type ComposedGenerics = GenericsOf<typeof composed>
+    type ComposedProps = PropsOf<ComposedGenerics>
+    type ComposedVariants = VariantsOf<ComposedGenerics>
+
+    expectTypeOf<ComposedProps['shared']>().toEqualTypeOf<CollisionError<'shared'>>()
+    expectTypeOf<ComposedProps>().toHaveProperty('ownOnlyProp')
+    expectTypeOf<ComposedProps>().toHaveProperty('partnerOnlyProp')
+    expectTypeOf<OptionalKeysOf<ComposedProps>>().toEqualTypeOf<
+      'ownOptional' | 'partnerOptional'
+    >()
+    expectTypeOf<VariantProps<ComposedVariants>['tone']>().toEqualTypeOf<
+      CollisionError<'tone'> | undefined
+    >()
+  })
+})
 
 describe('GenericsOf<T>', () => {
   it('recovers a real bundle’s own props, not the widest PolymorphicGenerics fallback', () => {
@@ -33,6 +233,7 @@ describe('GenericsOf<T>', () => {
     expectTypeOf<SlotProps>().not.toBeNever()
     expectTypeOf<SlotProps>().toHaveProperty('type')
     expectTypeOf<SlotProps>().toHaveProperty('class')
+    expectTypeOf<SlotProps['class']>().toEqualTypeOf<string | undefined>()
   })
 
   it('recovers the exact G, not merely some PolymorphicGenerics — checked against PropsOf directly', () => {

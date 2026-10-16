@@ -282,6 +282,21 @@ describe('Polymorphic (Svelte adapter)', () => {
       expect(received?.tagName.toLowerCase()).toBe('button')
     })
 
+    it('explicit allProps: false does not forward props to the composed bundle', () => {
+      const boxA = createContractComponent({
+        tag: 'div',
+        styling: { variants: { intent: { ghost: 'intent-ghost' } } },
+      })
+      const boxB = createContractComponent({
+        tag: 'button',
+        compose: { with: boxA, allProps: false },
+      })
+
+      const { container } = render(Polymorphic, { bundle: boxB, intent: 'ghost' })
+
+      expect(container.querySelector('button')?.className).not.toContain('intent-ghost')
+    })
+
     it('an explicit asChild from the consumer wins over compose', () => {
       const boxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
       const boxB = createContractComponent({

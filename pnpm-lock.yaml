@@ -550,6 +550,9 @@ importers:
       '@praxis-kit/adapter-utils':
         specifier: workspace:*
         version: link:../../lib/adapter-utils
+      '@praxis-kit/compose-props':
+        specifier: workspace:*
+        version: link:../../lib/compose-props
       '@praxis-kit/core':
         specifier: workspace:*
         version: link:../../packages/core

@@ -1,21 +1,12 @@
 import type { OmitIndexSignature } from 'type-fest'
 import type { PolymorphicGenerics, PropsOf, VariantProps, VariantsOf } from '@praxis-kit/core'
-import type { AnyBuiltRuntime, BuiltRuntime, WithChildRules } from './built-runtime'
+import type { ComposedBundleGenericsOf } from './composed-generics'
 
 /**
- * Recovers a bundle's `PolymorphicGenerics` descriptor from its own value type — the Svelte
- * analog of React's/Preact's `__generics` marker recovery, but
- * needs no marker at all: `createContractComponent` already returns `BuiltRuntime<G, TOptions>`
- * directly (not an erased type), so `G` is a plain, ordinary type parameter to `infer` back out.
- * The second type argument is fixed to `WithChildRules` (its own upper bound) rather than
- * `infer`'d, since nothing here needs `TOptions` itself, only `G`. Falls back to the widest
- * `PolymorphicGenerics` for any non-praxis-kit bundle, the same "no marker, nothing to recover"
- * case `HasGenerics<G>`'s own `never` branch covers for React/Preact — a caller annotation, not an
- * internal assertion, so a mismatched bundle should degrade gracefully rather than poison the
- * whole expression with `never`.
+ * Recovers a bundle's effective `PolymorphicGenerics` descriptor, including props and variants
+ * from `compose.with` when `compose.allProps` is true.
  */
-export type GenericsOf<T extends AnyBuiltRuntime> =
-  T extends BuiltRuntime<infer G, WithChildRules> ? G : PolymorphicGenerics
+export type GenericsOf<T> = ComposedBundleGenericsOf<T>
 
 /**
  * Props an `asChild` snippet receives once defaults, variant classes, and ARIA role resolution
