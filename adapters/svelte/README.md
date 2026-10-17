@@ -96,6 +96,6 @@ snippet's parameter explicitly:
 | `./Polymorphic.svelte`                    | The component every bundle renders through (separate subpath — a `.svelte` file, not a JS export)  |
 | `SvelteFactoryOptions` (type)             | Factory options with Svelte-specific extensions                                                    |
 | `BuiltRuntime` / `AnyBuiltRuntime` (type) | The bundle `createContractComponent` returns                                                       |
-| `GenericsOf<T>` (type)                    | Recovers effective bundle generics, including composed props/variants when `compose.allProps` is true |
+| `GenericsOf<T>` (type)                    | Recovers bundle generics, including the direct partner’s own props/variants when `compose.allProps` is true |
 | `ResolvedSlotProps<G>` (type)             | Props an `asChild` snippet receives — annotate with `ResolvedSlotProps<GenericsOf<typeof bundle>>` |
 | `PolymorphicComponentProps` (type)        | Props of `<Polymorphic>` itself, for wrapping it                                                   |

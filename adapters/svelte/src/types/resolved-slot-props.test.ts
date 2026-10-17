@@ -94,7 +94,7 @@ describe('GenericsOf<T> composition projection', () => {
     >().toEqualTypeOf<false>()
   })
 
-  it('recursively includes a composed partner’s own composed props', () => {
+  it('projects only the direct partner’s own props and variants', () => {
     const leaf = createContractComponent({
       tag: 'button',
       defaults: { leafOnlyProp: 'leaf' },
@@ -114,43 +114,16 @@ describe('GenericsOf<T> composition projection', () => {
     void root
 
     type RootProps = PropsOf<GenericsOf<typeof root>>
-    expectTypeOf<RootProps>().toHaveProperty('rootOnlyProp')
-    expectTypeOf<RootProps>().toHaveProperty('middleOnlyProp')
-    expectTypeOf<RootProps>().toHaveProperty('leafOnlyProp')
-    expectTypeOf<VariantsOf<GenericsOf<typeof root>>>().toHaveProperty('middleTone')
-    expectTypeOf<VariantsOf<GenericsOf<typeof root>>>().toHaveProperty('leafTone')
-  })
-
-  it('stops recursive projection at a partner whose own allProps is false', () => {
-    const leaf = createContractComponent({
-      tag: 'button',
-      defaults: { leafOnlyProp: 'leaf' },
-      styling: { variants: { leafTone: { soft: 'soft', strong: 'strong' } } },
-    })
-    const middle = createContractComponent({
-      tag: 'span',
-      defaults: { middleOnlyProp: 'middle' },
-      styling: { variants: { middleTone: { soft: 'soft', strong: 'strong' } } },
-      compose: { with: leaf as typeof leaf & ComponentReference, allProps: false },
-    })
-    const root = createContractComponent({
-      tag: 'div',
-      defaults: { rootOnlyProp: 'root' },
-      compose: { with: middle as typeof middle & ComponentReference, allProps: true },
-    })
-    void root
-
-    type RootProps = PropsOf<GenericsOf<typeof root>>
+    type RootVariants = VariantsOf<GenericsOf<typeof root>>
 
     expectTypeOf<RootProps>().toHaveProperty('rootOnlyProp')
     expectTypeOf<RootProps>().toHaveProperty('middleOnlyProp')
-    expectTypeOf<VariantsOf<GenericsOf<typeof root>>>().toHaveProperty('middleTone')
-    expectTypeOf<
-      'leafOnlyProp' extends keyof RootProps ? true : false
-    >().toEqualTypeOf<false>()
-    expectTypeOf<
-      'leafTone' extends keyof VariantsOf<GenericsOf<typeof root>> ? true : false
-    >().toEqualTypeOf<false>()
+    expectTypeOf<RootVariants>().toHaveProperty('middleTone')
+
+    // The Svelte runtime composes root with middle, but does not recursively render middle's
+    // partner. Leaf props/variants therefore must not appear in root's effective type surface.
+    expectTypeOf<'leafOnlyProp' extends keyof RootProps ? true : false>().toEqualTypeOf<false>()
+    expectTypeOf<'leafTone' extends keyof RootVariants ? true : false>().toEqualTypeOf<false>()
   })
 
   it('preserves the composing bundle’s default tag, variants, and preset', () => {

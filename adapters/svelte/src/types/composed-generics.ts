@@ -18,6 +18,8 @@ type OwnVariants<G extends PolymorphicGenerics> = OmitIndexSignature<VariantsOf<
 type PresetFor<G extends PolymorphicGenerics, V extends Readonly<VariantMap>> =
   RecipeOf<G> extends RecipeMap<V> ? RecipeOf<G> : RecipeMap<V>
 
+type OwnGenericsOf<T> = T extends BuiltRuntime<infer G, infer _O> ? G : PolymorphicGenerics
+
 type ComposedGenericsOf<T> = T extends BuiltRuntime<infer G, infer _O>
   ? ResolveComposition<G, T extends { readonly compose?: infer C } ? NonNullable<C> : never>
   : PolymorphicGenerics
@@ -27,7 +29,7 @@ type ResolveComposition<
   O,
 > = O extends { readonly allProps: true; readonly with: infer W }
   ? W extends { readonly runtime: unknown }
-    ? MergeGenerics<G, ComposedGenericsOf<W>>
+    ? MergeGenerics<G, OwnGenericsOf<W>>
     : G
   : G
 
@@ -48,8 +50,10 @@ type MergeGenerics<
   : Own
 
 /**
- * Recovers a Svelte bundle's effective generics, folding in composed props and variants when
- * `compose.allProps` is enabled. The original options are inferred from `BuiltRuntime`'s second
- * generic parameter; no runtime marker is required.
+ * Recovers a Svelte bundle's effective generics, folding in the direct composed partner's own props
+ * and variants when `compose.allProps` is enabled. Projection is intentionally one level deep to
+ * match the current Svelte runtime, which does not render a partner's own composition recursively.
+ * The original options are inferred from `BuiltRuntime`'s second generic parameter; no runtime
+ * marker is required.
  */
 export type ComposedBundleGenericsOf<T> = ComposedGenericsOf<T>
