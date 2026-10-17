@@ -122,9 +122,24 @@ describe('GenericsOf<T> composition projection', () => {
     expectTypeOf<GridProps>().toHaveProperty('gridOnlyProp')
     expectTypeOf<GridProps>().toHaveProperty('partnerOnlyProp')
 
-    // Resolved slot props are the final snippet-facing extraction path; keep this assertion here
-    // while the next flattening check determines whether union-specific keys need a flat shape.
+    // The final snippet-facing shape must retain keys that occur on only one member of the
+    // original union. Flattening makes those keys optional rather than discarding them.
     expectTypeOf<ComposedSlotProps>().not.toBeNever()
+    expectTypeOf<ComposedSlotProps['flexOnlyProp']>().toEqualTypeOf<string | undefined>()
+    expectTypeOf<ComposedSlotProps['gridOnlyProp']>().toEqualTypeOf<number | undefined>()
+    expectTypeOf<ComposedSlotProps['partnerOnlyProp']>().toEqualTypeOf<string | undefined>()
+
+    // Exercise the consumer-facing API with the actual composed type, not just a type alias.
+    const children = createRawSnippet<[ComposedSlotProps]>((getProps) => ({
+      render: () => {
+        const props = getProps()
+        expectTypeOf(props.flexOnlyProp).toEqualTypeOf<string | undefined>()
+        expectTypeOf(props.gridOnlyProp).toEqualTypeOf<number | undefined>()
+        expectTypeOf(props.partnerOnlyProp).toEqualTypeOf<string | undefined>()
+        return ''
+      },
+    }))
+    void children
   })
 
   it('projects only the direct partner’s own props and variants', () => {
