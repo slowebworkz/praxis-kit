@@ -10,11 +10,11 @@ import type {
   VariantMap,
 } from '@praxis-kit/core'
 import type { MergeComposedProps } from '@praxis-kit/compose-props'
-import type { OmitIndexSignature } from 'type-fest'
+import type { DistributiveOmitIndexSignature } from './omit-index-signature'
 import type { BuiltRuntime } from './built-runtime'
 
-type OwnProps<G extends PolymorphicGenerics> = OmitIndexSignature<PropsOf<G>>
-type OwnVariants<G extends PolymorphicGenerics> = OmitIndexSignature<VariantsOf<G>>
+type OwnProps<G extends PolymorphicGenerics> = DistributiveOmitIndexSignature<PropsOf<G>>
+type OwnVariants<G extends PolymorphicGenerics> = DistributiveOmitIndexSignature<VariantsOf<G>>
 type PresetFor<G extends PolymorphicGenerics, V extends Readonly<VariantMap>> =
   RecipeOf<G> extends RecipeMap<V> ? RecipeOf<G> : RecipeMap<V>
 

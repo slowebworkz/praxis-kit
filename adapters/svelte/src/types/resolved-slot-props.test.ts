@@ -94,6 +94,40 @@ describe('GenericsOf<T> composition projection', () => {
     >().toEqualTypeOf<false>()
   })
 
+  it('preserves member-specific keys when composing union-shaped props', () => {
+    const partner = createContractComponent({
+      tag: 'button',
+      props: undefined as unknown as { partnerOnlyProp: string },
+    })
+    const composed = createContractComponent({
+      tag: 'div',
+      props: undefined as unknown as
+        | { flex: true; flexOnlyProp: string }
+        | { grid: true; gridOnlyProp: number },
+      compose: { with: partner as typeof partner & ComponentReference, allProps: true },
+    })
+    void composed
+
+    type ComposedProps = PropsOf<GenericsOf<typeof composed>>
+    type ComposedSlotProps = ResolvedSlotProps<GenericsOf<typeof composed>>
+
+    // Each union member must retain its own keys after index signatures are stripped and the
+    // partner's props are merged. Applying OmitIndexSignature to the union as a whole loses these.
+    type FlexProps = Extract<ComposedProps, { flex: true }>
+    type GridProps = Extract<ComposedProps, { grid: true }>
+
+    expectTypeOf<FlexProps>().not.toBeNever()
+    expectTypeOf<FlexProps>().toHaveProperty('flexOnlyProp')
+    expectTypeOf<FlexProps>().toHaveProperty('partnerOnlyProp')
+    expectTypeOf<GridProps>().not.toBeNever()
+    expectTypeOf<GridProps>().toHaveProperty('gridOnlyProp')
+    expectTypeOf<GridProps>().toHaveProperty('partnerOnlyProp')
+
+    // Resolved slot props are the final snippet-facing extraction path; keep this assertion here
+    // while the next flattening check determines whether union-specific keys need a flat shape.
+    expectTypeOf<ComposedSlotProps>().not.toBeNever()
+  })
+
   it('projects only the direct partner’s own props and variants', () => {
     const leaf = createContractComponent({
       tag: 'button',

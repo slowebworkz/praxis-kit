@@ -1,4 +1,4 @@
-import type { OmitIndexSignature } from 'type-fest'
+import type { DistributiveOmitIndexSignature } from './omit-index-signature'
 import type { PolymorphicGenerics, PropsOf, VariantProps, VariantsOf } from '@praxis-kit/core'
 import type { ComposedBundleGenericsOf } from './composed-generics'
 
@@ -31,8 +31,8 @@ export type GenericsOf<T> = ComposedBundleGenericsOf<T>
  * spread onto an unknown target element).
  */
 export type ResolvedSlotProps<G extends PolymorphicGenerics> = Partial<
-  OmitIndexSignature<PropsOf<G>>
+  DistributiveOmitIndexSignature<PropsOf<G>>
 > &
-  OmitIndexSignature<VariantProps<VariantsOf<G>>> & {
+  DistributiveOmitIndexSignature<VariantProps<VariantsOf<G>>> & {
     class?: string | undefined
   }
