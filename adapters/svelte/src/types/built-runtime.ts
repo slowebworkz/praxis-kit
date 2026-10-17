@@ -24,6 +24,12 @@ export type OnElementFn<G extends PolymorphicGenerics = PolymorphicGenerics> = (
   getProps: () => Readonly<PropsOf<G>>,
 ) => void | (() => void)
 
+type ComposeOf<TOptions extends WithChildRules> = TOptions extends {
+  readonly compose: infer TCompose
+}
+  ? TCompose
+  : ComposeOptions
+
 export type BuiltRuntime<
   G extends PolymorphicGenerics = PolymorphicGenerics,
   TOptions extends WithChildRules = WithChildRules,
@@ -32,7 +38,7 @@ export type BuiltRuntime<
   filterProps: FilterPredicate
   slotValidator: SlotValidator
   onElement?: OnElementFn<G>
-  compose?: ComposeOptions
+  compose?: ComposeOf<TOptions>
 }
 
 // Structural alias used when generic precision is not needed (e.g. as a prop type).

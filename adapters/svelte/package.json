@@ -18,8 +18,10 @@
     "@praxis-kit/adapter-utils": "workspace:*",
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/compose-props": "workspace:*",
     "@praxis-kit/guards": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
+    "@praxis-kit/tailwind": "workspace:*",
     "type-fest": "catalog:"
   },
   "peerDependencies": {

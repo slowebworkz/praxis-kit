@@ -282,6 +282,66 @@ describe('Polymorphic (Svelte adapter)', () => {
       expect(received?.tagName.toLowerCase()).toBe('button')
     })
 
+    it('uses the composing component’s prop value when composed props collide', () => {
+      const withBundle = createContractComponent({
+        tag: 'button',
+        defaults: { 'data-collision': 'with-value' },
+      })
+      const composingBundle = createContractComponent({
+        tag: 'button',
+        defaults: { 'data-collision': 'composing-value' },
+        compose: { with: withBundle, allProps: true },
+      })
+
+      const { container } = render(Polymorphic, { bundle: composingBundle })
+
+      expect(container.querySelector('button')?.getAttribute('data-collision')).toBe(
+        'composing-value',
+      )
+    })
+
+    it('does not recursively render a composed partner’s own composition', () => {
+      const leaf = createContractComponent({
+        tag: 'a',
+        styling: { base: 'leaf-class' },
+      })
+      const middle = createContractComponent({
+        tag: 'span',
+        styling: { base: 'middle-class' },
+        compose: { with: leaf as never, allProps: true },
+      })
+      const root = createContractComponent({
+        tag: 'button',
+        styling: { base: 'root-class' },
+        compose: { with: middle as never, allProps: true },
+      })
+
+      const { container } = render(Polymorphic, { bundle: root })
+      const button = container.querySelector('button')
+
+      expect(button).toBeTruthy()
+      expect(button?.className).toContain('root-class')
+      expect(button?.className).toContain('middle-class')
+      expect(button?.className).not.toContain('leaf-class')
+      expect(container.querySelector('a')).toBeNull()
+      expect(container.querySelector('span')).toBeNull()
+    })
+
+    it('explicit allProps: false does not forward props to the composed bundle', () => {
+      const boxA = createContractComponent({
+        tag: 'div',
+        styling: { variants: { intent: { ghost: 'intent-ghost' } } },
+      })
+      const boxB = createContractComponent({
+        tag: 'button',
+        compose: { with: boxA, allProps: false },
+      })
+
+      const { container } = render(Polymorphic, { bundle: boxB, intent: 'ghost' })
+
+      expect(container.querySelector('button')?.className).not.toContain('intent-ghost')
+    })
+
     it('an explicit asChild from the consumer wins over compose', () => {
       const boxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
       const boxB = createContractComponent({

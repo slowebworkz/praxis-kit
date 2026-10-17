@@ -1,21 +1,52 @@
-import type { OmitIndexSignature } from 'type-fest'
+import type { LayoutKeyName } from '@praxis-kit/tailwind'
+import type { Simplify } from 'type-fest'
+import type { DistributiveOmitIndexSignature } from './omit-index-signature'
 import type { PolymorphicGenerics, PropsOf, VariantProps, VariantsOf } from '@praxis-kit/core'
-import type { AnyBuiltRuntime, BuiltRuntime, WithChildRules } from './built-runtime'
+import type { ComposedBundleGenericsOf } from './composed-generics'
+
+/** Whether a union member declares a layout key as exactly `true`. */
+type IsKeyTrueOn<M, K extends PropertyKey> = K extends keyof M
+  ? [M[K]] extends [true]
+    ? true
+    : false
+  : false
+
+/** Layout keys that occur as literal `true` in at least one member of a prop union. */
+type LayoutPluginKeys<P> = {
+  [K in LayoutKeyName]-?: P extends infer M ? (IsKeyTrueOn<M, K> extends true ? K : never) : never
+}[LayoutKeyName]
 
 /**
- * Recovers a bundle's `PolymorphicGenerics` descriptor from its own value type — the Svelte
- * analog of React's/Preact's `__generics` marker recovery, but
- * needs no marker at all: `createContractComponent` already returns `BuiltRuntime<G, TOptions>`
- * directly (not an erased type), so `G` is a plain, ordinary type parameter to `infer` back out.
- * The second type argument is fixed to `WithChildRules` (its own upper bound) rather than
- * `infer`'d, since nothing here needs `TOptions` itself, only `G`. Falls back to the widest
- * `PolymorphicGenerics` for any non-praxis-kit bundle, the same "no marker, nothing to recover"
- * case `HasGenerics<G>`'s own `never` branch covers for React/Preact — a caller annotation, not an
- * internal assertion, so a mismatched bundle should degrade gracefully rather than poison the
- * whole expression with `never`.
+ * Collapse the Tailwind plugin's mutually-exclusive layout-prop union for snippet prop extraction.
+ * This is deliberately limited to `ResolvedSlotProps`: `GenericsOf<T>` retains the underlying
+ * prop union, while a snippet needs a structurally useful object type for `Pick`, `Omit`, spreads,
+ * and rest destructuring.
  */
-export type GenericsOf<T extends AnyBuiltRuntime> =
-  T extends BuiltRuntime<infer G, WithChildRules> ? G : PolymorphicGenerics
+type DataAttributes = { [K in `data-${string}`]?: string | number | boolean | undefined }
+
+type UnionKeys<T> = T extends unknown ? keyof T : never
+
+type UnionPropValue<T, K extends PropertyKey> = T extends unknown
+  ? K extends keyof T
+    ? T[K]
+    : never
+  : never
+
+type FlattenLayout<P> = [P] extends [never]
+  ? never
+  : [LayoutPluginKeys<P>] extends [never]
+    ? P
+    : Simplify<
+        { [K in Exclude<UnionKeys<P>, LayoutKeyName>]?: UnionPropValue<P, K> } & {
+          [K in LayoutPluginKeys<P>]?: true
+        }
+      >
+
+/**
+ * Recovers a bundle's effective `PolymorphicGenerics` descriptor, including props and variants
+ * from `compose.with` when `compose.allProps` is true.
+ */
+export type GenericsOf<T> = ComposedBundleGenericsOf<T>
 
 /**
  * Props an `asChild` snippet receives once defaults, variant classes, and ARIA role resolution
@@ -40,8 +71,9 @@ export type GenericsOf<T extends AnyBuiltRuntime> =
  * spread onto an unknown target element).
  */
 export type ResolvedSlotProps<G extends PolymorphicGenerics> = Partial<
-  OmitIndexSignature<PropsOf<G>>
+  FlattenLayout<DistributiveOmitIndexSignature<PropsOf<G>>>
 > &
-  OmitIndexSignature<VariantProps<VariantsOf<G>>> & {
+  DataAttributes &
+  DistributiveOmitIndexSignature<VariantProps<VariantsOf<G>>> & {
     class?: string | undefined
   }
