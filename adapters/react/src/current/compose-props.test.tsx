@@ -542,3 +542,153 @@ describe('compose.with preserves plugin-contributed layout props', () => {
     void _invalid
   })
 })
+
+describe('compose.with public prop ownership and allProps boundaries', () => {
+  const Child = createContractComponent(
+    defineContract({
+      tag: 'div',
+      name: 'TypedChild',
+      props: undefined as unknown as { childLabel: string; childSize?: 'small' | 'large' },
+      styling: {
+        variants: {
+          childTone: { quiet: 'child-quiet', loud: 'child-loud' },
+        },
+      },
+    } satisfies ReactFactoryOptions),
+  )
+
+  const Parent = createContractComponent(
+    defineContract({
+      tag: 'article',
+      name: 'TypedParent',
+      props: undefined as unknown as { parentLabel: string; parentCount?: number },
+      styling: {
+        variants: {
+          parentTone: { calm: 'parent-calm', urgent: 'parent-urgent' },
+        },
+      },
+      enforcement: { allowedAs: ['article', 'section'] as const },
+      compose: { allProps: true, with: Child },
+    } satisfies ReactFactoryOptions),
+  )
+
+  it('merges parent and child ordinary props and variants with their exact optionality and value types', () => {
+    type ParentPicked = Pick<ContractProps<typeof Parent>,
+      'parentLabel' | 'parentCount' | 'parentTone' | 'childLabel' | 'childSize' | 'childTone'
+    >
+    expectTypeOf<ParentPicked>().toEqualTypeOf<{
+      parentLabel: string
+      parentCount?: number
+      parentTone?: 'calm' | 'urgent'
+      childLabel: string
+      childSize?: 'small' | 'large'
+      childTone?: 'quiet' | 'loud'
+    }>()
+
+    // Required props from both contracts remain required; optional props remain optional.
+    function consumeParent(props: Pick<ContractProps<typeof Parent>, 'parentLabel' | 'childLabel'>) {
+      void props
+    }
+    consumeParent({ parentLabel: 'parent', childLabel: 'child' })
+    // @ts-expect-error — the child’s required prop is part of the composed public API.
+    consumeParent({ parentLabel: 'parent' })
+    // @ts-expect-error — the parent’s required prop is still required.
+    consumeParent({ childLabel: 'child' })
+  })
+
+  it('accepts valid parent and child props together in JSX and rejects invalid values independently', () => {
+    const _valid = (
+      <Parent
+        parentLabel="parent"
+        parentCount={2}
+        parentTone="urgent"
+        childLabel="child"
+        childSize="large"
+        childTone="quiet"
+      />
+    )
+    void _valid
+
+    // @ts-expect-error — parentLabel is a string, not a number.
+    const _invalidParentValue = <Parent parentLabel={42} childLabel="child" />
+    // @ts-expect-error — childSize only accepts its declared literal union.
+    const _invalidChildValue = <Parent parentLabel="parent" childLabel="child" childSize="huge" />
+    // @ts-expect-error — parentTone is a parent-owned variant.
+    const _invalidParentVariant = <Parent parentLabel="parent" childLabel="child" parentTone="quiet" />
+    // @ts-expect-error — childTone is a child-owned variant.
+    const _invalidChildVariant = <Parent parentLabel="parent" childLabel="child" childTone="urgent" />
+    void _invalidParentValue
+    void _invalidChildValue
+    void _invalidParentVariant
+    void _invalidChildVariant
+  })
+
+  it('does not mutate the child component public props when the parent composes it', () => {
+    type ChildPicked = Pick<ContractProps<typeof Child>,
+      'childLabel' | 'childSize' | 'childTone'
+    >
+    expectTypeOf<ChildPicked>().toEqualTypeOf<{
+      childLabel: string
+      childSize?: 'small' | 'large'
+      childTone?: 'quiet' | 'loud'
+    }>()
+
+    type ChildHasParentLabel = 'parentLabel' extends keyof ContractProps<typeof Child>
+      ? true
+      : false
+    type ChildHasParentTone = 'parentTone' extends keyof ContractProps<typeof Child>
+      ? true
+      : false
+    expectTypeOf<ChildHasParentLabel>().toEqualTypeOf<false>()
+    expectTypeOf<ChildHasParentTone>().toEqualTypeOf<false>()
+
+    const _validChild = <Child childLabel="child" childTone="loud" />
+    void _validChild
+    // @ts-expect-error — composition is one-way; Parent's props do not leak back into Child.
+    const _invalidChild = <Child childLabel="child" parentLabel="parent" />
+    void _invalidChild
+  })
+
+  it('does not expose child props when allProps is false, while retaining parent-owned props', () => {
+    const ParentWithoutForwarding = createContractComponent(
+      defineContract({
+        tag: 'article',
+        name: 'ParentWithoutForwarding',
+        props: undefined as unknown as { parentLabel: string; parentCount?: number },
+        styling: { variants: { parentTone: { calm: 'calm', urgent: 'urgent' } } },
+        compose: { allProps: false, with: Child },
+      } satisfies ReactFactoryOptions),
+    )
+
+    type ParentPicked = Pick<ContractProps<typeof ParentWithoutForwarding>, 'parentLabel' | 'parentCount' | 'parentTone'>
+    expectTypeOf<ParentPicked>().toEqualTypeOf<{
+      parentLabel: string
+      parentCount?: number
+      parentTone?: 'calm' | 'urgent'
+    }>()
+    type HasChildLabel = 'childLabel' extends keyof ContractProps<typeof ParentWithoutForwarding>
+      ? true
+      : false
+    type HasChildTone = 'childTone' extends keyof ContractProps<typeof ParentWithoutForwarding>
+      ? true
+      : false
+    expectTypeOf<HasChildLabel>().toEqualTypeOf<false>()
+    expectTypeOf<HasChildTone>().toEqualTypeOf<false>()
+
+    const _valid = <ParentWithoutForwarding parentLabel="parent" parentTone="calm" />
+    void _valid
+    // @ts-expect-error — child props are not part of the public API without allProps: true.
+    const _invalid = <ParentWithoutForwarding parentLabel="parent" childLabel="child" />
+    void _invalid
+  })
+
+  it('preserves the parent’s allowedAs restriction rather than inheriting the child’s default tag', () => {
+    const _article = <Parent parentLabel="parent" childLabel="child" as="article" />
+    const _section = <Parent parentLabel="parent" childLabel="child" as="section" />
+    void _article
+    void _section
+    // @ts-expect-error — Child's default div does not widen Parent's allowedAs.
+    const _div = <Parent parentLabel="parent" childLabel="child" as="div" />
+    void _div
+  })
+})
