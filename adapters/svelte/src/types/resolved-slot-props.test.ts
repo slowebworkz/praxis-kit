@@ -198,6 +198,27 @@ describe('GenericsOf<T> composition projection', () => {
     expectTypeOf<RecipeOf<ComposedGenerics>>().toHaveProperty('compact')
   })
 
+  it('keeps partner variant choices broad when compose.defaults selects a default', () => {
+    const partner = createContractComponent({
+      tag: 'button',
+      styling: { variants: { partnerTone: { calm: 'calm', bright: 'bright' } } },
+    })
+    const composed = createContractComponent({
+      tag: 'div',
+      compose: {
+        with: partner as typeof partner & ComponentReference,
+        allProps: true,
+        defaults: { partnerTone: 'calm' },
+      },
+    })
+    void composed
+
+    // Composition defaults select the partner's runtime default; they must not narrow the
+    // public type to that single choice because callers can still override it via allProps.
+    type PartnerTone = VariantProps<VariantsOf<GenericsOf<typeof composed>>>['partnerTone']
+    expectTypeOf<PartnerTone>().toEqualTypeOf<'calm' | 'bright' | undefined>()
+  })
+
   it('uses the shared merge policy for incompatible same-name own props', () => {
     const partner = createContractComponent({
       tag: 'button',
