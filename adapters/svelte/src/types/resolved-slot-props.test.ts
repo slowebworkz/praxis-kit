@@ -19,6 +19,8 @@ import type {
   VariantsOf,
 } from '@praxis-kit/core'
 import type { CollisionError } from '@praxis-kit/compose-props'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
+import type { LayoutKeyName } from '@praxis-kit/tailwind'
 import type { OptionalKeysOf } from 'type-fest'
 import { createContractComponent } from '../create-contract-component'
 import type { AnyBuiltRuntime } from './built-runtime'
@@ -69,9 +71,7 @@ describe('GenericsOf<T> composition projection', () => {
     expectTypeOf<ComposedVariants>().toHaveProperty('partnerTone')
     expectTypeOf<ComposedSlotProps>().toHaveProperty('partnerOnlyProp')
     expectTypeOf<ComposedSlotProps>().toHaveProperty('partnerTone')
-    expectTypeOf<ComposedSlotProps['partnerTone']>().toEqualTypeOf<
-      'calm' | 'bright' | undefined
-    >()
+    expectTypeOf<ComposedSlotProps['partnerTone']>().toEqualTypeOf<'calm' | 'bright' | undefined>()
 
     // Omitting allProps and setting it explicitly to false both preserve the original own-only
     // type surface. Keep both cases covered: omission is the documented default, while false is
@@ -102,8 +102,7 @@ describe('GenericsOf<T> composition projection', () => {
     const composed = createContractComponent({
       tag: 'div',
       props: undefined as unknown as
-        | { flex: true; flexOnlyProp: string }
-        | { grid: true; gridOnlyProp: number },
+        { flex: true; flexOnlyProp: string } | { grid: true; gridOnlyProp: number },
       compose: { with: partner as typeof partner & ComponentReference, allProps: true },
     })
     void composed
@@ -213,9 +212,7 @@ describe('GenericsOf<T> composition projection', () => {
     expectTypeOf<ComposedProps['shared']>().toEqualTypeOf<CollisionError<'shared'>>()
     expectTypeOf<ComposedProps>().toHaveProperty('ownOnlyProp')
     expectTypeOf<ComposedProps>().toHaveProperty('partnerOnlyProp')
-    expectTypeOf<OptionalKeysOf<ComposedProps>>().toEqualTypeOf<
-      'ownOptional' | 'partnerOptional'
-    >()
+    expectTypeOf<OptionalKeysOf<ComposedProps>>().toEqualTypeOf<'ownOptional' | 'partnerOptional'>()
     expectTypeOf<VariantProps<ComposedVariants>['tone']>().toEqualTypeOf<
       CollisionError<'tone'> | undefined
     >()
@@ -297,5 +294,42 @@ describe('ResolvedSlotProps<G>', () => {
       }),
     )
     void _children
+  })
+})
+
+describe('ResolvedSlotProps<T> layout-union collapse', () => {
+  const partner = createContractComponent({
+    tag: 'button',
+    defaults: { partnerOnlyProp: 'partner' },
+  })
+  const composed = createContractComponent({
+    tag: 'div',
+    defaults: { 'data-slot': 'box' },
+    styling: { base: 'gap-2', plugin: createTailwindPipeline },
+    compose: { with: partner as typeof partner & ComponentReference, allProps: true },
+  })
+  void composed
+
+  type Props = ResolvedSlotProps<GenericsOf<typeof composed>>
+
+  it('collapses Tailwind layout unions into optional true-valued keys for snippets', () => {
+    expectTypeOf<Props['flex']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<Props['grid']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<Props['data-slot']>().toEqualTypeOf<string | number | boolean | undefined>()
+    expectTypeOf<Props['partnerOnlyProp']>().toEqualTypeOf<string | undefined>()
+
+    type WithoutLayout = Omit<Props, LayoutKeyName>
+    type OnlyGrid = Pick<Props, 'grid'>
+    type Merged = Props & { extra?: string }
+
+    expectTypeOf<WithoutLayout['data-slot']>().toEqualTypeOf<string | number | boolean | undefined>()
+    expectTypeOf<OnlyGrid['grid']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<Merged['extra']>().toEqualTypeOf<string | undefined>()
+
+    function readProps(props: Props): void {
+      const { 'data-slot': _slot, flex: _flex, ...rest } = props
+      expectTypeOf(rest).toBeObject()
+    }
+    void readProps
   })
 })

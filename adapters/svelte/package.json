@@ -21,6 +21,7 @@
     "@praxis-kit/compose-props": "workspace:*",
     "@praxis-kit/guards": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
+    "@praxis-kit/tailwind": "workspace:*",
     "type-fest": "catalog:"
   },
   "peerDependencies": {

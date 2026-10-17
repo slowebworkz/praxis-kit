@@ -20,34 +20,36 @@ type PresetFor<G extends PolymorphicGenerics, V extends Readonly<VariantMap>> =
 
 type OwnGenericsOf<T> = T extends BuiltRuntime<infer G, infer _O> ? G : PolymorphicGenerics
 
-type ComposedGenericsOf<T> = T extends BuiltRuntime<infer G, infer _O>
-  ? ResolveComposition<G, T extends { readonly compose?: infer C } ? NonNullable<C> : never>
-  : PolymorphicGenerics
+type ComposedGenericsOf<T> =
+  T extends BuiltRuntime<infer G, infer _O>
+    ? ResolveComposition<G, T extends { readonly compose?: infer C } ? NonNullable<C> : never>
+    : PolymorphicGenerics
 
-type ResolveComposition<
-  G extends PolymorphicGenerics,
-  O,
-> = O extends { readonly allProps: true; readonly with: infer W }
+type ResolveComposition<G extends PolymorphicGenerics, O> = O extends {
+  readonly allProps: true
+  readonly with: infer W
+}
   ? W extends { readonly runtime: unknown }
     ? MergeGenerics<G, OwnGenericsOf<W>>
     : G
   : G
 
-type MergeGenerics<
-  Own extends PolymorphicGenerics,
-  Composed extends PolymorphicGenerics,
-> = MergeComposedProps<OwnProps<Own>, OwnProps<Composed>> extends infer Props extends AnyRecord
-  ? MergeComposedProps<OwnVariants<Own>, OwnVariants<Composed>, true> extends infer Variants extends
-      Readonly<VariantMap>
-    ? PolymorphicGenerics<
-        DefaultOf<Own>,
-        Props,
-        Variants,
-        PresetFor<Own, Variants>,
-        AllowedOf<Own>
-      >
+type MergeGenerics<Own extends PolymorphicGenerics, Composed extends PolymorphicGenerics> =
+  MergeComposedProps<OwnProps<Own>, OwnProps<Composed>> extends infer Props extends AnyRecord
+    ? MergeComposedProps<
+        OwnVariants<Own>,
+        OwnVariants<Composed>,
+        true
+      > extends infer Variants extends Readonly<VariantMap>
+      ? PolymorphicGenerics<
+          DefaultOf<Own>,
+          Props,
+          Variants,
+          PresetFor<Own, Variants>,
+          AllowedOf<Own>
+        >
+      : Own
     : Own
-  : Own
 
 /**
  * Recovers a Svelte bundle's effective generics, folding in the direct composed partner's own props
