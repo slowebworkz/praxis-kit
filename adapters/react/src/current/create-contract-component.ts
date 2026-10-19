@@ -16,8 +16,12 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { finalizeComponent, invariant } from '@praxis-kit/adapter-utils'
-import { isFunction } from '@praxis-kit/guards'
+import {
+  attachCompositionStyleMetadata,
+  finalizeComponent,
+  invariant,
+} from '@praxis-kit/adapter-utils'
+import { isFunction, isString } from '@praxis-kit/guards'
 import { createElement, useCallback, useRef } from 'react'
 import type { ComponentType, Ref } from 'react'
 import type { PolymorphicComponent, ReactFactoryOptions, UnknownProps } from '../shared'
@@ -185,10 +189,13 @@ export function createContractComponent<
 
   applyDisplayName(Component, options.name)
   const { defaultTag } = bundle.runtime.options
-  const assembled = finalizeComponent(
-    Component,
-    typeof defaultTag === 'string' ? defaultTag : undefined,
-    options.subComponents,
+  const assembled = attachCompositionStyleMetadata(
+    finalizeComponent(
+      Component,
+      isString(defaultTag) ? defaultTag : undefined,
+      options.subComponents,
+    ),
+    bundle.runtime.options,
   )
 
   type G = PolymorphicGenerics<

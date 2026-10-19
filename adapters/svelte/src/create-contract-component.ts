@@ -11,7 +11,10 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { assembleCompoundComponent } from '@praxis-kit/adapter-utils'
+import {
+  assembleCompoundComponent,
+  attachCompositionStyleMetadata,
+} from '@praxis-kit/adapter-utils'
 import { buildRuntime } from './build-runtime'
 import type { SvelteFactoryOptions } from './svelte-options'
 import type { BuiltRuntime } from './types/built-runtime'
@@ -80,5 +83,6 @@ export function createContractComponent<
     options as unknown as SvelteFactoryOptions<TDefault, Props, Variants, TPreset> & C,
   ) as unknown as BuiltRuntime<ContractGenericsOf<C>, C>
 
+  attachCompositionStyleMetadata(bundle, bundle.runtime.options)
   return assembleCompoundComponent(bundle, options.subComponents)
 }

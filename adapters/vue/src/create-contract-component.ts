@@ -16,7 +16,11 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { finalizeComponent, invariant } from '@praxis-kit/adapter-utils'
+import {
+  attachCompositionStyleMetadata,
+  finalizeComponent,
+  invariant,
+} from '@praxis-kit/adapter-utils'
 import { applyDisplayName } from './apply-display-name'
 import { buildRuntime } from './build-runtime'
 import { isPolymorphicComponent } from './is-polymorphic-component'
@@ -166,10 +170,13 @@ export function createContractComponent<
 
   applyDisplayName(Component, options.name)
   const { defaultTag } = bundle.runtime.options
-  const assembled = finalizeComponent(
-    Component,
-    typeof defaultTag === 'string' ? defaultTag : undefined,
-    options.subComponents,
+  const assembled = attachCompositionStyleMetadata(
+    finalizeComponent(
+      Component,
+      typeof defaultTag === 'string' ? defaultTag : undefined,
+      options.subComponents,
+    ),
+    bundle.runtime.options,
   )
 
   type G = PolymorphicGenerics<

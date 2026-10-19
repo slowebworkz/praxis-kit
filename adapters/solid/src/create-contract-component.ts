@@ -14,7 +14,11 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { finalizeComponent, invariant } from '@praxis-kit/adapter-utils'
+import {
+  attachCompositionStyleMetadata,
+  finalizeComponent,
+  invariant,
+} from '@praxis-kit/adapter-utils'
 import { mergeProps, onCleanup } from 'solid-js'
 import { applyDisplayName } from './apply-display-name'
 import { buildRuntime } from './build-runtime'
@@ -23,6 +27,7 @@ import { render, renderComposed } from './render'
 import { isSolidFactoryOptions } from './to-solid-factory-options'
 import type { SolidFactoryOptions } from './solid-options'
 import type { KnownProps, PolymorphicComponent, SolidElement, UnknownProps } from './types'
+import { isFunction, isString } from '@praxis-kit/guards'
 
 /**
  * Creates a polymorphic Solid component with praxis-kit contracts applied.
@@ -102,7 +107,7 @@ export function createContractComponent<
           get ref() {
             const consumerRef = (props as { ref?: unknown }).ref
             return (el: Element) => {
-              if (typeof consumerRef === 'function') (consumerRef as (e: Element) => void)(el)
+              if (isFunction(consumerRef)) (consumerRef as (e: Element) => void)(el)
               // The real element's actual tag is only known at runtime; `onElement`'s parameter
               // type narrows that per-component via `TDefault`/`allowed`, which Solid's ref
               // contract itself can't express — see `FactoryOptions.onElement`.
@@ -141,10 +146,13 @@ export function createContractComponent<
 
   applyDisplayName(Component, options.name)
   const { defaultTag } = bundle.runtime.options
-  const assembled = finalizeComponent(
-    Component,
-    typeof defaultTag === 'string' ? defaultTag : undefined,
-    options.subComponents,
+  const assembled = attachCompositionStyleMetadata(
+    finalizeComponent(
+      Component,
+      isString(defaultTag) ? defaultTag : undefined,
+      options.subComponents,
+    ),
+    bundle.runtime.options,
   )
 
   type G = PolymorphicGenerics<
