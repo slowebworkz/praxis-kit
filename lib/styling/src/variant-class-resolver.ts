@@ -1,8 +1,6 @@
-import type { AnyRecord } from './types'
+import type { AnyRecord, CvaFn } from './types'
 import { iterate, LRUCache } from '@praxis-kit/primitive'
 import type { StringMap } from '@praxis-kit/primitive'
-
-type CvaFn = (props: AnyRecord) => string
 
 /**
  * Runtime CVA class resolution with LRU + precomputed-map caching.

@@ -358,7 +358,9 @@ describe('ResolvedSlotProps<T> layout-union collapse', () => {
     type OnlyGrid = Pick<Props, 'grid'>
     type Merged = Props & { extra?: string }
 
-    expectTypeOf<WithoutLayout['data-slot']>().toEqualTypeOf<string | number | boolean | undefined>()
+    expectTypeOf<WithoutLayout['data-slot']>().toEqualTypeOf<
+      string | number | boolean | undefined
+    >()
     expectTypeOf<OnlyGrid['grid']>().toEqualTypeOf<true | undefined>()
     expectTypeOf<Merged['extra']>().toEqualTypeOf<string | undefined>()
 
