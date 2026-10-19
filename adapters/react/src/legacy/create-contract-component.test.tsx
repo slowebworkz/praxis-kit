@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest'
 import { createElement, Fragment, createRef } from 'react'
 import { box, useReactDom } from '../shared/test-utils'
+import { COMPOSITION_STYLE_REQUEST_PROP } from '@praxis-kit/adapter-utils'
 import { createContractComponent } from './create-contract-component'
 
 const dom = useReactDom()
@@ -24,6 +25,112 @@ describe('createContractComponent (legacy / React 18)', () => {
     expect(dom.container.querySelector('section')).toBeTruthy()
   })
 
+  it('resolves composed Praxis styling once with primary defaults taking precedence', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'partner-base',
+        variants: {
+          tone: { quiet: 'partner-quiet', loud: 'partner-loud' },
+          size: { sm: 'partner-sm' },
+        },
+        defaults: { tone: 'quiet', size: 'sm' },
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface, defaults: { tone: 'quiet', size: 'sm' } },
+      styling: {
+        base: 'primary-base',
+        variants: {
+          tone: { quiet: 'primary-quiet', loud: 'primary-loud' },
+          density: { compact: 'primary-compact' },
+        },
+        defaults: { tone: 'loud' },
+      },
+    })
+
+    dom.mount(createElement(box(Card), { density: 'compact', className: 'caller-class' }))
+
+    const classes = dom.container.querySelector('div')!.className.split(' ')
+    expect(classes).toContain('partner-base')
+    expect(classes).toContain('primary-base')
+    expect(classes).toContain('partner-loud')
+    expect(classes).toContain('primary-loud')
+    expect(classes).toContain('partner-sm')
+    expect(classes).toContain('primary-compact')
+    expect(classes).toContain('caller-class')
+    expect(classes.filter((value) => value === 'partner-base')).toHaveLength(1)
+    expect(classes.filter((value) => value === 'primary-base')).toHaveLength(1)
+    expect(classes).not.toContain('partner-quiet')
+    expect(classes).not.toContain('primary-quiet')
+  })
+
+  it('does not resolve partner variants or compounds from unforwarded primary props', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        variants: {
+          intent: { ghost: 'partner-intent-ghost' },
+          size: { lg: 'partner-size-lg' },
+        },
+        compounds: [{ intent: 'ghost', size: 'lg', class: 'partner-compound-ghost-lg' }],
+      },
+    })
+    const Card = createContractComponent({ compose: { with: Surface } })
+
+    dom.mount(createElement(box(Card), { intent: 'ghost', size: 'lg' }))
+
+    const classes = dom.container.querySelector('div')!.className.split(' ')
+    expect(classes).not.toContain('partner-intent-ghost')
+    expect(classes).not.toContain('partner-size-lg')
+    expect(classes).not.toContain('partner-compound-ghost-lg')
+  })
+
+  it('resolves partner variants and compounds from allProps forwarded props', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        variants: {
+          intent: { ghost: 'partner-intent-ghost' },
+          size: { lg: 'partner-size-lg' },
+        },
+        compounds: [{ intent: 'ghost', size: 'lg', class: 'partner-compound-ghost-lg' }],
+      },
+    })
+    const Card = createContractComponent({ compose: { with: Surface, allProps: true } })
+
+    dom.mount(createElement(box(Card), { intent: 'ghost', size: 'lg' }))
+
+    const classes = dom.container.querySelector('div')!.className.split(' ')
+    expect(classes).toContain('partner-intent-ghost')
+    expect(classes).toContain('partner-size-lg')
+    expect(classes).toContain('partner-compound-ghost-lg')
+  })
+
+  it('matches partner compounds using compose.defaults and allProps-forwarded props', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        variants: {
+          intent: { ghost: 'partner-intent-ghost' },
+          size: { lg: 'partner-size-lg' },
+        },
+        compounds: [{ intent: 'ghost', size: 'lg', class: 'partner-compound-ghost-lg' }],
+      },
+    })
+    const Card = createContractComponent({
+      compose: { with: Surface, allProps: true, defaults: { intent: 'ghost' } },
+    })
+
+    dom.mount(createElement(box(Card), { size: 'lg' }))
+
+    const classes = dom.container.querySelector('div')!.className.split(' ')
+    expect(classes).toContain('partner-intent-ghost')
+    expect(classes).toContain('partner-size-lg')
+    expect(classes).toContain('partner-compound-ghost-lg')
+  })
+
   it('forwards a ref to the DOM element via forwardRef', () => {
     const Box = createContractComponent({})
     const ref = createRef<HTMLDivElement>()
@@ -35,6 +142,22 @@ describe('createContractComponent (legacy / React 18)', () => {
     const Box = createContractComponent({})
     dom.mount(createElement(box(Box), null, createElement('span', { id: 'child' })))
     expect(dom.container.querySelector('span#child')).toBeTruthy()
+  })
+
+  it('ignores a malformed internal composition style request', () => {
+    const Box = createContractComponent({ styling: { base: 'legacy-base' } })
+
+    expect(() =>
+      dom.mount(
+        createElement(
+          box(Box),
+          { asChild: true, [COMPOSITION_STYLE_REQUEST_PROP]: { resolveClasses: 'not-a-function' } },
+          createElement('button'),
+        ),
+      ),
+    ).not.toThrow()
+
+    expect(dom.container.querySelector('button')!.className).toContain('legacy-base')
   })
 
   it('asChild renders the child element type', () => {

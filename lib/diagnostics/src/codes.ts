@@ -20,6 +20,7 @@ export enum DiagnosticCode {
   CardinalityMax = 'COMP1007',
   PositionViolation = 'COMP1008',
   AllowedAsViolation = 'COMP1009',
+  CompositionVariantCollision = 'COMP1014',
 
   // Slot protocol
   SlotExclusive = 'SLOT1001',

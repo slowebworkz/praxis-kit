@@ -1,8 +1,28 @@
 import { isDefined, isFunction, isObject } from '@praxis-kit/guards'
-import type { RuntimeOptions, StyleMetadata } from './types'
+import type {
+  AnyRecord,
+  ClassName,
+  ClassPipelineFn,
+  ClassPipelineOptions,
+  VariantMap,
+} from '@praxis-kit/styling'
+import { createCompositionClassPipeline } from '@praxis-kit/styling'
+import type { StyleMetadata } from './types'
 
 /** Shared runtime key for styling metadata owned by a generated Praxis component. */
 const COMPOSITION_STYLE_METADATA = Symbol.for('@praxis-kit/composition-style-metadata')
+
+/** Internal prop used only to pass the combined resolver through automatic adapter composition. */
+export const COMPOSITION_STYLE_REQUEST_PROP = '__praxisCompositionStyleRequest'
+
+export interface CompositionStyleRequest {
+  resolveClasses: ClassPipelineFn
+}
+
+/** Validate the internal composition request before trusting a prop value at runtime. */
+export function isCompositionStyleRequest(value: unknown): value is CompositionStyleRequest {
+  return isObject(value, true) && isFunction(value.resolveClasses)
+}
 
 /**
  * Retain only standard styling fields on a generated component so a direct `compose.with`
@@ -12,17 +32,24 @@ const COMPOSITION_STYLE_METADATA = Symbol.for('@praxis-kit/composition-style-met
  * Per-contract precomputed classes are deliberately excluded: they cannot represent the
  * combined result of a composition.
  */
-export function attachCompositionStyleMetadata<T extends object>(
+export function attachCompositionStyleMetadata<T extends object, V extends VariantMap>(
   component: T,
-  options: RuntimeOptions,
+  options: ClassPipelineOptions<V>,
 ): T {
+  // Preserve the caller's concrete variant type at the API boundary; metadata is stored in the
+  // shared, erased representation because composition resolves it dynamically at runtime.
+  const styleOptions = options as StyleMetadata
   const metadata = {
-    ...(isDefined(options.baseClassName) && { baseClassName: options.baseClassName }),
-    ...(isDefined(options.variants) && { variants: options.variants }),
-    ...(isDefined(options.defaultVariants) && { defaultVariants: options.defaultVariants }),
-    ...(isDefined(options.compoundVariants) && { compoundVariants: options.compoundVariants }),
-    ...(isDefined(options.recipeMap) && { recipeMap: options.recipeMap }),
-    ...(isDefined(options.tagMap) && { tagMap: options.tagMap }),
+    ...(isDefined(styleOptions.baseClassName) && { baseClassName: styleOptions.baseClassName }),
+    ...(isDefined(styleOptions.variants) && { variants: styleOptions.variants }),
+    ...(isDefined(styleOptions.defaultVariants) && {
+      defaultVariants: styleOptions.defaultVariants,
+    }),
+    ...(isDefined(styleOptions.compoundVariants) && {
+      compoundVariants: styleOptions.compoundVariants,
+    }),
+    ...(isDefined(styleOptions.recipeMap) && { recipeMap: styleOptions.recipeMap }),
+    ...(isDefined(styleOptions.tagMap) && { tagMap: styleOptions.tagMap }),
   } satisfies StyleMetadata
 
   Object.defineProperty(component, COMPOSITION_STYLE_METADATA, {
@@ -42,4 +69,79 @@ export function getCompositionStyleMetadata(value: unknown): StyleMetadata | und
   }
 
   return (value as { [COMPOSITION_STYLE_METADATA]?: StyleMetadata })[COMPOSITION_STYLE_METADATA]
+}
+
+/**
+ * Build the shared resolver for a primary component and its direct Praxis partner.
+ * Only variant keys declared by the partner are accepted from `compose.defaults`; ordinary
+ * props remain the partner component's concern and are not mistaken for variant defaults.
+ */
+export function createCompositionStyleResolver(
+  primary: StyleMetadata,
+  partner: StyleMetadata,
+  composeDefaults?: object,
+  onDiagnostic?: (message: string) => void,
+): ClassPipelineFn {
+  const variantDefaults = composeDefaults
+    ? (Object.fromEntries(
+        Object.keys(partner.variants ?? {})
+          .filter((name) => Object.hasOwn(composeDefaults, name))
+          .map((name) => [name, Reflect.get(composeDefaults, name)]),
+      ) satisfies NonNullable<StyleMetadata['defaultVariants']>)
+    : {}
+
+  return createCompositionClassPipeline({
+    primary,
+    partner,
+    composeDefaults: variantDefaults,
+    ...(onDiagnostic && { onDiagnostic }),
+  })
+}
+
+/**
+ * Props for the combined resolver: the partner's props minus unforwarded `compose.defaults`, plus
+ * only the primary's own variant props. Other primary props must not leak into the partner's variant
+ * or compound resolution when `allProps` is disabled.
+ */
+export function composeStyleProps(
+  partnerProps: Readonly<AnyRecord>,
+  componentProps: Readonly<AnyRecord>,
+  primary: StyleMetadata,
+  composeDefaults?: object,
+): AnyRecord {
+  const result: AnyRecord = { ...partnerProps }
+  // `compose.defaults` reach the resolver through `createCompositionStyleResolver` at the lowest
+  // precedence; left in the props they would read as explicit values and override the primary's
+  // own defaults.
+  if (composeDefaults) {
+    for (const name of Object.keys(composeDefaults)) {
+      if (
+        result[name] === Reflect.get(composeDefaults, name) &&
+        componentProps[name] !== result[name]
+      ) {
+        delete result[name]
+      }
+    }
+  }
+  for (const name of Object.keys(primary.variants ?? {})) {
+    if (Object.hasOwn(componentProps, name)) result[name] = componentProps[name]
+  }
+  return result
+}
+
+/**
+ * Merge caller class names in partner-then-primary order. Avoid duplicating the same value when
+ * `allProps` forwards the primary className unchanged to the partner.
+ */
+export function mergeCompositionClassNames(
+  partnerClassName: ClassName | undefined,
+  primaryClassName: ClassName | undefined,
+): ClassName | undefined {
+  if (partnerClassName === primaryClassName) return primaryClassName
+
+  const values = [partnerClassName, primaryClassName].flatMap((value) =>
+    Array.isArray(value) ? value : value === undefined ? [] : [value],
+  )
+  const result = values.filter(Boolean).join(' ')
+  return result || undefined
 }

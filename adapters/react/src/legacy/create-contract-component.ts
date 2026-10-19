@@ -18,10 +18,17 @@ import type {
 } from '@praxis-kit/core'
 import {
   attachCompositionStyleMetadata,
+  composeStyleProps,
+  createCompositionStyleResolver,
+  getCompositionStyleMetadata,
+  mergeCompositionClassNames,
+  COMPOSITION_STYLE_REQUEST_PROP,
+  isCompositionStyleRequest,
   finalizeComponent,
   invariant,
 } from '@praxis-kit/adapter-utils'
-import { isFunction } from '@praxis-kit/guards'
+import { isFunction, isString } from '@praxis-kit/guards'
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 import type { ComponentType, ReactElement, Ref } from 'react'
 import { createElement, forwardRef, useCallback, useRef } from 'react'
 import type { PolymorphicComponent, ReactFactoryOptions, UnknownProps } from '../shared'
@@ -102,6 +109,21 @@ export function createContractComponent<
     >,
   )
   const { onElement, compose } = options
+  const partnerStyleMetadata = getCompositionStyleMetadata(compose?.with)
+  const compositionClassResolver = partnerStyleMetadata
+    ? createCompositionStyleResolver(
+        bundle.runtime.options,
+        partnerStyleMetadata,
+        compose?.defaults,
+        (message) =>
+          bundle.runtime.options.diagnostics.warn({
+            code: DiagnosticCode.CompositionVariantCollision,
+            category: DiagnosticCategory.Composition,
+            message,
+            ...(options.name !== undefined && { component: options.name }),
+          }),
+      )
+    : undefined
 
   // React 18: ref is not available as a plain prop — forwardRef is required.
   const Component = forwardRef<unknown, UnknownProps>(function Component(
@@ -110,8 +132,20 @@ export function createContractComponent<
   ): ReactElement {
     // Keep current on every render so the stable callback ref can always read the latest
     // props via getProps() without re-registering.
-    const propsRef = useRef(props)
-    propsRef.current = props
+    const compositionStyleRequestValue = props[COMPOSITION_STYLE_REQUEST_PROP]
+    const compositionStyleRequest = isCompositionStyleRequest(compositionStyleRequestValue)
+      ? compositionStyleRequestValue
+      : undefined
+    const { [COMPOSITION_STYLE_REQUEST_PROP]: _compositionStyleRequest, ...componentProps } = props
+    const renderBundle =
+      compositionStyleRequest && componentProps.asChild === true
+        ? {
+            ...bundle,
+            runtime: { ...bundle.runtime, resolveClasses: compositionStyleRequest.resolveClasses },
+          }
+        : bundle
+    const propsRef = useRef(componentProps)
+    propsRef.current = componentProps
     const cleanupRef = useRef<(() => void) | undefined>(undefined)
 
     // `onElement` originates from the options object closed over by createContractComponent,
@@ -151,19 +185,56 @@ export function createContractComponent<
     // consumer already took explicit control via their own `asChild`/`render`. Composition
     // defaults are spread first; `compose.allProps` additionally spreads this component's own
     // raw props afterward, so forwarded values override defaults. The `asChild`/`ref`/`children`
-    // overrides remain last and always win.
-    if (compose?.with !== undefined && props.asChild === undefined && !isFunction(props.render)) {
-      const innerElement = render({ ...bundle, props, ref: null })
+    // overrides remain last and always win. Combined styling resolution is independent of
+    // `allProps`, which controls only raw prop forwarding.
+    if (
+      compose?.with !== undefined &&
+      componentProps.asChild === undefined &&
+      !isFunction(componentProps.render)
+    ) {
+      const innerElement = render({
+        ...(compositionClassResolver
+          ? { ...bundle, runtime: { ...bundle.runtime, resolveClasses: (): undefined => {} } }
+          : bundle),
+        props: componentProps,
+        ref: null,
+      })
       return createElement(compose.with as ComponentType<UnknownProps>, {
         ...compose.defaults,
-        ...(compose.allProps ? props : undefined),
+        ...(compose.allProps && componentProps),
+        ...(compositionClassResolver
+          ? {
+              [COMPOSITION_STYLE_REQUEST_PROP]: {
+                resolveClasses: (
+                  tag: unknown,
+                  partnerProps: AnyRecord,
+                  partnerClassName?: string | string[],
+                  partnerRecipe?: string,
+                ) =>
+                  compositionClassResolver(
+                    tag,
+                    composeStyleProps(
+                      partnerProps,
+                      componentProps,
+                      bundle.runtime.options,
+                      compose.defaults,
+                    ),
+                    mergeCompositionClassNames(
+                      partnerClassName,
+                      componentProps.className as string | string[] | undefined,
+                    ),
+                    isString(componentProps.recipe) ? componentProps.recipe : partnerRecipe,
+                  ),
+              },
+            }
+          : undefined),
         asChild: true,
         ref: mergedRef,
         children: innerElement,
       })
     }
 
-    return render({ ...bundle, props, ref: mergedRef })
+    return render({ ...renderBundle, props: componentProps, ref: mergedRef })
   })
 
   applyDisplayName(Component, options.name)

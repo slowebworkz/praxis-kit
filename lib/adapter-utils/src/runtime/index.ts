@@ -15,5 +15,11 @@ export type { RuntimeEngines, BuildEnginesChildrenOptions, AdapterDefaults } fro
 
 export {
   attachCompositionStyleMetadata,
+  composeStyleProps,
   getCompositionStyleMetadata,
+  createCompositionStyleResolver,
+  mergeCompositionClassNames,
+  COMPOSITION_STYLE_REQUEST_PROP,
+  isCompositionStyleRequest,
 } from './composition-style-metadata'
+export type { CompositionStyleRequest } from './composition-style-metadata'
