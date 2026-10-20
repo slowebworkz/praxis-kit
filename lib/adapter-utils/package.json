@@ -20,7 +20,6 @@
     "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/guards": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
-    "@praxis-kit/pipeline-kit": "workspace:*",
     "@praxis-kit/runtime": "workspace:*",
     "@praxis-kit/styling": "workspace:*",
     "clsx": "catalog:",

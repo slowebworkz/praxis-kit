@@ -1,7 +1,10 @@
-import type { VariantMap } from '@praxis-kit/core'
-import type { ClassPipelineFn, ClassPipelineOptions } from '@praxis-kit/styling'
+import type {
+  ClassPipelineFn,
+  CompositionClassResolver as StylingCompositionClassResolver,
+  CompositionStyleContract,
+} from '@praxis-kit/styling'
 
-export type StyleMetadata = ClassPipelineOptions<VariantMap>
+export type StyleMetadata = CompositionStyleContract
 
 /** Internal request carrying the combined resolver through automatic adapter composition. */
 export interface CompositionStyleRequest {
@@ -17,11 +20,5 @@ export type OptionalCompositionStylePipelineOptions = {
   readonly onDiagnostic?: (message: string) => void
 }
 
-/** The pipeline's input once the partner's retained styling metadata has been looked up. */
-export type ResolvedOptionalCompositionStylePipelineOptions =
-  OptionalCompositionStylePipelineOptions & {
-    readonly partner: StyleMetadata | undefined
-  }
-
-/** A combined resolver with the partner metadata needed to select partner-only variants. */
-export type CompositionClassResolver = ClassPipelineFn & { readonly partner: StyleMetadata }
+/** The core runtime's resolver with the direct partner metadata retained for prop selection. */
+export type CompositionClassResolver = StylingCompositionClassResolver

@@ -31,6 +31,7 @@ export type {
   VariantValue,
 } from './variant'
 export type {
+  CompositionClassResolver,
   CompositionStyleContract,
   CompositionStyleOptions,
   CompositionTagMap,

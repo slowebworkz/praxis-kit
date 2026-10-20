@@ -257,10 +257,11 @@ describe('shared runtime composition integration', () => {
       baseClassName: 'partner-base',
     })
 
-    const built = buildCoreRuntime<ButtonGenerics>(
-      { tag: 'button', styling: { base: 'primary-base' } },
-      { with: partner, defaults: { tone: 'quiet' } },
-    )
+    const built = buildCoreRuntime<ButtonGenerics>({
+      tag: 'button',
+      styling: { base: 'primary-base' },
+      compose: { with: partner as never, defaults: { tone: 'quiet' } },
+    })
 
     expect(built.compositionClassResolver?.('button', {})).toBe('partner-base primary-base')
   })

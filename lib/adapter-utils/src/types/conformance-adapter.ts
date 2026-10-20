@@ -35,6 +35,13 @@ export type ConformanceAdapter<C extends ConformanceComponent = ConformanceCompo
    */
   createRef?(): ConformanceRef
   /**
+   * Builds a `compose.with` target that is *not* a Praxis component — it carries no retained
+   * styling metadata — and that renders its asChild-style content (children or slot) unchanged.
+   * Lets the shared suite exercise the documented fallback for external targets. Optional:
+   * adapters that omit it skip that case.
+   */
+  createExternalPartner?(): unknown
+  /**
    * Declare which optional *behavioral* contracts this adapter satisfies.
    * Unset fields default to true unless otherwise documented; set a field to false to opt out.
    * (`dynamicChildRules` is the one exception — see its own doc comment.)

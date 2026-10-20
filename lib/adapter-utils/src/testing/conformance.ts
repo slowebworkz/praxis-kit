@@ -691,6 +691,69 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(element.className).not.toContain('partner-quiet')
       })
 
+      it('follows the documented precedence: explicit > recipe > primary default > compose.defaults > partner default', () => {
+        const tone = (quiet: string, loud: string) => ({ tone: { quiet, loud } })
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: tone('partner-quiet', 'partner-loud'),
+            defaults: { tone: 'quiet' },
+            presets: { emphasis: { tone: 'loud' } },
+          },
+        })
+        const card = (composeDefaults?: object, primaryDefault?: 'quiet' | 'loud') =>
+          adapter.createComponent({
+            compose: { with: Surface, ...(composeDefaults && { defaults: composeDefaults }) },
+            styling: {
+              variants: tone('primary-quiet', 'primary-loud'),
+              ...(primaryDefault && { defaults: { tone: primaryDefault } }),
+            },
+          })
+        const classes = (Card: ReturnType<typeof card>, props: Record<string, unknown> = {}) => {
+          const { element, unmount } = adapter.render(Card, props)
+          const value = element.className
+          unmount()
+          return value
+        }
+
+        // 5. partner default, with nothing else selecting the variant
+        expect(classes(card())).toContain('partner-quiet')
+        // 4. compose.defaults beats the partner default
+        expect(classes(card({ tone: 'loud' }))).toContain('partner-loud')
+        // 3. a primary default beats compose.defaults
+        const primaryDefault = classes(card({ tone: 'loud' }, 'quiet'))
+        expect(primaryDefault).toContain('partner-quiet')
+        expect(primaryDefault).toContain('primary-quiet')
+        expect(primaryDefault).not.toContain('loud')
+        // 2. a recipe beats a primary default
+        const recipe = classes(card({ tone: 'quiet' }, 'quiet'), { recipe: 'emphasis' })
+        expect(recipe).toContain('partner-loud')
+        expect(recipe).not.toContain('partner-quiet')
+        // 1. an explicit selection beats a recipe
+        const explicit = classes(card({ tone: 'loud' }, 'loud'), {
+          recipe: 'emphasis',
+          tone: 'quiet',
+        })
+        expect(explicit).toContain('partner-quiet')
+        expect(explicit).toContain('primary-quiet')
+        expect(explicit).not.toContain('loud')
+      })
+
+      if (adapter.createExternalPartner)
+        it('falls back to nested rendering for a target without retained Praxis styling metadata', () => {
+          const External = adapter.createExternalPartner!()
+          const Card = adapter.createComponent({
+            compose: { with: External as never },
+            styling: { base: 'primary-base', variants: { size: { lg: 'primary-size-lg' } } },
+          })
+
+          const { element } = adapter.render(Card, { size: 'lg', class: 'caller-class' })
+
+          expect(element).toBeTruthy()
+          expect(element.className).toContain('primary-base')
+          expect(element.className).toContain('primary-size-lg')
+          expect(element.className).toContain('caller-class')
+        })
+
       it('activates partner variants selected on the composing component without allProps', () => {
         const Surface = adapter.createComponent({
           styling: {

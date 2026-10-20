@@ -57,6 +57,11 @@ const adapter: ConformanceAdapter<ConformanceComponent> = {
   },
   setup: () => {},
   cleanup: () => {},
+  // Not a Praxis component: no retained styling metadata, renders its default slot unchanged.
+  createExternalPartner:
+    () =>
+    (_props: unknown, { slots }: { slots: { default?: () => unknown } }) =>
+      slots.default?.(),
   capabilities: { compositionStyling: true },
 }
 

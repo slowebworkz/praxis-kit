@@ -6,19 +6,19 @@ import type {
   ClassPipelineOptions,
   VariantMap,
 } from '@praxis-kit/styling'
-import { createCompositionClassPipeline } from '@praxis-kit/styling'
-import { composePipelines } from '@praxis-kit/pipeline-kit'
-import type { Pipeline, PipelineFactory, PipelineStage } from '@praxis-kit/pipeline-kit'
+import {
+  COMPOSITION_STYLE_METADATA,
+  createCompositionStyleResolver as createCoreCompositionStyleResolver,
+  createOptionalCompositionStyleResolver,
+  getCompositionStyleMetadata,
+} from '@praxis-kit/core'
+import type { ComposeOptions } from '@praxis-kit/core'
 import type {
   CompositionClassResolver,
   CompositionStyleRequest,
   OptionalCompositionStylePipelineOptions,
-  ResolvedOptionalCompositionStylePipelineOptions,
   StyleMetadata,
 } from './types'
-
-/** Shared runtime key for styling metadata owned by a generated Praxis component. */
-const COMPOSITION_STYLE_METADATA = Symbol.for('@praxis-kit/composition-style-metadata')
 
 /** Internal prop used only to pass the combined resolver through automatic adapter composition. */
 export const COMPOSITION_STYLE_REQUEST_PROP = '__praxisCompositionStyleRequest'
@@ -66,14 +66,8 @@ export function attachCompositionStyleMetadata<T extends object, V extends Varia
   return component
 }
 
-/** Return retained styling metadata only for components created by a Praxis adapter. */
-export function getCompositionStyleMetadata(value: unknown): StyleMetadata | undefined {
-  if (!isObject(value) && !isFunction(value)) {
-    return undefined
-  }
-
-  return (value as { [COMPOSITION_STYLE_METADATA]?: StyleMetadata })[COMPOSITION_STYLE_METADATA]
-}
+// Metadata lookup lives in `@praxis-kit/core` so the key and reader have a single definition.
+export { getCompositionStyleMetadata }
 
 /**
  * Build the shared resolver for a primary component and its direct Praxis partner.
@@ -86,58 +80,25 @@ export function createCompositionStyleResolver(
   composeDefaults?: object,
   onDiagnostic?: (message: string) => void,
 ): ClassPipelineFn {
-  const variantDefaults = composeDefaults
-    ? (Object.fromEntries(
-        Object.keys(partner.variants ?? {})
-          .filter((name) => Object.hasOwn(composeDefaults, name))
-          .map((name) => [name, Reflect.get(composeDefaults, name)]),
-      ) satisfies NonNullable<StyleMetadata['defaultVariants']>)
-    : {}
-
-  return createCompositionClassPipeline({
-    primary,
-    partner,
-    composeDefaults: variantDefaults,
-    ...(onDiagnostic && { onDiagnostic }),
-  })
-}
-
-const resolveCompositionPartner: Pipeline<
-  [OptionalCompositionStylePipelineOptions],
-  ResolvedOptionalCompositionStylePipelineOptions
-> = (options) => ({
-  ...options,
-  partner: options.with === undefined ? undefined : getCompositionStyleMetadata(options.with),
-})
-
-const buildOptionalCompositionResolver: PipelineStage<
-  ResolvedOptionalCompositionStylePipelineOptions,
-  CompositionClassResolver | undefined
-> = ({ primary, partner, composeDefaults, onDiagnostic }) => {
-  if (!partner) return
-  return Object.assign(
-    createCompositionStyleResolver(primary, partner, composeDefaults, onDiagnostic),
-    { partner },
-  )
+  return createCoreCompositionStyleResolver(primary, partner, composeDefaults, onDiagnostic)
 }
 
 /**
- * Construct the optional composition styling pipeline through pipeline-kit. `compose.with` is
- * the activation switch; a target without retained Praxis styling metadata falls back to the
- * adapter's existing nested-render behavior. This factory is intentionally shared by adapters so
- * they don't each implement composition-pipeline selection independently.
+ * Shared adapter-facing wrapper around the core optional composition pipeline. The actual
+ * construction and activation policy lives in `@praxis-kit/core`; this module retains metadata
+ * attachment and adapter-specific prop shaping only.
  */
-const createOptionalCompositionPipeline: PipelineFactory<
-  OptionalCompositionStylePipelineOptions,
-  [],
-  CompositionClassResolver | undefined
-> = (options) =>
-  composePipelines(() => resolveCompositionPartner(options), buildOptionalCompositionResolver)
-
 export function createOptionalCompositionStylePipeline(
   options: OptionalCompositionStylePipelineOptions,
 ): CompositionClassResolver | undefined {
-  return createOptionalCompositionPipeline(options)()
+  const compose =
+    options.with === undefined
+      ? undefined
+      : {
+          with: options.with as ComposeOptions['with'],
+          ...(options.composeDefaults !== undefined && { defaults: options.composeDefaults }),
+        }
+  return createOptionalCompositionStyleResolver(options.primary, compose, options.onDiagnostic)
 }
 
 /**

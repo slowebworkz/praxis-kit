@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
 import { createElement, Fragment, createRef } from 'react'
+import type { RenderCallbackProps } from '../shared'
 import { box, useReactDom } from '../shared/test-utils'
 import { COMPOSITION_STYLE_REQUEST_PROP } from '@praxis-kit/adapter-utils'
 import { createContractComponent } from './create-contract-component'
@@ -181,6 +182,40 @@ describe('createContractComponent (legacy / React 18)', () => {
     const Box = createContractComponent({})
     const fragment = createElement(Fragment, null, createElement('span'), createElement('div'))
     expect(() => dom.mount(createElement(box(Box), { asChild: true }, fragment))).not.toThrow()
+  })
+
+  it('keeps explicit asChild rendering on the primary contract styling path', () => {
+    const Surface = createContractComponent({ tag: 'div', styling: { base: 'partner-base' } })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+
+    dom.mount(createElement(box(Card), { asChild: true }, createElement('button')))
+
+    const element = dom.container.querySelector('button')!
+    expect(element.className).toContain('primary-base')
+    expect(element.className).not.toContain('partner-base')
+  })
+
+  it('keeps custom render on the primary contract styling path when composed', () => {
+    const Surface = createContractComponent({ tag: 'div', styling: { base: 'partner-base' } })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+
+    dom.mount(
+      createElement(box(Card), {
+        render: (props: RenderCallbackProps) => createElement('button', props as never),
+      }),
+    )
+
+    const element = dom.container.querySelector('button')!
+    expect(element.className).toContain('primary-base')
+    expect(element.className).not.toContain('partner-base')
   })
 
   it('nested asChild: both components compose their classes onto the inner element', () => {

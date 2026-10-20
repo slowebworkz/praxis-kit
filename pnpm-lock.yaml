@@ -691,9 +691,6 @@ importers:
       '@praxis-kit/guards':
         specifier: workspace:*
         version: link:../guards
-      '@praxis-kit/pipeline-kit':
-        specifier: workspace:*
-        version: link:../pipeline-kit
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../primitive

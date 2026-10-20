@@ -57,6 +57,50 @@ describe('createPolymorphic — resolveProps()', () => {
 // ---------------------------------------------------------------------------
 
 describe('createPolymorphic — resolveClasses()', () => {
+  it('constructs the optional composition resolver in the core runtime', () => {
+    const partner = () => null
+    Object.defineProperty(partner, Symbol.for('@praxis-kit/composition-style-metadata'), {
+      value: {
+        baseClassName: 'partner-base',
+        variants: { tone: { quiet: 'partner-quiet' } },
+      },
+    })
+
+    const runtime = createPolymorphic({
+      styling: { base: 'primary-base' },
+      compose: { with: partner as never },
+    })
+
+    expect(runtime.compositionClassResolver?.('div', { tone: 'quiet' })).toContain('partner-base')
+    expect(runtime.compositionClassResolver?.('div', { tone: 'quiet' })).toContain('primary-base')
+    expect(runtime.compositionClassResolver?.('div', { tone: 'quiet' })).toContain('partner-quiet')
+  })
+
+  it('reports an incompatible composed variant through the runtime diagnostics, with the component name', () => {
+    const { reporter, diagnostics } = makeCollecting()
+    const partner = () => null
+    Object.defineProperty(partner, Symbol.for('@praxis-kit/composition-style-metadata'), {
+      value: { variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } } },
+    })
+
+    createPolymorphic({
+      name: 'Card',
+      enforcement: { diagnostics },
+      styling: { variants: { tone: { calm: 'primary-calm', bold: 'primary-bold' } } },
+      compose: { with: partner as never },
+    })
+
+    const collisions = reporter.diagnostics.filter((d) => d.code === 'COMP1014')
+    expect(collisions).toHaveLength(1)
+    expect(collisions[0]?.message).toContain('Incompatible composed variant "tone"')
+    expect(collisions[0]?.component).toBe('Card')
+  })
+
+  it('does not construct a composition resolver without a target', () => {
+    const runtime = createPolymorphic({ styling: { base: 'base' } })
+    expect(runtime.compositionClassResolver).toBeUndefined()
+  })
+
   it('returns base class', () => {
     const runtime = createPolymorphic({ styling: { base: 'rounded-lg' } })
     expect(runtime.resolveClasses('div', {})).toContain('rounded-lg')

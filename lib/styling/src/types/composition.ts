@@ -1,4 +1,5 @@
 import type { ClassPipelineOptions } from './class-pipeline-options'
+import type { ClassPipelineFn } from './class-pipeline'
 import type { VariantMap } from './variant'
 
 /** Runtime styling metadata retained for one Praxis contract. */
@@ -17,3 +18,8 @@ export interface CompositionStyleOptions {
 
 export type CompositionTagMap = ClassPipelineOptions<VariantMap>['tagMap']
 export type CompositionVariants = ClassPipelineOptions<VariantMap>['variants']
+
+/** Combined class resolver plus the retained direct partner metadata used for variant selection. */
+export type CompositionClassResolver = ClassPipelineFn & {
+  readonly partner: CompositionStyleContract
+}

@@ -102,6 +102,11 @@ const adapter: ConformanceAdapter<SvelteComponent> = {
   },
   setup: () => {},
   cleanup: () => cleanup(),
+  // Bundle-shaped but not a Praxis component: spreading drops the non-enumerable styling metadata.
+  createExternalPartner: (): SvelteComponent => ({
+    displayName: 'External',
+    _bundle: { ...(createContractComponent({}) as AnyBuiltRuntime) },
+  }),
   capabilities: { asChild: false, compositionStyling: true },
 }
 

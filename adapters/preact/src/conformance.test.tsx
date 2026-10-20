@@ -68,6 +68,8 @@ const adapter: ConformanceAdapter<PreactConformanceComponent> = {
     if (container?.parentNode) container.parentNode.removeChild(container)
   },
   createRef: () => createRef<HTMLElement>(),
+  // Not a Praxis component: no retained styling metadata, renders its asChild-style children.
+  createExternalPartner: () => (props: { children?: unknown }) => props.children ?? null,
   capabilities: { compositionStyling: true },
 }
 
