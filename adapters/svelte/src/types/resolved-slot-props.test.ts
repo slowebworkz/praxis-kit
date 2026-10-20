@@ -27,7 +27,7 @@ import type { AnyBuiltRuntime } from './built-runtime'
 import type { GenericsOf, ResolvedSlotProps } from './resolved-slot-props'
 
 describe('GenericsOf<T> composition projection', () => {
-  it('includes partner props and variants only when allProps is true', () => {
+  it('includes partner variants whenever composed, but partner props only when allProps is true', () => {
     const partner = createContractComponent({
       tag: 'button',
       defaults: { partnerOnlyProp: 'partner' },
@@ -74,24 +74,33 @@ describe('GenericsOf<T> composition projection', () => {
     expectTypeOf<ComposedSlotProps['partnerTone']>().toEqualTypeOf<'calm' | 'bright' | undefined>()
 
     // Omitting allProps and setting it explicitly to false both preserve the original own-only
-    // type surface. Keep both cases covered: omission is the documented default, while false is
-    // an explicit opt-out that must not accidentally become truthy during type inference.
+    // ordinary-prop surface. Variant visibility is independent of raw prop forwarding. Keep both
+    // cases covered: omission is the documented default, while false is an explicit opt-out that
+    // must not accidentally become truthy during type inference.
     expectTypeOf<NotForwardingProps>().toHaveProperty('ownOnlyProp')
     expectTypeOf<NotForwardingVariants>().toHaveProperty('ownTone')
+    expectTypeOf<NotForwardingVariants>().toHaveProperty('partnerTone')
+    expectTypeOf<VariantProps<NotForwardingVariants>['partnerTone']>().toEqualTypeOf<
+      'calm' | 'bright' | undefined
+    >()
     expectTypeOf<ExplicitlyFalseProps>().toHaveProperty('ownOnlyProp')
     expectTypeOf<ExplicitlyFalseVariants>().toHaveProperty('ownTone')
+    expectTypeOf<ExplicitlyFalseVariants>().toHaveProperty('partnerTone')
+    expectTypeOf<VariantProps<ExplicitlyFalseVariants>['partnerTone']>().toEqualTypeOf<
+      'calm' | 'bright' | undefined
+    >()
     expectTypeOf<
       'partnerOnlyProp' extends keyof NotForwardingProps ? true : false
     >().toEqualTypeOf<false>()
     expectTypeOf<
       'partnerTone' extends keyof NotForwardingVariants ? true : false
-    >().toEqualTypeOf<false>()
+    >().toEqualTypeOf<true>()
     expectTypeOf<
       'partnerOnlyProp' extends keyof ExplicitlyFalseProps ? true : false
     >().toEqualTypeOf<false>()
     expectTypeOf<
       'partnerTone' extends keyof ExplicitlyFalseVariants ? true : false
-    >().toEqualTypeOf<false>()
+    >().toEqualTypeOf<true>()
   })
 
   it('preserves member-specific keys when composing union-shaped props', () => {
