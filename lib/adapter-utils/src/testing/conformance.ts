@@ -791,6 +791,35 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(explicit).not.toContain('loud')
       })
 
+      it('uses the primary definition for incompatible variants and diagnoses once at construction', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        try {
+          const Surface = adapter.createComponent({
+            styling: {
+              variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+            },
+          })
+          const Card = adapter.createComponent({
+            compose: { with: Surface },
+            enforcement: { diagnostics: warnDiagnostics },
+            styling: {
+              variants: { tone: { calm: 'primary-calm', bold: 'primary-bold' } },
+              defaults: { tone: 'bold' },
+            },
+          })
+
+          const constructionWarnings = warnSpy.mock.calls.flat().join(' ')
+          expect(constructionWarnings).toContain('Incompatible composed variant "tone"')
+
+          const { element } = adapter.render(Card)
+          expect(element.className).toContain('primary-bold')
+          expect(element.className).not.toContain('partner-')
+          expect(warnSpy).toHaveBeenCalledTimes(1)
+        } finally {
+          warnSpy.mockRestore()
+        }
+      })
+
       if (adapter.createExternalPartner)
         it('falls back to nested rendering for a target without retained Praxis styling metadata', () => {
           const External = adapter.createExternalPartner!()
