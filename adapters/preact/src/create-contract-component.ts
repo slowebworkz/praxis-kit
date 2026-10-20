@@ -18,7 +18,6 @@ import {
   diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
   composeStyleProps,
-  createOptionalCompositionStylePipeline,
   mergeCompositionClassNames,
   COMPOSITION_STYLE_REQUEST_PROP,
   isCompositionStyleRequest,
@@ -26,7 +25,6 @@ import {
   invariant,
 } from '@praxis-kit/adapter-utils'
 import { isFunction, isString } from '@praxis-kit/guards'
-import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 import { h } from 'preact'
 import type { ComponentType } from 'preact'
 import { forwardRef } from 'preact/compat'
@@ -104,18 +102,7 @@ export function createContractComponent<
   )
   diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
-  const compositionClassResolver = createOptionalCompositionStylePipeline({
-    primary: bundle.runtime.options,
-    with: compose?.with,
-    ...(compose?.defaults !== undefined && { composeDefaults: compose.defaults }),
-    onDiagnostic: (message) =>
-      bundle.runtime.options.diagnostics.warn({
-        code: DiagnosticCode.CompositionVariantCollision,
-        category: DiagnosticCategory.Composition,
-        message,
-        ...(options.name !== undefined && { component: options.name }),
-      }),
-  })
+  const compositionClassResolver = bundle.compositionClassResolver
 
   const Component = forwardRef(function Component(
     props: UnknownProps,

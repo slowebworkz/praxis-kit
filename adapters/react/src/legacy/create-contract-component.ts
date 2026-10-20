@@ -20,7 +20,6 @@ import {
   diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
   composeStyleProps,
-  createOptionalCompositionStylePipeline,
   mergeCompositionClassNames,
   COMPOSITION_STYLE_REQUEST_PROP,
   isCompositionStyleRequest,
@@ -28,7 +27,6 @@ import {
   invariant,
 } from '@praxis-kit/adapter-utils'
 import { isFunction, isString } from '@praxis-kit/guards'
-import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 import type { ComponentType, ReactElement, Ref } from 'react'
 import { createElement, forwardRef, useCallback, useRef } from 'react'
 import type { PolymorphicComponent, ReactFactoryOptions, UnknownProps } from '../shared'
@@ -110,18 +108,7 @@ export function createContractComponent<
   )
   diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
-  const compositionClassResolver = createOptionalCompositionStylePipeline({
-    primary: bundle.runtime.options,
-    with: compose?.with,
-    ...(compose?.defaults !== undefined && { composeDefaults: compose.defaults }),
-    onDiagnostic: (message) =>
-      bundle.runtime.options.diagnostics.warn({
-        code: DiagnosticCode.CompositionVariantCollision,
-        category: DiagnosticCategory.Composition,
-        message,
-        ...(options.name !== undefined && { component: options.name }),
-      }),
-  })
+  const compositionClassResolver = bundle.compositionClassResolver
 
   // React 18: ref is not available as a plain prop — forwardRef is required.
   const Component = forwardRef<unknown, UnknownProps>(function Component(

@@ -1,11 +1,15 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createPolymorphic } from '@praxis-kit/core'
+import type { EmptyRecord, PolymorphicGenerics } from '@praxis-kit/core'
+import { buildCoreRuntime } from './build-core-runtime'
 import {
   attachCompositionStyleMetadata,
   composeStyleProps,
   createOptionalCompositionStylePipeline,
   getCompositionStyleMetadata,
 } from './composition-style-metadata'
+
+type ButtonGenerics = PolymorphicGenerics<'button', EmptyRecord, EmptyRecord, EmptyRecord>
 
 describe('composition style metadata', () => {
   it('retains standard resolved styling fields without exposing metadata as an enumerable property', () => {
@@ -71,6 +75,31 @@ describe('composeStyleProps', () => {
     )
 
     expect(result).toEqual({ intent: 'primary', size: 'lg' })
+  })
+})
+
+describe('shared runtime composition integration', () => {
+  it('constructs the optional resolver at runtime construction when a Praxis target is supplied', () => {
+    const partner = attachCompositionStyleMetadata(() => null, {
+      baseClassName: 'partner-base',
+    })
+
+    const built = buildCoreRuntime<ButtonGenerics>(
+      { tag: 'button', styling: { base: 'primary-base' } },
+      { with: partner, defaults: { tone: 'quiet' } },
+    )
+
+    expect(built.compositionClassResolver?.('button', {})).toBe('partner-base primary-base')
+  })
+
+  it('keeps the ordinary runtime path when no composition target is supplied', () => {
+    const built = buildCoreRuntime<ButtonGenerics>({
+      tag: 'button',
+      styling: { base: 'primary-base' },
+    })
+
+    expect(built.compositionClassResolver).toBeUndefined()
+    expect(built.runtime.resolveClasses('button', {})).toBe('primary-base')
   })
 })
 

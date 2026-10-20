@@ -1,3 +1,4 @@
+import type { ClassPipelineFn } from '@praxis-kit/styling'
 import type {
   AllowedOf,
   AnyRecord,
@@ -48,6 +49,7 @@ export type BuiltRuntime<
   TOptions extends WithChildRules = WithChildRules,
 > = BuiltChildrenEvaluator<TOptions> & {
   runtime: TypedRuntime<G>
+  compositionClassResolver?: ClassPipelineFn
   filterProps: FilterPredicate
   slotValidator: SlotValidator
   onElement?: OnElementFn<G>

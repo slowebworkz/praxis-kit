@@ -1,3 +1,4 @@
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 import type {
   DefaultOf,
   ElementType,
@@ -39,7 +40,17 @@ export function buildRuntime<
 ): BuiltRuntime<PolymorphicGenerics<TDefault, Props, Variants, TPreset>, TOptions> {
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
   const normalized = normalizeOptions<G>(options)
-  const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
+  const { runtime, ownedKeys, compositionClassResolver } = buildCoreRuntime<G>(
+    normalized,
+    options.compose,
+    (message) =>
+      normalized.diagnostics.warn({
+        code: DiagnosticCode.CompositionVariantCollision,
+        category: DiagnosticCategory.Composition,
+        message,
+        ...(options.name !== undefined && { component: options.name }),
+      }),
+  )
   const { childrenEvaluator } = buildEngines(
     normalized.diagnostics,
     normalized.enforcement?.children,
@@ -57,6 +68,7 @@ export function buildRuntime<
     filterProps,
     slotValidator,
     ...(childrenEvaluator !== undefined && { childrenEvaluator }),
+    ...(compositionClassResolver !== undefined && { compositionClassResolver }),
     ...(options.onElement !== undefined && { onElement: options.onElement }),
     ...(options.compose !== undefined && { compose: options.compose }),
   } as BuiltRuntime<G, TOptions>

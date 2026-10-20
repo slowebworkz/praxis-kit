@@ -17,11 +17,9 @@ import type {
 import {
   diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
-  createOptionalCompositionStylePipeline,
   finalizeComponent,
   invariant,
 } from '@praxis-kit/adapter-utils'
-import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 import { mergeProps, onCleanup } from 'solid-js'
 import { applyDisplayName } from './apply-display-name'
 import { buildRuntime } from './build-runtime'
@@ -101,20 +99,8 @@ export function createContractComponent<
   )
   diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
-  const compositionPipeline = createOptionalCompositionStylePipeline({
-    primary: bundle.runtime.options,
-    with: compose?.with,
-    ...(compose?.defaults !== undefined && { composeDefaults: compose.defaults }),
-    onDiagnostic: (message) =>
-      bundle.runtime.options.diagnostics.warn({
-        code: DiagnosticCode.CompositionVariantCollision,
-        category: DiagnosticCategory.Composition,
-        message,
-        ...(options.name !== undefined && { component: options.name }),
-      }),
-  })
-  const compositionClassResolver = compositionPipeline
-    ? { resolve: compositionPipeline, primary: bundle.runtime.options }
+  const compositionClassResolver = bundle.compositionClassResolver
+    ? { resolve: bundle.compositionClassResolver, primary: bundle.runtime.options }
     : undefined
 
   const Component = (props: UnknownProps): SolidElement => {

@@ -20,7 +20,6 @@ import {
   diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
   composeStyleProps,
-  createOptionalCompositionStylePipeline,
   mergeCompositionClassNames,
   COMPOSITION_STYLE_REQUEST_PROP,
   isCompositionStyleRequest,
@@ -28,7 +27,6 @@ import {
   invariant,
 } from '@praxis-kit/adapter-utils'
 import { isDefined, isString } from '@praxis-kit/guards'
-import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 import { applyDisplayName } from './apply-display-name'
 import { buildRuntime } from './build-runtime'
 import { isPolymorphicComponent } from './is-polymorphic-component'
@@ -102,18 +100,7 @@ export function createContractComponent<
   )
   diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
-  const compositionClassResolver = createOptionalCompositionStylePipeline({
-    primary: bundle.runtime.options,
-    with: compose?.with,
-    ...(compose?.defaults !== undefined && { composeDefaults: compose.defaults }),
-    onDiagnostic: (message) =>
-      bundle.runtime.options.diagnostics.warn({
-        code: DiagnosticCode.CompositionVariantCollision,
-        category: DiagnosticCategory.Composition,
-        message,
-        ...(isDefined(options.name) && { component: options.name }),
-      }),
-  })
+  const compositionClassResolver = bundle.compositionClassResolver
 
   const Component = defineComponent({
     // normalizeOptions always supplies `name`, so displayName is always defined here —

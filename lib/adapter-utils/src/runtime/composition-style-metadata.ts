@@ -9,17 +9,18 @@ import type {
 import { createCompositionClassPipeline } from '@praxis-kit/styling'
 import { composePipelines } from '@praxis-kit/pipeline-kit'
 import type { Pipeline, PipelineFactory, PipelineStage } from '@praxis-kit/pipeline-kit'
-import type { StyleMetadata } from './types'
+import type {
+  CompositionStyleRequest,
+  OptionalCompositionStylePipelineOptions,
+  ResolvedOptionalCompositionStylePipelineOptions,
+  StyleMetadata,
+} from './types'
 
 /** Shared runtime key for styling metadata owned by a generated Praxis component. */
 const COMPOSITION_STYLE_METADATA = Symbol.for('@praxis-kit/composition-style-metadata')
 
 /** Internal prop used only to pass the combined resolver through automatic adapter composition. */
 export const COMPOSITION_STYLE_REQUEST_PROP = '__praxisCompositionStyleRequest'
-
-export interface CompositionStyleRequest {
-  resolveClasses: ClassPipelineFn
-}
 
 /** Validate the internal composition request before trusting a prop value at runtime. */
 export function isCompositionStyleRequest(value: unknown): value is CompositionStyleRequest {
@@ -98,19 +99,6 @@ export function createCompositionStyleResolver(
     composeDefaults: variantDefaults,
     ...(onDiagnostic && { onDiagnostic }),
   })
-}
-
-/** Configuration for constructing composition styling from a component's declared `compose`. */
-export type OptionalCompositionStylePipelineOptions = {
-  readonly primary: StyleMetadata
-  /** The direct `compose.with` target. `undefined` means composition is not activated. */
-  readonly with: unknown
-  readonly composeDefaults?: object
-  readonly onDiagnostic?: (message: string) => void
-}
-
-type ResolvedOptionalCompositionStylePipelineOptions = OptionalCompositionStylePipelineOptions & {
-  readonly partner: StyleMetadata | undefined
 }
 
 const resolveCompositionPartner: Pipeline<
