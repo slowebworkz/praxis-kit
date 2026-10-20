@@ -15,7 +15,13 @@ import {
   diagnoseIncompleteComposition,
   assembleCompoundComponent,
   attachCompositionStyleMetadata,
+  composeStyleProps,
+  createCompositionStyleResolver,
+  getCompositionStyleMetadata,
+  mergeCompositionClassNames,
 } from '@praxis-kit/adapter-utils'
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
+import { isDefined, isString } from '@praxis-kit/guards'
 import { buildRuntime } from './build-runtime'
 import type { SvelteFactoryOptions } from './svelte-options'
 import type { BuiltRuntime } from './types/built-runtime'
@@ -86,5 +92,37 @@ export function createContractComponent<
 
   attachCompositionStyleMetadata(bundle, bundle.runtime.options)
   diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
+
+  // Composition styling is selected by `compose.with` alone, and only when the target is a Praxis
+  // bundle that retained styling metadata; an external target keeps the nested-render fallback.
+  const { compose } = options
+  const partnerStyleMetadata = getCompositionStyleMetadata(compose?.with)
+  if (compose && partnerStyleMetadata) {
+    const resolveClasses = createCompositionStyleResolver(
+      bundle.runtime.options,
+      partnerStyleMetadata,
+      compose.defaults,
+      (message) =>
+        bundle.runtime.options.diagnostics.warn({
+          code: DiagnosticCode.CompositionVariantCollision,
+          category: DiagnosticCategory.Composition,
+          message,
+          ...(isDefined(options.name) && { component: options.name }),
+        }),
+    )
+    // A `class` supplied through `compose.defaults` is caller input to the partner; the partner's
+    // own computed classes are superseded by the combined pipeline.
+    const configuredClass = compose.defaults ? Reflect.get(compose.defaults, 'class') : undefined
+    const defaultClass =
+      isString(configuredClass) || Array.isArray(configuredClass) ? configuredClass : undefined
+    bundle.resolveComposedClasses = (tag, partnerProps, componentProps, callerClass, recipe) =>
+      resolveClasses(
+        tag,
+        composeStyleProps(partnerProps, componentProps, bundle.runtime.options, compose.defaults),
+        mergeCompositionClassNames(defaultClass, callerClass),
+        recipe,
+      )
+  }
+
   return assembleCompoundComponent(bundle, options.subComponents)
 }

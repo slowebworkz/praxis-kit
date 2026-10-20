@@ -102,7 +102,7 @@ const adapter: ConformanceAdapter<SvelteComponent> = {
   },
   setup: () => {},
   cleanup: () => cleanup(),
-  capabilities: { asChild: false },
+  capabilities: { asChild: false, compositionStyling: true },
 }
 
 conformanceSuite(adapter)

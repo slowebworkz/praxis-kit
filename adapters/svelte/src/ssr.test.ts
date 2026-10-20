@@ -93,6 +93,40 @@ describe('Polymorphic — SSR (svelte/server render)', () => {
     expect(evaluateSpy).not.toHaveBeenCalled()
   })
 
+  it('server-renders the combined composition class in contribution order with the primary tag', () => {
+    const surface = createContractComponent({
+      tag: 'nav',
+      styling: {
+        base: 'partner-base',
+        variants: { intent: { ghost: 'partner-ghost', solid: 'partner-solid' } },
+      },
+    })
+    const card = createContractComponent({
+      tag: 'section',
+      compose: { with: surface, defaults: { class: 'default-class' } },
+      styling: {
+        base: 'primary-base',
+        variants: { intent: { ghost: 'primary-ghost', solid: 'primary-solid' } },
+        defaults: { intent: 'solid' },
+      },
+    })
+
+    const { html } = render(Polymorphic, { props: { bundle: card, class: 'caller-class' } })
+
+    // The composing component's own tag wins; the partner's default tag is never rendered.
+    expect(html).toContain('<section')
+    expect(html).not.toContain('<nav')
+    for (const expected of ['partner-base', 'primary-base', 'partner-solid', 'primary-solid']) {
+      expect(html).toContain(expected)
+    }
+    expect(html.indexOf('partner-base')).toBeLessThan(html.indexOf('primary-base'))
+    expect(html.indexOf('primary-base')).toBeLessThan(html.indexOf('partner-solid'))
+    expect(html.indexOf('partner-solid')).toBeLessThan(html.indexOf('primary-solid'))
+    expect(html).toContain('default-class')
+    expect(html).toContain('caller-class')
+    expect(html).not.toContain('partner-ghost')
+  })
+
   // `compose` SSR coverage — including the self-recursive <Polymorphic> import this adapter's
   // compose.with needs (see DECISIONS.md, "compose: declarative asChild composition") — comes
   // from the shared `ssrConformanceSuite` registration at the bottom of this file ("ssr —
