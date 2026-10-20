@@ -636,12 +636,14 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
             styling: {
               base: 'primary-base',
               variants: { size: { lg: 'primary-size-lg' } },
+              presets: { emphasis: { size: 'lg' } },
             },
           })
 
+          // `emphasis` exists on both components; only the primary's definition may apply.
           const { element } = adapter.render(
             Card,
-            { asChild: true, intent: 'ghost', size: 'lg', recipe: 'emphasis' },
+            { asChild: true, intent: 'ghost', recipe: 'emphasis' },
             [{ tag: 'button' }],
           )
 
