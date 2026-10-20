@@ -548,3 +548,11 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
 9. **Remaining:** Lit/Web are out of scope by design (`ComposeOptions`'s own doc comment — no
    `asChild` concept exists for either). No further adapters to assess; this proposal's rollout is
    complete modulo Svelte's separately-tracked runtime-shape decision.
+10. **Superseded detail — incompatible variant collisions keep the primary's values.** Items above
+    describe the colliding variant key as unusable (`CollisionError<K> | undefined`). That no longer
+    matches the canonical contract (the primary definition wins, the collision is surfaced, and a
+    value valid only under the partner's conflicting definition is not accepted). A colliding
+    variant is now `Own[K] & VariantCollisionError<K>` (`merge-policy.ts`), so the consumer-facing
+    prop is `<primary values> | CollisionError<K> | undefined`. Pinned by the "incompatible variant
+    collision — public prop type" tests in `compose-generics.test.ts` and each wired adapter's
+    collision assertion. Svelte's extraction limitation (section 6) is unchanged and still open.

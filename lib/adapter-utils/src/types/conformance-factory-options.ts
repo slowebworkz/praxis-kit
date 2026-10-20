@@ -14,6 +14,8 @@ type ConformanceStyling = {
   defaults?: StringMap<string>
   compounds?: ReadonlyArray<StringMap<string> & { class: string }>
   presets?: AnyRecord
+  /** Per-tag class names, merged partner-first when composing. */
+  tags?: StringMap<string>
 }
 
 type ConformanceChildRule = {

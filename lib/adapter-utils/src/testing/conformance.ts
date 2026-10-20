@@ -852,6 +852,56 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         }
       })
 
+      it('keeps the primary default when a partner recipe selects a value outside the primary variant definition', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+            presets: { emphasis: { tone: 'loud' } },
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface },
+          enforcement: { diagnostics: silentDiagnostics },
+          styling: {
+            variants: { tone: { calm: 'primary-calm', bold: 'primary-bold' } },
+            defaults: { tone: 'bold' },
+          },
+        })
+
+        const { element } = adapter.render(Card, { recipe: 'emphasis' })
+        expect(element.className).toContain('primary-bold')
+        expect(element.className).not.toContain('partner-')
+      })
+
+      it('does not let an unsupported value activate a partner compound on an incompatible variant', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: {
+              tone: { quiet: 'partner-quiet', loud: 'partner-loud' },
+              size: { sm: 'partner-sm', lg: 'partner-lg' },
+            },
+            compounds: [
+              { tone: 'loud', class: 'partner-compound-loud' },
+              { size: 'lg', class: 'partner-compound-lg' },
+            ],
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface },
+          enforcement: { diagnostics: silentDiagnostics },
+          styling: { variants: { tone: { calm: 'primary-calm', bold: 'primary-bold' } } },
+        })
+
+        // `tone` is incompatible (the primary definition wins), so a raw `loud` must not reach the
+        // partner's compound; a compound on the compatible, partner-only `size` still works.
+        const unsupported = adapter.render(Card, { tone: 'loud' })
+        expect(unsupported.element.className).not.toContain('partner-compound-loud')
+        unsupported.unmount()
+
+        const { element } = adapter.render(Card, { size: 'lg' })
+        expect(element.className).toContain('partner-compound-lg')
+      })
+
       if (adapter.createExternalPartner)
         it('falls back to nested rendering for a target without retained Praxis styling metadata', () => {
           const External = adapter.createExternalPartner!()

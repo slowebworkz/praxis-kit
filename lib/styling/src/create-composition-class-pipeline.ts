@@ -34,9 +34,82 @@ function sameKeys(left: Readonly<AnyRecord>, right: Readonly<AnyRecord>): boolea
   return leftKeys.length === rightKeys.length && leftKeys.every((key) => Object.hasOwn(right, key))
 }
 
+function incompatibleVariantNames(partner: Variants, primary: Variants): Set<string> {
+  const incompatible = new Set<string>()
+  for (const name of Object.keys(partner ?? {})) {
+    const partnerValues = partner?.[name]
+    const primaryValues = primary?.[name]
+    if (partnerValues && primaryValues && !sameKeys(partnerValues, primaryValues)) {
+      incompatible.add(name)
+    }
+  }
+  return incompatible
+}
+
+function filterIncompatibleSelections<T extends AnyRecord>(
+  selections: T | undefined,
+  incompatible: ReadonlySet<string>,
+  primaryVariants: Variants,
+): T | undefined {
+  if (!selections || incompatible.size === 0) return selections
+  const result: AnyRecord = { ...selections }
+  for (const name of incompatible) {
+    if (
+      Object.hasOwn(result, name) &&
+      !Object.hasOwn(primaryVariants?.[name] ?? {}, String(result[name]))
+    ) {
+      delete result[name]
+    }
+  }
+  return result as T
+}
+
+/**
+ * Partner compounds stay owned by the partner and are evaluated against the combined selection,
+ * but a condition on an incompatible variant may only name values the primary definition supports
+ * (the primary wins, so any other value cannot be selected through the primary's variant):
+ *
+ * - a scalar condition with a supported value is kept; an unsupported one drops the compound;
+ * - an array condition is narrowed to its supported values, and drops the compound when none remain;
+ * - conditions on other variants are left untouched.
+ *
+ * Primary compounds are never filtered. Every key except `class` is a condition.
+ */
+function narrowIncompatibleCompounds(
+  compounds: ClassPipelineOptions<VariantMap>['compoundVariants'],
+  incompatible: ReadonlySet<string>,
+  primaryVariants: Variants,
+): NonNullable<ClassPipelineOptions<VariantMap>['compoundVariants']> {
+  if (!compounds) return []
+  if (incompatible.size === 0) return compounds
+
+  const result: Array<(typeof compounds)[number]> = []
+  for (const compound of compounds) {
+    const narrowed: AnyRecord = { ...compound }
+    let keep = true
+    for (const name of incompatible) {
+      if (!Object.hasOwn(narrowed, name)) continue
+      const supported = (value: unknown): boolean =>
+        Object.hasOwn(primaryVariants?.[name] ?? {}, String(value))
+      const condition = narrowed[name]
+      if (Array.isArray(condition)) {
+        const values = condition.filter(supported)
+        if (values.length === 0) keep = false
+        else narrowed[name] = values
+      } else if (!supported(condition)) {
+        keep = false
+      }
+      if (!keep) break
+    }
+    if (keep) result.push(narrowed as (typeof compounds)[number])
+  }
+  return result
+}
+
 function mergeVariants(
   partner: Variants,
   primary: Variants,
+  incompatible: ReadonlySet<string>,
   onDiagnostic?: (message: string) => void,
 ): Variants {
   if (!partner && !primary) return undefined
@@ -58,7 +131,7 @@ function mergeVariants(
       )
       continue
     }
-    if (!sameKeys(partnerValues, primaryValues)) {
+    if (incompatible.has(name)) {
       onDiagnostic?.(
         `Incompatible composed variant "${name}": the primary contract wins; the composed partner's contribution is omitted.`,
       )
@@ -101,13 +174,31 @@ export function createCompositionClassPipeline({
   onDiagnostic,
 }: CompositionStyleOptions): ClassPipelineFn {
   const partnerOptions = partner ?? {}
-  const variants = mergeVariants(partnerOptions.variants, primary.variants, onDiagnostic)
+  const incompatible = incompatibleVariantNames(partnerOptions.variants, primary.variants)
+  const variants = mergeVariants(
+    partnerOptions.variants,
+    primary.variants,
+    incompatible,
+    onDiagnostic,
+  )
   const defaults = {
-    ...(partnerOptions.defaultVariants ?? {}),
-    ...(composeDefaults ?? {}),
+    ...(filterIncompatibleSelections(
+      partnerOptions.defaultVariants,
+      incompatible,
+      primary.variants,
+    ) ?? {}),
+    ...(filterIncompatibleSelections(composeDefaults, incompatible, primary.variants) ?? {}),
     ...(primary.defaultVariants ?? {}),
   }
-  const recipes = mergeRecipes(partnerOptions.recipeMap, primary.recipeMap)
+  const safePartnerRecipes = partnerOptions.recipeMap
+    ? Object.fromEntries(
+        Object.entries(partnerOptions.recipeMap).map(([name, selections]) => [
+          name,
+          filterIncompatibleSelections(selections, incompatible, primary.variants) ?? {},
+        ]),
+      )
+    : undefined
+  const recipes = mergeRecipes(safePartnerRecipes, primary.recipeMap)
   const tagMap = mergeTags(partnerOptions.tagMap, primary.tagMap)
   // exactOptionalPropertyTypes: omit absent keys rather than assigning `undefined`.
   const combined = {
@@ -115,7 +206,11 @@ export function createCompositionClassPipeline({
     ...(variants && { variants }),
     defaultVariants: defaults,
     compoundVariants: [
-      ...(partnerOptions.compoundVariants ?? []),
+      ...narrowIncompatibleCompounds(
+        partnerOptions.compoundVariants,
+        incompatible,
+        primary.variants,
+      ),
       ...(primary.compoundVariants ?? []),
     ],
     ...(recipes && { recipeMap: recipes }),

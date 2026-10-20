@@ -249,8 +249,9 @@ describe('GenericsOf<T> composition projection', () => {
     expectTypeOf<ComposedProps>().toHaveProperty('ownOnlyProp')
     expectTypeOf<ComposedProps>().toHaveProperty('partnerOnlyProp')
     expectTypeOf<OptionalKeysOf<ComposedProps>>().toEqualTypeOf<'ownOptional' | 'partnerOptional'>()
+    // The primary's own `own` value stays usable and the collision is still surfaced.
     expectTypeOf<VariantProps<ComposedVariants>['tone']>().toEqualTypeOf<
-      CollisionError<'tone'> | undefined
+      'own' | CollisionError<'tone'> | undefined
     >()
   })
 })

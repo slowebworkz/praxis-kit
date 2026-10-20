@@ -214,7 +214,9 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     void VariantCollidingCard
 
     type ShadowType = ContractProps<typeof VariantCollidingCard>['shadow']
-    expectTypeOf<ShadowType>().toEqualTypeOf<CollisionError<'shadow'> | undefined>()
+    // The primary's own values stay usable; the collision is still surfaced in the prop type, and
+    // the partner's conflicting values are not accepted.
+    expectTypeOf<ShadowType>().toEqualTypeOf<'yes' | 'no' | CollisionError<'shadow'> | undefined>()
 
     type SizeType = ContractProps<typeof VariantCollidingCard>['size']
     type ColorType = ContractProps<typeof VariantCollidingCard>['color']

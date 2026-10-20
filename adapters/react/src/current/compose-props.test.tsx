@@ -399,7 +399,9 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
 
     // The colliding key itself: a real diagnostic value, not `never`.
     type ShadowType = ContractProps<typeof VariantCollidingCard>['shadow']
-    expectTypeOf<ShadowType>().toEqualTypeOf<CollisionError<'shadow'> | undefined>()
+    // The primary's own values stay usable; the collision is still surfaced in the prop type, and
+    // the partner's conflicting values are not accepted.
+    expectTypeOf<ShadowType>().toEqualTypeOf<'yes' | 'no' | CollisionError<'shadow'> | undefined>()
 
     // Non-colliding variant keys from both sides keep their own real, usable value types.
     type SizeType = ContractProps<typeof VariantCollidingCard>['size']

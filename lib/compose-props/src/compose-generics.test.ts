@@ -5,6 +5,7 @@ import type {
   PolymorphicGenerics,
   PropsOf,
   RecipeOf,
+  VariantKey,
   VariantsOf,
 } from '@praxis-kit/primitive'
 import type { HasContract } from '@praxis-kit/contract-props'
@@ -360,6 +361,54 @@ describe('ContractGenericsWithComposeOf against real FactoryOptions-shaped contr
     }>()
   })
 
+  describe('incompatible variant collision — public prop type', () => {
+    // COMPOSE.md: on an incompatible collision the primary definition wins, the collision is
+    // surfaced in the public types, and a value valid only under the partner's conflicting
+    // definition must not be accepted by the primary component's public variant prop.
+    const partnerContract = {
+      tag: 'div',
+      name: 'Surface',
+      styling: {
+        variants: {
+          tone: { quiet: 'partner-quiet', loud: 'partner-loud' },
+          size: { sm: 'partner-sm', lg: 'partner-lg' },
+        },
+      },
+    } satisfies FactoryOptions
+    type PartnerComponent = BuiltComponent<typeof partnerContract>
+    void partnerContract
+
+    const primaryContract = {
+      tag: 'article',
+      name: 'Card',
+      styling: { variants: { tone: { calm: 'primary-calm', bold: 'primary-bold' } } },
+      compose: { with: {} as PartnerComponent },
+    } satisfies FactoryOptions
+    void primaryContract
+
+    type Variants = VariantsOf<ContractGenericsWithComposeOf<typeof primaryContract>>
+    type ToneProp = VariantKey<Variants, 'tone'>
+    type SizeProp = VariantKey<Variants, 'size'>
+
+    it('keeps a valid primary variant value usable', () => {
+      expectTypeOf<'calm'>().toExtend<ToneProp>()
+      expectTypeOf<'bold'>().toExtend<ToneProp>()
+    })
+
+    it('rejects a value that is valid only under the partner’s conflicting definition', () => {
+      expectTypeOf<'loud'>().not.toExtend<ToneProp>()
+      expectTypeOf<'quiet'>().not.toExtend<ToneProp>()
+    })
+
+    it('keeps an unrelated partner-only variant usable', () => {
+      expectTypeOf<SizeProp>().toEqualTypeOf<'sm' | 'lg'>()
+    })
+
+    it('still surfaces the collision in the public prop type', () => {
+      expectTypeOf<CollisionError<'tone'>>().toExtend<ToneProp>()
+    })
+  })
+
   it('regression — a real variant collision resolves only that key, not the whole variants map, to a diagnostic', () => {
     // Confirmed as a real bug, not a documentation gap: before this fix, a colliding variant's
     // raw `CollisionError<K>` string isn't structurally a `VariantStates` (`Record<string,
@@ -402,10 +451,13 @@ describe('ContractGenericsWithComposeOf against real FactoryOptions-shaped contr
     type Resolved = ContractGenericsWithComposeOf<CardContract>
     type Variants = OwnVariants<Resolved>
 
-    // The colliding key resolves to a usable, non-`never` diagnostic value (wrapped as a
-    // single-key object here, at the raw-variants-map layer — adapters convert this into a
-    // plain `CollisionError<K> | undefined` consumer-facing prop via `VariantKey`).
-    expectTypeOf<Variants['shadow']>().toEqualTypeOf<Record<CollisionError<'shadow'>, never>>()
+    // The colliding key keeps the primary's own states and carries the collision diagnostic
+    // (wrapped as a single-key object here, at the raw-variants-map layer — adapters turn this
+    // into a consumer-facing prop of `<primary values> | CollisionError<K> | undefined` via
+    // `VariantKey`).
+    expectTypeOf<Variants['shadow']>().toEqualTypeOf<
+      { yes: string; no: string } & Record<CollisionError<'shadow'>, never>
+    >()
 
     // The non-colliding keys on both sides keep their own real, unaffected shapes.
     expectTypeOf<Variants['size']>().toEqualTypeOf<{ sm: string; lg: string }>()

@@ -42,8 +42,12 @@ export type CollisionError<K extends PropertyKey> =
  * object), which poisons the whole merged variants object, not just the colliding key (see
  * `docs/design/compose-props-typing.md` for the confirmed failure mode and fix history). The
  * wrapped shape keeps the surrounding object valid; `VariantKey<V, K>` (`@praxis-kit/primitive`)
- * reads `keyof V[K]`, recovering the message itself, so the consumer-facing prop still ends up
- * `CollisionError<K> | undefined` — the same outward result as a props collision.
+ * reads `keyof V[K]`, recovering the message itself.
+ *
+ * On an incompatible variant collision the primary definition wins at runtime, so the merged
+ * variant is `Own[K] & VariantCollisionError<K>`: the consumer-facing prop accepts the primary's
+ * own values, still carries the collision message so the collision is surfaced, and rejects a
+ * value that is valid only under the partner's conflicting definition.
  */
 type VariantCollisionError<K extends PropertyKey> = Record<CollisionError<K>, never>
 
@@ -68,7 +72,7 @@ type MergeComposedValue<
         : Composed[K] extends Own[K]
           ? Composed[K]
           : AsVariants extends true
-            ? VariantCollisionError<K>
+            ? Own[K] & VariantCollisionError<K>
             : CollisionError<K>
       : Own[K] | Composed[K]
     : Own[K]
