@@ -17,8 +17,7 @@ import type {
 import {
   diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
-  createCompositionStyleResolver,
-  getCompositionStyleMetadata,
+  createOptionalCompositionStylePipeline,
   finalizeComponent,
   invariant,
 } from '@praxis-kit/adapter-utils'
@@ -102,23 +101,20 @@ export function createContractComponent<
   )
   diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
-  const partnerStyleMetadata = getCompositionStyleMetadata(compose?.with)
-  const compositionClassResolver = partnerStyleMetadata
-    ? {
-        resolve: createCompositionStyleResolver(
-          bundle.runtime.options,
-          partnerStyleMetadata,
-          compose?.defaults,
-          (message) =>
-            bundle.runtime.options.diagnostics.warn({
-              code: DiagnosticCode.CompositionVariantCollision,
-              category: DiagnosticCategory.Composition,
-              message,
-              ...(options.name !== undefined && { component: options.name }),
-            }),
-        ),
-        primary: bundle.runtime.options,
-      }
+  const compositionPipeline = createOptionalCompositionStylePipeline({
+    primary: bundle.runtime.options,
+    with: compose?.with,
+    ...(compose?.defaults !== undefined && { composeDefaults: compose.defaults }),
+    onDiagnostic: (message) =>
+      bundle.runtime.options.diagnostics.warn({
+        code: DiagnosticCode.CompositionVariantCollision,
+        category: DiagnosticCategory.Composition,
+        message,
+        ...(options.name !== undefined && { component: options.name }),
+      }),
+  })
+  const compositionClassResolver = compositionPipeline
+    ? { resolve: compositionPipeline, primary: bundle.runtime.options }
     : undefined
 
   const Component = (props: UnknownProps): SolidElement => {

@@ -20,8 +20,7 @@ import {
   diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
   composeStyleProps,
-  createCompositionStyleResolver,
-  getCompositionStyleMetadata,
+  createOptionalCompositionStylePipeline,
   mergeCompositionClassNames,
   COMPOSITION_STYLE_REQUEST_PROP,
   isCompositionStyleRequest,
@@ -103,21 +102,18 @@ export function createContractComponent<
   )
   diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
-  const partnerStyleMetadata = getCompositionStyleMetadata(compose?.with)
-  const compositionClassResolver = partnerStyleMetadata
-    ? createCompositionStyleResolver(
-        bundle.runtime.options,
-        partnerStyleMetadata,
-        compose?.defaults,
-        (message) =>
-          bundle.runtime.options.diagnostics.warn({
-            code: DiagnosticCode.CompositionVariantCollision,
-            category: DiagnosticCategory.Composition,
-            message,
-            ...(isDefined(options.name) && { component: options.name }),
-          }),
-      )
-    : undefined
+  const compositionClassResolver = createOptionalCompositionStylePipeline({
+    primary: bundle.runtime.options,
+    with: compose?.with,
+    ...(compose?.defaults !== undefined && { composeDefaults: compose.defaults }),
+    onDiagnostic: (message) =>
+      bundle.runtime.options.diagnostics.warn({
+        code: DiagnosticCode.CompositionVariantCollision,
+        category: DiagnosticCategory.Composition,
+        message,
+        ...(isDefined(options.name) && { component: options.name }),
+      }),
+  })
 
   const Component = defineComponent({
     // normalizeOptions always supplies `name`, so displayName is always defined here —

@@ -7,6 +7,8 @@ import type {
   VariantMap,
 } from '@praxis-kit/styling'
 import { createCompositionClassPipeline } from '@praxis-kit/styling'
+import { composePipelines } from '@praxis-kit/pipeline-kit'
+import type { Pipeline, PipelineFactory, PipelineStage } from '@praxis-kit/pipeline-kit'
 import type { StyleMetadata } from './types'
 
 /** Shared runtime key for styling metadata owned by a generated Praxis component. */
@@ -96,6 +98,54 @@ export function createCompositionStyleResolver(
     composeDefaults: variantDefaults,
     ...(onDiagnostic && { onDiagnostic }),
   })
+}
+
+/** Configuration for constructing composition styling from a component's declared `compose`. */
+export type OptionalCompositionStylePipelineOptions = {
+  readonly primary: StyleMetadata
+  /** The direct `compose.with` target. `undefined` means composition is not activated. */
+  readonly with: unknown
+  readonly composeDefaults?: object
+  readonly onDiagnostic?: (message: string) => void
+}
+
+type ResolvedOptionalCompositionStylePipelineOptions = OptionalCompositionStylePipelineOptions & {
+  readonly partner: StyleMetadata | undefined
+}
+
+const resolveCompositionPartner: Pipeline<
+  [OptionalCompositionStylePipelineOptions],
+  ResolvedOptionalCompositionStylePipelineOptions
+> = (options) => ({
+  ...options,
+  partner: options.with === undefined ? undefined : getCompositionStyleMetadata(options.with),
+})
+
+const buildOptionalCompositionResolver: PipelineStage<
+  ResolvedOptionalCompositionStylePipelineOptions,
+  ClassPipelineFn | undefined
+> = ({ primary, partner, composeDefaults, onDiagnostic }) =>
+  partner
+    ? createCompositionStyleResolver(primary, partner, composeDefaults, onDiagnostic)
+    : undefined
+
+/**
+ * Construct the optional composition styling pipeline through pipeline-kit. `compose.with` is
+ * the activation switch; a target without retained Praxis styling metadata falls back to the
+ * adapter's existing nested-render behavior. This factory is intentionally shared by adapters so
+ * they don't each implement composition-pipeline selection independently.
+ */
+const createOptionalCompositionPipeline: PipelineFactory<
+  OptionalCompositionStylePipelineOptions,
+  [],
+  ClassPipelineFn | undefined
+> = (options) =>
+  composePipelines(() => resolveCompositionPartner(options), buildOptionalCompositionResolver)
+
+export function createOptionalCompositionStylePipeline(
+  options: OptionalCompositionStylePipelineOptions,
+): ClassPipelineFn | undefined {
+  return createOptionalCompositionPipeline(options)()
 }
 
 /**

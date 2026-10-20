@@ -19,8 +19,12 @@ export {
   composeStyleProps,
   getCompositionStyleMetadata,
   createCompositionStyleResolver,
+  createOptionalCompositionStylePipeline,
   mergeCompositionClassNames,
   COMPOSITION_STYLE_REQUEST_PROP,
   isCompositionStyleRequest,
 } from './composition-style-metadata'
-export type { CompositionStyleRequest } from './composition-style-metadata'
+export type {
+  CompositionStyleRequest,
+  OptionalCompositionStylePipelineOptions,
+} from './composition-style-metadata'

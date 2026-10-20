@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createPolymorphic } from '@praxis-kit/core'
 import {
   attachCompositionStyleMetadata,
   composeStyleProps,
+  createOptionalCompositionStylePipeline,
   getCompositionStyleMetadata,
 } from './composition-style-metadata'
 
@@ -70,5 +71,67 @@ describe('composeStyleProps', () => {
     )
 
     expect(result).toEqual({ intent: 'primary', size: 'lg' })
+  })
+})
+
+describe('optional composition style pipeline', () => {
+  const primary = { baseClassName: 'primary-base' }
+
+  // A fresh partner per test: attaching metadata mutates the target.
+  function partnerWith(styling: Parameters<typeof attachCompositionStyleMetadata>[1]): () => null {
+    return attachCompositionStyleMetadata(() => null, styling)
+  }
+
+  it('does not activate when compose.with is undefined', () => {
+    expect(createOptionalCompositionStylePipeline({ primary, with: undefined })).toBeUndefined()
+  })
+
+  it('falls back when compose.with is not a Praxis component with styling metadata', () => {
+    expect(createOptionalCompositionStylePipeline({ primary, with: () => null })).toBeUndefined()
+  })
+
+  it('builds the combined resolver when compose.with exposes Praxis styling metadata', () => {
+    const resolveClasses = createOptionalCompositionStylePipeline({
+      primary,
+      with: partnerWith({ baseClassName: 'partner-base' }),
+    })
+
+    expect(resolveClasses).toBeTypeOf('function')
+    expect(resolveClasses?.('div', {})).toBe('partner-base primary-base')
+  })
+
+  it('forwards composeDefaults for variants the partner declares', () => {
+    const resolveClasses = createOptionalCompositionStylePipeline({
+      primary,
+      with: partnerWith({ variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } } }),
+      composeDefaults: { tone: 'loud' },
+    })
+
+    expect(resolveClasses?.('div', {})).toContain('partner-loud')
+    expect(resolveClasses?.('div', {})).not.toContain('partner-quiet')
+  })
+
+  it('reports an incompatible shared variant through onDiagnostic', () => {
+    const onDiagnostic = vi.fn()
+
+    createOptionalCompositionStylePipeline({
+      primary: { variants: { tone: { calm: 'primary-calm', bold: 'primary-bold' } } },
+      with: partnerWith({ variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } } }),
+      onDiagnostic,
+    })
+
+    expect(onDiagnostic).toHaveBeenCalledTimes(1)
+    expect(onDiagnostic).toHaveBeenCalledWith(
+      expect.stringContaining('Incompatible composed variant "tone"'),
+    )
+  })
+
+  it('rejects unknown option keys at the type level', () => {
+    createOptionalCompositionStylePipeline({
+      primary,
+      with: undefined,
+      // @ts-expect-error — a misspelled option must not be accepted silently
+      composeDefault: { tone: 'loud' },
+    })
   })
 })

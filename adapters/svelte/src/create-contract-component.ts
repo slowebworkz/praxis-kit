@@ -16,8 +16,7 @@ import {
   assembleCompoundComponent,
   attachCompositionStyleMetadata,
   composeStyleProps,
-  createCompositionStyleResolver,
-  getCompositionStyleMetadata,
+  createOptionalCompositionStylePipeline,
   mergeCompositionClassNames,
 } from '@praxis-kit/adapter-utils'
 import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
@@ -96,20 +95,19 @@ export function createContractComponent<
   // Composition styling is selected by `compose.with` alone, and only when the target is a Praxis
   // bundle that retained styling metadata; an external target keeps the nested-render fallback.
   const { compose } = options
-  const partnerStyleMetadata = getCompositionStyleMetadata(compose?.with)
-  if (compose && partnerStyleMetadata) {
-    const resolveClasses = createCompositionStyleResolver(
-      bundle.runtime.options,
-      partnerStyleMetadata,
-      compose.defaults,
-      (message) =>
-        bundle.runtime.options.diagnostics.warn({
-          code: DiagnosticCode.CompositionVariantCollision,
-          category: DiagnosticCategory.Composition,
-          message,
-          ...(isDefined(options.name) && { component: options.name }),
-        }),
-    )
+  const resolveClasses = createOptionalCompositionStylePipeline({
+    primary: bundle.runtime.options,
+    with: compose?.with,
+    ...(compose?.defaults !== undefined && { composeDefaults: compose.defaults }),
+    onDiagnostic: (message) =>
+      bundle.runtime.options.diagnostics.warn({
+        code: DiagnosticCode.CompositionVariantCollision,
+        category: DiagnosticCategory.Composition,
+        message,
+        ...(isDefined(options.name) && { component: options.name }),
+      }),
+  })
+  if (compose && resolveClasses) {
     // A `class` supplied through `compose.defaults` is caller input to the partner; the partner's
     // own computed classes are superseded by the combined pipeline.
     const configuredClass = compose.defaults ? Reflect.get(compose.defaults, 'class') : undefined
