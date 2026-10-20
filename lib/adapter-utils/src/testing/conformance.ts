@@ -619,6 +619,35 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
 
   if (caps.compositionStyling)
     describe('conformance — composition styling', () => {
+      if (caps.asChild)
+        it('uses ordinary primary styling when explicit asChild overrides composition', () => {
+          const Surface = adapter.createComponent({
+            styling: {
+              base: 'partner-base',
+              variants: { intent: { ghost: 'partner-intent-ghost' } },
+            },
+          })
+          const Card = adapter.createComponent({
+            compose: { with: Surface },
+            styling: {
+              base: 'primary-base',
+              variants: { size: { lg: 'primary-size-lg' } },
+            },
+          })
+
+          const { element } = adapter.render(
+            Card,
+            { asChild: true, intent: 'ghost', size: 'lg' },
+            [{ tag: 'button' }],
+          )
+
+          expect(element.tagName.toLowerCase()).toBe('button')
+          expect(element.className).toContain('primary-base')
+          expect(element.className).toContain('primary-size-lg')
+          expect(element.className).not.toContain('partner-base')
+          expect(element.className).not.toContain('partner-intent-ghost')
+        })
+
       it('combines partner and primary classes in the specified contribution order', () => {
         const Surface = adapter.createComponent({
           styling: {
