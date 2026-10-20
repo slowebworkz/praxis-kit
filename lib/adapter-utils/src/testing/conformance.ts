@@ -659,6 +659,24 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         }
       })
 
+      it('combines partner and primary tag-map classes for the rendered tag', () => {
+        const Surface = adapter.createComponent({
+          tag: 'section',
+          styling: { tags: { section: 'partner-section' } },
+        })
+        const Card = adapter.createComponent({
+          tag: 'section',
+          compose: { with: Surface },
+          styling: { tags: { section: 'primary-section' } },
+        })
+
+        const { element } = adapter.render(Card)
+
+        expect(element.tagName.toLowerCase()).toBe('section')
+        expect(element.className).toContain('partner-section')
+        expect(element.className).toContain('primary-section')
+      })
+
       it('uses primary defaults over compose.defaults for compatible shared variants', () => {
         const Surface = adapter.createComponent({
           styling: {
