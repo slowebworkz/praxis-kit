@@ -7,9 +7,8 @@ import type {
   VariantsOf,
 } from '@praxis-kit/core'
 import { createPolymorphic } from '@praxis-kit/core'
-import type { ClassPipelineFn } from '@praxis-kit/styling'
 import { createOptionalCompositionStylePipeline } from './composition-style-metadata'
-import type { CompositionRuntimeConfig } from './types'
+import type { CompositionClassResolver, CompositionRuntimeConfig } from './types'
 
 const EMPTY_SET: ReadonlySet<string> = new Set()
 
@@ -21,7 +20,7 @@ export function buildCoreRuntime<G extends PolymorphicGenerics>(
   const runtime = createPolymorphic(normalized)
   // Resolve composition metadata once at construction. Adapters still own framework rendering,
   // but no longer decide independently how the optional styling pipeline is constructed.
-  const compositionClassResolver: ClassPipelineFn | undefined =
+  const compositionClassResolver: CompositionClassResolver | undefined =
     createOptionalCompositionStylePipeline({
       primary: runtime.options,
       with: compose?.with,

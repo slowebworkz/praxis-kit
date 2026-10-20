@@ -203,6 +203,7 @@ export function createContractComponent<
                       componentProps,
                       bundle.runtime.options,
                       compose.defaults,
+                      compositionClassResolver.partner,
                     ),
                     mergeCompositionClassNames(
                       partnerClassName,

@@ -24,4 +24,8 @@ export {
   COMPOSITION_STYLE_REQUEST_PROP,
   isCompositionStyleRequest,
 } from './composition-style-metadata'
-export type { CompositionStyleRequest, OptionalCompositionStylePipelineOptions } from './types'
+export type {
+  CompositionClassResolver,
+  CompositionStyleRequest,
+  OptionalCompositionStylePipelineOptions,
+} from './types'

@@ -338,6 +338,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       tag: 'div',
       name: 'NoForwardSurface',
       props: undefined as unknown as { radius?: 'sm' | 'lg' },
+      styling: { variants: { tone: { quiet: 'text-muted', loud: 'text-strong' } } },
     } satisfies ReactFactoryOptions
     const NoForwardSurface = createContractComponent(noForwardSurfaceOptions)
 
@@ -350,8 +351,10 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     const NoForwardCard = createContractComponent(noForwardCardOptions)
     void NoForwardCard
 
-    type HasRadius = 'radius' extends keyof ContractProps<typeof NoForwardCard> ? true : false
+    type NoForwardProps = ContractProps<typeof NoForwardCard>
+    type HasRadius = 'radius' extends keyof NoForwardProps ? true : false
     expectTypeOf<HasRadius>().toEqualTypeOf<false>()
+    expectTypeOf<NoForwardProps['tone']>().toEqualTypeOf<'quiet' | 'loud' | undefined>()
   })
 
   it('(9) a real variant collision surfaces as a diagnostic at that exact key; non-colliding variants on either side keep their real values', () => {
@@ -388,7 +391,8 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
           color: { red: 'text-red', blue: 'text-blue' },
         },
       },
-      compose: { allProps: true, with: VariantCollidingSurface },
+      // Variant visibility is composition styling behavior, independent of raw prop forwarding.
+      compose: { allProps: false, with: VariantCollidingSurface },
     } satisfies ReactFactoryOptions
     const VariantCollidingCard = createContractComponent(variantCollidingCardOptions)
     void VariantCollidingCard

@@ -144,6 +144,7 @@ export function renderComposed<TProps extends KnownProps>(
   compositionClassResolver?: {
     resolve: ClassPipelineFn
     primary: Parameters<typeof composeStyleProps>[2]
+    partner: Parameters<typeof composeStyleProps>[4]
   },
 ): SolidElement {
   const [knownRaw, rest] = splitProps(props, SPLIT_KEYS)
@@ -205,6 +206,7 @@ export function renderComposed<TProps extends KnownProps>(
                   props,
                   compositionClassResolver.primary,
                   defaults,
+                  compositionClassResolver.partner,
                 ),
                 mergeCompositionClassNames(defaultClass, known.class as string | undefined),
                 isString(known.recipe) ? known.recipe : undefined,

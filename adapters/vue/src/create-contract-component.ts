@@ -213,6 +213,7 @@ export function createContractComponent<
                             cleanAttrs.value,
                             bundle.runtime.options,
                             compose.defaults,
+                            compositionClassResolver.partner,
                           ),
                           mergeCompositionClassNames(
                             partnerClassName,

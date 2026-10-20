@@ -109,7 +109,7 @@ describe('createContractComponent (current / React 19)', () => {
     expect(classes).not.toContain('primary-quiet')
   })
 
-  it('does not resolve partner variants or compounds from unforwarded primary props', () => {
+  it('resolves partner-only variants and compounds when allProps is disabled', () => {
     const Surface = createContractComponent({
       tag: 'div',
       styling: {
@@ -125,9 +125,9 @@ describe('createContractComponent (current / React 19)', () => {
     dom.mount(createElement(box(Card), { intent: 'ghost', size: 'lg' }))
 
     const classes = dom.container.querySelector('div')!.className.split(' ')
-    expect(classes).not.toContain('partner-intent-ghost')
-    expect(classes).not.toContain('partner-size-lg')
-    expect(classes).not.toContain('partner-compound-ghost-lg')
+    expect(classes).toContain('partner-intent-ghost')
+    expect(classes).toContain('partner-size-lg')
+    expect(classes).toContain('partner-compound-ghost-lg')
   })
 
   it('resolves partner variants and compounds from allProps forwarded props', () => {
@@ -202,6 +202,28 @@ describe('createContractComponent (current / React 19)', () => {
     })
 
     dom.mount(createElement(box(Card), { asChild: true }, createElement('button')))
+
+    const element = dom.container.querySelector('button')!
+    expect(element.className).toContain('primary-base')
+    expect(element.className).not.toContain('partner-base')
+  })
+
+  it('keeps custom render on the primary contract styling path when composed', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base' },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+
+    dom.mount(
+      createElement(box(Card), {
+        render: (props: RenderCallbackProps) => createElement('button', props as never),
+      }),
+    )
 
     const element = dom.container.querySelector('button')!
     expect(element.className).toContain('primary-base')

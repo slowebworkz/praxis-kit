@@ -327,7 +327,9 @@ describe('Polymorphic (Svelte adapter)', () => {
       expect(container.querySelector('span')).toBeNull()
     })
 
-    it('explicit allProps: false does not forward props to the composed bundle', () => {
+    it('explicit allProps: false still styles the composed bundle from selected variants', () => {
+      // `allProps` gates raw prop forwarding only; a variant the Praxis partner declares is
+      // selected from the composing component's props whenever `compose.with` exists.
       const boxA = createContractComponent({
         tag: 'div',
         styling: { variants: { intent: { ghost: 'intent-ghost' } } },
@@ -339,7 +341,7 @@ describe('Polymorphic (Svelte adapter)', () => {
 
       const { container } = render(Polymorphic, { bundle: boxB, intent: 'ghost' })
 
-      expect(container.querySelector('button')?.className).not.toContain('intent-ghost')
+      expect(container.querySelector('button')?.className).toContain('intent-ghost')
     })
 
     describe('composition styling', () => {
@@ -469,13 +471,13 @@ describe('Polymorphic (Svelte adapter)', () => {
       // (a bundle-shaped target without it — a spread copy drops the non-enumerable metadata) are
       // two implementations that must agree on the REQUIRED PARITY behaviors below: partner and
       // primary base classes, caller class, a `class` from compose.defaults, explicit primary
-      // variant values affecting the primary contribution, partner-only variants reaching the
-      // partner only through allProps, the composing component's own DOM props, single handler
-      // delivery, and explicit asChild precedence.
+      // variant values affecting the primary contribution, the composing component's own DOM
+      // props, single handler delivery, and explicit asChild precedence.
       //
       // INTENTIONAL DIFFERENCES (combined path only; the fallback has no retained partner metadata):
-      //   - A variant name both contracts declare resolves once from the primary's explicit value,
-      //     so the partner's contribution follows it even with allProps: false.
+      //   - A variant the partner declares, whether shared with the primary or partner-only, is
+      //     selected from the composing component's props, so the partner's contribution follows
+      //     it even with allProps: false. The fallback only reaches the partner through allProps.
       //   - Partner base/variant/compound classes are produced by the shared pipeline in
       //     contribution order, not concatenated from the partner's separately-resolved class.
       // These differences are pinned by their own tests; do not add them to the parity matrix.
@@ -534,23 +536,6 @@ describe('Polymorphic (Svelte adapter)', () => {
           expect(className).not.toContain('primary-ghost')
         })
 
-        it('reaches a partner-only variant only when allProps forwards the value', () => {
-          const forwarded = render(Polymorphic, {
-            bundle: build({ allProps: true }),
-            tone: 'loud',
-          })
-          expect(forwarded.container.querySelector('div')!.className).toContain('partner-loud')
-          cleanup()
-
-          const notForwarded = render(Polymorphic, {
-            bundle: build({ allProps: false }),
-            tone: 'loud',
-          })
-          expect(notForwarded.container.querySelector('div')!.className).not.toContain(
-            'partner-loud',
-          )
-        })
-
         it('keeps the composing component’s own DOM props on its element regardless of allProps', () => {
           // Not a forwarding test: the primary's own element always receives its DOM props. The
           // partner-only variant test above is the observable proof of allProps forwarding.
@@ -594,27 +579,37 @@ describe('Polymorphic (Svelte adapter)', () => {
         })
       })
 
-      it('lets the primary’s explicit value drive a shared variant on the partner without allProps', () => {
-        // Intended difference between the two paths: with a Praxis partner, a variant name both
-        // contracts declare is resolved once, from the primary's explicit value, so the partner's
-        // contribution follows it even when allProps is off. A partner without retained metadata
-        // is only reachable through allProps, so it never sees the value.
+      it.each([
+        [
+          'a variant both contracts declare',
+          'intent',
+          { intent: { ghost: 'primary-ghost', solid: 'primary-solid' } },
+        ],
+        ['a partner-only variant', 'intent', {}],
+      ])('selects %s on the partner without allProps (combined path only)', (_label, name, own) => {
+        // Intended difference between the two paths: with a Praxis partner, a variant it declares
+        // is selected from the composing component's props even when allProps is off, so the
+        // partner's contribution follows it. A partner without retained metadata is only reachable
+        // through allProps, so it never sees the value.
         const surface = createContractComponent({
           tag: 'div',
-          styling: { variants: { intent: { ghost: 'partner-ghost', solid: 'partner-solid' } } },
+          styling: { variants: { [name]: { ghost: 'partner-ghost', solid: 'partner-solid' } } },
         })
         const card = (partner: object) =>
           createContractComponent({
             tag: 'div',
             compose: { with: partner as never, allProps: false },
-            styling: { variants: { intent: { ghost: 'primary-ghost', solid: 'primary-solid' } } },
-          })
+            styling: { variants: own },
+          } as never)
 
-        const combined = render(Polymorphic, { bundle: card(surface), intent: 'solid' })
+        const combined = render(Polymorphic, { bundle: card(surface), [name]: 'solid' } as never)
         expect(combined.container.querySelector('div')!.className).toContain('partner-solid')
         cleanup()
 
-        const fallback = render(Polymorphic, { bundle: card({ ...surface }), intent: 'solid' })
+        const fallback = render(Polymorphic, {
+          bundle: card({ ...surface }),
+          [name]: 'solid',
+        } as never)
         expect(fallback.container.querySelector('div')!.className).not.toContain('partner-solid')
       })
 

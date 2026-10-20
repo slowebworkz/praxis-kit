@@ -358,13 +358,15 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           expect(ref.current!.tagName.toLowerCase()).toBe('button')
         })
 
-      it('without allProps, "with" does not see the composing component\'s own props', () => {
+      it('without allProps, a variant the partner declares is still selected on the composing component', () => {
+        // `allProps` gates raw prop forwarding only; the partner's styling variants are part of
+        // the composing component's public surface whenever `compose.with` exists.
         const BoxA = adapter.createComponent({
           styling: { variants: { intent: { ghost: 'intent-ghost' } } },
         })
         const BoxB = adapter.createComponent({ compose: { with: BoxA } })
         const { element } = adapter.render(BoxB, { intent: 'ghost' })
-        expect(element.className).not.toContain('intent-ghost')
+        expect(element.className).toContain('intent-ghost')
       })
 
       it('with allProps: true, "with" resolves its own variants from the forwarded props', () => {
@@ -428,7 +430,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(element.className).toContain('child-compound-ghost-lg')
       })
 
-      it('does not resolve child compounds from parent props when allProps is disabled', () => {
+      it('resolves child compounds from selected partner variants when allProps is disabled', () => {
         const BoxA = adapter.createComponent({
           styling: {
             variants: {
@@ -441,7 +443,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         const BoxB = adapter.createComponent({ compose: { with: BoxA } })
 
         const { element } = adapter.render(BoxB, { intent: 'ghost', size: 'lg' })
-        expect(element.className).not.toContain('child-compound-ghost-lg')
+        expect(element.className).toContain('child-compound-ghost-lg')
       })
 
       it('matches child compounds using both defaults and forwarded props', () => {
@@ -657,7 +659,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(calls).toBe(1)
       })
 
-      it('does not activate partner variants from unforwarded primary props', () => {
+      it('activates partner variants selected on the composing component without allProps', () => {
         const Surface = adapter.createComponent({
           styling: {
             variants: { intent: { ghost: 'partner-intent-ghost' } },
@@ -671,8 +673,22 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
 
         const { element } = adapter.render(Card, { intent: 'ghost', size: 'lg' })
         expect(element.className).toContain('primary-size-lg')
+        expect(element.className).toContain('partner-intent-ghost')
+        expect(element.className).toContain('partner-compound-ghost')
+      })
+
+      it('does not turn an unrelated, non-variant prop into a styling input', () => {
+        const Surface = adapter.createComponent({
+          styling: { variants: { intent: { ghost: 'partner-intent-ghost' } } },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface },
+          styling: { base: 'primary-base' },
+        })
+
+        const { element } = adapter.render(Card, { notAVariant: 'ghost' })
+        expect(element.className).toContain('primary-base')
         expect(element.className).not.toContain('partner-intent-ghost')
-        expect(element.className).not.toContain('partner-compound-ghost')
       })
     })
 

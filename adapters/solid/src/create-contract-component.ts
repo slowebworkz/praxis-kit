@@ -100,7 +100,11 @@ export function createContractComponent<
   diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
   const compositionClassResolver = bundle.compositionClassResolver
-    ? { resolve: bundle.compositionClassResolver, primary: bundle.runtime.options }
+    ? {
+        resolve: bundle.compositionClassResolver,
+        primary: bundle.runtime.options,
+        partner: bundle.compositionClassResolver.partner,
+      }
     : undefined
 
   const Component = (props: UnknownProps): SolidElement => {

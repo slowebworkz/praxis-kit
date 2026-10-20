@@ -65,20 +65,20 @@ a cross-adapter rebuild.
 
 ## 2. Goals and non-goals
 
-**Goal:** a composing component's exported props type includes `compose.with`'s forwarded surface
-when `allProps: true`, computed automatically from the contract — no hand-maintained
-`CardProps & SurfaceProps`-style alias per adopter.
+**Goal:** a composing component's exported props type includes `compose.with`'s ordinary forwarded
+props when `allProps: true`, and includes the partner's styling variants whenever `compose.with` is
+present. Variant visibility is independent of raw prop forwarding, matching the composition styling
+pipeline contract in `.vscode/COMPOSE.md`.
 
 **Non-goals:**
 
-- No new runtime composition mechanism. The existing `compose`/`asChild`/`Slot` pipeline is
-  unchanged; this is a type-extraction-time fix only.
+- This document focuses on public type extraction. Runtime composition and styling semantics are
+  specified in `.vscode/COMPOSE.md` and implemented at the adapter runtime boundary.
 - No attempt to type the _merged element result_ — e.g. which value wins when both `Card` and
   `Surface` set the same prop at a specific call site, accounting for explicit-vs-defaulted values.
   That is a separate, harder, already-scoped-and-declined problem (see section 5).
-- No new public configuration API beyond the existing `allProps` boolean. The type-side merge is
-  automatic whenever `allProps: true` is set, not gated behind a second opt-in — matching the
-  runtime, which also has no separate type-visibility toggle.
+- No new public configuration API beyond the existing `allProps` boolean. `allProps` controls
+  ordinary raw prop forwarding; it does not gate the composed styling-variant surface.
 
 ## 3. Proposed type architecture — intermediate types
 
@@ -99,7 +99,7 @@ type RecoveredContractOf<T> = T extends HasContract<infer C> ? C : never
  *  `allProps`, or `with` isn't a recognizable praxis-kit component. Isolates the three-way gate
  *  (compose present / allProps true / with recognizable) in one place instead of repeating it at
  *  every downstream read. */
-type ComposedContractOf<C> = C extends { compose: { allProps: true; with: infer W } }
+type ComposedContractOf<C> = C extends { compose: { with: infer W } }
   ? RecoveredContractOf<W>
   : never
 
@@ -150,29 +150,35 @@ type MergeComposedProps<Own, Composed> = {
  *  instead makes one definition correct at every depth, bounded naturally by the real, finite
  *  chain of `compose.with` references — no artificial depth cap needed, but also not "free" in
  *  the sense an earlier framing of this proposal assumed; it has to be written this way
- *  deliberately. */
+ *  deliberately. This recursion applies to ordinary props exposed by the partner. Styling variants
+ *  and presets are merged from the direct partner contract only, matching `.vscode/COMPOSE.md`'s
+ *  rule not to flatten nested composition styling metadata. */
 type ContractGenericsWithComposeOf<C> =
   ComposedContractOf<C> extends infer CC
     ? [CC] extends [never]
-      ? { props: ContractPropsOf<C>; variants: ContractVariantsOf<C> }
+      ? {
+          props: ContractPropsOf<C>
+          variants: ContractVariantsOf<C>
+          preset: ContractPresetOf<C>
+        }
       : {
-          props: MergeComposedProps<ContractPropsOf<C>, ContractGenericsWithComposeOf<CC>['props']>
-          variants: MergeComposedProps<
-            ContractVariantsOf<C>,
-            ContractGenericsWithComposeOf<CC>['variants']
-          >
+          props: C extends { compose: { allProps: true } }
+            ? MergeComposedProps<ContractPropsOf<C>, ContractGenericsWithComposeOf<CC>['props']>
+            : ContractPropsOf<C>
+          variants: MergeComposedProps<ContractVariantsOf<C>, ContractVariantsOf<CC>>
+          preset: MergePresetMaps<ContractPresetOf<CC>, ContractPresetOf<C>>
         }
     : never
 ```
 
 **Consumer-facing change:** each adapter's `ContractProps<T>` swaps its internal
 `ContractGenericsWithAllowedOf<C>` read for a `PolymorphicGenerics` built from
-`ContractGenericsWithComposeOf<C>`'s `props`/`variants`, keeping `ContractTagOf<C>`/
-`ContractPresetOf<C>`/`ContractAllowedOf<C>` untouched. **Deliberately not** touching
-`createContractComponent`'s own return-type instantiation — `G` there stays exactly as today. The
-composed surface is a type-extraction-time concern, matching how `ContractProps` already diverges
-from the call signature's own non-generic fallback overload for a different, pre-existing reason
-(documented in that type's own comment).
+`ContractGenericsWithComposeOf<C>`'s `props`/`variants`/`preset`, keeping `ContractTagOf<C>` and
+`ContractAllowedOf<C>` untouched. **Deliberately not** touching `createContractComponent`'s own
+return-type instantiation — `G` there stays exactly as today. The composed surface is a
+type-extraction-time concern, matching how `ContractProps` already diverges from the call
+signature's own non-generic fallback overload for a different, pre-existing reason (documented in
+that type's own comment).
 
 ## 4. Model metadata and extraction — what's reused vs. new
 
@@ -391,9 +397,9 @@ deliberately wrong assertion before relying on a clean pass as real signal):
    equals exactly `{ props: C's own props; variants: C's own variants }`. The fallback path is a
    true no-op.
 2. **Simple composition** — `Card` composing `Surface` with `allProps: true` resolves to `Card`'s
-   own props/variants plus `Surface`'s (`radius`, `shadow`). **2b (negative case):** a `Card` with
-   no `compose` field at all leaves the partner's props unreachable — confirmed via
-   `expectTypeOf<keyof Resolved['props']>().not.toEqualTypeOf<'radius'>()`.
+   own props/variants plus `Surface`'s ordinary props and variants. With `allProps: false`, the
+   partner's ordinary props remain unreachable while its styling variants remain public. A `Card`
+   with no `compose` field at all preserves its own props/variants exactly.
 3. **Collision** — a same-named `child-wins`-category prop (`variant`) with incompatible types on
    both sides resolves to `CollisionError<'variant'>`, not a silently-wrong type.
 4. **Nested composition** — `Surface` composing `Base`, `Card` composing `Surface`: `Card`'s

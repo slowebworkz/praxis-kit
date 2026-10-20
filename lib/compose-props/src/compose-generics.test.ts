@@ -4,6 +4,7 @@ import type {
   FactoryOptions,
   PolymorphicGenerics,
   PropsOf,
+  RecipeOf,
   VariantsOf,
 } from '@praxis-kit/primitive'
 import type { HasContract } from '@praxis-kit/contract-props'
@@ -97,11 +98,12 @@ describe('ContractGenericsWithComposeOf against real FactoryOptions-shaped contr
     }>()
   })
 
-  it('step 2b — without allProps (or no compose at all), the partner’s props stay unreachable', () => {
+  it('step 2b — allProps: false keeps partner props private but exposes partner variants', () => {
     const cardContract = {
       tag: 'article',
       name: 'Card',
       props: undefined as unknown as { variant: 'elevated' | 'flat' },
+      compose: { allProps: false, with: {} as Surface },
     } satisfies FactoryOptions
     type CardContract = typeof cardContract
     void cardContract
@@ -109,8 +111,70 @@ describe('ContractGenericsWithComposeOf against real FactoryOptions-shaped contr
     type Resolved = ContractGenericsWithComposeOf<CardContract>
 
     expectTypeOf<OwnProps<Resolved>>().toEqualTypeOf<{ variant: 'elevated' | 'flat' }>()
-    expectTypeOf<keyof OwnProps<Resolved>>().not.toEqualTypeOf<'radius'>()
-    void (undefined as unknown as Surface)
+    expectTypeOf<OwnVariants<Resolved>>().toEqualTypeOf<{
+      shadow: { true: string; false: string }
+    }>()
+    expectTypeOf<'radius' extends keyof OwnProps<Resolved> ? true : false>().toEqualTypeOf<false>()
+  })
+
+  it('step 2c — no compose target preserves the own props and variants exactly', () => {
+    const cardContract = {
+      tag: 'article',
+      name: 'Card',
+      props: undefined as unknown as { variant: 'elevated' | 'flat' },
+      styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
+    } satisfies FactoryOptions
+    type CardContract = typeof cardContract
+    void cardContract
+
+    type Resolved = ContractGenericsWithComposeOf<CardContract>
+
+    expectTypeOf<OwnProps<Resolved>>().toEqualTypeOf<{ variant: 'elevated' | 'flat' }>()
+    expectTypeOf<OwnVariants<Resolved>>().toEqualTypeOf<{ size: { sm: string; lg: string } }>()
+  })
+
+  it('merges direct partner recipes with primary values winning duplicate recipe keys', () => {
+    const recipePartnerContract = {
+      tag: 'div',
+      name: 'RecipePartner',
+      styling: {
+        variants: {
+          tone: { quiet: 'quiet', loud: 'loud' },
+          size: { sm: 'small', lg: 'large' },
+        },
+        presets: {
+          compact: { tone: 'quiet', size: 'sm' },
+          partnerOnly: { tone: 'loud' },
+        },
+      },
+    } as const satisfies FactoryOptions
+    type RecipePartner = BuiltComponent<typeof recipePartnerContract>
+    void recipePartnerContract
+
+    const cardContract = {
+      tag: 'article',
+      name: 'RecipeCard',
+      styling: {
+        variants: { size: { sm: 'small', lg: 'large' } },
+        presets: {
+          compact: { size: 'lg' },
+          primaryOnly: { size: 'sm' },
+        },
+      },
+      compose: { allProps: false, with: {} as RecipePartner },
+    } as const satisfies FactoryOptions
+    void cardContract
+    type Resolved = ContractGenericsWithComposeOf<typeof cardContract>
+
+    type Presets = RecipeOf<Resolved>
+    expectTypeOf<keyof Presets>().toEqualTypeOf<'compact' | 'partnerOnly' | 'primaryOnly'>()
+    // The partner-only `tone` selection is retained; the primary's `size` wins the duplicate key.
+    expectTypeOf<Presets['compact']['tone']>().toEqualTypeOf<'quiet'>()
+    expectTypeOf<Presets['compact']['size']>().toEqualTypeOf<'lg'>()
+    // A recipe that exists only on the partner keeps its partner-only selections unchanged, and a
+    // recipe that exists only on the primary keeps the primary's.
+    expectTypeOf<Presets['partnerOnly']['tone']>().toEqualTypeOf<'loud'>()
+    expectTypeOf<Presets['primaryOnly']['size']>().toEqualTypeOf<'sm'>()
   })
 
   it('step 4 — a same-named child-wins prop with incompatible types surfaces as CollisionError', () => {
@@ -187,6 +251,7 @@ describe('ContractGenericsWithComposeOf against real FactoryOptions-shaped contr
       tag: 'div',
       name: 'Surface',
       props: undefined as unknown as { radius: 'sm' | 'lg' },
+      styling: { variants: { surfaceTone: { calm: 'calm' } } },
       compose: { allProps: true, with: {} as Base },
     } satisfies FactoryOptions
     type SurfaceComposingBaseContract = typeof surfaceComposingBaseContract
@@ -210,6 +275,11 @@ describe('ContractGenericsWithComposeOf against real FactoryOptions-shaped contr
       variant: 'elevated' | 'flat'
       radius: 'sm' | 'lg'
       as: 'div' | 'span'
+    }>()
+    // Style metadata is combined with the direct partner only; Base's nested variant is not
+    // flattened into Card's composition resolver/public variant surface.
+    expectTypeOf<OwnVariants<Resolved>>().toEqualTypeOf<{
+      surfaceTone: { calm: string }
     }>()
   })
 

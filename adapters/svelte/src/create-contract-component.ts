@@ -99,7 +99,13 @@ export function createContractComponent<
     bundle.resolveComposedClasses = (tag, partnerProps, componentProps, callerClass, recipe) =>
       resolveClasses(
         tag,
-        composeStyleProps(partnerProps, componentProps, bundle.runtime.options, compose.defaults),
+        composeStyleProps(
+          partnerProps,
+          componentProps,
+          bundle.runtime.options,
+          compose.defaults,
+          resolveClasses.partner,
+        ),
         mergeCompositionClassNames(defaultClass, callerClass),
         recipe,
       )

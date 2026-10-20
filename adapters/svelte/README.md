@@ -97,12 +97,13 @@ With `compose.with`, styling resolves one of two ways:
   rendered with `asChild` and its slot props are merged onto the primary's element.
 
 Both paths agree on base classes, the caller class, a `class` supplied through `compose.defaults`,
-explicit primary variant values affecting the primary contribution consistently, `allProps`
-forwarding, single handler delivery, and explicit `asChild` precedence. They intentionally differ
-where the fallback has no partner metadata: a variant name both contracts declare is resolved once
-from the primary's explicit value on the combined path (so the partner's contribution follows it
-even with `allProps: false`), while the fallback only reaches the partner through `allProps`. Both
-behaviours are pinned in `src/Polymorphic.test.ts` → "composition styling".
+explicit primary variant values affecting the primary contribution, single handler delivery, and
+explicit `asChild` precedence. They intentionally differ in how the partner's own variants are
+selected: on the combined path, a variant the partner declares (shared with the primary or
+partner-only) is selected from the composing component's props whenever `compose.with` exists, so
+`allProps` gates only ordinary prop forwarding. The fallback has no partner metadata and only
+reaches the partner through `allProps`. Both behaviours are pinned in `src/Polymorphic.test.ts` →
+"composition styling".
 
 ### Event handlers vs. component callbacks
 

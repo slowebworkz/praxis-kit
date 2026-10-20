@@ -66,7 +66,7 @@ describe('createContractComponent (legacy / React 18)', () => {
     expect(classes).not.toContain('primary-quiet')
   })
 
-  it('does not resolve partner variants or compounds from unforwarded primary props', () => {
+  it('resolves partner-only variants and compounds when allProps is disabled', () => {
     const Surface = createContractComponent({
       tag: 'div',
       styling: {
@@ -82,9 +82,9 @@ describe('createContractComponent (legacy / React 18)', () => {
     dom.mount(createElement(box(Card), { intent: 'ghost', size: 'lg' }))
 
     const classes = dom.container.querySelector('div')!.className.split(' ')
-    expect(classes).not.toContain('partner-intent-ghost')
-    expect(classes).not.toContain('partner-size-lg')
-    expect(classes).not.toContain('partner-compound-ghost-lg')
+    expect(classes).toContain('partner-intent-ghost')
+    expect(classes).toContain('partner-size-lg')
+    expect(classes).toContain('partner-compound-ghost-lg')
   })
 
   it('resolves partner variants and compounds from allProps forwarded props', () => {

@@ -22,3 +22,6 @@ export type ResolvedOptionalCompositionStylePipelineOptions =
   OptionalCompositionStylePipelineOptions & {
     readonly partner: StyleMetadata | undefined
   }
+
+/** A combined resolver with the partner metadata needed to select partner-only variants. */
+export type CompositionClassResolver = ClassPipelineFn & { readonly partner: StyleMetadata }

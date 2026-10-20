@@ -10,6 +10,7 @@ import { createCompositionClassPipeline } from '@praxis-kit/styling'
 import { composePipelines } from '@praxis-kit/pipeline-kit'
 import type { Pipeline, PipelineFactory, PipelineStage } from '@praxis-kit/pipeline-kit'
 import type {
+  CompositionClassResolver,
   CompositionStyleRequest,
   OptionalCompositionStylePipelineOptions,
   ResolvedOptionalCompositionStylePipelineOptions,
@@ -111,11 +112,14 @@ const resolveCompositionPartner: Pipeline<
 
 const buildOptionalCompositionResolver: PipelineStage<
   ResolvedOptionalCompositionStylePipelineOptions,
-  ClassPipelineFn | undefined
-> = ({ primary, partner, composeDefaults, onDiagnostic }) =>
-  partner
-    ? createCompositionStyleResolver(primary, partner, composeDefaults, onDiagnostic)
-    : undefined
+  CompositionClassResolver | undefined
+> = ({ primary, partner, composeDefaults, onDiagnostic }) => {
+  if (!partner) return
+  return Object.assign(
+    createCompositionStyleResolver(primary, partner, composeDefaults, onDiagnostic),
+    { partner },
+  )
+}
 
 /**
  * Construct the optional composition styling pipeline through pipeline-kit. `compose.with` is
@@ -126,26 +130,37 @@ const buildOptionalCompositionResolver: PipelineStage<
 const createOptionalCompositionPipeline: PipelineFactory<
   OptionalCompositionStylePipelineOptions,
   [],
-  ClassPipelineFn | undefined
+  CompositionClassResolver | undefined
 > = (options) =>
   composePipelines(() => resolveCompositionPartner(options), buildOptionalCompositionResolver)
 
 export function createOptionalCompositionStylePipeline(
   options: OptionalCompositionStylePipelineOptions,
-): ClassPipelineFn | undefined {
+): CompositionClassResolver | undefined {
   return createOptionalCompositionPipeline(options)()
 }
 
 /**
- * Props for the combined resolver: the partner's props minus unforwarded `compose.defaults`, plus
- * only the primary's own variant props. Other primary props must not leak into the partner's variant
- * or compound resolution when `allProps` is disabled.
+ * Copy one explicitly selected variant value. An absent or `undefined` value is not a selection:
+ * copying it would pin the variant to `undefined` and shadow recipe values and defaults, and
+ * `Object.hasOwn` alone can't be trusted for it because a dynamic props proxy (Solid's spread of
+ * a computed object) reports keys that were never set.
+ */
+function copySelectedVariant(target: AnyRecord, source: Readonly<AnyRecord>, name: string): void {
+  if (Object.hasOwn(source, name) && source[name] !== undefined) target[name] = source[name]
+}
+
+/**
+ * Props for the combined resolver: partner props minus unforwarded `compose.defaults`, plus
+ * explicit variant selections declared by either contract. Other primary props must not leak into
+ * partner variant or compound resolution when `allProps` is disabled.
  */
 export function composeStyleProps(
   partnerProps: Readonly<AnyRecord>,
   componentProps: Readonly<AnyRecord>,
   primary: StyleMetadata,
-  composeDefaults?: object,
+  composeDefaults: object | undefined,
+  partner: StyleMetadata,
 ): AnyRecord {
   const result: AnyRecord = { ...partnerProps }
   // `compose.defaults` reach the resolver through `createCompositionStyleResolver` at the lowest
@@ -161,8 +176,24 @@ export function composeStyleProps(
       }
     }
   }
+  // A declared variant carried as `undefined` (forwarded from the partner's props) is not a
+  // selection either: left in place it would pin the variant and shadow recipe values and
+  // defaults, so drop it before the defined selections are applied.
+  const declaredVariants = [
+    ...Object.keys(partner.variants ?? {}),
+    ...Object.keys(primary.variants ?? {}),
+  ]
+  for (const name of declaredVariants) {
+    if (result[name] === undefined) delete result[name]
+  }
+  // Partner-only variant props are styling inputs even when `allProps` is false; raw props
+  // remain unforwarded, but the shared resolver must still see the combined variant selection.
+  for (const name of Object.keys(partner.variants ?? {})) {
+    copySelectedVariant(result, componentProps, name)
+  }
+  // Primary values win incompatible collisions, matching the resolver's primary-wins policy.
   for (const name of Object.keys(primary.variants ?? {})) {
-    if (Object.hasOwn(componentProps, name)) result[name] = componentProps[name]
+    copySelectedVariant(result, componentProps, name)
   }
   return result
 }
