@@ -726,6 +726,38 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(calls).toBe(1)
       })
 
+      it('merges partner and primary recipes with primary values winning duplicate keys', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: {
+              tone: { quiet: 'partner-quiet', loud: 'partner-loud' },
+              size: { sm: 'partner-sm', lg: 'partner-lg' },
+            },
+            presets: { emphasis: { tone: 'quiet', size: 'lg' } },
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface },
+          styling: {
+            variants: {
+              tone: { quiet: 'primary-quiet', loud: 'primary-loud' },
+              density: { compact: 'primary-compact', spacious: 'primary-spacious' },
+            },
+            presets: { emphasis: { tone: 'loud', density: 'compact' } },
+          },
+        })
+
+        const { element } = adapter.render(Card, { recipe: 'emphasis' })
+
+        // The primary recipe wins the shared `tone` key; unique recipe keys still merge.
+        expect(element.className).toContain('partner-loud')
+        expect(element.className).toContain('primary-loud')
+        expect(element.className).toContain('partner-lg')
+        expect(element.className).toContain('primary-compact')
+        expect(element.className).not.toContain('partner-quiet')
+        expect(element.className).not.toContain('primary-quiet')
+      })
+
       it('resolves a partner-only recipe without allProps when its variant is undefined', () => {
         const Surface = adapter.createComponent({
           styling: {
