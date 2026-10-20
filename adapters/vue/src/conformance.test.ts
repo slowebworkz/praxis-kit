@@ -57,6 +57,7 @@ const adapter: ConformanceAdapter<ConformanceComponent> = {
   },
   setup: () => {},
   cleanup: () => {},
+  capabilities: { compositionStyling: true },
 }
 
 conformanceSuite(adapter)

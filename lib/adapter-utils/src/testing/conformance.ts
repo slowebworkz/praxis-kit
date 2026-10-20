@@ -570,7 +570,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           },
         })
 
-        const { element } = adapter.render(Card, { size: 'lg', className: 'caller-class' })
+        const { element } = adapter.render(Card, { size: 'lg', class: 'caller-class' })
         const className = element.className
         const orderedClasses = [
           'partner-base',

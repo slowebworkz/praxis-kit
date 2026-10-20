@@ -19,9 +19,17 @@ import type {
 import {
   diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
+  composeStyleProps,
+  createCompositionStyleResolver,
+  getCompositionStyleMetadata,
+  mergeCompositionClassNames,
+  COMPOSITION_STYLE_REQUEST_PROP,
+  isCompositionStyleRequest,
   finalizeComponent,
   invariant,
 } from '@praxis-kit/adapter-utils'
+import { isDefined, isString } from '@praxis-kit/guards'
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 import { applyDisplayName } from './apply-display-name'
 import { buildRuntime } from './build-runtime'
 import { isPolymorphicComponent } from './is-polymorphic-component'
@@ -95,6 +103,21 @@ export function createContractComponent<
   )
   diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
+  const partnerStyleMetadata = getCompositionStyleMetadata(compose?.with)
+  const compositionClassResolver = partnerStyleMetadata
+    ? createCompositionStyleResolver(
+        bundle.runtime.options,
+        partnerStyleMetadata,
+        compose?.defaults,
+        (message) =>
+          bundle.runtime.options.diagnostics.warn({
+            code: DiagnosticCode.CompositionVariantCollision,
+            category: DiagnosticCategory.Composition,
+            message,
+            ...(isDefined(options.name) && { component: options.name }),
+          }),
+      )
+    : undefined
 
   const Component = defineComponent({
     // normalizeOptions always supplies `name`, so displayName is always defined here —
@@ -102,10 +125,36 @@ export function createContractComponent<
     name: bundle.runtime.options.displayName ?? 'PolymorphicComponent',
     inheritAttrs: false,
     setup(_, { attrs, slots }) {
+      // The resolver request is an internal bridge between generated components, never a
+      // consumer prop and never something that should reach normalized or DOM-bound props.
+      const cleanAttrs = computed(() => {
+        const { [COMPOSITION_STYLE_REQUEST_PROP]: _request, ...rest } = attrs
+        return rest as KnownProps
+      })
+      const compositionStyleRequest = computed(() => {
+        const value = attrs[COMPOSITION_STYLE_REQUEST_PROP]
+        return isCompositionStyleRequest(value) ? value : undefined
+      })
+      const renderRuntime = computed(() => {
+        const request = compositionStyleRequest.value
+        if (request && attrs['asChild'] === true) {
+          return { ...bundle.runtime, resolveClasses: request.resolveClasses }
+        }
+        if (
+          compositionClassResolver &&
+          isDefined(compose?.with) &&
+          attrs['asChild'] === undefined
+        ) {
+          // The primary is represented by the combined resolver on `compose.with`; its child
+          // vnode must not contribute a second, independently-resolved primary class string.
+          return { ...bundle.runtime, resolveClasses: (): undefined => {} }
+        }
+        return bundle.runtime
+      })
       // Cache derived render state using Vue's dependency tracking so prop resolution only
       // recomputes when attrs change.
       const state = computed(() =>
-        prepareRenderState(bundle.runtime, attrs as KnownProps, bundle.filterProps),
+        prepareRenderState(renderRuntime.value, cleanAttrs.value, bundle.filterProps),
       )
 
       // setup() runs once per component instance, so this callback remains stable across
@@ -143,6 +192,7 @@ export function createContractComponent<
       return () => {
         const innerVNode = render({
           ...bundle,
+          runtime: renderRuntime.value,
           state: state.value,
           slots,
           elementRef: onElementRef,
@@ -160,7 +210,39 @@ export function createContractComponent<
         if (compose?.with !== undefined && attrs['asChild'] === undefined) {
           return h(
             compose.with as VueComponent,
-            { ...compose.defaults, ...(compose.allProps ? attrs : undefined), asChild: true },
+            {
+              ...compose.defaults,
+              ...(compose.allProps ? cleanAttrs.value : undefined),
+              ...(compositionClassResolver
+                ? {
+                    [COMPOSITION_STYLE_REQUEST_PROP]: {
+                      resolveClasses: (
+                        tag: unknown,
+                        partnerProps: AnyRecord,
+                        partnerClassName?: string | string[],
+                        partnerRecipe?: string,
+                      ) => {
+                        const recipe = cleanAttrs.value['recipe']
+                        return compositionClassResolver(
+                          tag,
+                          composeStyleProps(
+                            partnerProps,
+                            cleanAttrs.value,
+                            bundle.runtime.options,
+                            compose.defaults,
+                          ),
+                          mergeCompositionClassNames(
+                            partnerClassName,
+                            cleanAttrs.value['class'] as string | string[] | undefined,
+                          ),
+                          isString(recipe) ? recipe : partnerRecipe,
+                        )
+                      },
+                    },
+                  }
+                : {}),
+              asChild: true,
+            },
             { default: () => innerVNode },
           )
         }
@@ -175,7 +257,7 @@ export function createContractComponent<
   const assembled = attachCompositionStyleMetadata(
     finalizeComponent(
       Component,
-      typeof defaultTag === 'string' ? defaultTag : undefined,
+      isString(defaultTag) ? defaultTag : undefined,
       options.subComponents,
     ),
     bundle.runtime.options,
