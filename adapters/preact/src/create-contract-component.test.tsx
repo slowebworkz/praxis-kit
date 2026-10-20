@@ -241,6 +241,28 @@ describe('createContractComponent (Preact adapter)', () => {
     expect(el.className).not.toContain('partner-base')
   })
 
+  it('falls back to primary styling when compose.with has no Praxis metadata', () => {
+    const External = (props: UnknownProps) =>
+      h('section', { className: 'external-base' }, props.children as never)
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: External as never },
+      styling: {
+        base: 'primary-base',
+        variants: { tone: { quiet: 'primary-quiet' } },
+      },
+    })
+
+    mount(h(box(Card), { tone: 'quiet' }))
+
+    const external = container.querySelector('section')!
+    const primary = container.querySelector('div')!
+    expect(external.className).toContain('external-base')
+    expect(primary.className).toContain('primary-base')
+    expect(primary.className).toContain('primary-quiet')
+    expect(primary.className).not.toContain('partner-')
+  })
+
   it('forwards a ref to the rendered element through automatic composition', () => {
     const Surface = createContractComponent({ tag: 'div', styling: { base: 'partner-base' } })
     const Card = createContractComponent({
