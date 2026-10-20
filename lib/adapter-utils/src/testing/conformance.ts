@@ -578,6 +578,41 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           warnSpy.mockRestore()
         }
       })
+
+      it('diagnoses compose.defaults even when the supplied defaults object is empty', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        try {
+          adapter.createComponent({
+            enforcement: { diagnostics: warnDiagnostics },
+            compose: { defaults: {} } as unknown as NonNullable<
+              ConformanceFactoryOptions['compose']
+            >,
+          })
+          const output = warnSpy.mock.calls.flat().join(' ')
+          expect(output).toContain('compose.defaults has no effect without compose.with')
+        } finally {
+          warnSpy.mockRestore()
+        }
+      })
+
+      it('reports both composition-only options in one diagnostic when with is missing', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        try {
+          adapter.createComponent({
+            enforcement: { diagnostics: warnDiagnostics },
+            compose: { allProps: false, defaults: {} } as unknown as NonNullable<
+              ConformanceFactoryOptions['compose']
+            >,
+          })
+          const output = warnSpy.mock.calls.flat().join(' ')
+          expect(warnSpy).toHaveBeenCalledTimes(1)
+          expect(output).toContain(
+            'compose.allProps and compose.defaults have no effect without compose.with',
+          )
+        } finally {
+          warnSpy.mockRestore()
+        }
+      })
     })
 
   // ── composition styling ────────────────────────────────────────────────────────
