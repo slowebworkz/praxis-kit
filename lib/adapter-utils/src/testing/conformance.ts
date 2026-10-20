@@ -19,6 +19,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
   const caps = {
     asChild: true,
     compose: true,
+    compositionStyling: false,
     tagPolymorphism: true,
     domPropFiltering: true,
     dynamicChildRules: false,
@@ -545,6 +546,90 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         } finally {
           warnSpy.mockRestore()
         }
+      })
+    })
+
+  // ── composition styling ────────────────────────────────────────────────────────
+
+  if (caps.compositionStyling)
+    describe('conformance — composition styling', () => {
+      it('combines partner and primary classes in the specified contribution order', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            base: 'partner-base',
+            variants: { intent: { ghost: 'partner-intent-ghost' } },
+            compounds: [{ intent: 'ghost', class: 'partner-compound-ghost' }],
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface, defaults: { intent: 'ghost' } },
+          styling: {
+            base: 'primary-base',
+            variants: { size: { lg: 'primary-size-lg' } },
+            compounds: [{ size: 'lg', class: 'primary-compound-lg' }],
+          },
+        })
+
+        const { element } = adapter.render(Card, { size: 'lg', className: 'caller-class' })
+        const className = element.className
+        const orderedClasses = [
+          'partner-base',
+          'primary-base',
+          'partner-intent-ghost',
+          'primary-size-lg',
+          'partner-compound-ghost',
+          'primary-compound-lg',
+          'caller-class',
+        ]
+        let previousIndex = -1
+
+        for (const classNamePart of orderedClasses) {
+          const index = className.indexOf(classNamePart)
+          expect(index, `${classNamePart} should be present`).toBeGreaterThanOrEqual(0)
+          expect(index, `${classNamePart} should follow the previous contribution`).toBeGreaterThan(
+            previousIndex,
+          )
+          previousIndex = index
+        }
+      })
+
+      it('uses primary defaults over compose.defaults for compatible shared variants', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: { intent: { ghost: 'partner-ghost', solid: 'partner-solid' } },
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface, defaults: { intent: 'ghost' } },
+          styling: {
+            variants: { intent: { ghost: 'primary-ghost', solid: 'primary-solid' } },
+            defaults: { intent: 'solid' },
+          },
+        })
+
+        const { element } = adapter.render(Card)
+        expect(element.className).toContain('partner-solid')
+        expect(element.className).toContain('primary-solid')
+        expect(element.className).not.toContain('partner-ghost')
+        expect(element.className).not.toContain('primary-ghost')
+      })
+
+      it('does not activate partner variants from unforwarded primary props', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: { intent: { ghost: 'partner-intent-ghost' } },
+            compounds: [{ intent: 'ghost', class: 'partner-compound-ghost' }],
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface },
+          styling: { variants: { size: { lg: 'primary-size-lg' } } },
+        })
+
+        const { element } = adapter.render(Card, { intent: 'ghost', size: 'lg' })
+        expect(element.className).toContain('primary-size-lg')
+        expect(element.className).not.toContain('partner-intent-ghost')
+        expect(element.className).not.toContain('partner-compound-ghost')
       })
     })
 

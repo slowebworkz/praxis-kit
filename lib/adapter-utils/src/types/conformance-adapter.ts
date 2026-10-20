@@ -58,6 +58,13 @@ export type ConformanceAdapter<C extends ConformanceComponent = ConformanceCompo
      */
     compose?: boolean
     /**
+     * true when automatic composition combines the primary and partner styling contracts
+     * through the shared composition-aware resolver. This is separate from basic `compose`
+     * rendering, which may only nest the partner and primary components. Opt-in; unset defaults
+     * to false until an adapter implements the combined styling contract.
+     */
+    compositionStyling?: boolean
+    /**
      * false for adapters where the rendered element tag is fixed at registration
      * time (e.g. Lit custom elements). Skips tests that assert element.tagName
      * matches options.tag or the as prop value.

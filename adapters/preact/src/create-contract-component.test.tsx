@@ -182,6 +182,31 @@ describe('createContractComponent (Preact adapter)', () => {
     expect(ref.current).toBe(container.querySelector('button'))
   })
 
+  it('keeps partner, primary, and caller classes when composing', () => {
+    const Surface = createContractComponent({
+      styling: {
+        base: 'partner-base',
+        variants: { intent: { ghost: 'partner-intent-ghost' } },
+      },
+    })
+    const Card = createContractComponent({
+      compose: { with: Surface, defaults: { intent: 'ghost' } },
+      styling: {
+        base: 'primary-base',
+        variants: { size: { lg: 'primary-size-lg' } },
+      },
+    })
+
+    mount(h(box(Card), { size: 'lg', className: 'caller-class' }))
+
+    const el = container.firstElementChild as HTMLElement
+    expect(el.className).toContain('partner-base')
+    expect(el.className).toContain('partner-intent-ghost')
+    expect(el.className).toContain('primary-base')
+    expect(el.className).toContain('primary-size-lg')
+    expect(el.className).toContain('caller-class')
+  })
+
   // `compose` (declarative asChild composition) is covered by the shared conformance suite
   // (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`, "conformance —
   // compose") rather than duplicated here — same convention as `asChild` itself.
