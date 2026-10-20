@@ -211,13 +211,23 @@ export function renderComposed<TProps extends KnownProps>(
               ),
             )
           : undefined
+        const slotProps = mergeSlotProps(withProps, domProps())
+        // `tryRenderAsChild` executes its render callback untracked. Keep the composed class as a
+        // getter instead of eagerly evaluating `composedClass()` here, so Solid's DOM-prop spread
+        // can track class changes and update the mounted element without rerunning the callback.
+        const finalProps = composedClass
+          ? {
+              ...slotProps,
+              get class() {
+                return composedClass()
+              },
+            }
+          : slotProps
+
         return (
           <Dynamic
             component={tag() as unknown as ValidComponent}
-            {...({
-              ...mergeSlotProps(withProps, domProps()),
-              ...(composedClass && { class: composedClass() }),
-            } as UnknownProps)}
+            {...(finalProps as UnknownProps)}
           />
         )
       }}
