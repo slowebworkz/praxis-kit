@@ -624,7 +624,11 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           const Surface = adapter.createComponent({
             styling: {
               base: 'partner-base',
-              variants: { intent: { ghost: 'partner-intent-ghost' } },
+              variants: {
+                intent: { ghost: 'partner-intent-ghost' },
+                tone: { quiet: 'partner-tone-quiet', loud: 'partner-tone-loud' },
+              },
+              presets: { emphasis: { tone: 'loud' } },
             },
           })
           const Card = adapter.createComponent({
@@ -637,7 +641,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
 
           const { element } = adapter.render(
             Card,
-            { asChild: true, intent: 'ghost', size: 'lg' },
+            { asChild: true, intent: 'ghost', size: 'lg', recipe: 'emphasis' },
             [{ tag: 'button' }],
           )
 
@@ -646,6 +650,8 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           expect(element.className).toContain('primary-size-lg')
           expect(element.className).not.toContain('partner-base')
           expect(element.className).not.toContain('partner-intent-ghost')
+          expect(element.className).not.toContain('partner-tone-quiet')
+          expect(element.className).not.toContain('partner-tone-loud')
         })
 
       it('combines partner and primary classes in the specified contribution order', () => {
