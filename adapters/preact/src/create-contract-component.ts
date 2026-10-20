@@ -17,10 +17,17 @@ import type {
 import {
   diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
+  composeStyleProps,
+  createCompositionStyleResolver,
+  getCompositionStyleMetadata,
+  mergeCompositionClassNames,
+  COMPOSITION_STYLE_REQUEST_PROP,
+  isCompositionStyleRequest,
   finalizeComponent,
   invariant,
 } from '@praxis-kit/adapter-utils'
 import { isFunction, isString } from '@praxis-kit/guards'
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 import { h } from 'preact'
 import type { ComponentType } from 'preact'
 import { forwardRef } from 'preact/compat'
@@ -98,15 +105,43 @@ export function createContractComponent<
   )
   diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
+  const partnerStyleMetadata = getCompositionStyleMetadata(compose?.with)
+  const compositionClassResolver = partnerStyleMetadata
+    ? createCompositionStyleResolver(
+        bundle.runtime.options,
+        partnerStyleMetadata,
+        compose?.defaults,
+        (message) =>
+          bundle.runtime.options.diagnostics.warn({
+            code: DiagnosticCode.CompositionVariantCollision,
+            category: DiagnosticCategory.Composition,
+            message,
+            ...(options.name !== undefined && { component: options.name }),
+          }),
+      )
+    : undefined
 
   const Component = forwardRef(function Component(
     props: UnknownProps,
     ref: ForwardedRef<unknown>,
   ): AnyVNode {
+    const compositionStyleRequestValue = props[COMPOSITION_STYLE_REQUEST_PROP]
+    const compositionStyleRequest = isCompositionStyleRequest(compositionStyleRequestValue)
+      ? compositionStyleRequestValue
+      : undefined
+    const { [COMPOSITION_STYLE_REQUEST_PROP]: _compositionStyleRequest, ...componentProps } = props
+    const renderBundle =
+      compositionStyleRequest && componentProps.asChild === true
+        ? {
+            ...bundle,
+            runtime: { ...bundle.runtime, resolveClasses: compositionStyleRequest.resolveClasses },
+          }
+        : bundle
+
     // Keep current on every render so the stable callback ref can always read the latest
     // props via getProps() without re-registering.
-    const propsRef = useRef(props)
-    propsRef.current = props
+    const propsRef = useRef(componentProps)
+    propsRef.current = componentProps
     const cleanupRef = useRef<(() => void) | undefined>(undefined)
 
     // `onElement` originates from the options object closed over by createContractComponent,
@@ -146,18 +181,54 @@ export function createContractComponent<
     // explicit control via their own `asChild`. `compose.allProps` additionally spreads this
     // component's own raw props onto `with` (before the `asChild`/`ref`/`children` overrides, so
     // those three always win) — opt-in.
-    if (compose?.with !== undefined && props.asChild === undefined && !isFunction(props.render)) {
-      const innerElement = render({ ...bundle, props, ref: null })
+    if (
+      compose?.with !== undefined &&
+      componentProps.asChild === undefined &&
+      !isFunction(componentProps.render)
+    ) {
+      const innerElement = render({
+        ...(compositionClassResolver
+          ? { ...bundle, runtime: { ...bundle.runtime, resolveClasses: (): undefined => {} } }
+          : bundle),
+        props: componentProps,
+        ref: null,
+      })
       return h(compose.with as ComponentType<UnknownProps>, {
         ...compose.defaults,
-        ...(compose.allProps ? props : undefined),
+        ...(compose.allProps && componentProps),
+        ...(compositionClassResolver
+          ? {
+              [COMPOSITION_STYLE_REQUEST_PROP]: {
+                resolveClasses: (
+                  tag: unknown,
+                  partnerProps: AnyRecord,
+                  partnerClassName?: string | string[],
+                  partnerRecipe?: string,
+                ) =>
+                  compositionClassResolver(
+                    tag,
+                    composeStyleProps(
+                      partnerProps,
+                      componentProps,
+                      bundle.runtime.options,
+                      compose.defaults,
+                    ),
+                    mergeCompositionClassNames(
+                      partnerClassName,
+                      componentProps.className as string | string[] | undefined,
+                    ),
+                    isString(componentProps.recipe) ? componentProps.recipe : partnerRecipe,
+                  ),
+              },
+            }
+          : {}),
         asChild: true,
         ref: mergedRef,
         children: innerElement,
       })
     }
 
-    return render({ ...bundle, props, ref: mergedRef })
+    return render({ ...renderBundle, props: componentProps, ref: mergedRef })
   })
 
   applyDisplayName(Component, options.name)

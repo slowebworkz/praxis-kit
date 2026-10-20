@@ -68,6 +68,7 @@ const adapter: ConformanceAdapter<PreactConformanceComponent> = {
     if (container?.parentNode) container.parentNode.removeChild(container)
   },
   createRef: () => createRef<HTMLElement>(),
+  capabilities: { compositionStyling: true },
 }
 
 conformanceSuite(adapter)
