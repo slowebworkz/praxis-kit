@@ -1,4 +1,5 @@
 export { applyDisplayName } from './apply-display-name'
+export { diagnoseIncompleteComposition } from './diagnose-incomplete-composition'
 export { defineContract } from './define-contract'
 export { declareProps } from './declare-props'
 export { assembleCompoundComponent } from './assemble-compound-component'

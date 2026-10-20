@@ -12,6 +12,7 @@ import type {
   VariantMap,
 } from '@praxis-kit/core'
 import {
+  diagnoseIncompleteComposition,
   assembleCompoundComponent,
   attachCompositionStyleMetadata,
 } from '@praxis-kit/adapter-utils'
@@ -84,5 +85,6 @@ export function createContractComponent<
   ) as unknown as BuiltRuntime<ContractGenericsOf<C>, C>
 
   attachCompositionStyleMetadata(bundle, bundle.runtime.options)
+  diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   return assembleCompoundComponent(bundle, options.subComponents)
 }

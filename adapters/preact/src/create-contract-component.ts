@@ -15,6 +15,7 @@ import type {
   VariantMap,
 } from '@praxis-kit/core'
 import {
+  diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
   finalizeComponent,
   invariant,
@@ -95,6 +96,7 @@ export function createContractComponent<
   const bundle = buildRuntime(
     options as unknown as PreactFactoryOptions<TDefault, Props, Variants, TPreset>,
   )
+  diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
 
   const Component = forwardRef(function Component(

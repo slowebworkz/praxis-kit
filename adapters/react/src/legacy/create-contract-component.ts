@@ -17,6 +17,7 @@ import type {
   VariantMap,
 } from '@praxis-kit/core'
 import {
+  diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
   composeStyleProps,
   createCompositionStyleResolver,
@@ -108,6 +109,7 @@ export function createContractComponent<
       TAllowed
     >,
   )
+  diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
   const partnerStyleMetadata = getCompositionStyleMetadata(compose?.with)
   const compositionClassResolver = partnerStyleMetadata

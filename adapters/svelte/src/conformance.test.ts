@@ -45,7 +45,7 @@ const adapter: ConformanceAdapter<SvelteComponent> = {
     // expect for compose.with. Unwrap it before handing options to the real implementation.
     const compose = options.compose
     const unwrappedOptions =
-      compose !== undefined
+      compose?.with !== undefined
         ? { ...options, compose: { ...compose, with: (compose.with as SvelteComponent)._bundle } }
         : options
     const bundle = createContractComponent(

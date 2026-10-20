@@ -17,6 +17,7 @@ import type {
   VariantMap,
 } from '@praxis-kit/core'
 import {
+  diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
   finalizeComponent,
   invariant,
@@ -92,6 +93,7 @@ export function createContractComponent<
   const bundle = buildRuntime(
     options as unknown as VueFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin>,
   )
+  diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
 
   const Component = defineComponent({

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import type { AnyRecord } from '@praxis-kit/core'
-import type { ConformanceAdapter, ConformanceComponent } from '../types'
+import type { ConformanceAdapter, ConformanceComponent, ConformanceFactoryOptions } from '../types'
 import { throwDiagnostics, warnDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
 import { dynamic } from '@praxis-kit/primitive'
 export type {
@@ -528,6 +528,23 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         const { element } = adapter.render(BoxB, { 'data-testid': 'inner' })
         expect(element.tagName.toLowerCase()).toBe('button')
         expect(element.getAttribute('data-testid')).toBe('inner')
+      })
+
+      it('warns at construction when compose options are supplied without "with"', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        try {
+          adapter.createComponent({
+            enforcement: { diagnostics: warnDiagnostics },
+            // Deliberately incomplete: the type requires `with`, the runtime diagnostic covers JS callers.
+            compose: { allProps: true } as unknown as NonNullable<
+              ConformanceFactoryOptions['compose']
+            >,
+          })
+          const output = warnSpy.mock.calls.flat().join(' ')
+          expect(output).toContain('compose.allProps has no effect without compose.with')
+        } finally {
+          warnSpy.mockRestore()
+        }
       })
     })
 
