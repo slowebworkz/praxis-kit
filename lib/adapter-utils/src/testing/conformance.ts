@@ -531,6 +531,21 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(element.getAttribute('data-testid')).toBe('inner')
       })
 
+      it('delivers a handler to the composing component exactly once, with or without allProps', () => {
+        for (const allProps of [true, false]) {
+          const BoxA = adapter.createComponent({})
+          const BoxB = adapter.createComponent({ compose: { with: BoxA, allProps } })
+          let calls = 0
+          const { element } = adapter.render(BoxB, {
+            onClick: () => {
+              calls++
+            },
+          })
+          element.click()
+          expect(calls, `allProps: ${allProps}`).toBe(1)
+        }
+      })
+
       it('warns at construction when compose options are supplied without "with"', () => {
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
         try {
