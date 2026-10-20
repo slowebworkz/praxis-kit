@@ -1,4 +1,11 @@
-import { applyFilter, mergeSlotProps, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
+import {
+  applyFilter,
+  composeStyleProps,
+  mergeCompositionClassNames,
+  mergeSlotProps,
+  resolveNormalizedProps,
+} from '@praxis-kit/adapter-utils'
+import type { ClassPipelineFn } from '@praxis-kit/styling'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
 import { isString } from '@praxis-kit/guards'
@@ -129,6 +136,10 @@ export function renderComposed<TProps extends KnownProps>(
   ref: unknown,
   allProps?: boolean,
   defaults?: object,
+  compositionClassResolver?: {
+    resolve: ClassPipelineFn
+    primary: Parameters<typeof composeStyleProps>[2]
+  },
 ): SolidElement {
   const [knownRaw, rest] = splitProps(props, SPLIT_KEYS)
   const known = knownRaw as unknown as KnownProps
@@ -166,12 +177,40 @@ export function renderComposed<TProps extends KnownProps>(
       asChild
       ref={ref}
     >
-      {(withProps: UnknownProps) => (
-        <Dynamic
-          component={tag() as unknown as ValidComponent}
-          {...(mergeSlotProps(withProps, domProps()) as UnknownProps)}
-        />
-      )}
+      {(withProps: UnknownProps) => {
+        // The partner's own resolved `withProps.class` is superseded by the combined pipeline, but
+        // an explicit `class` supplied through `compose.defaults` is caller input and must survive.
+        const configuredClass = defaults ? Reflect.get(defaults, 'class') : undefined
+        const defaultClass =
+          isString(configuredClass) || Array.isArray(configuredClass) ? configuredClass : undefined
+        const composedClass = compositionClassResolver
+          ? createMemo(() =>
+              compositionClassResolver.resolve(
+                tag(),
+                composeStyleProps(
+                  {
+                    ...defaults,
+                    ...(allProps ? props : {}),
+                  },
+                  props,
+                  compositionClassResolver.primary,
+                  defaults,
+                ),
+                mergeCompositionClassNames(defaultClass, known.class as string | undefined),
+                isString(known.recipe) ? known.recipe : undefined,
+              ),
+            )
+          : undefined
+        return (
+          <Dynamic
+            component={tag() as unknown as ValidComponent}
+            {...({
+              ...mergeSlotProps(withProps, domProps()),
+              ...(composedClass && { class: composedClass() }),
+            } as UnknownProps)}
+          />
+        )
+      }}
     </Dynamic>
   ) as unknown as SolidElement
 }

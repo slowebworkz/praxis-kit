@@ -17,9 +17,12 @@ import type {
 import {
   diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
+  createCompositionStyleResolver,
+  getCompositionStyleMetadata,
   finalizeComponent,
   invariant,
 } from '@praxis-kit/adapter-utils'
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 import { mergeProps, onCleanup } from 'solid-js'
 import { applyDisplayName } from './apply-display-name'
 import { buildRuntime } from './build-runtime'
@@ -99,6 +102,24 @@ export function createContractComponent<
   )
   diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
+  const partnerStyleMetadata = getCompositionStyleMetadata(compose?.with)
+  const compositionClassResolver = partnerStyleMetadata
+    ? {
+        resolve: createCompositionStyleResolver(
+          bundle.runtime.options,
+          partnerStyleMetadata,
+          compose?.defaults,
+          (message) =>
+            bundle.runtime.options.diagnostics.warn({
+              code: DiagnosticCode.CompositionVariantCollision,
+              category: DiagnosticCategory.Composition,
+              message,
+              ...(options.name !== undefined && { component: options.name }),
+            }),
+        ),
+        primary: bundle.runtime.options,
+      }
+    : undefined
 
   const Component = (props: UnknownProps): SolidElement => {
     // Solid ref callbacks fire once, at element creation — a natural fit for "mount". They
@@ -137,6 +158,7 @@ export function createContractComponent<
         known.ref,
         compose.allProps,
         compose.defaults,
+        compositionClassResolver,
       )
     }
 

@@ -216,6 +216,36 @@ describe('createContractComponent (Solid adapter)', () => {
   // render-function child, incompatible with the harness's `ChildSpec`), so this one case stays
   // adapter-specific, same convention `asChild` itself already uses.
 
+  it('compose: a class supplied through compose.defaults survives combined styling', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'partner-base',
+        variants: { intent: { ghost: 'partner-ghost', solid: 'partner-solid' } },
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface, defaults: { class: 'default-class', intent: 'ghost' } },
+      styling: {
+        base: 'primary-base',
+        variants: { intent: { ghost: 'primary-ghost', solid: 'primary-solid' } },
+        defaults: { intent: 'solid' },
+      },
+    })
+
+    const { container } = solidRender(() => <Card class="caller-class" />)
+    const className = container.querySelector('div')!.className
+
+    expect(className).toContain('default-class')
+    expect(className).toContain('caller-class')
+    expect(className).toContain('partner-base')
+    expect(className).toContain('primary-base')
+    expect(className).toContain('partner-solid')
+    expect(className).not.toContain('partner-ghost')
+    expect(className).not.toContain('primary-ghost')
+  })
+
   it('compose: an explicit asChild from the consumer wins over compose', () => {
     const BoxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
     const BoxB = createContractComponent({
