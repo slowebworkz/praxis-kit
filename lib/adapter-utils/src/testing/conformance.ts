@@ -902,6 +902,37 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(element.className).toContain('partner-compound-lg')
       })
 
+      it('narrows partner compound arrays to values supported by the primary variant', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: {
+              tone: { calm: 'partner-calm', loud: 'partner-loud', quiet: 'partner-quiet' },
+              size: { sm: 'partner-sm', lg: 'partner-lg' },
+            },
+            compounds: [
+              { tone: ['calm', 'loud'], size: 'lg', class: 'partner-compound-supported-array' },
+              { tone: ['loud', 'quiet'], class: 'partner-compound-unsupported-array' },
+            ],
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface },
+          enforcement: { diagnostics: silentDiagnostics },
+          styling: {
+            variants: { tone: { calm: 'primary-calm', bold: 'primary-bold' } },
+          },
+        })
+
+        const supported = adapter.render(Card, { tone: 'calm', size: 'lg' })
+        expect(supported.element.className).toContain('partner-compound-supported-array')
+        expect(supported.element.className).not.toContain('partner-compound-unsupported-array')
+        supported.unmount()
+
+        const unsupported = adapter.render(Card, { tone: 'loud', size: 'lg' })
+        expect(unsupported.element.className).not.toContain('partner-compound-supported-array')
+        expect(unsupported.element.className).not.toContain('partner-compound-unsupported-array')
+      })
+
       if (adapter.createExternalPartner)
         it('falls back to nested rendering for a target without retained Praxis styling metadata', () => {
           const External = adapter.createExternalPartner!()
