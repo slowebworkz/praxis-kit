@@ -548,6 +548,20 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         }
       })
 
+      it('does not warn for an empty compose configuration', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        try {
+          adapter.createComponent({
+            enforcement: { diagnostics: warnDiagnostics },
+            // Empty compose is inert and should not trigger incomplete-config diagnostics.
+            compose: {} as unknown as NonNullable<ConformanceFactoryOptions['compose']>,
+          })
+          expect(warnSpy).not.toHaveBeenCalled()
+        } finally {
+          warnSpy.mockRestore()
+        }
+      })
+
       it('warns at construction when compose options are supplied without "with"', () => {
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
         try {
@@ -657,6 +671,24 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(element.className).toContain('primary-base')
         expect(element.className).not.toContain('partner-quiet')
         expect(calls).toBe(1)
+      })
+
+      it('resolves a partner-only recipe without allProps when its variant is undefined', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+            presets: { emphasis: { tone: 'loud' } },
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface },
+          styling: { base: 'primary-base' },
+        })
+
+        const { element } = adapter.render(Card, { recipe: 'emphasis', tone: undefined })
+        expect(element.className).toContain('partner-loud')
+        expect(element.className).toContain('primary-base')
+        expect(element.className).not.toContain('partner-quiet')
       })
 
       it('activates partner variants selected on the composing component without allProps', () => {
