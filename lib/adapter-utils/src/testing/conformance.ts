@@ -918,6 +918,23 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           expect(element.className).toContain('caller-class')
         })
 
+      it('keeps ordinary styling when allProps is supplied without a composition target', () => {
+        const Box = adapter.createComponent({
+          compose: { allProps: true } as unknown as NonNullable<ConformanceFactoryOptions['compose']>,
+          styling: {
+            base: 'primary-base',
+            variants: { tone: { quiet: 'primary-quiet', loud: 'primary-loud' } },
+            defaults: { tone: 'quiet' },
+          },
+        })
+
+        const { element } = adapter.render(Box, { tone: 'loud' })
+
+        expect(element.className).toContain('primary-base')
+        expect(element.className).toContain('primary-loud')
+        expect(element.className).not.toContain('primary-quiet')
+      })
+
       it('activates partner variants selected on the composing component without allProps', () => {
         const Surface = adapter.createComponent({
           styling: {
