@@ -166,8 +166,14 @@
     }
     return resolveNormalizedProps(options, tag, mergedProps)
   })
+  // Automatic composition with a Praxis partner owns class resolution (see `composedClass` below),
+  // so the primary must not also resolve on its own: it would reject a recipe that only the
+  // partner defines, and its result is discarded by `composeProps` anyway.
+  const composing = $derived(bundle.resolveComposedClasses !== undefined && !asChild)
   const resolvedClass = $derived(
-    bundle.runtime.resolveClasses(tag, normalizedProps, cls as string | undefined, recipe),
+    composing
+      ? undefined
+      : bundle.runtime.resolveClasses(tag, normalizedProps, cls as string | undefined, recipe),
   )
   const filteredProps = $derived(
     applyFilter(normalizedProps, bundle.filterProps, bundle.runtime.options.variantKeys),
@@ -182,7 +188,6 @@
   // `compose.defaults` plus, with `allProps`, this component's raw props; its own separately-
   // resolved class (`withProps.class`) is superseded rather than concatenated. Explicit `asChild`
   // never reaches the compose branch, so it keeps ordinary own-contract styling.
-  const composing = $derived(bundle.resolveComposedClasses !== undefined && !asChild)
   const composedClass = $derived(
     composing
       ? bundle.resolveComposedClasses?.(

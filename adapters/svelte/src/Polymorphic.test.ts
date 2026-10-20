@@ -415,6 +415,27 @@ describe('Polymorphic (Svelte adapter)', () => {
         expect(className).toContain('primary-loud')
       })
 
+      it('retains a recipe that only the partner defines instead of rejecting it', () => {
+        const surface = createContractComponent({
+          tag: 'div',
+          styling: {
+            variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+            presets: { emphasis: { tone: 'loud' } },
+          },
+        })
+        const card = createContractComponent({
+          tag: 'div',
+          compose: { with: surface },
+          styling: { base: 'primary-base' },
+        })
+
+        const { container } = render(Polymorphic, { bundle: card, recipe: 'emphasis' })
+        const className = container.querySelector('div')!.className
+
+        expect(className).toContain('partner-loud')
+        expect(className).toContain('primary-base')
+      })
+
       it('lets the primary win an incompatible shared variant and warns once at construction', () => {
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
         try {
