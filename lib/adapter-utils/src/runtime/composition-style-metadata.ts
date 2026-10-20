@@ -11,7 +11,7 @@ import {
   createCompositionStyleResolver as createCoreCompositionStyleResolver,
   createOptionalCompositionStyleResolver,
   getCompositionStyleMetadata,
-} from '@praxis-kit/core'
+} from '@praxis-kit/core/internal/composition-style'
 import type { ComposeOptions } from '@praxis-kit/core'
 import type {
   CompositionClassResolver,

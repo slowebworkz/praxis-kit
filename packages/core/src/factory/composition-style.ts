@@ -70,6 +70,8 @@ const buildOptionalResolver = ({
   return createCompositionStyleResolver(primary, partner, compose.defaults, onDiagnostic)
 }
 
+const optionalCompositionStylePipeline = composePipelines(resolvePartner, buildOptionalResolver)
+
 /**
  * Construct the optional composition styling pipeline from explicit retained contract metadata.
  * This lives beside the core runtime so adapters receive the already-resolved capability instead
@@ -80,6 +82,9 @@ export function createOptionalCompositionStyleResolver(
   compose: ComposeOptions | undefined,
   onDiagnostic?: CompositionDiagnostic,
 ): CompositionClassResolver | undefined {
-  const pipeline = composePipelines(resolvePartner, buildOptionalResolver)
-  return pipeline({ primary, ...(compose && { compose }), ...(onDiagnostic && { onDiagnostic }) })
+  return optionalCompositionStylePipeline({
+    primary,
+    ...(compose && { compose }),
+    ...(onDiagnostic && { onDiagnostic }),
+  })
 }
