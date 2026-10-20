@@ -629,6 +629,34 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(element.className).not.toContain('primary-ghost')
       })
 
+      it('resolves a partner-only recipe while a handler forwarded through allProps fires once', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+            presets: { emphasis: { tone: 'loud' } },
+          },
+        })
+        // The primary defines no `emphasis` preset: the recipe belongs to the partner alone.
+        const Card = adapter.createComponent({
+          compose: { with: Surface, allProps: true },
+          styling: { base: 'primary-base' },
+        })
+        let calls = 0
+
+        const { element } = adapter.render(Card, {
+          recipe: 'emphasis',
+          onClick: () => {
+            calls++
+          },
+        })
+        element.click()
+
+        expect(element.className).toContain('partner-loud')
+        expect(element.className).toContain('primary-base')
+        expect(element.className).not.toContain('partner-quiet')
+        expect(calls).toBe(1)
+      })
+
       it('does not activate partner variants from unforwarded primary props', () => {
         const Surface = adapter.createComponent({
           styling: {

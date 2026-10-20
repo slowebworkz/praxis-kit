@@ -153,13 +153,18 @@ export function renderComposed<TProps extends KnownProps>(
   const normalizedProps = createMemo(() =>
     resolveNormalizedProps(runtime.options, tag(), mergedProps()),
   )
+  // With a Praxis partner the combined resolver below owns class resolution. The primary must not
+  // also resolve on its own: it would reject a recipe that only the partner defines, and its
+  // result is replaced by the combined class anyway.
   const resolvedClass = createMemo(() =>
-    runtime.resolveClasses(
-      tag(),
-      normalizedProps(),
-      known.class as string | undefined,
-      known.recipe as string | undefined,
-    ),
+    compositionClassResolver
+      ? undefined
+      : runtime.resolveClasses(
+          tag(),
+          normalizedProps(),
+          known.class as string | undefined,
+          known.recipe as string | undefined,
+        ),
   )
   const filteredProps = createMemo(() =>
     applyFilter(normalizedProps(), filterProps, runtime.options.variantKeys),
