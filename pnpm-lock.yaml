@@ -225,8 +225,8 @@ catalogs:
       specifier: ^0.8.1
       version: 0.8.1
     publint:
-      specifier: ^0.3.24
-      version: 0.3.24
+      specifier: ^0.3.25
+      version: 0.3.25
     react:
       specifier: ^19.3.0
       version: 19.3.0
@@ -335,13 +335,13 @@ importers:
         version: 0.8.1(prettier@3.9.10)
       publint:
         specifier: 'catalog:'
-        version: 0.3.24
+        version: 0.3.25
       ts-morph:
         specifier: 'catalog:'
         version: 28.0.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.1(publint@0.3.24)(tsx@4.23.13)(typescript@6.0.3)
+        version: 0.23.1(publint@0.3.25)(tsx@4.23.13)(typescript@6.0.3)
       tsx:
         specifier: 'catalog:'
         version: 4.23.13
@@ -987,7 +987,7 @@ importers:
         version: 10.29.8(preact-render-to-string@6.7.0)
       publint:
         specifier: 'catalog:'
-        version: 0.3.24
+        version: 0.3.25
       react:
         specifier: 'catalog:'
         version: 19.3.0
@@ -1002,7 +1002,7 @@ importers:
         version: 5.57.2(@typescript-eslint/types@8.68.0)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.1(publint@0.3.24)(tsx@4.23.13)(typescript@6.0.3)
+        version: 0.23.1(publint@0.3.25)(tsx@4.23.13)(typescript@6.0.3)
       tsx:
         specifier: 'catalog:'
         version: 4.23.13
@@ -1054,7 +1054,7 @@ importers:
     devDependencies:
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.1(publint@0.3.24)(tsx@4.23.13)(typescript@6.0.3)
+        version: 0.23.1(publint@0.3.25)(tsx@4.23.13)(typescript@6.0.3)
       typescript:
         specifier: '>=6 <7'
         version: 6.0.3
@@ -1243,7 +1243,7 @@ importers:
         version: 26.6.5
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.1(publint@0.3.24)(tsx@4.23.13)(typescript@6.0.3)
+        version: 0.23.1(publint@0.3.25)(tsx@4.23.13)(typescript@6.0.3)
       typescript:
         specifier: '>=6 <7'
         version: 6.0.3
@@ -3730,8 +3730,8 @@ packages:
   proto-list@1.2.4:
     resolution: {integrity: sha512-vtK/94akxsTMhe0/cbfpR+syPuszcuwhqVjJq26CuNDgFGj682oRBXOP5MJpv2r7JtE8MsiepGIqvvOTBwn2vA==}
 
-  publint@0.3.24:
-    resolution: {integrity: sha512-9zS56KrKBoqi5Qt8h92uMP8TTM9AYZSgnmCo4u2priMqkOZvQnTsziZ2p5LJ2ywbYkAjoCDp2jda9u4cgFefIw==}
+  publint@0.3.25:
+    resolution: {integrity: sha512-WMMbn/d7JqRlfXQL/JUI4n5skC8cJ5WVr8/wT5mmiYWkUdENkZr1I5rgs2+dQPVRgoJd+JRYtB46MTsuDylw9g==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -6650,7 +6650,7 @@ snapshots:
 
   proto-list@1.2.4: {}
 
-  publint@0.3.24:
+  publint@0.3.25:
     dependencies:
       '@publint/pack': 0.1.7
       package-manager-detector: 1.8.0
@@ -6917,7 +6917,7 @@ snapshots:
       '@ts-morph/common': 0.29.0
       code-block-writer: 13.0.3
 
-  tsdown@0.23.1(publint@0.3.24)(tsx@4.23.13)(typescript@6.0.3):
+  tsdown@0.23.1(publint@0.3.25)(tsx@4.23.13)(typescript@6.0.3):
     dependencies:
       cac: 7.0.1
       defu: 6.1.7
@@ -6934,7 +6934,7 @@ snapshots:
       unconfig-core: 7.5.0
       verkit: 0.5.0
     optionalDependencies:
-      publint: 0.3.24
+      publint: 0.3.25
       tsx: 4.23.13
       typescript: 6.0.3
     transitivePeerDependencies:
