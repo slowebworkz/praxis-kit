@@ -9,7 +9,7 @@ import type { ClassPipelineFn } from '@praxis-kit/styling'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
 import { isString } from '@praxis-kit/guards'
-import { createEffect, createMemo, splitProps } from 'solid-js'
+import { createEffect, createMemo, mergeProps, splitProps, untrack } from 'solid-js'
 import type { ValidComponent } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import type { SlotValidator } from './slot'
@@ -104,9 +104,14 @@ function tryRenderAsChild(
   }
   if (!slotValidator.assertRenderFn(known.children)) return null
   const renderFn = known.children as (p: UnknownProps) => SolidElement
-  // createMemo tracks filteredProps() and resolvedClass() so slot props stay reactive.
+  // The render function runs once, untracked, with a reactive props proxy: reads inside the JSX it
+  // returns (`<a {...props} />`) stay fine-grained, so a changed slot prop updates the existing
+  // element in place instead of re-running the function and replacing the element (which would
+  // drop focus, uncontrolled state and any ref held on it). Re-runs only when the function itself
+  // or a tracked read outside the proxy changes.
+  const slotProps = mergeProps(() => buildSlotProps(filteredProps(), resolvedClass(), known.ref))
   return createMemo(() =>
-    renderFn(buildSlotProps(filteredProps(), resolvedClass(), known.ref)),
+    untrack(() => renderFn(slotProps as UnknownProps)),
   ) as unknown as SolidElement
 }
 
