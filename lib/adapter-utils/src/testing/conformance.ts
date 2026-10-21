@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import type { AnyRecord } from '@praxis-kit/core'
-import type { ConformanceAdapter, ConformanceComponent } from '../types'
+import type { ConformanceAdapter, ConformanceComponent, ConformanceFactoryOptions } from '../types'
 import { throwDiagnostics, warnDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
 import { dynamic } from '@praxis-kit/primitive'
 export type {
@@ -19,6 +19,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
   const caps = {
     asChild: true,
     compose: true,
+    compositionStyling: false,
     tagPolymorphism: true,
     domPropFiltering: true,
     dynamicChildRules: false,
@@ -357,13 +358,15 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           expect(ref.current!.tagName.toLowerCase()).toBe('button')
         })
 
-      it('without allProps, "with" does not see the composing component\'s own props', () => {
+      it('without allProps, a variant the partner declares is still selected on the composing component', () => {
+        // `allProps` gates raw prop forwarding only; the partner's styling variants are part of
+        // the composing component's public surface whenever `compose.with` exists.
         const BoxA = adapter.createComponent({
           styling: { variants: { intent: { ghost: 'intent-ghost' } } },
         })
         const BoxB = adapter.createComponent({ compose: { with: BoxA } })
         const { element } = adapter.render(BoxB, { intent: 'ghost' })
-        expect(element.className).not.toContain('intent-ghost')
+        expect(element.className).toContain('intent-ghost')
       })
 
       it('with allProps: true, "with" resolves its own variants from the forwarded props', () => {
@@ -427,7 +430,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(element.className).toContain('child-compound-ghost-lg')
       })
 
-      it('does not resolve child compounds from parent props when allProps is disabled', () => {
+      it('resolves child compounds from selected partner variants when allProps is disabled', () => {
         const BoxA = adapter.createComponent({
           styling: {
             variants: {
@@ -440,7 +443,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         const BoxB = adapter.createComponent({ compose: { with: BoxA } })
 
         const { element } = adapter.render(BoxB, { intent: 'ghost', size: 'lg' })
-        expect(element.className).not.toContain('child-compound-ghost-lg')
+        expect(element.className).toContain('child-compound-ghost-lg')
       })
 
       it('matches child compounds using both defaults and forwarded props', () => {
@@ -528,6 +531,509 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         const { element } = adapter.render(BoxB, { 'data-testid': 'inner' })
         expect(element.tagName.toLowerCase()).toBe('button')
         expect(element.getAttribute('data-testid')).toBe('inner')
+      })
+
+      it('delivers a handler to the composing component exactly once, with or without allProps', () => {
+        for (const allProps of [true, false]) {
+          const BoxA = adapter.createComponent({})
+          const BoxB = adapter.createComponent({ compose: { with: BoxA, allProps } })
+          let calls = 0
+          const { element } = adapter.render(BoxB, {
+            onClick: () => {
+              calls++
+            },
+          })
+          element.click()
+          expect(calls, `allProps: ${allProps}`).toBe(1)
+        }
+      })
+
+      it('does not warn for an empty compose configuration', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        try {
+          adapter.createComponent({
+            enforcement: { diagnostics: warnDiagnostics },
+            // Empty compose is inert and should not trigger incomplete-config diagnostics.
+            compose: {} as unknown as NonNullable<ConformanceFactoryOptions['compose']>,
+          })
+          expect(warnSpy).not.toHaveBeenCalled()
+        } finally {
+          warnSpy.mockRestore()
+        }
+      })
+
+      it('warns at construction when compose options are supplied without "with"', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        try {
+          adapter.createComponent({
+            enforcement: { diagnostics: warnDiagnostics },
+            // Deliberately incomplete: the type requires `with`, the runtime diagnostic covers JS callers.
+            compose: { allProps: true } as unknown as NonNullable<
+              ConformanceFactoryOptions['compose']
+            >,
+          })
+          const output = warnSpy.mock.calls.flat().join(' ')
+          expect(output).toContain('compose.allProps has no effect without compose.with')
+        } finally {
+          warnSpy.mockRestore()
+        }
+      })
+
+      it('diagnoses compose.defaults even when the supplied defaults object is empty', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        try {
+          adapter.createComponent({
+            enforcement: { diagnostics: warnDiagnostics },
+            compose: { defaults: {} } as unknown as NonNullable<
+              ConformanceFactoryOptions['compose']
+            >,
+          })
+          const output = warnSpy.mock.calls.flat().join(' ')
+          expect(output).toContain('compose.defaults has no effect without compose.with')
+        } finally {
+          warnSpy.mockRestore()
+        }
+      })
+
+      it('reports both composition-only options in one diagnostic when with is missing', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        try {
+          adapter.createComponent({
+            enforcement: { diagnostics: warnDiagnostics },
+            compose: { allProps: false, defaults: {} } as unknown as NonNullable<
+              ConformanceFactoryOptions['compose']
+            >,
+          })
+          const output = warnSpy.mock.calls.flat().join(' ')
+          expect(warnSpy).toHaveBeenCalledTimes(1)
+          expect(output).toContain(
+            'compose.allProps and compose.defaults have no effect without compose.with',
+          )
+        } finally {
+          warnSpy.mockRestore()
+        }
+      })
+    })
+
+  // ── composition styling ────────────────────────────────────────────────────────
+
+  if (caps.compositionStyling)
+    describe('conformance — composition styling', () => {
+      if (caps.asChild)
+        it('uses ordinary primary styling when explicit asChild overrides composition', () => {
+          const Surface = adapter.createComponent({
+            styling: {
+              base: 'partner-base',
+              variants: {
+                intent: { ghost: 'partner-intent-ghost' },
+                tone: { quiet: 'partner-tone-quiet', loud: 'partner-tone-loud' },
+              },
+              presets: { emphasis: { tone: 'loud' } },
+            },
+          })
+          const Card = adapter.createComponent({
+            compose: { with: Surface, defaults: { tone: 'loud' } },
+            styling: {
+              base: 'primary-base',
+              variants: { size: { lg: 'primary-size-lg' } },
+              presets: { emphasis: { size: 'lg' } },
+            },
+          })
+
+          // `emphasis` exists on both components; only the primary's definition may apply, and
+          // `compose.defaults` (partner-scoped) must not become a primary styling default.
+          const { element } = adapter.render(
+            Card,
+            { asChild: true, intent: 'ghost', recipe: 'emphasis' },
+            [{ tag: 'button' }],
+          )
+
+          expect(element.tagName.toLowerCase()).toBe('button')
+          expect(element.className).toContain('primary-base')
+          expect(element.className).toContain('primary-size-lg')
+          expect(element.className).not.toContain('partner-base')
+          expect(element.className).not.toContain('partner-intent-ghost')
+          expect(element.className).not.toContain('partner-tone-quiet')
+          expect(element.className).not.toContain('partner-tone-loud')
+        })
+
+      it('combines partner and primary classes in the specified contribution order', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            base: 'partner-base',
+            variants: { intent: { ghost: 'partner-intent-ghost' } },
+            compounds: [{ intent: 'ghost', class: 'partner-compound-ghost' }],
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface, defaults: { intent: 'ghost' } },
+          styling: {
+            base: 'primary-base',
+            variants: { size: { lg: 'primary-size-lg' } },
+            compounds: [{ size: 'lg', class: 'primary-compound-lg' }],
+          },
+        })
+
+        const { element } = adapter.render(Card, { size: 'lg', class: 'caller-class' })
+        const className = element.className
+        const orderedClasses = [
+          'partner-base',
+          'primary-base',
+          'partner-intent-ghost',
+          'primary-size-lg',
+          'partner-compound-ghost',
+          'primary-compound-lg',
+          'caller-class',
+        ]
+        let previousIndex = -1
+
+        for (const classNamePart of orderedClasses) {
+          const index = className.indexOf(classNamePart)
+          expect(index, `${classNamePart} should be present`).toBeGreaterThanOrEqual(0)
+          expect(index, `${classNamePart} should follow the previous contribution`).toBeGreaterThan(
+            previousIndex,
+          )
+          previousIndex = index
+        }
+      })
+
+      it('combines partner and primary tag-map classes for the rendered tag', () => {
+        const Surface = adapter.createComponent({
+          tag: 'section',
+          styling: { tags: { section: 'partner-section' } },
+        })
+        const Card = adapter.createComponent({
+          tag: 'section',
+          compose: { with: Surface },
+          styling: { tags: { section: 'primary-section' } },
+        })
+
+        const { element } = adapter.render(Card)
+
+        expect(element.tagName.toLowerCase()).toBe('section')
+        expect(element.className).toContain('partner-section')
+        expect(element.className).toContain('primary-section')
+      })
+
+      it('uses primary defaults over compose.defaults for compatible shared variants', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: { intent: { ghost: 'partner-ghost', solid: 'partner-solid' } },
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface, defaults: { intent: 'ghost' } },
+          styling: {
+            variants: { intent: { ghost: 'primary-ghost', solid: 'primary-solid' } },
+            defaults: { intent: 'solid' },
+          },
+        })
+
+        const { element } = adapter.render(Card)
+        expect(element.className).toContain('partner-solid')
+        expect(element.className).toContain('primary-solid')
+        expect(element.className).not.toContain('partner-ghost')
+        expect(element.className).not.toContain('primary-ghost')
+      })
+
+      it('resolves a partner-only recipe while a handler forwarded through allProps fires once', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+            presets: { emphasis: { tone: 'loud' } },
+          },
+        })
+        // The primary defines no `emphasis` preset: the recipe belongs to the partner alone.
+        const Card = adapter.createComponent({
+          compose: { with: Surface, allProps: true },
+          styling: { base: 'primary-base' },
+        })
+        let calls = 0
+
+        const { element } = adapter.render(Card, {
+          recipe: 'emphasis',
+          onClick: () => {
+            calls++
+          },
+        })
+        element.click()
+
+        expect(element.className).toContain('partner-loud')
+        expect(element.className).toContain('primary-base')
+        expect(element.className).not.toContain('partner-quiet')
+        expect(calls).toBe(1)
+      })
+
+      it('merges partner and primary recipes with primary values winning duplicate keys', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: {
+              tone: { quiet: 'partner-quiet', loud: 'partner-loud' },
+              size: { sm: 'partner-sm', lg: 'partner-lg' },
+            },
+            presets: { emphasis: { tone: 'quiet', size: 'lg' } },
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface },
+          styling: {
+            variants: {
+              tone: { quiet: 'primary-quiet', loud: 'primary-loud' },
+              density: { compact: 'primary-compact', spacious: 'primary-spacious' },
+            },
+            presets: { emphasis: { tone: 'loud', density: 'compact' } },
+          },
+        })
+
+        const { element } = adapter.render(Card, { recipe: 'emphasis' })
+
+        // The primary recipe wins the shared `tone` key; unique recipe keys still merge.
+        expect(element.className).toContain('partner-loud')
+        expect(element.className).toContain('primary-loud')
+        expect(element.className).toContain('partner-lg')
+        expect(element.className).toContain('primary-compact')
+        expect(element.className).not.toContain('partner-quiet')
+        expect(element.className).not.toContain('primary-quiet')
+      })
+
+      it('resolves a partner-only recipe without allProps when its variant is undefined', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+            presets: { emphasis: { tone: 'loud' } },
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface },
+          styling: { base: 'primary-base' },
+        })
+
+        const { element } = adapter.render(Card, { recipe: 'emphasis', tone: undefined })
+        expect(element.className).toContain('partner-loud')
+        expect(element.className).toContain('primary-base')
+        expect(element.className).not.toContain('partner-quiet')
+      })
+
+      it('follows the documented precedence: explicit > recipe > primary default > compose.defaults > partner default', () => {
+        const tone = (quiet: string, loud: string) => ({ tone: { quiet, loud } })
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: tone('partner-quiet', 'partner-loud'),
+            defaults: { tone: 'quiet' },
+            presets: { emphasis: { tone: 'loud' } },
+          },
+        })
+        const card = (composeDefaults?: object, primaryDefault?: 'quiet' | 'loud') =>
+          adapter.createComponent({
+            compose: { with: Surface, ...(composeDefaults && { defaults: composeDefaults }) },
+            styling: {
+              variants: tone('primary-quiet', 'primary-loud'),
+              ...(primaryDefault && { defaults: { tone: primaryDefault } }),
+            },
+          })
+        const classes = (Card: ReturnType<typeof card>, props: Record<string, unknown> = {}) => {
+          const { element, unmount } = adapter.render(Card, props)
+          const value = element.className
+          unmount()
+          return value
+        }
+
+        // 5. partner default, with nothing else selecting the variant
+        expect(classes(card())).toContain('partner-quiet')
+        // 4. compose.defaults beats the partner default
+        expect(classes(card({ tone: 'loud' }))).toContain('partner-loud')
+        // 3. a primary default beats compose.defaults
+        const primaryDefault = classes(card({ tone: 'loud' }, 'quiet'))
+        expect(primaryDefault).toContain('partner-quiet')
+        expect(primaryDefault).toContain('primary-quiet')
+        expect(primaryDefault).not.toContain('loud')
+        // 2. a recipe beats a primary default
+        const recipe = classes(card({ tone: 'quiet' }, 'quiet'), { recipe: 'emphasis' })
+        expect(recipe).toContain('partner-loud')
+        expect(recipe).not.toContain('partner-quiet')
+        // 1. an explicit selection beats a recipe
+        const explicit = classes(card({ tone: 'loud' }, 'loud'), {
+          recipe: 'emphasis',
+          tone: 'quiet',
+        })
+        expect(explicit).toContain('partner-quiet')
+        expect(explicit).toContain('primary-quiet')
+        expect(explicit).not.toContain('loud')
+      })
+
+      it('uses the primary definition for incompatible variants and diagnoses once at construction', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        try {
+          const Surface = adapter.createComponent({
+            styling: {
+              variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+            },
+          })
+          const Card = adapter.createComponent({
+            compose: { with: Surface },
+            enforcement: { diagnostics: warnDiagnostics },
+            styling: {
+              variants: { tone: { calm: 'primary-calm', bold: 'primary-bold' } },
+              defaults: { tone: 'bold' },
+            },
+          })
+
+          const constructionWarnings = warnSpy.mock.calls.flat().join(' ')
+          expect(constructionWarnings).toContain('Incompatible composed variant "tone"')
+
+          const { element } = adapter.render(Card)
+          expect(element.className).toContain('primary-bold')
+          expect(element.className).not.toContain('partner-')
+          expect(warnSpy).toHaveBeenCalledTimes(1)
+        } finally {
+          warnSpy.mockRestore()
+        }
+      })
+
+      it('keeps the primary default when a partner recipe selects a value outside the primary variant definition', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+            presets: { emphasis: { tone: 'loud' } },
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface },
+          enforcement: { diagnostics: silentDiagnostics },
+          styling: {
+            variants: { tone: { calm: 'primary-calm', bold: 'primary-bold' } },
+            defaults: { tone: 'bold' },
+          },
+        })
+
+        const { element } = adapter.render(Card, { recipe: 'emphasis' })
+        expect(element.className).toContain('primary-bold')
+        expect(element.className).not.toContain('partner-')
+      })
+
+      it('does not let an unsupported value activate a partner compound on an incompatible variant', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: {
+              tone: { quiet: 'partner-quiet', loud: 'partner-loud' },
+              size: { sm: 'partner-sm', lg: 'partner-lg' },
+            },
+            compounds: [
+              { tone: 'loud', class: 'partner-compound-loud' },
+              { size: 'lg', class: 'partner-compound-lg' },
+            ],
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface },
+          enforcement: { diagnostics: silentDiagnostics },
+          styling: { variants: { tone: { calm: 'primary-calm', bold: 'primary-bold' } } },
+        })
+
+        // `tone` is incompatible (the primary definition wins), so a raw `loud` must not reach the
+        // partner's compound; a compound on the compatible, partner-only `size` still works.
+        const unsupported = adapter.render(Card, { tone: 'loud' })
+        expect(unsupported.element.className).not.toContain('partner-compound-loud')
+        unsupported.unmount()
+
+        const { element } = adapter.render(Card, { size: 'lg' })
+        expect(element.className).toContain('partner-compound-lg')
+      })
+
+      it('narrows partner compound arrays to values supported by the primary variant', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: {
+              tone: { calm: 'partner-calm', loud: 'partner-loud', quiet: 'partner-quiet' },
+              size: { sm: 'partner-sm', lg: 'partner-lg' },
+            },
+            compounds: [
+              { tone: ['calm', 'loud'], size: 'lg', class: 'partner-compound-supported-array' },
+              { tone: ['loud', 'quiet'], class: 'partner-compound-unsupported-array' },
+            ],
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface },
+          enforcement: { diagnostics: silentDiagnostics },
+          styling: {
+            variants: { tone: { calm: 'primary-calm', bold: 'primary-bold' } },
+          },
+        })
+
+        const supported = adapter.render(Card, { tone: 'calm', size: 'lg' })
+        expect(supported.element.className).toContain('partner-compound-supported-array')
+        expect(supported.element.className).not.toContain('partner-compound-unsupported-array')
+        supported.unmount()
+
+        const unsupported = adapter.render(Card, { tone: 'loud', size: 'lg' })
+        expect(unsupported.element.className).not.toContain('partner-compound-supported-array')
+        expect(unsupported.element.className).not.toContain('partner-compound-unsupported-array')
+      })
+
+      if (adapter.createExternalPartner)
+        it('falls back to nested rendering for a target without retained Praxis styling metadata', () => {
+          const External = adapter.createExternalPartner!()
+          const Card = adapter.createComponent({
+            compose: { with: External as never },
+            styling: { base: 'primary-base', variants: { size: { lg: 'primary-size-lg' } } },
+          })
+
+          const { element } = adapter.render(Card, { size: 'lg', class: 'caller-class' })
+
+          expect(element).toBeTruthy()
+          expect(element.className).toContain('primary-base')
+          expect(element.className).toContain('primary-size-lg')
+          expect(element.className).toContain('caller-class')
+        })
+
+      it('keeps ordinary styling when allProps is supplied without a composition target', () => {
+        const Box = adapter.createComponent({
+          compose: { allProps: true } as unknown as NonNullable<ConformanceFactoryOptions['compose']>,
+          styling: {
+            base: 'primary-base',
+            variants: { tone: { quiet: 'primary-quiet', loud: 'primary-loud' } },
+            defaults: { tone: 'quiet' },
+          },
+        })
+
+        const { element } = adapter.render(Box, { tone: 'loud' })
+
+        expect(element.className).toContain('primary-base')
+        expect(element.className).toContain('primary-loud')
+        expect(element.className).not.toContain('primary-quiet')
+      })
+
+      it('activates partner variants selected on the composing component without allProps', () => {
+        const Surface = adapter.createComponent({
+          styling: {
+            variants: { intent: { ghost: 'partner-intent-ghost' } },
+            compounds: [{ intent: 'ghost', class: 'partner-compound-ghost' }],
+          },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface },
+          styling: { variants: { size: { lg: 'primary-size-lg' } } },
+        })
+
+        const { element } = adapter.render(Card, { intent: 'ghost', size: 'lg' })
+        expect(element.className).toContain('primary-size-lg')
+        expect(element.className).toContain('partner-intent-ghost')
+        expect(element.className).toContain('partner-compound-ghost')
+      })
+
+      it('does not turn an unrelated, non-variant prop into a styling input', () => {
+        const Surface = adapter.createComponent({
+          styling: { variants: { intent: { ghost: 'partner-intent-ghost' } } },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface },
+          styling: { base: 'primary-base' },
+        })
+
+        const { element } = adapter.render(Card, { notAVariant: 'ghost' })
+        expect(element.className).toContain('primary-base')
+        expect(element.className).not.toContain('partner-intent-ghost')
       })
     })
 

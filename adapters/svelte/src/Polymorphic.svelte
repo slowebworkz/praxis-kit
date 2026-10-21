@@ -45,6 +45,9 @@
   }: PolymorphicComponentProps = $props()
   let hostEl: Element | undefined = $state()
 
+  // Behavior contract: `event-normalization.test.ts`; user-facing note: README → "Event handlers
+  // vs. component callbacks". Edit those together with this function.
+  //
   // Svelte 5 event delegation requires lowercase handler names (onclick, onfocus…). This is a
   // deliberate, documented compatibility feature — not an accident of the regex — so a bundle's
   // caller can write React-style camelCase (onClick, onPointerDown) and it reaches
@@ -135,6 +138,17 @@
     return { ...merged, ...(mergedClass && { class: mergedClass }) }
   }
 
+  // Combined composition styling replaces, rather than concatenates, the partner's own class.
+  function composeProps(withProps: UnknownProps, innerProps: UnknownProps): UnknownProps {
+    if (!composing) return mergeComposedProps(withProps, innerProps)
+    const { class: _partnerClass, ...partnerRest } = withProps as ResolvedAttributes
+    const { class: _innerClass, ...innerRest } = innerProps as ResolvedAttributes
+    return {
+      ...mergeSlotProps(partnerRest as UnknownProps, innerRest as UnknownProps),
+      ...(composedClass !== undefined && { class: composedClass }),
+    }
+  }
+
   const tag = $derived(bundle.runtime.resolveTag(asProp as ElementType | undefined))
   const mergedProps = $derived(bundle.runtime.resolveProps(rest as UnknownProps))
   const normalizedProps = $derived.by(() => {
@@ -152,13 +166,39 @@
     }
     return resolveNormalizedProps(options, tag, mergedProps)
   })
+  // Automatic composition with a Praxis partner owns class resolution (see `composedClass` below),
+  // so the primary must not also resolve on its own: it would reject a recipe that only the
+  // partner defines, and its result is discarded by `composeProps` anyway.
+  const composing = $derived(bundle.resolveComposedClasses !== undefined && !asChild)
   const resolvedClass = $derived(
-    bundle.runtime.resolveClasses(tag, normalizedProps, cls as string | undefined, recipe),
+    composing
+      ? undefined
+      : bundle.runtime.resolveClasses(tag, normalizedProps, cls as string | undefined, recipe),
   )
   const filteredProps = $derived(
     applyFilter(normalizedProps, bundle.filterProps, bundle.runtime.options.variantKeys),
   )
   const domProps = $derived(buildDomProps(filteredProps, resolvedClass, tag, normalizedProps))
+
+  // Behavior contract: `Polymorphic.test.ts` → "composition styling" (including the path-parity
+  // matrix), the shared `conformance — composition styling` cases, and `.vscode/COMPOSE.md`.
+  //
+  // Automatic composition with a Praxis partner resolves one combined class string through the
+  // shared pipeline (selected by `compose.with` alone, never by `allProps`). The partner receives
+  // `compose.defaults` plus, with `allProps`, this component's raw props; its own separately-
+  // resolved class (`withProps.class`) is superseded rather than concatenated. Explicit `asChild`
+  // never reaches the compose branch, so it keeps ordinary own-contract styling.
+  const composedClass = $derived(
+    composing
+      ? bundle.resolveComposedClasses?.(
+          tag,
+          { ...bundle.compose?.defaults, ...(bundle.compose?.allProps ? rest : {}) },
+          rest,
+          cls as string | undefined,
+          recipe,
+        )
+      : undefined,
+  )
 
   // Resolves whether to render as child slot; also enforces as+asChild mutual exclusion.
   const useAsChild = $derived.by(() => {
@@ -227,13 +267,13 @@
         <svelte:element
           this={tag}
           bind:this={hostEl}
-          {...mergeComposedProps(withProps as UnknownProps, domProps)}
+          {...composeProps(withProps as UnknownProps, domProps)}
         >
           {@render (ownChildren as Snippet | undefined)?.()}
         </svelte:element>
       {:else}
         {@const Comp = tag}
-        <Comp {...mergeComposedProps(withProps as UnknownProps, buildSlotProps(filteredProps, resolvedClass))}>
+        <Comp {...composeProps(withProps as UnknownProps, buildSlotProps(filteredProps, resolvedClass))}>
           {@render (ownChildren as Snippet | undefined)?.()}
         </Comp>
       {/if}

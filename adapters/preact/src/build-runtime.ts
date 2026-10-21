@@ -18,6 +18,7 @@ import { normalizeChildren } from './normalize-children'
 import type { PreactFactoryOptions } from './preact-options'
 import { Slot, SlotValidator } from './slot'
 import type { BuiltRuntime, NormalizedOptions, UnknownProps } from './types'
+import { isDefined } from '@praxis-kit/guards'
 
 function normalizeOptions<G extends PolymorphicGenerics>(
   options: PreactFactoryOptions<DefaultOf<G>, PropsOf<G>, VariantsOf<G>, RecipeOf<G>>,
@@ -42,7 +43,7 @@ export function buildRuntime<
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
 
   const normalized = normalizeOptions<G>(options)
-  const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
+  const { runtime, ownedKeys, compositionClassResolver } = buildCoreRuntime<G>(normalized)
 
   const { diagnostics, enforcement, filterProps: userFilter, name, slotComponent } = normalized
 
@@ -59,7 +60,8 @@ export function buildRuntime<
     slotValidator,
     slotComponent,
     normalizeChildren,
-    ...(childrenEvaluator !== undefined && { childrenEvaluator }),
+    ...(isDefined(childrenEvaluator) && { childrenEvaluator }),
+    ...(isDefined(compositionClassResolver) && { compositionClassResolver }),
   }
 
   return built

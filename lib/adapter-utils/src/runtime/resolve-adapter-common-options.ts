@@ -1,16 +1,6 @@
-import type { Diagnostics, DiagnosticsMode } from '@praxis-kit/diagnostics'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
+import type { AdapterDefaults, OptionsShape } from './types'
 import { throwDiagnostics, silentDiagnostics, resolveDiagnostics } from '@praxis-kit/diagnostics'
-
-type OptionsShape = Readonly<{
-  name?: string
-  enforcement?: { diagnostics?: Diagnostics | DiagnosticsMode }
-}>
-
-/** The two fields every adapter's `NormalizedOptions` must supply. */
-export type AdapterDefaults = {
-  name: string
-  diagnostics: Diagnostics
-}
 
 /**
  * Resolves the two fields that every adapter's `normalizeOptions` must provide:

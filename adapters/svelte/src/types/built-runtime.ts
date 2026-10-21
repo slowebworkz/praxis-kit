@@ -1,5 +1,6 @@
 import type {
   AllowedOf,
+  AnyRecord,
   ChildrenEvaluator,
   ComposeOptions,
   DefaultOf,
@@ -9,6 +10,7 @@ import type {
 } from '@praxis-kit/core'
 import type {
   BuiltChildrenEvaluator,
+  CompositionClassResolver,
   SlotValidator,
   WithChildRules,
 } from '@praxis-kit/adapter-utils'
@@ -24,6 +26,18 @@ export type OnElementFn<G extends PolymorphicGenerics = PolymorphicGenerics> = (
   getProps: () => Readonly<PropsOf<G>>,
 ) => void | (() => void)
 
+/**
+ * Resolves the combined primary + `compose.with` class string for one automatic-composition render.
+ * Present only when `compose.with` is a Praxis bundle that retained styling metadata.
+ */
+export type ResolveComposedClasses = (
+  tag: unknown,
+  partnerProps: Readonly<AnyRecord>,
+  componentProps: Readonly<AnyRecord>,
+  callerClass: string | undefined,
+  recipe: string | undefined,
+) => string | undefined
+
 type ComposeOf<TOptions extends WithChildRules> = TOptions extends {
   readonly compose: infer TCompose
 }
@@ -35,10 +49,12 @@ export type BuiltRuntime<
   TOptions extends WithChildRules = WithChildRules,
 > = BuiltChildrenEvaluator<TOptions> & {
   runtime: TypedRuntime<G>
+  compositionClassResolver?: CompositionClassResolver
   filterProps: FilterPredicate
   slotValidator: SlotValidator
   onElement?: OnElementFn<G>
   compose?: ComposeOf<TOptions>
+  resolveComposedClasses?: ResolveComposedClasses
 }
 
 // Structural alias used when generic precision is not needed (e.g. as a prop type).
@@ -52,4 +68,5 @@ export type AnyBuiltRuntime = {
   childrenEvaluator?: ChildrenEvaluator
   onElement?: OnElementFn
   compose?: ComposeOptions
+  resolveComposedClasses?: ResolveComposedClasses
 }

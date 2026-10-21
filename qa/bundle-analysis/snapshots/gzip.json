@@ -1,68 +1,68 @@
 {
   "source/lit": {
-    "gzip": 30244
+    "gzip": 31443
   },
   "source/preact": {
-    "gzip": 31031
+    "gzip": 32817
   },
   "source/react": {
-    "gzip": 31353
+    "gzip": 33133
   },
   "source/react-legacy": {
-    "gzip": 31280
+    "gzip": 33076
   },
   "source/solid": {
-    "gzip": 29868
+    "gzip": 32027
   },
   "source/svelte": {
-    "gzip": 28681
+    "gzip": 30292
   },
   "source/tailwind": {
-    "gzip": 13810
+    "gzip": 13832
   },
   "source/vue": {
-    "gzip": 30583
+    "gzip": 32339
   },
   "source/web": {
-    "gzip": 30199
+    "gzip": 31401
   },
   "package/contract": {
     "gzip": 9122
   },
   "package/guards": {
-    "gzip": 8051
+    "gzip": 8081
   },
   "package/html": {
-    "gzip": 23620
+    "gzip": 23648
   },
   "package/lit": {
-    "gzip": 36669
+    "gzip": 37889
   },
   "package/preact": {
-    "gzip": 37439
+    "gzip": 39254
   },
   "package/react": {
-    "gzip": 37785
+    "gzip": 39594
   },
   "package/react-legacy": {
-    "gzip": 37722
+    "gzip": 39530
   },
   "package/solid": {
-    "gzip": 36343
+    "gzip": 38579
   },
   "package/svelte": {
-    "gzip": 35165
+    "gzip": 36782
   },
   "package/tailwind": {
-    "gzip": 20400
+    "gzip": 20461
   },
   "package/utils": {
     "gzip": 118
   },
   "package/vue": {
-    "gzip": 36951
+    "gzip": 38778
   },
   "package/web": {
-    "gzip": 36635
+    "gzip": 37841
   }
 }

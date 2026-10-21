@@ -193,6 +193,31 @@ describe('createContractComponent (Solid adapter)', () => {
     expect(container.querySelector('a')?.getAttribute('data-slot')).toBe('no')
   })
 
+  it('asChild updates the mounted element in place and runs the render function once', () => {
+    // A slot-prop change (here, the resolved class) must not re-run the render function and
+    // rebuild its element: that would drop focus, uncontrolled input state, and any ref held on
+    // the element.
+    const Comp = createContractComponent({ tag: 'div', styling: { base: 'base' } })
+    const [extra, setExtra] = createSignal('a')
+    let renderFnCalls = 0
+    const { container } = solidRender(() => (
+      <Comp asChild class={extra()}>
+        {(props) => {
+          renderFnCalls++
+          return <a {...props} />
+        }}
+      </Comp>
+    ))
+    const element = container.querySelector('a')!
+
+    setExtra('b')
+
+    expect(container.querySelector('a')).toBe(element)
+    expect(element.className).toContain('b')
+    expect(element.className).not.toContain(' a')
+    expect(renderFnCalls).toBe(1)
+  })
+
   it('asChild forwards ref to the rendered element', () => {
     const Comp = createContractComponent({ tag: 'div' })
     let el: HTMLAnchorElement | undefined
@@ -216,21 +241,174 @@ describe('createContractComponent (Solid adapter)', () => {
   // render-function child, incompatible with the harness's `ChildSpec`), so this one case stays
   // adapter-specific, same convention `asChild` itself already uses.
 
-  it('compose: an explicit asChild from the consumer wins over compose', () => {
-    const BoxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
+  it('compose: a class supplied through compose.defaults survives combined styling', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'partner-base',
+        variants: { intent: { ghost: 'partner-ghost', solid: 'partner-solid' } },
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface, defaults: { class: 'default-class', intent: 'ghost' } },
+      styling: {
+        base: 'primary-base',
+        variants: { intent: { ghost: 'primary-ghost', solid: 'primary-solid' } },
+        defaults: { intent: 'solid' },
+      },
+    })
+
+    const { container } = solidRender(() => <Card class="caller-class" />)
+    const className = container.querySelector('div')!.className
+
+    expect(className).toContain('default-class')
+    expect(className).toContain('caller-class')
+    expect(className).toContain('partner-base')
+    expect(className).toContain('primary-base')
+    expect(className).toContain('partner-solid')
+    expect(className).not.toContain('partner-ghost')
+    expect(className).not.toContain('primary-ghost')
+  })
+
+  it('compose: updates both styling contributions when a shared variant changes', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'partner-base',
+        variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: {
+        base: 'primary-base',
+        variants: { tone: { quiet: 'primary-quiet', loud: 'primary-loud' } },
+      },
+    })
+    const [tone, setTone] = createSignal<'quiet' | 'loud'>('quiet')
+    const { container } = solidRender(() => <Card tone={tone()} />)
+
+    const element = container.querySelector('div')!
+    expect(element.className).toContain('partner-quiet')
+    expect(element.className).toContain('primary-quiet')
+
+    setTone('loud')
+
+    expect(element.className).toContain('partner-loud')
+    expect(element.className).toContain('primary-loud')
+    expect(element.className).not.toContain('partner-quiet')
+    expect(element.className).not.toContain('primary-quiet')
+  })
+
+  it('compose: reactively resolves a partner-only recipe', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'partner-base',
+        variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+        presets: { emphasis: { tone: 'loud' } },
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+    const [recipe, setRecipe] = createSignal<string | undefined>(undefined)
+    const { container } = solidRender(() => (
+      // `emphasis` belongs only to Surface. Spread keeps this runtime regression test focused on
+      // forwarding rather than requiring the primary component to declare the partner's recipe.
+      <Card
+        {...({
+          get recipe() {
+            return recipe()
+          },
+        } as AnyRecord)}
+      />
+    ))
+
+    const element = container.querySelector('div')!
+    expect(element.className).toContain('partner-base')
+    expect(element.className).toContain('primary-base')
+    expect(element.className).not.toContain('partner-loud')
+
+    setRecipe('emphasis')
+
+    expect(element.className).toContain('partner-loud')
+    expect(element.className).toContain('primary-base')
+    expect(element.className).not.toContain('partner-quiet')
+  })
+
+  it('compose: reactively forwards partner-only variants when allProps is enabled', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'partner-base',
+        variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface, allProps: true },
+      styling: { base: 'primary-base' },
+    })
+    const [tone, setTone] = createSignal<'quiet' | 'loud'>('quiet')
+    const { container } = solidRender(() => (
+      // `tone` is intentionally defined only by Surface, so use a spread to exercise runtime
+      // forwarding without widening Card's public variant contract.
+      <Card
+        {...({
+          get tone() {
+            return tone()
+          },
+        } as AnyRecord)}
+      />
+    ))
+
+    const element = container.querySelector('div')!
+    expect(element.className).toContain('partner-quiet')
+    expect(element.className).toContain('primary-base')
+
+    setTone('loud')
+
+    // A styling-only change updates the mounted element in place; it is not replaced.
+    expect(container.querySelector('div')).toBe(element)
+    expect(element.isConnected).toBe(true)
+    expect(element.className).toContain('partner-loud')
+    expect(element.className).toContain('primary-base')
+    expect(element.className).not.toContain('partner-quiet')
+  })
+
+  it('compose: an explicit asChild from the consumer uses only primary styling', () => {
+    const BoxA = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'partner-base',
+        variants: { intent: { ghost: 'partner-intent-ghost' } },
+        presets: { emphasis: { intent: 'ghost' } },
+      },
+    })
     const BoxB = createContractComponent({
       tag: 'button',
-      compose: { with: BoxA },
-      styling: { base: 'class-b' },
+      compose: { with: BoxA, defaults: { intent: 'ghost' } },
+      styling: {
+        base: 'primary-base',
+        variants: { size: { lg: 'primary-size-lg' } },
+        presets: { emphasis: { size: 'lg' } },
+      },
     })
 
     const { container } = solidRender(() => (
-      <BoxB asChild>{(props: AnyRecord) => <a {...props} />}</BoxB>
+      <BoxB asChild {...({ recipe: 'emphasis' } as AnyRecord)}>{(props: AnyRecord) => <a {...props} />}</BoxB>
     ))
 
     const el = container.querySelector('a')!
-    expect(el.className).toContain('class-b')
-    expect(el.className).not.toContain('class-a')
+    expect(el.className).toContain('primary-base')
+    expect(el.className).toContain('primary-size-lg')
+    expect(el.className).not.toContain('partner-base')
+    expect(el.className).not.toContain('partner-intent-ghost')
     expect(container.querySelector('button')).toBeNull()
   })
 

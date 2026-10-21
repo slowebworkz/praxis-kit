@@ -14,6 +14,9 @@ import type {
   ResolvedFactoryShape,
   VariantMap,
 } from '../types'
+import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
+import type { CompositionClassResolver } from '@praxis-kit/styling'
+import { createOptionalCompositionStyleResolver } from './composition-style'
 import {
   createAriaPipeline,
   createHtmlChildrenEvaluatorPipeline,
@@ -57,7 +60,7 @@ export function createPolymorphic<
   Extract<keyof TPreset, string>,
   TPreset,
   PluginInstance<TPlugin>
-> {
+> & { readonly compositionClassResolver?: CompositionClassResolver } {
   const baseResolved = resolveFactoryOptions(options)
   const anyBaseResolved = eraseResolvedShape(baseResolved)
   const resolved = Object.freeze({
@@ -80,6 +83,17 @@ export function createPolymorphic<
   const resolveProps = createPropsPipeline(anyResolved)
   const resolveAriaFn =
     options.enforcement !== undefined ? createAriaPipeline(anyResolved) : resolveAriaPassthrough
+  const compositionClassResolver = createOptionalCompositionStyleResolver(
+    anyResolved,
+    options.compose,
+    (message) =>
+      resolved.diagnostics.warn({
+        code: DiagnosticCode.CompositionVariantCollision,
+        category: DiagnosticCategory.Composition,
+        message,
+        ...(options.name !== undefined && { component: options.name }),
+      }),
+  )
 
   // `packages/core` resolves the render-time capabilities and hands them to the adapter layer;
   // it does not run a full render itself. In particular `resolveProps` is a *component-level*
@@ -112,8 +126,18 @@ export function createPolymorphic<
   }
 
   const runtimeObject = pluginResult
-    ? { ...methods, options: resolved, hasStyling: true as const, classPlugin: pluginResult }
-    : { ...methods, options: resolved }
+    ? {
+        ...methods,
+        options: resolved,
+        hasStyling: true as const,
+        classPlugin: pluginResult,
+        ...(compositionClassResolver && { compositionClassResolver }),
+      }
+    : {
+        ...methods,
+        options: resolved,
+        ...(compositionClassResolver && { compositionClassResolver }),
+      }
 
   return runtimeObject as PolymorphicRuntime<
     TDefault,
@@ -122,5 +146,5 @@ export function createPolymorphic<
     Extract<keyof TPreset, string>,
     TPreset,
     PluginInstance<TPlugin>
-  >
+  > & { readonly compositionClassResolver?: CompositionClassResolver }
 }

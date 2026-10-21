@@ -3702,3 +3702,55 @@ last reassessment: `v1.3.0` (compose-aware `ContractProps<T>` for finding #54, a
 React/Preact/Vue/Solid) — real engineering progress, but adoption signals still haven't moved.
 **Revisit trigger unchanged:** a star/issue/PR from a non-maintainer account, or the next version
 tag.
+
+### Composition resolver bundle cost — accept, update baselines (2026-10-20)
+
+**Question:** can the composition resolver be structured so components that never use `compose`
+avoid the runtime and bundled-code overhead? **Measured against the baselines recorded at
+`c90fda0`** (`qa/tree-shaking-tests` and `qa/bundle-analysis`, `pnpm gzip`): `source/*` scenarios
+grew ~430–490 B gzip (svelte +1189 B), `package/*` entry points ~+1.0 KB (lit/web) to ~+1.7 KB
+(react/preact/solid/vue) — roughly 4.5% of a ~37–39 KB entry point, inside the 5% gate but close to
+it. `package/contract-only`, `guards-only`, `utils-only` are unchanged. Isolated esbuild gzip
+estimate of the composition-specific code: ≈0.7 KB for `createCompositionClassPipeline` plus ≈0.3 KB
+for the core wrapper in `composition-style.ts` — about 1 KB, which matches the package-level delta.
+
+**Runtime:** no per-render cost for non-composing components.
+`createOptionalCompositionStyleResolver` returns `undefined` when `compose.with` is absent, so
+`compositionClassResolver` is never set and the render path is unchanged. The only cost is a
+one-time construction-time pass through `composePipelines` per component.
+
+**Why the bytes can't be dropped without an API change:** `compose` is a runtime option on
+`createPolymorphic`, so `create-polymorphic.ts` must import the resolver statically; a bundler
+cannot prove a given consumer never passes `compose`. Making it tree-shakeable would need an opt-in
+registration entry point (e.g. a `compose` subpath that injects the resolver factory) touching every
+adapter and the public API, for ~1 KB on a feature that is a headline capability. Dynamic import
+doesn't fit (resolver is needed synchronously at construction).
+
+**Decision: accept the cost, update both `snapshots/gzip.json` baselines** (`tree-shaking-tests` and
+`bundle-analysis`, via `gzip:update`). Cheap follow-ups that don't change the API, left optional:
+return before building the pipeline object when `compose?.with === undefined`, and mark the
+module-level `composePipelines(...)` call `/*#__PURE__*/`. **Revisit trigger:** package entry points
+approaching the 5% gate again, or a third optional capability that would justify the opt-in
+registration pattern.
+
+**Correction (same day) — the gate is measured against `develop`, not `c90fda0`.** The figures above
+were deltas from the `c90fda0` baselines, which already contained part of this branch's growth, so
+they understated the regression and "inside the 5% gate" was wrong. Against `develop`'s committed
+baselines the branch is over the gate: every `source/*` scenario is +5.6–5.8% (lit/web +4.0%),
+`source/solid` is **+7.3%** (+2.2 KB), and `package/solid` is +6.2%; the other `package/*` entry
+points are +3.0–4.9%. Solid carries roughly 400 B more than the other adapters, so part of its
+growth is adapter-specific (its composition integration), not the shared resolver. The updated
+baselines in this branch must not be read as having cleared the gate: they only hold if the
+`develop` → branch growth is explicitly accepted at merge.
+
+**Solid outlier investigated — no removable waste.** The ~400 B gzip Solid carries over the other
+adapters (`source/solid` +7.3% vs +5.7%) is Solid's own composition code, measured per file against
+`develop` (esbuild minify + gzip, unbundled): `render.tsx` 925 → 1101 B (+176),
+`create-contract-component.ts` 564 → 681 B (+117), `build-runtime.ts` 346 → 368 B (+22) — about +315
+B, matching the gap in the scenario's per-module output. It is behavior, not bloat: the
+combined-class memo with a reactive getter, the `untrack`ed slot-props proxy that preserves DOM
+identity, `compose.defaults.class` handling, the diagnostic call, and metadata attachment. Solid's
+percentage is also higher because its `develop` baseline is the smallest (29.9 KB). Nothing was
+trimmed. **Optional follow-up:** the `{ resolve, primary, partner }` resolver wrapper is assembled
+per adapter; a shared `adapter-utils` helper would remove that duplication and a few dozen bytes per
+adapter. **Decision stands:** accept the growth against `develop` and reset the baselines at merge.

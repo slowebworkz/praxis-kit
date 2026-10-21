@@ -1,8 +1,7 @@
-import type { AnyRecord } from './types'
+import type { AnyRecord, CvaFn } from './types'
 import { iterate, LRUCache } from '@praxis-kit/primitive'
 import type { StringMap } from '@praxis-kit/primitive'
-
-type CvaFn = (props: AnyRecord) => string
+import { isDefined, isNonNull, isNull, isString, isUndefined } from '@praxis-kit/guards'
 
 /**
  * Runtime CVA class resolution with LRU + precomputed-map caching.
@@ -41,13 +40,13 @@ export class VariantClassResolver {
     const cacheKey = this.#createCacheKey(props, normalizedKey)
 
     // Precomputed map covers all statically-known combinations; injected by classExtractPlugin.
-    if (this.#precomputedClasses !== null) {
+    if (isNonNull(this.#precomputedClasses)) {
       const precomputed = this.#precomputedClasses[cacheKey]
-      if (precomputed !== undefined) return precomputed
+      if (isDefined(precomputed)) return precomputed
     }
 
     const cached = this.#cache.get(cacheKey)
-    if (cached !== undefined) return cached
+    if (isDefined(cached)) return cached
 
     const result = this.#compute(props, recipe)
     this.#cache.set(cacheKey, result)
@@ -60,7 +59,7 @@ export class VariantClassResolver {
     // key (matches `createClassPipeline` / `StaticClassResolver` / `diagnoseClassPipeline`, all
     // of which test `recipe !== undefined`). A string with no matching preset still falls through
     // to the no-preset path — but not by being coerced falsy here.
-    if (recipe === undefined) return this.#cvaFn(props)
+    if (!isDefined(recipe)) return this.#cvaFn(props)
     const preset = this.#recipeMap[recipe]
     if (!preset) return this.#cvaFn(props)
     return this.#cvaFn({ ...preset, ...props })
@@ -71,7 +70,7 @@ export class VariantClassResolver {
   // Iterating #variantKeys directly (fixed Set insertion order) avoids Object.keys + filter + sort.
   // String is built incrementally to avoid a parts[] array allocation on every render.
   #createCacheKey(props: AnyRecord, recipe: string): string {
-    if (this.#variantKeys !== null) {
+    if (isNonNull(this.#variantKeys)) {
       let key = recipe
       iterate.forEachSet(this.#variantKeys, (k) => {
         if (k in props) key += `|${k}:${VariantClassResolver.#serializeValue(props[k])}`
@@ -86,10 +85,10 @@ export class VariantClassResolver {
   }
 
   static #serializeValue(value: unknown): string {
-    if (value === undefined) return 'u'
-    if (value === null) return 'n'
+    if (isUndefined(value)) return 'u'
+    if (isNull(value)) return 'n'
     if (typeof value === 'boolean') return `b:${value}`
-    if (typeof value === 'string') return `s:${value}`
+    if (isString(value)) return `s:${value}`
     return `x:${String(value)}`
   }
 }

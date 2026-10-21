@@ -182,6 +182,104 @@ describe('createContractComponent (Preact adapter)', () => {
     expect(ref.current).toBe(container.querySelector('button'))
   })
 
+  it('keeps partner, primary, and caller classes when composing', () => {
+    const Surface = createContractComponent({
+      styling: {
+        base: 'partner-base',
+        variants: { intent: { ghost: 'partner-intent-ghost' } },
+      },
+    })
+    const Card = createContractComponent({
+      compose: { with: Surface, defaults: { intent: 'ghost' } },
+      styling: {
+        base: 'primary-base',
+        variants: { size: { lg: 'primary-size-lg' } },
+      },
+    })
+
+    mount(h(box(Card), { size: 'lg', className: 'caller-class' }))
+
+    const el = container.firstElementChild as HTMLElement
+    expect(el.className).toContain('partner-base')
+    expect(el.className).toContain('partner-intent-ghost')
+    expect(el.className).toContain('primary-base')
+    expect(el.className).toContain('primary-size-lg')
+    expect(el.className).toContain('caller-class')
+  })
+
+  it('ignores a malformed internal composition style request without leaking it to the DOM', () => {
+    const Box = createContractComponent({ styling: { base: 'primary-base' } })
+
+    expect(() =>
+      mount(
+        h(
+          box(Box),
+          { asChild: true, __praxisCompositionStyleRequest: { resolveClasses: 'not-a-function' } },
+          h('button', null),
+        ),
+      ),
+    ).not.toThrow()
+
+    const el = container.querySelector('button')!
+    expect(el.className).toContain('primary-base')
+    expect(el.hasAttribute('__praxisCompositionStyleRequest')).toBe(false)
+    expect(el.hasAttribute('__praxiscompositionstylerequest')).toBe(false)
+  })
+
+  it('keeps explicit asChild rendering on the primary contract styling path when composed', () => {
+    const Surface = createContractComponent({ tag: 'div', styling: { base: 'partner-base' } })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+
+    mount(h(box(Card), { asChild: true }, h('button', null)))
+
+    const el = container.querySelector('button')!
+    expect(el.className).toContain('primary-base')
+    expect(el.className).not.toContain('partner-base')
+  })
+
+  it('falls back to primary styling when compose.with has no Praxis metadata', () => {
+    const External = (props: UnknownProps) =>
+      h('section', { className: 'external-base' }, props.children as never)
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: External as never },
+      styling: {
+        base: 'primary-base',
+        variants: { tone: { quiet: 'primary-quiet' } },
+      },
+    })
+
+    mount(h(box(Card), { tone: 'quiet' }))
+
+    const external = container.querySelector('section')!
+    const primary = container.querySelector('div')!
+    expect(external.className).toContain('external-base')
+    expect(primary.className).toContain('primary-base')
+    expect(primary.className).toContain('primary-quiet')
+    expect(primary.className).not.toContain('partner-')
+  })
+
+  it('forwards a ref to the rendered element through automatic composition', () => {
+    const Surface = createContractComponent({ tag: 'div', styling: { base: 'partner-base' } })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+    const ref = createRef<HTMLDivElement>()
+
+    mount(h(box(Card), { ref }))
+
+    const el = container.firstElementChild as HTMLElement
+    expect(ref.current).toBe(el)
+    expect(el.className).toContain('partner-base')
+    expect(el.className).toContain('primary-base')
+  })
+
   // `compose` (declarative asChild composition) is covered by the shared conformance suite
   // (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`, "conformance —
   // compose") rather than duplicated here — same convention as `asChild` itself.

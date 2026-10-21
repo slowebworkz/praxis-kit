@@ -45,7 +45,7 @@ const adapter: ConformanceAdapter<SvelteComponent> = {
     // expect for compose.with. Unwrap it before handing options to the real implementation.
     const compose = options.compose
     const unwrappedOptions =
-      compose !== undefined
+      compose?.with !== undefined
         ? { ...options, compose: { ...compose, with: (compose.with as SvelteComponent)._bundle } }
         : options
     const bundle = createContractComponent(
@@ -102,7 +102,12 @@ const adapter: ConformanceAdapter<SvelteComponent> = {
   },
   setup: () => {},
   cleanup: () => cleanup(),
-  capabilities: { asChild: false },
+  // Bundle-shaped but not a Praxis component: spreading drops the non-enumerable styling metadata.
+  createExternalPartner: (): SvelteComponent => ({
+    displayName: 'External',
+    _bundle: { ...(createContractComponent({}) as AnyBuiltRuntime) },
+  }),
+  capabilities: { asChild: false, compositionStyling: true },
 }
 
 conformanceSuite(adapter)

@@ -1,8 +1,15 @@
-import { applyFilter, mergeSlotProps, resolveNormalizedProps } from '@praxis-kit/adapter-utils'
+import {
+  applyFilter,
+  composeStyleProps,
+  mergeCompositionClassNames,
+  mergeSlotProps,
+  resolveNormalizedProps,
+} from '@praxis-kit/adapter-utils'
+import type { ClassPipelineFn } from '@praxis-kit/styling'
 import type { ElementType, IntrinsicProps } from '@praxis-kit/core'
 import { enforceAllowedAs, isKnownAriaRole } from '@praxis-kit/core'
 import { isString } from '@praxis-kit/guards'
-import { createEffect, createMemo, splitProps } from 'solid-js'
+import { createEffect, createMemo, mergeProps, splitProps, untrack } from 'solid-js'
 import type { ValidComponent } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import type { SlotValidator } from './slot'
@@ -97,9 +104,14 @@ function tryRenderAsChild(
   }
   if (!slotValidator.assertRenderFn(known.children)) return null
   const renderFn = known.children as (p: UnknownProps) => SolidElement
-  // createMemo tracks filteredProps() and resolvedClass() so slot props stay reactive.
+  // The render function runs once, untracked, with a reactive props proxy: reads inside the JSX it
+  // returns (`<a {...props} />`) stay fine-grained, so a changed slot prop updates the existing
+  // element in place instead of re-running the function and replacing the element (which would
+  // drop focus, uncontrolled state and any ref held on it). Re-runs only when the function itself
+  // or a tracked read outside the proxy changes.
+  const slotProps = mergeProps(() => buildSlotProps(filteredProps(), resolvedClass(), known.ref))
   return createMemo(() =>
-    renderFn(buildSlotProps(filteredProps(), resolvedClass(), known.ref)),
+    untrack(() => renderFn(slotProps as UnknownProps)),
   ) as unknown as SolidElement
 }
 
@@ -129,6 +141,11 @@ export function renderComposed<TProps extends KnownProps>(
   ref: unknown,
   allProps?: boolean,
   defaults?: object,
+  compositionClassResolver?: {
+    resolve: ClassPipelineFn
+    primary: Parameters<typeof composeStyleProps>[2]
+    partner: Parameters<typeof composeStyleProps>[4]
+  },
 ): SolidElement {
   const [knownRaw, rest] = splitProps(props, SPLIT_KEYS)
   const known = knownRaw as unknown as KnownProps
@@ -142,13 +159,18 @@ export function renderComposed<TProps extends KnownProps>(
   const normalizedProps = createMemo(() =>
     resolveNormalizedProps(runtime.options, tag(), mergedProps()),
   )
+  // With a Praxis partner the combined resolver below owns class resolution. The primary must not
+  // also resolve on its own: it would reject a recipe that only the partner defines, and its
+  // result is replaced by the combined class anyway.
   const resolvedClass = createMemo(() =>
-    runtime.resolveClasses(
-      tag(),
-      normalizedProps(),
-      known.class as string | undefined,
-      known.recipe as string | undefined,
-    ),
+    compositionClassResolver
+      ? undefined
+      : runtime.resolveClasses(
+          tag(),
+          normalizedProps(),
+          known.class as string | undefined,
+          known.recipe as string | undefined,
+        ),
   )
   const filteredProps = createMemo(() =>
     applyFilter(normalizedProps(), filterProps, runtime.options.variantKeys),
@@ -166,12 +188,51 @@ export function renderComposed<TProps extends KnownProps>(
       asChild
       ref={ref}
     >
-      {(withProps: UnknownProps) => (
-        <Dynamic
-          component={tag() as unknown as ValidComponent}
-          {...(mergeSlotProps(withProps, domProps()) as UnknownProps)}
-        />
-      )}
+      {(withProps: UnknownProps) => {
+        // The partner's own resolved `withProps.class` is superseded by the combined pipeline, but
+        // an explicit `class` supplied through `compose.defaults` is caller input and must survive.
+        const configuredClass = defaults ? Reflect.get(defaults, 'class') : undefined
+        const defaultClass =
+          isString(configuredClass) || Array.isArray(configuredClass) ? configuredClass : undefined
+        const composedClass = compositionClassResolver
+          ? createMemo(() =>
+              compositionClassResolver.resolve(
+                tag(),
+                composeStyleProps(
+                  {
+                    ...defaults,
+                    ...(allProps ? props : {}),
+                  },
+                  props,
+                  compositionClassResolver.primary,
+                  defaults,
+                  compositionClassResolver.partner,
+                ),
+                mergeCompositionClassNames(defaultClass, known.class as string | undefined),
+                isString(known.recipe) ? known.recipe : undefined,
+              ),
+            )
+          : undefined
+        const slotProps = mergeSlotProps(withProps, domProps())
+        // `tryRenderAsChild` executes its render callback untracked. Keep the composed class as a
+        // getter instead of eagerly evaluating `composedClass()` here, so Solid's DOM-prop spread
+        // can track class changes and update the mounted element without rerunning the callback.
+        const finalProps = composedClass
+          ? {
+              ...slotProps,
+              get class() {
+                return composedClass()
+              },
+            }
+          : slotProps
+
+        return (
+          <Dynamic
+            component={tag() as unknown as ValidComponent}
+            {...(finalProps as UnknownProps)}
+          />
+        )
+      }}
     </Dynamic>
   ) as unknown as SolidElement
 }

@@ -1,8 +1,10 @@
 # Design proposal: compose-aware prop typing
 
 **Status:** implemented in `lib/compose-props` (`@praxis-kit/compose-props`) and wired into React,
-Preact, Vue, and Solid's `ContractProps`. Svelte is confirmed blocked without a runtime-shape change
-(not merely unverified); Lit/Web are out of scope by design — see "Next steps" and section 6.
+Preact, Vue, and Solid's `ContractProps`, plus Svelte's `GenericsOf<T>` projection. Svelte uses its
+`BuiltRuntime<G, TOptions>` generic shape rather than the `__contract` marker used by the other
+adapters, and intentionally projects only the direct composed partner. Lit/Web remain out of scope
+by design — see section 6.
 
 ## 1. Problem statement and precedent
 
@@ -65,20 +67,20 @@ a cross-adapter rebuild.
 
 ## 2. Goals and non-goals
 
-**Goal:** a composing component's exported props type includes `compose.with`'s forwarded surface
-when `allProps: true`, computed automatically from the contract — no hand-maintained
-`CardProps & SurfaceProps`-style alias per adopter.
+**Goal:** a composing component's exported props type includes `compose.with`'s ordinary forwarded
+props when `allProps: true`, and includes the partner's styling variants whenever `compose.with` is
+present. Variant visibility is independent of raw prop forwarding, matching the composition styling
+pipeline contract in `.vscode/COMPOSE.md`.
 
 **Non-goals:**
 
-- No new runtime composition mechanism. The existing `compose`/`asChild`/`Slot` pipeline is
-  unchanged; this is a type-extraction-time fix only.
+- This document focuses on public type extraction. Runtime composition and styling semantics are
+  specified in `.vscode/COMPOSE.md` and implemented at the adapter runtime boundary.
 - No attempt to type the _merged element result_ — e.g. which value wins when both `Card` and
   `Surface` set the same prop at a specific call site, accounting for explicit-vs-defaulted values.
   That is a separate, harder, already-scoped-and-declined problem (see section 5).
-- No new public configuration API beyond the existing `allProps` boolean. The type-side merge is
-  automatic whenever `allProps: true` is set, not gated behind a second opt-in — matching the
-  runtime, which also has no separate type-visibility toggle.
+- No new public configuration API beyond the existing `allProps` boolean. `allProps` controls
+  ordinary raw prop forwarding; it does not gate the composed styling-variant surface.
 
 ## 3. Proposed type architecture — intermediate types
 
@@ -99,7 +101,7 @@ type RecoveredContractOf<T> = T extends HasContract<infer C> ? C : never
  *  `allProps`, or `with` isn't a recognizable praxis-kit component. Isolates the three-way gate
  *  (compose present / allProps true / with recognizable) in one place instead of repeating it at
  *  every downstream read. */
-type ComposedContractOf<C> = C extends { compose: { allProps: true; with: infer W } }
+type ComposedContractOf<C> = C extends { compose: { with: infer W } }
   ? RecoveredContractOf<W>
   : never
 
@@ -150,29 +152,35 @@ type MergeComposedProps<Own, Composed> = {
  *  instead makes one definition correct at every depth, bounded naturally by the real, finite
  *  chain of `compose.with` references — no artificial depth cap needed, but also not "free" in
  *  the sense an earlier framing of this proposal assumed; it has to be written this way
- *  deliberately. */
+ *  deliberately. This recursion applies to ordinary props exposed by the partner. Styling variants
+ *  and presets are merged from the direct partner contract only, matching `.vscode/COMPOSE.md`'s
+ *  rule not to flatten nested composition styling metadata. */
 type ContractGenericsWithComposeOf<C> =
   ComposedContractOf<C> extends infer CC
     ? [CC] extends [never]
-      ? { props: ContractPropsOf<C>; variants: ContractVariantsOf<C> }
+      ? {
+          props: ContractPropsOf<C>
+          variants: ContractVariantsOf<C>
+          preset: ContractPresetOf<C>
+        }
       : {
-          props: MergeComposedProps<ContractPropsOf<C>, ContractGenericsWithComposeOf<CC>['props']>
-          variants: MergeComposedProps<
-            ContractVariantsOf<C>,
-            ContractGenericsWithComposeOf<CC>['variants']
-          >
+          props: C extends { compose: { allProps: true } }
+            ? MergeComposedProps<ContractPropsOf<C>, ContractGenericsWithComposeOf<CC>['props']>
+            : ContractPropsOf<C>
+          variants: MergeComposedProps<ContractVariantsOf<C>, ContractVariantsOf<CC>>
+          preset: MergePresetMaps<ContractPresetOf<CC>, ContractPresetOf<C>>
         }
     : never
 ```
 
 **Consumer-facing change:** each adapter's `ContractProps<T>` swaps its internal
 `ContractGenericsWithAllowedOf<C>` read for a `PolymorphicGenerics` built from
-`ContractGenericsWithComposeOf<C>`'s `props`/`variants`, keeping `ContractTagOf<C>`/
-`ContractPresetOf<C>`/`ContractAllowedOf<C>` untouched. **Deliberately not** touching
-`createContractComponent`'s own return-type instantiation — `G` there stays exactly as today. The
-composed surface is a type-extraction-time concern, matching how `ContractProps` already diverges
-from the call signature's own non-generic fallback overload for a different, pre-existing reason
-(documented in that type's own comment).
+`ContractGenericsWithComposeOf<C>`'s `props`/`variants`/`preset`, keeping `ContractTagOf<C>` and
+`ContractAllowedOf<C>` untouched. **Deliberately not** touching `createContractComponent`'s own
+return-type instantiation — `G` there stays exactly as today. The composed surface is a
+type-extraction-time concern, matching how `ContractProps` already diverges from the call
+signature's own non-generic fallback overload for a different, pre-existing reason (documented in
+that type's own comment).
 
 ## 4. Model metadata and extraction — what's reused vs. new
 
@@ -334,28 +342,19 @@ an invented ownership model:
   explicit `OmitIndexSignature` for this reason (`adapters/vue/src/compose-props.test.ts`) —
   confirmed, by deliberately breaking the fixed version, that the unwrapped check really was a false
   positive before the fix.
-- **Svelte — confirmed blocked, not merely unverified.** Investigated directly (not inferred):
-  Svelte's analog, `GenericsOf<T>` (`adapters/svelte/src/types/resolved-slot-props.ts`), is
-
-  ```ts
-  export type GenericsOf<T extends AnyBuiltRuntime> =
-    T extends BuiltRuntime<infer G, WithChildRules> ? G : PolymorphicGenerics
-  ```
-
-  — it recovers the already-projected `G` directly as a live type parameter (no marker needed, per
-  that type's own doc comment, since `createContractComponent` returns `BuiltRuntime<G, TOptions>`
-  un-erased), never `C` itself. `createContractComponent`'s actual return type
-  (`adapters/svelte/src/create-contract-component.ts`) is `BuiltRuntime<ContractGenericsOf<C>, C>` —
-  `C` is passed in, but `BuiltRuntime`'s own fields (`runtime`, `filterProps`, `slotValidator`,
-  `onElement`, a bare non-generic `compose?: ComposeOptions`, `childrenEvaluator`) consume it only
-  as the scrutinee of `BuiltChildrenEvaluator<TOptions>`'s conditional type — never stored in an
-  `infer`-able position. There is no field anywhere that retains `C` itself. Reaching `compose` for
-  Svelte needs either a new marker field on `BuiltRuntime` (undoing the "no marker needed" design
-  the current approach is built on) or a changed return-type shape threading `C` through inferably —
-  a real runtime-bundle-shape change, not a type-only swap in a `ContractProps`-equivalent file
-  (Svelte doesn't have one to swap in the first place, since `GenericsOf<T>` is the whole
-  mechanism).
-
+- **Svelte — implemented with its own bundle-generic projection.** Svelte does not use the
+  `HasContract`/`__contract` marker mechanism. Instead, `BuiltRuntime<G, TOptions>` retains the
+  original options as an inferable generic, and `adapters/svelte/src/types/composed-generics.ts`
+  projects the effective generics from that shape. `ComposedBundleGenericsOf<T>` merges the direct
+  partner's variants whenever `compose.with` is present, and merges its ordinary props only when
+  `compose.allProps: true`, using the shared `MergeComposedProps` policy from `lib/compose-props`.
+  This keeps variant visibility independent from raw prop forwarding, as required by the composition
+  contract. The projection is intentionally one level deep: Svelte renders the primary with its
+  direct partner, but does not recursively render that partner's own composition.
+  `adapters/svelte/src/types/resolved-slot-props.test.ts` covers the allProps gate, partner props
+  and variants, union-shaped props, direct-only composition, defaults/presets, and incompatible
+  collisions. This is a Svelte-specific type path, not a `ContractProps` swap; no new runtime marker
+  field was required.
 - **Solid — done.** `adapters/solid/src/types/polymorphic-props.ts`: investigated independently (not
   assumed to share Svelte's shape or React's) and confirmed, by reading the actual source, that
   Solid's `PolymorphicComponent<G, C>` carries `readonly __contract?: C` and
@@ -391,9 +390,9 @@ deliberately wrong assertion before relying on a clean pass as real signal):
    equals exactly `{ props: C's own props; variants: C's own variants }`. The fallback path is a
    true no-op.
 2. **Simple composition** — `Card` composing `Surface` with `allProps: true` resolves to `Card`'s
-   own props/variants plus `Surface`'s (`radius`, `shadow`). **2b (negative case):** a `Card` with
-   no `compose` field at all leaves the partner's props unreachable — confirmed via
-   `expectTypeOf<keyof Resolved['props']>().not.toEqualTypeOf<'radius'>()`.
+   own props/variants plus `Surface`'s ordinary props and variants. With `allProps: false`, the
+   partner's ordinary props remain unreachable while its styling variants remain public. A `Card`
+   with no `compose` field at all preserves its own props/variants exactly.
 3. **Collision** — a same-named `child-wins`-category prop (`variant`) with incompatible types on
    both sides resolves to `CollisionError<'variant'>`, not a silently-wrong type.
 4. **Nested composition** — `Surface` composing `Base`, `Card` composing `Surface`: `Card`'s
@@ -421,10 +420,12 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
   (`@praxis-kit/compose-props`), depending on both `@praxis-kit/primitive` and
   `@praxis-kit/contract-props` — option (b) from the original three, keeping both existing packages'
   dependency boundaries (`contract-props` stays dependency-free) untouched.
-- **Risk — Svelte:** still open, unaddressed by this implementation. `lib/compose-props` is
-  framework-neutral, so wiring it into Svelte's own `GenericsOf<T>` still needs the dedicated audit
-  section 6 calls for, since Svelte has no `__contract` marker to recover a composed partner's
-  contract from in the first place.
+- **Svelte-specific projection:** implemented in `adapters/svelte/src/types/composed-generics.ts`
+  using the original options generic retained by `BuiltRuntime<G, TOptions>`. It does not use a
+  `__contract` marker. The known boundary is intentional: the type projection includes only the
+  direct partner's own props and variants, matching Svelte's current non-recursive composition
+  rendering behavior. Regression coverage lives in
+  `adapters/svelte/src/types/resolved-slot-props.test.ts`.
 - **Risk — `ClassifyPropKey` drift:** unchanged from the original proposal — flagged in section 5,
   no automated drift check implemented, code-review discipline only.
 - **Risk — untrusted `with`:** closed. `lib/compose-props/src/compose-generics.test.ts`'s "risk
@@ -528,17 +529,35 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
 5. ~~Add a real-component integration test for nested composition.~~ Done — `Card → Surface → Base`
    validated through the real public `ContractProps` extraction path in React, Preact, Vue, and
    Solid.
-6. ~~Audit Svelte's extraction path.~~ Done — confirmed blocked, not merely unverified (section 6
-   has the full investigation). Reaching `compose` there needs a runtime-bundle-shape change
-   (threading `C` itself through `createContractComponent`'s return type, or a new marker field),
-   not a type-only swap — out of scope for this proposal as written.
+6. ~~Implement Svelte's extraction path.~~ Done — `ComposedBundleGenericsOf<T>` recovers the direct
+   partner from `BuiltRuntime<G, TOptions>` and applies the shared prop/variant merge policy. The
+   implementation deliberately matches Svelte's one-level runtime composition behavior; tests in
+   `resolved-slot-props.test.ts` cover the supported surface.
 7. ~~Extend the swap to Preact and Vue.~~ Done — same `HasContract`/`__contract` mechanism, same
    pre-change `ContractGenericsOf<C>` projection, same safe swap, validated independently per
    adapter rather than assumed. Vue surfaced one adapter-specific, pre-existing test wrinkle
    (section 6) unrelated to this change's own correctness.
-8. ~~Audit Solid independently.~~ Done — confirmed safe, same mechanism as React/Preact/Vue, not
-   Svelte's blocked shape. Swapped and validated the same way; no Vue-style index-signature wrinkle
-   (Solid's own `ControlProps` already applies `OmitIndexSignature`).
+8. ~~Audit Solid independently.~~ Done — confirmed safe, same marker-based mechanism as
+   React/Preact/Vue; Svelte uses its separate bundle-generic projection. No Vue-style
+   index-signature wrinkle (Solid's own `ControlProps` already applies `OmitIndexSignature`).
 9. **Remaining:** Lit/Web are out of scope by design (`ComposeOptions`'s own doc comment — no
-   `asChild` concept exists for either). No further adapters to assess; this proposal's rollout is
-   complete modulo Svelte's separately-tracked runtime-shape decision.
+   `asChild` concept exists for either). The type-projection rollout for the supported adapters is
+   complete, with Svelte intentionally following its own bundle-generic and one-level composition
+   model.
+10. **Superseded detail — incompatible variant collisions keep the primary's values.** Items above
+    describe the colliding variant key as unusable (`CollisionError<K> | undefined`). That no longer
+    matches the canonical contract (the primary definition wins, the collision is surfaced, and a
+    value valid only under the partner's conflicting definition is not accepted). A colliding
+    variant is now `Own[K] & VariantCollisionError<K>` (`merge-policy.ts`), so the consumer-facing
+    prop is `<primary values> | CollisionError<K> | undefined`. Pinned by the "incompatible variant
+    collision — public prop type" tests in `compose-generics.test.ts` and each wired adapter's
+    collision assertion. Svelte's own `ComposedBundleGenericsOf<T>` projection is covered by its
+    collision assertions in `resolved-slot-props.test.ts`.
+11. **`ComposeOptions.with` stays required in TypeScript.** `ComposeOptions` declares `with` as
+    required, so `compose: {}` and `compose: { allProps: true }` are compile errors. Every
+    projection above therefore assumes a defined `with`; none models an incomplete configuration. At
+    runtime, composition activates exactly when `with !== undefined`. Incomplete shapes that reach
+    the runtime anyway (plain JavaScript, casts) are non-composing, and a supplied
+    `allProps`/`defaults` without `with` raises a construction-time diagnostic (`compose: {}` stays
+    silent). Making `with` optional was considered and rejected: it would only move a compile-time
+    error to a runtime diagnostic and force every projection to handle a no-target case.

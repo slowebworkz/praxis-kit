@@ -51,6 +51,10 @@ export const workspaceAlias: StringMap<string> = {
   '@praxis-kit/core/primitive': join(root, 'packages/core/src/primitive.ts'),
   '@praxis-kit/core/contract': join(root, 'packages/core/src/contract.ts'),
   '@praxis-kit/core/styling': join(root, 'packages/core/src/styling.ts'),
+  '@praxis-kit/core/internal/composition-style': join(
+    root,
+    'packages/core/src/factory/composition-style.ts',
+  ),
   '@praxis-kit/primitive/types/primitives': join(
     root,
     'lib/primitive/src/types/primitives/index.ts',

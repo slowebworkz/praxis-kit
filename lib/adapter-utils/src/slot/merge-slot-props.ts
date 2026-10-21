@@ -17,7 +17,12 @@ export function mergeSlotProps(slotProps: AnyRecord, childProps: AnyRecord): Any
 // React/Preact's `className` and Vue/Solid/Svelte's `class` are the same concept under different
 // adapter-specific naming — both get the same concat policy, not just the literal key `className`.
 function classifyProp(key: string, slotVal: unknown, childVal: unknown): PropMergePolicy {
-  if (EVENT_HANDLER_RE.test(key) && isFunction(slotVal) && isFunction(childVal)) return 'chain'
+  if (EVENT_HANDLER_RE.test(key) && isFunction(slotVal) && isFunction(childVal)) {
+    // The same function reference on both sides (e.g. `compose.allProps` forwarding a handler the
+    // composing component also binds itself) is one handler, not two: chaining it would run it
+    // twice per event.
+    return slotVal === childVal ? 'child-wins' : 'chain'
+  }
   switch (key) {
     case 'className':
     case 'class':

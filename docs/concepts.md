@@ -142,7 +142,13 @@ actually resolve.
 ## `compose`: declarative `asChild` composition
 
 `compose: { with: Component }` on `FactoryOptions` makes a component always render composed
-`asChild` into another praxis-kit component, declaratively — no hand-written wrapper needed:
+`asChild` into another praxis-kit component, declaratively — no hand-written wrapper needed. The
+`with` property is required by the public `ComposeOptions` TypeScript type: `compose: {}` and
+`compose: { allProps: true }` are incomplete declarations and should be corrected by supplying a
+composition target. The runtime also checks incomplete declarations defensively: a missing `with`
+does not activate composition styling, and supplying `allProps` or `defaults` without `with` emits
+a construction-time diagnostic. An empty `compose: {}` remains silent at runtime, but is not a
+supported typed declaration:
 
 ```tsx
 const Surface = createContractComponent({ styling: { base: 'surface' } })

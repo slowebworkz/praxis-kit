@@ -77,6 +77,53 @@ describe('createContractComponent — tag rendering', () => {
   })
 })
 
+describe('createContractComponent — composition styling', () => {
+  it('combines partner and primary base classes in contribution order', () => {
+    const Surface = createContractComponent({ styling: { base: 'partner-base' } })
+    const Card = createContractComponent({
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+    const wrapper = mount(box(Card))
+
+    expect(wrapper.element.className.indexOf('partner-base')).toBeGreaterThanOrEqual(0)
+    expect(wrapper.element.className.indexOf('primary-base')).toBeGreaterThan(
+      wrapper.element.className.indexOf('partner-base'),
+    )
+  })
+
+  it('preserves explicit asChild styling instead of applying automatic composition', () => {
+    const Surface = createContractComponent({ styling: { base: 'partner-base' } })
+    const Card = createContractComponent({
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+    const wrapper = mount(box(Card), {
+      props: { asChild: true },
+      slots: { default: () => h('button') },
+    })
+
+    expect(wrapper.element.tagName.toLowerCase()).toBe('button')
+    expect(wrapper.element.className).toContain('primary-base')
+    expect(wrapper.element.className).not.toContain('partner-base')
+  })
+
+  it('ignores malformed internal resolver requests and does not forward them to the DOM', () => {
+    const Surface = createContractComponent({ styling: { base: 'partner-base' } })
+    const wrapper = mount(box(Surface), {
+      props: {
+        asChild: true,
+        __praxisCompositionStyleRequest: { resolveClasses: 'not-a-function' },
+      } as never,
+      slots: { default: () => h('button') },
+    })
+
+    expect(wrapper.element.className).toContain('partner-base')
+    expect(wrapper.element.hasAttribute('__praxisCompositionStyleRequest')).toBe(false)
+    expect(wrapper.element.hasAttribute('__praxiscompositionstylerequest')).toBe(false)
+  })
+})
+
 describe('createContractComponent — class merging', () => {
   it('applies baseClassName', () => {
     const Box = createContractComponent({ styling: { base: 'base-cls' } })

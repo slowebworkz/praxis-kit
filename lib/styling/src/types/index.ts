@@ -30,3 +30,12 @@ export type {
   VariantSelection,
   VariantValue,
 } from './variant'
+export type {
+  CompositionClassResolver,
+  CompositionStyleContract,
+  CompositionStyleOptions,
+  CompositionTagMap,
+  CompositionVariants,
+} from './composition'
+export type { ClassDiagnosis, CompoundTrace } from './diagnosis'
+export type { CvaFn } from './cva-fn'

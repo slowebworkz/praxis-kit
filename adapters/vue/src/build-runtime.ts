@@ -40,7 +40,7 @@ export function buildRuntime<
   type G = PolymorphicGenerics<TDefault, Props, Variants, TPreset>
 
   const normalized = normalizeOptions<G>(options)
-  const { runtime, ownedKeys } = buildCoreRuntime<G>(normalized)
+  const { runtime, ownedKeys, compositionClassResolver } = buildCoreRuntime<G>(normalized)
 
   const { diagnostics, enforcement, filterProps: userFilter, name } = normalized
 
@@ -56,6 +56,7 @@ export function buildRuntime<
     filterProps,
     slotValidator,
     ...(childrenEvaluator !== undefined && { childrenEvaluator }),
+    ...(compositionClassResolver !== undefined && { compositionClassResolver }),
   }
 
   return built

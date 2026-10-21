@@ -11,7 +11,14 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { assembleCompoundComponent } from '@praxis-kit/adapter-utils'
+import {
+  diagnoseIncompleteComposition,
+  assembleCompoundComponent,
+  attachCompositionStyleMetadata,
+  composeStyleProps,
+  mergeCompositionClassNames,
+} from '@praxis-kit/adapter-utils'
+import { isString } from '@praxis-kit/guards'
 import { buildRuntime } from './build-runtime'
 import type { SvelteFactoryOptions } from './svelte-options'
 import type { BuiltRuntime } from './types/built-runtime'
@@ -79,6 +86,30 @@ export function createContractComponent<
   const bundle = buildRuntime(
     options as unknown as SvelteFactoryOptions<TDefault, Props, Variants, TPreset> & C,
   ) as unknown as BuiltRuntime<ContractGenericsOf<C>, C>
+
+  attachCompositionStyleMetadata(bundle, bundle.runtime.options)
+  diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
+
+  const { compose } = options
+  const resolveClasses = bundle.compositionClassResolver
+  if (compose && resolveClasses) {
+    const configuredClass = compose.defaults ? Reflect.get(compose.defaults, 'class') : undefined
+    const defaultClass =
+      isString(configuredClass) || Array.isArray(configuredClass) ? configuredClass : undefined
+    bundle.resolveComposedClasses = (tag, partnerProps, componentProps, callerClass, recipe) =>
+      resolveClasses(
+        tag,
+        composeStyleProps(
+          partnerProps,
+          componentProps,
+          bundle.runtime.options,
+          compose.defaults,
+          resolveClasses.partner,
+        ),
+        mergeCompositionClassNames(defaultClass, callerClass),
+        recipe,
+      )
+  }
 
   return assembleCompoundComponent(bundle, options.subComponents)
 }

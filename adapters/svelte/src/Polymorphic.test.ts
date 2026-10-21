@@ -327,7 +327,9 @@ describe('Polymorphic (Svelte adapter)', () => {
       expect(container.querySelector('span')).toBeNull()
     })
 
-    it('explicit allProps: false does not forward props to the composed bundle', () => {
+    it('explicit allProps: false still styles the composed bundle from selected variants', () => {
+      // `allProps` gates raw prop forwarding only; a variant the Praxis partner declares is
+      // selected from the composing component's props whenever `compose.with` exists.
       const boxA = createContractComponent({
         tag: 'div',
         styling: { variants: { intent: { ghost: 'intent-ghost' } } },
@@ -339,7 +341,328 @@ describe('Polymorphic (Svelte adapter)', () => {
 
       const { container } = render(Polymorphic, { bundle: boxB, intent: 'ghost' })
 
-      expect(container.querySelector('button')?.className).not.toContain('intent-ghost')
+      expect(container.querySelector('button')?.className).toContain('intent-ghost')
+    })
+
+    describe('composition styling', () => {
+      // Contribution order, primary-over-`compose.defaults` precedence, and unforwarded-prop
+      // isolation run through the shared conformance suite (`compositionStyling: true`); the
+      // cases below are the ones that suite can't express.
+
+      it('preserves a class supplied through compose.defaults without the partner’s computed classes', () => {
+        const surface = createContractComponent({
+          tag: 'div',
+          styling: {
+            base: 'partner-base',
+            variants: { intent: { ghost: 'partner-ghost', solid: 'partner-solid' } },
+          },
+        })
+        const card = createContractComponent({
+          tag: 'div',
+          compose: { with: surface, defaults: { class: 'default-class', intent: 'ghost' } },
+          styling: {
+            base: 'primary-base',
+            variants: { intent: { ghost: 'primary-ghost', solid: 'primary-solid' } },
+            defaults: { intent: 'solid' },
+          },
+        })
+
+        const { container } = render(Polymorphic, { bundle: card, class: 'caller-class' })
+        const className = container.querySelector('div')!.className
+
+        expect(className).toContain('default-class')
+        expect(className).toContain('caller-class')
+        expect(className).toContain('partner-solid')
+        expect(className).not.toContain('partner-ghost')
+        expect(className).not.toContain('primary-ghost')
+      })
+
+      it('keeps a partner-only variant from compose.defaults and a primary-only variant functional', () => {
+        const surface = createContractComponent({
+          tag: 'div',
+          styling: { variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } } },
+        })
+        const card = createContractComponent({
+          tag: 'div',
+          compose: { with: surface, defaults: { tone: 'loud' } },
+          styling: { variants: { size: { sm: 'primary-sm', lg: 'primary-lg' } } },
+        })
+
+        const { container } = render(Polymorphic, { bundle: card, size: 'lg' })
+        const className = container.querySelector('div')!.className
+
+        expect(className).toContain('partner-loud')
+        expect(className).toContain('primary-lg')
+        expect(className).not.toContain('partner-quiet')
+      })
+
+      it('applies a recipe from the composing component across both contracts', () => {
+        const surface = createContractComponent({
+          tag: 'div',
+          styling: { variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } } },
+        })
+        const card = createContractComponent({
+          tag: 'div',
+          compose: { with: surface },
+          styling: {
+            variants: { tone: { quiet: 'primary-quiet', loud: 'primary-loud' } },
+            presets: { emphasis: { tone: 'loud' } },
+          },
+        })
+
+        const { container } = render(Polymorphic, { bundle: card, recipe: 'emphasis' })
+        const className = container.querySelector('div')!.className
+
+        expect(className).toContain('partner-loud')
+        expect(className).toContain('primary-loud')
+      })
+
+      it('retains a recipe that only the partner defines instead of rejecting it', () => {
+        const surface = createContractComponent({
+          tag: 'div',
+          styling: {
+            variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+            presets: { emphasis: { tone: 'loud' } },
+          },
+        })
+        const card = createContractComponent({
+          tag: 'div',
+          compose: { with: surface },
+          styling: { base: 'primary-base' },
+        })
+
+        const { container } = render(Polymorphic, { bundle: card, recipe: 'emphasis' })
+        const className = container.querySelector('div')!.className
+
+        expect(className).toContain('partner-loud')
+        expect(className).toContain('primary-base')
+      })
+
+      it('lets the primary win an incompatible shared variant and warns once at construction', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        try {
+          const surface = createContractComponent({
+            tag: 'div',
+            styling: { variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } } },
+          })
+          const card = createContractComponent({
+            tag: 'div',
+            compose: { with: surface },
+            enforcement: { diagnostics: warnDiagnostics },
+            styling: {
+              variants: { tone: { calm: 'primary-calm', bold: 'primary-bold' } },
+              defaults: { tone: 'bold' },
+            },
+          })
+          // Construction-time: the diagnostic fires before any render.
+          const constructionWarnings = warnSpy.mock.calls.flat().join(' ')
+          expect(constructionWarnings).toContain('Incompatible composed variant "tone"')
+
+          const { container } = render(Polymorphic, { bundle: card })
+          const className = container.querySelector('div')!.className
+          expect(className).toContain('primary-bold')
+          expect(className).not.toContain('partner-')
+        } finally {
+          warnSpy.mockRestore()
+        }
+      })
+
+      // The combined path (Praxis partner with retained metadata) and the nested-render fallback
+      // (a bundle-shaped target without it — a spread copy drops the non-enumerable metadata) are
+      // two implementations that must agree on the REQUIRED PARITY behaviors below: partner and
+      // primary base classes, caller class, a `class` from compose.defaults, explicit primary
+      // variant values affecting the primary contribution, the composing component's own DOM
+      // props, single handler delivery, and explicit asChild precedence.
+      //
+      // INTENTIONAL DIFFERENCES (combined path only; the fallback has no retained partner metadata):
+      //   - A variant the partner declares, whether shared with the primary or partner-only, is
+      //     selected from the composing component's props, so the partner's contribution follows
+      //     it even with allProps: false. The fallback only reaches the partner through allProps.
+      //   - Partner base/variant/compound classes are produced by the shared pipeline in
+      //     contribution order, not concatenated from the partner's separately-resolved class.
+      // These differences are pinned by their own tests; do not add them to the parity matrix.
+      describe.each([
+        ['Praxis partner (combined path)', (b: object) => b],
+        ['partner without retained metadata (fallback path)', (b: object) => ({ ...b })],
+      ])('required path parity — %s', (_label, asPartner) => {
+        function build(
+          composeExtras: AnyRecord = {},
+          primaryStyling: AnyRecord = {},
+        ): ReturnType<typeof createContractComponent> {
+          const surface = createContractComponent({
+            tag: 'div',
+            styling: {
+              base: 'partner-base',
+              variants: {
+                intent: { ghost: 'partner-ghost', solid: 'partner-solid' },
+                tone: { quiet: 'partner-quiet', loud: 'partner-loud' },
+              },
+            },
+          })
+          return createContractComponent({
+            tag: 'div',
+            compose: { with: asPartner(surface) as never, ...composeExtras },
+            styling: {
+              base: 'primary-base',
+              variants: { intent: { ghost: 'primary-ghost', solid: 'primary-solid' } },
+              ...primaryStyling,
+            },
+          } as never)
+        }
+
+        it('keeps partner base, primary base, and the caller class', () => {
+          const { container } = render(Polymorphic, { bundle: build(), class: 'caller-class' })
+          const className = container.querySelector('div')!.className
+
+          expect(className).toContain('partner-base')
+          expect(className).toContain('primary-base')
+          expect(className).toContain('caller-class')
+        })
+
+        it('keeps a class supplied through compose.defaults alongside the caller class', () => {
+          const bundle = build({ defaults: { class: 'default-class' } })
+          const { container } = render(Polymorphic, { bundle, class: 'caller-class' })
+          const className = container.querySelector('div')!.className
+
+          expect(className).toContain('default-class')
+          expect(className).toContain('caller-class')
+        })
+
+        it('lets an explicit primary variant value drive the primary contribution', () => {
+          const { container } = render(Polymorphic, { bundle: build(), intent: 'solid' })
+          const className = container.querySelector('div')!.className
+
+          expect(className).toContain('primary-solid')
+          expect(className).not.toContain('primary-ghost')
+        })
+
+        it('keeps the composing component’s own DOM props on its element regardless of allProps', () => {
+          // Not a forwarding test: the primary's own element always receives its DOM props. The
+          // partner-only variant test above is the observable proof of allProps forwarding.
+          for (const allProps of [true, false]) {
+            const { container } = render(Polymorphic, {
+              bundle: build({ allProps }),
+              'data-probe': 'yes',
+            })
+            expect(container.querySelector('div')!.getAttribute('data-probe')).toBe('yes')
+            cleanup()
+          }
+        })
+
+        it.each([true, false])(
+          'delivers a handler passed to the composing component exactly once (allProps: %s)',
+          (allProps) => {
+            const onClick = vi.fn()
+            const { container } = render(Polymorphic, { bundle: build({ allProps }), onClick })
+
+            container.querySelector('div')!.dispatchEvent(new Event('click', { bubbles: true }))
+
+            // The composing component owns the handler on its element; allProps may also hand it
+            // to the partner, but the partner's slot props never bind a second native listener.
+            expect(onClick).toHaveBeenCalledTimes(1)
+          },
+        )
+
+        it('prefers explicit asChild and resolves only the primary recipe', () => {
+          const surface = createContractComponent({
+            tag: 'div',
+            styling: {
+              base: 'partner-base',
+              variants: { intent: { ghost: 'partner-intent-ghost' } },
+              presets: { emphasis: { intent: 'ghost' } },
+            },
+          })
+          const card = createContractComponent({
+            tag: 'div',
+            compose: { with: surface, defaults: { intent: 'ghost' } },
+            styling: {
+              base: 'primary-base',
+              variants: { size: { lg: 'primary-size-lg' } },
+              presets: { emphasis: { size: 'lg' } },
+            },
+          })
+          let received: AnyRecord = {}
+          const children = createRawSnippet<[AnyRecord]>((getProps) => ({
+            render() {
+              received = getProps()
+              return '<a>link</a>'
+            },
+          }))
+
+          render(Polymorphic, { bundle: card, recipe: 'emphasis', asChild: true, children })
+
+          expect(received['class']).toContain('primary-base')
+          expect(received['class']).toContain('primary-size-lg')
+          expect(received['class']).not.toContain('partner-base')
+          expect(received['class']).not.toContain('partner-intent-ghost')
+        })
+      })
+
+      it.each([
+        [
+          'a variant both contracts declare',
+          'intent',
+          { intent: { ghost: 'primary-ghost', solid: 'primary-solid' } },
+        ],
+        ['a partner-only variant', 'intent', {}],
+      ])('selects %s on the partner without allProps (combined path only)', (_label, name, own) => {
+        // Intended difference between the two paths: with a Praxis partner, a variant it declares
+        // is selected from the composing component's props even when allProps is off, so the
+        // partner's contribution follows it. A partner without retained metadata is only reachable
+        // through allProps, so it never sees the value.
+        const surface = createContractComponent({
+          tag: 'div',
+          styling: { variants: { [name]: { ghost: 'partner-ghost', solid: 'partner-solid' } } },
+        })
+        const card = (partner: object) =>
+          createContractComponent({
+            tag: 'div',
+            compose: { with: partner as never, allProps: false },
+            styling: { variants: own },
+          } as never)
+
+        const combined = render(Polymorphic, { bundle: card(surface), [name]: 'solid' } as never)
+        expect(combined.container.querySelector('div')!.className).toContain('partner-solid')
+        cleanup()
+
+        const fallback = render(Polymorphic, {
+          bundle: card({ ...surface }),
+          [name]: 'solid',
+        } as never)
+        expect(fallback.container.querySelector('div')!.className).not.toContain('partner-solid')
+      })
+
+      it('does not activate from compose.allProps alone, and leaves ordinary rendering unchanged', () => {
+        const box = createContractComponent({
+          tag: 'div',
+          compose: { allProps: true } as never,
+          styling: { base: 'primary-base' },
+        })
+
+        const { container } = render(Polymorphic, { bundle: box, class: 'caller-class' })
+
+        expect(box.resolveComposedClasses).toBeUndefined()
+        expect(container.querySelector('div')?.className).toBe('primary-base caller-class')
+      })
+
+      it('keeps the nested-render fallback for a target without retained styling metadata', () => {
+        const surface = createContractComponent({ tag: 'div', styling: { base: 'partner-base' } })
+        // Spreading drops the non-enumerable metadata property, leaving a bundle-shaped value with
+        // no retained Praxis styling contract.
+        const external = { ...surface }
+        const card = createContractComponent({
+          tag: 'div',
+          compose: { with: external },
+          styling: { base: 'primary-base' },
+        })
+
+        const { container } = render(Polymorphic, { bundle: card })
+        const className = container.querySelector('div')!.className
+
+        expect(card.resolveComposedClasses).toBeUndefined()
+        expect(className).toContain('partner-base')
+        expect(className).toContain('primary-base')
+      })
     })
 
     it('an explicit asChild from the consumer wins over compose', () => {

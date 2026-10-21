@@ -77,7 +77,13 @@ const adapter: ConformanceAdapter<SolidConformanceComponent> = {
   setup: () => {},
   cleanup: () => cleanup(),
   createRef: () => ({ current: null }),
-  capabilities: { asChild: false, dynamicChildRules: true },
+  // Not a Praxis component: no retained styling metadata. Solid's asChild contract hands the
+  // children render function its slot props.
+  createExternalPartner: () => (props: { children?: unknown }) =>
+    typeof props.children === 'function'
+      ? (props.children as (p: object) => unknown)({})
+      : props.children,
+  capabilities: { asChild: false, dynamicChildRules: true, compositionStyling: true },
 }
 
 conformanceSuite(adapter)

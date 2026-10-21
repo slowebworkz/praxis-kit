@@ -33,6 +33,14 @@ import type { ComponentReference } from '../element-type'
  * component-reference values.
  */
 export type ComposeOptions = {
+  /**
+   * The component to compose into. **Required by TypeScript**: `compose: {}` or
+   * `compose: { allProps: true }` does not type-check. Composition activates exactly when `with`
+   * is defined at runtime, so the type refuses the incomplete shapes outright. Untyped callers (plain
+   * JavaScript, casts) can still supply them; the runtime treats them as non-composing and, for
+   * a supplied `allProps`/`defaults` without `with`, reports a construction-time diagnostic
+   * (`compose: {}` stays silent).
+   */
   readonly with: ComponentReference
   readonly allProps?: boolean
   /**
