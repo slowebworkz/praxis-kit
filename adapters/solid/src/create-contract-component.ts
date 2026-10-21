@@ -104,6 +104,7 @@ export function createContractComponent<
         resolve: bundle.compositionClassResolver,
         primary: bundle.runtime.options,
         partner: bundle.compositionClassResolver.partner,
+        ownedKeys: bundle.compositionClassResolver.ownedKeys,
       }
     : undefined
 
@@ -145,6 +146,7 @@ export function createContractComponent<
         compose.allProps,
         compose.defaults,
         compositionClassResolver,
+        bundle.ownedKeys,
       )
     }
 

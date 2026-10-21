@@ -401,7 +401,9 @@ describe('createContractComponent (Solid adapter)', () => {
     })
 
     const { container } = solidRender(() => (
-      <BoxB asChild {...({ recipe: 'emphasis' } as AnyRecord)}>{(props: AnyRecord) => <a {...props} />}</BoxB>
+      <BoxB asChild {...({ recipe: 'emphasis' } as AnyRecord)}>
+        {(props: AnyRecord) => <a {...props} />}
+      </BoxB>
     ))
 
     const el = container.querySelector('a')!

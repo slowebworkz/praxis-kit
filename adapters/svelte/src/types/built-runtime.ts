@@ -50,6 +50,8 @@ export type BuiltRuntime<
 > = BuiltChildrenEvaluator<TOptions> & {
   runtime: TypedRuntime<G>
   compositionClassResolver?: CompositionClassResolver
+  /** Plugin-owned keys reserved from host and child prop forwarding. */
+  ownedKeys: ReadonlySet<string>
   filterProps: FilterPredicate
   slotValidator: SlotValidator
   onElement?: OnElementFn<G>
@@ -63,6 +65,7 @@ export type BuiltRuntime<
 // All BuiltRuntime<G, TOptions> variants satisfy this shape.
 export type AnyBuiltRuntime = {
   runtime: Runtime
+  ownedKeys: ReadonlySet<string>
   filterProps: FilterPredicate
   slotValidator: SlotValidator
   childrenEvaluator?: ChildrenEvaluator

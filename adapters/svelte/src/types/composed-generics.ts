@@ -66,10 +66,11 @@ type VariantsForComposition<
 > = MergeComposedProps<OwnVariants<Own>, OwnVariants<Composed>, true>
 
 /** Resolves `G` against the composition options: unchanged without a partner, merged with one. */
-type ResolveComposition<G extends PolymorphicGenerics, Options> =
-  [ComposedTargetOf<Options>] extends [never]
-    ? G
-    : MergeGenerics<G, OwnGenericsOf<ComposedTargetOf<Options>>, ForwardPropsOf<Options>>
+type ResolveComposition<G extends PolymorphicGenerics, Options> = [
+  ComposedTargetOf<Options>,
+] extends [never]
+  ? G
+  : MergeGenerics<G, OwnGenericsOf<ComposedTargetOf<Options>>, ForwardPropsOf<Options>>
 
 /**
  * Builds merged `PolymorphicGenerics` from own and composed generics, falling back to `Own` if a

@@ -5,6 +5,7 @@ import { buildCoreRuntime } from './build-core-runtime'
 import {
   attachCompositionStyleMetadata,
   composeStyleProps,
+  filterOwnedProps,
   createOptionalCompositionStylePipeline,
   getCompositionStyleMetadata,
 } from './composition-style-metadata'
@@ -105,6 +106,33 @@ describe('composeStyleProps', () => {
     )
 
     expect(result).toEqual({ tone: 'loud' })
+  })
+})
+
+describe('composition-owned props', () => {
+  it('passes owned props to composition styling when allProps forwarding is disabled', () => {
+    const ownedKeys = new Set(['flex', 'grid'])
+    const defaults = { flex: true, grid: false }
+
+    expect(composeStyleProps({}, { flex: false }, {}, defaults, {}, ownedKeys)).toEqual({
+      flex: false,
+      grid: false,
+    })
+  })
+
+  it('uses compose.defaults for owned props when there is no explicit selection', () => {
+    const ownedKeys = new Set(['flex'])
+
+    expect(composeStyleProps({}, {}, {}, { flex: true }, {}, ownedKeys)).toEqual({ flex: true })
+  })
+
+  it('filters owned props before child or host forwarding', () => {
+    expect(
+      filterOwnedProps(
+        { flex: true, grid: false, id: 'button', 'data-testid': 'primary' },
+        new Set(['flex', 'grid']),
+      ),
+    ).toEqual({ id: 'button', 'data-testid': 'primary' })
   })
 })
 
@@ -268,18 +296,26 @@ describe('composition recipe and default precedence', () => {
 })
 
 describe('shared runtime composition integration', () => {
-  it('constructs the optional resolver at runtime construction when a Praxis target is supplied', () => {
+  it('constructs the optional resolver and reserves its owned keys at runtime construction', () => {
+    const pluginFactory = ((options: { baseClassName?: string }) => ({
+      pipeline: () => options.baseClassName ?? '',
+      ownedKeys: new Set(options.baseClassName?.includes('partner-base') ? ['grid'] : ['flex']),
+    })) as never
     const partner = attachCompositionStyleMetadata(() => null, {
       baseClassName: 'partner-base',
     })
 
     const built = buildCoreRuntime<ButtonGenerics>({
       tag: 'button',
-      styling: { base: 'primary-base' },
+      styling: {
+        base: 'primary-base',
+        plugin: pluginFactory,
+      },
       compose: { with: partner as never, defaults: { tone: 'quiet' } },
     })
 
     expect(built.compositionClassResolver?.('button', {})).toBe('partner-base primary-base')
+    expect(built.ownedKeys).toEqual(new Set(['flex', 'grid']))
   })
 
   it('keeps the ordinary runtime path when no composition target is supplied', () => {

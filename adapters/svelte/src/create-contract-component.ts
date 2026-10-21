@@ -105,6 +105,7 @@ export function createContractComponent<
           bundle.runtime.options,
           compose.defaults,
           resolveClasses.partner,
+          resolveClasses.ownedKeys,
         ),
         mergeCompositionClassNames(defaultClass, callerClass),
         recipe,

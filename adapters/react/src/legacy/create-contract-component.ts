@@ -20,6 +20,7 @@ import {
   diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
   composeStyleProps,
+  filterOwnedProps,
   mergeCompositionClassNames,
   COMPOSITION_STYLE_REQUEST_PROP,
   isCompositionStyleRequest,
@@ -185,8 +186,8 @@ export function createContractComponent<
         ref: null,
       })
       return createElement(compose.with as ComponentType<UnknownProps>, {
-        ...compose.defaults,
-        ...(compose.allProps && componentProps),
+        ...filterOwnedProps(compose.defaults, bundle.ownedKeys),
+        ...(compose.allProps ? filterOwnedProps(componentProps, bundle.ownedKeys) : undefined),
         ...(compositionClassResolver
           ? {
               [COMPOSITION_STYLE_REQUEST_PROP]: {
@@ -204,6 +205,7 @@ export function createContractComponent<
                       bundle.runtime.options,
                       compose.defaults,
                       compositionClassResolver.partner,
+                      compositionClassResolver.ownedKeys,
                     ),
                     mergeCompositionClassNames(
                       partnerClassName,

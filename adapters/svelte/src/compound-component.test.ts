@@ -44,9 +44,16 @@ describe('subComponents (compound component generation)', () => {
 
   it('a plain (non-compound) component is unaffected — no subComponents option', () => {
     const Plain = createContractComponent({ tag: 'div' as const, name: 'Plain' })
-    // No subComponents were passed, so assembleCompoundComponent short-circuits and
-    // returns the bundle untouched — same own keys as any plain buildRuntime() bundle.
-    expect(Object.keys(Plain)).toEqual(['runtime', 'filterProps', 'slotValidator'])
+    // No subComponents were passed, so assembleCompoundComponent short-circuits and returns the
+    // bundle untouched: it keeps the core bundle fields and gains no sub-component properties.
+    // (Not pinned to an exact key list — the bundle may gain internal fields without that
+    // meaning a compound was assembled.)
+    expect(Object.keys(Plain)).toEqual(
+      expect.arrayContaining(['runtime', 'filterProps', 'slotValidator']),
+    )
+    expect(Plain).not.toHaveProperty('Header')
+    expect(Plain).not.toHaveProperty('Content')
+    expect(Plain).not.toHaveProperty('Footer')
 
     expect(() => render(Polymorphic, { bundle: Plain })).not.toThrow()
   })

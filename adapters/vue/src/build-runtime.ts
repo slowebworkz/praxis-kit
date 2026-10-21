@@ -53,6 +53,7 @@ export function buildRuntime<
 
   const built: BuiltRuntime<G> = {
     runtime,
+    ownedKeys,
     filterProps,
     slotValidator,
     ...(childrenEvaluator !== undefined && { childrenEvaluator }),

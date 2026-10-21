@@ -19,7 +19,13 @@ export function buildCoreRuntime<G extends PolymorphicGenerics>(
   const compositionClassResolver = runtime.compositionClassResolver
   // classPlugin is absent when no styling plugin is provided; fall back to EMPTY_SET
   // so consumers can call ownedKeys.has(key) unconditionally.
-  const ownedKeys: ReadonlySet<string> =
+  const componentOwnedKeys: ReadonlySet<string> =
     'classPlugin' in runtime ? (runtime.classPlugin.ownedKeys ?? EMPTY_SET) : EMPTY_SET
+  // A composed pipeline can own keys that the primary component's standalone plugin does not.
+  // Reserve the union at the adapter boundary so neither set leaks to a host element or child.
+  const ownedKeys: ReadonlySet<string> = new Set([
+    ...componentOwnedKeys,
+    ...(compositionClassResolver?.ownedKeys ?? EMPTY_SET),
+  ])
   return { runtime, ownedKeys, ...(compositionClassResolver && { compositionClassResolver }) }
 }

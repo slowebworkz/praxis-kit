@@ -1,4 +1,5 @@
 import { isDefined, isFunction, isObject } from '@praxis-kit/guards'
+import { iterate } from '@praxis-kit/primitive'
 import type {
   AnyRecord,
   ClassName,
@@ -110,13 +111,26 @@ export function createOptionalCompositionStylePipeline(
 }
 
 /**
- * Copy one explicitly selected variant value. An absent or `undefined` value is not a selection:
+ * Copy one explicitly selected styling prop. An absent or `undefined` value is not a selection:
  * copying it would pin the variant to `undefined` and shadow recipe values and defaults, and
  * `Object.hasOwn` alone can't be trusted for it because a dynamic props proxy (Solid's spread of
  * a computed object) reports keys that were never set.
  */
-function copySelectedVariant(target: AnyRecord, source: Readonly<AnyRecord>, name: string): void {
+function copySelectedProp(target: AnyRecord, source: Readonly<AnyRecord>, name: string): void {
   if (Object.hasOwn(source, name) && source[name] !== undefined) target[name] = source[name]
+}
+
+/** Remove plugin-owned styling inputs before forwarding props to a child or host element. */
+export function filterOwnedProps(
+  props: object | undefined,
+  ownedKeys: ReadonlySet<string>,
+): AnyRecord {
+  if (!props) return {}
+  const result: AnyRecord = {}
+  iterate.forEachEntry(props as AnyRecord, (key, value) => {
+    if (!ownedKeys.has(key)) result[key] = value
+  })
+  return result
 }
 
 /**
@@ -130,40 +144,44 @@ export function composeStyleProps(
   primary: StyleMetadata,
   composeDefaults: object | undefined,
   partner: StyleMetadata,
+  compositionOwnedKeys: ReadonlySet<string> = new Set(),
 ): AnyRecord {
   const result: AnyRecord = { ...partnerProps }
   // `compose.defaults` reach the resolver through `createCompositionStyleResolver` at the lowest
   // precedence; left in the props they would read as explicit values and override the primary's
   // own defaults.
   if (composeDefaults) {
-    for (const name of Object.keys(composeDefaults)) {
-      if (
-        result[name] === Reflect.get(composeDefaults, name) &&
-        componentProps[name] !== result[name]
-      ) {
+    iterate.forEachEntry(composeDefaults as AnyRecord, (name, defaultValue) => {
+      if (result[name] === defaultValue && componentProps[name] !== result[name]) {
         delete result[name]
       }
-    }
+    })
   }
   // A declared variant carried as `undefined` (forwarded from the partner's props) is not a
   // selection either: left in place it would pin the variant and shadow recipe values and
   // defaults, so drop it before the defined selections are applied.
-  const declaredVariants = [
-    ...Object.keys(partner.variants ?? {}),
-    ...Object.keys(primary.variants ?? {}),
-  ]
-  for (const name of declaredVariants) {
+  const dropUndefinedSelection = (name: string): void => {
     if (result[name] === undefined) delete result[name]
   }
+  iterate.forEachEntry(partner.variants ?? {}, dropUndefinedSelection)
+  iterate.forEachEntry(primary.variants ?? {}, dropUndefinedSelection)
   // Partner-only variant props are styling inputs even when `allProps` is false; raw props
   // remain unforwarded, but the shared resolver must still see the combined variant selection.
-  for (const name of Object.keys(partner.variants ?? {})) {
-    copySelectedVariant(result, componentProps, name)
-  }
+  iterate.forEachEntry(partner.variants ?? {}, (name) => {
+    copySelectedProp(result, componentProps, name)
+  })
   // Primary values win incompatible collisions, matching the resolver's primary-wins policy.
-  for (const name of Object.keys(primary.variants ?? {})) {
-    copySelectedVariant(result, componentProps, name)
-  }
+  iterate.forEachEntry(primary.variants ?? {}, (name) => {
+    copySelectedProp(result, componentProps, name)
+  })
+  // Plugin-owned layout props are styling inputs even when compose.allProps is false. Explicit
+  // primary values win; otherwise a defined compose.defaults value remains a low-priority input.
+  iterate.forEachSet(compositionOwnedKeys, (name) => {
+    copySelectedProp(result, componentProps, name)
+    if (result[name] === undefined && composeDefaults) {
+      copySelectedProp(result, composeDefaults as Readonly<AnyRecord>, name)
+    }
+  })
   return result
 }
 

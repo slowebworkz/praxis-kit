@@ -989,7 +989,9 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
 
       it('keeps ordinary styling when allProps is supplied without a composition target', () => {
         const Box = adapter.createComponent({
-          compose: { allProps: true } as unknown as NonNullable<ConformanceFactoryOptions['compose']>,
+          compose: { allProps: true } as unknown as NonNullable<
+            ConformanceFactoryOptions['compose']
+          >,
           styling: {
             base: 'primary-base',
             variants: { tone: { quiet: 'primary-quiet', loud: 'primary-loud' } },
