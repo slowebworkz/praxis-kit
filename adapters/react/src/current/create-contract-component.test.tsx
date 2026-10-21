@@ -3,6 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { createElement, Fragment, createRef, forwardRef } from 'react'
 import type { RenderCallbackProps } from '../shared'
 import { warnDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import type { AriaRule } from '@praxis-kit/core/contract'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import { box, useReactDom } from '../shared/test-utils'
@@ -172,6 +173,28 @@ describe('createContractComponent (current / React 19)', () => {
     expect(classes).toContain('partner-intent-ghost')
     expect(classes).toContain('partner-size-lg')
     expect(classes).toContain('partner-compound-ghost-lg')
+  })
+
+  it('uses the Tailwind plugin for combined classes and filters plugin-owned props from the host', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4 rounded' },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'border', plugin: createTailwindPipeline },
+    })
+
+    dom.mount(createElement(box(Card), { flex: true }))
+
+    const element = dom.container.querySelector('div')!
+    expect(element.className).toContain('flex')
+    expect(element.className).toContain('gap-4')
+    expect(element.className).toContain('rounded')
+    expect(element.className).toContain('border')
+    expect(element.className).not.toContain('grid-cols-3')
+    expect(element.getAttribute('flex')).toBeNull()
   })
 
   it('ignores a malformed internal composition style request', () => {

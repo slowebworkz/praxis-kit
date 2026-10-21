@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
 import { createElement, Fragment, createRef } from 'react'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import type { RenderCallbackProps } from '../shared'
 import { box, useReactDom } from '../shared/test-utils'
 import { COMPOSITION_STYLE_REQUEST_PROP } from '@praxis-kit/adapter-utils'
@@ -143,6 +144,28 @@ describe('createContractComponent (legacy / React 18)', () => {
     const Box = createContractComponent({})
     dom.mount(createElement(box(Box), null, createElement('span', { id: 'child' })))
     expect(dom.container.querySelector('span#child')).toBeTruthy()
+  })
+
+  it('uses the Tailwind plugin for combined classes and filters plugin-owned props from the host', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4 rounded' },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'border', plugin: createTailwindPipeline },
+    })
+
+    dom.mount(createElement(box(Card), { flex: true }))
+
+    const element = dom.container.querySelector('div')!
+    expect(element.className).toContain('flex')
+    expect(element.className).toContain('gap-4')
+    expect(element.className).toContain('rounded')
+    expect(element.className).toContain('border')
+    expect(element.className).not.toContain('grid-cols-3')
+    expect(element.getAttribute('flex')).toBeNull()
   })
 
   it('ignores a malformed internal composition style request', () => {
