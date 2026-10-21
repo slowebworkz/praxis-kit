@@ -1,39 +1,43 @@
 {
-  "generated": "2026-10-13T00:52:30.224Z",
+  "generated": "2026-10-21T04:54:49.539Z",
   "bundles": {
     "package/contract-only": 8450,
-    "package/guards-only": 7837,
-    "package/html-only": 23385,
-    "package/lit-minimal": 36124,
-    "package/preact-minimal": 37433,
-    "package/react-minimal": 37768,
-    "package/solid-minimal": 36342,
+    "package/guards-only": 7870,
+    "package/html-only": 23411,
+    "package/lit-minimal": 37222,
+    "package/preact-minimal": 39248,
+    "package/react-minimal": 39577,
+    "package/solid-minimal": 38579,
     "package/utils-only": 118,
-    "package/vue-minimal": 36946,
-    "package/web-minimal": 36092,
-    "source/aria-only": 31400,
-    "source/contracts-only": 31466,
-    "source/full-runtime": 31630,
-    "source/minimal-polymorphic": 31355,
+    "package/vue-minimal": 38772,
+    "package/web-minimal": 37184,
+    "source/aria-only": 33177,
+    "source/contracts-only": 33243,
+    "source/full-runtime": 33408,
+    "source/minimal-polymorphic": 33134,
     "source/pk2-engine-only": 793,
-    "source/polymorphic-validation": 31422,
-    "source/preact-minimal": 31048,
-    "source/react-minimal": 31355,
-    "source/solid-minimal": 29880,
-    "source/svelte-minimal": 28694,
-    "source/vue-minimal": 30582
+    "source/polymorphic-validation": 33203,
+    "source/preact-minimal": 32807,
+    "source/react-minimal": 33134,
+    "source/solid-minimal": 32048,
+    "source/svelte-minimal": 30309,
+    "source/vue-minimal": 32349
   },
   "architecture": {
     "status": "CLEAN",
     "violations": 0,
     "exports": {
       "@praxis-kit/adapter-utils": {
-        "values": 36,
-        "types": 23
+        "values": 45,
+        "types": 27
       },
       "@praxis-kit/codemod": {
         "values": 0,
         "types": 0
+      },
+      "@praxis-kit/compose-props": {
+        "values": 0,
+        "types": 7
       },
       "@praxis-kit/contract": {
         "values": 33,
@@ -100,8 +104,8 @@
         "types": 12
       },
       "@praxis-kit/styling": {
-        "values": 8,
-        "types": 32
+        "values": 9,
+        "types": 38
       },
       "@praxis-kit/svelte": {
         "values": 1,
@@ -133,12 +137,12 @@
     "lib/primitive": {
       "files": 120,
       "functions": 15,
-      "loc": 2118
+      "loc": 2160
     },
     "lib/diagnostics": {
       "files": 18,
       "functions": 23,
-      "loc": 450
+      "loc": 452
     },
     "lib/contract-props": {
       "files": 5,
@@ -151,9 +155,9 @@
       "loc": 2553
     },
     "lib/styling": {
-      "files": 18,
-      "functions": 21,
-      "loc": 476
+      "files": 22,
+      "functions": 31,
+      "loc": 725
     },
     "lib/tailwind": {
       "files": 15,
@@ -171,14 +175,14 @@
       "loc": 260
     },
     "lib/adapter-utils": {
-      "files": 49,
-      "functions": 54,
-      "loc": 2604
+      "files": 56,
+      "functions": 62,
+      "loc": 3512
     },
     "packages/core": {
-      "files": 74,
-      "functions": 60,
-      "loc": 2559
+      "files": 75,
+      "functions": 65,
+      "loc": 2662
     }
   }
 }
