@@ -14,6 +14,8 @@ export type BuiltRuntime<
 > = BuiltChildrenEvaluator<TOptions> & {
   runtime: TypedRuntime<G>
   compositionClassResolver?: CompositionClassResolver
+  /** Plugin-owned keys reserved from host and child prop forwarding. */
+  ownedKeys: ReadonlySet<string>
   slotComponent: SlotComponent
   normalizeChildren: (children: unknown) => NormalizedChild[]
   slotValidator: SlotValidator

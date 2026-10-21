@@ -3754,3 +3754,33 @@ percentage is also higher because its `develop` baseline is the smallest (29.9 K
 trimmed. **Optional follow-up:** the `{ resolve, primary, partner }` resolver wrapper is assembled
 per adapter; a shared `adapter-utils` helper would remove that duplication and a few dozen bytes per
 adapter. **Decision stands:** accept the growth against `develop` and reset the baselines at merge.
+
+### Composition class-plugin selection — primary factory wins (2026-10-21)
+
+**Decision:** the automatic composition class resolver uses exactly one class-plugin factory,
+selected from the primary component first and the retained direct `compose.with` partner second. If
+neither component declares a factory, composition keeps using the ordinary class pipeline. If both
+declare the same factory function, instantiate it once for the merged style options. If both declare
+different factory functions, select the primary factory and emit the construction-time
+`CompositionPluginConflict` diagnostic (`COMP1016`, `DiagnosticCategory.Composition`). The
+diagnostic explains that the primary factory was selected and the partner factory was not run.
+
+The selected factory receives the merged composition `ClassPipelineOptions` and the primary
+runtime's configured diagnostics instance through the existing plugin validation and
+guarded-pipeline path. Plugin-owned keys are supplied to combined class resolution as styling inputs
+and reserved from ordinary child/DOM forwarding; they are not made conditional on
+`compose.allProps`.
+
+**No arbitrary plugin composition or nested-plugin cascading.** We will not combine, sequence, or
+otherwise reconcile different plugin pipelines, and we will not walk through nested partners to
+collect plugin factories. Only the primary and the retained direct partner participate in selection.
+An external or unannotated partner retains the existing fallback behavior; no plugin metadata is
+inferred from framework component internals. The ordinary per-contract pipeline remains unchanged
+for non-composed renders. This decision does not imply Tailwind CSS generation, source detection, or
+safelist behavior; those remain build-time consumer responsibilities.
+
+**Rationale:** plugin factories represent executable policy, not mergeable style metadata. Choosing
+a single deterministic factory avoids inventing a generic composition algebra for arbitrary plugins
+and keeps composition framework-independent. Primary precedence also makes the component whose
+contract is being rendered authoritative when two plugin policies conflict, while the diagnostic
+makes the otherwise surprising ignored partner configuration visible.

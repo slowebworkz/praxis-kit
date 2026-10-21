@@ -22,4 +22,6 @@ export type CompositionVariants = ClassPipelineOptions<VariantMap>['variants']
 /** Combined class resolver plus the retained direct partner metadata used for variant selection. */
 export type CompositionClassResolver = ClassPipelineFn & {
   readonly partner: CompositionStyleContract
+  /** Plugin-owned props consumed by the composition-selected class pipeline. */
+  readonly ownedKeys: ReadonlySet<string>
 }

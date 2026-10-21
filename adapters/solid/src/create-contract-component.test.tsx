@@ -3,6 +3,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest'
 import { render as solidRender, cleanup } from '@solidjs/testing-library'
 import { createSignal } from 'solid-js'
 import { silentDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
 
@@ -271,6 +272,46 @@ describe('createContractComponent (Solid adapter)', () => {
     expect(className).not.toContain('primary-ghost')
   })
 
+  it('compose: reactively updates plugin-owned flex styling selected from the partner', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4', plugin: createTailwindPipeline },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'rounded' },
+    })
+    const [flex, setFlex] = createSignal(false)
+    const { container } = solidRender(() => (
+      <Card
+        {...({
+          get flex() {
+            return flex()
+          },
+        } as AnyRecord)}
+      />
+    ))
+    const element = container.querySelector('div')!
+
+    // Without a display prop the Tailwind plugin drops container utilities (`grid-cols-3`,
+    // `gap-4`); `flex` selects the flex family, which keeps `gap-4` and still drops `grid-cols-3`.
+    expect(element.className).toContain('rounded')
+    expect(element.className).not.toContain('flex')
+    expect(element.className).not.toContain('gap-4')
+
+    setFlex(true)
+    expect(container.querySelector('div')).toBe(element)
+    expect(element.className).toContain('flex')
+    expect(element.className).toContain('gap-4')
+    expect(element.className).not.toContain('grid-cols-3')
+
+    setFlex(false)
+    expect(element.className).not.toContain('flex')
+    expect(element.className).not.toContain('gap-4')
+    expect(element.className).toContain('rounded')
+  })
+
   it('compose: updates both styling contributions when a shared variant changes', () => {
     const Surface = createContractComponent({
       tag: 'div',
@@ -401,7 +442,9 @@ describe('createContractComponent (Solid adapter)', () => {
     })
 
     const { container } = solidRender(() => (
-      <BoxB asChild {...({ recipe: 'emphasis' } as AnyRecord)}>{(props: AnyRecord) => <a {...props} />}</BoxB>
+      <BoxB asChild {...({ recipe: 'emphasis' } as AnyRecord)}>
+        {(props: AnyRecord) => <a {...props} />}
+      </BoxB>
     ))
 
     const el = container.querySelector('a')!

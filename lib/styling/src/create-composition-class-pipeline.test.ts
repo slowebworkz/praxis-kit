@@ -1,7 +1,32 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { createCompositionClassPipeline } from './create-composition-class-pipeline'
+import {
+  createCompositionClassPipeline,
+  mergeCompositionClassPipelineOptions,
+} from './create-composition-class-pipeline'
 import type { ClassPipelineOptions, VariantMap } from './types'
+
+describe('mergeCompositionClassPipelineOptions', () => {
+  it('returns merged style options without constructing a class pipeline or reusing precomputed classes', () => {
+    const options = mergeCompositionClassPipelineOptions({
+      partner: {
+        baseClassName: 'partner-base',
+        variants: { size: { sm: 'partner-sm', lg: 'partner-lg' } },
+        precomputedClasses: { 'size=sm': 'partner-precomputed' },
+      },
+      primary: {
+        baseClassName: 'primary-base',
+        variants: { size: { lg: 'primary-lg', sm: 'primary-sm' } },
+        precomputedClasses: { 'size=sm': 'primary-precomputed' },
+      },
+    })
+
+    expect(options.baseClassName).toBe('partner-base primary-base')
+    expect(options.variants?.size?.sm).toBe('partner-sm primary-sm')
+    expect(options.variants?.size?.lg).toBe('partner-lg primary-lg')
+    expect(options).not.toHaveProperty('precomputedClasses')
+  })
+})
 
 describe('createCompositionClassPipeline', () => {
   it('combines partner and primary base classes, compatible variants, and caller classes in order', () => {

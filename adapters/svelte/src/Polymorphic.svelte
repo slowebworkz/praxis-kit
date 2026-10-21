@@ -21,6 +21,7 @@
   import { isObject, isString } from '@praxis-kit/guards'
   import {
     applyFilter,
+    filterOwnedProps,
     mergeClassNames,
     mergeSlotProps,
     resolveNormalizedProps,
@@ -192,7 +193,10 @@
     composing
       ? bundle.resolveComposedClasses?.(
           tag,
-          { ...bundle.compose?.defaults, ...(bundle.compose?.allProps ? rest : {}) },
+          {
+            ...filterOwnedProps(bundle.compose?.defaults, bundle.ownedKeys),
+            ...(bundle.compose?.allProps ? filterOwnedProps(rest, bundle.ownedKeys) : {}),
+          },
           rest,
           cls as string | undefined,
           recipe,
@@ -261,7 +265,12 @@
   -->
   {@const With = bundle.compose.with}
   {@const ownChildren = children}
-  <Polymorphic bundle={With} {...bundle.compose.defaults} {...(bundle.compose.allProps ? rest : {})} asChild>
+  <Polymorphic
+    bundle={With}
+    {...filterOwnedProps(bundle.compose.defaults, bundle.ownedKeys)}
+    {...(bundle.compose.allProps ? filterOwnedProps(rest, bundle.ownedKeys) : {})}
+    asChild
+  >
     {#snippet children(withProps)}
       {#if isString(tag)}
         <svelte:element

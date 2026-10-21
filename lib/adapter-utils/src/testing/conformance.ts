@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import type { AnyRecord } from '@praxis-kit/core'
+import { createClassPipeline } from '@praxis-kit/core'
+import type { AnyRecord, ClassPluginFactory } from '@praxis-kit/core'
 import type { ConformanceAdapter, ConformanceComponent, ConformanceFactoryOptions } from '../types'
 import { throwDiagnostics, warnDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
 import { dynamic } from '@praxis-kit/primitive'
@@ -12,6 +13,20 @@ export type {
   ConformanceRef,
   RenderResult,
 } from '../types'
+
+// Minimal plugin used to exercise the real adapter composition path without coupling the
+// adapter-utils test harness to a framework-specific plugin package. Its `flex` prop is an
+// owned styling input: it affects the pipeline output but must never be forwarded as an attribute.
+const compositionOwnedPropPlugin: ClassPluginFactory<{ flex?: boolean }> = (options) => {
+  const resolveClasses = createClassPipeline(options)
+  return {
+    ownedKeys: new Set(['flex']),
+    pipeline(tag, props, className, recipe) {
+      const classes = resolveClasses(tag, props, className, recipe) ?? ''
+      return props.flex === true ? [classes, 'plugin-flex'].filter(Boolean).join(' ') : classes
+    },
+  }
+}
 
 export function conformanceSuite<C extends ConformanceComponent = ConformanceComponent>(
   adapter: ConformanceAdapter<C>,
@@ -989,7 +1004,9 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
 
       it('keeps ordinary styling when allProps is supplied without a composition target', () => {
         const Box = adapter.createComponent({
-          compose: { allProps: true } as unknown as NonNullable<ConformanceFactoryOptions['compose']>,
+          compose: { allProps: true } as unknown as NonNullable<
+            ConformanceFactoryOptions['compose']
+          >,
           styling: {
             base: 'primary-base',
             variants: { tone: { quiet: 'primary-quiet', loud: 'primary-loud' } },
@@ -1034,6 +1051,50 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         const { element } = adapter.render(Card, { notAVariant: 'ghost' })
         expect(element.className).toContain('primary-base')
         expect(element.className).not.toContain('partner-intent-ghost')
+      })
+
+      it.each([false, true])(
+        'passes primary plugin-owned props into the combined resolver and filters them from the host (allProps=%s)',
+        (allProps) => {
+          const Surface = adapter.createComponent({
+            styling: { base: 'partner-base' },
+          })
+          const Card = adapter.createComponent({
+            compose: { with: Surface, allProps },
+            styling: { base: 'primary-base', plugin: compositionOwnedPropPlugin },
+          })
+
+          const { element, unmount } = adapter.render(Card, {
+            flex: true,
+            'data-testid': 'plugin-card',
+          })
+
+          expect(element.className).toContain('partner-base')
+          expect(element.className).toContain('primary-base')
+          expect(element.className).toContain('plugin-flex')
+          expect(element.getAttribute('flex')).toBeNull()
+          expect(element.getAttribute('data-testid')).toBe('plugin-card')
+          unmount()
+        },
+      )
+
+      it('uses a partner plugin when the primary has none, with explicit owned props overriding compose.defaults', () => {
+        const Surface = adapter.createComponent({
+          styling: { base: 'partner-base', plugin: compositionOwnedPropPlugin },
+        })
+        const Card = adapter.createComponent({
+          compose: { with: Surface, defaults: { flex: true } },
+          styling: { base: 'primary-base' },
+        })
+
+        const fromDefault = adapter.render(Card)
+        expect(fromDefault.element.className).toContain('plugin-flex')
+        expect(fromDefault.element.getAttribute('flex')).toBeNull()
+        fromDefault.unmount()
+
+        const fromExplicitFalse = adapter.render(Card, { flex: false })
+        expect(fromExplicitFalse.element.className).not.toContain('plugin-flex')
+        expect(fromExplicitFalse.element.getAttribute('flex')).toBeNull()
       })
     })
 

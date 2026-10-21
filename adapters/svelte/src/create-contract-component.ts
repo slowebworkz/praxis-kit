@@ -87,7 +87,7 @@ export function createContractComponent<
     options as unknown as SvelteFactoryOptions<TDefault, Props, Variants, TPreset> & C,
   ) as unknown as BuiltRuntime<ContractGenericsOf<C>, C>
 
-  attachCompositionStyleMetadata(bundle, bundle.runtime.options)
+  attachCompositionStyleMetadata(bundle, bundle.runtime.options, options.styling?.plugin)
   diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
 
   const { compose } = options
@@ -105,6 +105,7 @@ export function createContractComponent<
           bundle.runtime.options,
           compose.defaults,
           resolveClasses.partner,
+          resolveClasses.ownedKeys,
         ),
         mergeCompositionClassNames(defaultClass, callerClass),
         recipe,

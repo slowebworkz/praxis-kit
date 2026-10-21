@@ -93,6 +93,15 @@ export function createPolymorphic<
         message,
         ...(options.name !== undefined && { component: options.name }),
       }),
+    (message) =>
+      resolved.diagnostics.warn({
+        code: DiagnosticCode.CompositionPluginConflict,
+        category: DiagnosticCategory.Composition,
+        message,
+        ...(options.name !== undefined && { component: options.name }),
+      }),
+    options.styling?.plugin,
+    resolved.diagnostics,
   )
 
   // `packages/core` resolves the render-time capabilities and hands them to the adapter layer;

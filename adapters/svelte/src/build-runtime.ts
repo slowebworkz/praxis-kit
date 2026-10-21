@@ -54,6 +54,7 @@ export function buildRuntime<
 
   return {
     runtime,
+    ownedKeys,
     filterProps,
     slotValidator,
     ...(childrenEvaluator !== undefined && { childrenEvaluator }),

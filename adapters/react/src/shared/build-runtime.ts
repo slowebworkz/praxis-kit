@@ -80,6 +80,7 @@ export function buildRuntime<
 
   return {
     runtime,
+    ownedKeys,
     filterProps,
     slotValidator,
     slotComponent: normalized.slotComponent,

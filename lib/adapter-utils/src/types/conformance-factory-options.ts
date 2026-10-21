@@ -1,5 +1,6 @@
 import type {
   AnyRecord,
+  AnyClassPluginFactory,
   ChildRuleContext,
   ChildRuleMatch,
   ComponentReference,
@@ -16,6 +17,8 @@ type ConformanceStyling = {
   presets?: AnyRecord
   /** Per-tag class names, merged partner-first when composing. */
   tags?: StringMap<string>
+  /** Generic class plugin used by cross-adapter composition conformance tests. */
+  plugin?: AnyClassPluginFactory
 }
 
 type ConformanceChildRule = {

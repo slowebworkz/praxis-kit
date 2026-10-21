@@ -33,3 +33,9 @@ export type {
 export type { ResolvedFactoryShape } from './resolved-factory-shape'
 export type { RenderPipeline } from './render-pipeline'
 export type { ClassPluginResolution } from './class-plugin-resolution'
+export type {
+  CompositionDiagnostic,
+  CompositionResolverOptions,
+  ResolvedCompositionResolverOptions,
+  RetainedCompositionStyleMetadata,
+} from './composition-style'

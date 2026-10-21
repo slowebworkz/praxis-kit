@@ -20,6 +20,7 @@ import {
   diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
   composeStyleProps,
+  filterOwnedProps,
   mergeCompositionClassNames,
   COMPOSITION_STYLE_REQUEST_PROP,
   isCompositionStyleRequest,
@@ -194,8 +195,10 @@ export function createContractComponent<
           return h(
             compose.with as VueComponent,
             {
-              ...compose.defaults,
-              ...(compose.allProps ? cleanAttrs.value : undefined),
+              ...filterOwnedProps(compose.defaults, bundle.ownedKeys),
+              ...(compose.allProps
+                ? filterOwnedProps(cleanAttrs.value, bundle.ownedKeys)
+                : undefined),
               ...(compositionClassResolver
                 ? {
                     [COMPOSITION_STYLE_REQUEST_PROP]: {
@@ -214,6 +217,7 @@ export function createContractComponent<
                             bundle.runtime.options,
                             compose.defaults,
                             compositionClassResolver.partner,
+                            compositionClassResolver.ownedKeys,
                           ),
                           mergeCompositionClassNames(
                             partnerClassName,
@@ -245,6 +249,7 @@ export function createContractComponent<
       options.subComponents,
     ),
     bundle.runtime.options,
+    options.styling?.plugin,
   )
 
   type G = PolymorphicGenerics<

@@ -1,6 +1,7 @@
 import {
   applyFilter,
   composeStyleProps,
+  filterOwnedProps,
   mergeCompositionClassNames,
   mergeSlotProps,
   resolveNormalizedProps,
@@ -145,14 +146,21 @@ export function renderComposed<TProps extends KnownProps>(
     resolve: ClassPipelineFn
     primary: Parameters<typeof composeStyleProps>[2]
     partner: Parameters<typeof composeStyleProps>[4]
+    ownedKeys: ReadonlySet<string>
   },
+  reservedOwnedKeys: ReadonlySet<string> = new Set(),
 ): SolidElement {
   const [knownRaw, rest] = splitProps(props, SPLIT_KEYS)
   const known = knownRaw as unknown as KnownProps
   // `splitProps`, not plain destructuring — Solid's props are reactive proxies, and destructuring
   // one directly (outside a tracking scope) would read it eagerly and break that reactivity, the
   // same reason `known`/`rest` above go through `splitProps` rather than `const { as, ... } = props`.
-  const [, forwardableProps] = splitProps(props, ['asChild', 'ref', 'children'])
+  const [, forwardableProps] = splitProps(props, [
+    'asChild',
+    'ref',
+    'children',
+    ...reservedOwnedKeys,
+  ])
 
   const tag = createMemo(() => resolveTag(runtime, known.as))
   const mergedProps = createMemo(() => runtime.resolveProps(rest as UnknownProps))
@@ -183,7 +191,7 @@ export function renderComposed<TProps extends KnownProps>(
   return (
     <Dynamic
       component={withComponent as ValidComponent}
-      {...defaults}
+      {...filterOwnedProps(defaults, reservedOwnedKeys)}
       {...(allProps ? forwardableProps : undefined)}
       asChild
       ref={ref}
@@ -200,13 +208,14 @@ export function renderComposed<TProps extends KnownProps>(
                 tag(),
                 composeStyleProps(
                   {
-                    ...defaults,
-                    ...(allProps ? props : {}),
+                    ...filterOwnedProps(defaults, reservedOwnedKeys),
+                    ...(allProps ? filterOwnedProps(props, reservedOwnedKeys) : {}),
                   },
                   props,
                   compositionClassResolver.primary,
                   defaults,
                   compositionClassResolver.partner,
+                  compositionClassResolver.ownedKeys,
                 ),
                 mergeCompositionClassNames(defaultClass, known.class as string | undefined),
                 isString(known.recipe) ? known.recipe : undefined,

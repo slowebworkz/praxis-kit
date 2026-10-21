@@ -186,6 +186,20 @@ composition model:
 | Solid, Svelte      | `with` renders through its own render-callback/snippet `asChild` mode; the synthesized callback merges `with`'s handed-back props onto this component's own resolved output |
 | Lit, Web           | No effect — these adapters have no `asChild` concept for `compose` to compose into                                                                                          |
 
+**Styling plugins.** When automatic `compose` is active and either component uses a
+`styling.plugin`, Praxis Kit constructs one composition pipeline from the merged styling metadata.
+The primary component's plugin factory takes precedence; if it has no plugin, the direct partner's
+factory is used. If both specify different factories, Praxis Kit reports `COMP1016` and keeps the
+primary factory. It does not combine arbitrary plugin pipelines or cascade plugin selection through
+multiple composition levels. The ordinary, non-composed render path continues to use the component's
+own styling pipeline.
+
+The selected plugin's owned props participate in combined class resolution even when `allProps` is
+false, but those props are reserved for styling and are not forwarded to the host element or child
+through ordinary prop forwarding or `compose.defaults`. Explicit consumer `asChild` or custom
+`render` still takes precedence over automatic `compose`; the composition-selected plugin applies
+only when the automatic composition resolver is active.
+
 Multi-level `compose` chaining (`with` itself also declaring its own `compose.with`) does not
 cascade automatically — `with` is always invoked with `asChild: true`, so its own `compose` check
 never fires for that invocation. Composing through more than one hop currently requires an explicit

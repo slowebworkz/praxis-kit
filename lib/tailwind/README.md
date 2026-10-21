@@ -85,6 +85,22 @@ conflicting utilities based on the active family:
 Do not pass display classes as literal strings in `base`, `variants`, or `className` — the pipeline
 will warn (when `strict` is enabled) and strip them in favour of the prop-controlled value.
 
+### Composition with `compose.with`
+
+When a Tailwind-enabled component is used as the direct `compose.with` partner, its plugin can be
+selected for the combined styling pipeline even if the composing component has no plugin of its own.
+The selected factory receives the merged styling options, so display props such as `flex` resolve
+against both components' class contributions. If both components configure different plugin
+factories, the primary component's factory wins and Praxis Kit reports `COMP1016`; plugin pipelines
+are not chained together.
+
+Plugin-owned layout props are inputs to class resolution, not host attributes. They are reserved
+from normal forwarding and `compose.defaults`, including when `compose.allProps` is enabled. This
+behavior applies only while automatic composition is active; an explicit `asChild` or custom `render`
+path takes precedence. As usual, Tailwind CSS generation and source detection remain the consuming
+application's build-time responsibility. For Tailwind v4, import the provided stylesheet as described
+below so runtime-injected display classes have generated CSS.
+
 ### Tailwind v4 setup (required)
 
 Display classes are assembled at runtime from boolean props, so they never appear as a literal

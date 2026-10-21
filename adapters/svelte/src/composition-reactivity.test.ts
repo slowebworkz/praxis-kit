@@ -8,6 +8,8 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { render, cleanup } from '@testing-library/svelte'
 import { tick } from 'svelte'
 import Host from './composition-reactivity.test-host.svelte'
+import OwnedPropHost from './composition-owned-prop-reactivity.test-host.svelte'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import { createContractComponent } from './create-contract-component'
 
 afterEach(cleanup)
@@ -86,5 +88,42 @@ describe('composition reactivity — combined path', () => {
 
     expect(className()).toContain('partner-solid')
     expect(className()).not.toContain('partner-ghost')
+  })
+})
+
+describe('composition reactivity — plugin-owned props', () => {
+  it('updates partner-selected Tailwind classes when flex changes after mount', async () => {
+    const surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4', plugin: createTailwindPipeline },
+    })
+    const card = createContractComponent({
+      tag: 'div',
+      compose: { with: surface as never },
+      styling: { base: 'rounded' },
+    } as never)
+    const { container, component } = render(OwnedPropHost, { props: { bundle: card } })
+    const element = container.querySelector('div')!
+
+    // Without a display prop the Tailwind plugin drops container utilities (`grid-cols-3`,
+    // `gap-4`); `flex` selects the flex family, which keeps `gap-4` and still drops `grid-cols-3`.
+    expect(element.className).toContain('rounded')
+    expect(element.className).not.toContain('flex')
+    expect(element.className).not.toContain('gap-4')
+
+    component.setFlex(true)
+    await tick()
+
+    expect(container.querySelector('div')).toBe(element)
+    expect(element.className).toContain('flex')
+    expect(element.className).toContain('gap-4')
+    expect(element.className).not.toContain('grid-cols-3')
+
+    component.setFlex(false)
+    await tick()
+
+    expect(element.className).not.toContain('flex')
+    expect(element.className).not.toContain('gap-4')
+    expect(element.className).toContain('rounded')
   })
 })

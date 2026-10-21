@@ -17,6 +17,7 @@ export type { RuntimeEngines, BuildEnginesChildrenOptions, AdapterDefaults } fro
 export {
   attachCompositionStyleMetadata,
   composeStyleProps,
+  filterOwnedProps,
   getCompositionStyleMetadata,
   createCompositionStyleResolver,
   createOptionalCompositionStylePipeline,
