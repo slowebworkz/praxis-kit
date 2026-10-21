@@ -3742,3 +3742,15 @@ points are +3.0–4.9%. Solid carries roughly 400 B more than the other adapters
 growth is adapter-specific (its composition integration), not the shared resolver. The updated
 baselines in this branch must not be read as having cleared the gate: they only hold if the
 `develop` → branch growth is explicitly accepted at merge.
+
+**Solid outlier investigated — no removable waste.** The ~400 B gzip Solid carries over the other
+adapters (`source/solid` +7.3% vs +5.7%) is Solid's own composition code, measured per file against
+`develop` (esbuild minify + gzip, unbundled): `render.tsx` 925 → 1101 B (+176),
+`create-contract-component.ts` 564 → 681 B (+117), `build-runtime.ts` 346 → 368 B (+22) — about +315
+B, matching the gap in the scenario's per-module output. It is behavior, not bloat: the
+combined-class memo with a reactive getter, the `untrack`ed slot-props proxy that preserves DOM
+identity, `compose.defaults.class` handling, the diagnostic call, and metadata attachment. Solid's
+percentage is also higher because its `develop` baseline is the smallest (29.9 KB). Nothing was
+trimmed. **Optional follow-up:** the `{ resolve, primary, partner }` resolver wrapper is assembled
+per adapter; a shared `adapter-utils` helper would remove that duplication and a few dozen bytes per
+adapter. **Decision stands:** accept the growth against `develop` and reset the baselines at merge.
