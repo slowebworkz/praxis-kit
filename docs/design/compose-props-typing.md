@@ -553,3 +553,11 @@ merge, as explicit follow-up checks — not assumed to pass by extension of this
     collision — public prop type" tests in `compose-generics.test.ts` and each wired adapter's
     collision assertion. Svelte's own `ComposedBundleGenericsOf<T>` projection is covered by its
     collision assertions in `resolved-slot-props.test.ts`.
+11. **`ComposeOptions.with` stays required in TypeScript.** `ComposeOptions` declares `with` as
+    required, so `compose: {}` and `compose: { allProps: true }` are compile errors. Every
+    projection above therefore assumes a defined `with`; none models an incomplete configuration. At
+    runtime, composition activates exactly when `with !== undefined`. Incomplete shapes that reach
+    the runtime anyway (plain JavaScript, casts) are non-composing, and a supplied
+    `allProps`/`defaults` without `with` raises a construction-time diagnostic (`compose: {}` stays
+    silent). Making `with` optional was considered and rejected: it would only move a compile-time
+    error to a runtime diagnostic and force every projection to handle a no-target case.
