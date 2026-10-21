@@ -2,7 +2,15 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { createElement, Fragment, createRef, forwardRef } from 'react'
 import type { RenderCallbackProps } from '../shared'
-import { warnDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
+import {
+  CollectingReporter,
+  DefaultPolicy,
+  Diagnostics,
+  Severity,
+  warnDiagnostics,
+  throwDiagnostics,
+} from '@praxis-kit/diagnostics'
+import type { ClassPluginFactory } from '@praxis-kit/styling'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import type { AriaRule } from '@praxis-kit/core/contract'
 import type { AnyRecord } from '@praxis-kit/primitive'
@@ -197,6 +205,40 @@ describe('createContractComponent (current / React 19)', () => {
     expect(element.getAttribute('flex')).toBeNull()
   })
 
+  it('reports conflicting plugin factories through adapter composition and keeps the primary factory', () => {
+    const reporter = new CollectingReporter()
+    const diagnostics = new Diagnostics(
+      reporter,
+      new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
+    )
+    const primaryPlugin = vi.fn(() => ({ pipeline: () => 'primary-plugin' }))
+    const partnerPlugin = vi.fn(() => ({ pipeline: () => 'partner-plugin' }))
+    // Cast at the use site so the mocks keep their `.mock` typing.
+    const asPlugin = (factory: unknown) => factory as ClassPluginFactory
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: asPlugin(partnerPlugin) },
+    })
+    const partnerCallsBeforeComposition = partnerPlugin.mock.calls.length
+    const Card = createContractComponent({
+      tag: 'div',
+      name: 'ConflictCard',
+      enforcement: { diagnostics },
+      compose: { with: Surface },
+      styling: { base: 'primary-base', plugin: asPlugin(primaryPlugin) },
+    })
+
+    const conflicts = reporter.diagnostics.filter((diagnostic) => diagnostic.code === 'COMP1016')
+    expect(conflicts).toHaveLength(1)
+    expect(conflicts[0]?.component).toBe('ConflictCard')
+    expect(partnerPlugin).toHaveBeenCalledTimes(partnerCallsBeforeComposition)
+
+    dom.mount(createElement(box(Card), null))
+    const classes = dom.container.querySelector('div')!.className
+    expect(classes).toContain('primary-plugin')
+    expect(classes).not.toContain('partner-plugin')
+  })
+
   it('ignores a malformed internal composition style request', () => {
     const Box = createContractComponent({ styling: { base: 'primary-base' } })
 
@@ -231,6 +273,32 @@ describe('createContractComponent (current / React 19)', () => {
     expect(element.className).not.toContain('partner-base')
   })
 
+  it('does not apply the partner plugin on the explicit asChild path', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4', plugin: createTailwindPipeline },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+
+    dom.mount(
+      createElement(
+        box(Card),
+        { asChild: true, ...({ flex: true } as AnyRecord) },
+        createElement('button'),
+      ),
+    )
+
+    const element = dom.container.querySelector('button')!
+    expect(element.className).toContain('primary-base')
+    expect(element.className).not.toContain('grid-cols-3')
+    expect(element.className).not.toContain('flex')
+    expect(element.getAttribute('flex')).toBeNull()
+  })
+
   it('keeps custom render on the primary contract styling path when composed', () => {
     const Surface = createContractComponent({
       tag: 'div',
@@ -262,6 +330,31 @@ describe('createContractComponent (current / React 19)', () => {
     expect(element.className).toContain('primary-lg')
     expect(element.className).not.toContain('partner-base')
     expect(element.className).not.toContain('partner-loud')
+  })
+
+  it('does not apply the partner plugin on the custom render path', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4', plugin: createTailwindPipeline },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+
+    dom.mount(
+      createElement(box(Card), {
+        ...({ flex: true } as AnyRecord),
+        render: (props: RenderCallbackProps) => createElement('button', props as never),
+      }),
+    )
+
+    const element = dom.container.querySelector('button')!
+    expect(element.className).toContain('primary-base')
+    expect(element.className).not.toContain('grid-cols-3')
+    expect(element.className).not.toContain('flex')
+    expect(element.getAttribute('flex')).toBeNull()
   })
 
   it('forwards a ref to the DOM element', () => {
