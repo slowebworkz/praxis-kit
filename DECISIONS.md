@@ -3732,3 +3732,13 @@ return before building the pipeline object when `compose?.with === undefined`, a
 module-level `composePipelines(...)` call `/*#__PURE__*/`. **Revisit trigger:** package entry points
 approaching the 5% gate again, or a third optional capability that would justify the opt-in
 registration pattern.
+
+**Correction (same day) — the gate is measured against `develop`, not `c90fda0`.** The figures above
+were deltas from the `c90fda0` baselines, which already contained part of this branch's growth, so
+they understated the regression and "inside the 5% gate" was wrong. Against `develop`'s committed
+baselines the branch is over the gate: every `source/*` scenario is +5.6–5.8% (lit/web +4.0%),
+`source/solid` is **+7.3%** (+2.2 KB), and `package/solid` is +6.2%; the other `package/*` entry
+points are +3.0–4.9%. Solid carries roughly 400 B more than the other adapters, so part of its
+growth is adapter-specific (its composition integration), not the shared resolver. The updated
+baselines in this branch must not be read as having cleared the gate: they only hold if the
+`develop` → branch growth is explicitly accepted at merge.
