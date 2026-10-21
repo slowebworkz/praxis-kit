@@ -1,22 +1,46 @@
 import { isFunction, isObject } from '@praxis-kit/guards'
-import type { CompositionClassResolver, CompositionStyleContract } from '@praxis-kit/styling'
-import { createCompositionClassPipeline } from '@praxis-kit/styling'
 import { composePipelines } from '@praxis-kit/pipeline-kit'
-import type { ComposeOptions } from '../types'
+import type {
+  ClassPipelineOptions,
+  CompositionClassResolver,
+  CompositionStyleContract,
+  CompositionStyleOptions,
+  VariantMap,
+} from '@praxis-kit/styling'
+import {
+  createCompositionClassPipeline as createDefaultCompositionClassPipeline,
+  mergeCompositionClassPipelineOptions,
+} from '@praxis-kit/styling'
+import type {
+  AnyClassPluginFactory,
+  ClassPluginResolution,
+  ComposeOptions,
+  CompositionDiagnostic,
+  CompositionResolverOptions,
+  ResolvedCompositionResolverOptions,
+  ResolvedFactoryShape,
+} from '../types'
+import { resolveClassPlugin } from './pipelines/styling'
 
 /** Shared runtime key for styling metadata owned by a generated Praxis component. */
 export const COMPOSITION_STYLE_METADATA = Symbol.for('@praxis-kit/composition-style-metadata')
 
-type CompositionDiagnostic = (message: string) => void
-
-type ResolverOptions = {
-  readonly primary: CompositionStyleContract
-  readonly compose?: ComposeOptions
-  readonly onDiagnostic?: CompositionDiagnostic
-}
-
-type ResolvedResolverOptions = ResolverOptions & {
-  readonly partner: CompositionStyleContract | undefined
+/**
+ * Construct a composition pipeline from merged styling options through the same plugin
+ * validation and pipeline-guarding boundary used by ordinary component construction.
+ *
+ * The caller is responsible for selecting the single factory according to composition policy;
+ * this function deliberately does not inspect component metadata or combine plugin factories.
+ * `factory` is `undefined` when no plugin was selected, in which case `resolveClassPlugin`
+ * returns the ordinary class pipeline.
+ */
+export function createSelectedCompositionClassPipeline(
+  options: CompositionStyleOptions,
+  factory: AnyClassPluginFactory,
+  diagnostics: ResolvedFactoryShape['diagnostics'],
+): ClassPluginResolution {
+  const merged: ClassPipelineOptions<VariantMap> = mergeCompositionClassPipelineOptions(options)
+  return resolveClassPlugin(factory, merged, diagnostics)
 }
 
 /** Return retained styling metadata only for components created by a Praxis adapter. */
@@ -42,7 +66,7 @@ export function createCompositionStyleResolver(
     : {}
 
   return Object.assign(
-    createCompositionClassPipeline({
+    createDefaultCompositionClassPipeline({
       primary,
       partner,
       composeDefaults: defaults,
@@ -52,7 +76,9 @@ export function createCompositionStyleResolver(
   )
 }
 
-const resolvePartner = (options: ResolverOptions): ResolvedResolverOptions => ({
+const resolvePartner = (
+  options: CompositionResolverOptions,
+): ResolvedCompositionResolverOptions => ({
   ...options,
   partner:
     options.compose?.with === undefined
@@ -65,7 +91,7 @@ const buildOptionalResolver = ({
   compose,
   partner,
   onDiagnostic,
-}: ResolvedResolverOptions): CompositionClassResolver | undefined => {
+}: ResolvedCompositionResolverOptions): CompositionClassResolver | undefined => {
   if (compose?.with === undefined || partner === undefined) return undefined
   return createCompositionStyleResolver(primary, partner, compose.defaults, onDiagnostic)
 }

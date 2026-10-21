@@ -31,6 +31,8 @@ export type * from './contract'
 export type {
   AllowedOf,
   ClassPluginResolution,
+  CompositionDiagnostic,
+  CompositionResolverOptions,
   ComposeOptions,
   DefaultOf,
   EnforcementOptions,
@@ -41,6 +43,7 @@ export type {
   PropsOf,
   RecipeOf,
   RenderPipeline,
+  ResolvedCompositionResolverOptions,
   ResolvedFactoryShape,
   ResolveInput,
   ResolveOutput,
