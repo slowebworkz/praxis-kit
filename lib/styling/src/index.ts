@@ -1,5 +1,8 @@
 export { createClassPipeline } from './create-class-pipeline'
-export { createCompositionClassPipeline } from './create-composition-class-pipeline'
+export {
+  createCompositionClassPipeline,
+  mergeCompositionClassPipelineOptions,
+} from './create-composition-class-pipeline'
 export { diagnoseClassPipeline } from './diagnose-class-pipeline'
 export { cva } from './cva'
 export { StaticClassResolver } from './static-class-resolver'

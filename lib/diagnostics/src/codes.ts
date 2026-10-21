@@ -22,6 +22,9 @@ export enum DiagnosticCode {
   AllowedAsViolation = 'COMP1009',
   CompositionVariantCollision = 'COMP1014',
   CompositionOptionsWithoutWith = 'COMP1015',
+  // Allocated; emitted once composition selects a class-plugin factory (see
+  // docs/design/tailwind-composition-plugin-integration.md, Phase 2).
+  CompositionPluginConflict = 'COMP1016',
 
   // Slot protocol
   SlotExclusive = 'SLOT1001',

@@ -167,12 +167,12 @@ function mergeRecipes(
  * Partner contributions are the base layer; primary contributions win incompatible definitions.
  * Recipe values are applied by the existing resolver below explicit props and above defaults.
  */
-export function createCompositionClassPipeline({
+export function mergeCompositionClassPipelineOptions({
   primary,
   partner,
   composeDefaults,
   onDiagnostic,
-}: CompositionStyleOptions): ClassPipelineFn {
+}: CompositionStyleOptions): ClassPipelineOptions<VariantMap> {
   const partnerOptions = partner ?? {}
   const incompatible = incompatibleVariantNames(partnerOptions.variants, primary.variants)
   const variants = mergeVariants(
@@ -219,5 +219,14 @@ export function createCompositionClassPipeline({
     // represent the combined contribution, and the option is optional.
   } satisfies ClassPipelineOptions<VariantMap>
 
-  return createClassPipeline(combined)
+  return combined
+}
+
+/**
+ * Build the default framework-independent class pipeline for a primary contract and its direct
+ * partner. Callers that need a selected class plugin can use the merged options independently and
+ * construct their pipeline through the shared plugin-validation boundary.
+ */
+export function createCompositionClassPipeline(options: CompositionStyleOptions): ClassPipelineFn {
+  return createClassPipeline(mergeCompositionClassPipelineOptions(options))
 }
