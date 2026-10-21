@@ -392,7 +392,7 @@ describe('createContractComponent (Solid adapter)', () => {
     })
     const BoxB = createContractComponent({
       tag: 'button',
-      compose: { with: BoxA },
+      compose: { with: BoxA, defaults: { intent: 'ghost' } },
       styling: {
         base: 'primary-base',
         variants: { size: { lg: 'primary-size-lg' } },

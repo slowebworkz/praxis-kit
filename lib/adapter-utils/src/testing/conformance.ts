@@ -632,7 +632,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
             },
           })
           const Card = adapter.createComponent({
-            compose: { with: Surface },
+            compose: { with: Surface, defaults: { tone: 'loud' } },
             styling: {
               base: 'primary-base',
               variants: { size: { lg: 'primary-size-lg' } },
@@ -640,7 +640,8 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
             },
           })
 
-          // `emphasis` exists on both components; only the primary's definition may apply.
+          // `emphasis` exists on both components; only the primary's definition may apply, and
+          // `compose.defaults` (partner-scoped) must not become a primary styling default.
           const { element } = adapter.render(
             Card,
             { asChild: true, intent: 'ghost', recipe: 'emphasis' },

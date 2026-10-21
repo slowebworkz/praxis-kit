@@ -574,7 +574,7 @@ describe('Polymorphic (Svelte adapter)', () => {
           })
           const card = createContractComponent({
             tag: 'div',
-            compose: { with: surface },
+            compose: { with: surface, defaults: { intent: 'ghost' } },
             styling: {
               base: 'primary-base',
               variants: { size: { lg: 'primary-size-lg' } },
