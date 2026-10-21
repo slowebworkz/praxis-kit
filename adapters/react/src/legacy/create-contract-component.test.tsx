@@ -210,7 +210,7 @@ describe('createContractComponent (legacy / React 18)', () => {
     })
     const Card = createContractComponent({
       tag: 'div',
-      compose: { with: Surface },
+      compose: { with: Surface, defaults: { intent: 'loud' } },
       styling: {
         base: 'primary-base',
         variants: { size: { lg: 'primary-lg' } },
