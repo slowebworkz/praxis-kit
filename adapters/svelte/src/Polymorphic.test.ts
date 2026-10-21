@@ -563,7 +563,24 @@ describe('Polymorphic (Svelte adapter)', () => {
           },
         )
 
-        it('prefers explicit asChild over composition on either path', () => {
+        it('prefers explicit asChild and resolves only the primary recipe', () => {
+          const surface = createContractComponent({
+            tag: 'div',
+            styling: {
+              base: 'partner-base',
+              variants: { intent: { ghost: 'partner-intent-ghost' } },
+              presets: { emphasis: { intent: 'ghost' } },
+            },
+          })
+          const card = createContractComponent({
+            tag: 'div',
+            compose: { with: surface },
+            styling: {
+              base: 'primary-base',
+              variants: { size: { lg: 'primary-size-lg' } },
+              presets: { emphasis: { size: 'lg' } },
+            },
+          })
           let received: AnyRecord = {}
           const children = createRawSnippet<[AnyRecord]>((getProps) => ({
             render() {
@@ -572,10 +589,12 @@ describe('Polymorphic (Svelte adapter)', () => {
             },
           }))
 
-          render(Polymorphic, { bundle: build(), asChild: true, children })
+          render(Polymorphic, { bundle: card, recipe: 'emphasis', asChild: true, children })
 
           expect(received['class']).toContain('primary-base')
+          expect(received['class']).toContain('primary-size-lg')
           expect(received['class']).not.toContain('partner-base')
+          expect(received['class']).not.toContain('partner-intent-ghost')
         })
       })
 

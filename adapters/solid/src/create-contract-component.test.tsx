@@ -381,21 +381,34 @@ describe('createContractComponent (Solid adapter)', () => {
     expect(element.className).not.toContain('partner-quiet')
   })
 
-  it('compose: an explicit asChild from the consumer wins over compose', () => {
-    const BoxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
+  it('compose: an explicit asChild from the consumer uses only primary styling', () => {
+    const BoxA = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'partner-base',
+        variants: { intent: { ghost: 'partner-intent-ghost' } },
+        presets: { emphasis: { intent: 'ghost' } },
+      },
+    })
     const BoxB = createContractComponent({
       tag: 'button',
       compose: { with: BoxA },
-      styling: { base: 'class-b' },
+      styling: {
+        base: 'primary-base',
+        variants: { size: { lg: 'primary-size-lg' } },
+        presets: { emphasis: { size: 'lg' } },
+      },
     })
 
     const { container } = solidRender(() => (
-      <BoxB asChild>{(props: AnyRecord) => <a {...props} />}</BoxB>
+      <BoxB asChild {...({ recipe: 'emphasis' } as AnyRecord)}>{(props: AnyRecord) => <a {...props} />}</BoxB>
     ))
 
     const el = container.querySelector('a')!
-    expect(el.className).toContain('class-b')
-    expect(el.className).not.toContain('class-a')
+    expect(el.className).toContain('primary-base')
+    expect(el.className).toContain('primary-size-lg')
+    expect(el.className).not.toContain('partner-base')
+    expect(el.className).not.toContain('partner-intent-ghost')
     expect(container.querySelector('button')).toBeNull()
   })
 
