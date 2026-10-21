@@ -41,7 +41,7 @@ catalog:
   "@vitejs/plugin-vue": ^6.0.10
   "@vitest/ui": ^4.1.11
   "@vue/compiler-dom": ^3.5.44
-  "@vue/server-renderer": ^3.5.43
+  "@vue/server-renderer": ^3.5.44
   "@vue/test-utils": ^2.5.1
   class-variance-authority: ^0.7.1
 
@@ -90,7 +90,7 @@ catalog:
   vite: ^8.3.4
   vite-plugin-solid: ^2.11.14
   vitest: ^4.1.11
-  vue: ^3.5.43
+  vue: ^3.5.44
 
 overrides:
   # Security-advisory floors. Verified against the GitHub Advisory DB on
