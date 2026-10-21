@@ -254,6 +254,7 @@ export function createContractComponent<
       options.subComponents,
     ),
     bundle.runtime.options,
+    options.styling?.plugin,
   )
 
   type G = PolymorphicGenerics<

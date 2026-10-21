@@ -44,6 +44,7 @@ export type {
   RecipeOf,
   RenderPipeline,
   ResolvedCompositionResolverOptions,
+  RetainedCompositionStyleMetadata,
   ResolvedFactoryShape,
   ResolveInput,
   ResolveOutput,

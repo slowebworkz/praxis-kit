@@ -1,20 +1,26 @@
-import type { ComposeOptions } from '@praxis-kit/primitive'
+import type { ComposeOptions, AnyClassPluginFactory } from '@praxis-kit/primitive'
+import type { Diagnostics } from '@praxis-kit/diagnostics'
 import type { CompositionStyleContract } from '@praxis-kit/styling'
+
+/** Internal metadata retained on generated components for direct composition. */
+export type RetainedCompositionStyleMetadata = CompositionStyleContract & {
+  /** Original factory input; kept separate from mergeable style fields. */
+  readonly pluginFactory?: AnyClassPluginFactory
+}
 
 /** Receives a human-readable message for a construction-time composition diagnostic. */
 export type CompositionDiagnostic = (message: string) => void
 
-/** Input to the optional composition styling pipeline: the primary contract's retained styling
- *  metadata plus the component's `compose` options. Named `Composition…` to stay distinct from the
- *  class resolver's own `ResolverOptions`. */
+/** Input to the optional composition styling pipeline. */
 export type CompositionResolverOptions = {
-  readonly primary: CompositionStyleContract
+  readonly primary: RetainedCompositionStyleMetadata
   readonly compose?: ComposeOptions
   readonly onDiagnostic?: CompositionDiagnostic
+  readonly onPluginConflict?: CompositionDiagnostic
+  readonly diagnostics?: Diagnostics
 }
 
-/** {@link CompositionResolverOptions} after the direct `compose.with` partner's retained metadata
- *  has been looked up; `undefined` for an external or unannotated partner. */
+/** Options after the direct `compose.with` partner's retained metadata has been looked up. */
 export type ResolvedCompositionResolverOptions = CompositionResolverOptions & {
-  readonly partner: CompositionStyleContract | undefined
+  readonly partner: RetainedCompositionStyleMetadata | undefined
 }

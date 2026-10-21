@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createPolymorphic } from '@praxis-kit/core'
-import type { EmptyRecord, PolymorphicGenerics } from '@praxis-kit/core'
+import type { ClassPluginFactory, EmptyRecord, PolymorphicGenerics } from '@praxis-kit/core'
 import { buildCoreRuntime } from './build-core-runtime'
 import {
   attachCompositionStyleMetadata,
@@ -12,6 +12,22 @@ import {
 type ButtonGenerics = PolymorphicGenerics<'button', EmptyRecord, EmptyRecord, EmptyRecord>
 
 describe('composition style metadata', () => {
+  it('retains the original plugin factory separately from normalized styling options', () => {
+    // Cast through the real factory type: `as never` would make `createPolymorphic` infer `never`.
+    const pluginFactory = vi.fn(() => ({
+      pipeline: () => 'plugin-output',
+    })) as unknown as ClassPluginFactory
+    const runtime = createPolymorphic({ styling: { base: 'base', plugin: pluginFactory } })
+    const component = () => {}
+
+    attachCompositionStyleMetadata(component, runtime.options, pluginFactory)
+
+    expect(getCompositionStyleMetadata(component)).toMatchObject({
+      baseClassName: 'base',
+      pluginFactory,
+    })
+  })
+
   it('retains standard resolved styling fields without exposing metadata as an enumerable property', () => {
     const runtime = createPolymorphic({
       tag: 'button',

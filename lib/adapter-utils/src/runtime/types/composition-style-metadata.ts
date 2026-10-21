@@ -1,10 +1,10 @@
 import type {
   ClassPipelineFn,
   CompositionClassResolver as StylingCompositionClassResolver,
-  CompositionStyleContract,
 } from '@praxis-kit/styling'
+import type { RetainedCompositionStyleMetadata } from '@praxis-kit/core/internal/composition-style'
 
-export type StyleMetadata = CompositionStyleContract
+export type StyleMetadata = RetainedCompositionStyleMetadata
 
 /** Internal request carrying the combined resolver through automatic adapter composition. */
 export interface CompositionStyleRequest {
@@ -18,6 +18,7 @@ export type OptionalCompositionStylePipelineOptions = {
   readonly with: unknown
   readonly composeDefaults?: object
   readonly onDiagnostic?: (message: string) => void
+  readonly onPluginConflict?: (message: string) => void
 }
 
 /** The core runtime's resolver with the direct partner metadata retained for prop selection. */

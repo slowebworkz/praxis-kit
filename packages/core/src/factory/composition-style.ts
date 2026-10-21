@@ -1,16 +1,15 @@
+import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import { isFunction, isObject } from '@praxis-kit/guards'
 import { composePipelines } from '@praxis-kit/pipeline-kit'
 import type {
+  ClassPipelineFn,
   ClassPipelineOptions,
   CompositionClassResolver,
   CompositionStyleContract,
   CompositionStyleOptions,
   VariantMap,
 } from '@praxis-kit/styling'
-import {
-  createCompositionClassPipeline as createDefaultCompositionClassPipeline,
-  mergeCompositionClassPipelineOptions,
-} from '@praxis-kit/styling'
+import { mergeCompositionClassPipelineOptions } from '@praxis-kit/styling'
 import type {
   AnyClassPluginFactory,
   ClassPluginResolution,
@@ -19,8 +18,11 @@ import type {
   CompositionResolverOptions,
   ResolvedCompositionResolverOptions,
   ResolvedFactoryShape,
+  RetainedCompositionStyleMetadata,
 } from '../types'
 import { resolveClassPlugin } from './pipelines/styling'
+
+export type { RetainedCompositionStyleMetadata }
 
 /** Shared runtime key for styling metadata owned by a generated Praxis component. */
 export const COMPOSITION_STYLE_METADATA = Symbol.for('@praxis-kit/composition-style-metadata')
@@ -44,18 +46,22 @@ export function createSelectedCompositionClassPipeline(
 }
 
 /** Return retained styling metadata only for components created by a Praxis adapter. */
-export function getCompositionStyleMetadata(value: unknown): CompositionStyleContract | undefined {
+export function getCompositionStyleMetadata(
+  value: unknown,
+): RetainedCompositionStyleMetadata | undefined {
   if (!isObject(value) && !isFunction(value)) return undefined
-  return (value as { [COMPOSITION_STYLE_METADATA]?: CompositionStyleContract })[
+  return (value as { [COMPOSITION_STYLE_METADATA]?: RetainedCompositionStyleMetadata })[
     COMPOSITION_STYLE_METADATA
   ]
 }
 
 export function createCompositionStyleResolver(
-  primary: CompositionStyleContract,
-  partner: CompositionStyleContract,
+  primary: RetainedCompositionStyleMetadata,
+  partner: RetainedCompositionStyleMetadata,
   composeDefaults?: object,
   onDiagnostic?: CompositionDiagnostic,
+  onPluginConflict?: CompositionDiagnostic,
+  diagnostics?: ResolvedFactoryShape['diagnostics'],
 ): CompositionClassResolver {
   const defaults = composeDefaults
     ? (Object.fromEntries(
@@ -65,15 +71,34 @@ export function createCompositionStyleResolver(
       ) satisfies NonNullable<CompositionStyleContract['defaultVariants']>)
     : {}
 
-  return Object.assign(
-    createDefaultCompositionClassPipeline({
+  const primaryFactory = primary.pluginFactory
+  const partnerFactory = partner.pluginFactory
+  const selectedFactory = primaryFactory ?? partnerFactory
+
+  if (primaryFactory && partnerFactory && primaryFactory !== partnerFactory) {
+    onPluginConflict?.(
+      'Both the primary component and its composed partner define different class-plugin factories; the primary factory is used for composition.',
+    )
+  }
+
+  const { classPipeline, pluginResult } = createSelectedCompositionClassPipeline(
+    {
       primary,
       partner,
       composeDefaults: defaults,
       ...(onDiagnostic && { onDiagnostic }),
-    }),
-    { partner },
+    },
+    selectedFactory,
+    diagnostics ?? silentDiagnostics,
   )
+
+  // A plugin-derived pipeline is typed by its argument tuple (`tag: ElementType`), while
+  // `ClassPipelineFn` takes the looser `tag: unknown`; see `ClassPluginResolution`. The two are
+  // compatible at runtime, so bridge the declared parameter type here.
+  return Object.assign(classPipeline as ClassPipelineFn, {
+    partner,
+    ownedKeys: pluginResult?.ownedKeys ?? new Set<string>(),
+  })
 }
 
 const resolvePartner = (
@@ -91,9 +116,18 @@ const buildOptionalResolver = ({
   compose,
   partner,
   onDiagnostic,
+  onPluginConflict,
+  diagnostics,
 }: ResolvedCompositionResolverOptions): CompositionClassResolver | undefined => {
   if (compose?.with === undefined || partner === undefined) return undefined
-  return createCompositionStyleResolver(primary, partner, compose.defaults, onDiagnostic)
+  return createCompositionStyleResolver(
+    primary as RetainedCompositionStyleMetadata,
+    partner,
+    compose.defaults,
+    onDiagnostic,
+    onPluginConflict,
+    diagnostics,
+  )
 }
 
 const optionalCompositionStylePipeline = composePipelines(resolvePartner, buildOptionalResolver)
@@ -107,10 +141,15 @@ export function createOptionalCompositionStyleResolver(
   primary: CompositionStyleContract,
   compose: ComposeOptions | undefined,
   onDiagnostic?: CompositionDiagnostic,
+  onPluginConflict?: CompositionDiagnostic,
+  primaryPluginFactory?: AnyClassPluginFactory,
+  diagnostics?: ResolvedFactoryShape['diagnostics'],
 ): CompositionClassResolver | undefined {
   return optionalCompositionStylePipeline({
-    primary,
+    primary: { ...primary, ...(primaryPluginFactory && { pluginFactory: primaryPluginFactory }) },
     ...(compose && { compose }),
     ...(onDiagnostic && { onDiagnostic }),
+    ...(onPluginConflict && { onPluginConflict }),
+    ...(diagnostics && { diagnostics }),
   })
 }

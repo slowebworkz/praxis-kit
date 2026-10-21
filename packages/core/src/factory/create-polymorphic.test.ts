@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   CollectingReporter,
   DefaultPolicy,
@@ -8,6 +8,7 @@ import {
 } from '@praxis-kit/diagnostics'
 import { createPolymorphic } from './create-polymorphic'
 import type { AnyRecord } from '../types'
+import type { ClassPluginFactory } from '@praxis-kit/styling'
 
 function makeCollecting() {
   const reporter = new CollectingReporter()
@@ -303,5 +304,115 @@ describe('createPolymorphic — options.htmlChildrenEvaluatorFn', () => {
     runtime.options.htmlChildrenEvaluatorFn?.('picture')?.evaluate([{ type: 'div' }])
     expect(warn).toHaveBeenCalled()
     warn.mockRestore()
+  })
+})
+
+describe('createPolymorphic — composition plugin selection', () => {
+  const metadataKey = Symbol.for('@praxis-kit/composition-style-metadata')
+
+  // Cast through the real factory type: `as never` would make `createPolymorphic` infer `never`.
+  const asPlugin = (factory: unknown) => factory as ClassPluginFactory
+
+  function partnerWith(pluginFactory?: unknown) {
+    const partner = () => null
+    Object.defineProperty(partner, metadataKey, {
+      value: {
+        baseClassName: 'partner-base',
+        ...(pluginFactory !== undefined && { pluginFactory }),
+      },
+    })
+    return partner
+  }
+
+  const pluginA = vi.fn((options: { baseClassName?: string }) => ({
+    pipeline: () => `plugin-a:${options.baseClassName ?? ''}`,
+    ownedKeys: new Set(['flex']),
+  }))
+  const pluginB = vi.fn(() => ({ pipeline: () => 'plugin-b' }))
+
+  beforeEach(() => {
+    pluginA.mockClear()
+    pluginB.mockClear()
+  })
+
+  it('selects the primary factory and passes merged styling options', () => {
+    const runtime = createPolymorphic({
+      styling: { base: 'primary-base', plugin: asPlugin(pluginA) },
+      compose: { with: partnerWith(pluginB) as never },
+    })
+
+    expect(pluginA).toHaveBeenCalledTimes(2)
+    expect(pluginA.mock.calls[1]?.[0].baseClassName).toBe('partner-base primary-base')
+    expect(pluginB).not.toHaveBeenCalled()
+    expect(runtime.compositionClassResolver?.('div', {})).toBe('plugin-a:partner-base primary-base')
+    expect(runtime.compositionClassResolver?.ownedKeys).toEqual(new Set(['flex']))
+  })
+
+  it('selects a primary-only factory when the partner has none', () => {
+    const runtime = createPolymorphic({
+      styling: { base: 'primary-base', plugin: asPlugin(pluginA) },
+      compose: { with: partnerWith() as never },
+    })
+
+    expect(pluginA).toHaveBeenCalledTimes(2)
+    expect(runtime.compositionClassResolver?.('div', {})).toBe('plugin-a:partner-base primary-base')
+  })
+
+  it('selects the partner factory when the primary has none', () => {
+    const runtime = createPolymorphic({
+      styling: { base: 'primary-base' },
+      compose: { with: partnerWith(pluginB) as never },
+    })
+
+    expect(pluginB).toHaveBeenCalledTimes(1)
+    expect(runtime.compositionClassResolver?.('div', {})).toBe('plugin-b')
+  })
+
+  it('instantiates a shared factory once for the composition pipeline', () => {
+    const shared = vi.fn(() => ({ pipeline: () => 'shared' }))
+    const runtime = createPolymorphic({
+      styling: { plugin: asPlugin(shared) },
+      compose: { with: partnerWith(shared) as never },
+    })
+
+    // One standalone pipeline and one merged composition pipeline. The shared factory is not
+    // invoked separately for the primary and partner within composition.
+    expect(shared).toHaveBeenCalledTimes(2)
+    expect(runtime.compositionClassResolver?.('div', {})).toBe('shared')
+  })
+
+  it('warns with COMP1016 and keeps the primary factory when factories conflict', () => {
+    const { reporter, diagnostics } = makeCollecting()
+    const runtime = createPolymorphic({
+      name: 'Composed',
+      enforcement: { diagnostics },
+      styling: { plugin: asPlugin(pluginA) },
+      compose: { with: partnerWith(pluginB) as never },
+    })
+
+    const conflicts = reporter.diagnostics.filter((diagnostic) => diagnostic.code === 'COMP1016')
+    expect(conflicts).toHaveLength(1)
+    expect(conflicts[0]?.component).toBe('Composed')
+    expect(pluginB).not.toHaveBeenCalled()
+    expect(runtime.compositionClassResolver?.('div', {})).toContain('plugin-a:')
+  })
+
+  it('uses the default class pipeline when neither contract declares a plugin', () => {
+    const runtime = createPolymorphic({
+      styling: { base: 'primary-base' },
+      compose: { with: partnerWith() as never },
+    })
+
+    expect(runtime.compositionClassResolver?.('div', {})).toBe('partner-base primary-base')
+    expect(runtime.compositionClassResolver?.ownedKeys).toEqual(new Set())
+  })
+
+  it('does not activate composition for an external partner without retained metadata', () => {
+    const runtime = createPolymorphic({
+      styling: { plugin: asPlugin(pluginA) },
+      compose: { with: (() => null) as never },
+    })
+
+    expect(runtime.compositionClassResolver).toBeUndefined()
   })
 })

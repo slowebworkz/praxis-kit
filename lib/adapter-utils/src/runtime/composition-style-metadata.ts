@@ -12,7 +12,7 @@ import {
   createOptionalCompositionStyleResolver,
   getCompositionStyleMetadata,
 } from '@praxis-kit/core/internal/composition-style'
-import type { ComposeOptions } from '@praxis-kit/core'
+import type { AnyClassPluginFactory, ComposeOptions } from '@praxis-kit/core'
 import type {
   CompositionClassResolver,
   CompositionStyleRequest,
@@ -39,6 +39,7 @@ export function isCompositionStyleRequest(value: unknown): value is CompositionS
 export function attachCompositionStyleMetadata<T extends object, V extends VariantMap>(
   component: T,
   options: ClassPipelineOptions<V>,
+  pluginFactory?: AnyClassPluginFactory,
 ): T {
   // Preserve the caller's concrete variant type at the API boundary; metadata is stored in the
   // shared, erased representation because composition resolves it dynamically at runtime.
@@ -54,6 +55,7 @@ export function attachCompositionStyleMetadata<T extends object, V extends Varia
     }),
     ...(isDefined(styleOptions.recipeMap) && { recipeMap: styleOptions.recipeMap }),
     ...(isDefined(styleOptions.tagMap) && { tagMap: styleOptions.tagMap }),
+    ...(pluginFactory && { pluginFactory }),
   } satisfies StyleMetadata
 
   Object.defineProperty(component, COMPOSITION_STYLE_METADATA, {
@@ -98,7 +100,13 @@ export function createOptionalCompositionStylePipeline(
           with: options.with as ComposeOptions['with'],
           ...(options.composeDefaults !== undefined && { defaults: options.composeDefaults }),
         }
-  return createOptionalCompositionStyleResolver(options.primary, compose, options.onDiagnostic)
+  return createOptionalCompositionStyleResolver(
+    options.primary,
+    compose,
+    options.onDiagnostic,
+    options.onPluginConflict,
+    options.primary.pluginFactory,
+  )
 }
 
 /**

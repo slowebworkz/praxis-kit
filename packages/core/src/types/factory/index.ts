@@ -37,4 +37,5 @@ export type {
   CompositionDiagnostic,
   CompositionResolverOptions,
   ResolvedCompositionResolverOptions,
+  RetainedCompositionStyleMetadata,
 } from './composition-style'
