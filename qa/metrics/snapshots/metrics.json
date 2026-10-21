@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-21T04:54:49.539Z",
+  "generated": "2026-10-21T21:41:17.008Z",
   "bundles": {
     "package/contract-only": 8450,
     "package/guards-only": 7870,
@@ -28,7 +28,7 @@
     "violations": 0,
     "exports": {
       "@praxis-kit/adapter-utils": {
-        "values": 45,
+        "values": 46,
         "types": 27
       },
       "@praxis-kit/codemod": {
@@ -49,7 +49,7 @@
       },
       "@praxis-kit/core": {
         "values": 84,
-        "types": 117
+        "types": 121
       },
       "@praxis-kit/diagnostics": {
         "values": 19,
@@ -104,7 +104,7 @@
         "types": 12
       },
       "@praxis-kit/styling": {
-        "values": 9,
+        "values": 10,
         "types": 38
       },
       "@praxis-kit/svelte": {
@@ -142,7 +142,7 @@
     "lib/diagnostics": {
       "files": 18,
       "functions": 23,
-      "loc": 452
+      "loc": 453
     },
     "lib/contract-props": {
       "files": 5,
@@ -156,8 +156,8 @@
     },
     "lib/styling": {
       "files": 22,
-      "functions": 31,
-      "loc": 725
+      "functions": 32,
+      "loc": 738
     },
     "lib/tailwind": {
       "files": 15,
@@ -176,13 +176,13 @@
     },
     "lib/adapter-utils": {
       "files": 56,
-      "functions": 62,
-      "loc": 3512
+      "functions": 65,
+      "loc": 3595
     },
     "packages/core": {
-      "files": 75,
-      "functions": 65,
-      "loc": 2662
+      "files": 76,
+      "functions": 66,
+      "loc": 2763
     }
   }
 }
