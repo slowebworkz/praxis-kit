@@ -211,23 +211,34 @@ describe('createContractComponent (current / React 19)', () => {
   it('keeps custom render on the primary contract styling path when composed', () => {
     const Surface = createContractComponent({
       tag: 'div',
-      styling: { base: 'partner-base' },
+      styling: {
+        base: 'partner-base',
+        variants: { intent: { loud: 'partner-loud' } },
+        presets: { emphasis: { intent: 'loud' } },
+      },
     })
     const Card = createContractComponent({
       tag: 'div',
       compose: { with: Surface },
-      styling: { base: 'primary-base' },
+      styling: {
+        base: 'primary-base',
+        variants: { size: { lg: 'primary-lg' } },
+        presets: { emphasis: { size: 'lg' } },
+      },
     })
 
     dom.mount(
       createElement(box(Card), {
+        recipe: 'emphasis',
         render: (props: RenderCallbackProps) => createElement('button', props as never),
       }),
     )
 
     const element = dom.container.querySelector('button')!
     expect(element.className).toContain('primary-base')
+    expect(element.className).toContain('primary-lg')
     expect(element.className).not.toContain('partner-base')
+    expect(element.className).not.toContain('partner-loud')
   })
 
   it('forwards a ref to the DOM element', () => {
