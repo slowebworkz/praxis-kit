@@ -46,20 +46,20 @@ const surfaceOptions = {
 } satisfies ReactFactoryOptions
 const Surface = createContractComponent(surfaceOptions)
 
-// `compose.defaults` is validated against the secondary component's public props and variants.
+// `compose.defaults` is validated against the secondary component's variants, not ordinary props.
 const ValidComposeDefaults = defineContract({
   tag: 'section',
   name: 'ValidComposeDefaults',
-  compose: { with: Surface, defaults: { radius: 'lg', shadow: true } },
+  compose: { with: Surface, defaults: { shadow: true } },
 })
 void ValidComposeDefaults
 
-// Defaults are partial: callers can configure one supported prop without specifying variants
-// or ordinary props that should retain their existing behavior.
+// Defaults are partial: callers can configure one supported variant without specifying other
+// variants or ordinary props.
 const ValidPartialComposeDefaults = defineContract({
   tag: 'section',
   name: 'ValidPartialComposeDefaults',
-  compose: { with: Surface, defaults: { radius: 'lg' } },
+  compose: { with: Surface, defaults: { shadow: false } },
 })
 void ValidPartialComposeDefaults
 
@@ -86,16 +86,15 @@ const PluginSurface = createContractComponent({
   styling: { base: '', plugin: createTailwindPipeline },
 } satisfies ReactFactoryOptions)
 
-// Plugin-contributed props participate in compose.defaults validation too.
-const ValidPluginComposeDefaults = defineContract({
+// Plugin-owned selector props are styling inputs, but are not declared contract variants.
+// @ts-expect-error — compose.defaults only accepts variants declared in `styling.variants`
+defineContract({
   tag: 'section',
-  name: 'ValidPluginComposeDefaults',
+  name: 'InvalidPluginComposeDefaults',
   compose: { with: PluginSurface, defaults: { flex: true } },
 })
-void ValidPluginComposeDefaults
 
-// Explicitly exercise a plugin whose props are a union: keys unique to a union member must
-// remain valid composition defaults, even though `keyof` on the union contains only common keys.
+// Plugin-owned union selector props are still not contract variants and cannot be defaults.
 type ExclusiveLayoutProps =
   { flex: true; grid?: never } | { grid: true; flex?: never } | { flex?: never; grid?: never }
 const exclusiveLayoutPlugin = (() => ({
@@ -108,44 +107,26 @@ const UnionPluginSurface = createContractComponent({
   styling: { base: '', plugin: exclusiveLayoutPlugin },
 } satisfies ReactFactoryOptions)
 
-defineContract({
-  tag: 'section',
-  name: 'UnionPluginComposeDefaults',
-  compose: { with: UnionPluginSurface, defaults: { flex: true } },
-})
-defineContract({
-  tag: 'section',
-  name: 'UnionPluginComposeDefaultsGrid',
-  compose: { with: UnionPluginSurface, defaults: { grid: true } },
-})
-
-// @ts-expect-error — plugin-contributed union props still enforce their value types
-// (the union allows only literal `true`, not `false`).
+// @ts-expect-error — plugin-owned `flex` is not a declared contract variant
+// even when the plugin exposes a literal-true selector.
 defineContract({
   tag: 'section',
   name: 'InvalidUnionPluginComposeDefaults',
-  compose: { with: UnionPluginSurface, defaults: { flex: false } },
+  compose: { with: UnionPluginSurface, defaults: { flex: true } },
 })
 
-// @ts-expect-error — the plugin-contributed flex prop is boolean
-defineContract({
-  tag: 'section',
-  name: 'InvalidPluginComposeDefaults',
-  compose: { with: PluginSurface, defaults: { flex: 'yes' } },
-})
-
-// @ts-expect-error — `raduis` is not a public prop of Surface
+// @ts-expect-error — unknown keys are not valid compose.defaults keys
 defineContract({
   tag: 'section',
   name: 'InvalidComposeDefaultsKey',
   compose: { with: Surface, defaults: { raduis: 'lg' } },
 })
 
-// @ts-expect-error — Surface's radius prop only accepts 'sm' or 'lg'
+// @ts-expect-error — `compose.defaults` cannot configure an ordinary prop, even with a valid value
 defineContract({
   tag: 'section',
-  name: 'InvalidComposeDefaultsValue',
-  compose: { with: Surface, defaults: { radius: 'md' } },
+  name: 'InvalidComposeDefaultsOrdinaryProp',
+  compose: { with: Surface, defaults: { radius: 'sm' } },
 })
 
 // @ts-expect-error — Surface's shadow variant only accepts booleans
@@ -153,6 +134,15 @@ defineContract({
   tag: 'section',
   name: 'InvalidComposeDefaultsVariant',
   compose: { with: Surface, defaults: { shadow: 'yes' } },
+})
+
+// @ts-expect-error — `tone` is declared only by the primary component, not by Surface, so it is
+// not Surface's variant to default: compose.defaults is owned by the composed (secondary) contract.
+defineContract({
+  tag: 'section',
+  name: 'InvalidComposeDefaultsPrimaryOnlyVariant',
+  styling: { variants: { tone: { quiet: 'tone-quiet', loud: 'tone-loud' } } },
+  compose: { with: Surface, defaults: { tone: 'quiet' } },
 })
 
 const cardOptions = {

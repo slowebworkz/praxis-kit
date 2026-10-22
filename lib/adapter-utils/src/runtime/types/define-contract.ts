@@ -2,17 +2,19 @@ import type {
   ContractGenericsOf,
   ContractInput,
   FactoryOptions,
-  PropsOf,
   VariantProps,
   VariantsOf,
 } from '@praxis-kit/core'
 import type { OmitIndexSignature } from 'type-fest'
 
-/** Props recovered from a retained Praxis Kit component contract, including plugin props. */
+/** Variant defaults accepted from a retained Praxis Kit component contract.
+ *
+ * Ordinary props and plugin-owned selector props are deliberately excluded: `compose.defaults`
+ * configures only variants explicitly declared by the composed contract.
+ */
 export type RetainedComponentProps<T> = T extends { readonly __contract?: infer C }
   ? NonNullable<C> extends infer Contract extends FactoryOptions
-    ? OmitIndexSignature<PropsOf<ContractGenericsOf<Contract>>> &
-        OmitIndexSignature<VariantProps<VariantsOf<ContractGenericsOf<Contract>>>>
+    ? OmitIndexSignature<VariantProps<VariantsOf<ContractGenericsOf<Contract>>>>
     : never
   : never
 
@@ -42,7 +44,7 @@ export type HasRetainedComponentProps<Props> = [Props] extends [never] ? false :
 /** Keys present in any member of a union, rather than only keys common to every member. */
 export type KeysOfUnion<T> = T extends unknown ? keyof T : never
 
-/** Whether defaults contain only valid props with valid values. */
+/** Whether defaults contain only valid declared variant keys with valid values. */
 export type IsValidComposeDefaults<Defaults, Props> =
   Exclude<keyof Defaults, KeysOfUnion<Props>> extends never
     ? Defaults extends Partial<Props>
@@ -51,7 +53,7 @@ export type IsValidComposeDefaults<Defaults, Props> =
     : false
 
 /**
- * Validate compose.defaults against the retained secondary component contract.
+ * Validate compose.defaults against the retained secondary component’s declared variant contract.
  * External framework components without retained contracts intentionally skip validation.
  */
 export type ComposeDefaultsConstraint<O> =
