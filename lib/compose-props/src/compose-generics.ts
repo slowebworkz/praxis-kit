@@ -1,5 +1,6 @@
 import type { OmitIndexSignature } from 'type-fest'
 import type {
+  AnyClassPluginFactory,
   AnyRecord,
   ContractAllowedOf,
   ContractGenericsOf,
@@ -53,22 +54,30 @@ export type ComposedContractOf<C extends FactoryOptions> = C extends {
  * own self-reference, not a rule about which position breaks — so every argument gets its own
  * named, guarded type, not only the one a specific test happened to catch.
  */
+/** A contract that sets no `styling.plugin` projects the wide `AnyClassPluginFactory`. */
+type HasPlugin<C extends FactoryOptions> = [AnyClassPluginFactory] extends [ContractPluginOf<C>]
+  ? false
+  : true
+
 /**
- * Every class-plugin factory whose props appear in `ContractGenericsWithComposeOf<C>`'s merged
- * props: `C`'s own, plus those of each composed partner reached through `compose.allProps: true`
- * (the same condition `MergePropsOf` uses to fold a partner's props in — a partner whose props
- * stay private contributes no plugin props either). Lets a caller flatten plugin-contributed props
+ * The one class-plugin factory whose props `ContractGenericsWithComposeOf<C>` carries, matching
+ * the runtime selection (`DECISIONS.md` → "Composition class-plugin selection — primary factory
+ * wins"): `C`'s own plugin if it sets one, otherwise the *direct* partner's — and only when
+ * `compose.allProps: true`, the same condition `MergePropsOf` uses to fold a partner's props in
+ * (a partner whose props stay private contributes no plugin props to flatten). Plugins are never
+ * combined and nested partners are never walked. Lets a caller flatten plugin-contributed props
  * without knowing which plugin, or which contract in the chain, owns them.
  */
 export type ComposedPluginOf<C extends FactoryOptions> =
-  | ContractPluginOf<C>
-  | (C extends { compose: { allProps: true } }
+  HasPlugin<C> extends true
+    ? ContractPluginOf<C>
+    : C extends { compose: { allProps: true } }
       ? [ComposedContractOf<C>] extends [never]
-        ? never
+        ? ContractPluginOf<C>
         : ComposedContractOf<C> extends infer CC extends FactoryOptions
-          ? ComposedPluginOf<CC>
+          ? ContractPluginOf<CC>
           : never
-      : never)
+      : ContractPluginOf<C>
 
 type DefaultTagOf<C extends FactoryOptions> =
   ContractTagOf<C> extends infer TDefault extends ElementType ? TDefault : ElementType

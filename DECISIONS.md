@@ -3784,3 +3784,33 @@ a single deterministic factory avoids inventing a generic composition algebra fo
 and keeps composition framework-independent. Primary precedence also makes the component whose
 contract is being rendered authoritative when two plugin policies conflict, while the diagnostic
 makes the otherwise surprising ignored partner configuration visible.
+
+### Plugin-owned flattened props — types follow the runtime selection (2026-10-21)
+
+`ContractProps<T>` flattens the Tailwind plugin's ~22-way mutually exclusive layout union for the
+type-extraction path. That knowledge used to live in each adapter (`LayoutKeyName`,
+`FlattenLayout`); it now lives with the plugin. `ClassPlugin<TProps, TFlatProps>` carries both the
+strict call-site props and a flat extraction shape (`TFlatProps` defaults to `TProps`, i.e. no
+flattening), and `FlattenPluginProps<P, TPlugin>` (`@praxis-kit/primitive`) applies it without
+naming any plugin's keys. `createTailwindPipeline` declares `FlatLayoutProps`.
+
+**Which plugin is flattened follows the runtime selection**, per "Composition class-plugin selection
+— primary factory wins" above: `ComposedPluginOf<C>` (`@praxis-kit/compose-props`) is `C`'s own
+plugin if it sets one, otherwise the direct partner's — and only when `compose.allProps: true`,
+because a partner whose props stay private contributes no props to flatten. Plugins are never
+combined and nested partners are never walked, so there is no flat-shape collision policy to define.
+
+**Scope and deferrals**
+
+- **React and Preact only.** Svelte keeps its own `FlattenLayout` in `resolved-slot-props.ts`.
+  `ResolvedSlotProps<G>` receives only the merged generics, with no contract and so no plugin, and
+  flattens a broader shape (every union key made optional). Extending it means threading the
+  selected plugin through `ComposedBundleGenericsOf` — a design change, tracked as a follow-up.
+- **`ContractInputProps` not added.** The strict, unflattened twin of `ContractProps` (the shape the
+  component's call signature accepts, so a value annotated with it can be spread back in) would fix
+  the `const p: ContractProps<typeof Card> = {...}; <Card {...p} />` failure. Nothing here depends
+  on it; add it when a consumer needs it.
+- **Known limit:** a composed component whose partner alone owns the plugin has no plugin props in
+  its call signature (`createContractComponent` uses `ContractGenericsWithAllowedOf`, not the
+  compose projection), although `ContractProps` exposes them. Invisible while every contract sets
+  the plugin itself.

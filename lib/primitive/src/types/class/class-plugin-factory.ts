@@ -3,7 +3,7 @@ import type { ClassPipelineOptions } from '../pipeline/class-pipeline-options'
 import type { VariantMap } from '../variants'
 import type { ClassPlugin } from './class-plugin'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
-import type { IsEqual, KeysOfUnion, Simplify, UnionToIntersection } from 'type-fest'
+import type { IsEqual, KeysOfUnion, Simplify } from 'type-fest'
 
 export type ClassPluginFactory<
   TProps extends AnyRecord = EmptyRecord,
@@ -40,14 +40,6 @@ export type ExtractPluginFlatProps<TPlugin extends AnyClassPluginFactory> =
  * own flat shape back. Knows nothing about any particular plugin's props — the plugin declares
  * both shapes.
  *
- * `TPlugin` may be a union of factories (a composed component carries its partners' plugins too):
- * the strict keys of every member are dropped, and the members' flat shapes are intersected.
- *
- * Collision policy: two plugins owning the same prop is unsupported. Their flat shapes are plainly
- * intersected, so a shared key with incompatible value types collapses to `never` (an optional
- * key then reads as `undefined`) — pinned by a test in the React adapter's `compose-props.test.tsx`.
- * Plugins that need to share a key must agree on its type.
- *
  * Returns `P` untouched when no plugin contributes keys, or when none declares a distinct flat
  * shape (strict and flat are identical), so the `Omit` never runs for a plugin-less component or one whose props
  * are already flat.
@@ -60,9 +52,7 @@ export type FlattenPluginProps<P, TPlugin extends AnyClassPluginFactory> = [P] e
       ? P
       : FlattenWith<P, ExtractPluginProps<TPlugin>, ExtractPluginFlatProps<TPlugin>>
 
-type FlattenWith<P, TStrict, TFlat> = Simplify<
-  Omit<P, KeysOfUnion<TStrict>> & UnionToIntersection<TFlat>
->
+type FlattenWith<P, TStrict, TFlat> = Simplify<Omit<P, KeysOfUnion<TStrict>> & TFlat>
 
 export type PluginInstance<TPlugin extends AnyClassPluginFactory> =
   TPlugin extends ClassPluginFactory<infer TProps, infer TFlat>

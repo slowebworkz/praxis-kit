@@ -607,7 +607,7 @@ describe('compose.with preserves plugin-contributed layout props', () => {
     void _invalid
   })
 
-  describe('flattening across two different plugins', () => {
+  describe('flattening follows the runtime plugin selection (primary wins)', () => {
     type ToneStrict = { tone: 'a'; mood?: never } | { mood: 'b'; tone?: never }
     type ToneFlat = { tone?: 'a'; mood?: 'b' }
     const tonePlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<
@@ -622,14 +622,6 @@ describe('compose.with preserves plugin-contributed layout props', () => {
       SizeFlat
     >
 
-    // Same key as `ToneFlat`, incompatible value type.
-    type ClashStrict = { tone: 'z'; other?: never } | { other: 'w'; tone?: never }
-    type ClashFlat = { tone?: 'z'; other?: 'w' }
-    const clashPlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<
-      ClashStrict,
-      ClashFlat
-    >
-
     const ToneSurface = createContractComponent({
       tag: 'div',
       name: 'ToneSurface',
@@ -637,7 +629,9 @@ describe('compose.with preserves plugin-contributed layout props', () => {
       styling: { base: '', plugin: tonePlugin },
     } satisfies ReactFactoryOptions)
 
-    it('flattens the primary and partner plugins independently', () => {
+    it('flattens only the primary plugin when both the primary and the partner set one', () => {
+      // Mirrors DECISIONS.md "Composition class-plugin selection — primary factory wins": only the
+      // primary's plugin is selected, so only its flat shape is applied.
       const SizedCard = createContractComponent({
         tag: 'article',
         name: 'SizedCard',
@@ -647,31 +641,25 @@ describe('compose.with preserves plugin-contributed layout props', () => {
       } satisfies ReactFactoryOptions)
       type Props = ContractProps<typeof SizedCard>
 
-      expectTypeOf<Pick<Props, 'tone' | 'mood' | 'size' | 'dense'>>().toEqualTypeOf<{
-        tone?: 'a'
-        mood?: 'b'
-        size?: 'x'
-        dense?: 'y'
-      }>()
-      const _all: Props = { tone: 'a', mood: 'b', size: 'x', dense: 'y' }
-      void _all
+      const _flatPrimary: Props = { size: 'x', dense: 'y' }
+      void _flatPrimary
     })
 
-    it('intersects a key both plugins flatten, so incompatible value types collapse to never', () => {
-      // Unsupported: two plugins must not own the same prop with incompatible types. The
-      // documented outcome is the plain intersection, which makes the key unusable.
-      const ClashCard = createContractComponent({
+    it('flattens the partner plugin when the primary sets none', () => {
+      const ToneCard = createContractComponent({
         tag: 'article',
-        name: 'ClashCard',
+        name: 'ToneCard',
         props: undefined as unknown as EmptyRecord,
-        styling: { base: '', plugin: clashPlugin },
         compose: { allProps: true, with: ToneSurface },
       } satisfies ReactFactoryOptions)
-      type Props = ContractProps<typeof ClashCard>
+      type Props = ContractProps<typeof ToneCard>
 
-      expectTypeOf<Props['tone']>().toEqualTypeOf<undefined>()
-      expectTypeOf<Props['mood']>().toEqualTypeOf<'b' | undefined>()
-      expectTypeOf<Props['other']>().toEqualTypeOf<'w' | undefined>()
+      expectTypeOf<Pick<Props, 'tone' | 'mood'>>().toEqualTypeOf<{
+        tone?: 'a'
+        mood?: 'b'
+      }>()
+      const _both: Props = { tone: 'a', mood: 'b' }
+      void _both
     })
   })
 })
