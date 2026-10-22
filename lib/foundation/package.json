@@ -14,7 +14,8 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "clsx": "catalog:"
+    "clsx": "catalog:",
+    "guardz": "catalog:"
   },
   "devDependencies": {
     "vitest": "catalog:"

@@ -22,7 +22,6 @@
     "@praxis-kit/primitive": "workspace:*",
     "@praxis-kit/runtime": "workspace:*",
     "@praxis-kit/styling": "workspace:*",
-    "clsx": "catalog:",
     "type-fest": "catalog:"
   },
   "devDependencies": {
