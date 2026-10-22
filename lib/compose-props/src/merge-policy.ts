@@ -3,20 +3,21 @@ import type { OptionalKeysOf } from 'type-fest'
 /**
  * Type-level mirror of the runtime slot-merge policy (`classifyProp`,
  * `lib/adapter-utils/src/slot/merge-slot-props.ts`) that `compose: { with, allProps: true }`
- * transitively reaches through `asChild`/`Slot` (see `docs/design/compose-props-typing.md`,
- * section 5, for the confirmed call path). Four categories, matching
- * `PROP_MERGE_POLICIES` (`lib/adapter-utils/src/slot/policies.ts`) exactly — kept in sync by hand,
- * not by a shared import, since one side is a runtime value tuple and the other a type; a change
- * to `classifyProp`'s classification must be mirrored here.
+ * reaches through `asChild`/`Slot`. The four categories match `PROP_MERGE_POLICIES`
+ * (`lib/adapter-utils/src/slot/policies.ts`). They are kept in sync by hand, not by a shared
+ * import, since one side is a runtime value tuple and the other a type: a change to
+ * `classifyProp`'s classification must be mirrored here.
  */
 export type PropMergeCategory = 'chain' | 'concat' | 'shallow-merge' | 'child-wins'
 
 /**
- * Approximates `classifyProp`'s `EVENT_HANDLER_RE.test(key) && isFunction(slotVal) &&
- * isFunction(childVal)` check with a key-name pattern alone (`` on${string} ``) — types can't
- * additionally confirm both sides' *values* are functions the way the runtime check does. Holds
- * for every real contract-authored handler prop (always typed as a function on both sides); a
- * named simplification, not a silent assumption.
+ * Approximates `classifyProp`'s `EVENT_HANDLER_RE.test(key) &&
+ * isFunction(slotVal) && isFunction(childVal)` check with a key-name pattern
+ * alone (`on${string}`). Types cannot additionally confirm that both sides'
+ * values are functions, as the runtime check does.
+ *
+ * This holds for every contract-authored handler prop, which is typed as a
+ * function on both sides.
  */
 export type ClassifyPropKey<K extends PropertyKey> = K extends 'className' | 'class'
   ? 'concat'
@@ -27,22 +28,20 @@ export type ClassifyPropKey<K extends PropertyKey> = K extends 'className' | 'cl
       : 'child-wins'
 
 /**
- * The type-side consequence of `ComposeOptions`'s own doc comment: "forwarding is only safe when
- * `with`'s own contract is known not to have variant/prop names that collide with this
- * component's own." A `'child-wins'`-category key present on both sides with incompatible types
- * resolves to this literal instead of silently picking a direction.
+ * The type-level diagnostic for a prop declared by both components with
+ * incompatible types.
  */
 export type CollisionError<K extends PropertyKey> =
   `compose: '${K & string}' is declared by both this component and its composed partner with incompatible types`
 
 /**
- * `CollisionError<K>` wrapped as a single-key `VariantStates`-shaped object, for use at a
- * *variant's* value position instead of the raw string `CollisionError<K>` props use — a raw
- * string there isn't structurally a `VariantStates` (`Record<string, VariantValue>` requires an
- * object), which poisons the whole merged variants object, not just the colliding key (see
- * `docs/design/compose-props-typing.md` for the confirmed failure mode and fix history). The
- * wrapped shape keeps the surrounding object valid; `VariantKey<V, K>` (`@praxis-kit/primitive`)
- * reads `keyof V[K]`, recovering the message itself.
+ * Wraps a collision diagnostic in a `VariantStates`-compatible object shape.
+ *
+ * A raw string diagnostic at a variant value position would violate the
+ * variant-map constraint and poison the entire merged variants object.
+ * Wrapping it preserves the surrounding object; `VariantKey<V, K>` recovers
+ * the diagnostic from the wrapper's key so the consumer-facing prop retains
+ * the same error shape as a prop collision.
  *
  * On an incompatible variant collision the primary definition wins at runtime, so the merged
  * variant is `Own[K] & VariantCollisionError<K>`: the consumer-facing prop accepts the primary's
@@ -52,12 +51,36 @@ export type CollisionError<K extends PropertyKey> =
 type VariantCollisionError<K extends PropertyKey> = Record<CollisionError<K>, never>
 
 /**
- * The value a merged key resolves to, independent of whether that key ends up optional or
- * required in the final result — split out so optionality (below) can be computed separately
- * from the value itself. `AsVariants` selects which collision shape applies; every call site in
- * this package passes a literal (`true` for variants, omitted/`false` for props) — passing a
- * non-literal `boolean` would let this conditional distribute and produce a union of both
- * shapes, so keep it literal at any new call site too.
+ * Resolves the collision result for a key declared on both sides.
+ *
+ * Identical or assignable types are compatible. Incompatible types produce
+ * a diagnostic whose shape depends on whether this merge represents props
+ * or variants.
+ *
+ * `AsVariants` must remain a literal at call sites (`true` for variants, omitted/`false` for
+ * props): a non-literal `boolean` would let this conditional distribute and produce a union of
+ * both collision shapes.
+ */
+type MergeChildWinsValue<
+  Own,
+  Composed,
+  K extends keyof Own & keyof Composed,
+  AsVariants extends boolean,
+> = Own[K] extends Composed[K]
+  ? Own[K]
+  : Composed[K] extends Own[K]
+    ? Composed[K]
+    : AsVariants extends true
+      ? Own[K] & VariantCollisionError<K>
+      : CollisionError<K>
+
+/**
+ * Resolves the value contributed by a key, independently of whether the key
+ * will be optional or required in the resulting object.
+ *
+ * Keys classified as `child-wins` use the collision policy. Keys classified
+ * as `chain`, `concat`, or `shallow-merge` can coexist, so their types are
+ * combined as a union.
  */
 type MergeComposedValue<
   Own,
@@ -67,13 +90,7 @@ type MergeComposedValue<
 > = K extends keyof Own
   ? K extends keyof Composed
     ? ClassifyPropKey<K> extends 'child-wins'
-      ? Own[K] extends Composed[K]
-        ? Own[K]
-        : Composed[K] extends Own[K]
-          ? Composed[K]
-          : AsVariants extends true
-            ? Own[K] & VariantCollisionError<K>
-            : CollisionError<K>
+      ? MergeChildWinsValue<Own, Composed, K, AsVariants>
       : Own[K] | Composed[K]
     : Own[K]
   : K extends keyof Composed
@@ -81,12 +98,10 @@ type MergeComposedValue<
     : never
 
 /**
- * Whether `K` is optional *as declared on `T` specifically* — `true` both when `T` marks it
- * optional and when `T` doesn't declare `K` at all. Only meaningful combined with the other
- * side's own answer below; `IsMergedKeyOptional` checks presence on each side before consulting
- * this, since on its own it can't distinguish "optional" from "absent." Uses `type-fest`'s own
- * `OptionalKeysOf`, which is why `T` is constrained to `object` here and propagated up through
- * every type below that reaches it.
+ * Whether `K` is optional on `T`.
+ *
+ * A missing key returns `true`, so callers must account for key presence
+ * before interpreting this result as actual optionality.
  */
 type IsOptionalOn<T extends object, K extends PropertyKey> = K extends keyof T
   ? K extends OptionalKeysOf<T>
@@ -95,11 +110,22 @@ type IsOptionalOn<T extends object, K extends PropertyKey> = K extends keyof T
   : true
 
 /**
- * A merged key is optional iff it's optional (or absent) on *every* side that actually declares
- * it — required on at least one declaring side makes the merged result required too, since a
- * caller composing both components still owes that value to whichever side requires it.
- * Checking presence on each side separately (rather than one combined check) is what keeps a key
- * required-only-on-`Composed`-and-absent-from-`Own` correctly required.
+ * A key declared on both sides is optional only when both declarations are
+ * optional. A required declaration on either side makes the merged key
+ * required.
+ */
+type IsOptionalOnBoth<
+  Own extends object,
+  Composed extends object,
+  K extends keyof Own & keyof Composed,
+> = IsOptionalOn<Own, K> extends true ? IsOptionalOn<Composed, K> : false
+
+/**
+ * Determines whether a merged key is optional, taking account of which sides
+ * declare it.
+ *
+ * A key declared by only one side inherits that side's optionality. A key
+ * declared by neither side is treated as optional.
  */
 type IsMergedKeyOptional<
   Own extends object,
@@ -107,16 +133,16 @@ type IsMergedKeyOptional<
   K extends PropertyKey,
 > = K extends keyof Own
   ? K extends keyof Composed
-    ? IsOptionalOn<Own, K> extends true
-      ? IsOptionalOn<Composed, K>
-      : false
+    ? IsOptionalOnBoth<Own, Composed, K>
     : IsOptionalOn<Own, K>
   : K extends keyof Composed
     ? IsOptionalOn<Composed, K>
     : true
 
+/** All keys contributed by either side. */
 type AllMergedKeys<Own extends object, Composed extends object> = keyof Own | keyof Composed
 
+/** The subset of merged keys that should be optional. */
 type MergedOptionalKeys<Own extends object, Composed extends object> = {
   [K in AllMergedKeys<Own, Composed>]: IsMergedKeyOptional<Own, Composed, K> extends true
     ? K
@@ -124,14 +150,10 @@ type MergedOptionalKeys<Own extends object, Composed extends object> = {
 }[AllMergedKeys<Own, Composed>]
 
 /**
- * Own-vs-composed key merge, resolved per `ClassifyPropKey`. `'chain'`/`'concat'`/
- * `'shallow-merge'` keys are safe to coexist on both sides (the runtime combinator makes sense
- * for two different values, hence the union rather than a collision check); a `'child-wins'` key
- * on both sides is only safe when the two types agree — otherwise it's a real authoring conflict,
- * surfaced as a collision placeholder rather than resolved either direction (`CollisionError<K>`
- * for props, `VariantCollisionError<K>` for variants via `AsVariants: true`). Built as two
- * separate mapped types (required keys, then optional keys) rather than one, so each half can
- * apply its own `?` modifier explicitly.
+ * Merges a single pair of prop members.
+ *
+ * Required and optional properties are expressed as separate mapped types so
+ * each group can apply its own optional modifier explicitly.
  */
 type MergeComposedPropsMember<
   Own extends object,
@@ -146,12 +168,11 @@ type MergeComposedPropsMember<
 }
 
 /**
- * Merge each union member independently. Contracts may contribute mutually-exclusive prop unions
- * (notably the Tailwind layout shorthand `{ flex: true } | { grid: true } | ...`). Computing
- * `keyof Own` or mapped keys against the union as a whole only sees keys shared by every member;
- * this can erase a valid primary prop and make it resolve to `never` when the composed partner
- * does not declare that prop. Distribution retains the primary contract's exclusivity while still
- * applying the same per-key collision policy to each member.
+ * Distributes over each union member on both sides before merging.
+ *
+ * This preserves member-specific keys in mutually exclusive prop unions,
+ * such as plugin-generated layout props, instead of allowing `keyof` on the
+ * whole union to discard keys that are not shared by every member.
  */
 type MergeComposedPropsDistributive<
   Own extends object,
@@ -164,21 +185,31 @@ type MergeComposedPropsDistributive<
   : never
 
 /**
- * Avoid a quadratic union cross-product when both sides contribute the same prop shape.
+ * Exact type comparison used to avoid an unnecessary union cross-product.
  *
- * Plugin-generated props can be mutually-exclusive unions (for example Tailwind's flex/grid
- * layout props). Distributing both identical unions would compare every member against every
- * other member, manufacturing collisions between alternatives and potentially exhausting
- * TypeScript's instantiation depth. If the two complete types are mutually assignable, their
- * merge is already represented by either side; otherwise retain the member-wise merge so
- * member-specific keys and collision diagnostics continue to work for genuinely different types.
+ * Bidirectional assignability alone is insufficient: an empty record can be
+ * assignable to shapes whose properties are all optional. This check is
+ * intended to recognize identical types, including identical unions.
+ */
+type IsSameType<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
+    ? (<T>() => T extends B ? 1 : 2) extends <T>() => T extends A ? 1 : 2
+      ? true
+      : false
+    : false
+
+/**
+ * Merges a component's own props with those of its composed partner.
+ *
+ * Identical types take the fast path, avoiding a quadratic cross-product of
+ * union members. Different types use the distributive merge so member-
+ * specific keys and collision diagnostics are retained.
  */
 export type MergeComposedProps<
   Own extends object,
   Composed extends object,
   AsVariants extends boolean = false,
-> = [Own] extends [Composed]
-  ? [Composed] extends [Own]
+> =
+  IsSameType<Own, Composed> extends true
     ? Own
     : MergeComposedPropsDistributive<Own, Composed, AsVariants>
-  : MergeComposedPropsDistributive<Own, Composed, AsVariants>
