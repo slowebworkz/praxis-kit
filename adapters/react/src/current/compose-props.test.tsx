@@ -555,6 +555,7 @@ describe('compose.with preserves plugin-contributed layout props', () => {
         compose: { allProps: true, with: LayoutSurface },
       }),
     )
+    void FlatPartnerCard
     type Props = ContractProps<typeof FlatPartnerCard>
 
     type Picked = Pick<Props, 'flex' | 'grid' | 'variant'>
@@ -601,6 +602,7 @@ describe('compose.with preserves plugin-contributed layout props', () => {
       }),
     )
 
+    void OuterSurface
     type Props = ContractProps<typeof OuterSurface>
     type InputProps = ContractInputProps<typeof OuterSurface>
 
@@ -631,6 +633,7 @@ describe('compose.with preserves plugin-contributed layout props', () => {
         compose: { allProps: false, with: PrivateSurface },
       }),
     )
+    void PrivateCard
     type Props = ContractProps<typeof PrivateCard>
     expectTypeOf<'flex' extends keyof Props ? true : false>().toEqualTypeOf<false>()
   })
@@ -700,6 +703,7 @@ describe('compose.with preserves plugin-contributed layout props', () => {
         styling: { base: '', plugin: sizePlugin },
         compose: { allProps: true, with: ToneSurface },
       } satisfies ReactFactoryOptions)
+      void SizedCard
       type Props = ContractProps<typeof SizedCard>
 
       const _flatPrimary: Props = { size: 'x', dense: 'y' }
@@ -713,6 +717,7 @@ describe('compose.with preserves plugin-contributed layout props', () => {
         props: undefined as unknown as EmptyRecord,
         compose: { allProps: true, with: ToneSurface },
       } satisfies ReactFactoryOptions)
+      void ToneCard
       type Props = ContractProps<typeof ToneCard>
 
       expectTypeOf<Pick<Props, 'tone' | 'mood'>>().toEqualTypeOf<{

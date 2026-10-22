@@ -194,6 +194,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     } satisfies PreactFactoryOptions
     const PrimaryInputContract = createContractComponent(primaryOptions)
 
+    void PrimaryInputContract
     type InputProps = ContractInputProps<typeof PrimaryInputContract>
     type ExtractedProps = ContractProps<typeof PrimaryInputContract>
     expectTypeOf<'own' extends keyof InputProps ? true : false>().toEqualTypeOf<true>()
@@ -272,6 +273,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       compose: { allProps: true, with: LayoutSurface },
     } satisfies PreactFactoryOptions)
 
+    void FlatPartnerCard
     type Normal = ContractProps<typeof FlatPartnerCard>
     type AsChild = ContractProps<typeof FlatPartnerCard, 'asChild'>
 
