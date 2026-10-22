@@ -1,4 +1,5 @@
 import type { StyleContext } from './types'
+import { isDefined, isString } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import type { AnyRecord, StringMap } from '@praxis-kit/primitive'
 
@@ -23,9 +24,10 @@ export function createVariantPass(activeProps: AnyRecord, config: VariantConfig)
   return {
     name: 'variant',
     execute() {
-      const preset = typeof activeProps['preset'] === 'string' ? activeProps['preset'] : undefined
+      const presetProp = activeProps['preset']
+      const preset = isString(presetProp) ? presetProp : undefined
       const presetDefaults =
-        preset !== undefined && config.presets?.[preset] !== undefined ? config.presets[preset] : {}
+        isDefined(preset) && isDefined(config.presets?.[preset]) ? config.presets[preset] : {}
       // Merge order: factory defaults < preset values < explicitly set props
       const resolved: AnyRecord = {
         ...config.defaults,
@@ -36,9 +38,9 @@ export function createVariantPass(activeProps: AnyRecord, config: VariantConfig)
       const classes: string[] = []
       iterate.forEachEntry(config.variants, (key, valueMap) => {
         const active = resolved[key]
-        if (typeof active === 'string') {
+        if (isString(active)) {
           const cls = valueMap[active]
-          if (cls !== undefined) classes.push(cls)
+          if (isDefined(cls)) classes.push(cls)
         }
       })
 
