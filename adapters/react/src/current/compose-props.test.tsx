@@ -606,4 +606,72 @@ describe('compose.with preserves plugin-contributed layout props', () => {
     const _invalid = <SharedLayoutCard flex grid />
     void _invalid
   })
+
+  describe('flattening across two different plugins', () => {
+    type ToneStrict = { tone: 'a'; mood?: never } | { mood: 'b'; tone?: never }
+    type ToneFlat = { tone?: 'a'; mood?: 'b' }
+    const tonePlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<
+      ToneStrict,
+      ToneFlat
+    >
+
+    type SizeStrict = { size: 'x'; dense?: never } | { dense: 'y'; size?: never }
+    type SizeFlat = { size?: 'x'; dense?: 'y' }
+    const sizePlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<
+      SizeStrict,
+      SizeFlat
+    >
+
+    // Same key as `ToneFlat`, incompatible value type.
+    type ClashStrict = { tone: 'z'; other?: never } | { other: 'w'; tone?: never }
+    type ClashFlat = { tone?: 'z'; other?: 'w' }
+    const clashPlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<
+      ClashStrict,
+      ClashFlat
+    >
+
+    const ToneSurface = createContractComponent({
+      tag: 'div',
+      name: 'ToneSurface',
+      props: undefined as unknown as EmptyRecord,
+      styling: { base: '', plugin: tonePlugin },
+    } satisfies ReactFactoryOptions)
+
+    it('flattens the primary and partner plugins independently', () => {
+      const SizedCard = createContractComponent({
+        tag: 'article',
+        name: 'SizedCard',
+        props: undefined as unknown as EmptyRecord,
+        styling: { base: '', plugin: sizePlugin },
+        compose: { allProps: true, with: ToneSurface },
+      } satisfies ReactFactoryOptions)
+      type Props = ContractProps<typeof SizedCard>
+
+      expectTypeOf<Pick<Props, 'tone' | 'mood' | 'size' | 'dense'>>().toEqualTypeOf<{
+        tone?: 'a'
+        mood?: 'b'
+        size?: 'x'
+        dense?: 'y'
+      }>()
+      const _all: Props = { tone: 'a', mood: 'b', size: 'x', dense: 'y' }
+      void _all
+    })
+
+    it('intersects a key both plugins flatten, so incompatible value types collapse to never', () => {
+      // Unsupported: two plugins must not own the same prop with incompatible types. The
+      // documented outcome is the plain intersection, which makes the key unusable.
+      const ClashCard = createContractComponent({
+        tag: 'article',
+        name: 'ClashCard',
+        props: undefined as unknown as EmptyRecord,
+        styling: { base: '', plugin: clashPlugin },
+        compose: { allProps: true, with: ToneSurface },
+      } satisfies ReactFactoryOptions)
+      type Props = ContractProps<typeof ClashCard>
+
+      expectTypeOf<Props['tone']>().toEqualTypeOf<undefined>()
+      expectTypeOf<Props['mood']>().toEqualTypeOf<'b' | undefined>()
+      expectTypeOf<Props['other']>().toEqualTypeOf<'w' | undefined>()
+    })
+  })
 })

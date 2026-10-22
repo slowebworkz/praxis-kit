@@ -43,6 +43,11 @@ export type ExtractPluginFlatProps<TPlugin extends AnyClassPluginFactory> =
  * `TPlugin` may be a union of factories (a composed component carries its partners' plugins too):
  * the strict keys of every member are dropped, and the members' flat shapes are intersected.
  *
+ * Collision policy: two plugins owning the same prop is unsupported. Their flat shapes are plainly
+ * intersected, so a shared key with incompatible value types collapses to `never` (an optional
+ * key then reads as `undefined`) — pinned by a test in the React adapter's `compose-props.test.tsx`.
+ * Plugins that need to share a key must agree on its type.
+ *
  * Returns `P` untouched when no plugin contributes keys, or when none declares a distinct flat
  * shape (strict and flat are identical), so the `Omit` never runs for a plugin-less component or one whose props
  * are already flat.
