@@ -1,5 +1,6 @@
 import type { ReadonlyDeep } from 'type-fest'
 import type { AnyRecord } from '@praxis-kit/primitive'
+import { iterate } from '@praxis-kit/primitive'
 import { isDefined } from '@praxis-kit/guards'
 import type {
   AriaContext,
@@ -83,9 +84,9 @@ function defineRuleMetadata<
   M extends object,
 >(rule: T, metadata: M): T & M {
   const descriptors: PropertyDescriptorMap = {}
-  for (const key of Object.keys(metadata)) {
-    descriptors[key] = { value: (metadata as AnyRecord)[key], enumerable: false }
-  }
+  iterate.forEachEntry(metadata as AnyRecord, (key, value) => {
+    descriptors[key] = { value, enumerable: false }
+  })
   Object.defineProperties(rule, descriptors)
   return rule as T & M
 }
