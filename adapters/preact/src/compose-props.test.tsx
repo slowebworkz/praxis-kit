@@ -15,6 +15,7 @@
  * No runtime assertions are made. These tests exist to catch type regressions.
  */
 import { describe, it, expectTypeOf } from 'vitest'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import type { PreactFactoryOptions } from './preact-options'
 import { createContractComponent } from './create-contract-component'
 import type { ContractProps, PolymorphicWithAllowedAs } from './types'
@@ -219,5 +220,35 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     type ColorType = ContractProps<typeof VariantCollidingCard>['color']
     expectTypeOf<SizeType>().toEqualTypeOf<'sm' | 'lg' | undefined>()
     expectTypeOf<ColorType>().toEqualTypeOf<'red' | 'blue' | undefined>()
+  })
+
+  it('(10) a partner-owned plugin union is flattened in normal and asChild modes', () => {
+    const LayoutSurface = createContractComponent({
+      tag: 'div',
+      name: 'FlatPartnerSurface',
+      styling: { base: '', plugin: createTailwindPipeline },
+    } satisfies PreactFactoryOptions)
+    const FlatPartnerCard = createContractComponent({
+      tag: 'article',
+      name: 'FlatPartnerCard',
+      props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+      compose: { allProps: true, with: LayoutSurface },
+    } satisfies PreactFactoryOptions)
+
+    type Normal = ContractProps<typeof FlatPartnerCard>
+    type AsChild = ContractProps<typeof FlatPartnerCard, 'asChild'>
+
+    expectTypeOf<Pick<Normal, 'flex' | 'grid' | 'variant'>>().toEqualTypeOf<{
+      flex?: true
+      grid?: true
+      variant?: 'elevated' | 'flat'
+    }>()
+    expectTypeOf<Omit<Normal, 'flex'>['grid']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<AsChild['flex']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<AsChild['asChild']>().toEqualTypeOf<true>()
+
+    // Flattened, not a union: both keys together are a valid extracted shape.
+    const _both: Normal = { flex: true, grid: true }
+    void _both
   })
 })
