@@ -1,3 +1,5 @@
+import { isNullish } from '@praxis-kit/guards'
+
 function panic(message: string): never {
   throw new Error(message)
 }
@@ -7,5 +9,5 @@ export function invariant(condition: unknown, message: string): asserts conditio
 }
 
 export function invariantDefined<T>(value: T, message: string): asserts value is NonNullable<T> {
-  if (value == null) panic(message)
+  if (isNullish(value)) panic(message)
 }

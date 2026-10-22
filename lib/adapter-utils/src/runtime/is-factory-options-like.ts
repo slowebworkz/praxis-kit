@@ -1,4 +1,4 @@
-import { isFunction, isObject, isString } from '@praxis-kit/guards'
+import { isFunction, isObject, isString, isUndefined } from '@praxis-kit/guards'
 import type { StringMap } from '@praxis-kit/primitive'
 
 /**
@@ -15,23 +15,23 @@ import type { StringMap } from '@praxis-kit/primitive'
  * `filterProps`, etc.) are passed in by the caller as extra entries.
  */
 export const FACTORY_OPTIONS_FIELD_VALIDATORS: StringMap<(value: unknown) => boolean> = {
-  tag: (v) => v === undefined || isString(v),
-  name: (v) => v === undefined || isString(v),
-  defaults: (v) => v === undefined || isObject(v),
+  tag: (v) => isUndefined(v) || isString(v),
+  name: (v) => isUndefined(v) || isString(v),
+  defaults: (v) => isUndefined(v) || isObject(v),
   // `props` (`declareProps<Props>()`, @praxis-kit/adapter-utils) is type-only — always
   // `undefined` at runtime by design (see that function's own doc comment) — but its *key*
   // being present on `options` still makes it an own enumerable property `Object.entries`
   // walks below, so it needs an entry here too, same as every other optional field. Missing
   // until now because no existing test actually exercised `props: declareProps<Props>()` at
   // runtime through `createContractComponent` — confirmed by grepping the whole repo.
-  props: (v) => v === undefined || isObject(v),
-  normalize: (v) => v === undefined || isFunction(v),
-  styling: (v) => v === undefined || isObject(v),
-  enforcement: (v) => v === undefined || isObject(v),
-  diagnostics: (v) => v === undefined || isObject(v),
-  subComponents: (v) => v === undefined || isObject(v),
-  compose: (v) => v === undefined || isObject(v),
-  onElement: (v) => v === undefined || isFunction(v),
+  props: (v) => isUndefined(v) || isObject(v),
+  normalize: (v) => isUndefined(v) || isFunction(v),
+  styling: (v) => isUndefined(v) || isObject(v),
+  enforcement: (v) => isUndefined(v) || isObject(v),
+  diagnostics: (v) => isUndefined(v) || isObject(v),
+  subComponents: (v) => isUndefined(v) || isObject(v),
+  compose: (v) => isUndefined(v) || isObject(v),
+  onElement: (v) => isUndefined(v) || isFunction(v),
 }
 
 /**

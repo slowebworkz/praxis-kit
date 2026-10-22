@@ -1,6 +1,7 @@
 import type { StringMap } from '@praxis-kit/primitive'
 import type { CompoundVariant, VariantConfig } from '@praxis-kit/styling'
 import type { ClassName } from '@praxis-kit/core'
+import { isDefined } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 
 export type VariantTable<T> = StringMap<StringMap<T>>
@@ -28,9 +29,9 @@ export function buildVariantConfig(
 ): VariantConfig {
   return {
     variants: mapVariantRecord(variants ?? {}, flattenClassName),
-    ...(presets !== undefined && Object.keys(presets).length > 0 && { presets }),
-    ...(defaults !== undefined && Object.keys(defaults).length > 0 && { defaults }),
-    ...(compounds !== undefined &&
+    ...(isDefined(presets) && Object.keys(presets).length > 0 && { presets }),
+    ...(isDefined(defaults) && Object.keys(defaults).length > 0 && { defaults }),
+    ...(isDefined(compounds) &&
       compounds.length > 0 && {
         compounds: compounds as unknown as ReadonlyArray<CompoundVariant>,
       }),

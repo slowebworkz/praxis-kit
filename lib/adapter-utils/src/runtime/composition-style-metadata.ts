@@ -1,4 +1,4 @@
-import { isDefined, isFunction, isObject } from '@praxis-kit/guards'
+import { isDefined, isFunction, isObject, isUndefined } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import type {
   AnyRecord,
@@ -94,13 +94,12 @@ export function createCompositionStyleResolver(
 export function createOptionalCompositionStylePipeline(
   options: OptionalCompositionStylePipelineOptions,
 ): CompositionClassResolver | undefined {
-  const compose =
-    options.with === undefined
-      ? undefined
-      : {
-          with: options.with as ComposeOptions['with'],
-          ...(options.composeDefaults !== undefined && { defaults: options.composeDefaults }),
-        }
+  const compose = isUndefined(options.with)
+    ? undefined
+    : {
+        with: options.with as ComposeOptions['with'],
+        ...(isDefined(options.composeDefaults) && { defaults: options.composeDefaults }),
+      }
   return createOptionalCompositionStyleResolver(
     options.primary,
     compose,
@@ -117,7 +116,9 @@ export function createOptionalCompositionStylePipeline(
  * a computed object) reports keys that were never set.
  */
 function copySelectedProp(target: AnyRecord, source: Readonly<AnyRecord>, name: string): void {
-  if (Object.hasOwn(source, name) && source[name] !== undefined) target[name] = source[name]
+  // `!isUndefined`, not `isDefined`: a `null` selection is copied as-is, matching the ordinary
+  // (non-composed) path, where `null` is not treated as unset the way `undefined` is.
+  if (Object.hasOwn(source, name) && !isUndefined(source[name])) target[name] = source[name]
 }
 
 /** Remove plugin-owned styling inputs before forwarding props to a child or host element. */
@@ -161,7 +162,7 @@ export function composeStyleProps(
   // selection either: left in place it would pin the variant and shadow recipe values and
   // defaults, so drop it before the defined selections are applied.
   const dropUndefinedSelection = (name: string): void => {
-    if (result[name] === undefined) delete result[name]
+    if (isUndefined(result[name])) delete result[name]
   }
   iterate.forEachEntry(partner.variants ?? {}, dropUndefinedSelection)
   iterate.forEachEntry(primary.variants ?? {}, dropUndefinedSelection)
@@ -178,7 +179,7 @@ export function composeStyleProps(
   // primary values win; otherwise a defined compose.defaults value remains a low-priority input.
   iterate.forEachSet(compositionOwnedKeys, (name) => {
     copySelectedProp(result, componentProps, name)
-    if (result[name] === undefined && composeDefaults) {
+    if (isUndefined(result[name]) && composeDefaults) {
       copySelectedProp(result, composeDefaults as Readonly<AnyRecord>, name)
     }
   })
@@ -196,7 +197,7 @@ export function mergeCompositionClassNames(
   if (partnerClassName === primaryClassName) return primaryClassName
 
   const values = [partnerClassName, primaryClassName].flatMap((value) =>
-    Array.isArray(value) ? value : value === undefined ? [] : [value],
+    Array.isArray(value) ? value : isUndefined(value) ? [] : [value],
   )
   const result = values.filter(Boolean).join(' ')
   return result || undefined

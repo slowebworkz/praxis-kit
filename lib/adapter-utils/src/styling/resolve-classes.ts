@@ -4,6 +4,7 @@ import type { DefaultMap, VariantConfig } from '@praxis-kit/styling'
 import { buildPrecomputedKey, createVariantPass } from '@praxis-kit/styling'
 import type { CompoundRecord, Defaults } from './build-variant-config'
 import { resolveCompounds } from './resolve-compounds'
+import { isDefined, isString, isUndefined } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 
 export interface ClassResolution {
@@ -21,15 +22,15 @@ export function resolveClasses(
 ): ClassResolution {
   const active = getActiveProps('root', decoration)
 
-  if (variantLookup !== undefined && recipe === undefined) {
+  if (isDefined(variantLookup) && isUndefined(recipe)) {
     const activeVariants: DefaultMap = {}
     iterate.forEachKey(variantConfig.variants, (key) => {
       const value = active[key]
-      if (typeof value === 'string') activeVariants[key] = value
+      if (isString(value)) activeVariants[key] = value
     })
     const lookupKey = buildPrecomputedKey(activeVariants)
     const precomputedValue = variantLookup[lookupKey]
-    if (precomputedValue !== undefined) {
+    if (isDefined(precomputedValue)) {
       return {
         variantClasses: precomputedValue !== '' ? [precomputedValue] : [],
         compoundClasses: [],
@@ -37,12 +38,12 @@ export function resolveClasses(
     }
   }
 
-  const passInput = recipe !== undefined ? { ...active, preset: recipe } : active
+  const passInput = isDefined(recipe) ? { ...active, preset: recipe } : active
 
   const { context } = createVariantPass(passInput, variantConfig).execute({ classes: [] })
   const variantClasses = context.classes
 
-  const presetOverrides = recipe !== undefined ? (variantConfig.presets?.[recipe] ?? {}) : {}
+  const presetOverrides = isDefined(recipe) ? (variantConfig.presets?.[recipe] ?? {}) : {}
 
   const resolvedValues = {
     ...variantDefaults,

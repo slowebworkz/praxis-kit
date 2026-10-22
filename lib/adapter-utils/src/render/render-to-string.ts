@@ -1,5 +1,6 @@
 import type { AnyRecord, ElementType } from '@praxis-kit/core'
 import { enforceAllowedAs } from '@praxis-kit/core'
+import { isFalse, isNullish, isTrue } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 
 import { applyFilter, resolveNormalizedProps } from '../props'
@@ -91,8 +92,8 @@ function escapeAttr(value: string): string {
 function buildAttrString(attributes: AnyRecord): string {
   const parts: string[] = []
   iterate.forEachEntry(attributes, (key, value) => {
-    if (value === false || value === null || value === undefined) return
-    if (value === true) {
+    if (isNullish(value) || isFalse(value)) return
+    if (isTrue(value)) {
       parts.push(key)
     } else {
       parts.push(`${key}="${escapeAttr(String(value))}"`)

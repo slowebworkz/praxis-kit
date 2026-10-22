@@ -1,4 +1,5 @@
 import type { AnyRecord, ElementType, NormalizeFn, PropNormalizer } from '@praxis-kit/core'
+import { iterate } from '@praxis-kit/primitive'
 
 /**
  * The subset of the resolved runtime options that {@link resolveNormalizedProps}
@@ -46,8 +47,11 @@ export function resolveNormalizedProps(
   const htmlNormalizers = options.htmlPropNormalizersFn?.(tag)
   let base = mergedProps
   if (htmlNormalizers?.length) {
-    base = { ...mergedProps }
-    for (const normalize of htmlNormalizers) Object.assign(base, normalize(base))
+    const normalized = { ...mergedProps }
+    iterate.forEach(htmlNormalizers, (normalize) => {
+      Object.assign(normalized, normalize(normalized))
+    })
+    base = normalized
   }
   return typeof options.normalizeFn === 'function' ? options.normalizeFn(base) : base
 }
