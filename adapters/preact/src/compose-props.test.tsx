@@ -18,7 +18,7 @@ import { describe, it, expectTypeOf } from 'vitest'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import type { PreactFactoryOptions } from './preact-options'
 import { createContractComponent } from './create-contract-component'
-import type { ContractProps, PolymorphicWithAllowedAs } from './types'
+import type { ContractInputProps, ContractProps, PolymorphicWithAllowedAs } from './types'
 import type { CollisionError, ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
 
 const surfaceOptions = {
@@ -179,7 +179,29 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     expectTypeOf<HasRadius>().toEqualTypeOf<false>()
   })
 
-  it('(9) a real variant collision surfaces as a diagnostic at that exact key; non-colliding variants on either side keep their real values', () => {
+  it('(9) ContractInputProps describes the primary contract, not composed extraction props', () => {
+    const pluginPartnerOptions = {
+      tag: 'div',
+      name: 'PluginInputPartner',
+      styling: { base: '', plugin: createTailwindPipeline },
+    } satisfies PreactFactoryOptions
+    const PluginInputPartner = createContractComponent(pluginPartnerOptions)
+    const primaryOptions = {
+      tag: 'article',
+      name: 'PrimaryInputContract',
+      props: undefined as unknown as { own?: boolean },
+      compose: { allProps: true, with: PluginInputPartner },
+    } satisfies PreactFactoryOptions
+    const PrimaryInputContract = createContractComponent(primaryOptions)
+
+    type InputProps = ContractInputProps<typeof PrimaryInputContract>
+    type ExtractedProps = ContractProps<typeof PrimaryInputContract>
+    expectTypeOf<'own' extends keyof InputProps ? true : false>().toEqualTypeOf<true>()
+    expectTypeOf<'flex' extends keyof InputProps ? true : false>().toEqualTypeOf<false>()
+    expectTypeOf<'flex' extends keyof ExtractedProps ? true : false>().toEqualTypeOf<true>()
+  })
+
+  it('(10) a real variant collision surfaces as a diagnostic at that exact key; non-colliding variants on either side keep their real values', () => {
     // Regression: the first version of this test only checked `extends keyof ContractProps<T>`
     // for the non-colliding keys, which passed even when the underlying bug made the *entire*
     // merged variants object resolve to `never` (not just the colliding key), because `keyof
@@ -222,7 +244,22 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     expectTypeOf<ColorType>().toEqualTypeOf<'red' | 'blue' | undefined>()
   })
 
-  it('(10) a partner-owned plugin union is flattened in normal and asChild modes', () => {
+  it('(12) a ContractInputProps value can be spread back into the component', () => {
+    const LayoutCard = createContractComponent({
+      tag: 'article',
+      name: 'SpreadLayoutCard',
+      styling: { base: '', plugin: createTailwindPipeline },
+    } satisfies PreactFactoryOptions)
+    const input: ContractInputProps<typeof LayoutCard> = { flex: true }
+    const _spread = <LayoutCard {...input} />
+    void _spread
+
+    // @ts-expect-error — the strict input still rejects two display props at once.
+    const _both: ContractInputProps<typeof LayoutCard> = { flex: true, grid: true }
+    void _both
+  })
+
+  it('(11) a partner-owned plugin union is flattened in normal and asChild modes', () => {
     const LayoutSurface = createContractComponent({
       tag: 'div',
       name: 'FlatPartnerSurface',

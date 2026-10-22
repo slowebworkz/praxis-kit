@@ -4,6 +4,7 @@ import type { OmitIndexSignature, Simplify } from 'type-fest'
 import type {
   AllowedOf,
   ClassName,
+  ContractGenericsOf,
   DefaultOf,
   ElementType,
   FactoryOptions,
@@ -135,6 +136,23 @@ export type CompoundComponent<
 > = PolymorphicComponent<G> & {
   readonly [K in keyof S]: PolymorphicComponent<S[K]>
 }
+
+/** Strict component-call props, retaining plugin unions. Use `ContractProps` for flattened
+ * extraction intended for `Pick`, `Omit`, and destructuring. */
+export type ContractInputProps<
+  T extends HasContract<FactoryOptions>,
+  M extends Exclude<Mode, 'render'> = 'normal',
+> =
+  T extends HasContract<infer C extends FactoryOptions>
+    ? ContractGenericsOf<C> extends infer G extends PolymorphicGenerics
+      ? PickMode<
+          M,
+          PolymorphicProps<G, DefaultOf<G>>,
+          PolymorphicWithAsChild<G, DefaultOf<G>>,
+          never
+        >
+      : never
+    : never
 
 /**
  * Recovers a built `PolymorphicComponent<G>`'s prop shape for a specific render mode, from

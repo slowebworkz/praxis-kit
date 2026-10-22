@@ -3802,15 +3802,19 @@ combined and nested partners are never walked, so there is no flat-shape collisi
 
 **Scope and deferrals**
 
-- **React and Preact only.** Svelte keeps its own `FlattenLayout` in `resolved-slot-props.ts`.
-  `ResolvedSlotProps<G>` receives only the merged generics, with no contract and so no plugin, and
-  flattens a broader shape (every union key made optional). Extending it means threading the
-  selected plugin through `ComposedBundleGenericsOf` — a design change, tracked as a follow-up.
-- **`ContractInputProps` not added.** The strict, unflattened twin of `ContractProps` (the shape the
-  component's call signature accepts, so a value annotated with it can be spread back in) would fix
-  the `const p: ContractProps<typeof Card> = {...}; <Card {...p} />` failure. Nothing here depends
-  on it; add it when a consumer needs it.
-- **Known limit:** a composed component whose partner alone owns the plugin has no plugin props in
-  its call signature (`createContractComponent` uses `ContractGenericsWithAllowedOf`, not the
-  compose projection), although `ContractProps` exposes them. Invisible while every contract sets
-  the plugin itself.
+- **React and Preact only; Svelte is a tracked follow-up.** Svelte keeps its own `FlattenLayout` in
+  `resolved-slot-props.ts` (and its `LayoutKeyName` import). `ResolvedSlotProps<G>` receives only
+  the merged generics, and Svelte's `BuiltRuntime<G, TOptions>` does not retain `styling.plugin`
+  (the inferred `TOptions` carries only `enforcement`), so a bundle-aware variant has no plugin to
+  recover. Doing this needs `createContractComponent` to carry the plugin type through the bundle —
+  a design change of its own, not a mechanical port.
+- **`ContractInputProps` is the strict own-contract shape, not composed extraction props.** React
+  derives it from `ContractGenericsWithAllowedOf<C>` to preserve the component's allowed-tag
+  narrowing; Preact derives it from `ContractGenericsOf<C>`. Neither uses
+  `ContractGenericsWithComposeOf<C>`, because that projection intentionally includes partner props
+  for extraction and can be wider than the component's actual call signature. Vue and Solid do not
+  export this alias because their `ContractProps` has no separate flattened shape today.
+- **Known limit:** a composed component whose partner alone owns the plugin can expose the partner's
+  plugin props in `ContractProps` while those props remain absent from the primary component's
+  strict call signature. This follows the runtime-aligned primary-plugin selection policy and is
+  tested.

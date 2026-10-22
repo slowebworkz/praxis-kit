@@ -3,6 +3,7 @@ import type { JSX, ReactElement, ReactNode, Ref } from 'react'
 import type {
   AllowedOf,
   ClassName,
+  ContractGenericsWithAllowedOf,
   DefaultOf,
   ElementType,
   FactoryOptions,
@@ -279,6 +280,25 @@ export type PolymorphicComponent<
 
   displayName?: string
 }
+
+/**
+ * Strict, call-site prop shape for a Praxis component’s own contract. Composed partner props are
+ * available through `ContractProps` extraction, but are not added to the component’s call signature.
+ * Unlike `ContractProps`, this preserves mutually-exclusive plugin prop unions rather than
+ * flattening them for `Pick`/`Omit`/destructuring. Use this when modeling props that will be
+ * passed directly to the component; use `ContractProps` for ergonomic extraction.
+ */
+export type ContractInputProps<T extends HasContract<FactoryOptions>, M extends Mode = 'normal'> =
+  T extends HasContract<infer C extends FactoryOptions>
+    ? ContractGenericsWithAllowedOf<C> extends infer G extends PolymorphicGenerics
+      ? PickMode<
+          M,
+          PolymorphicProps<G, AllowedOf<G>>,
+          PolymorphicWithAsChild<G, AllowedOf<G>>,
+          PolymorphicWithRender<G, AllowedOf<G>>
+        >
+      : never
+    : never
 
 /**
  * Recovers a built `PolymorphicComponent<G, C>`'s prop shape for a specific render mode, from

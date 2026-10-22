@@ -22,7 +22,12 @@ import type { EmptyRecord, ClassPluginFactory } from '@praxis-kit/core'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import type { CollisionError, ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
 import { createContractComponent } from './create-contract-component'
-import type { ContractProps, PolymorphicWithAllowedAs, ReactFactoryOptions } from '../shared'
+import type {
+  ContractInputProps,
+  ContractProps,
+  PolymorphicWithAllowedAs,
+  ReactFactoryOptions,
+} from '../shared'
 
 /**
  * `satisfies ReactFactoryOptions` is not just documentation here — confirmed by direct
@@ -472,6 +477,18 @@ describe('compose.with preserves plugin-contributed layout props', () => {
     void _invalid
   })
 
+  it('lets a ContractInputProps value be spread back into the component', () => {
+    // The original failure: an annotated `ContractProps` value is flattened and can't be spread.
+    // `ContractInputProps` keeps the strict union the call signature accepts, so it can.
+    const input: ContractInputProps<typeof LayoutCard> = { flex: true }
+    const _spread = <LayoutCard {...input} />
+    void _spread
+
+    // @ts-expect-error — the strict input still rejects two display props at once.
+    const _both: ContractInputProps<typeof LayoutCard> = { flex: true, grid: true }
+    void _both
+  })
+
   it('does not widen the primary component’s allowedAs when composing a plugin-bearing partner', () => {
     const _section = <LayoutCard as="section" />
     const _article = <LayoutCard as="article" />
@@ -513,6 +530,13 @@ describe('compose.with preserves plugin-contributed layout props', () => {
     expectTypeOf<ContractProps<typeof ComposedLayoutCard, 'render'>['flex']>().toEqualTypeOf<
       true | undefined
     >()
+
+    // ContractInputProps mirrors the primary component's own call signature, not the composed
+    // extraction projection. Partner-owned plugin props are therefore absent from strict input.
+    type InputProps = ContractInputProps<typeof ComposedLayoutCard>
+    expectTypeOf<'flex' extends keyof InputProps ? true : false>().toEqualTypeOf<false>()
+    expectTypeOf<'grid' extends keyof InputProps ? true : false>().toEqualTypeOf<false>()
+    expectTypeOf<'variant' extends keyof InputProps ? true : false>().toEqualTypeOf<true>()
   })
 
   it('flattens the partner-owned plugin union in the extracted props', () => {
@@ -552,6 +576,43 @@ describe('compose.with preserves plugin-contributed layout props', () => {
       expectTypeOf(rest).toBeObject()
     }
     void readProps
+  })
+
+  it('does not select a plugin from beyond the direct composed partner', () => {
+    const PluginSurface = createContractComponent(
+      defineContract({
+        tag: 'div',
+        name: 'NestedPluginSurface',
+        styling: { base: '', plugin: createTailwindPipeline },
+      }),
+    )
+    const MiddleSurface = createContractComponent(
+      defineContract({
+        tag: 'div',
+        name: 'NestedMiddleSurface',
+        compose: { allProps: true, with: PluginSurface },
+      }),
+    )
+    const OuterSurface = createContractComponent(
+      defineContract({
+        tag: 'article',
+        name: 'NestedOuterSurface',
+        compose: { allProps: true, with: MiddleSurface },
+      }),
+    )
+
+    type Props = ContractProps<typeof OuterSurface>
+    type InputProps = ContractInputProps<typeof OuterSurface>
+
+    // Plugin selection follows the runtime's one-level policy: OuterSurface has no plugin and its
+    // direct partner has no plugin, so the nested PluginSurface's flat shape is not selected here.
+    // The nested strict union remains present in the recursively composed props projection.
+    expectTypeOf<Props['flex']>().toEqualTypeOf<true | undefined>()
+    // @ts-expect-error — nested layout keys remain mutually exclusive at this extraction boundary.
+    const _notFlat: Props = { flex: true, grid: true }
+    // Strict input is the outer contract only; nested partner props are not accepted.
+    expectTypeOf<'flex' extends keyof InputProps ? true : false>().toEqualTypeOf<false>()
+    void _notFlat
   })
 
   it('does not add partner plugin props when allProps keeps them private', () => {
