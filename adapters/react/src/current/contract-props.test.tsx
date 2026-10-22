@@ -144,7 +144,7 @@ describe('ContractProps — data-* passthrough (finding #43)', () => {
     // Mirrors `createTailwindPipeline`, whose plugin props are a mutually-exclusive union
     // (`{ flex: true } | { grid: true } | …`) — before finding #43's fix that union distributed
     // through `ContractProps` and `data-slot` was no longer a common member. Finding #44's
-    // `FlattenLayout` then collapses the union entirely, so `data-slot` is a plain member here.
+    // `FlattenPluginProps` then collapses the union entirely, so `data-slot` is a plain member here.
     // Shape matches `LayoutProps`: one-of the exclusive `true`s, or none of them.
     type LayoutUnion =
       { flex: true; grid?: never } | { grid: true; flex?: never } | { flex?: never; grid?: never }
@@ -187,7 +187,7 @@ describe('ContractProps — layout-union collapse (finding #44)', () => {
   // ~22-member mutually-exclusive union. Before the fix that union distributed through
   // `ContractProps`, so the extracted type was a ~22-way union with no common member: a
   // rest-destructure tripped `TS2700`, `Omit`/`Pick`/`Merge` tripped `TS2590`, and any prop the
-  // union doesn't share (`data-slot`) was inaccessible. `FlattenLayout` collapses it to one flat
+  // union doesn't share (`data-slot`) was inaccessible. `FlattenPluginProps` collapses it to one flat
   // object where each layout key is an optional `true` — for the `ContractProps` extraction path
   // only; the strict union stays on the component's own call overloads (asserted last).
   const Box = createContractComponent(

@@ -114,7 +114,7 @@ describe('ContractProps — layout-union collapse (finding #44)', () => {
   // ~22-member mutually-exclusive union. Before the fix that union distributed through
   // `ContractProps`, so the extracted type was a ~22-way union with no common member: a
   // rest-destructure tripped `TS2700`, `Omit`/`Pick`/`Merge` tripped `TS2590`, `data-slot` was
-  // inaccessible. `FlattenLayout` collapses it to one flat object (each layout key an optional
+  // inaccessible. `FlattenPluginProps` collapses it to one flat object (each layout key an optional
   // `true`) on the `ContractProps` extraction path only — the strict union stays on the
   // component's own call overloads.
   const Box = createContractComponent({

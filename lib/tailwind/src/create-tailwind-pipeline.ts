@@ -26,6 +26,7 @@ import type {
   ClassifiedToken,
   CompoundVariant,
   LayoutKey,
+  FlatLayoutProps,
   LayoutProps,
   ResolvedLayout,
   TailwindPipelineArgs,
@@ -203,7 +204,7 @@ function warnDeadVariants<V extends VariantMap>(
 export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   options: ClassPipelineOptions<V>,
   diagnostics: Diagnostics,
-): ClassPlugin<LayoutProps<typeof layoutKeys>> {
+): ClassPlugin<LayoutProps<typeof layoutKeys>, FlatLayoutProps> {
   const innerPipeline = createClassPipeline(options)
   const compoundDims = compoundDimensions(getCompoundVariants(options))
 

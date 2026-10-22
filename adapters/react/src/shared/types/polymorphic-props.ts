@@ -6,6 +6,8 @@ import type {
   DefaultOf,
   ElementType,
   FactoryOptions,
+  FlattenPluginProps,
+  ContractPluginOf,
   IntrinsicTag,
   PolymorphicGenerics,
   RecipeOf,
@@ -14,7 +16,6 @@ import type {
   VariantsOf,
 } from '@praxis-kit/core'
 import type { StringMap } from '@praxis-kit/primitive'
-import type { LayoutKeyName } from '@praxis-kit/tailwind'
 import type { HasContract, Mode, PickMode } from '@praxis-kit/contract-props'
 import type { ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
 import type { RenderCallbackProps } from './props'
@@ -214,78 +215,6 @@ export type PolymorphicWithAllowedAs<G extends PolymorphicGenerics> = Polymorphi
 >
 
 /**
- * Whether a single (already-distributed) union member `M` declares `K` as exactly `true` — the
- * "this key is the active one *on this member*" check `KeyTrueInAnyMember` runs once per member.
- * `K extends keyof M` first, so a member that doesn't declare `K` at all (not even `?: never`)
- * answers `false` rather than erroring on the indexed access. `[M[K]] extends [true]` (not a bare
- * `M[K] extends true`) rejects plain `boolean` — a component's *own* same-named prop or the
- * intrinsic `hidden` attribute — so only the literal `true` `ExclusiveTrueProp` itself produces
- * counts, matching `LayoutPluginKeys`'s own contract.
- */
-type IsKeyTrueOn<M, K extends PropertyKey> = K extends keyof M
-  ? [M[K]] extends [true]
-    ? true
-    : false
-  : false
-
-/**
- * Whether *any* member of the (possibly still-union) `P` sets `K` to `true` — `K` itself if so,
- * `never` otherwise. `P extends infer M ? ... : never` distributes the check across each member
- * of `P` individually via `IsKeyTrueOn`, rather than computing `keyof`/an indexed access over the
- * union as a whole (which only sees keys common to *every* member, via `keyof`'s intersection
- * rule for unions — confirmed empirically: a union with one member that omits a key entirely,
- * rather than declaring it `?: never`, silently loses that key everywhere if checked against
- * `keyof P` directly). `ExclusiveTrueProp` (`@praxis-kit/tailwind`) happens to declare every
- * layout key on every member today, so that particular gap isn't live — but per-member
- * distribution costs nothing extra and doesn't depend on that continuing to hold.
- */
-type KeyTrueInAnyMember<P, K extends PropertyKey> = P extends infer M
-  ? IsKeyTrueOn<M, K> extends true
-    ? K
-    : never
-  : never
-
-/**
- * The layout keys a prop-union actually carries as the tailwind plugin's mutually-exclusive
- * shape: for each known layout key, keep it only if `KeyTrueInAnyMember` finds it `true`
- * somewhere in `P`. A component with no `styling.plugin` yields `never` (no member of a
- * plugin-less `P` ever sets a layout key `true`).
- */
-type LayoutPluginKeys<P> = {
-  [K in LayoutKeyName]-?: KeyTrueInAnyMember<P, K>
-}[LayoutKeyName]
-
-/**
- * Collapses the mutually-exclusive `LayoutProps` union down to one flat shape — every layout key
- * an optional `true` — for the **type-extraction** path (`ContractProps<T>`) only.
- *
- * `styling.plugin: createTailwindPipeline` contributes `ExclusiveTrueProp<LayoutKey>` — a ~22-way
- * union (`{ flex: true } | { grid: true } | …`) that distributes through every downstream type,
- * so `PolymorphicProps<G>` (and a `ContractProps<T>` built from it) becomes a ~22-member union
- * whose members share no common layout key. That makes the extracted type hostile to every
- * structural operation a consumer does with it: a spread matches no member on any extra/missing
- * key (`not assignable to '… | … 20 more … | …'`), `Omit`/`Pick`/`Merge` trips `TS2590 union too
- * complex`, a rest-destructure trips `TS2700`.
- *
- * A consumer extracting props to build a wrapper wants "the layout props exist and are optional",
- * not the discriminated union — so flatten it here. The strict union stays on
- * `PolymorphicComponent<G>`'s call overloads, where "only one display prop may be `true`" is the
- * whole point of the compile error. See finding #44 /
- * `praxis-kit-0.1.x-contractprops-regression.md` item #2.
- *
- * `Omit<P, LayoutKeyName>` (a static key set, so cheap) drops every layout key from every member
- * — the members only ever differed there — so the union dedupes to one; the flat
- * `{ flex?: true; … }` is added back from just the keys the union really had. The
- * `LayoutPluginKeys<P> extends never` fast-path returns `P` untouched for a plugin-less
- * component, so the expensive `Omit` never runs on the (large) intrinsic-prop object there.
- */
-type FlattenLayout<P> = [P] extends [never]
-  ? never
-  : [LayoutPluginKeys<P>] extends [never]
-    ? P
-    : Simplify<Omit<P, LayoutKeyName> & { [K in LayoutPluginKeys<P>]?: true }>
-
-/**
  * A polymorphic React component.
  *
  * Overloads provide three rendering strategies:
@@ -313,7 +242,7 @@ export type PolymorphicComponent<
    * correct prop inference for tools such as Storybook and
    * `React.ComponentProps`.
    *
-   * Deliberately *not* run through `FlattenLayout`: this overload is still a
+   * Deliberately *not* run through `FlattenPluginProps`: this overload is still a
    * real call signature (it catches calls the three generic overloads reject),
    * so flattening it here would make `<Component flex grid />` — two
    * mutually-exclusive layout props — compile. `ContractProps<T>` does the
@@ -381,7 +310,7 @@ export type PolymorphicComponent<
  * does not, by design (see `docs/design/compose-props-typing.md` — the composed surface is
  * deliberately a type-extraction-time concern, not a change to the component's own callable
  * signature). For every non-composing component the two still agree exactly, same as before this
- * wiring landed. `FlattenLayout`, `PickMode`, `Mode`, and the three `Polymorphic*` prop-shape types
+ * wiring landed. `FlattenPluginProps`, `PickMode`, `Mode`, and the three `Polymorphic*` prop-shape types
  * below are unchanged — only where `G` comes from moved. `__generics` itself is untouched (Phase
  * 3's migration policy: added alongside `__contract`, not replaced by it, until every adapter and
  * test proves the new relationship out — see that field's own doc comment).
@@ -403,9 +332,18 @@ export type ContractProps<T extends HasContract<FactoryOptions>, M extends Mode 
     ? ContractGenericsWithComposeOf<C> extends infer G extends PolymorphicGenerics
       ? PickMode<
           M,
-          FlattenLayout<PolymorphicProps<G, DefaultOf<G>>>,
-          FlattenLayout<PolymorphicWithAsChild<G, DefaultOf<G>>>,
-          FlattenLayout<PolymorphicWithRender<G, DefaultOf<G>>>
+          FlattenPluginProps<
+            PolymorphicProps<G, DefaultOf<G>>,
+            ContractPluginOf<C>
+          >,
+          FlattenPluginProps<
+            PolymorphicWithAsChild<G, DefaultOf<G>>,
+            ContractPluginOf<C>
+          >,
+          FlattenPluginProps<
+            PolymorphicWithRender<G, DefaultOf<G>>,
+            ContractPluginOf<C>
+          >
         >
       : never
     : never
