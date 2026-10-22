@@ -311,12 +311,13 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
 
   // ── compose ───────────────────────────────────────────────────────────────────
   //
-  // compose: { with: Component } makes a component always render composed `asChild` into
-  // `with`, as if the consumer had hand-written the exact nested-`asChild` shape the suite
-  // above already proves works — these tests assert `compose` produces identical output,
-  // not a new mechanism. No `ChildSpec`/render-function support is needed from the harness
-  // (the consumer never supplies children), so this runs for every adapter registered here,
-  // including ones that set `asChild: false` for harness-compatibility reasons (Solid, Svelte).
+  // `compose.with` may use an internal asChild/slot path in an adapter, but its public contract
+  // is distinct from explicit `asChild`: compose keeps element selection and `allowedAs` ownership
+  // on the composing parent, while explicit `asChild` delegates element selection to its child.
+  // These tests assert that public behavior, independent of the adapter's internal rendering path.
+  // No `ChildSpec`/render-function support is needed for the basic compose cases, so this runs for
+  // every adapter registered here, including ones that set `asChild: false` for harness
+  // compatibility reasons (Solid, Svelte).
 
   if (caps.compose)
     describe('conformance — compose', () => {
@@ -331,17 +332,94 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(element.className).toContain('class-b')
       })
 
-      if (caps.tagPolymorphism)
-        it("when both components declare a tag, the composing component's own tag wins", () => {
-          const BoxA = adapter.createComponent({ tag: 'nav', styling: { base: 'class-a' } })
-          const BoxB = adapter.createComponent({
-            tag: 'button',
-            compose: { with: BoxA },
-            styling: { base: 'class-b' },
-          })
-          const { element } = adapter.render(BoxB)
-          expect(element.tagName.toLowerCase()).toBe('button')
+      if (caps.tagPolymorphism) {
+        it("uses the composing parent's default tag even when the partner disallows it", () => {
+          const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+          try {
+            const Surface = adapter.createComponent({
+              tag: 'nav',
+              enforcement: {
+                diagnostics: throwDiagnostics,
+                allowedAs: ['nav', 'main'],
+              },
+              styling: { base: 'class-a' },
+            })
+            const Card = adapter.createComponent({
+              tag: 'div',
+              enforcement: {
+                diagnostics: throwDiagnostics,
+                allowedAs: ['div', 'article'],
+              },
+              compose: { with: Surface },
+              styling: { base: 'class-b' },
+            })
+
+            const { element } = adapter.render(Card)
+            expect(element.tagName.toLowerCase()).toBe('div')
+            expect(warnSpy).not.toHaveBeenCalled()
+          } finally {
+            warnSpy.mockRestore()
+          }
         })
+
+        it.each([false, true])(
+          'validates an explicit as override against the parent contract (allProps=%s)',
+          (allProps) => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+            try {
+              const Surface = adapter.createComponent({
+                tag: 'section',
+                enforcement: {
+                  diagnostics: throwDiagnostics,
+                  allowedAs: ['section', 'main'],
+                },
+              })
+              const Card = adapter.createComponent({
+                tag: 'div',
+                enforcement: {
+                  diagnostics: throwDiagnostics,
+                  allowedAs: ['div', 'article'],
+                },
+                compose: { with: Surface, allProps },
+              })
+
+              const { element } = adapter.render(Card, { as: 'article' })
+              expect(element.tagName.toLowerCase()).toBe('article')
+              expect(element.hasAttribute('as')).toBe(false)
+              expect(warnSpy).not.toHaveBeenCalled()
+            } finally {
+              warnSpy.mockRestore()
+            }
+          },
+        )
+
+        it('reports an explicit as value allowed only by the composed partner', () => {
+          const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+          try {
+            const Surface = adapter.createComponent({
+              tag: 'section',
+              enforcement: {
+                diagnostics: warnDiagnostics,
+                allowedAs: ['section', 'main'],
+              },
+            })
+            const Card = adapter.createComponent({
+              tag: 'div',
+              enforcement: {
+                diagnostics: warnDiagnostics,
+                allowedAs: ['div', 'article'],
+              },
+              compose: { with: Surface },
+            })
+
+            adapter.render(Card, { as: 'main' })
+            expect(warnSpy).toHaveBeenCalled()
+            expect(warnSpy.mock.calls.flat().join(' ')).toMatch(/COMP1009.*"as" prop received "main"/)
+          } finally {
+            warnSpy.mockRestore()
+          }
+        })
+      }
 
       it(
         'with allProps: true, consumes `as` on the composing component instead of forwarding it to `with`',
@@ -365,7 +443,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(element.getAttribute('data-testid')).toBe('inner')
       })
 
-      if (caps.asChild)
+      if (caps.asChild) {
         it('an explicit asChild from the consumer wins over compose', () => {
           const BoxA = adapter.createComponent({ styling: { base: 'class-a' } })
           const BoxB = adapter.createComponent({
@@ -377,6 +455,44 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           expect(element.className).toContain('class-b')
           expect(element.className).not.toContain('class-a')
         })
+
+        if (caps.tagPolymorphism)
+          it.each([
+            { mode: 'the child default', childProps: {}, expectedTag: 'section' },
+            { mode: 'the child as override', childProps: { as: 'main' }, expectedTag: 'main' },
+          ])(
+            'explicit asChild delegates $mode element selection to the child contract',
+            ({ childProps, expectedTag }) => {
+              const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+              try {
+                const Surface = adapter.createComponent({
+                  tag: 'section',
+                  enforcement: {
+                    diagnostics: throwDiagnostics,
+                    allowedAs: ['section', 'main'],
+                  },
+                })
+                const Partner = adapter.createComponent({ tag: 'nav' })
+                const Card = adapter.createComponent({
+                  tag: 'div',
+                  enforcement: {
+                    diagnostics: warnDiagnostics,
+                    allowedAs: ['div', 'article'],
+                  },
+                  compose: { with: Partner },
+                })
+
+                const { element } = adapter.render(Card, { asChild: true }, [
+                  { component: Surface, props: childProps },
+                ])
+                expect(element.tagName.toLowerCase()).toBe(expectedTag)
+                expect(warnSpy).not.toHaveBeenCalled()
+              } finally {
+                warnSpy.mockRestore()
+              }
+            },
+          )
+      }
 
       if (adapter.createRef)
         it("forwards ref through compose to the composing component's own real element", () => {

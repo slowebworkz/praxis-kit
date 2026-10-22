@@ -162,6 +162,18 @@ export function renderComposed<TProps extends KnownProps>(
   ])
 
   const tag = createMemo(() => resolveTag(runtime, known.as))
+  const { allowedAs } = runtime.options
+  if (allowedAs !== undefined) {
+    // `renderComposed` resolves the parent's element itself instead of going through `render()`,
+    // so it must enforce the same parent-owned `as` contract explicitly. Only a caller-supplied
+    // override is checked; the parent's own default tag is valid by definition.
+    createEffect(() => {
+      if (known.as !== undefined) {
+        enforceAllowedAs(tag(), allowedAs, runtime.options.diagnostics, runtime.options.displayName)
+      }
+    })
+  }
+
   const mergedProps = createMemo(() => runtime.resolveProps(rest as UnknownProps))
   const normalizedProps = createMemo(() =>
     resolveNormalizedProps(runtime.options, tag(), mergedProps()),

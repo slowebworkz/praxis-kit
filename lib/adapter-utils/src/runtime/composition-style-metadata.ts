@@ -125,11 +125,12 @@ function copySelectedProp(target: AnyRecord, source: Readonly<AnyRecord>, name: 
 export function filterOwnedProps(
   props: object | undefined,
   ownedKeys: ReadonlySet<string>,
+  omittedKeys: readonly string[] = [],
 ): AnyRecord {
   if (!props) return {}
   const result: AnyRecord = {}
   iterate.forEachEntry(props as AnyRecord, (key, value) => {
-    if (!ownedKeys.has(key)) result[key] = value
+    if (!ownedKeys.has(key) && !omittedKeys.includes(key)) result[key] = value
   })
   return result
 }

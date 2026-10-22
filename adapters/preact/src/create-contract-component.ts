@@ -178,8 +178,8 @@ export function createContractComponent<
         ref: null,
       })
       return h(compose.with as ComponentType<UnknownProps>, {
-        ...filterOwnedProps(compose.defaults, bundle.ownedKeys),
-        ...(compose.allProps ? filterOwnedProps(componentProps, bundle.ownedKeys) : undefined),
+        ...filterOwnedProps(compose.defaults, bundle.ownedKeys, ['as']),
+        ...(compose.allProps ? filterOwnedProps(componentProps, bundle.ownedKeys, ['as']) : undefined),
         ...(compositionClassResolver
           ? {
               [COMPOSITION_STYLE_REQUEST_PROP]: {

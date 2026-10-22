@@ -134,6 +134,16 @@ describe('composition-owned props', () => {
       ),
     ).toEqual({ id: 'button', 'data-testid': 'primary' })
   })
+
+  it('also omits caller-specified props before forwarding', () => {
+    expect(
+      filterOwnedProps(
+        { as: 'article', id: 'card' },
+        new Set(),
+        ['as'],
+      ),
+    ).toEqual({ id: 'card' })
+  })
 })
 
 describe('composeStyleProps — undefined selections', () => {
