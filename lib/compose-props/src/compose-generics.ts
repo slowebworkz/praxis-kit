@@ -3,6 +3,7 @@ import type {
   AnyRecord,
   ContractAllowedOf,
   ContractGenericsOf,
+  ContractPluginOf,
   ContractPresetOf,
   ContractTagOf,
   ContractVariantsOf,
@@ -52,6 +53,23 @@ export type ComposedContractOf<C extends FactoryOptions> = C extends {
  * own self-reference, not a rule about which position breaks — so every argument gets its own
  * named, guarded type, not only the one a specific test happened to catch.
  */
+/**
+ * Every class-plugin factory whose props appear in `ContractGenericsWithComposeOf<C>`'s merged
+ * props: `C`'s own, plus those of each composed partner reached through `compose.allProps: true`
+ * (the same condition `MergePropsOf` uses to fold a partner's props in — a partner whose props
+ * stay private contributes no plugin props either). Lets a caller flatten plugin-contributed props
+ * without knowing which plugin, or which contract in the chain, owns them.
+ */
+export type ComposedPluginOf<C extends FactoryOptions> =
+  | ContractPluginOf<C>
+  | (C extends { compose: { allProps: true } }
+      ? [ComposedContractOf<C>] extends [never]
+        ? never
+        : ComposedContractOf<C> extends infer CC extends FactoryOptions
+          ? ComposedPluginOf<CC>
+          : never
+      : never)
+
 type DefaultTagOf<C extends FactoryOptions> =
   ContractTagOf<C> extends infer TDefault extends ElementType ? TDefault : ElementType
 

@@ -7,7 +7,6 @@ import type {
   ElementType,
   FactoryOptions,
   FlattenPluginProps,
-  ContractPluginOf,
   IntrinsicTag,
   PolymorphicGenerics,
   RecipeOf,
@@ -17,7 +16,7 @@ import type {
 } from '@praxis-kit/core'
 import type { StringMap } from '@praxis-kit/primitive'
 import type { HasContract, Mode, PickMode } from '@praxis-kit/contract-props'
-import type { ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
+import type { ComposedPluginOf, ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
 import type { RenderCallbackProps } from './props'
 import type { UnknownProps } from './primitives'
 
@@ -332,18 +331,9 @@ export type ContractProps<T extends HasContract<FactoryOptions>, M extends Mode 
     ? ContractGenericsWithComposeOf<C> extends infer G extends PolymorphicGenerics
       ? PickMode<
           M,
-          FlattenPluginProps<
-            PolymorphicProps<G, DefaultOf<G>>,
-            ContractPluginOf<C>
-          >,
-          FlattenPluginProps<
-            PolymorphicWithAsChild<G, DefaultOf<G>>,
-            ContractPluginOf<C>
-          >,
-          FlattenPluginProps<
-            PolymorphicWithRender<G, DefaultOf<G>>,
-            ContractPluginOf<C>
-          >
+          FlattenPluginProps<PolymorphicProps<G, DefaultOf<G>>, ComposedPluginOf<C>>,
+          FlattenPluginProps<PolymorphicWithAsChild<G, DefaultOf<G>>, ComposedPluginOf<C>>,
+          FlattenPluginProps<PolymorphicWithRender<G, DefaultOf<G>>, ComposedPluginOf<C>>
         >
       : never
     : never

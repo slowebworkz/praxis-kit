@@ -515,6 +515,65 @@ describe('compose.with preserves plugin-contributed layout props', () => {
     >()
   })
 
+  it('flattens the partner-owned plugin union in the extracted props', () => {
+    const LayoutSurface = createContractComponent(
+      defineContract({
+        tag: 'div',
+        name: 'FlatPartnerSurface',
+        styling: { base: '', plugin: createTailwindPipeline },
+      }),
+    )
+    const FlatPartnerCard = createContractComponent(
+      defineContract({
+        tag: 'article',
+        name: 'FlatPartnerCard',
+        props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+        compose: { allProps: true, with: LayoutSurface },
+      }),
+    )
+    type Props = ContractProps<typeof FlatPartnerCard>
+
+    type Picked = Pick<Props, 'flex' | 'grid' | 'variant'>
+    expectTypeOf<Picked>().toEqualTypeOf<{
+      flex?: true
+      grid?: true
+      variant?: 'elevated' | 'flat'
+    }>()
+
+    type WithoutFlex = Omit<Props, 'flex'>
+    expectTypeOf<WithoutFlex['grid']>().toEqualTypeOf<true | undefined>()
+
+    // Flattened, not a union: a value with both keys is a valid extracted shape.
+    const _both: Props = { flex: true, grid: true }
+    void _both
+
+    function readProps(props: Props): void {
+      const { flex: _flex, grid: _grid, ...rest } = props
+      expectTypeOf(rest).toBeObject()
+    }
+    void readProps
+  })
+
+  it('does not add partner plugin props when allProps keeps them private', () => {
+    const PrivateSurface = createContractComponent(
+      defineContract({
+        tag: 'div',
+        name: 'PrivatePartnerSurface',
+        styling: { base: '', plugin: createTailwindPipeline },
+      }),
+    )
+    const PrivateCard = createContractComponent(
+      defineContract({
+        tag: 'article',
+        name: 'PrivatePartnerCard',
+        props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+        compose: { allProps: false, with: PrivateSurface },
+      }),
+    )
+    type Props = ContractProps<typeof PrivateCard>
+    expectTypeOf<'flex' extends keyof Props ? true : false>().toEqualTypeOf<false>()
+  })
+
   it('preserves mutually exclusive plugin props when both components contribute the same union', () => {
     const LayoutSurface = createContractComponent(
       defineContract({

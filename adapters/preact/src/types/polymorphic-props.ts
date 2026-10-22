@@ -8,7 +8,6 @@ import type {
   ElementType,
   FactoryOptions,
   FlattenPluginProps,
-  ContractPluginOf,
   IntrinsicTag,
   PolymorphicGenerics,
   RecipeOf,
@@ -18,7 +17,7 @@ import type {
 } from '@praxis-kit/core'
 import type { StringMap } from '@praxis-kit/primitive'
 import type { HasContract, Mode, PickMode } from '@praxis-kit/contract-props'
-import type { ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
+import type { ComposedPluginOf, ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
 
 export type ElementRef<T extends ElementType> = T extends IntrinsicTag
   ? HTMLElementTagNameMap[T]
@@ -170,8 +169,8 @@ export type ContractProps<
     ? ContractGenericsWithComposeOf<C> extends infer G extends PolymorphicGenerics
       ? PickMode<
           M,
-          FlattenPluginProps<PolymorphicProps<G, DefaultOf<G>>, ContractPluginOf<C>>,
-          FlattenPluginProps<PolymorphicWithAsChild<G, DefaultOf<G>>, ContractPluginOf<C>>,
+          FlattenPluginProps<PolymorphicProps<G, DefaultOf<G>>, ComposedPluginOf<C>>,
+          FlattenPluginProps<PolymorphicWithAsChild<G, DefaultOf<G>>, ComposedPluginOf<C>>,
           never
         >
       : never

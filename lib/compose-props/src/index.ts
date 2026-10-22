@@ -1,5 +1,6 @@
 export type {
   ComposedContractOf,
+  ComposedPluginOf,
   ContractGenericsWithComposeOf,
   RecoveredContractOf,
 } from './compose-generics'
