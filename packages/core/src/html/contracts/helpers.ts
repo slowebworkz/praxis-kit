@@ -6,7 +6,7 @@ import type {
   HtmlTag,
   VNodeLike,
 } from './types'
-import { getTag, isObject, isTag } from '@praxis-kit/guards'
+import { getTag, isObject, isTag, isUndefined } from '@praxis-kit/guards'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
 import { METADATA_TAGS } from './categories'
 
@@ -26,7 +26,7 @@ export function isOpenContent(...blockedTags: HtmlTag[]): ChildMatcher {
   return (child: unknown): child is VNodeLike => {
     if (!isVNodeLike(child)) return false
     const tag = getTag(child)
-    return tag === undefined || !set.has(tag)
+    return isUndefined(tag) || !set.has(tag)
   }
 }
 

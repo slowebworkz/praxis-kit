@@ -1,5 +1,5 @@
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
-import { isFunction, isObject } from '@praxis-kit/guards'
+import { isFunction, isObject, isUndefined } from '@praxis-kit/guards'
 import { composePipelines } from '@praxis-kit/pipeline-kit'
 import type {
   ClassPipelineFn,
@@ -105,10 +105,9 @@ const resolvePartner = (
   options: CompositionResolverOptions,
 ): ResolvedCompositionResolverOptions => ({
   ...options,
-  partner:
-    options.compose?.with === undefined
-      ? undefined
-      : getCompositionStyleMetadata(options.compose.with),
+  partner: isUndefined(options.compose?.with)
+    ? undefined
+    : getCompositionStyleMetadata(options.compose.with),
 })
 
 const buildOptionalResolver = ({
@@ -119,7 +118,7 @@ const buildOptionalResolver = ({
   onPluginConflict,
   diagnostics,
 }: ResolvedCompositionResolverOptions): CompositionClassResolver | undefined => {
-  if (compose?.with === undefined || partner === undefined) return undefined
+  if (isUndefined(compose?.with) || isUndefined(partner)) return undefined
   return createCompositionStyleResolver(
     primary as RetainedCompositionStyleMetadata,
     partner,

@@ -2,6 +2,11 @@
 // collections. Already large — keep it to genuinely shared primitives; a helper
 // with one call site belongs next to that call site, not here.
 
+// `guardz` directly, not `@praxis-kit/guards`: this package sits below it in the dependency graph
+// (guards → primitive → foundation), so importing through it would be a cycle. Same arrangement as
+// `lib/primitive` and `lib/diagnostics`; see DECISIONS.md (guards migration).
+import { isDefined, isEqualTo } from 'guardz'
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type OwnKey<T extends object> = string & keyof T
@@ -15,13 +20,16 @@ interface ItemCollection<T> {
   item(index: number): T | null
 }
 
+// guardz has no standalone `isNull`; `isEqualTo(null)` is its own documented composition for it.
+const isNull = isEqualTo(null)
+
 // ─── Generic iterable algorithms ──────────────────────────────────────────────
 
 function find<T, R>(iterable: Iterable<T>, callback: (value: T) => R | null | undefined): R | null {
   for (const value of iterable) {
     const result = callback(value)
 
-    if (result != null) {
+    if (isDefined(result)) {
       return result
     }
   }
@@ -112,7 +120,7 @@ function collect<T, K extends PropertyKey, V>(
   for (const value of iterable) {
     const entry = callback(value, index++)
 
-    if (entry === null) {
+    if (isNull(entry)) {
       return null
     }
 
@@ -141,7 +149,7 @@ function findLast<T, R>(
   for (let index = value.length - 1; index >= 0; index--) {
     const result = callback(value[index]!, index)
 
-    if (result != null) {
+    if (isDefined(result)) {
       return result
     }
   }
@@ -155,7 +163,7 @@ export function* items<T>(collection: ItemCollection<T>): IterableIterator<T> {
   for (let i = 0; i < collection.length; i++) {
     const item = collection.item(i)
 
-    if (item !== null) {
+    if (!isNull(item)) {
       yield item
     }
   }
@@ -167,7 +175,7 @@ function nodeList<T extends Element = Element>(list: NodeListOf<T>): Iterable<T>
       for (let i = 0; i < list.length; i++) {
         const node = list.item(i)
 
-        if (node !== null) {
+        if (!isNull(node)) {
           yield node
         }
       }

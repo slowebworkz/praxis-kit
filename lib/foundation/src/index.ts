@@ -24,3 +24,4 @@ export type { WrappedMethod } from './observation/wrap-method-for-detection.ts'
 // utils
 export { assertNever } from './utils/assert-never.ts'
 export { cn } from './utils/cn.ts'
+export type { ClassValue } from './utils/cn.ts'

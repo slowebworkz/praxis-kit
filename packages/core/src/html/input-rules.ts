@@ -1,5 +1,6 @@
 import type { AriaContext, AriaResult, AriaRule } from '../types'
 import { HtmlDiagnostics, InputAccessibilityDiagnostics } from '@praxis-kit/contract'
+import { isString } from '@praxis-kit/guards'
 import { HTML_INPUT_TYPES } from './spec/vocabulary/input'
 import type { AttributeTypePolicy } from './spec/types'
 import { INPUT_ATTRIBUTE_TYPE_POLICIES } from './spec/attributes/input'
@@ -20,7 +21,7 @@ function policyFor(attribute: InputAttributeName): AttributeTypePolicy<InputAttr
 
 export const supportedInputTypeRule: AriaRule = Object.assign(
   ({ tag, props }: AriaContext): readonly AriaResult[] => {
-    if (tag !== 'input' || typeof props.type !== 'string') return []
+    if (tag !== 'input' || !isString(props.type)) return []
     const type = props.type
     if (HTML_INPUT_TYPES.has(type)) return []
     const diagnostic = HtmlDiagnostics.input.unsupportedType(type)
@@ -73,7 +74,7 @@ export const inputAccessibleNameRule: AriaRule = Object.assign(
   ({ tag, props }: AriaContext): readonly AriaResult[] => {
     if (tag !== 'input' || props.type === 'hidden') return []
     if ('aria-label' in props || 'aria-labelledby' in props) return []
-    const hasPlaceholder = typeof props.placeholder === 'string' && props.placeholder.length > 0
+    const hasPlaceholder = isString(props.placeholder) && props.placeholder.length > 0
     const diagnostic = hasPlaceholder
       ? InputAccessibilityDiagnostics.placeholderIsNotLabel()
       : InputAccessibilityDiagnostics.missingAccessibleName()
@@ -91,7 +92,7 @@ export const passwordAutocompleteRule: AriaRule = Object.assign(
   ({ tag, props }: AriaContext): readonly AriaResult[] => {
     if (tag !== 'input' || props.type !== 'password') return []
     const autoComplete = props.autoComplete
-    const tokens = typeof autoComplete === 'string' ? autoComplete.split(' ') : []
+    const tokens = isString(autoComplete) ? autoComplete.split(' ') : []
     if (PASSWORD_AUTOCOMPLETE_VALUES.some((value) => tokens.includes(value))) return []
     const diagnostic = InputAccessibilityDiagnostics.passwordMissingAutocomplete()
     return [{ valid: false, fixable: false, severity: diagnostic.severity, diagnostic }]

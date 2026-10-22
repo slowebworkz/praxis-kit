@@ -11,7 +11,7 @@ export {
   LRUCache,
   wrapMethodForDetection,
 } from '@praxis-kit/foundation'
-export type { Observable, WrappedMethod } from '@praxis-kit/foundation'
+export type { ClassValue, Observable, WrappedMethod } from '@praxis-kit/foundation'
 
 export { lazy } from './lazy'
 export { memoize } from './memoize'
