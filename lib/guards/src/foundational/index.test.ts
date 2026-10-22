@@ -1,5 +1,14 @@
-import { describe, it, expect } from 'vitest'
-import { isObject, isPlainObject, isArray } from './index'
+import { describe, it, expect, expectTypeOf } from 'vitest'
+import {
+  isObject,
+  isPlainObject,
+  isArray,
+  isEqualTo,
+  isFalse,
+  isTrue,
+  isNull,
+  isUndefined,
+} from './index'
 
 // Moved from @praxis-kit/foundation/src/type-guards.test.ts — guardz has no equivalent that
 // preserves isObject's array-inclusive overload or isPlainObject's prototype-chain check, so these
@@ -78,5 +87,82 @@ describe('isArray', () => {
     expect(isArray(null)).toBe(false)
     expect(isArray(undefined)).toBe(false)
     expect(isArray('string')).toBe(false)
+  })
+})
+
+describe('isFalse', () => {
+  it('is true only for the boolean false', () => {
+    expect(isFalse(false)).toBe(true)
+  })
+
+  it('is false for other falsy values, so it cannot swallow 0, "", null or undefined', () => {
+    for (const value of [true, 0, '', null, undefined, NaN, 'false']) {
+      expect(isFalse(value)).toBe(false)
+    }
+  })
+
+  it('narrows to the literal false, not boolean', () => {
+    const value: unknown = false
+    if (isFalse(value)) {
+      expectTypeOf(value).toEqualTypeOf<false>()
+    }
+  })
+})
+
+describe('isTrue', () => {
+  it('is true only for the boolean true', () => {
+    expect(isTrue(true)).toBe(true)
+  })
+
+  it('is false for other truthy values, so it cannot swallow 1, strings or objects', () => {
+    for (const value of [false, 1, 'true', '', {}, [], null, undefined]) {
+      expect(isTrue(value)).toBe(false)
+    }
+  })
+
+  it('is not the complement of isFalse', () => {
+    // Why `!isFalse(x)` cannot stand in for `isTrue(x)`: it is true for every non-false value.
+    expect(!isFalse('Close')).toBe(true)
+    expect(isTrue('Close')).toBe(false)
+  })
+
+  it('narrows to the literal true, not boolean', () => {
+    const value: unknown = true
+    if (isTrue(value)) {
+      expectTypeOf(value).toEqualTypeOf<true>()
+    }
+  })
+})
+
+describe('isNull / isUndefined', () => {
+  it('match only their own value', () => {
+    expect(isNull(null)).toBe(true)
+    expect(isNull(undefined)).toBe(false)
+    expect(isUndefined(undefined)).toBe(true)
+    expect(isUndefined(null)).toBe(false)
+  })
+})
+
+describe('isEqualTo', () => {
+  it('builds an exact-value guard', () => {
+    const isAdmin = isEqualTo('admin')
+    expect(isAdmin('admin')).toBe(true)
+    expect(isAdmin('Admin')).toBe(false)
+    expect(isAdmin(undefined)).toBe(false)
+  })
+
+  it('uses strict equality, so it does not coerce', () => {
+    const isOne = isEqualTo(1)
+    expect(isOne(1)).toBe(true)
+    expect(isOne('1')).toBe(false)
+    expect(isOne(true)).toBe(false)
+  })
+
+  it('narrows to a literal when given an explicit type argument', () => {
+    const isOn = isEqualTo<'on'>('on')
+    const value: unknown = 'on'
+    if (isOn(value)) {
+      expectTypeOf(value).toEqualTypeOf<'on'>()
+    }
   })
 })
