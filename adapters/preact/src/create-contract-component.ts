@@ -163,8 +163,8 @@ export function createContractComponent<
     // See `@praxis-kit/react`'s identical block for the full explanation — `compose` makes this
     // component always render `asChild` into `compose.with` unless the consumer already took
     // explicit control via their own `asChild`. `compose.allProps` additionally spreads this
-    // component's own raw props onto `with` (before the `asChild`/`ref`/`children` overrides, so
-    // those three always win) — opt-in.
+    // component's own raw props onto `with`, except `as`, which the inner render has consumed;
+    // the `asChild`/`ref`/`children` overrides below always win — opt-in.
     if (
       compose?.with !== undefined &&
       componentProps.asChild === undefined &&

@@ -126,13 +126,11 @@ function tryRenderAsChild(
  * computation) rather than calling `render()` itself, since the merge has to happen *before* the
  * final `<Dynamic>` is created, not after.
  *
- * `allProps` additionally spreads this component's own raw props onto `withComponent` (minus
- * `asChild`/`ref`/`children`, which it's always given explicitly below, so those three still
- * win) so `withComponent`'s own contract can resolve variants/`compounds` against them — opt-in,
- * mirroring the same `compose.allProps` flag on every other adapter. Deliberately the *full*
- * prop set, not `rest` (which also excludes `as`/`class`/`recipe` — correct for this function's
- * own intrinsic-path rendering below, but those three are ordinary forwardable props from
- * `withComponent`'s point of view, and every other adapter's `allProps` forwards them too).
+ * `allProps` additionally spreads this component's own raw props onto `withComponent`,
+ * excluding `as` (consumed to choose this component's host tag), `asChild`, `ref`, and `children`
+ * (which are explicitly supplied below). Other ordinary props, including `class` and
+ * `recipe`, remain forwardable so the partner's contract can resolve variants/compounds against
+ * them — opt-in, mirroring the other adapters.
  */
 export function renderComposed<TProps extends KnownProps>(
   withComponent: unknown,
@@ -156,6 +154,7 @@ export function renderComposed<TProps extends KnownProps>(
   // one directly (outside a tracking scope) would read it eagerly and break that reactivity, the
   // same reason `known`/`rest` above go through `splitProps` rather than `const { as, ... } = props`.
   const [, forwardableProps] = splitProps(props, [
+    'as',
     'asChild',
     'ref',
     'children',

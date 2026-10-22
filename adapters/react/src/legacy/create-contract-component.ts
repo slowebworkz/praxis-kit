@@ -170,9 +170,9 @@ export function createContractComponent<
     // `compose` makes this component always render `asChild` into `compose.with` unless the
     // consumer already took explicit control via their own `asChild`/`render`. Composition
     // defaults are spread first; `compose.allProps` additionally spreads this component's own
-    // raw props afterward, so forwarded values override defaults. The `asChild`/`ref`/`children`
-    // overrides remain last and always win. Combined styling resolution is independent of
-    // `allProps`, which controls only raw prop forwarding.
+    // raw props afterward, except `as`, which the inner render has already consumed. Forwarded
+    // values override defaults; the `asChild`/`ref`/`children` overrides remain last and win.
+    // Combined styling resolution is independent of `allProps`, which controls raw prop forwarding.
     if (
       compose?.with !== undefined &&
       componentProps.asChild === undefined &&

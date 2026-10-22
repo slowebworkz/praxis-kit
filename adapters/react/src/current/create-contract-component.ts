@@ -191,9 +191,10 @@ export function createContractComponent<
      * generated component
      * runs its own `render()` pipeline from here, exactly as it already does for a hand-written
      * nested `asChild` call (including its own `allowedAs`/`nativeTagBehavior` checks).
-     * `compose.allProps` additionally spreads this component's own raw props onto `with` (before
-     * the `asChild`/`ref`/`children` overrides below, so those three always win). It controls raw
-     * prop forwarding only; combined styling resolution is independent of this option.
+     * `compose.allProps` additionally spreads this component's own raw props onto `with`, except
+     * `as`, which the inner render has already consumed. The `asChild`/`ref`/`children` overrides
+     * below always win. This controls raw prop forwarding only; combined styling resolution is
+     * independent of this option.
      */
     if (
       compose?.with !== undefined &&
