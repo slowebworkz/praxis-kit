@@ -205,6 +205,31 @@ describe('createContractComponent (current / React 19)', () => {
     expect(element.getAttribute('flex')).toBeNull()
   })
 
+  it('uses the composed partner Tailwind plugin when the primary has no plugin', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'grid-cols-3 gap-4 rounded',
+        plugin: createTailwindPipeline,
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'border' },
+    })
+
+    dom.mount(createElement(box(Card), { flex: true }))
+
+    const element = dom.container.querySelector('div')!
+    expect(element.className).toContain('flex')
+    expect(element.className).toContain('gap-4')
+    expect(element.className).toContain('rounded')
+    expect(element.className).toContain('border')
+    expect(element.className).not.toContain('grid-cols-3')
+    expect(element.getAttribute('flex')).toBeNull()
+  })
+
   it('reports conflicting plugin factories through adapter composition and keeps the primary factory', () => {
     const reporter = new CollectingReporter()
     const diagnostics = new Diagnostics(
