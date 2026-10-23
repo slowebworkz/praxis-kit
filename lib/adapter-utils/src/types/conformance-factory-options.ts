@@ -34,6 +34,8 @@ type ConformanceChildRule = {
 
 type ConformanceEnforcement = {
   diagnostics?: Diagnostics
+  /** Restricts the `as` tag in shared conformance cases. */
+  allowedAs?: readonly string[]
   children?: ReadonlyArray<ConformanceChildRule>
 }
 

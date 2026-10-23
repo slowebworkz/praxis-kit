@@ -197,7 +197,7 @@ export function createContractComponent<
             {
               ...filterOwnedProps(compose.defaults, bundle.ownedKeys),
               ...(compose.allProps
-                ? filterOwnedProps(cleanAttrs.value, bundle.ownedKeys)
+                ? filterOwnedProps(cleanAttrs.value, bundle.ownedKeys, ['as'])
                 : undefined),
               ...(compositionClassResolver
                 ? {

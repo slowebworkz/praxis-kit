@@ -1,5 +1,6 @@
 import type { Simplify, ValueOf } from 'type-fest'
 import type { StringMap } from '@praxis-kit/primitive'
+import type { layoutKeys } from '../layout-keys'
 
 // Produces the union of values from a tuple.
 // Unlike `ValueOf`, tuples must use `T[number]` because `keyof` also includes
@@ -36,3 +37,12 @@ type ExclusiveTrueProp<K extends PropertyKey> = {
  */
 export type LayoutProps<T extends readonly string[]> =
   ExclusiveTrueProp<LayoutKey<T>> | Partial<Record<LayoutKey<T>, never>>
+
+/**
+ * `LayoutProps` flattened for the type-extraction path (`ContractProps<T>`): every layout key an
+ * optional `true`, no mutual exclusivity. The component's own call signature keeps the strict
+ * `LayoutProps` union; this is the shape a wrapper author wants for `Omit` / `Pick` /
+ * rest-destructure, which the ~22-member union breaks. Declared as the `ClassPlugin` flat-props
+ * generic so adapters never need to know the layout keys.
+ */
+export type FlatLayoutProps = { [K in LayoutKey<typeof layoutKeys>]?: true }

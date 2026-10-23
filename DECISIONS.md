@@ -3784,3 +3784,37 @@ a single deterministic factory avoids inventing a generic composition algebra fo
 and keeps composition framework-independent. Primary precedence also makes the component whose
 contract is being rendered authoritative when two plugin policies conflict, while the diagnostic
 makes the otherwise surprising ignored partner configuration visible.
+
+### Plugin-owned flattened props — types follow the runtime selection (2026-10-21)
+
+`ContractProps<T>` flattens the Tailwind plugin's ~22-way mutually exclusive layout union for the
+type-extraction path. That knowledge used to live in each adapter (`LayoutKeyName`,
+`FlattenLayout`); it now lives with the plugin. `ClassPlugin<TProps, TFlatProps>` carries both the
+strict call-site props and a flat extraction shape (`TFlatProps` defaults to `TProps`, i.e. no
+flattening), and `FlattenPluginProps<P, TPlugin>` (`@praxis-kit/primitive`) applies it without
+naming any plugin's keys. `createTailwindPipeline` declares `FlatLayoutProps`.
+
+**Which plugin is flattened follows the runtime selection**, per "Composition class-plugin selection
+— primary factory wins" above: `ComposedPluginOf<C>` (`@praxis-kit/compose-props`) is `C`'s own
+plugin if it sets one, otherwise the direct partner's — and only when `compose.allProps: true`,
+because a partner whose props stay private contributes no props to flatten. Plugins are never
+combined and nested partners are never walked, so there is no flat-shape collision policy to define.
+
+**Scope and deferrals**
+
+- **React and Preact only; Svelte is a tracked follow-up.** Svelte keeps its own `FlattenLayout` in
+  `resolved-slot-props.ts` (and its `LayoutKeyName` import). `ResolvedSlotProps<G>` receives only
+  the merged generics, and Svelte's `BuiltRuntime<G, TOptions>` does not retain `styling.plugin`
+  (the inferred `TOptions` carries only `enforcement`), so a bundle-aware variant has no plugin to
+  recover. Doing this needs `createContractComponent` to carry the plugin type through the bundle —
+  a design change of its own, not a mechanical port.
+- **`ContractInputProps` is the strict own-contract shape, not composed extraction props.** React
+  derives it from `ContractGenericsWithAllowedOf<C>` to preserve the component's allowed-tag
+  narrowing; Preact derives it from `ContractGenericsOf<C>`. Neither uses
+  `ContractGenericsWithComposeOf<C>`, because that projection intentionally includes partner props
+  for extraction and can be wider than the component's actual call signature. Vue and Solid do not
+  export this alias because their `ContractProps` has no separate flattened shape today.
+- **Known limit:** a composed component whose partner alone owns the plugin can expose the partner's
+  plugin props in `ContractProps` while those props remain absent from the primary component's
+  strict call signature. This follows the runtime-aligned primary-plugin selection policy and is
+  tested.
