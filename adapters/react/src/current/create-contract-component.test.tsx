@@ -264,6 +264,40 @@ describe('createContractComponent (current / React 19)', () => {
     expect(classes).not.toContain('partner-plugin')
   })
 
+  it('reuses the same Tailwind plugin factory across composed components', () => {
+    const reporter = new CollectingReporter()
+    const diagnostics = new Diagnostics(
+      reporter,
+      new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
+    )
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'grid-cols-3 gap-4 rounded',
+        plugin: createTailwindPipeline,
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      name: 'SharedPluginCard',
+      enforcement: { diagnostics },
+      compose: { with: Surface },
+      styling: { base: 'border', plugin: createTailwindPipeline },
+    })
+
+    expect(reporter.diagnostics.filter((diagnostic) => diagnostic.code === 'COMP1016')).toHaveLength(0)
+
+    dom.mount(createElement(box(Card), { flex: true }))
+
+    const element = dom.container.querySelector('div')!
+    expect(element.className).toContain('flex')
+    expect(element.className).toContain('gap-4')
+    expect(element.className).toContain('rounded')
+    expect(element.className).toContain('border')
+    expect(element.className).not.toContain('grid-cols-3')
+    expect(element.getAttribute('flex')).toBeNull()
+  })
+
   it('ignores a malformed internal composition style request', () => {
     const Box = createContractComponent({ styling: { base: 'primary-base' } })
 
