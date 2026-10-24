@@ -1,4 +1,10 @@
 export type { HtmlContractMap } from './contracts'
+export { createAriaReferenceIndex } from './aria-reference-index'
+export type {
+  AriaIdElement,
+  AriaIdReferenceResolution,
+  AriaReferenceIndex,
+} from './aria-reference-index'
 export { getHtmlChildrenEvaluator } from './evaluators'
 export { getHtmlPropNormalizers } from './prop-normalizers'
 export {
