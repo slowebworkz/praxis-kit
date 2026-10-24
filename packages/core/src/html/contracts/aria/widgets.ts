@@ -94,3 +94,16 @@ export const radioContract = ariaContract([requireAriaState('aria-checked', 'rad
 
 /** `role="checkbox"` — expose the checked state, including an explicit false. */
 export const checkboxContract = ariaContract([requireAriaState('aria-checked', 'checkbox')])
+
+/**
+ * `role="tabpanel"` — provide an accessible name, commonly via
+ * `aria-labelledby` pointing to its controlling tab. The static contract does
+ * not resolve that ID reference or validate sibling relationships.
+ */
+export const tabpanelContract = ariaContract([requireAccessibleName])
+
+/**
+ * `role="option"` — expose the option's selection state. Presence is checked
+ * rather than truthiness, so `aria-selected="false"` remains valid.
+ */
+export const optionContract = ariaContract([requireAriaState('aria-selected', 'option')])

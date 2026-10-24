@@ -306,10 +306,10 @@ implementation. Keyboard navigation, focus management, and selection behavior be
 widget only if Praxis Kit explicitly provides such a runtime. Do not infer that those behaviors must
 be implemented by these static contracts.
 
-The current baseline is intentionally characterization-only: the existing widget contracts require
-an accessible name, but do not validate descendant structure, state transitions, or cross-element ID
-references. `packages/core/src/html/contracts.test.ts` records this baseline so later rule changes
-can distinguish new enforcement from existing behavior.
+The baseline was characterization-only. The next behavior slice registers `tab` and `option`
+selection-state contracts (`aria-selected` must be present, including an explicit `false`) and a
+`tabpanel` accessible-name contract. These checks remain per-element: they do not validate descendant
+structure, state transitions, or cross-element ID references.
 
 | APG pattern / role family          | Current registry coverage     | Audit questions for a later behavior patch                                                                                                                                |
 | ---------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

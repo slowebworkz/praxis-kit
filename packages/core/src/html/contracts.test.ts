@@ -25,6 +25,7 @@ import {
   menubarContract,
   menuContract,
   objectContract,
+  optionContract,
   optgroupContract,
   pContract,
   pictureContract,
@@ -34,6 +35,7 @@ import {
   tableContract,
   tableRowContract,
   tablistContract,
+  tabpanelContract,
   treeContract,
   videoContract,
   voidContract,
@@ -884,6 +886,7 @@ describe('widget contracts', () => {
     ['gridContract', gridContract],
     ['listboxContract', listboxContract],
     ['tablistContract', tablistContract],
+    ['tabpanelContract', tabpanelContract],
     ['radiogroupContract', radiogroupContract],
   ] as const)('%s has a single aria rule (requireAccessibleName)', (_name, contract) => {
     expect(contract.aria).toHaveLength(1)
@@ -896,6 +899,8 @@ describe('widget contracts', () => {
     ['grid', gridContract],
     ['listbox', listboxContract],
     ['tablist', tablistContract],
+    ['tabpanel', tabpanelContract],
+    ['option', optionContract],
     ['radiogroup', radiogroupContract],
   ])('widgetContracts[%s] is the correct contract', (role, expected) => {
     expect(widgetContracts[role]).toBe(expected)
@@ -921,10 +926,12 @@ describe('widget contracts', () => {
         'listbox',
         'menu',
         'menubar',
+        'option',
         'radio',
         'radiogroup',
         'tab',
         'tablist',
+        'tabpanel',
         'tree',
       ].sort(),
     )
@@ -948,8 +955,8 @@ describe('widget contracts', () => {
     },
   )
 
-  it('does not currently register standalone tabpanel, combobox, or option contracts', () => {
-    for (const role of ['tabpanel', 'combobox', 'option']) {
+  it('does not register a standalone combobox contract without a defined per-element rule', () => {
+    for (const role of ['combobox']) {
       expect(widgetContracts).not.toHaveProperty(role)
     }
   })

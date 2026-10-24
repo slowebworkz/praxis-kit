@@ -6,9 +6,11 @@ export {
   listboxContract,
   menuContract,
   menubarContract,
+  optionContract,
   radioContract,
   radiogroupContract,
   tabContract,
+  tabpanelContract,
   tablistContract,
   treeContract,
 } from './widgets'

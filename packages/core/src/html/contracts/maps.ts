@@ -9,10 +9,12 @@ import {
   listboxContract,
   menuContract,
   menubarContract,
+  optionContract,
   radioContract,
   radiogroupContract,
   tabContract,
   tablistContract,
+  tabpanelContract,
   treeContract,
 } from './aria'
 import { LANDMARK_TAGS, TEXT_ONLY_TAGS, VOID_TAGS } from './categories'
@@ -128,7 +130,9 @@ export const widgetContracts: HtmlContractMap = {
   tree: treeContract,
   grid: gridContract,
   listbox: listboxContract,
+  option: optionContract,
   tablist: tablistContract,
+  tabpanel: tabpanelContract,
   radio: radioContract,
   radiogroup: radiogroupContract,
   tab: tabContract,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { AriaContext } from '../../../types'
-import { checkboxContract, radioContract, tabContract } from './widgets'
+import { checkboxContract, optionContract, radioContract, tabContract } from './widgets'
 
 function ctx(props: Record<string, unknown>): AriaContext {
   return {
@@ -15,6 +15,7 @@ function ctx(props: Record<string, unknown>): AriaContext {
 describe('APG required widget states', () => {
   it.each([
     ['tab', tabContract, 'aria-selected'],
+    ['option', optionContract, 'aria-selected'],
     ['radio', radioContract, 'aria-checked'],
     ['checkbox', checkboxContract, 'aria-checked'],
   ] as const)('warns when role="%s" omits %s', (role, contract, attribute) => {
@@ -33,6 +34,7 @@ describe('APG required widget states', () => {
 
   it.each([
     ['tab', tabContract, 'aria-selected'],
+    ['option', optionContract, 'aria-selected'],
     ['radio', radioContract, 'aria-checked'],
     ['checkbox', checkboxContract, 'aria-checked'],
   ] as const)('accepts role="%s" when %s is explicitly false', (_role, contract, attribute) => {
