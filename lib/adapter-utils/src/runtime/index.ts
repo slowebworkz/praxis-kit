@@ -13,6 +13,7 @@ export {
   silentDiagnostics,
 } from './resolve-adapter-common-options'
 export type { RuntimeEngines, BuildEnginesChildrenOptions, AdapterDefaults } from './types'
+export type { ComposeDefaultsConstraint, RetainedComponentProps } from './types'
 
 export {
   attachCompositionStyleMetadata,
