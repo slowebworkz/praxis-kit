@@ -221,11 +221,14 @@ First pass (branch `fix/aria-html-standards-audit`): corrected the allowed-role 
 a data-correctness pass.
 
 The role→attribute realignment and prohibited-property handling tracked as F5 are closed; see
-`docs/accessibility/html-aria-audit.md` and its change log. Remaining work is the APG
-widget-contract audit (F7) and the `undefined` allowed-role rows that need ancestry the
-single-element context lacks. The F7 baseline is documented in the audit doc and characterized in
-`contracts.test.ts`; it does not imply that keyboard interaction or focus management belongs in the
-static contract layer.
+`docs/accessibility/html-aria-audit.md` and its change log. The APG widget-contract audit (F7) is
+**in progress**: per-element contracts now cover accessible names for `menu`, `menubar`, `combobox`,
+`listbox`, `tree`, `treeitem`, `grid`, `tablist`, `tabpanel`, and `radiogroup`, plus required state
+presence for `tab`, `option`, `radio`, `checkbox`, `menuitemcheckbox`, and `menuitemradio`. Remaining
+F7 questions concern conditional role/state applicability and relationships that need ancestor,
+descendant, or document context. This audit does not imply that keyboard interaction or focus
+management belongs in the static contract layer. The separate `undefined` allowed-role rows also
+remain open where they need ancestry the single-element context lacks.
 
 ## Resolved
 
