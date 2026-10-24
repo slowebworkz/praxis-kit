@@ -319,7 +319,7 @@ descendant structure, state transitions, or cross-element ID references.
 | Listbox / option                   | `listbox` only                | `option` coverage; `aria-selected`/`aria-checked` applicability; `aria-activedescendant` ID reference; multiselect state.                                                 |
 | Tree                               | `tree` only                   | `treeitem`/group relationships; `aria-expanded`, selection, level/position metadata; permit valid flat and nested representations.                                        |
 | Radiogroup / radio                 | `radiogroup` only             | `radio` coverage; checked state representation and group-level labeling; do not confuse static validation with arrow-key behavior.                                        |
-| Grid                               | `grid` only                   | Row/cell role coverage and ownership; applicable row/column counts and indices; active-descendant relationships; distinguish data grids from layout grids where possible. |
+| Grid                               | `grid` only (accessible name) | Characterize `row`, `gridcell`, `columnheader`, and `rowheader` coverage before adding contracts. Do not require optional row/column counts, indices, selection, or active-descendant universally; assess which checks need tree/document context. |
 
 Audit each row against the relevant APG pattern and WAI-ARIA 1.2 role/property requirements before
 changing runtime rules. Record a finding only when the requirement is expressible from the available
@@ -343,6 +343,16 @@ Praxis Kit will add a tree-aware validation phase.
 Do not approximate these checks by requiring `aria-expanded` on every `treeitem`: leaf items do not
 need expansion state, and flat and nested tree representations are both valid. Likewise, do not
 require `aria-activedescendant` universally; APG permits focus-management alternatives.
+
+### Grid: current validation boundary
+
+The `gridContract` currently enforces an accessible name only. The grid-role audit begins with
+characterization rather than adding `row`, `gridcell`, `columnheader`, or `rowheader` contracts
+without a demonstrated, universally applicable per-element requirement. Row/column counts and
+indices may be optional or context-dependent, and `aria-activedescendant` is one focus-management
+pattern rather than a universal requirement. Grid ownership, cell relationships, and whether a
+role is appropriate in a particular grid require structure or usage context not provided by the
+current single-element `AriaContext`.
 
 ---
 

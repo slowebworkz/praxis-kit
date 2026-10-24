@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { AriaContext } from '../../../types'
 import {
   checkboxContract,
+  gridContract,
   listboxContract,
   menuitemcheckboxContract,
   menuitemradioContract,
@@ -124,5 +125,22 @@ describe('APG treeitem naming', () => {
 
   it.each(['aria-label', 'aria-labelledby'])('accepts role="treeitem" named by %s', (attribute) => {
     expect(treeitemContract.aria![0]!(ctx({ [attribute]: 'Folder' }))).toEqual([])
+  })
+})
+
+describe('APG grid role coverage', () => {
+  it('keeps grid validation at the accessible-name boundary', () => {
+    const rule = gridContract.aria![0]!
+
+    expect(
+      rule(
+        ctx({
+          'aria-label': 'Search results',
+          'aria-rowcount': 12,
+          'aria-colcount': 4,
+          'aria-activedescendant': 'result-1',
+        }),
+      ),
+    ).toEqual([])
   })
 })
