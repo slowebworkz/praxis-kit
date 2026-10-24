@@ -21,6 +21,7 @@ import {
   resolveHostState,
   toLooseBundle,
 } from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsValidationArgs } from '@praxis-kit/adapter-utils'
 import { buildRuntime } from './build-runtime'
 import { isWebContractComponent } from './is-web-contract-component'
 import { registerForSsr } from './render-to-string'
@@ -119,6 +120,7 @@ export function createContractComponent<
   options: C & {
     readonly subComponents?: TSubComponents
   },
+  ..._composeDefaultsValidation: ComposeDefaultsValidationArgs<C>
 ): WebContractComponent<TVariants, ExtractPluginProps<TPlugin>, ContractGenericsOf<C>, C> &
   TSubComponents {
   invariant(isWebFactoryOptions(options), 'options is not a valid WebFactoryOptions object')

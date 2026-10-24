@@ -3755,6 +3755,15 @@ trimmed. **Optional follow-up:** the `{ resolve, primary, partner }` resolver wr
 per adapter; a shared `adapter-utils` helper would remove that duplication and a few dozen bytes per
 adapter. **Decision stands:** accept the growth against `develop` and reset the baselines at merge.
 
+**Baseline refresh after plugin-composition work (2026-10-24).** After `a12b0d1` reset the
+baselines, PRs #168–#171 (shared guards, plugin flattening, `compose.with` rendering contract,
+Tailwind plugin composition) grew every non-trivial scenario again: `source/*` +270–350 B,
+`package/*` entry points +200–260 B (~0.6–0.9%), `package/html-only` +504 B (~2.2%);
+`contract-only`/`guards-only` within 20 B, `utils-only` unchanged. All are well inside the 5% gate
+against the prior baselines, and the type-only `compose.defaults` enforcement in this branch adds no
+runtime bytes. Accepted; both `snapshots/gzip.json` baselines reset via `gzip:update`. This closes
+the release gate opened by the resolver-cost entry above.
+
 ### Composition class-plugin selection — primary factory wins (2026-10-21)
 
 **Decision:** the automatic composition class resolver uses exactly one class-plugin factory,

@@ -18,6 +18,7 @@
  */
 import { describe, it, expectTypeOf } from 'vitest'
 import { defineContract } from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsConstraint, RetainedComponentProps } from '@praxis-kit/adapter-utils'
 import type { EmptyRecord, ClassPluginFactory } from '@praxis-kit/core'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import type { CollisionError, ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
@@ -45,6 +46,33 @@ const surfaceOptions = {
   styling: { variants: { shadow: { true: 'shadow-sm', false: 'shadow-none' } } },
 } satisfies ReactFactoryOptions
 const Surface = createContractComponent(surfaceOptions)
+
+describe('compose.defaults diagnostic types — factory-retained partner', () => {
+  it('retains the partner variants when queried after factory inference', () => {
+    type PartnerVariantKeys = keyof RetainedComponentProps<typeof Surface>
+    type ShadowValue = RetainedComponentProps<typeof Surface>['shadow']
+
+    expectTypeOf<PartnerVariantKeys>().toEqualTypeOf<'shadow'>()
+    expectTypeOf<ShadowValue>().toEqualTypeOf<boolean | undefined>()
+  })
+
+  it('evaluates the defaults constraint correctly once the options type is concrete', () => {
+    type ValidOptions = {
+      compose: { with: typeof Surface; defaults: { shadow: true } }
+    }
+    type InvalidOrdinaryOptions = {
+      compose: { with: typeof Surface; defaults: { radius: 'sm' } }
+    }
+    type InvalidPrimaryOnlyOptions = {
+      styling: { variants: { tone: { quiet: string; loud: string } } }
+      compose: { with: typeof Surface; defaults: { tone: 'quiet' } }
+    }
+
+    expectTypeOf<ComposeDefaultsConstraint<ValidOptions>>().toEqualTypeOf<unknown>()
+    expectTypeOf<ComposeDefaultsConstraint<InvalidOrdinaryOptions>>().toEqualTypeOf<never>()
+    expectTypeOf<ComposeDefaultsConstraint<InvalidPrimaryOnlyOptions>>().toEqualTypeOf<never>()
+  })
+})
 
 // `compose.defaults` is validated against the secondary component's variants, not ordinary props.
 const ValidComposeDefaults = defineContract({

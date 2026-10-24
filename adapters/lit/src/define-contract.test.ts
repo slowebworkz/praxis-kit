@@ -45,3 +45,44 @@ describe('defineContract — Lit integration', () => {
     expectTypeOf(ButtonB).toMatchTypeOf<LitContractComponent<typeof variants>>()
   })
 })
+
+// Public factory validation runs after options inference: partner variants are accepted, while
+// variants owned only by the primary component are rejected in compose.defaults.
+const ComposeDefaultsSurface = createContractComponent({
+  tag: 'div',
+  name: 'ComposeDefaultsSurface',
+  props: undefined as unknown as { radius?: 'sm' | 'lg' },
+  styling: { variants: { tone: { quiet: 'tone-quiet', loud: 'tone-loud' } } },
+})
+const ComposeDefaultsValid = createContractComponent({
+  tag: 'section',
+  name: 'ComposeDefaultsValid',
+  styling: { variants: { size: { small: 'size-small', large: 'size-large' } } },
+  compose: { with: ComposeDefaultsSurface, defaults: { tone: 'quiet' } as const },
+})
+void ComposeDefaultsValid
+
+// @ts-expect-error — `size` belongs to the primary component, not ComposeDefaultsSurface.
+const ComposeDefaultsInvalid = createContractComponent({
+  tag: 'section',
+  name: 'ComposeDefaultsInvalid',
+  styling: { variants: { size: { small: 'size-small', large: 'size-large' } } },
+  compose: { with: ComposeDefaultsSurface, defaults: { size: 'small' } as const },
+})
+void ComposeDefaultsInvalid
+
+// @ts-expect-error — ordinary partner props are not declared variants and cannot be defaulted.
+const ComposeDefaultsInvalidOrdinary = createContractComponent({
+  tag: 'section',
+  name: 'ComposeDefaultsInvalidOrdinary',
+  compose: { with: ComposeDefaultsSurface, defaults: { radius: 'sm' } as const },
+})
+void ComposeDefaultsInvalidOrdinary
+
+// @ts-expect-error — a declared partner variant still rejects values outside its declared set.
+const ComposeDefaultsInvalidValue = createContractComponent({
+  tag: 'section',
+  name: 'ComposeDefaultsInvalidValue',
+  compose: { with: ComposeDefaultsSurface, defaults: { tone: 'bright' } as const },
+})
+void ComposeDefaultsInvalidValue

@@ -27,6 +27,7 @@ import {
   finalizeComponent,
   invariant,
 } from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsValidationArgs } from '@praxis-kit/adapter-utils'
 import { isFunction, isString } from '@praxis-kit/guards'
 import { createElement, useCallback, useRef } from 'react'
 import type { ComponentType, Ref } from 'react'
@@ -71,7 +72,7 @@ import { buildRuntime } from './build-runtime'
  * `C` is now the single authoritative input; these are its projection, not a fresh inference.
  */
 export function createContractComponent<
-  C extends ReactFactoryOptions,
+  const C extends ReactFactoryOptions,
   TDefault extends ElementType = ContractTagOf<C>,
   Props extends UnknownProps = ContractPropsOf<C>,
   Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
@@ -83,6 +84,7 @@ export function createContractComponent<
   options: C & {
     readonly subComponents?: TSubComponents
   },
+  ..._composeDefaultsValidation: ComposeDefaultsValidationArgs<C>
 ): MergeRecords<
   PolymorphicComponent<
     PolymorphicGenerics<
@@ -210,7 +212,9 @@ export function createContractComponent<
       })
       return createElement(compose.with as ComponentType<UnknownProps>, {
         ...filterOwnedProps(compose.defaults, bundle.ownedKeys, ['as']),
-        ...(compose.allProps ? filterOwnedProps(componentProps, bundle.ownedKeys, ['as']) : undefined),
+        ...(compose.allProps
+          ? filterOwnedProps(componentProps, bundle.ownedKeys, ['as'])
+          : undefined),
         ...(compositionClassResolver
           ? {
               [COMPOSITION_STYLE_REQUEST_PROP]: {

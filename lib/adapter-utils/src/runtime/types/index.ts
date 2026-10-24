@@ -9,6 +9,7 @@ export type {
 export type {
   ComposeConfigOf,
   ComposeDefaultsConstraint,
+  ComposeDefaultsValidationArgs,
   ComposeDefaultsOf,
   ComposedComponentOf,
   DefineContractOptions,

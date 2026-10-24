@@ -101,6 +101,7 @@ describe('Polymorphic — SSR (svelte/server render)', () => {
         variants: { intent: { ghost: 'partner-ghost', solid: 'partner-solid' } },
       },
     })
+    // @ts-expect-error compose.defaults is variant-only; `class` is rejected by the type but still honored at runtime
     const card = createContractComponent({
       tag: 'section',
       compose: { with: surface, defaults: { class: 'default-class' } },
