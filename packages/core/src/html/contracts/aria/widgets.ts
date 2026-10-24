@@ -32,6 +32,14 @@ export const menubarContract = ariaContract([requireAccessibleName])
 export const treeContract = ariaContract([requireAccessibleName])
 
 /**
+ * `role="treeitem"` — an item in a hierarchical tree. Its accessible name
+ * identifies the item; this contract does not validate tree/group ancestry or
+ * whether `aria-expanded` is appropriate for the item.
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/treeview/
+ */
+export const treeitemContract = ariaContract([requireAccessibleName])
+
+/**
  * `role="grid"` — composite widget containing rows of cells, similar to a spreadsheet.
  * APG: https://www.w3.org/WAI/ARIA/apg/patterns/grid/
  */

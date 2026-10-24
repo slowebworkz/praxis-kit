@@ -11,6 +11,7 @@ import {
   tabContract,
   tabpanelContract,
   treeContract,
+  treeitemContract,
 } from './widgets'
 
 function ctx(props: Record<string, unknown>): AriaContext {
@@ -112,4 +113,16 @@ describe('APG listbox and tree relationship scope', () => {
       ).toEqual([])
     },
   )
+})
+
+describe('APG treeitem naming', () => {
+  it('warns when role="treeitem" has no accessible name', () => {
+    expect(treeitemContract.aria![0]!(ctx({}))).toMatchObject([
+      { valid: false, severity: 'warning' },
+    ])
+  })
+
+  it.each(['aria-label', 'aria-labelledby'])('accepts role="treeitem" named by %s', (attribute) => {
+    expect(treeitemContract.aria![0]!(ctx({ [attribute]: 'Folder' }))).toEqual([])
+  })
 })

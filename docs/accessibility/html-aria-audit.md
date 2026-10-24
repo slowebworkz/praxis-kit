@@ -329,14 +329,17 @@ negative characterization tests for each rule proposed.
 
 ### Listbox and tree: current validation boundary
 
-The current `listboxContract` and `treeContract` enforce accessible naming only. They do not verify
+The current `listboxContract` and `treeContract` enforce accessible naming only. The new
+`treeitemContract` also requires an accessible name. These contracts do not verify
 that an `aria-activedescendant` value resolves to an element, that a listbox contains `option` roles,
 or that `treeitem`/`group` descendants form a valid tree. Those checks require descendant or
 document-level context that is not available to the current per-element `AriaContext`. The
 characterization tests intentionally preserve that boundary; they are not a claim that those
 relationships are optional under APG.
 
-For a future behavior patch, first decide whether Praxis Kit will add a tree-aware validation phase.
+The `treeitemContract` checks naming only. It deliberately does not require `aria-expanded`,
+because leaf items do not need expansion state. For a future behavior patch, first decide whether
+Praxis Kit will add a tree-aware validation phase.
 Do not approximate these checks by requiring `aria-expanded` on every `treeitem`: leaf items do not
 need expansion state, and flat and nested tree representations are both valid. Likewise, do not
 require `aria-activedescendant` universally; APG permits focus-management alternatives.

@@ -39,6 +39,7 @@ import {
   tablistContract,
   tabpanelContract,
   treeContract,
+  treeitemContract,
   videoContract,
   voidContract,
   widgetContracts,
@@ -885,6 +886,7 @@ describe('widget contracts', () => {
     ['menuContract', menuContract],
     ['menubarContract', menubarContract],
     ['treeContract', treeContract],
+    ['treeitemContract', treeitemContract],
     ['gridContract', gridContract],
     ['listboxContract', listboxContract],
     ['tablistContract', tablistContract],
@@ -900,6 +902,7 @@ describe('widget contracts', () => {
     ['menuitemradio', menuitemradioContract],
     ['menubar', menubarContract],
     ['tree', treeContract],
+    ['treeitem', treeitemContract],
     ['grid', gridContract],
     ['listbox', listboxContract],
     ['tablist', tablistContract],
@@ -939,6 +942,7 @@ describe('widget contracts', () => {
         'tablist',
         'tabpanel',
         'tree',
+        'treeitem',
       ].sort(),
     )
   })
