@@ -3,6 +3,7 @@ import type { ContractGroup } from './types'
 import { buildMap } from './build-map'
 import {
   checkboxContract,
+  comboboxContract,
   dialogContract,
   gridContract,
   landmarkContract,
@@ -128,6 +129,7 @@ export const htmlContracts: HtmlContractMap = {
  */
 export const widgetContracts: HtmlContractMap = {
   checkbox: checkboxContract,
+  combobox: comboboxContract,
   menu: menuContract,
   menuitemcheckbox: menuitemcheckboxContract,
   menuitemradio: menuitemradioContract,

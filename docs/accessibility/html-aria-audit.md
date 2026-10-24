@@ -315,7 +315,7 @@ descendant structure, state transitions, or cross-element ID references.
 | ---------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Tabs: `tablist`, `tab`, `tabpanel` | `tablist` only                | Role coverage; tab-to-panel ID references; selected state and orientation applicability; avoid requiring a single markup shape where APG permits alternatives.            |
 | Menu / menubar                     | `menu`, `menubar`             | Supported item roles and ownership; applicable `aria-haspopup`, `aria-expanded`, and disabled state; distinguish static semantics from keyboard behavior.                 |
-| Combobox                           | No standalone widget contract | Native `<input>`/`<select>` implicit-role handling is audited elsewhere; decide whether an explicit-role contract belongs here and what it can validate per element.      |
+| Combobox                           | `combobox` (accessible name)  | Accessible name is enforceable per element. Required properties such as `aria-expanded` remain covered by shared ARIA validation; popup ownership and `aria-controls` target resolution require cross-element context. |
 | Listbox / option                   | `listbox` only                | `option` coverage; `aria-selected`/`aria-checked` applicability; `aria-activedescendant` ID reference; multiselect state.                                                 |
 | Tree                               | `tree` only                   | `treeitem`/group relationships; `aria-expanded`, selection, level/position metadata; permit valid flat and nested representations.                                        |
 | Radiogroup / radio                 | `radiogroup` only             | `radio` coverage; checked state representation and group-level labeling; do not confuse static validation with arrow-key behavior.                                        |
@@ -343,6 +343,15 @@ Praxis Kit will add a tree-aware validation phase.
 Do not approximate these checks by requiring `aria-expanded` on every `treeitem`: leaf items do not
 need expansion state, and flat and nested tree representations are both valid. Likewise, do not
 require `aria-activedescendant` universally; APG permits focus-management alternatives.
+
+### Combobox: current validation boundary
+
+The standalone `comboboxContract` requires an accessible name. It does not impose one APG
+implementation pattern: comboboxes may be input- or button-based, and their popup may be a listbox,
+tree, grid, or dialog. Required ARIA properties such as `aria-expanded` remain the responsibility
+of shared required-property validation rather than a duplicate widget-specific rule. Resolving
+`aria-controls` targets or validating popup ownership requires cross-element context and is out of
+scope for the current per-element `AriaContext`.
 
 ### Grid: current validation boundary
 
