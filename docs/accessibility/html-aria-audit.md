@@ -344,6 +344,14 @@ Do not approximate these checks by requiring `aria-expanded` on every `treeitem`
 need expansion state, and flat and nested tree representations are both valid. Likewise, do not
 require `aria-activedescendant` universally; APG permits focus-management alternatives.
 
+### Radiogroup and radio: current validation boundary
+
+The `radiogroupContract` requires an accessible name, and the `radioContract` requires
+`aria-checked` to be present, including an explicit `false`. These are independent per-element
+checks: the current contract layer does not verify group membership, mutual exclusion within a
+single-select group, or arrow-key selection behavior. Those require structural or runtime context
+that is not available to the current per-element `AriaContext`.
+
 ### Combobox: current validation boundary
 
 The standalone `comboboxContract` requires an accessible name. It does not impose one APG
