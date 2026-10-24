@@ -73,7 +73,6 @@ const ComposeDefaultsInvalid = createContractComponent({
 })
 void ComposeDefaultsInvalid
 
-
 // @ts-expect-error — ordinary partner props are not declared variants and cannot be defaulted.
 const ComposeDefaultsInvalidOrdinary = createContractComponent({
   tag: 'section',

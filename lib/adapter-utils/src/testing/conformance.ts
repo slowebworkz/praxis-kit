@@ -414,27 +414,26 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
 
             adapter.render(Card, { as: 'main' })
             expect(warnSpy).toHaveBeenCalled()
-            expect(warnSpy.mock.calls.flat().join(' ')).toMatch(/COMP1009.*"as" prop received "main"/)
+            expect(warnSpy.mock.calls.flat().join(' ')).toMatch(
+              /COMP1009.*"as" prop received "main"/,
+            )
           } finally {
             warnSpy.mockRestore()
           }
         })
       }
 
-      it(
-        'with allProps: true, consumes `as` on the composing component instead of forwarding it to `with`',
-        () => {
-          const Surface = adapter.createComponent({ tag: 'div' })
-          const Card = adapter.createComponent({
-            tag: 'article',
-            compose: { with: Surface, allProps: true },
-          })
-          const { element } = adapter.render(Card, { as: 'section', 'data-testid': 'composed' })
-          expect(element.tagName.toLowerCase()).toBe('section')
-          expect(element.getAttribute('data-testid')).toBe('composed')
-          expect(element.querySelector('[data-testid="composed"]')).toBeNull()
-        },
-      )
+      it('with allProps: true, consumes `as` on the composing component instead of forwarding it to `with`', () => {
+        const Surface = adapter.createComponent({ tag: 'div' })
+        const Card = adapter.createComponent({
+          tag: 'article',
+          compose: { with: Surface, allProps: true },
+        })
+        const { element } = adapter.render(Card, { as: 'section', 'data-testid': 'composed' })
+        expect(element.tagName.toLowerCase()).toBe('section')
+        expect(element.getAttribute('data-testid')).toBe('composed')
+        expect(element.querySelector('[data-testid="composed"]')).toBeNull()
+      })
 
       it('consumer props land on the composing component itself, not on "with"', () => {
         const BoxA = adapter.createComponent({})
