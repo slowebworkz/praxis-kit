@@ -32,6 +32,7 @@ import {
   optgroupContract,
   pContract,
   pictureContract,
+  radioContract,
   radiogroupContract,
   selectContract,
   tableBodyContract,
@@ -969,6 +970,18 @@ describe('widget contracts', () => {
       expect(rule(ctx('div', props))).toEqual([])
     },
   )
+
+  it('radio requires aria-checked while radiogroup requires an accessible name', () => {
+    expect(radioContract.aria![0]!(ctx('div', {}))).toMatchObject([
+      { valid: false, severity: 'warning' },
+    ])
+    expect(radioContract.aria![0]!(ctx('div', { 'aria-checked': false }))).toEqual([])
+
+    expect(radiogroupContract.aria![0]!(ctx('div', {}))).toMatchObject([
+      { valid: false, severity: 'warning' },
+    ])
+    expect(radiogroupContract.aria![0]!(ctx('div', { 'aria-label': 'Size' }))).toEqual([])
+  })
 
   it('requireAccessibleName fires via comboboxContract when aria-label is absent', () => {
     expect(comboboxContract.aria![0]!(ctx('input', {}))).toMatchObject([
