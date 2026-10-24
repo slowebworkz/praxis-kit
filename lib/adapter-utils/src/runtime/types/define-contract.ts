@@ -70,3 +70,13 @@ export type ComposeDefaultsConstraint<O> =
     : unknown
 
 export type DefineContractOptions<O extends ContractInput> = O & ComposeDefaultsConstraint<O>
+
+/**
+ * Deferred public-factory validation for `compose.defaults`.
+ *
+ * A rest tuple checks the fully inferred options type after the primary parameter has inferred
+ * `O`, avoiding the inference collapse caused by intersecting `O` with its own constraint.
+ */
+export type ComposeDefaultsValidationArgs<O> = ComposeDefaultsConstraint<O> extends never
+  ? [invalidComposeDefaults: never]
+  : []

@@ -20,6 +20,7 @@ import {
   finalizeComponent,
   invariant,
 } from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsValidationArgs } from '@praxis-kit/adapter-utils'
 import { mergeProps, onCleanup } from 'solid-js'
 import { applyDisplayName } from './apply-display-name'
 import { buildRuntime } from './build-runtime'
@@ -57,7 +58,7 @@ import { isFunction, isString } from '@praxis-kit/guards'
  * this adapter's pre-refactor behavior — Solid never threaded it as its own generic.
  */
 export function createContractComponent<
-  C extends SolidFactoryOptions,
+  const C extends SolidFactoryOptions,
   TDefault extends ElementType = ContractTagOf<C>,
   Props extends UnknownProps = ContractPropsOf<C>,
   Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
@@ -68,6 +69,7 @@ export function createContractComponent<
   options: C & {
     readonly subComponents?: TSubComponents
   },
+  ..._composeDefaultsValidation: ComposeDefaultsValidationArgs<C>
 ): MergeRecords<
   PolymorphicComponent<
     PolymorphicGenerics<

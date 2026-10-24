@@ -18,6 +18,7 @@ import {
   composeStyleProps,
   mergeCompositionClassNames,
 } from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsValidationArgs } from '@praxis-kit/adapter-utils'
 import { isString } from '@praxis-kit/guards'
 import { buildRuntime } from './build-runtime'
 import type { SvelteFactoryOptions } from './svelte-options'
@@ -68,7 +69,7 @@ import type { UnknownProps } from './types'
  * `C` itself below, not a separate parameter.
  */
 export function createContractComponent<
-  C extends SvelteFactoryOptions,
+  const C extends SvelteFactoryOptions,
   TDefault extends ElementType = ContractTagOf<C>,
   Props extends UnknownProps = ContractPropsOf<C>,
   Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
@@ -76,7 +77,11 @@ export function createContractComponent<
   TSubComponents extends Readonly<AnyRecord> = EmptyRecord,
 >(
   options: C & { readonly subComponents?: TSubComponents },
-): MergeRecords<BuiltRuntime<ContractGenericsOf<C>, C>, TSubComponents> {
+  ..._composeDefaultsValidation: ComposeDefaultsValidationArgs<C>
+): MergeRecords<
+  BuiltRuntime<ContractGenericsOf<C>, C> & { readonly __contract?: C },
+  TSubComponents
+> {
   // `options` (a single, formally independent type parameter `C`) no longer sufficiently
   // overlaps with the reconstructed `SvelteFactoryOptions<...> & C` for a direct cast the way the
   // old, separately-threaded generics did — see `@praxis-kit/react`'s identical comment. `C` is

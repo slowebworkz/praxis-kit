@@ -25,6 +25,7 @@ import {
   finalizeComponent,
   invariant,
 } from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsValidationArgs } from '@praxis-kit/adapter-utils'
 import { isFunction, isString } from '@praxis-kit/guards'
 import { h } from 'preact'
 import type { ComponentType } from 'preact'
@@ -68,7 +69,7 @@ import type { PreactFactoryOptions } from './preact-options'
  * this adapter's pre-refactor behavior — Preact never threaded it as its own generic.
  */
 export function createContractComponent<
-  C extends PreactFactoryOptions,
+  const C extends PreactFactoryOptions,
   TDefault extends ElementType = ContractTagOf<C>,
   Props extends UnknownProps = ContractPropsOf<C>,
   Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
@@ -79,6 +80,7 @@ export function createContractComponent<
   options: C & {
     readonly subComponents?: TSubComponents
   },
+  ..._composeDefaultsValidation: ComposeDefaultsValidationArgs<C>
 ): MergeRecords<
   PolymorphicComponent<
     PolymorphicGenerics<

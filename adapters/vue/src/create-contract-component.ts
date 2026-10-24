@@ -27,6 +27,7 @@ import {
   finalizeComponent,
   invariant,
 } from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsValidationArgs } from '@praxis-kit/adapter-utils'
 import { isDefined, isString } from '@praxis-kit/guards'
 import { applyDisplayName } from './apply-display-name'
 import { buildRuntime } from './build-runtime'
@@ -66,7 +67,7 @@ import type { VueFactoryOptions } from './vue-options'
  * this adapter's pre-refactor behavior — Vue never threaded it as its own generic.
  */
 export function createContractComponent<
-  C extends VueFactoryOptions,
+  const C extends VueFactoryOptions,
   TDefault extends ElementType = ContractTagOf<C>,
   Props extends UnknownProps = ContractPropsOf<C>,
   Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
@@ -77,6 +78,7 @@ export function createContractComponent<
   options: C & {
     readonly subComponents?: TSubComponents
   },
+  ..._composeDefaultsValidation: ComposeDefaultsValidationArgs<C>
 ): MergeRecords<
   PolymorphicComponent<
     PolymorphicGenerics<
