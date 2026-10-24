@@ -298,6 +298,54 @@ best-practice advisories, not ARIA-specific, but they ship in `HTML_ARIA_RULES`.
 
 ---
 
+## APG widget-contract audit baseline (F7)
+
+This audit concerns the static, per-element contract layer in
+`packages/core/src/html/contracts/aria/widgets.ts`; it is **not** a keyboard-interaction
+implementation. Keyboard navigation, focus management, and selection behavior belong to a runtime
+widget only if Praxis Kit explicitly provides such a runtime. Do not infer that those behaviors must
+be implemented by these static contracts.
+
+The baseline was characterization-only. The next behavior slice registers `tab` and `option`
+selection-state contracts (`aria-selected` must be present, including an explicit `false`) and a
+`tabpanel` accessible-name contract. These checks remain per-element: they do not validate
+descendant structure, state transitions, or cross-element ID references.
+
+| APG pattern / role family          | Current registry coverage     | Audit questions for a later behavior patch                                                                                                                                |
+| ---------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tabs: `tablist`, `tab`, `tabpanel` | `tablist` only                | Role coverage; tab-to-panel ID references; selected state and orientation applicability; avoid requiring a single markup shape where APG permits alternatives.            |
+| Menu / menubar                     | `menu`, `menubar`             | Supported item roles and ownership; applicable `aria-haspopup`, `aria-expanded`, and disabled state; distinguish static semantics from keyboard behavior.                 |
+| Combobox                           | No standalone widget contract | Native `<input>`/`<select>` implicit-role handling is audited elsewhere; decide whether an explicit-role contract belongs here and what it can validate per element.      |
+| Listbox / option                   | `listbox` only                | `option` coverage; `aria-selected`/`aria-checked` applicability; `aria-activedescendant` ID reference; multiselect state.                                                 |
+| Tree                               | `tree` only                   | `treeitem`/group relationships; `aria-expanded`, selection, level/position metadata; permit valid flat and nested representations.                                        |
+| Radiogroup / radio                 | `radiogroup` only             | `radio` coverage; checked state representation and group-level labeling; do not confuse static validation with arrow-key behavior.                                        |
+| Grid                               | `grid` only                   | Row/cell role coverage and ownership; applicable row/column counts and indices; active-descendant relationships; distinguish data grids from layout grids where possible. |
+
+Audit each row against the relevant APG pattern and WAI-ARIA 1.2 role/property requirements before
+changing runtime rules. Record a finding only when the requirement is expressible from the available
+single-element `AriaContext`; descendant structure and cross-element ID references may require a
+separate tree-aware design decision. Keep valid APG alternatives valid, and add positive and
+negative characterization tests for each rule proposed.
+
+### Listbox and tree: current validation boundary
+
+The current `listboxContract` and `treeContract` enforce accessible naming only. The new
+`treeitemContract` also requires an accessible name. These contracts do not verify
+that an `aria-activedescendant` value resolves to an element, that a listbox contains `option` roles,
+or that `treeitem`/`group` descendants form a valid tree. Those checks require descendant or
+document-level context that is not available to the current per-element `AriaContext`. The
+characterization tests intentionally preserve that boundary; they are not a claim that those
+relationships are optional under APG.
+
+The `treeitemContract` checks naming only. It deliberately does not require `aria-expanded`,
+because leaf items do not need expansion state. For a future behavior patch, first decide whether
+Praxis Kit will add a tree-aware validation phase.
+Do not approximate these checks by requiring `aria-expanded` on every `treeitem`: leaf items do not
+need expansion state, and flat and nested tree representations are both valid. Likewise, do not
+require `aria-activedescendant` universally; APG permits focus-management alternatives.
+
+---
+
 ## Open work
 
 Tracked findings, roughly in priority order. None is a 0.1 blocker on its own; together they are

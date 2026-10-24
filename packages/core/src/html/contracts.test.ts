@@ -24,7 +24,10 @@ import {
   listContract,
   menubarContract,
   menuContract,
+  menuitemcheckboxContract,
+  menuitemradioContract,
   objectContract,
+  optionContract,
   optgroupContract,
   pContract,
   pictureContract,
@@ -34,7 +37,9 @@ import {
   tableContract,
   tableRowContract,
   tablistContract,
+  tabpanelContract,
   treeContract,
+  treeitemContract,
   videoContract,
   voidContract,
   widgetContracts,
@@ -881,9 +886,11 @@ describe('widget contracts', () => {
     ['menuContract', menuContract],
     ['menubarContract', menubarContract],
     ['treeContract', treeContract],
+    ['treeitemContract', treeitemContract],
     ['gridContract', gridContract],
     ['listboxContract', listboxContract],
     ['tablistContract', tablistContract],
+    ['tabpanelContract', tabpanelContract],
     ['radiogroupContract', radiogroupContract],
   ] as const)('%s has a single aria rule (requireAccessibleName)', (_name, contract) => {
     expect(contract.aria).toHaveLength(1)
@@ -891,11 +898,16 @@ describe('widget contracts', () => {
 
   it.each([
     ['menu', menuContract],
+    ['menuitemcheckbox', menuitemcheckboxContract],
+    ['menuitemradio', menuitemradioContract],
     ['menubar', menubarContract],
     ['tree', treeContract],
+    ['treeitem', treeitemContract],
     ['grid', gridContract],
     ['listbox', listboxContract],
     ['tablist', tablistContract],
+    ['tabpanel', tabpanelContract],
+    ['option', optionContract],
     ['radiogroup', radiogroupContract],
   ])('widgetContracts[%s] is the correct contract', (role, expected) => {
     expect(widgetContracts[role]).toBe(expected)
@@ -915,7 +927,47 @@ describe('widget contracts', () => {
 
   it('widgetContracts contains exactly the expected roles', () => {
     expect(Object.keys(widgetContracts).sort()).toEqual(
-      ['grid', 'listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'tree'].sort(),
+      [
+        'checkbox',
+        'grid',
+        'listbox',
+        'menu',
+        'menuitemcheckbox',
+        'menuitemradio',
+        'menubar',
+        'option',
+        'radio',
+        'radiogroup',
+        'tab',
+        'tablist',
+        'tabpanel',
+        'tree',
+        'treeitem',
+      ].sort(),
     )
+  })
+
+  // Characterization for the APG audit: these contracts currently validate the
+  // widget's accessible name only. They do not inspect descendants or enforce
+  // widget-specific states and ID relationships.
+  it.each([
+    ['menu', menuContract, { 'aria-label': 'Actions' }],
+    ['tree', treeContract, { 'aria-label': 'Folders' }],
+    ['grid', gridContract, { 'aria-label': 'Results' }],
+    ['listbox', listboxContract, { 'aria-label': 'Choices' }],
+    ['tablist', tablistContract, { 'aria-label': 'Sections' }],
+    ['radiogroup', radiogroupContract, { 'aria-label': 'Size' }],
+  ] as const)(
+    '%s does not currently enforce APG-specific relationships or states',
+    (_name, contract, props) => {
+      const rule = contract.aria![0]!
+      expect(rule(ctx('div', props))).toEqual([])
+    },
+  )
+
+  it('does not register a standalone combobox contract without a defined per-element rule', () => {
+    for (const role of ['combobox']) {
+      expect(widgetContracts).not.toHaveProperty(role)
+    }
   })
 })

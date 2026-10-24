@@ -136,13 +136,9 @@ describe('composition-owned props', () => {
   })
 
   it('also omits caller-specified props before forwarding', () => {
-    expect(
-      filterOwnedProps(
-        { as: 'article', id: 'card' },
-        new Set(),
-        ['as'],
-      ),
-    ).toEqual({ id: 'card' })
+    expect(filterOwnedProps({ as: 'article', id: 'card' }, new Set(), ['as'])).toEqual({
+      id: 'card',
+    })
   })
 })
 

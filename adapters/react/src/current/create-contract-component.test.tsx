@@ -285,7 +285,9 @@ describe('createContractComponent (current / React 19)', () => {
       styling: { base: 'border', plugin: createTailwindPipeline },
     })
 
-    expect(reporter.diagnostics.filter((diagnostic) => diagnostic.code === 'COMP1016')).toHaveLength(0)
+    expect(
+      reporter.diagnostics.filter((diagnostic) => diagnostic.code === 'COMP1016'),
+    ).toHaveLength(0)
 
     dom.mount(createElement(box(Card), { flex: true }))
 

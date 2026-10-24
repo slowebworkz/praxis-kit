@@ -220,9 +220,12 @@ First pass (branch `fix/aria-html-standards-audit`): corrected the allowed-role 
 `aria-expanded`. The `AriaPolicyEngine` / `createAriaPipeline` architecture did not change — this is
 a data-correctness pass.
 
-Still open (tracked in the audit doc's "Open work" table): the full WAI-ARIA 1.2 §6 pass on the
-role→attribute table incl. prohibited properties (F5), the APG widget-contract audit (F7), and the
-`undefined` allowed-role rows that need ancestry the single-element context lacks.
+The role→attribute realignment and prohibited-property handling tracked as F5 are closed; see
+`docs/accessibility/html-aria-audit.md` and its change log. Remaining work is the APG
+widget-contract audit (F7) and the `undefined` allowed-role rows that need ancestry the
+single-element context lacks. The F7 baseline is documented in the audit doc and characterized in
+`contracts.test.ts`; it does not imply that keyboard interaction or focus management belongs in the
+static contract layer.
 
 ## Resolved
 
