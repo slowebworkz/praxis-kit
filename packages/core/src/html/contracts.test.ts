@@ -24,6 +24,8 @@ import {
   listContract,
   menubarContract,
   menuContract,
+  menuitemcheckboxContract,
+  menuitemradioContract,
   objectContract,
   optionContract,
   optgroupContract,
@@ -894,6 +896,8 @@ describe('widget contracts', () => {
 
   it.each([
     ['menu', menuContract],
+    ['menuitemcheckbox', menuitemcheckboxContract],
+    ['menuitemradio', menuitemradioContract],
     ['menubar', menubarContract],
     ['tree', treeContract],
     ['grid', gridContract],
@@ -925,6 +929,8 @@ describe('widget contracts', () => {
         'grid',
         'listbox',
         'menu',
+        'menuitemcheckbox',
+        'menuitemradio',
         'menubar',
         'option',
         'radio',

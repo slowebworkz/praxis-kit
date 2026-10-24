@@ -8,6 +8,8 @@ import {
   landmarkContract,
   listboxContract,
   menuContract,
+  menuitemcheckboxContract,
+  menuitemradioContract,
   menubarContract,
   optionContract,
   radioContract,
@@ -126,6 +128,8 @@ export const htmlContracts: HtmlContractMap = {
 export const widgetContracts: HtmlContractMap = {
   checkbox: checkboxContract,
   menu: menuContract,
+  menuitemcheckbox: menuitemcheckboxContract,
+  menuitemradio: menuitemradioContract,
   menubar: menubarContract,
   tree: treeContract,
   grid: gridContract,

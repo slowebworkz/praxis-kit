@@ -308,8 +308,8 @@ be implemented by these static contracts.
 
 The baseline was characterization-only. The next behavior slice registers `tab` and `option`
 selection-state contracts (`aria-selected` must be present, including an explicit `false`) and a
-`tabpanel` accessible-name contract. These checks remain per-element: they do not validate descendant
-structure, state transitions, or cross-element ID references.
+`tabpanel` accessible-name contract. These checks remain per-element: they do not validate
+descendant structure, state transitions, or cross-element ID references.
 
 | APG pattern / role family          | Current registry coverage     | Audit questions for a later behavior patch                                                                                                                                |
 | ---------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

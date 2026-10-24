@@ -107,3 +107,13 @@ export const tabpanelContract = ariaContract([requireAccessibleName])
  * rather than truthiness, so `aria-selected="false"` remains valid.
  */
 export const optionContract = ariaContract([requireAriaState('aria-selected', 'option')])
+
+/** `role="menuitemcheckbox"` — expose its checked state, including false. */
+export const menuitemcheckboxContract = ariaContract([
+  requireAriaState('aria-checked', 'menuitemcheckbox'),
+])
+
+/** `role="menuitemradio"` — expose its checked state, including false. */
+export const menuitemradioContract = ariaContract([
+  requireAriaState('aria-checked', 'menuitemradio'),
+])

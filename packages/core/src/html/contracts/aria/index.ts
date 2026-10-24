@@ -5,6 +5,8 @@ export {
   gridContract,
   listboxContract,
   menuContract,
+  menuitemcheckboxContract,
+  menuitemradioContract,
   menubarContract,
   optionContract,
   radioContract,
