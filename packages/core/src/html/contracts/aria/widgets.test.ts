@@ -3,12 +3,14 @@ import { describe, expect, it } from 'vitest'
 import type { AriaContext } from '../../../types'
 import {
   checkboxContract,
+  listboxContract,
   menuitemcheckboxContract,
   menuitemradioContract,
   optionContract,
   radioContract,
   tabContract,
   tabpanelContract,
+  treeContract,
 } from './widgets'
 
 function ctx(props: Record<string, unknown>): AriaContext {
@@ -72,6 +74,42 @@ describe('APG menu item checked states', () => {
     'accepts an explicit false checked state',
     (contract) => {
       expect(contract.aria![0]!(ctx({ 'aria-checked': false }))).toEqual([])
+    },
+  )
+})
+
+describe('APG tabpanel naming', () => {
+  it('warns when role="tabpanel" has no accessible name', () => {
+    expect(tabpanelContract.aria![0]!(ctx({}))).toMatchObject([
+      { valid: false, severity: 'warning' },
+    ])
+  })
+
+  it.each(['aria-label', 'aria-labelledby'])('accepts role="tabpanel" named by %s', (attribute) => {
+    expect(tabpanelContract.aria![0]!(ctx({ [attribute]: 'x' }))).toEqual([])
+  })
+})
+
+describe('APG listbox and tree relationship scope', () => {
+  it.each([
+    ['listbox', listboxContract],
+    ['tree', treeContract],
+  ] as const)(
+    'keeps role="%s" relationship validation outside the single-element contract',
+    (_role, contract) => {
+      const rule = contract.aria![0]!
+
+      // AriaContext has no descendant tree or document-wide ID map. These props
+      // can be present, but their targets/relationships cannot be verified here.
+      expect(
+        rule(
+          ctx({
+            'aria-label': 'Items',
+            'aria-activedescendant': 'active-item',
+            'aria-multiselectable': false,
+          }),
+        ),
+      ).toEqual([])
     },
   )
 })
