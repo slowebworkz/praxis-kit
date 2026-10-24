@@ -11,8 +11,8 @@ validation behavior.
 - `AriaPolicyEngine` in `lib/contract/src/aria/aria-policy-engine.ts` derives that local context,
   selects and runs local rules, applies fixes, and returns a `ValidationResult` for the evaluated
   element. Its static `evaluate(tag, props)` entry point cannot resolve references to other nodes.
-- The contract package exports the ARIA policy engine and rules through `lib/contract/src/aria/index.ts`
-  and `lib/contract/src/index.ts`.
+- The contract package exports the ARIA policy engine and rules through
+  `lib/contract/src/aria/index.ts` and `lib/contract/src/index.ts`.
 - The repository has separate structural child evaluation (`lib/contract/src/children`). That is
   evidence that structure-aware checks have a distinct home, but its current child contract API
   should not be assumed to provide rendered DOM IDs or effective ARIA roles without inspection.
@@ -33,9 +33,9 @@ distinguish:
 - exactly one target;
 - duplicate IDs (ambiguous target).
 
-Build the index once per supplied validation scope. Do not silently select one target for a duplicate
-ID. Keep this utility independent of browser globals and DOM objects so it can be unit-tested in
-Node and used by adapters that can supply a snapshot.
+Build the index once per supplied validation scope. Do not silently select one target for a
+duplicate ID. Keep this utility independent of browser globals and DOM objects so it can be
+unit-tested in Node and used by adapters that can supply a snapshot.
 
 This first slice should index IDs only. It must not yet assert that a target is a valid target for
 `aria-controls`, `aria-labelledby`, or `aria-activedescendant`; those checks need separate,
@@ -58,15 +58,15 @@ strings.
 
 ## Test matrix for the index utility
 
-| Case | Expected result |
-| --- | --- |
-| Empty node list | Empty index; lookups are missing |
-| Node without `id` | Node is not indexed |
-| One node with a given ID | Lookup returns one unambiguous target |
-| Multiple nodes with the same ID | Lookup reports ambiguity and preserves all matching node identities |
-| IDs differing only by case | Treated as distinct IDs; matching follows exact ID string semantics |
+| Case                                                | Expected result                                                                                    |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Empty node list                                     | Empty index; lookups are missing                                                                   |
+| Node without `id`                                   | Node is not indexed                                                                                |
+| One node with a given ID                            | Lookup returns one unambiguous target                                                              |
+| Multiple nodes with the same ID                     | Lookup reports ambiguity and preserves all matching node identities                                |
+| IDs differing only by case                          | Treated as distinct IDs; matching follows exact ID string semantics                                |
 | Mutation of caller-owned input after index creation | Index result remains stable, or the API explicitly documents and tests a different ownership model |
-| Multiple independent scopes | Each index resolves only within the supplied scope |
+| Multiple independent scopes                         | Each index resolves only within the supplied scope                                                 |
 
 ## Not in the first slice
 
@@ -83,8 +83,10 @@ strings.
 2. Duplicate IDs are explicit and never resolved arbitrarily.
 3. The utility has focused unit tests for the matrix above.
 4. Existing per-element validation behavior remains unchanged.
-5. The utility is not exported as a stable public API until scope, node identity, and integration ownership are decided.
-6. Each later relationship rule cites its normative basis and has valid-pattern fixtures before it is enabled.
+5. The utility is not exported as a stable public API until scope, node identity, and integration
+   ownership are decided.
+6. Each later relationship rule cites its normative basis and has valid-pattern fixtures before it
+   is enabled.
 
 ## Decisions still required before integration
 
