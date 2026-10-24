@@ -5,6 +5,12 @@ export type {
   AriaIdReferenceResolution,
   AriaReferenceIndex,
 } from './aria-reference-index'
+export { validateAriaIdReferences } from './aria-reference-validation'
+export type {
+  AriaReferenceAttribute,
+  AriaReferenceDiagnostic,
+  AriaReferenceElement,
+} from './aria-reference-validation'
 export { getHtmlChildrenEvaluator } from './evaluators'
 export { getHtmlPropNormalizers } from './prop-normalizers'
 export {
