@@ -146,8 +146,8 @@ actually resolve.
 `with` property is required by the public `ComposeOptions` TypeScript type: `compose: {}` and
 `compose: { allProps: true }` are incomplete declarations and should be corrected by supplying a
 composition target. The runtime also checks incomplete declarations defensively: a missing `with`
-does not activate composition styling, and supplying `allProps` or `defaults` without `with` emits
-a construction-time diagnostic. An empty `compose: {}` remains silent at runtime, but is not a
+does not activate composition styling, and supplying `allProps` or `defaults` without `with` emits a
+construction-time diagnostic. An empty `compose: {}` remains silent at runtime, but is not a
 supported typed declaration:
 
 ```tsx

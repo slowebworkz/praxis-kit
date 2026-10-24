@@ -918,4 +918,28 @@ describe('widget contracts', () => {
       ['grid', 'listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'tree'].sort(),
     )
   })
+
+  // Characterization for the APG audit: these contracts currently validate the
+  // widget's accessible name only. They do not inspect descendants or enforce
+  // widget-specific states and ID relationships.
+  it.each([
+    ['menu', menuContract, { 'aria-label': 'Actions' }],
+    ['tree', treeContract, { 'aria-label': 'Folders' }],
+    ['grid', gridContract, { 'aria-label': 'Results' }],
+    ['listbox', listboxContract, { 'aria-label': 'Choices' }],
+    ['tablist', tablistContract, { 'aria-label': 'Sections' }],
+    ['radiogroup', radiogroupContract, { 'aria-label': 'Size' }],
+  ] as const)(
+    '%s does not currently enforce APG-specific relationships or states',
+    (_name, contract, props) => {
+      const rule = contract.aria![0]!
+      expect(rule(ctx('div', props))).toEqual([])
+    },
+  )
+
+  it('does not currently register standalone tab, tabpanel, combobox, or option contracts', () => {
+    for (const role of ['tab', 'tabpanel', 'combobox', 'option']) {
+      expect(widgetContracts).not.toHaveProperty(role)
+    }
+  })
 })

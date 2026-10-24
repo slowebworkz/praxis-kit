@@ -298,6 +298,37 @@ best-practice advisories, not ARIA-specific, but they ship in `HTML_ARIA_RULES`.
 
 ---
 
+## APG widget-contract audit baseline (F7)
+
+This audit concerns the static, per-element contract layer in
+`packages/core/src/html/contracts/aria/widgets.ts`; it is **not** a keyboard-interaction
+implementation. Keyboard navigation, focus management, and selection behavior belong to a runtime
+widget only if Praxis Kit explicitly provides such a runtime. Do not infer that those behaviors must
+be implemented by these static contracts.
+
+The current baseline is intentionally characterization-only: the existing widget contracts require
+an accessible name, but do not validate descendant structure, state transitions, or cross-element ID
+references. `packages/core/src/html/contracts.test.ts` records this baseline so later rule changes
+can distinguish new enforcement from existing behavior.
+
+| APG pattern / role family          | Current registry coverage     | Audit questions for a later behavior patch                                                                                                                                |
+| ---------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tabs: `tablist`, `tab`, `tabpanel` | `tablist` only                | Role coverage; tab-to-panel ID references; selected state and orientation applicability; avoid requiring a single markup shape where APG permits alternatives.            |
+| Menu / menubar                     | `menu`, `menubar`             | Supported item roles and ownership; applicable `aria-haspopup`, `aria-expanded`, and disabled state; distinguish static semantics from keyboard behavior.                 |
+| Combobox                           | No standalone widget contract | Native `<input>`/`<select>` implicit-role handling is audited elsewhere; decide whether an explicit-role contract belongs here and what it can validate per element.      |
+| Listbox / option                   | `listbox` only                | `option` coverage; `aria-selected`/`aria-checked` applicability; `aria-activedescendant` ID reference; multiselect state.                                                 |
+| Tree                               | `tree` only                   | `treeitem`/group relationships; `aria-expanded`, selection, level/position metadata; permit valid flat and nested representations.                                        |
+| Radiogroup / radio                 | `radiogroup` only             | `radio` coverage; checked state representation and group-level labeling; do not confuse static validation with arrow-key behavior.                                        |
+| Grid                               | `grid` only                   | Row/cell role coverage and ownership; applicable row/column counts and indices; active-descendant relationships; distinguish data grids from layout grids where possible. |
+
+Audit each row against the relevant APG pattern and WAI-ARIA 1.2 role/property requirements before
+changing runtime rules. Record a finding only when the requirement is expressible from the available
+single-element `AriaContext`; descendant structure and cross-element ID references may require a
+separate tree-aware design decision. Keep valid APG alternatives valid, and add positive and
+negative characterization tests for each rule proposed.
+
+---
+
 ## Open work
 
 Tracked findings, roughly in priority order. None is a 0.1 blocker on its own; together they are

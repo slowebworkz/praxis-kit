@@ -96,10 +96,10 @@ are not chained together.
 
 Plugin-owned layout props are inputs to class resolution, not host attributes. They are reserved
 from normal forwarding and `compose.defaults`, including when `compose.allProps` is enabled. This
-behavior applies only while automatic composition is active; an explicit `asChild` or custom `render`
-path takes precedence. As usual, Tailwind CSS generation and source detection remain the consuming
-application's build-time responsibility. For Tailwind v4, import the provided stylesheet as described
-below so runtime-injected display classes have generated CSS.
+behavior applies only while automatic composition is active; an explicit `asChild` or custom
+`render` path takes precedence. As usual, Tailwind CSS generation and source detection remain the
+consuming application's build-time responsibility. For Tailwind v4, import the provided stylesheet
+as described below so runtime-injected display classes have generated CSS.
 
 ### Tailwind v4 setup (required)
 
