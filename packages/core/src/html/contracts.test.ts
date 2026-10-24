@@ -9,6 +9,7 @@ import {
   audioContract,
   buttonContract,
   colgroupContract,
+  comboboxContract,
   datalistContract,
   detailsContract,
   dlContract,
@@ -884,6 +885,7 @@ describe('widget contracts', () => {
 
   it.each([
     ['menuContract', menuContract],
+    ['comboboxContract', comboboxContract],
     ['menubarContract', menubarContract],
     ['treeContract', treeContract],
     ['treeitemContract', treeitemContract],
@@ -898,6 +900,7 @@ describe('widget contracts', () => {
 
   it.each([
     ['menu', menuContract],
+    ['combobox', comboboxContract],
     ['menuitemcheckbox', menuitemcheckboxContract],
     ['menuitemradio', menuitemradioContract],
     ['menubar', menubarContract],
@@ -929,6 +932,7 @@ describe('widget contracts', () => {
     expect(Object.keys(widgetContracts).sort()).toEqual(
       [
         'checkbox',
+        'combobox',
         'grid',
         'listbox',
         'menu',
@@ -955,6 +959,7 @@ describe('widget contracts', () => {
     ['tree', treeContract, { 'aria-label': 'Folders' }],
     ['grid', gridContract, { 'aria-label': 'Results' }],
     ['listbox', listboxContract, { 'aria-label': 'Choices' }],
+    ['combobox', comboboxContract, { 'aria-label': 'Search' }],
     ['tablist', tablistContract, { 'aria-label': 'Sections' }],
     ['radiogroup', radiogroupContract, { 'aria-label': 'Size' }],
   ] as const)(
@@ -965,9 +970,13 @@ describe('widget contracts', () => {
     },
   )
 
-  it('does not register a standalone combobox contract without a defined per-element rule', () => {
-    for (const role of ['combobox']) {
-      expect(widgetContracts).not.toHaveProperty(role)
-    }
+  it('requireAccessibleName fires via comboboxContract when aria-label is absent', () => {
+    expect(comboboxContract.aria![0]!(ctx('input', {}))).toMatchObject([
+      { valid: false, severity: 'warning' },
+    ])
+  })
+
+  it('requireAccessibleName passes via comboboxContract when aria-label is present', () => {
+    expect(comboboxContract.aria![0]!(ctx('input', { 'aria-label': 'Search' }))).toEqual([])
   })
 })

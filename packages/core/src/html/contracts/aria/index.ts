@@ -1,6 +1,7 @@
 export { landmarkContract } from './landmarks'
 export {
   checkboxContract,
+  comboboxContract,
   dialogContract,
   gridContract,
   listboxContract,

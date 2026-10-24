@@ -46,6 +46,15 @@ export const treeitemContract = ariaContract([requireAccessibleName])
 export const gridContract = ariaContract([requireAccessibleName])
 
 /**
+ * `role="combobox"` — input or button that controls a popup for choosing a value.
+ * This contract checks the accessible name only. Required states such as
+ * `aria-expanded` are handled by the shared ARIA required-property validation;
+ * popup ownership and `aria-controls` target resolution need cross-element context.
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/combobox/
+ */
+export const comboboxContract = ariaContract([requireAccessibleName])
+
+/**
  * `role="listbox"` — list from which a user may select one or more options.
  * APG: https://www.w3.org/WAI/ARIA/apg/patterns/listbox/
  */
