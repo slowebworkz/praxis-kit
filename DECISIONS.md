@@ -220,6 +220,10 @@ First pass (branch `fix/aria-html-standards-audit`): corrected the allowed-role 
 `aria-expanded`. The `AriaPolicyEngine` / `createAriaPipeline` architecture did not change — this is
 a data-correctness pass.
 
+The proposed next step for F7 cross-element relationships is documented in
+`docs/accessibility/aria-relationship-validation-design.md`. It is design-only; no structural
+validation API or runtime behavior is approved by that document.
+
 The role→attribute realignment and prohibited-property handling tracked as F5 are closed; see
 `docs/accessibility/html-aria-audit.md` and its change log. The APG widget-contract audit (F7) is
 **in progress**: per-element contracts now cover accessible names for `menu`, `menubar`, `combobox`,
