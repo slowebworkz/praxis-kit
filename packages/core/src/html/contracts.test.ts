@@ -915,7 +915,18 @@ describe('widget contracts', () => {
 
   it('widgetContracts contains exactly the expected roles', () => {
     expect(Object.keys(widgetContracts).sort()).toEqual(
-      ['grid', 'listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'tree'].sort(),
+      [
+        'checkbox',
+        'grid',
+        'listbox',
+        'menu',
+        'menubar',
+        'radio',
+        'radiogroup',
+        'tab',
+        'tablist',
+        'tree',
+      ].sort(),
     )
   })
 
@@ -937,8 +948,8 @@ describe('widget contracts', () => {
     },
   )
 
-  it('does not currently register standalone tab, tabpanel, combobox, or option contracts', () => {
-    for (const role of ['tab', 'tabpanel', 'combobox', 'option']) {
+  it('does not currently register standalone tabpanel, combobox, or option contracts', () => {
+    for (const role of ['tabpanel', 'combobox', 'option']) {
       expect(widgetContracts).not.toHaveProperty(role)
     }
   })

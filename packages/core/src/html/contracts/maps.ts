@@ -2,13 +2,16 @@ import type { HtmlContractMap } from '@praxis-kit/contract'
 import type { ContractGroup } from './types'
 import { buildMap } from './build-map'
 import {
+  checkboxContract,
   dialogContract,
   gridContract,
   landmarkContract,
   listboxContract,
   menuContract,
   menubarContract,
+  radioContract,
   radiogroupContract,
+  tabContract,
   tablistContract,
   treeContract,
 } from './aria'
@@ -99,7 +102,7 @@ export const htmlContracts: HtmlContractMap = {
 }
 
 /**
- * Built-in contracts for WAI-ARIA composite widget roles.
+ * Built-in contracts for WAI-ARIA widget roles.
  *
  * Use these when semantics are provided by an explicit `role` attribute rather
  * than the HTML element itself.
@@ -119,11 +122,14 @@ export const htmlContracts: HtmlContractMap = {
  * composite widgets.
  */
 export const widgetContracts: HtmlContractMap = {
+  checkbox: checkboxContract,
   menu: menuContract,
   menubar: menubarContract,
   tree: treeContract,
   grid: gridContract,
   listbox: listboxContract,
   tablist: tablistContract,
+  radio: radioContract,
   radiogroup: radiogroupContract,
+  tab: tabContract,
 }

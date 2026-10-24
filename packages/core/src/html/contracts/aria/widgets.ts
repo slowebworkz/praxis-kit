@@ -1,3 +1,5 @@
+import { AriaDiagnostics } from '@praxis-kit/contract'
+import type { AriaContext, AriaResult } from '../../../types'
 import { requireAccessibleName } from '../../aria-rules'
 import { ariaContract } from '../helpers'
 
@@ -52,3 +54,43 @@ export const tablistContract = ariaContract([requireAccessibleName])
  * WAI-ARIA 1.2: https://www.w3.org/TR/wai-aria-1.2/#radiogroup
  */
 export const radiogroupContract = ariaContract([requireAccessibleName])
+
+/**
+ * Creates a local widget-role rule for a state that WAI-ARIA requires on the
+ * role itself. This intentionally checks attribute presence, not truthiness:
+ * values such as `aria-selected="false"` and `aria-checked="false"` are valid.
+ *
+ * The contract is applied explicitly for a role, so it does not infer widget
+ * identity from a host element or attempt cross-element APG relationship checks.
+ */
+function requireAriaState(attribute: string, role: string) {
+  return ({ tag, props }: AriaContext): readonly AriaResult[] => {
+    if (attribute in props) return []
+
+    const message = `role="${role}" requires ${attribute}. Set it to the current state, including "false" when appropriate.`
+    return [
+      {
+        valid: false,
+        fixable: false,
+        severity: 'warning',
+        diagnostic: AriaDiagnostics.fromViolation({
+          message,
+          tag,
+          role,
+          attribute,
+          severity: 'warning',
+          phase: 'evaluate',
+        }),
+      },
+    ]
+  }
+}
+
+/** `role="tab"` — expose whether this tab is currently selected. */
+export const tabContract = ariaContract([requireAriaState('aria-selected', 'tab')])
+
+/** `role="radio"` — expose the checked state, including an explicit false. */
+export const radioContract = ariaContract([requireAriaState('aria-checked', 'radio')])
+
+/** `role="checkbox"` — expose the checked state, including an explicit false. */
+export const checkboxContract = ariaContract([requireAriaState('aria-checked', 'checkbox')])
