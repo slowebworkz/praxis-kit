@@ -9,7 +9,7 @@ import type {
 export interface AriaTabRelationshipDiagnostic {
   readonly valid: false
   readonly severity: 'warning'
-  readonly code: 'wrong-target-role' | 'missing-tab-reference'
+  readonly code: 'wrong-target-role' | 'missing-tab-reference' | 'mismatched-tab-reference'
   readonly sourceIndex: number
   readonly targetId: string
   readonly message: string
@@ -58,6 +58,7 @@ function tabDiagnostics(
 
 /** A tabpanel's uniquely resolved `aria-labelledby` targets should include a tab. */
 function tabpanelDiagnostics(
+  elements: readonly AriaReferenceElement[],
   element: AriaReferenceElement,
   sourceIndex: number,
   index: AriaReferenceIndex,
@@ -65,8 +66,38 @@ function tabpanelDiagnostics(
   const labels = index.resolveList(element.props?.['aria-labelledby']).filter(isResolvedLookup)
   const [first] = labels
 
-  // Nothing resolved uniquely (don't guess), or a tab is already referenced.
-  if (!first || labels.some(isTab)) return []
+  // Nothing resolved uniquely (don't guess).
+  if (!first) return []
+
+  const labelledTabs = labels.filter(isTab)
+  const [labelledTab] = labelledTabs
+  const controllingTabs = elements.flatMap((candidate) => {
+    if (roleOf(candidate) !== 'tab') return []
+    const controls = index.resolveList(candidate.props?.['aria-controls'])
+    return controls.some((target) => isResolvedLookup(target) && target.element === element)
+      ? [candidate]
+      : []
+  })
+
+  // When both sides declare the relationship, they must identify the same tab. Do not
+  // require reciprocal attributes: this only flags an explicit, uniquely resolved conflict.
+  if (controllingTabs.length > 0 && labelledTab) {
+    const matchingTab = controllingTabs.some((tab) =>
+      labelledTabs.some((label) => label.element === tab),
+    )
+    if (!matchingTab) {
+      return [
+        warn(
+          'mismatched-tab-reference',
+          sourceIndex,
+          labelledTab.id,
+          `role="tabpanel" is controlled by a tab, but aria-labelledby references different tab id "${labelledTab.id}".`,
+        ),
+      ]
+    }
+  }
+
+  if (labelledTab) return []
 
   return [
     warn(
@@ -87,7 +118,7 @@ export function validateAriaTabRelationships(
   return elements.flatMap((element, sourceIndex) => {
     const role = roleOf(element)
     if (role === 'tab') return tabDiagnostics(element, sourceIndex, index)
-    if (role === 'tabpanel') return tabpanelDiagnostics(element, sourceIndex, index)
+    if (role === 'tabpanel') return tabpanelDiagnostics(elements, element, sourceIndex, index)
     return []
   })
 }

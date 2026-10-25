@@ -46,6 +46,25 @@ describe('ARIA tab relationships', () => {
     ).toMatchObject([{ code: 'wrong-target-role', targetId: 'panel-1' }])
   })
 
+  it('warns when a panel is controlled by one tab but labelled by a different tab', () => {
+    expect(
+      validateAriaTabRelationships([
+        { id: 'tab-1', props: { role: 'tab', 'aria-controls': 'panel-1' } },
+        { id: 'tab-2', props: { role: 'tab' } },
+        { id: 'panel-1', props: { role: 'tabpanel', 'aria-labelledby': 'tab-2' } },
+      ]),
+    ).toMatchObject([{ code: 'mismatched-tab-reference', sourceIndex: 2, targetId: 'tab-2' }])
+  })
+
+  it('does not require reciprocal references when the available relationship is consistent', () => {
+    expect(
+      validateAriaTabRelationships([
+        { id: 'tab-1', props: { role: 'tab', 'aria-controls': 'panel-1' } },
+        { id: 'panel-1', props: { role: 'tabpanel', 'aria-labelledby': 'tab-1' } },
+      ]),
+    ).toEqual([])
+  })
+
   it('warns when a uniquely resolved panel label does not reference a tab', () => {
     expect(
       validateAriaTabRelationships([
