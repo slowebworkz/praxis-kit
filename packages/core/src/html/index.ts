@@ -74,3 +74,10 @@ export {
 } from './contracts'
 export { validateAriaTabRelationships } from './aria-relationships'
 export type { AriaTabRelationshipDiagnostic } from './aria-relationships'
+
+export { validateAriaListboxRelationships } from './aria-listbox-relationship-validation'
+export type {
+  AriaListboxElement,
+  AriaListboxRelationshipDiagnostic,
+  AriaListboxRelationshipIssue,
+} from './aria-listbox-relationship-validation'

@@ -1,0 +1,80 @@
+import { describe, expect, it } from 'vitest'
+import { validateAriaListboxRelationships } from './aria-listbox-relationship-validation'
+
+describe('validateAriaListboxRelationships', () => {
+  it('accepts options nested under a listbox and a valid active descendant', () => {
+    expect(
+      validateAriaListboxRelationships([
+        { id: 'list', props: { role: 'listbox', 'aria-activedescendant': 'option-a' } },
+        { id: 'option-a', parentIndex: 0, props: { role: 'option' } },
+      ]),
+    ).toEqual([])
+  })
+
+  it('accepts options owned through aria-owns', () => {
+    expect(
+      validateAriaListboxRelationships([
+        {
+          id: 'list',
+          props: { role: 'listbox', 'aria-owns': 'option-a', 'aria-activedescendant': 'option-a' },
+        },
+        { id: 'option-a', props: { role: 'option' } },
+      ]),
+    ).toEqual([])
+  })
+
+  it('reports an option without a listbox owner', () => {
+    expect(
+      validateAriaListboxRelationships([{ id: 'option-a', props: { role: 'option' } }]),
+    ).toEqual([{ elementIndex: 0, issue: 'option-without-listbox-owner' }])
+  })
+
+  it('reports an active descendant with a non-option role', () => {
+    expect(
+      validateAriaListboxRelationships([
+        { props: { role: 'listbox', 'aria-activedescendant': 'target' } },
+        { id: 'target', parentIndex: 0, props: { role: 'button' } },
+      ]),
+    ).toEqual([
+      {
+        elementIndex: 0,
+        issue: 'active-descendant-not-option',
+        reference: 'target',
+        targetIndex: 1,
+      },
+    ])
+  })
+
+  it('reports an active descendant outside the listbox ownership scope', () => {
+    expect(
+      validateAriaListboxRelationships([
+        { props: { role: 'listbox', 'aria-activedescendant': 'target' } },
+        { id: 'target', parentIndex: 2, props: { role: 'option' } },
+        { props: { role: 'listbox' } },
+      ]),
+    ).toEqual([
+      {
+        elementIndex: 0,
+        issue: 'active-descendant-not-owned',
+        reference: 'target',
+        targetIndex: 1,
+      },
+    ])
+  })
+
+  it('reports missing and ambiguous active descendant references', () => {
+    expect(
+      validateAriaListboxRelationships([
+        { props: { role: 'listbox', 'aria-activedescendant': 'missing' } },
+      ]),
+    ).toEqual([{ elementIndex: 0, issue: 'active-descendant-missing', reference: 'missing' }])
+
+    expect(
+      validateAriaListboxRelationships([
+        { props: { role: 'listbox', 'aria-activedescendant': 'duplicate' } },
+        { id: 'duplicate', parentIndex: 0, props: { role: 'option' } },
+        { id: 'duplicate', parentIndex: 0, props: { role: 'option' } },
+      ]),
+    ).toEqual([{ elementIndex: 0, issue: 'active-descendant-ambiguous', reference: 'duplicate' }])
+  })
+})
