@@ -72,16 +72,5 @@ export {
   radiogroupContract,
   widgetContracts,
 } from './contracts'
-export {
-  createAriaReferenceIndex,
-  validateAriaIdReferences,
-  validateAriaTabRelationships,
-} from './aria-relationships'
-export type {
-  AriaIdLookup,
-  AriaReferenceElement,
-  AriaReferenceIndex,
-  AriaReferenceAttribute,
-  AriaRelationshipDiagnostic,
-  AriaTabRelationshipDiagnostic,
-} from './aria-relationships'
+export { validateAriaTabRelationships } from './aria-relationships'
+export type { AriaTabRelationshipDiagnostic } from './aria-relationships'
