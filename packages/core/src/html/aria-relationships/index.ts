@@ -11,3 +11,6 @@ export { validateAriaGridRelationships } from './validate-grid-relationships'
 export type { AriaGridRelationshipDiagnostic } from './validate-grid-relationships'
 export { validateAriaComboboxRelationships } from './validate-combobox-relationships'
 export type { AriaComboboxRelationshipDiagnostic } from './validate-combobox-relationships'
+
+export { validateAriaRadiogroupRelationships } from './validate-radiogroup-relationships'
+export type { AriaRadiogroupRelationshipDiagnostic } from './validate-radiogroup-relationships'

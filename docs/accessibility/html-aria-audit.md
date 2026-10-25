@@ -319,7 +319,7 @@ descendant structure, state transitions, or cross-element ID references.
 | Combobox                           | `combobox` (accessible name)                             | `validateAriaComboboxRelationships` checks supplied `aria-controls` references and supported popup roles (`listbox`, `tree`, `grid`, `dialog`); no reference is required by this relationship validator. |
 | Listbox / option                   | `listbox`, `option`; `validateAriaListboxRelationships` | Checks option ownership by supplied parent ancestry or `aria-owns`, and validates a present listbox `aria-activedescendant` reference for resolution, option role, and ownership. Selection applicability, multiselect consistency, and keyboard behavior remain separate questions. |
 | Tree                               | `tree`, `treeitem`                                       | `treeitem`/group relationships; conditional `aria-expanded`, selection, level/position metadata; permit valid flat and nested representations.                           |
-| Radiogroup / radio                 | `radiogroup`, `radio`                                    | Group membership, mutual exclusion, and group-level labeling; do not confuse static validation with arrow-key behavior.                                                |
+| Radiogroup / radio                 | `radiogroup`, `radio`                                    | Radio membership is checked by `validateAriaRadiogroupRelationships` when a caller supplies structural `parentId` links or explicit `aria-owns`; mutual exclusion, group-level labeling, and arrow-key behavior remain outside this relationship validator.                                                |
 | Grid                               | `grid` (accessible name)                                 | Characterize `row`, `gridcell`, `columnheader`, and `rowheader` coverage before adding contracts. Do not require optional row/column counts, indices, selection, or active-descendant universally; assess which checks need tree/document context. |
 
 For menu-item contracts, the static single-element boundary is intentional: `menuitem` requires an
@@ -355,10 +355,11 @@ require `aria-activedescendant` universally; APG permits focus-management altern
 ### Radiogroup and radio: current validation boundary
 
 The `radiogroupContract` requires an accessible name, and the `radioContract` requires
-`aria-checked` to be present, including an explicit `false`. These are independent per-element
-checks: the current contract layer does not verify group membership, mutual exclusion within a
-single-select group, or arrow-key selection behavior. Those require structural or runtime context
-that is not available to the current per-element `AriaContext`.
+`aria-checked` to be present, including an explicit `false`. The separate
+`validateAriaRadiogroupRelationships` utility checks that each supplied `radio` has exactly one
+`radiogroup` ancestor/owner, using `parentId` for structural containment and `aria-owns` for explicit
+ownership. It does not infer relationships outside the supplied scope, validate mutual exclusion,
+labeling, or keyboard behavior; those remain separate concerns.
 
 ### Combobox: current validation boundary
 
