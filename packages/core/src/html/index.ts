@@ -81,3 +81,5 @@ export type {
   AriaListboxRelationshipDiagnostic,
   AriaListboxRelationshipIssue,
 } from './aria-listbox-relationship-validation'
+export { validateAriaTreeRelationships } from './aria-relationships'
+export type { AriaTreeRelationshipDiagnostic } from './aria-relationships'
