@@ -83,3 +83,5 @@ export type {
 } from './aria-listbox-relationship-validation'
 export { validateAriaTreeRelationships } from './aria-relationships'
 export type { AriaTreeRelationshipDiagnostic } from './aria-relationships'
+export { validateAriaGridRelationships } from './aria-relationships'
+export type { AriaGridRelationshipDiagnostic } from './aria-relationships'
