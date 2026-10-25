@@ -72,3 +72,5 @@ export {
   radiogroupContract,
   widgetContracts,
 } from './contracts'
+export { validateAriaTabRelationships } from './aria-relationships'
+export type { AriaTabRelationshipDiagnostic } from './aria-relationships'
