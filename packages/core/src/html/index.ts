@@ -88,3 +88,6 @@ export type { AriaGridRelationshipDiagnostic } from './aria-relationships'
 
 export { validateAriaComboboxRelationships } from './aria-relationships'
 export type { AriaComboboxRelationshipDiagnostic } from './aria-relationships'
+
+export { validateAriaRadiogroupRelationships } from './aria-relationships'
+export type { AriaRadiogroupRelationshipDiagnostic } from './aria-relationships'
