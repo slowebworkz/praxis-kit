@@ -7,3 +7,5 @@ export type { AriaTabRelationshipDiagnostic } from './validate-tab-relationships
 
 export { validateAriaTreeRelationships } from './validate-tree-relationships'
 export type { AriaTreeRelationshipDiagnostic } from './validate-tree-relationships'
+export { validateAriaGridRelationships } from './validate-grid-relationships'
+export type { AriaGridRelationshipDiagnostic } from './validate-grid-relationships'
