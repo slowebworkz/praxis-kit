@@ -56,11 +56,13 @@ export function validateAriaListboxRelationships(
     if (isDescendantOf(optionIndex, listboxIndex)) return true
     const owns = elements[listboxIndex]?.props?.['aria-owns']
     if (!isString(owns)) return false
-    return iterate.some(
-      index.resolveList(owns),
-      (resolution) =>
-        resolution.status === 'resolved' && resolution.target === elements[optionIndex],
-    )
+    return iterate.some(index.resolveList(owns), (resolution) => {
+      if (resolution.status !== 'resolved') return false
+      const ownedIndex = elements.indexOf(resolution.target)
+      // A listbox may own an option directly or own a group that contains
+      // options. Treat descendants of an explicitly owned group as owned too.
+      return ownedIndex === optionIndex || isDescendantOf(optionIndex, ownedIndex)
+    })
   }
 
   iterate.forEach(elements, (element, elementIndex) => {

@@ -317,7 +317,7 @@ descendant structure, state transitions, or cross-element ID references.
 | Menu / menubar                     | `menu`, `menubar`, `menuitem`, `menuitemcheckbox`, `menuitemradio` | Ownership and keyboard behavior need composite/runtime context. `aria-haspopup`/`aria-expanded` are conditional on submenu behavior; `aria-disabled` is optional. `menuitemcheckbox` and `menuitemradio` require `aria-checked`, including explicit `false`. |
 | Toolbar                            | `toolbar` (accessible name)                              | Keyboard navigation and focus management are behavioral concerns; validate structural relationships only when the available context supports them. |
 | Combobox                           | `combobox` (accessible name)                             | `validateAriaComboboxRelationships` checks supplied `aria-controls` references and supported popup roles (`listbox`, `tree`, `grid`, `dialog`); no reference is required by this relationship validator. |
-| Listbox / option                   | `listbox`, `option`                                      | `aria-selected`/`aria-checked` applicability; `aria-activedescendant` ID reference; multiselect state.                                                                 |
+| Listbox / option                   | `listbox`, `option`; `validateAriaListboxRelationships` | Checks option ownership by supplied parent ancestry or `aria-owns`, and validates a present listbox `aria-activedescendant` reference for resolution, option role, and ownership. Selection applicability, multiselect consistency, and keyboard behavior remain separate questions. |
 | Tree                               | `tree`, `treeitem`                                       | `treeitem`/group relationships; conditional `aria-expanded`, selection, level/position metadata; permit valid flat and nested representations.                           |
 | Radiogroup / radio                 | `radiogroup`, `radio`                                    | Group membership, mutual exclusion, and group-level labeling; do not confuse static validation with arrow-key behavior.                                                |
 | Grid                               | `grid` (accessible name)                                 | Characterize `row`, `gridcell`, `columnheader`, and `rowheader` coverage before adding contracts. Do not require optional row/column counts, indices, selection, or active-descendant universally; assess which checks need tree/document context. |
@@ -337,13 +337,13 @@ negative characterization tests for each rule proposed.
 
 ### Listbox and tree: current validation boundary
 
-The current `listboxContract` and `treeContract` enforce accessible naming only. The new
-`treeitemContract` also requires an accessible name. These contracts do not verify
-that an `aria-activedescendant` value resolves to an element, that a listbox contains `option` roles,
-or that `treeitem`/`group` descendants form a valid tree. Those checks require descendant or
-document-level context that is not available to the current per-element `AriaContext`. The
-characterization tests intentionally preserve that boundary; they are not a claim that those
-relationships are optional under APG.
+The per-element `listboxContract` and `treeContract` enforce accessible naming only. The separate
+`validateAriaListboxRelationships` utility accepts a caller-supplied ordered element scope and can
+check option ownership through `parentIndex` ancestry or `aria-owns`, plus a present
+`aria-activedescendant` reference for resolution, option role, and ownership. An explicitly owned
+group also owns its option descendants. This utility is not a DOM walker and does not validate
+selection state, multiselect consistency, or keyboard behavior. The `treeitemContract` requires an
+accessible name, but treeitem/group hierarchy still needs a separate tree-aware validation design.
 
 The `treeitemContract` checks naming only. It deliberately does not require `aria-expanded`,
 because leaf items do not need expansion state. For a future behavior patch, first decide whether
