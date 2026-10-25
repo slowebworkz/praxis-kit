@@ -5,6 +5,7 @@ import {
   checkboxContract,
   gridContract,
   listboxContract,
+  menuitemContract,
   menuitemcheckboxContract,
   menuitemradioContract,
   optionContract,
@@ -52,6 +53,21 @@ describe('APG required widget states', () => {
   ] as const)('accepts role="%s" when %s is explicitly false', (_role, contract, attribute) => {
     expect(contract.aria![0]!(ctx({ [attribute]: false }))).toEqual([])
   })
+})
+
+describe('APG menuitem naming', () => {
+  it('warns when role="menuitem" has no accessible name', () => {
+    expect(menuitemContract.aria![0]!(ctx({}))).toMatchObject([
+      { valid: false, severity: 'warning' },
+    ])
+  })
+
+  it.each(['aria-label', 'aria-labelledby'])(
+    'accepts role="menuitem" named by %s',
+    (attribute) => {
+      expect(menuitemContract.aria![0]!(ctx({ [attribute]: 'Save' }))).toEqual([])
+    },
+  )
 })
 
 describe('APG menu item checked states', () => {

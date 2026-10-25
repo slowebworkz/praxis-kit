@@ -25,6 +25,7 @@ import {
   listContract,
   menubarContract,
   menuContract,
+  menuitemContract,
   menuitemcheckboxContract,
   menuitemradioContract,
   objectContract,
@@ -901,6 +902,7 @@ describe('widget contracts', () => {
 
   it.each([
     ['menu', menuContract],
+    ['menuitem', menuitemContract],
     ['combobox', comboboxContract],
     ['menuitemcheckbox', menuitemcheckboxContract],
     ['menuitemradio', menuitemradioContract],
@@ -915,6 +917,18 @@ describe('widget contracts', () => {
     ['radiogroup', radiogroupContract],
   ])('widgetContracts[%s] is the correct contract', (role, expected) => {
     expect(widgetContracts[role]).toBe(expected)
+  })
+
+  it('requireAccessibleName fires via menuitemContract when aria-label is absent', () => {
+    const rule = menuitemContract.aria![0]!
+    const results = rule(ctx('button', {}))
+    expect(results).toMatchObject([{ valid: false, severity: 'warning' }])
+  })
+
+  it('requireAccessibleName passes via menuitemContract when aria-label is present', () => {
+    const rule = menuitemContract.aria![0]!
+    const results = rule(ctx('button', { 'aria-label': 'Save' }))
+    expect(results).toEqual([])
   })
 
   it('requireAccessibleName fires via menuContract when aria-label is absent', () => {
@@ -937,6 +951,7 @@ describe('widget contracts', () => {
         'grid',
         'listbox',
         'menu',
+        'menuitem',
         'menuitemcheckbox',
         'menuitemradio',
         'menubar',

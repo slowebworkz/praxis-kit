@@ -20,6 +20,14 @@ export const dialogContract = ariaContract([requireAccessibleName])
 export const menuContract = ariaContract([requireAccessibleName])
 
 /**
+ * `role="menuitem"` — an actionable item within a menu or menubar.
+ * This single-element contract checks for an accessible name only; menu
+ * ownership and keyboard interaction require composite-widget context.
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/menubar/
+ */
+export const menuitemContract = ariaContract([requireAccessibleName])
+
+/**
  * `role="menubar"` — persistent horizontal menu bar of menu items.
  * APG: https://www.w3.org/WAI/ARIA/apg/patterns/menubar/
  */
