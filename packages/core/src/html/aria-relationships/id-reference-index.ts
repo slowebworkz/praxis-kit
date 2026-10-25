@@ -1,10 +1,11 @@
 import { isString } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 /** Minimal element shape accepted by the document-level ARIA relationship checks. */
 export interface AriaReferenceElement {
   readonly id?: unknown
-  readonly props?: Readonly<Record<string, unknown>>
+  readonly props?: Readonly<AnyRecord>
   readonly role?: unknown
   /** Optional structural parent ID supplied by a tree-aware caller. */
   readonly parentId?: unknown

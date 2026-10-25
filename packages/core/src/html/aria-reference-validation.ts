@@ -2,11 +2,12 @@ import { isString } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import type { AriaIdReferenceResolution } from './aria-reference-index'
 import { createAriaReferenceIndex } from './aria-reference-index'
+import type { AnyRecord } from '@praxis-kit/primitive'
 
 /** Element data needed for tree-level ID-reference integrity checks. */
 export interface AriaReferenceElement {
   readonly id?: string | null
-  readonly props?: Readonly<Record<string, unknown>>
+  readonly props?: Readonly<AnyRecord>
 }
 
 export type AriaReferenceAttribute = 'aria-labelledby' | 'aria-controls' | 'aria-activedescendant'
