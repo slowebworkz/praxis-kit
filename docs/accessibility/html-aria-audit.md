@@ -313,7 +313,7 @@ descendant structure, state transitions, or cross-element ID references.
 
 | APG pattern / role family          | Current registry coverage                                | Remaining audit questions                                                                                                                                             |
 | ---------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tabs: `tablist`, `tab`, `tabpanel` | `tablist`, `tab`, `tabpanel`                             | Tab-to-panel ID references; selected-state applicability and orientation; avoid requiring a single markup shape where APG permits alternatives.                       |
+| Tabs: `tablist`, `tab`, `tabpanel` | `tablist`, `tab`, `tabpanel`                             | Tab-to-panel ID references; warn when a uniquely resolved `aria-controls` relationship conflicts with a uniquely resolved `aria-labelledby` tab reference; do not require reciprocal attributes when only one side is declared.                       |
 | Menu / menubar                     | `menu`, `menubar`, `menuitem`, `menuitemcheckbox`, `menuitemradio` | Ownership and keyboard behavior need composite/runtime context. `aria-haspopup`/`aria-expanded` are conditional on submenu behavior; `aria-disabled` is optional. `menuitemcheckbox` and `menuitemradio` require `aria-checked`, including explicit `false`. |
 | Toolbar                            | `toolbar` (accessible name)                              | Keyboard navigation and focus management are behavioral concerns; validate structural relationships only when the available context supports them. |
 | Combobox                           | `combobox` (accessible name)                             | Required properties such as `aria-expanded` remain covered by shared ARIA validation; popup ownership and `aria-controls` target resolution require cross-element context. |
@@ -408,3 +408,6 @@ The separate `validateAriaGridRelationships` utility now checks caller-supplied 
 row ownership, row-to-cell ownership, and resolved `aria-activedescendant` ownership. It does not
 require optional row/column counts or indices, infer keyboard behavior, or change the local
 `gridContract`; relationship checks require an explicit element scope.
+
+
+The tab relationship validator also warns when a tab uniquely controls a panel but that panel's `aria-labelledby` uniquely names a different tab. It does not require reciprocal attributes, and it avoids guessing when ID references are missing or ambiguous.
