@@ -1,0 +1,6 @@
+export { createAriaReferenceIndex } from './id-reference-index'
+export type { AriaIdLookup, AriaReferenceElement, AriaReferenceIndex } from './id-reference-index'
+export { validateAriaIdReferences } from './validate-id-references'
+export type { AriaReferenceAttribute, AriaRelationshipDiagnostic } from './validate-id-references'
+export { validateAriaTabRelationships } from './validate-tab-relationships'
+export type { AriaTabRelationshipDiagnostic } from './validate-tab-relationships'
