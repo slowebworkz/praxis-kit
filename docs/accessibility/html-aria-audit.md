@@ -318,7 +318,7 @@ descendant structure, state transitions, or cross-element ID references.
 | Toolbar                            | `toolbar` (accessible name)                              | Keyboard navigation and focus management are behavioral concerns; validate structural relationships only when the available context supports them. |
 | Combobox                           | `combobox` (accessible name)                             | `validateAriaComboboxRelationships` checks supplied `aria-controls` references and supported popup roles (`listbox`, `tree`, `grid`, `dialog`); no reference is required by this relationship validator. |
 | Listbox / option                   | `listbox`, `option`; `validateAriaListboxRelationships` | Checks option ownership by supplied parent ancestry or `aria-owns`, and validates a present listbox `aria-activedescendant` reference for resolution, option role, and ownership. Selection applicability, multiselect consistency, and keyboard behavior remain separate questions. |
-| Tree                               | `tree`, `treeitem`                                       | `treeitem`/group relationships; conditional `aria-expanded`, selection, level/position metadata; permit valid flat and nested representations.                           |
+| Tree                               | `tree`, `treeitem`                                       | `treeitem`/group ownership; conditional `aria-expanded`, selection, level/position metadata; permit valid flat and nested representations.                           |
 | Radiogroup / radio                 | `radiogroup`, `radio`                                    | Radio membership is checked by `validateAriaRadiogroupRelationships` when a caller supplies structural `parentId` links or explicit `aria-owns`; mutual exclusion, group-level labeling, and arrow-key behavior remain outside this relationship validator.                                                |
 | Grid                               | `grid` (accessible name)                                 | Characterize `row`, `gridcell`, `columnheader`, and `rowheader` coverage before adding contracts. Do not require optional row/column counts, indices, selection, or active-descendant universally; assess which checks need tree/document context. |
 
@@ -345,7 +345,7 @@ group also owns its option descendants. This utility is not a DOM walker and doe
 selection state, multiselect consistency, or keyboard behavior. The `treeitemContract` requires an
 accessible name, but treeitem/group hierarchy still needs a separate tree-aware validation design.
 
-The `treeitemContract` checks naming only. It deliberately does not require `aria-expanded`,
+The tree relationship validator checks ownership for both `treeitem` and `group`, including orphaned groups, invalid group owners, and multiple resolved owners. It deliberately permits structural containment and explicit `aria-owns` ownership. The `treeitemContract` checks naming only. It deliberately does not require `aria-expanded`,
 because leaf items do not need expansion state. For a future behavior patch, first decide whether
 Praxis Kit will add a tree-aware validation phase.
 Do not approximate these checks by requiring `aria-expanded` on every `treeitem`: leaf items do not
