@@ -19,6 +19,36 @@ describe('ARIA grid relationships', () => {
     ])).toEqual([])
   })
 
+  it('accepts a rowgroup structurally contained by a grid', () => {
+    expect(validateAriaGridRelationships([
+      { id: 'grid', role: 'grid' },
+      { id: 'rowgroup', role: 'rowgroup', parentId: 'grid' },
+      { id: 'row', role: 'row', parentId: 'rowgroup' },
+      { id: 'cell', role: 'gridcell', parentId: 'row' },
+    ])).toEqual([])
+  })
+
+  it('accepts a rowgroup explicitly owned by a treegrid', () => {
+    expect(validateAriaGridRelationships([
+      { id: 'grid', props: { role: 'treegrid', 'aria-owns': 'rowgroup' } },
+      { id: 'rowgroup', role: 'rowgroup' },
+      { id: 'row', role: 'row', parentId: 'rowgroup' },
+      { id: 'cell', role: 'gridcell', parentId: 'row' },
+    ])).toEqual([])
+  })
+
+  it('warns for orphaned rowgroups and rowgroups associated with multiple grids', () => {
+    expect(validateAriaGridRelationships([
+      { id: 'orphan', role: 'rowgroup' },
+      { id: 'grid-a', role: 'grid', props: { 'aria-owns': 'shared' } },
+      { id: 'grid-b', role: 'treegrid', props: { 'aria-owns': 'shared' } },
+      { id: 'shared', role: 'rowgroup' },
+    ]).map(({ code }) => code)).toEqual([
+      'rowgroup-without-grid-owner',
+      'rowgroup-with-multiple-grid-owners',
+    ])
+  })
+
   it('warns when rows and cells lack their required owners', () => {
     expect(validateAriaGridRelationships([
       { id: 'row', props: { role: 'row' } },

@@ -6,7 +6,12 @@ import type { AriaReferenceElement } from './id-reference-index'
 export interface AriaGridRelationshipDiagnostic {
   readonly valid: false
   readonly severity: 'warning'
-  readonly code: 'row-without-grid-owner' | 'cell-without-row-owner' | 'active-descendant-not-owned'
+  readonly code:
+    | 'rowgroup-without-grid-owner'
+    | 'rowgroup-with-multiple-grid-owners'
+    | 'row-without-grid-owner'
+    | 'cell-without-row-owner'
+    | 'active-descendant-not-owned'
   readonly sourceIndex: number
   readonly targetId?: string
   readonly message: string
@@ -84,10 +89,49 @@ export function validateAriaGridRelationships(
     return ancestors
   }
 
+  const nearestGridOwnersOf = (sourceIndex: number): Set<number> => {
+    const owners = new Set<number>()
+    const pending = [...parents[sourceIndex]!]
+    const visited = new Set<number>()
+    while (pending.length > 0) {
+      const current = pending.pop()!
+      if (visited.has(current)) continue
+      visited.add(current)
+      if (['grid', 'treegrid'].includes(String(roleOf(elements[current]!)))) {
+        owners.add(current)
+        // A nested grid/treegrid is the owning composite; don't also count outer grids.
+        continue
+      }
+      pending.push(...parents[current]!)
+    }
+    return owners
+  }
+
   const diagnostics: AriaGridRelationshipDiagnostic[] = []
   iterate.forEach(elements, (element, sourceIndex) => {
     const role = roleOf(element)
     const ancestors = ancestorsOf(sourceIndex)
+
+    if (role === 'rowgroup') {
+      const gridOwners = [...nearestGridOwnersOf(sourceIndex)]
+      if (gridOwners.length === 0) {
+        diagnostics.push(
+          warn(
+            'rowgroup-without-grid-owner',
+            sourceIndex,
+            'role="rowgroup" is not contained in or owned by a grid or treegrid.',
+          ),
+        )
+      } else if (gridOwners.length > 1) {
+        diagnostics.push(
+          warn(
+            'rowgroup-with-multiple-grid-owners',
+            sourceIndex,
+            'role="rowgroup" is associated with more than one grid or treegrid.',
+          ),
+        )
+      }
+    }
 
     if (role === 'row') {
       const hasGridOwner = [...ancestors].some((ancestorIndex) =>
