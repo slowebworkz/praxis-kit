@@ -23,6 +23,33 @@ describe('validateAriaListboxRelationships', () => {
     ).toEqual([])
   })
 
+  it('accepts options inside a group explicitly owned by a listbox', () => {
+    expect(
+      validateAriaListboxRelationships([
+        {
+          id: 'list',
+          props: {
+            role: 'listbox',
+            'aria-owns': 'group',
+            'aria-activedescendant': 'option-a',
+          },
+        },
+        { id: 'group', props: { role: 'group' } },
+        { id: 'option-a', parentIndex: 1, props: { role: 'option' } },
+      ]),
+    ).toEqual([])
+  })
+
+  it('does not treat descendants of an unowned group as listbox-owned', () => {
+    expect(
+      validateAriaListboxRelationships([
+        { id: 'list', props: { role: 'listbox', 'aria-owns': 'other-group' } },
+        { id: 'group', props: { role: 'group' } },
+        { id: 'option-a', parentIndex: 1, props: { role: 'option' } },
+      ]),
+    ).toEqual([{ elementIndex: 2, issue: 'option-without-listbox-owner' }])
+  })
+
   it('reports an option without a listbox owner', () => {
     expect(
       validateAriaListboxRelationships([{ id: 'option-a', props: { role: 'option' } }]),
