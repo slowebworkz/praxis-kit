@@ -2,6 +2,46 @@ import { describe, expect, it } from 'vitest'
 import { validateAriaListboxRelationships } from './aria-listbox-relationship-validation'
 
 describe('validateAriaListboxRelationships', () => {
+  it('accepts a consistent aria-selected selection model', () => {
+    expect(
+      validateAriaListboxRelationships([
+        { props: { role: 'listbox' } },
+        { parentIndex: 0, props: { role: 'option', 'aria-selected': true } },
+        { parentIndex: 0, props: { role: 'option', 'aria-selected': false } },
+      ]),
+    ).toEqual([])
+  })
+
+  it('accepts a consistent aria-checked selection model', () => {
+    expect(
+      validateAriaListboxRelationships([
+        { props: { role: 'listbox' } },
+        { parentIndex: 0, props: { role: 'option', 'aria-checked': true } },
+        { parentIndex: 0, props: { role: 'option', 'aria-checked': false } },
+      ]),
+    ).toEqual([])
+  })
+
+  it('warns when owned options mix aria-selected and aria-checked', () => {
+    expect(
+      validateAriaListboxRelationships([
+        { props: { role: 'listbox' } },
+        { parentIndex: 0, props: { role: 'option', 'aria-selected': false } },
+        { parentIndex: 0, props: { role: 'option', 'aria-checked': false } },
+      ]),
+    ).toEqual([{ elementIndex: 0, issue: 'mixed-option-selection-state' }])
+  })
+
+  it('does not mix selection models across separate listboxes', () => {
+    expect(
+      validateAriaListboxRelationships([
+        { props: { role: 'listbox' } },
+        { parentIndex: 0, props: { role: 'option', 'aria-selected': false } },
+        { props: { role: 'listbox' } },
+        { parentIndex: 2, props: { role: 'option', 'aria-checked': false } },
+      ]),
+    ).toEqual([])
+  })
   it('accepts options nested under a listbox and a valid active descendant', () => {
     expect(
       validateAriaListboxRelationships([
