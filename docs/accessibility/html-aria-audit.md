@@ -316,7 +316,7 @@ descendant structure, state transitions, or cross-element ID references.
 | Tabs: `tablist`, `tab`, `tabpanel` | `tablist`, `tab`, `tabpanel`                             | Tab-to-panel ID references; warn when a uniquely resolved `aria-controls` relationship conflicts with a uniquely resolved `aria-labelledby` tab reference; do not require reciprocal attributes when only one side is declared.                       |
 | Menu / menubar                     | `menu`, `menubar`, `menuitem`, `menuitemcheckbox`, `menuitemradio` | Ownership and keyboard behavior need composite/runtime context. `aria-haspopup`/`aria-expanded` are conditional on submenu behavior; `aria-disabled` is optional. `menuitemcheckbox` and `menuitemradio` require `aria-checked`, including explicit `false`. |
 | Toolbar                            | `toolbar` (accessible name)                              | Keyboard navigation and focus management are behavioral concerns; validate structural relationships only when the available context supports them. |
-| Combobox                           | `combobox` (accessible name)                             | Required properties such as `aria-expanded` remain covered by shared ARIA validation; popup ownership and `aria-controls` target resolution require cross-element context. |
+| Combobox                           | `combobox` (accessible name)                             | `validateAriaComboboxRelationships` checks supplied `aria-controls` references and supported popup roles (`listbox`, `tree`, `grid`, `dialog`); no reference is required by this relationship validator. |
 | Listbox / option                   | `listbox`, `option`                                      | `aria-selected`/`aria-checked` applicability; `aria-activedescendant` ID reference; multiselect state.                                                                 |
 | Tree                               | `tree`, `treeitem`                                       | `treeitem`/group relationships; conditional `aria-expanded`, selection, level/position metadata; permit valid flat and nested representations.                           |
 | Radiogroup / radio                 | `radiogroup`, `radio`                                    | Group membership, mutual exclusion, and group-level labeling; do not confuse static validation with arrow-key behavior.                                                |
@@ -365,9 +365,11 @@ that is not available to the current per-element `AriaContext`.
 The standalone `comboboxContract` requires an accessible name. It does not impose one APG
 implementation pattern: comboboxes may be input- or button-based, and their popup may be a listbox,
 tree, grid, or dialog. Required ARIA properties such as `aria-expanded` remain the responsibility
-of shared required-property validation rather than a duplicate widget-specific rule. Resolving
-`aria-controls` targets or validating popup ownership requires cross-element context and is out of
-scope for the current per-element `AriaContext`.
+of shared required-property validation rather than a duplicate widget-specific rule. The separate
+`validateAriaComboboxRelationships` utility checks `aria-controls` references within a caller-supplied
+element scope: missing and ambiguous IDs are reported, and uniquely resolved targets must use one
+of the supported popup roles. It does not require `aria-controls` to be present, infer DOM containment,
+or validate focus and keyboard behavior.
 
 ### Grid: current validation boundary
 
@@ -411,3 +413,6 @@ require optional row/column counts or indices, infer keyboard behavior, or chang
 
 
 The tab relationship validator also warns when a tab uniquely controls a panel but that panel's `aria-labelledby` uniquely names a different tab. It does not require reciprocal attributes, and it avoids guessing when ID references are missing or ambiguous.
+
+
+The combobox relationship validator uses the same explicit element-scope model as the tab, grid, and tree validators. It checks only declared `aria-controls` references and does not assume a single popup implementation.
