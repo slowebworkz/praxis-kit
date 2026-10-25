@@ -314,13 +314,20 @@ descendant structure, state transitions, or cross-element ID references.
 | APG pattern / role family          | Current registry coverage                                | Remaining audit questions                                                                                                                                             |
 | ---------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Tabs: `tablist`, `tab`, `tabpanel` | `tablist`, `tab`, `tabpanel`                             | Tab-to-panel ID references; selected-state applicability and orientation; avoid requiring a single markup shape where APG permits alternatives.                       |
-| Menu / menubar                     | `menu`, `menubar`, `menuitemcheckbox`, `menuitemradio`   | Remaining menu-item role coverage, ownership, and conditional `aria-haspopup`/`aria-expanded`/disabled applicability; distinguish static semantics from keyboard behavior. |
+| Menu / menubar                     | `menu`, `menubar`, `menuitem`, `menuitemcheckbox`, `menuitemradio` | Ownership and keyboard behavior need composite/runtime context. `aria-haspopup`/`aria-expanded` are conditional on submenu behavior; `aria-disabled` is optional. `menuitemcheckbox` and `menuitemradio` require `aria-checked`, including explicit `false`. |
 | Toolbar                            | `toolbar` (accessible name)                              | Keyboard navigation and focus management are behavioral concerns; validate structural relationships only when the available context supports them. |
 | Combobox                           | `combobox` (accessible name)                             | Required properties such as `aria-expanded` remain covered by shared ARIA validation; popup ownership and `aria-controls` target resolution require cross-element context. |
 | Listbox / option                   | `listbox`, `option`                                      | `aria-selected`/`aria-checked` applicability; `aria-activedescendant` ID reference; multiselect state.                                                                 |
 | Tree                               | `tree`, `treeitem`                                       | `treeitem`/group relationships; conditional `aria-expanded`, selection, level/position metadata; permit valid flat and nested representations.                           |
 | Radiogroup / radio                 | `radiogroup`, `radio`                                    | Group membership, mutual exclusion, and group-level labeling; do not confuse static validation with arrow-key behavior.                                                |
 | Grid                               | `grid` (accessible name)                                 | Characterize `row`, `gridcell`, `columnheader`, and `rowheader` coverage before adding contracts. Do not require optional row/column counts, indices, selection, or active-descendant universally; assess which checks need tree/document context. |
+
+For menu-item contracts, the static single-element boundary is intentional: `menuitem` requires an
+accessible name; `menuitemcheckbox` and `menuitemradio` additionally require `aria-checked` to be
+present (the explicit `false` value is valid). `aria-disabled` is optional, and `aria-haspopup` /
+`aria-expanded` are only relevant when an item opens a submenu. The static contract does not infer
+submenu behavior or validate menu ownership. Tests in `contracts/aria/widgets.test.ts` pin this
+boundary so optional states are not accidentally promoted to universal requirements.
 
 Audit each row against the relevant APG pattern and WAI-ARIA 1.2 role/property requirements before
 changing runtime rules. Record a finding only when the requirement is expressible from the available

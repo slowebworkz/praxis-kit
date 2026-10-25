@@ -71,6 +71,38 @@ describe('APG menuitem naming', () => {
   )
 })
 
+describe('APG optional menu item states', () => {
+  it.each([
+    { 'aria-label': 'Open submenu' },
+    { 'aria-label': 'Open submenu', 'aria-haspopup': 'menu' },
+    { 'aria-label': 'Open submenu', 'aria-haspopup': 'menu', 'aria-expanded': true },
+    { 'aria-label': 'Unavailable action', 'aria-disabled': true },
+    { 'aria-label': 'Available action', 'aria-disabled': false },
+  ])('does not require conditional menuitem state attributes', (props) => {
+    expect(menuitemContract.aria![0]!(ctx(props))).toEqual([])
+  })
+
+  it('does not make submenu or disabled state attributes substitutes for checked state', () => {
+    for (const contract of [menuitemcheckboxContract, menuitemradioContract]) {
+      expect(
+        contract.aria![0]!(
+          ctx({
+            'aria-label': 'Action',
+            'aria-disabled': true,
+            'aria-haspopup': 'menu',
+            'aria-expanded': true,
+          }),
+        ),
+      ).toMatchObject([
+        {
+          valid: false,
+          diagnostic: { message: expect.stringContaining('aria-checked') },
+        },
+      ])
+    }
+  })
+})
+
 describe('APG menu item checked states', () => {
   it.each([
     ['menuitemcheckbox', menuitemcheckboxContract],
