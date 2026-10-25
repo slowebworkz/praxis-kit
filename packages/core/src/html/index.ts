@@ -91,3 +91,5 @@ export type { AriaComboboxRelationshipDiagnostic } from './aria-relationships'
 
 export { validateAriaRadiogroupRelationships } from './aria-relationships'
 export type { AriaRadiogroupRelationshipDiagnostic } from './aria-relationships'
+export { validateAriaMenuRelationships } from './aria-relationships'
+export type { AriaMenuRelationshipDiagnostic } from './aria-relationships'
