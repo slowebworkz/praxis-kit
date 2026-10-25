@@ -4,3 +4,6 @@ export { validateAriaIdReferences } from './validate-id-references'
 export type { AriaReferenceAttribute, AriaRelationshipDiagnostic } from './validate-id-references'
 export { validateAriaTabRelationships } from './validate-tab-relationships'
 export type { AriaTabRelationshipDiagnostic } from './validate-tab-relationships'
+
+export { validateAriaTreeRelationships } from './validate-tree-relationships'
+export type { AriaTreeRelationshipDiagnostic } from './validate-tree-relationships'

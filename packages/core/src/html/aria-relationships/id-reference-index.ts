@@ -6,6 +6,8 @@ export interface AriaReferenceElement {
   readonly id?: unknown
   readonly props?: Readonly<Record<string, unknown>>
   readonly role?: unknown
+  /** Optional structural parent ID supplied by a tree-aware caller. */
+  readonly parentId?: unknown
 }
 
 export type AriaIdLookup =
