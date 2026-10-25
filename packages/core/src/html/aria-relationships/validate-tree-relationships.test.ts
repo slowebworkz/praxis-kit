@@ -31,6 +31,42 @@ describe('ARIA tree relationships', () => {
     ).toEqual(['missing-owner', 'wrong-owner-role'])
   })
 
+  it('warns for orphaned groups and groups owned by invalid roles', () => {
+    expect(
+      validateAriaTreeRelationships([
+        { id: 'orphan', props: { role: 'group' } },
+        { id: 'region', props: { role: 'region' } },
+        { id: 'invalid-group', parentId: 'region', props: { role: 'group' } },
+      ]).map(({ code, sourceIndex }) => [code, sourceIndex]),
+    ).toEqual([
+      ['missing-group-owner', 0],
+      ['wrong-group-owner-role', 2],
+    ])
+  })
+
+  it('accepts groups structurally contained by or explicitly owned by treeitems', () => {
+    expect(
+      validateAriaTreeRelationships([
+        { id: 'tree', props: { role: 'tree' } },
+        { id: 'parent', parentId: 'tree', props: { role: 'treeitem', 'aria-expanded': 'true', 'aria-owns': 'explicit-group' } },
+        { id: 'nested-group', parentId: 'parent', props: { role: 'group' } },
+        { id: 'child', parentId: 'nested-group', props: { role: 'treeitem' } },
+        { id: 'explicit-group', props: { role: 'group' } },
+      ]),
+    ).toEqual([])
+  })
+
+  it('warns when a group has multiple owners', () => {
+    expect(
+      validateAriaTreeRelationships([
+        { id: 'tree', props: { role: 'tree' } },
+        { id: 'first', parentId: 'tree', props: { role: 'treeitem', 'aria-expanded': 'true', 'aria-owns': 'group' } },
+        { id: 'second', parentId: 'tree', props: { role: 'treeitem', 'aria-expanded': 'true', 'aria-owns': 'group' } },
+        { id: 'group', props: { role: 'group' } },
+      ]).map(({ code, sourceIndex }) => [code, sourceIndex]),
+    ).toContainEqual(['multiple-group-owners', 3])
+  })
+
   it('warns when the active descendant is outside the tree', () => {
     expect(
       validateAriaTreeRelationships([

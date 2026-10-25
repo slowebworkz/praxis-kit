@@ -10,6 +10,9 @@ export interface AriaTreeRelationshipDiagnostic {
     | 'missing-owner'
     | 'wrong-owner-role'
     | 'multiple-owners'
+    | 'missing-group-owner'
+    | 'wrong-group-owner-role'
+    | 'multiple-group-owners'
     | 'active-descendant-not-owned'
     | 'missing-expanded'
     | 'expanded-on-leaf'
@@ -103,6 +106,42 @@ export function validateAriaTreeRelationships(
 
   iterate.forEach(elements, (element, sourceIndex) => {
     const role = roleOf(element)
+
+    if (role === 'group') {
+      const ownerIndexes = [...parents[sourceIndex]!]
+      if (ownerIndexes.length === 0) {
+        diagnostics.push(
+          warn(
+            'missing-group-owner',
+            sourceIndex,
+            'role="group" in a tree must be owned by a treeitem.',
+          ),
+        )
+      } else {
+        const invalidOwner = ownerIndexes.find(
+          (ownerIndex) => roleOf(elements[ownerIndex]!) !== 'treeitem',
+        )
+        if (isDefined(invalidOwner)) {
+          diagnostics.push(
+            warn(
+              'wrong-group-owner-role',
+              sourceIndex,
+              'role="group" in a tree must be owned by a treeitem, not another role.',
+              idOf(elements[invalidOwner]!),
+            ),
+          )
+        }
+        if (ownerIndexes.length > 1) {
+          diagnostics.push(
+            warn(
+              'multiple-group-owners',
+              sourceIndex,
+              'role="group" has more than one resolved owner.',
+            ),
+          )
+        }
+      }
+    }
 
     if (role === 'treeitem') {
       const ownerIndexes = [...parents[sourceIndex]!]
