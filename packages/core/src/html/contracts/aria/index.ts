@@ -16,6 +16,7 @@ export {
   tabContract,
   tabpanelContract,
   tablistContract,
+  toolbarContract,
   treeContract,
   treeitemContract,
 } from './widgets'

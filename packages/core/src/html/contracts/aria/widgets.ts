@@ -69,6 +69,14 @@ export const comboboxContract = ariaContract([requireAccessibleName])
 export const listboxContract = ariaContract([requireAccessibleName])
 
 /**
+ * `role="toolbar"` — a grouping of controls that functions as a single widget.
+ * This static contract checks only the toolbar's accessible name; keyboard
+ * navigation and focus management are behavioral concerns.
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/
+ */
+export const toolbarContract = ariaContract([requireAccessibleName])
+
+/**
  * `role="tablist"` — container for a set of tabs that manage tab panels.
  * APG: https://www.w3.org/WAI/ARIA/apg/patterns/tabs/
  */

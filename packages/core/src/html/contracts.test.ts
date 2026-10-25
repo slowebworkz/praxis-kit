@@ -41,6 +41,7 @@ import {
   tableRowContract,
   tablistContract,
   tabpanelContract,
+  toolbarContract,
   treeContract,
   treeitemContract,
   videoContract,
@@ -961,6 +962,7 @@ describe('widget contracts', () => {
         'tab',
         'tablist',
         'tabpanel',
+        'toolbar',
         'tree',
         'treeitem',
       ].sort(),
@@ -977,6 +979,7 @@ describe('widget contracts', () => {
     ['listbox', listboxContract, { 'aria-label': 'Choices' }],
     ['combobox', comboboxContract, { 'aria-label': 'Search' }],
     ['tablist', tablistContract, { 'aria-label': 'Sections' }],
+    ['toolbar', toolbarContract, { 'aria-label': 'Formatting' }],
     ['radiogroup', radiogroupContract, { 'aria-label': 'Size' }],
   ] as const)(
     '%s does not currently enforce APG-specific relationships or states',

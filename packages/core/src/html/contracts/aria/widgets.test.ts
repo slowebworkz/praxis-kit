@@ -12,6 +12,7 @@ import {
   radioContract,
   tabContract,
   tabpanelContract,
+  toolbarContract,
   treeContract,
   treeitemContract,
 } from './widgets'
@@ -159,4 +160,20 @@ describe('APG grid role coverage', () => {
       ),
     ).toEqual([])
   })
+})
+
+
+describe('APG toolbar naming', () => {
+  it('warns when role="toolbar" has no accessible name', () => {
+    expect(toolbarContract.aria![0]!(ctx({}))).toMatchObject([
+      { valid: false, severity: 'warning' },
+    ])
+  })
+
+  it.each(['aria-label', 'aria-labelledby'])(
+    'accepts role="toolbar" named by %s',
+    (attribute) => {
+      expect(toolbarContract.aria![0]!(ctx({ [attribute]: 'Formatting' }))).toEqual([])
+    },
+  )
 })

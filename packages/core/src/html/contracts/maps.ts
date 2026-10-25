@@ -19,6 +19,7 @@ import {
   tabContract,
   tablistContract,
   tabpanelContract,
+  toolbarContract,
   treeContract,
   treeitemContract,
 } from './aria'
@@ -143,6 +144,7 @@ export const widgetContracts: HtmlContractMap = {
   option: optionContract,
   tablist: tablistContract,
   tabpanel: tabpanelContract,
+  toolbar: toolbarContract,
   radio: radioContract,
   radiogroup: radiogroupContract,
   tab: tabContract,
