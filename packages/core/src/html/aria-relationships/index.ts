@@ -14,3 +14,6 @@ export type { AriaComboboxRelationshipDiagnostic } from './validate-combobox-rel
 
 export { validateAriaRadiogroupRelationships } from './validate-radiogroup-relationships'
 export type { AriaRadiogroupRelationshipDiagnostic } from './validate-radiogroup-relationships'
+
+export { validateAriaMenuRelationships } from './validate-menu-relationships'
+export type { AriaMenuRelationshipDiagnostic } from './validate-menu-relationships'
