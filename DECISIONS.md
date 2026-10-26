@@ -220,20 +220,23 @@ First pass (branch `fix/aria-html-standards-audit`): corrected the allowed-role 
 `aria-expanded`. The `AriaPolicyEngine` / `createAriaPipeline` architecture did not change — this is
 a data-correctness pass.
 
-The proposed next step for F7 cross-element relationships is documented in
-`docs/accessibility/aria-relationship-validation-design.md`. It is design-only; no structural
-validation API or runtime behavior is approved by that document. A code-level readiness review is
-recorded in `docs/accessibility/aria-relationship-validation-readiness.md`; its proposed ID-index
-utility is not yet approved for runtime integration.
+F7 cross-element relationships are handled by opt-in utilities that take a caller-supplied element
+scope (the design is in `docs/accessibility/aria-relationship-validation-design.md`, the code-level
+readiness review in `docs/accessibility/aria-relationship-validation-readiness.md`). They are
+implemented, not proposed: an internal ID index plus validators for ID references, tabs,
+listbox/options, combobox popups, tree, grid, radiogroup and menu/menubar ownership. They are not
+DOM walkers, and the single-element `AriaContext` and `AriaPolicyEngine` are unchanged.
 
 The role→attribute realignment and prohibited-property handling tracked as F5 are closed; see
 `docs/accessibility/html-aria-audit.md` and its change log. The APG widget-contract audit (F7) is
-**in progress**: per-element contracts now cover accessible names for `menu`, `menubar`, `combobox`,
-`listbox`, `tree`, `treeitem`, `grid`, `tablist`, `tabpanel`, and `radiogroup`, plus required state
-presence for `tab`, `option`, `radio`, `checkbox`, `menuitemcheckbox`, and `menuitemradio`.
-Remaining F7 questions concern conditional role/state applicability and relationships that need
-ancestor, descendant, or document context. This audit does not imply that keyboard interaction or
-focus management belongs in the static contract layer. The separate `undefined` allowed-role rows
+**in progress**: per-element contracts cover accessible names for `menu`, `menubar`, `menuitem`,
+`combobox`, `listbox`, `tree`, `treeitem`, `grid`, `tablist`, `tabpanel`, `toolbar` and
+`radiogroup`, plus required state presence for `tab`, `option`, `radio`, `checkbox`,
+`menuitemcheckbox` and `menuitemradio`; the supplied-scope relationship validators above cover
+ownership, ID references, active descendants and consistent selection mechanisms. Remaining F7 work
+is a focused APG coverage review of conditional role/state applicability and of requirements that
+need additional structural or document context. This audit does not imply that keyboard interaction
+or focus management belongs in the static contract layer. The separate `undefined` allowed-role rows
 also remain open where they need ancestry the single-element context lacks.
 
 ## Resolved
