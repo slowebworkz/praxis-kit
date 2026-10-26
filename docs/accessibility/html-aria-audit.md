@@ -304,11 +304,13 @@ best-practice advisories, not ARIA-specific, but they ship in `HTML_ARIA_RULES`.
 
 ## APG widget-contract audit baseline (F7)
 
-This audit concerns the static, per-element contract layer in
-`packages/core/src/html/contracts/aria/widgets.ts`; it is **not** a keyboard-interaction
-implementation. Keyboard navigation, focus management, and selection behavior belong to a runtime
-widget only if Praxis Kit explicitly provides such a runtime. Do not infer that those behaviors must
-be implemented by these static contracts.
+This audit concerns the explicit-role `widgetContracts` registry defined in
+`packages/core/src/html/contracts/maps.ts`, whose role contracts are implemented in
+`packages/core/src/html/contracts/aria/widgets.ts`; it is **not** a keyboard-interaction implementation.
+Native HTML element contracts in `htmlContracts` are outside this matrix, including the separately
+registered `<dialog>` `dialogContract`. Keyboard navigation, focus management, and selection behavior
+belong to a runtime widget only if Praxis Kit explicitly provides such a runtime. Do not infer that
+those behaviors must be implemented by these static contracts.
 
 The initial baseline was characterization-only. The current implementation includes per-element
 naming and state contracts plus opt-in, caller-supplied-scope relationship validators. These

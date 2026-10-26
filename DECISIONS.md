@@ -230,11 +230,13 @@ DOM walkers, and the single-element `AriaContext` and `AriaPolicyEngine` are unc
 The role→attribute realignment and prohibited-property handling tracked as F5 are closed; see
 `docs/accessibility/html-aria-audit.md` and its change log. The focused APG widget-contract review (F7)
 is complete; findings and boundaries are recorded in `docs/accessibility/apg-widget-coverage-review.md`.
-Per-element contracts cover accessible names for `menu`, `menubar`, `menuitem`, `combobox`, `listbox`,
-`tree`, `treeitem`, `grid`, `tablist`, `tabpanel`, `toolbar` and `radiogroup`, plus required state
-presence for `tab`, `option`, `radio`, `checkbox`, `menuitemcheckbox` and `menuitemradio`. The
-supplied-scope relationship validators cover ownership, ID references, active descendants and
-consistent selection mechanisms. F7 closure means the current registry was reviewed and its supported
+Within the explicit-role `widgetContracts` registry, per-element contracts cover accessible names for
+`menu`, `menubar`, `menuitem`, `combobox`, `listbox`, `tree`, `treeitem`, `grid`, `tablist`, `tabpanel`,
+`toolbar` and `radiogroup`, plus required state presence for `tab`, `option`, `radio`, `checkbox`,
+`menuitemcheckbox` and `menuitemradio`. The separately registered native `<dialog>` `dialogContract` is
+part of `htmlContracts` and is outside this F7 widget-role matrix. The supplied-scope relationship
+validators cover ownership, ID references, active descendants and consistent selection mechanisms. F7
+closure means the explicit-role registry was reviewed and its supported
 boundary documented; it does not claim exhaustive coverage of every APG pattern or promote keyboard
 interaction, focus management, or state transitions into static contracts. New widget patterns can be
 considered as separately scoped work. The separate `undefined` allowed-role rows also remain open
