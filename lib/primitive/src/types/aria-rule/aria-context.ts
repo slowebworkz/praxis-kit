@@ -8,6 +8,12 @@ export type AriaContext = {
   readonly tag: IntrinsicTag
 
   /**
+   * Ancestor HTML tags, ordered from nearest ancestor to farthest.
+   * Optional because existing single-element evaluations do not have tree context.
+   */
+  readonly ancestorTags?: readonly IntrinsicTag[]
+
+  /**
    * The implicit ARIA role associated with the intrinsic tag.
    */
   readonly implicitRole: AriaRole | undefined

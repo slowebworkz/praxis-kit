@@ -47,6 +47,26 @@ describe('getImplicitRole', () => {
     })
   })
 
+  describe('header / footer ancestry', () => {
+    it('preserves the existing single-element result when ancestry is omitted', () => {
+      expect(getImplicitRole('header')).toBe('banner')
+      expect(getImplicitRole('footer')).toBe('contentinfo')
+    })
+
+    it.each(['article', 'aside', 'main', 'nav', 'section'] as const)(
+      'resolves header and footer to generic inside a %s ancestor',
+      (ancestorTag) => {
+        expect(getImplicitRole('header', undefined, [ancestorTag])).toBe('generic')
+        expect(getImplicitRole('footer', undefined, [ancestorTag])).toBe('generic')
+      },
+    )
+
+    it('ignores unrelated ancestors', () => {
+      expect(getImplicitRole('header', undefined, ['div', 'body'])).toBe('banner')
+      expect(getImplicitRole('footer', undefined, ['div', 'body'])).toBe('contentinfo')
+    })
+  })
+
   describe('section / form', () => {
     it('exposes the landmark role only when the element has an accessible name', () => {
       expect(getImplicitRole('section', {} as IntrinsicProps)).toBeUndefined()
