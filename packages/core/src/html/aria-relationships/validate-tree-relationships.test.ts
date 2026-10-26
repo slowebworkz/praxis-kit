@@ -100,4 +100,42 @@ describe('ARIA tree relationships', () => {
       ]),
     ).toMatchObject([{ code: 'multiple-owners', sourceIndex: 2 }])
   })
+  it('warns when one tree mixes aria-selected and aria-checked across treeitems', () => {
+    expect(
+      validateAriaTreeRelationships([
+        { id: 'tree', props: { role: 'tree' } },
+        { id: 'selected', parentId: 'tree', props: { role: 'treeitem', 'aria-selected': 'true' } },
+        { id: 'checked', parentId: 'tree', props: { role: 'treeitem', 'aria-checked': 'false' } },
+      ]).map(({ code, sourceIndex }) => [code, sourceIndex]),
+    ).toEqual([['mixed-treeitem-selection-state', 0]])
+  })
+
+  it('accepts either treeitem selection mechanism when used consistently', () => {
+    expect(
+      validateAriaTreeRelationships([
+        { id: 'tree', props: { role: 'tree' } },
+        { id: 'first', parentId: 'tree', props: { role: 'treeitem', 'aria-selected': 'true' } },
+        { id: 'second', parentId: 'tree', props: { role: 'treeitem', 'aria-selected': 'false' } },
+      ]),
+    ).toEqual([])
+    expect(
+      validateAriaTreeRelationships([
+        { id: 'tree', props: { role: 'tree' } },
+        { id: 'first', parentId: 'tree', props: { role: 'treeitem', 'aria-checked': 'true' } },
+        { id: 'second', parentId: 'tree', props: { role: 'treeitem', 'aria-checked': 'false' } },
+      ]),
+    ).toEqual([])
+  })
+
+  it('keeps nested tree selection mechanisms independent', () => {
+    expect(
+      validateAriaTreeRelationships([
+        { id: 'outer-tree', props: { role: 'tree' } },
+        { id: 'outer-item', parentId: 'outer-tree', props: { role: 'treeitem', 'aria-selected': 'true' } },
+        { id: 'inner-tree', parentId: 'outer-item', props: { role: 'tree' } },
+        { id: 'inner-item', parentId: 'inner-tree', props: { role: 'treeitem', 'aria-checked': 'true' } },
+      ]),
+    ).toEqual([])
+  })
+
 })
