@@ -16,6 +16,7 @@ export type AriaListboxRelationshipIssue =
   | 'active-descendant-not-owned'
   | 'active-descendant-ambiguous'
   | 'active-descendant-missing'
+  | 'mixed-option-selection-state'
 
 export interface AriaListboxRelationshipDiagnostic {
   readonly elementIndex: number
@@ -31,8 +32,9 @@ function roleOf(element: AriaListboxElement): unknown {
 /**
  * Checks listbox/option ownership within a caller-supplied, ordered element
  * scope. `parentIndex` represents the immediate parent in that scope; `aria-owns`
- * may additionally establish ownership. This is a structural utility, not a DOM
- * walker, and does not validate selection or keyboard interaction.
+ * may additionally establish ownership. It also warns when a listbox mixes
+ * `aria-selected` and `aria-checked` as option selection mechanisms. This is not
+ * a DOM walker and does not validate selection values or keyboard interaction.
  */
 export function validateAriaListboxRelationships(
   elements: readonly AriaListboxElement[],
@@ -77,6 +79,20 @@ export function validateAriaListboxRelationships(
     }
 
     if (roleOf(element) !== 'listbox') return
+
+    let usesAriaSelected = false
+    let usesAriaChecked = false
+    iterate.forEach(elements, (candidate, candidateIndex) => {
+      if (roleOf(candidate) !== 'option' || !isOwnedBy(candidateIndex, elementIndex)) return
+      const props = candidate.props
+      if (!props) return
+      usesAriaSelected ||= Object.prototype.hasOwnProperty.call(props, 'aria-selected')
+      usesAriaChecked ||= Object.prototype.hasOwnProperty.call(props, 'aria-checked')
+    })
+    if (usesAriaSelected && usesAriaChecked) {
+      diagnostics.push({ elementIndex, issue: 'mixed-option-selection-state' })
+    }
+
     const activeDescendant = element.props?.['aria-activedescendant']
     if (!isString(activeDescendant) || activeDescendant.length === 0) return
 
