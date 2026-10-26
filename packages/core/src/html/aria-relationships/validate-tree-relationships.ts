@@ -16,6 +16,7 @@ export interface AriaTreeRelationshipDiagnostic {
     | 'active-descendant-not-owned'
     | 'missing-expanded'
     | 'expanded-on-leaf'
+    | 'mixed-treeitem-selection-state'
   readonly sourceIndex: number
   readonly targetId?: string
   readonly message: string
@@ -100,6 +101,22 @@ export function validateAriaTreeRelationships(
       pending.push(...children[next]!)
     }
     return descendants
+  }
+
+  const belongsToTree = (itemIndex: number, treeIndex: number): boolean => {
+    const pending = [...parents[itemIndex]!]
+    const visited = new Set<number>()
+    while (pending.length > 0) {
+      const parentIndex = pending.pop()!
+      if (parentIndex === treeIndex) return true
+      if (visited.has(parentIndex)) continue
+      visited.add(parentIndex)
+      // A nested tree establishes its own selection scope. Do not attribute its
+      // treeitems to an outer tree through the nested tree boundary.
+      if (roleOf(elements[parentIndex]!) === 'tree') continue
+      pending.push(...parents[parentIndex]!)
+    }
+    return false
   }
 
   const diagnostics: AriaTreeRelationshipDiagnostic[] = []
@@ -196,6 +213,25 @@ export function validateAriaTreeRelationships(
             'expanded-on-leaf',
             sourceIndex,
             'Leaf role="treeitem" should not expose aria-expanded.',
+          ),
+        )
+      }
+    }
+
+    if (role === 'tree') {
+      let usesAriaSelected = false
+      let usesAriaChecked = false
+      iterate.forEach(elements, (candidate, candidateIndex) => {
+        if (roleOf(candidate) !== 'treeitem' || !belongsToTree(candidateIndex, sourceIndex)) return
+        usesAriaSelected ||= hasProp(candidate, 'aria-selected')
+        usesAriaChecked ||= hasProp(candidate, 'aria-checked')
+      })
+      if (usesAriaSelected && usesAriaChecked) {
+        diagnostics.push(
+          warn(
+            'mixed-treeitem-selection-state',
+            sourceIndex,
+            'Treeitems owned by the same tree should use a consistent selection state mechanism: aria-selected or aria-checked, not both.',
           ),
         )
       }
