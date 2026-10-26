@@ -159,7 +159,7 @@ Historical note: `IMPLICIT_ROLE_RECORD.select` was hard-coded to `listbox`, whic
 | `<section>` with non-empty `aria-label`/`aria-labelledby` | `region`      | ARIA in HTML | Whitespace-only name counts as no name.                       | `is-aria-role.test.ts`, `aria-policy-engine.roles.test.ts` ("section conditional landmark") |
 | `<section>` unnamed                                       | _(none)_      | ARIA in HTML | Spec `generic`; modelled as `undefined` (no landmark checks). | `is-aria-role.test.ts`                                                                      |
 | `<form>` with non-empty name                              | `form`        | ARIA in HTML | —                                                             | `aria-policy-engine.roles.test.ts` ("form conditional landmark")                            |
-| `<form>` unnamed                                          | _(none)_      | ARIA in HTML | As `<section>`.                                               | —                                                                                           |
+| `<form>` unnamed                                          | _(none)_      | ARIA in HTML | As `<section>`; an unnamed form has no implicit `form` landmark role. | `is-aria-role.test.ts`, `aria-policy-engine.roles.test.ts` |
 
 ---
 
