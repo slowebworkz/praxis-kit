@@ -401,7 +401,7 @@ what closes sub-areas j, m and the `undefined` rows above.
 | ID     | Area             | Summary                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ------ | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **F7** | widget contracts | Core per-element naming/state contracts and supplied-scope relationship validators are implemented for tabs, listbox/options, combobox popups, tree, grid, radiogroup, and menu/menubar ownership. Remaining work is a focused APG coverage review for conditional applicability or requirements that need additional structural/document context; do not treat keyboard interaction as a static-contract requirement. Post-0.1. |
-| **F8** | implicit role    | Partially implemented: `getImplicitRole` and `AriaPolicyEngine.evaluate`/`validate` accept optional nearest-first ancestor tags; `<header>`/`<footer>` resolve to `generic` inside `<article>/<section>/<aside>/<main>/<nav>`. Existing callers do not yet derive and pass ancestry automatically. Keep open until component/factory propagation and end-to-end tests land. |
+| **F8** | implicit role    | Partially implemented: `getImplicitRole`, `AriaPolicyEngine.evaluate`/`validate`, and the polymorphic runtime's `resolveAria` hook accept optional nearest-first ancestor tags; `<header>`/`<footer>` resolve to `generic` inside `<article>/<section>/<aside>/<main>/<nav>` when context is supplied. Adapters do not yet derive and propagate ancestry automatically. Keep open until adapter-level propagation and end-to-end tests land. |
 
 **Closed:** F1 (`<select>` combobox/listbox), F3 (`<input>` no-`type` → `textbox`), F4
 (required-property scoping), F5 (role→attribute realignment), F6 (`<img>` no-`alt` allowed roles),
@@ -428,3 +428,5 @@ The tab relationship validator also warns when a tab uniquely controls a panel b
 
 
 The combobox relationship validator uses the same explicit element-scope model as the tab, grid, and tree validators. It checks only declared `aria-controls` references and does not assume a single popup implementation.
+
+| 2026-10 | `feat/aria-header-footer-ancestry-runtime` | Threaded optional ancestor tags through the polymorphic runtime's `resolveAria` hook; automatic ancestry discovery/propagation remains open. |

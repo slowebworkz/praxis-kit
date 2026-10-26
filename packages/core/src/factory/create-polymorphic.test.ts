@@ -130,6 +130,23 @@ describe('createPolymorphic — resolveAria()', () => {
     expect(runtime.resolveAria('button', props).props).toMatchObject({ 'aria-checked': 'true' })
   })
 
+  it('forwards ancestor context through the factory runtime to implicit-role evaluation', () => {
+    const redundantRoleCodes = (ariaOptions?: { ancestorTags: ['main'] }) => {
+      const { reporter, diagnostics } = makeCollecting()
+      const runtime = createPolymorphic({ tag: 'header', enforcement: { diagnostics } })
+      runtime.resolveAria('header', { role: 'banner' }, undefined, ariaOptions)
+      return reporter.diagnostics.map((d) => d.code)
+    }
+
+    // A top-level header has the implicit banner role, so an explicit banner is redundant.
+    expect(redundantRoleCodes()).toContain('HTML3003')
+
+    // Inside a landmark context the implicit role is generic, so banner is no longer reported as
+    // redundant. (It is still not a permitted role for a nested header, hence other diagnostics.)
+    // The fourth argument carries the same optional ancestry accepted by the engine.
+    expect(redundantRoleCodes({ ancestorTags: ['main'] })).not.toContain('HTML3003')
+  })
+
   it('strips an invalid aria-* attribute for the effective role when enforcement is declared', () => {
     const runtime = createPolymorphic({
       tag: 'button',

@@ -1,4 +1,5 @@
 import { AriaPolicyEngine } from '@praxis-kit/contract'
+import type { IntrinsicTag } from '@praxis-kit/primitive'
 import type {
   AriaPipelineResult,
   AriaRule,
@@ -19,7 +20,7 @@ function resolveAriaRules(resolved: ResolvedFactoryShape): readonly AriaRule[] {
 }
 
 export const createAriaPipeline: RenderPipeline<
-  [ElementType, IntrinsicProps, IntrinsicProps?],
+  [ElementType, IntrinsicProps, IntrinsicProps?, { readonly ancestorTags?: readonly IntrinsicTag[] }?],
   AriaPipelineResult
 > = (resolved) => {
   const rules = resolveAriaRules(resolved)
@@ -27,7 +28,7 @@ export const createAriaPipeline: RenderPipeline<
     ...(rules.length > 0 && { rules }),
     variantKeys: resolved.variantKeys,
   })
-  return (tag, props, extraProps) => engine.validate(tag, props, extraProps)
+  return (tag, props, extraProps, options) => engine.validate(tag, props, extraProps, options)
 }
 
 // Used in place of createAriaPipeline's result when a component has no `enforcement` option
@@ -37,6 +38,7 @@ export function resolveAriaPassthrough<P extends IntrinsicProps>(
   _tag: ElementType,
   props: P,
   _extraProps?: IntrinsicProps,
+  _options?: { readonly ancestorTags?: readonly IntrinsicTag[] },
 ) {
   return { props }
 }

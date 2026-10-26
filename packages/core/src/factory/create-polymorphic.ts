@@ -14,6 +14,7 @@ import type {
   ResolvedFactoryShape,
   VariantMap,
 } from '../types'
+import type { IntrinsicTag } from '@praxis-kit/primitive'
 import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 import type { CompositionClassResolver } from '@praxis-kit/styling'
 import { createOptionalCompositionStyleResolver } from './composition-style'
@@ -129,8 +130,13 @@ export function createPolymorphic<
       return classPipeline(tag, props, className, recipe) || undefined
     },
 
-    resolveAria<P extends IntrinsicProps>(tag: ElementType, props: P, extraProps?: IntrinsicProps) {
-      return resolveAriaFn(tag, props, extraProps) as { props: P }
+    resolveAria<P extends IntrinsicProps>(
+      tag: ElementType,
+      props: P,
+      extraProps?: IntrinsicProps,
+      ariaOptions?: { readonly ancestorTags?: readonly IntrinsicTag[] },
+    ) {
+      return resolveAriaFn(tag, props, extraProps, ariaOptions) as { props: P }
     },
   }
 
