@@ -125,6 +125,29 @@ describe('roleNotPermittedRule', () => {
       }
     })
 
+    it('radio permits menuitemradio and rejects other unlisted alternates', () => {
+      expect(
+        roleNotPermittedRule(ctx('input', { type: 'radio', role: 'menuitemradio' }, 'radio')),
+      ).toEqual([])
+
+      const [result] = roleNotPermittedRule(
+        ctx('input', { type: 'radio', role: 'switch' }, 'radio'),
+      )
+      expect(result).toMatchObject({ valid: false, fixable: true })
+    })
+
+    it.each([
+      ['range', 'slider'],
+      ['number', 'spinbutton'],
+    ] as const)('range/number input type=%s permits only its implicit role', (type, role) => {
+      expect(roleNotPermittedRule(ctx('input', { type, role }, role))).toEqual([])
+
+      const [result] = roleNotPermittedRule(
+        ctx('input', { type, role: 'menu' }, role),
+      )
+      expect(result).toMatchObject({ valid: false, fixable: true })
+    })
+
     it('input type=email with a list attribute accepts combobox (implicit-role path)', () => {
       // `list` flips the implicit role to combobox; role === implicitRole early-returns.
       expect(
