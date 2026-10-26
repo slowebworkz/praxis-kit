@@ -228,16 +228,17 @@ listbox/options, combobox popups, tree, grid, radiogroup and menu/menubar owners
 DOM walkers, and the single-element `AriaContext` and `AriaPolicyEngine` are unchanged.
 
 The role→attribute realignment and prohibited-property handling tracked as F5 are closed; see
-`docs/accessibility/html-aria-audit.md` and its change log. The APG widget-contract audit (F7) is
-**in progress**: per-element contracts cover accessible names for `menu`, `menubar`, `menuitem`,
-`combobox`, `listbox`, `tree`, `treeitem`, `grid`, `tablist`, `tabpanel`, `toolbar` and
-`radiogroup`, plus required state presence for `tab`, `option`, `radio`, `checkbox`,
-`menuitemcheckbox` and `menuitemradio`; the supplied-scope relationship validators above cover
-ownership, ID references, active descendants and consistent selection mechanisms. Remaining F7 work
-is a focused APG coverage review of conditional role/state applicability and of requirements that
-need additional structural or document context. This audit does not imply that keyboard interaction
-or focus management belongs in the static contract layer. The separate `undefined` allowed-role rows
-also remain open where they need ancestry the single-element context lacks.
+`docs/accessibility/html-aria-audit.md` and its change log. The focused APG widget-contract review (F7)
+is complete; findings and boundaries are recorded in `docs/accessibility/apg-widget-coverage-review.md`.
+Per-element contracts cover accessible names for `menu`, `menubar`, `menuitem`, `combobox`, `listbox`,
+`tree`, `treeitem`, `grid`, `tablist`, `tabpanel`, `toolbar` and `radiogroup`, plus required state
+presence for `tab`, `option`, `radio`, `checkbox`, `menuitemcheckbox` and `menuitemradio`. The
+supplied-scope relationship validators cover ownership, ID references, active descendants and
+consistent selection mechanisms. F7 closure means the current registry was reviewed and its supported
+boundary documented; it does not claim exhaustive coverage of every APG pattern or promote keyboard
+interaction, focus management, or state transitions into static contracts. New widget patterns can be
+considered as separately scoped work. The separate `undefined` allowed-role rows also remain open
+where they need ancestry the single-element context lacks.
 
 ## Resolved
 

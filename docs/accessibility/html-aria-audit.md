@@ -324,6 +324,7 @@ keyboard navigation, focus management, or state transitions.
 | Listbox / option                   | `listbox`, `option`; `validateAriaListboxRelationships` | Checks option ownership by supplied parent ancestry or `aria-owns`, validates a present listbox `aria-activedescendant` reference for resolution, option role, and ownership, and warns if owned options mix `aria-selected` and `aria-checked` as selection mechanisms. It does not require either mechanism universally, infer multiselectability, validate state values, or check keyboard behavior. |
 | Tree                               | `tree`, `treeitem`; `validateAriaTreeRelationships`       | Checks treeitem/group ownership, conditional `aria-expanded`, active-descendant ownership, and warns when one tree mixes `aria-selected` and `aria-checked` across owned treeitems. It does not require either mechanism or optional level/position metadata; nested trees remain separate selection scopes. |
 | Radiogroup / radio                 | `radiogroup`, `radio`                                    | Radio membership is checked by `validateAriaRadiogroupRelationships` when a caller supplies structural `parentId` links or explicit `aria-owns`; mutual exclusion, group-level labeling, and arrow-key behavior remain outside this relationship validator.                                                |
+| Checkbox                           | `checkbox`                                               | Requires `aria-checked` to be present, including explicit `false`. This is a single-element state-presence rule; it does not implement toggling or interaction behavior.                                                                                                                    |
 | Grid                               | `grid` (accessible name); `validateAriaGridRelationships` | Checks row ownership by `grid`/`treegrid`, rowgroup ownership by grid/treegrid, cell ownership by row, and present `aria-activedescendant` ownership. Does not require optional row/column counts, indices, selection state, or keyboard behavior. |
 
 For menu-item contracts, the static single-element boundary is intentional: `menuitem` requires an
@@ -404,13 +405,13 @@ what closes sub-areas j, m and the `undefined` rows above.
 
 | ID     | Area             | Summary                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ------ | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **F7** | widget contracts | Core per-element naming/state contracts and supplied-scope relationship validators are implemented for tabs, listbox/options, combobox popups, tree, grid, radiogroup, and menu/menubar ownership. Remaining work is a focused APG coverage review for conditional applicability or requirements that need additional structural/document context; do not treat keyboard interaction as a static-contract requirement. Post-0.1. |
 | **F8** | implicit role    | Apply `getConditionalImplicitRole` to `<header>`/`<footer>` (top-level → `banner`/`contentinfo`, otherwise `generic`). **Deferred past 0.1** — needs ancestor visibility that `AriaContext` deliberately does not carry (single-element view); adding it is an architecture change, not a fix. Until then, header/footer are treated as always top-level — see the implicit-role table and **D4** below. |
 
-**Closed:** F1 (`<select>` combobox/listbox), F3 (`<input>` no-`type` → `textbox`), F4
-(required-property scoping), F5 (role→attribute realignment), F6 (`<img>` no-`alt` allowed roles),
-F9 (`<a>` implicit role). F2 (`input[list]` / `select[multiple/size]` second discriminators) closed
-on `feat/aria-audit-p1-close`.
+**Closed:** F1 (`<select>` combobox/listbox), F2 (`input[list]` / `select[multiple/size]` second discriminators),
+F3 (`<input>` no-`type` → `textbox`), F4 (required-property scoping), F5 (role→attribute realignment),
+F6 (`<img>` no-`alt` allowed roles), F7 (focused APG widget-contract coverage review), and F9 (`<a>` implicit role).
+F7's review findings and explicit scope boundary are recorded in
+[`apg-widget-coverage-review.md`](./apg-widget-coverage-review.md). F8 remains deferred past 0.1.
 
 ## Change log
 
@@ -420,6 +421,7 @@ on `feat/aria-audit-p1-close`.
 | 2026-09 | `fix/aria-audit-bare-anchor-and-attr-table` | **F9** closed — `<a>`/`<area>` implicit role from `href`. **F5** closed — Name-Prohibited roles (`NAME_PROHIBITED_ROLES`); `aria-description` global; `ROLE_RESTRICTED_ATTRIBUTES` realigned to `aria-query` via `aria-support.generated.json` + spec-conformance tests (fixed real false positives on `aria-required`/`aria-readonly`/`aria-expanded`/`aria-haspopup`/`aria-invalid`).                                                                                                                                                                                                      |
 | 2026-09 | `feat/aria-audit-p1-close`                  | **F3** closed — `getInputImplicitRole` defaults `type ?? 'text'` → `textbox`; shared `LIST_ELIGIBLE_INPUT_TYPES` moved to `@praxis-kit/primitive` constants. **F2** closed — `inputElementSpec` and a new `selectElementSpec` are `dynamic` policies: `input[list]` on a text-like type and `select[multiple]`/`select[size>1]` narrow the permitted explicit-role set to `[]`. **F6** closed for allowed roles — `<img>` with no `alt` permits only `none`/`presentation` (`IMG_DECORATIVE_ROLES`). **F8** reframed as deviation **D4** (deferred past 0.1 — needs `AriaContext` ancestry). |
 | 2026-10 | `docs/aria-audit-final-reconciliation`       | Reconciled the F7 status with implemented relationship validators; removed stale statements that described tab references and tree hierarchy validation as outstanding; clarified the static validation boundary and retained F8 as an architectural deferral. |
+| 2026-10 | `docs/aria-apg-widget-coverage-review`       | Completed the focused F7 review against the current contract registry and tests; documented the static-contract boundary, recorded checkbox state coverage in the matrix, and closed F7 without expanding runtime or ancestry-dependent behavior. |
 
 The separate `validateAriaGridRelationships` utility now checks caller-supplied grid/treegrid
 row ownership, row-to-cell ownership, and resolved `aria-activedescendant` ownership. It does not
