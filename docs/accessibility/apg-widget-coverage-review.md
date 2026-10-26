@@ -1,14 +1,17 @@
 # APG widget-contract coverage review (F7)
 
-**Status:** Review complete; F7 closed for the current contract registry. This is a scoped review of
-existing Praxis Kit static contracts and supplied-scope relationship validators, not a claim of
-exhaustive implementation of every WAI-ARIA APG pattern.
+**Status:** Review complete; F7 closed for the current explicit-role `widgetContracts` registry. This is a
+scoped review of those static widget-role contracts and supplied-scope relationship validators, not a
+review of every native HTML element contract or a claim of exhaustive implementation of every WAI-ARIA
+APG pattern. The native `<dialog>` `dialogContract` is registered through `htmlContracts`, not
+`widgetContracts`, and is intentionally outside this widget-role coverage matrix.
 
 ## Review basis
 
 Reviewed the contract registry and its tests in:
 
 - `packages/core/src/html/contracts/aria/widgets.ts`
+- `packages/core/src/html/contracts/maps.ts` (to distinguish `htmlContracts` from `widgetContracts`)
 - `packages/core/src/html/contracts/aria/widgets.test.ts`
 - `packages/core/src/html/contracts.test.ts`
 - `packages/core/src/html/aria-relationships/validate-tab-relationships.test.ts`
@@ -44,10 +47,12 @@ accessible-name checks, and the documented relationship-validator boundaries.
 
 ## Decision
 
-Close F7 for the current registry after reconciling the audit matrix and decision record. No runtime
-behavior, new ARIA rule, relationship validator, or ancestry support is added by this patch. F8 remains
-deferred past 0.1: header/footer ancestry requires a separate architecture decision because the current
-`AriaContext` is a single-element view.
+Close F7 for the explicit-role `widgetContracts` registry after reconciling the audit matrix and decision
+record. Native HTML element contracts, including the separately registered `<dialog>` `dialogContract`,
+are outside this matrix and are not claimed as part of this F7 review. No runtime behavior, new ARIA
+rule, relationship validator, or ancestry support is added by this patch. F8 remains deferred past 0.1:
+header/footer ancestry requires a separate architecture decision because the current `AriaContext` is a
+single-element view.
 
 ## Verification boundary
 
