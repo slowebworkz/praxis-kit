@@ -42,6 +42,26 @@ describe('AriaPolicyEngine.evaluate() — static', () => {
     expect(props).not.toHaveProperty('role')
     expect(violations).toHaveLength(1)
   })
+
+  it('uses supplied ancestor tags when resolving header/footer implicit roles', () => {
+    const nested = AriaPolicyEngine.evaluate('header', { role: 'generic' }, {
+      ancestorTags: ['main'],
+    })
+    expect(nested.violations).toHaveLength(1)
+    expect(nested.violations[0]?.message).toContain('redundant')
+
+    const standalone = AriaPolicyEngine.evaluate('header', { role: 'generic' })
+    expect(standalone.violations).toHaveLength(0)
+  })
+
+  it('accepts ancestor tags through instance validate()', () => {
+    const engine = makeValidator(silentDiagnostics)
+    const nested = engine.validate('footer', { role: 'generic' }, undefined, {
+      ancestorTags: ['article'],
+    })
+    expect(nested.violations).toHaveLength(1)
+    expect(nested.violations[0]?.message).toContain('redundant')
+  })
 })
 
 // ---------------------------------------------------------------------------
