@@ -75,24 +75,28 @@ Last cross-checked against these sources: **2026-09**.
 | `header`   | `banner`                   | ARIA in HTML | As above (**D4** / **F8**).                                                                                                                                       | `aria-policy-engine.roles.test.ts` |
 | `main`     | `main`                     | ARIA in HTML | —                                                                                                                                                                 | `aria-policy-engine.roles.test.ts` |
 | `nav`      | `navigation`               | ARIA in HTML | —                                                                                                                                                                 | `aria-policy-engine.roles.test.ts` |
-| `button`   | `button`                   | ARIA in HTML | —                                                                                                                                                                 | —                                  |
+| `button`   | `button`                   | ARIA in HTML | —                                                                                                                                                                 | `aria-role-policy.test.ts`        |
 | `textarea` | `textbox`                  | ARIA in HTML | —                                                                                                                                                                 | `aria-policy-engine.roles.test.ts` |
 | `h1`–`h6`  | `heading` (+ `aria-level`) | ARIA in HTML | Implicit level from the digit; see heading-level section.                                                                                                         | `aria-policy-engine.roles.test.ts` |
 | `ul`, `ol` | `list`                     | ARIA in HTML | —                                                                                                                                                                 | `contracts.test.ts`                |
-| `li`       | `listitem`                 | ARIA in HTML | The "generic when not in a list" case is not modelled.                                                                                                            | —                                  |
-| `table`    | `table`                    | ARIA in HTML | —                                                                                                                                                                 | —                                  |
-| `tr`       | `row`                      | ARIA in HTML | —                                                                                                                                                                 | —                                  |
-| `td`       | `cell`                     | ARIA in HTML | Defaults case (ancestor `role=table`); `gridcell` variant not modelled.                                                                                           | —                                  |
-| `th`       | `columnheader`             | ARIA in HTML | Defaults case; `rowheader`/`cell`/`gridcell` variants not modelled.                                                                                               | —                                  |
+| `li`       | `listitem`                 | ARIA in HTML | The "generic when not in a list" case is not modelled.                                                                                                            | `aria-role-policy.test.ts`        |
+| `table`    | `table`                    | ARIA in HTML | —                                                                                                                                                                 | `aria-role-policy.test.ts`        |
+| `tr`       | `row`                      | ARIA in HTML | —                                                                                                                                                                 | `aria-role-policy.test.ts`        |
+| `td`       | `cell`                     | ARIA in HTML | Defaults case (ancestor `role=table`); `gridcell` variant not modelled.                                                                                           | `aria-role-policy.test.ts`        |
+| `th`       | `columnheader`             | ARIA in HTML | Defaults case; `rowheader`/`cell`/`gridcell` variants not modelled.                                                                                               | `aria-role-policy.test.ts`        |
 | `dialog`   | `dialog`                   | ARIA in HTML | —                                                                                                                                                                 | `aria-policy-engine.roles.test.ts` |
 | `fieldset` | `group`                    | ARIA in HTML | —                                                                                                                                                                 | `aria-policy-engine.roles.test.ts` |
-| `figure`   | `figure`                   | ARIA in HTML | —                                                                                                                                                                 | —                                  |
-| `meter`    | `meter`                    | ARIA in HTML | —                                                                                                                                                                 | —                                  |
+| `figure`   | `figure`                   | ARIA in HTML | —                                                                                                                                                                 | `aria-role-policy.test.ts`        |
+| `meter`    | `meter`                    | ARIA in HTML | —                                                                                                                                                                 | `aria-role-policy.test.ts`        |
 | `output`   | `status`                   | ARIA in HTML | Live-region role → drives `aria-live="polite"` injection.                                                                                                         | `aria-policy-engine.roles.test.ts` |
 | `progress` | `progressbar`              | ARIA in HTML | —                                                                                                                                                                 | `aria-policy-engine.roles.test.ts` |
 
 `<a>`/`<area>` and `<select>` were removed from this record — they are attribute-dependent (see
 below).
+
+The parameterized cases in `aria-role-policy.test.ts` pin every entry in `IMPLICIT_ROLE_RECORD`,
+including default-case mappings for `td` and `th`; context-dependent variants remain explicitly
+outside this tag-only table.
 
 ### Conditional — `<a>` / `<area>` by `href`
 
