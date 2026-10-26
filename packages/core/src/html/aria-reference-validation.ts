@@ -2,15 +2,10 @@ import { isString } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import type { AriaIdReferenceResolution } from './aria-reference-index'
 import { createAriaReferenceIndex } from './aria-reference-index'
-import type { AnyRecord } from '@praxis-kit/primitive'
+import { REFERENCE_ATTRIBUTES } from './aria-relationships/shared'
+import type { AriaReferenceAttribute, AriaReferenceElement } from './aria-relationships/types'
 
-/** Element data needed for tree-level ID-reference integrity checks. */
-export interface AriaReferenceElement {
-  readonly id?: string | null
-  readonly props?: Readonly<AnyRecord>
-}
-
-export type AriaReferenceAttribute = 'aria-labelledby' | 'aria-controls' | 'aria-activedescendant'
+export type { AriaReferenceAttribute, AriaReferenceElement }
 
 export interface AriaReferenceDiagnostic {
   /** Position of the source element in the caller-supplied element sequence. */
@@ -23,12 +18,6 @@ export interface AriaReferenceDiagnostic {
     { status: 'resolved' }
   >
 }
-
-const REFERENCE_ATTRIBUTES: readonly AriaReferenceAttribute[] = [
-  'aria-labelledby',
-  'aria-controls',
-  'aria-activedescendant',
-]
 
 /**
  * Checks ID-reference integrity for a caller-supplied element scope.

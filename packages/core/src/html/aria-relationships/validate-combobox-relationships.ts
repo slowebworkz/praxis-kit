@@ -1,29 +1,15 @@
 import { createAriaReferenceIndex, isUnresolvedLookup } from './id-reference-index'
-import type { AriaReferenceElement } from './id-reference-index'
+import { COMBOBOX_POPUP_ROLES, hasRole, roleOf, unresolvedReference, warn } from './shared'
+import type {
+  AriaReferenceElement,
+  AriaRelationshipDiagnostic,
+  UnresolvedReferenceCode,
+} from './types'
 
-const COMBOBOX_POPUP_ROLES = new Set(['listbox', 'tree', 'grid', 'dialog'])
-
-export interface AriaComboboxRelationshipDiagnostic {
-  readonly valid: false
-  readonly severity: 'warning'
-  readonly code: 'missing-target' | 'ambiguous-target' | 'wrong-popup-role'
-  readonly sourceIndex: number
-  readonly targetId: string
-  readonly message: string
-}
-
-function roleOf(element: AriaReferenceElement): unknown {
-  return element.role ?? element.props?.role
-}
-
-function warn(
-  code: AriaComboboxRelationshipDiagnostic['code'],
-  sourceIndex: number,
-  targetId: string,
-  message: string,
-): AriaComboboxRelationshipDiagnostic {
-  return { valid: false, severity: 'warning', code, sourceIndex, targetId, message }
-}
+export type AriaComboboxRelationshipDiagnostic = AriaRelationshipDiagnostic<
+  UnresolvedReferenceCode | 'wrong-popup-role',
+  { readonly targetId: string }
+>
 
 /**
  * Validates `aria-controls` popup references for comboboxes within a caller-supplied
@@ -43,33 +29,18 @@ export function validateAriaComboboxRelationships(
       .resolveList(element.props?.['aria-controls'])
       .flatMap((target): AriaComboboxRelationshipDiagnostic[] => {
         if (isUnresolvedLookup(target)) {
-          return target.status === 'missing'
-            ? [
-                warn(
-                  'missing-target',
-                  sourceIndex,
-                  target.id,
-                  `role="combobox" aria-controls references missing id "${target.id}".`,
-                ),
-              ]
-            : [
-                warn(
-                  'ambiguous-target',
-                  sourceIndex,
-                  target.id,
-                  `role="combobox" aria-controls references id "${target.id}", which is not unique.`,
-                ),
-              ]
+          const { code, message } = unresolvedReference(target, 'role="combobox" aria-controls')
+          return [warn(code, sourceIndex, message, target.id)]
         }
 
-        if (COMBOBOX_POPUP_ROLES.has(String(roleOf(target.element)))) return []
+        if (hasRole(target.element, COMBOBOX_POPUP_ROLES)) return []
 
         return [
           warn(
             'wrong-popup-role',
             sourceIndex,
-            target.id,
             `role="combobox" controls id "${target.id}", but the target role must be listbox, tree, grid, or dialog.`,
+            target.id,
           ),
         ]
       })

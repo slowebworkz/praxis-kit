@@ -1,5 +1,5 @@
 import { isString } from '@praxis-kit/guards'
-import { iterate } from '@praxis-kit/primitive'
+import { groupById, lookupById } from './aria-relationships/id-reference-index'
 
 /**
  * Minimal, read-only ID index for a caller-supplied ARIA validation scope.
@@ -29,26 +29,22 @@ export interface AriaReferenceIndex<T> {
  * Duplicate IDs are retained so resolution can report ambiguity rather than
  * silently selecting the first element. IDs are matched exactly and are not
  * trimmed or normalized.
+ *
+ * Unlike the internal relationship index, only the top-level `id` is read (no
+ * `props.id` fallback) and IDREFS values split on ASCII whitespace only.
  */
 export function createAriaReferenceIndex<T extends AriaIdElement>(
   elements: Iterable<T>,
 ): AriaReferenceIndex<T> {
-  const targetsById = new Map<string, T[]>()
-
-  iterate.forEach(elements, (element) => {
-    const id = element.id
-    if (!isString(id) || id.length === 0) return
-
-    const targets = targetsById.get(id)
-    if (targets) targets.push(element)
-    else targetsById.set(id, [element])
-  })
+  const byId = groupById(elements, (element) => element.id)
 
   const resolve = (id: string): AriaIdReferenceResolution<T> => {
-    const targets = targetsById.get(id)
-    if (!targets || targets.length === 0) return { status: 'missing', id }
-    if (targets.length === 1) return { status: 'resolved', id, target: targets[0]! }
-    return { status: 'ambiguous', id, targets: [...targets] }
+    const found = lookupById(byId, id)
+    if (found.status === 'resolved') return { status: 'resolved', id, target: found.element }
+    if (found.status === 'ambiguous') {
+      return { status: 'ambiguous', id, targets: [...found.matches] }
+    }
+    return found
   }
 
   return {

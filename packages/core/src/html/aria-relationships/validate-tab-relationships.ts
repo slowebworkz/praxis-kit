@@ -1,23 +1,17 @@
 import { createAriaReferenceIndex, isResolvedLookup } from './id-reference-index'
+import { roleOf, warn } from './shared'
 import type {
   AriaIdLookup,
+  AriaIdLookupIndex,
   AriaReferenceElement,
-  AriaReferenceIndex,
+  AriaRelationshipDiagnostic,
   AriaResolvedLookup,
-} from './id-reference-index'
+} from './types'
 
-export interface AriaTabRelationshipDiagnostic {
-  readonly valid: false
-  readonly severity: 'warning'
-  readonly code: 'wrong-target-role' | 'missing-tab-reference' | 'mismatched-tab-reference'
-  readonly sourceIndex: number
-  readonly targetId: string
-  readonly message: string
-}
-
-function roleOf(element: AriaReferenceElement): unknown {
-  return element.role ?? element.props?.role
-}
+export type AriaTabRelationshipDiagnostic = AriaRelationshipDiagnostic<
+  'wrong-target-role' | 'missing-tab-reference' | 'mismatched-tab-reference',
+  { readonly targetId: string }
+>
 
 function isTab(target: AriaResolvedLookup): boolean {
   return roleOf(target.element) === 'tab'
@@ -28,20 +22,11 @@ function isNotTabpanel(target: AriaIdLookup): target is AriaResolvedLookup {
   return isResolvedLookup(target) && roleOf(target.element) !== 'tabpanel'
 }
 
-function warn(
-  code: AriaTabRelationshipDiagnostic['code'],
-  sourceIndex: number,
-  targetId: string,
-  message: string,
-): AriaTabRelationshipDiagnostic {
-  return { valid: false, severity: 'warning', code, sourceIndex, targetId, message }
-}
-
 /** A tab's uniquely resolved `aria-controls` targets must be tabpanels. */
 function tabDiagnostics(
   element: AriaReferenceElement,
   sourceIndex: number,
-  index: AriaReferenceIndex,
+  index: AriaIdLookupIndex,
 ): AriaTabRelationshipDiagnostic[] {
   return index
     .resolveList(element.props?.['aria-controls'])
@@ -50,8 +35,8 @@ function tabDiagnostics(
       warn(
         'wrong-target-role',
         sourceIndex,
-        target.id,
         `role="tab" controls id "${target.id}", but the target is not role="tabpanel".`,
+        target.id,
       ),
     )
 }
@@ -61,7 +46,7 @@ function tabpanelDiagnostics(
   elements: readonly AriaReferenceElement[],
   element: AriaReferenceElement,
   sourceIndex: number,
-  index: AriaReferenceIndex,
+  index: AriaIdLookupIndex,
 ): AriaTabRelationshipDiagnostic[] {
   const labels = index.resolveList(element.props?.['aria-labelledby']).filter(isResolvedLookup)
   const [first] = labels
@@ -90,8 +75,8 @@ function tabpanelDiagnostics(
         warn(
           'mismatched-tab-reference',
           sourceIndex,
-          labelledTab.id,
           `role="tabpanel" is controlled by a tab, but aria-labelledby references different tab id "${labelledTab.id}".`,
+          labelledTab.id,
         ),
       ]
     }
@@ -103,8 +88,8 @@ function tabpanelDiagnostics(
     warn(
       'missing-tab-reference',
       sourceIndex,
-      first.id,
       'role="tabpanel" aria-labelledby should reference its controlling role="tab".',
+      first.id,
     ),
   ]
 }

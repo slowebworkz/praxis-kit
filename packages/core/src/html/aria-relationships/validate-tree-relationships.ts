@@ -1,55 +1,32 @@
-import { isDefined, isString } from '@praxis-kit/guards'
+import { isDefined } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
-import { createAriaReferenceIndex, isResolvedLookup } from './id-reference-index'
-import type { AriaReferenceElement } from './id-reference-index'
+import { createAriaReferenceIndex } from './id-reference-index'
+import { buildOwnershipGraph, misownedActiveDescendant } from './ownership-graph'
+import {
+  TREE_ITEM_CHILD_ROLES,
+  TREE_OWNER_ROLES,
+  TREEITEM_ROLES,
+  hasProp,
+  hasRole,
+  idOf,
+  roleOf,
+  warn,
+} from './shared'
+import type { AriaReferenceElement, AriaRelationshipDiagnostic } from './types'
 
-export interface AriaTreeRelationshipDiagnostic {
-  readonly valid: false
-  readonly severity: 'warning'
-  readonly code:
-    | 'missing-owner'
-    | 'wrong-owner-role'
-    | 'multiple-owners'
-    | 'missing-group-owner'
-    | 'wrong-group-owner-role'
-    | 'multiple-group-owners'
-    | 'active-descendant-not-owned'
-    | 'missing-expanded'
-    | 'expanded-on-leaf'
-    | 'mixed-treeitem-selection-state'
-  readonly sourceIndex: number
-  readonly targetId?: string
-  readonly message: string
-}
-
-function roleOf(element: AriaReferenceElement): unknown {
-  return element.role ?? element.props?.role
-}
-
-function idOf(element: AriaReferenceElement): string | undefined {
-  const id = element.id ?? element.props?.id
-  return isString(id) && id.length > 0 ? id : undefined
-}
-
-function hasProp(element: AriaReferenceElement, name: string): boolean {
-  return isDefined(element.props) && Object.hasOwn(element.props, name)
-}
-
-function warn(
-  code: AriaTreeRelationshipDiagnostic['code'],
-  sourceIndex: number,
-  message: string,
-  targetId?: string,
-): AriaTreeRelationshipDiagnostic {
-  return {
-    valid: false,
-    severity: 'warning',
-    code,
-    sourceIndex,
-    ...(targetId ? { targetId } : {}),
-    message,
-  }
-}
+export type AriaTreeRelationshipDiagnostic = AriaRelationshipDiagnostic<
+  | 'missing-owner'
+  | 'wrong-owner-role'
+  | 'multiple-owners'
+  | 'missing-group-owner'
+  | 'wrong-group-owner-role'
+  | 'multiple-group-owners'
+  | 'active-descendant-not-owned'
+  | 'missing-expanded'
+  | 'expanded-on-leaf'
+  | 'mixed-treeitem-selection-state',
+  { readonly targetId?: string }
+>
 
 /**
  * Validates tree/treeitem ownership against a complete caller-supplied scope.
@@ -60,64 +37,13 @@ export function validateAriaTreeRelationships(
   elements: readonly AriaReferenceElement[],
 ): readonly AriaTreeRelationshipDiagnostic[] {
   const index = createAriaReferenceIndex(elements)
-  const ids = new Map<AriaReferenceElement, number>()
-  iterate.forEach(elements, (element, elementIndex) => {
-    ids.set(element, elementIndex)
-  })
-
-  // Build ownership edges from structural parent IDs and explicit aria-owns references.
-  const children = elements.map(() => new Set<number>())
-  const parents = elements.map(() => new Set<number>())
-  const addEdge = (parentIndex: number, childIndex: number) => {
-    children[parentIndex]!.add(childIndex)
-    parents[childIndex]!.add(parentIndex)
-  }
-
-  iterate.forEach(elements, (element, childIndex) => {
-    if (isString(element.parentId)) {
-      const parent = index.lookup(element.parentId)
-      if (isResolvedLookup(parent)) {
-        const parentIndex = ids.get(parent.element)
-        if (isDefined(parentIndex)) addEdge(parentIndex, childIndex)
-      }
-    }
-
-    if (['tree', 'treeitem', 'group'].includes(String(roleOf(element)))) {
-      const owned = index.resolveList(element.props?.['aria-owns']).filter(isResolvedLookup)
-      iterate.forEach(owned, (target) => {
-        const targetIndex = ids.get(target.element)
-        if (isDefined(targetIndex)) addEdge(childIndex, targetIndex)
-      })
-    }
-  })
-
-  const descendantsOf = (rootIndex: number): Set<number> => {
-    const descendants = new Set<number>()
-    const pending = [...children[rootIndex]!]
-    while (pending.length > 0) {
-      const next = pending.pop()!
-      if (descendants.has(next)) continue
-      descendants.add(next)
-      pending.push(...children[next]!)
-    }
-    return descendants
-  }
-
-  const belongsToTree = (itemIndex: number, treeIndex: number): boolean => {
-    const pending = [...parents[itemIndex]!]
-    const visited = new Set<number>()
-    while (pending.length > 0) {
-      const parentIndex = pending.pop()!
-      if (parentIndex === treeIndex) return true
-      if (visited.has(parentIndex)) continue
-      visited.add(parentIndex)
-      // A nested tree establishes its own selection scope. Do not attribute its
-      // treeitems to an outer tree through the nested tree boundary.
-      if (roleOf(elements[parentIndex]!) === 'tree') continue
-      pending.push(...parents[parentIndex]!)
-    }
-    return false
-  }
+  const graph = buildOwnershipGraph(elements, index, (element) =>
+    hasRole(element, TREE_OWNER_ROLES),
+  )
+  const parents = graph.parents
+  const children = graph.children
+  // A nested tree establishes its own selection scope; items behind it belong to the nested tree.
+  const isTree = (elementIndex: number) => roleOf(elements[elementIndex]!) === 'tree'
 
   const diagnostics: AriaTreeRelationshipDiagnostic[] = []
 
@@ -172,8 +98,7 @@ export function validateAriaTreeRelationships(
         )
       } else {
         const invalidOwner = ownerIndexes.find(
-          (ownerIndex) =>
-            !['tree', 'treeitem', 'group'].includes(String(roleOf(elements[ownerIndex]!))),
+          (ownerIndex) => !hasRole(elements[ownerIndex]!, TREE_OWNER_ROLES),
         )
         if (isDefined(invalidOwner)) {
           diagnostics.push(
@@ -197,7 +122,7 @@ export function validateAriaTreeRelationships(
       }
 
       const hasChildren = [...children[sourceIndex]!].some((childIndex) =>
-        ['treeitem', 'group'].includes(String(roleOf(elements[childIndex]!))),
+        hasRole(elements[childIndex]!, TREE_ITEM_CHILD_ROLES),
       )
       if (hasChildren && !hasProp(element, 'aria-expanded')) {
         diagnostics.push(
@@ -219,14 +144,14 @@ export function validateAriaTreeRelationships(
     }
 
     if (role === 'tree') {
-      let usesAriaSelected = false
-      let usesAriaChecked = false
-      iterate.forEach(elements, (candidate, candidateIndex) => {
-        if (roleOf(candidate) !== 'treeitem' || !belongsToTree(candidateIndex, sourceIndex)) return
-        usesAriaSelected ||= hasProp(candidate, 'aria-selected')
-        usesAriaChecked ||= hasProp(candidate, 'aria-checked')
-      })
-      if (usesAriaSelected && usesAriaChecked) {
+      const items = elements.filter(
+        (candidate, candidateIndex) =>
+          roleOf(candidate) === 'treeitem' && graph.belongsTo(candidateIndex, sourceIndex, isTree),
+      )
+      if (
+        items.some((item) => hasProp(item, 'aria-selected')) &&
+        items.some((item) => hasProp(item, 'aria-checked'))
+      ) {
         diagnostics.push(
           warn(
             'mixed-treeitem-selection-state',
@@ -237,23 +162,17 @@ export function validateAriaTreeRelationships(
       }
     }
 
-    if (role === 'tree' && hasProp(element, 'aria-activedescendant')) {
-      const active = index.resolveList(element.props?.['aria-activedescendant'])[0]
-      if (active && isResolvedLookup(active)) {
-        const targetIndex = ids.get(active.element)
-        if (
-          isDefined(targetIndex) &&
-          (roleOf(active.element) !== 'treeitem' || !descendantsOf(sourceIndex).has(targetIndex))
-        ) {
-          diagnostics.push(
-            warn(
-              'active-descendant-not-owned',
-              sourceIndex,
-              'aria-activedescendant must reference a treeitem owned by this tree.',
-              active.id,
-            ),
-          )
-        }
+    if (role === 'tree') {
+      const misowned = misownedActiveDescendant(graph, index, element, sourceIndex, TREEITEM_ROLES)
+      if (misowned) {
+        diagnostics.push(
+          warn(
+            'active-descendant-not-owned',
+            sourceIndex,
+            'aria-activedescendant must reference a treeitem owned by this tree.',
+            misowned.id,
+          ),
+        )
       }
     }
   })

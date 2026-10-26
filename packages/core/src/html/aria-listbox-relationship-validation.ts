@@ -1,12 +1,13 @@
 import { isNumber, isString } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import { createAriaReferenceIndex } from './aria-reference-index'
+import { hasProp, roleOf } from './aria-relationships/shared'
+import type { AriaReferenceElement } from './aria-relationships/types'
 
 /** Minimal element shape for listbox relationship checks. */
-export interface AriaListboxElement {
-  readonly id?: string | null
+export interface AriaListboxElement extends AriaReferenceElement {
+  /** Position of the immediate parent in the supplied element sequence. */
   readonly parentIndex?: number | null
-  readonly props?: Readonly<Record<string, unknown>>
 }
 
 export type AriaListboxRelationshipIssue =
@@ -25,10 +26,6 @@ export interface AriaListboxRelationshipDiagnostic {
   readonly targetIndex?: number
 }
 
-function roleOf(element: AriaListboxElement): unknown {
-  return element.props?.role
-}
-
 /**
  * Checks listbox/option ownership within a caller-supplied, ordered element
  * scope. `parentIndex` represents the immediate parent in that scope; `aria-owns`
@@ -41,6 +38,10 @@ export function validateAriaListboxRelationships(
 ): readonly AriaListboxRelationshipDiagnostic[] {
   const index = createAriaReferenceIndex(elements)
   const diagnostics: AriaListboxRelationshipDiagnostic[] = []
+  const positions = new Map<AriaListboxElement, number>()
+  iterate.forEach(elements, (element, elementIndex) => {
+    if (!positions.has(element)) positions.set(element, elementIndex)
+  })
 
   const isDescendantOf = (elementIndex: number, ancestorIndex: number): boolean => {
     let parentIndex = elements[elementIndex]?.parentIndex
@@ -60,7 +61,7 @@ export function validateAriaListboxRelationships(
     if (!isString(owns)) return false
     return iterate.some(index.resolveList(owns), (resolution) => {
       if (resolution.status !== 'resolved') return false
-      const ownedIndex = elements.indexOf(resolution.target)
+      const ownedIndex = positions.get(resolution.target) ?? -1
       // A listbox may own an option directly or own a group that contains
       // options. Treat descendants of an explicitly owned group as owned too.
       return ownedIndex === optionIndex || isDescendantOf(optionIndex, ownedIndex)
@@ -78,56 +79,54 @@ export function validateAriaListboxRelationships(
       }
     }
 
-    if (roleOf(element) !== 'listbox') return
-
-    let usesAriaSelected = false
-    let usesAriaChecked = false
-    iterate.forEach(elements, (candidate, candidateIndex) => {
-      if (roleOf(candidate) !== 'option' || !isOwnedBy(candidateIndex, elementIndex)) return
-      const props = candidate.props
-      if (!props) return
-      usesAriaSelected ||= Object.prototype.hasOwnProperty.call(props, 'aria-selected')
-      usesAriaChecked ||= Object.prototype.hasOwnProperty.call(props, 'aria-checked')
-    })
-    if (usesAriaSelected && usesAriaChecked) {
-      diagnostics.push({ elementIndex, issue: 'mixed-option-selection-state' })
-    }
-
-    const activeDescendant = element.props?.['aria-activedescendant']
-    if (!isString(activeDescendant) || activeDescendant.length === 0) return
-
-    iterate.forEach(index.resolveList(activeDescendant), (resolution) => {
-      if (resolution.status === 'missing') {
-        diagnostics.push({
-          elementIndex,
-          issue: 'active-descendant-missing',
-          reference: resolution.id,
-        })
-      } else if (resolution.status === 'ambiguous') {
-        diagnostics.push({
-          elementIndex,
-          issue: 'active-descendant-ambiguous',
-          reference: resolution.id,
-        })
-      } else {
-        const targetIndex = elements.indexOf(resolution.target)
-        if (roleOf(resolution.target) !== 'option') {
-          diagnostics.push({
-            elementIndex,
-            issue: 'active-descendant-not-option',
-            reference: resolution.id,
-            targetIndex,
-          })
-        } else if (!isOwnedBy(targetIndex, elementIndex)) {
-          diagnostics.push({
-            elementIndex,
-            issue: 'active-descendant-not-owned',
-            reference: resolution.id,
-            targetIndex,
-          })
-        }
+    if (roleOf(element) === 'listbox') {
+      const options = elements.filter(
+        (candidate, candidateIndex) =>
+          roleOf(candidate) === 'option' && isOwnedBy(candidateIndex, elementIndex),
+      )
+      if (
+        options.some((option) => hasProp(option, 'aria-selected')) &&
+        options.some((option) => hasProp(option, 'aria-checked'))
+      ) {
+        diagnostics.push({ elementIndex, issue: 'mixed-option-selection-state' })
       }
-    })
+
+      const activeDescendant = element.props?.['aria-activedescendant']
+      const references = isString(activeDescendant) ? index.resolveList(activeDescendant) : []
+
+      iterate.forEach(references, (resolution) => {
+        if (resolution.status === 'missing') {
+          diagnostics.push({
+            elementIndex,
+            issue: 'active-descendant-missing',
+            reference: resolution.id,
+          })
+        } else if (resolution.status === 'ambiguous') {
+          diagnostics.push({
+            elementIndex,
+            issue: 'active-descendant-ambiguous',
+            reference: resolution.id,
+          })
+        } else {
+          const targetIndex = positions.get(resolution.target) ?? -1
+          if (roleOf(resolution.target) !== 'option') {
+            diagnostics.push({
+              elementIndex,
+              issue: 'active-descendant-not-option',
+              reference: resolution.id,
+              targetIndex,
+            })
+          } else if (!isOwnedBy(targetIndex, elementIndex)) {
+            diagnostics.push({
+              elementIndex,
+              issue: 'active-descendant-not-owned',
+              reference: resolution.id,
+              targetIndex,
+            })
+          }
+        }
+      })
+    }
   })
 
   return diagnostics
