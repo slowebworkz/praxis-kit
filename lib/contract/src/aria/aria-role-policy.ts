@@ -12,29 +12,9 @@ import {
 
 export { hasStandaloneRole, isStrongImplicitRole }
 
-// Returns the implicit ARIA role for a tag, optionally informed by props, and (for header/footer)
-// by ancestor tags when available.
-const LANDMARK_CONTEXT_BOUNDARIES: ReadonlySet<IntrinsicTag> = new Set([
-  'article',
-  'aside',
-  'main',
-  'nav',
-  'section',
-])
-
-export function getImplicitRole(
-  tag: IntrinsicTag,
-  props?: IntrinsicProps,
-  ancestorTags?: readonly IntrinsicTag[],
-): string | undefined {
-  // HTML-ARIA maps header/footer to generic when nested inside a sectioning/landmark
-  // boundary. Without supplied ancestry, retain the historical single-element result.
-  if (
-    (tag === 'header' || tag === 'footer') &&
-    ancestorTags?.some((ancestorTag) => LANDMARK_CONTEXT_BOUNDARIES.has(ancestorTag))
-  ) {
-    return 'generic'
-  }
+// Returns the implicit ARIA role for a tag, optionally informed by props for
+// elements whose role depends on attributes (a/area, input[type=...], select, section, form).
+export function getImplicitRole(tag: IntrinsicTag, props?: IntrinsicProps): string | undefined {
   if (tag in IMPLICIT_ROLE_RECORD) return IMPLICIT_ROLE_RECORD[tag as Tag]
   // <a>/<area> is a `link` with an href, `generic` without.
   if (tag === 'a' || tag === 'area') return getAnchorImplicitRole(props?.href)

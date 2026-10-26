@@ -1,4 +1,4 @@
-import type { ElementType, IntrinsicProps, IntrinsicTag } from '../primitives'
+import type { ElementType, IntrinsicProps } from '../primitives'
 
 // `extraProps`, when supplied, is the pre-variant-filter props object (the same one
 // `normalize()` already receives) — used only as the evaluation context for a consumer's own
@@ -9,5 +9,4 @@ export type ResolveAriaFn = <P extends IntrinsicProps>(
   tag: ElementType,
   props: P,
   extraProps?: IntrinsicProps,
-  options?: { readonly ancestorTags?: readonly IntrinsicTag[] },
 ) => { props: P }
