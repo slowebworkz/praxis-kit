@@ -46,17 +46,6 @@ describe('validate() — fix-plan cache', () => {
     spy.mockRestore()
   })
 
-  it('does not reuse an ancestry-sensitive plan across different ancestor contexts', () => {
-    const engine = makeValidator(silentDiagnostics)
-    const spy = vi.spyOn(AriaPolicyEngine, 'evaluate')
-
-    engine.validate('header', { role: 'banner' }, undefined, { ancestorTags: [] })
-    engine.validate('header', { role: 'banner' }, undefined, { ancestorTags: ['main'] })
-
-    expect(spy).toHaveBeenCalledTimes(2)
-    spy.mockRestore()
-  })
-
   it('produces a cache hit when only non-aria props change', () => {
     const engine = makeValidator()
     const spy = vi.spyOn(engine, 'report')

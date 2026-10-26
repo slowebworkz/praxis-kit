@@ -103,10 +103,9 @@ export class AriaPolicyEngine extends InvariantBase {
     tag: AnyTag,
     props: IntrinsicProps,
     variantKeys: ReadonlySet<string> = NO_VARIANT_KEYS,
-    ancestorTags?: readonly IntrinsicTag[],
   ): EvaluationContext {
     if (!isIntrinsicTag(tag)) return { proceed: false, result: { props, violations: [] } }
-    const implicitRole = getImplicitRole(tag, props, ancestorTags)
+    const implicitRole = getImplicitRole(tag, props)
     // hasRole marks whether the element has native or author-supplied ARIA semantics (implicit
     // role, or a non-empty explicit role). It gates only the built-in role-semantic rule tiers
     // (see #getRules) — it must not gate the whole context, since a consumer's own #extraRules
@@ -135,14 +134,7 @@ export class AriaPolicyEngine extends InvariantBase {
       hasRole,
       props: workingProps,
       preExistingViolations,
-      context: {
-        tag,
-        props: workingProps,
-        implicitRole,
-        effectiveRole,
-        variantKeys,
-        ...(ancestorTags !== undefined && { ancestorTags }),
-      },
+      context: { tag, props: workingProps, implicitRole, effectiveRole, variantKeys },
     }
   }
 
@@ -200,17 +192,8 @@ export class AriaPolicyEngine extends InvariantBase {
     return AriaPolicyEngine.#implicitOnlyRules
   }
 
-  static evaluate(
-    tag: AnyTag,
-    props: IntrinsicProps,
-    options?: { ancestorTags?: readonly IntrinsicTag[] },
-  ): ValidationResult {
-    const derived = AriaPolicyEngine.#deriveContext(
-      tag,
-      props,
-      NO_VARIANT_KEYS,
-      options?.ancestorTags,
-    )
+  static evaluate(tag: AnyTag, props: IntrinsicProps): ValidationResult {
+    const derived = AriaPolicyEngine.#deriveContext(tag, props)
     if (!derived.proceed) return derived.result
     // No extra rules and no role semantics — nothing to evaluate.
     if (!derived.hasRole)
@@ -227,14 +210,7 @@ export class AriaPolicyEngine extends InvariantBase {
       AriaPolicyEngine.#getRules(context),
       context,
     )
-    const next = AriaPolicyEngine.#applyFixes(
-      narrowedTag,
-      implicitRole,
-      workingProps,
-      fixes,
-      NO_VARIANT_KEYS,
-      context.ancestorTags,
-    )
+    const next = AriaPolicyEngine.#applyFixes(narrowedTag, implicitRole, workingProps, fixes)
     return { props: next, violations: [...preExistingViolations, ...violations] }
   }
 
@@ -244,9 +220,8 @@ export class AriaPolicyEngine extends InvariantBase {
     extraRules: readonly AriaRule[],
     extraProps?: IntrinsicProps,
     variantKeys: ReadonlySet<string> = NO_VARIANT_KEYS,
-    ancestorTags?: readonly IntrinsicTag[],
   ): ValidationResult {
-    const derived = AriaPolicyEngine.#deriveContext(tag, props, variantKeys, ancestorTags)
+    const derived = AriaPolicyEngine.#deriveContext(tag, props, variantKeys)
     if (!derived.proceed) return derived.result
 
     const {
@@ -282,7 +257,6 @@ export class AriaPolicyEngine extends InvariantBase {
       workingProps,
       fixes,
       variantKeys,
-      context.ancestorTags,
     )
     return { props: next, violations: [...preExistingViolations, ...violations] }
   }
@@ -300,12 +274,7 @@ export class AriaPolicyEngine extends InvariantBase {
   // #extraRules (a consumer's `enforcement.aria`/`enforcement.rules`), never for the built-in
   // role-semantic pipeline or for the props a fix can apply to. Defaults to `props` so callers
   // that don't have a separate pre-filter object (or don't need one) see unchanged behavior.
-  validate(
-    tag: AnyTag,
-    props: IntrinsicProps,
-    extraProps?: IntrinsicProps,
-    options?: { ancestorTags?: readonly IntrinsicTag[] },
-  ): ValidationResult {
+  validate(tag: AnyTag, props: IntrinsicProps, extraProps?: IntrinsicProps): ValidationResult {
     const ruleProps = extraProps ?? props
     // Custom `enforcement.aria` rules (#extraRules) may read arbitrary props that
     // createPlanKey doesn't encode (it only covers what the built-in pipeline reads). A rule
@@ -313,9 +282,7 @@ export class AriaPolicyEngine extends InvariantBase {
     // the key, read off `ruleProps` since that's what the rule itself actually sees. Any extra
     // rule without `readsProps` is assumed unsafe to cache and bypasses the plan cache entirely
     // for this validate() call.
-    // Ancestor-sensitive role resolution cannot share a plan with a different ancestry.
-    // Keep the existing cache path unchanged for ordinary single-element evaluations.
-    const baseKey = options?.ancestorTags === undefined ? createPlanKey(tag, props) : null
+    const baseKey = createPlanKey(tag, props)
     let key: string | null = baseKey
     if (this.#extraRules.length > 0) {
       const suffix = extraRulesKeySuffix(this.#extraRules, ruleProps)
@@ -340,9 +307,8 @@ export class AriaPolicyEngine extends InvariantBase {
           this.#extraRules,
           extraProps,
           this.#variantKeys,
-          options?.ancestorTags,
         )
-      : AriaPolicyEngine.evaluate(tag, props, options)
+      : AriaPolicyEngine.evaluate(tag, props)
 
     if (result.violations.length > 0) this.report(result.violations)
 
@@ -365,21 +331,13 @@ export class AriaPolicyEngine extends InvariantBase {
     props: T,
     fixes: AriaFix[],
     variantKeys: ReadonlySet<string> = NO_VARIANT_KEYS,
-    ancestorTags?: readonly IntrinsicTag[],
   ): T {
     if (fixes.length === 0) return props
     const sorted = [...fixes].sort((a, b) => (a.priority ?? Infinity) - (b.priority ?? Infinity))
     let next: IntrinsicProps = props
     iterate.forEach(sorted, ({ apply }) => {
       const effectiveRole = next.role ?? implicitRole
-      const fixContext: AriaContext = {
-        tag,
-        implicitRole,
-        effectiveRole,
-        props: next,
-        variantKeys,
-        ...(ancestorTags !== undefined && { ancestorTags }),
-      }
+      const fixContext: AriaContext = { tag, implicitRole, effectiveRole, props: next, variantKeys }
       const fixResult = apply(fixContext)
       if (fixResult.applied) next = fixResult.next as IntrinsicProps
     })

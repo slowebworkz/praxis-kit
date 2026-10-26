@@ -237,7 +237,7 @@ ownership, ID references, active descendants and consistent selection mechanisms
 is a focused APG coverage review of conditional role/state applicability and of requirements that
 need additional structural or document context. This audit does not imply that keyboard interaction
 or focus management belongs in the static contract layer. The separate `undefined` allowed-role rows
-also remain open where they need ancestry the single-element context lacks. F8 now has optional `ancestorTags` support in the ARIA context, policy engine, and polymorphic runtime `resolveAria` hook, but adapters do not yet derive and propagate ancestry automatically; see the audit's F8 entry.
+also remain open where they need ancestry the single-element context lacks.
 
 ## Resolved
 
