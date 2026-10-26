@@ -306,14 +306,14 @@ implementation. Keyboard navigation, focus management, and selection behavior be
 widget only if Praxis Kit explicitly provides such a runtime. Do not infer that those behaviors must
 be implemented by these static contracts.
 
-The baseline was characterization-only. The next behavior slice registers `tab` and `option`
-selection-state contracts (`aria-selected` must be present, including an explicit `false`) and a
-`tabpanel` accessible-name contract. These checks remain per-element: they do not validate
-descendant structure, state transitions, or cross-element ID references.
+The initial baseline was characterization-only. The current implementation includes per-element
+naming and state contracts plus opt-in, caller-supplied-scope relationship validators. These
+validators check structural relationships and declared ID references; they do not implement
+keyboard navigation, focus management, or state transitions.
 
 | APG pattern / role family          | Current registry coverage                                | Remaining audit questions                                                                                                                                             |
 | ---------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tabs: `tablist`, `tab`, `tabpanel` | `tablist`, `tab`, `tabpanel`                             | Tab-to-panel ID references; warn when a uniquely resolved `aria-controls` relationship conflicts with a uniquely resolved `aria-labelledby` tab reference; do not require reciprocal attributes when only one side is declared.                       |
+| Tabs: `tablist`, `tab`, `tabpanel` | `tablist`, `tab`, `tabpanel`; `validateAriaTabRelationships` | Checks declared tab-to-panel ID references and warns when a uniquely resolved `aria-controls` relationship conflicts with a uniquely resolved `aria-labelledby` tab reference. It does not require reciprocal attributes when only one side is declared. |
 | Menu / menubar                     | `menu`, `menubar`, `menuitem`, `menuitemcheckbox`, `menuitemradio`; `validateAriaMenuRelationships` | Checks menuitem ownership by a supplied `menu`/`menubar`, including group wrappers and explicit `aria-owns`; does not validate submenu state or keyboard behavior. `aria-haspopup`/`aria-expanded` are conditional on submenu behavior; `aria-disabled` is optional. `menuitemcheckbox` and `menuitemradio` require `aria-checked`, including explicit `false`. |
 | Toolbar                            | `toolbar` (accessible name)                              | Keyboard navigation and focus management are behavioral concerns; validate structural relationships only when the available context supports them. |
 | Combobox                           | `combobox` (accessible name)                             | `validateAriaComboboxRelationships` checks supplied `aria-controls` references and supported popup roles (`listbox`, `tree`, `grid`, `dialog`); no reference is required by this relationship validator. |
@@ -325,15 +325,17 @@ descendant structure, state transitions, or cross-element ID references.
 For menu-item contracts, the static single-element boundary is intentional: `menuitem` requires an
 accessible name; `menuitemcheckbox` and `menuitemradio` additionally require `aria-checked` to be
 present (the explicit `false` value is valid). `aria-disabled` is optional, and `aria-haspopup` /
-`aria-expanded` are only relevant when an item opens a submenu. The static contract does not infer
-submenu behavior or validate menu ownership. Tests in `contracts/aria/widgets.test.ts` pin this
-boundary so optional states are not accidentally promoted to universal requirements.
+`aria-expanded` are only relevant when an item opens a submenu. The separate
+`validateAriaMenuRelationships` utility checks supplied-scope menuitem ownership, including group
+wrappers and explicit `aria-owns`; it does not infer submenu behavior or validate keyboard interaction.
+Tests in `contracts/aria/widgets.test.ts` pin the per-element boundary so optional states are not
+accidentally promoted to universal requirements.
 
-Audit each row against the relevant APG pattern and WAI-ARIA 1.2 role/property requirements before
-changing runtime rules. Record a finding only when the requirement is expressible from the available
-single-element `AriaContext`; descendant structure and cross-element ID references may require a
-separate tree-aware design decision. Keep valid APG alternatives valid, and add positive and
-negative characterization tests for each rule proposed.
+For future audit work, distinguish requirements expressible from a single-element `AriaContext` from
+relationships that need a caller-supplied element scope. The existing relationship utilities cover
+the structural and ID-reference cases listed above; they are not DOM walkers or runtime widget
+implementations. Keep valid APG alternatives valid, and add positive and negative characterization
+tests for any new rule proposed.
 
 ### Listbox and tree: current validation boundary
 
@@ -343,12 +345,17 @@ check option ownership through `parentIndex` ancestry or `aria-owns`, plus a pre
 `aria-activedescendant` reference for resolution, option role, and ownership. An explicitly owned
 group also owns its option descendants. This utility is not a DOM walker. It warns when options
 owned by the same listbox mix `aria-selected` and `aria-checked`; it does not require either
-mechanism universally, infer multiselectability, validate state values, or check keyboard behavior. The `treeitemContract` requires an
-accessible name, but treeitem/group hierarchy still needs a separate tree-aware validation design.
+mechanism universally, infer multiselectability, validate state values, or check keyboard behavior.
 
-The tree relationship validator checks ownership for both `treeitem` and `group`, including orphaned groups, invalid group owners, and multiple resolved owners. It also warns when treeitems owned by one tree mix `aria-selected` and `aria-checked`; either mechanism is permitted when used consistently, and nested trees are treated as separate selection scopes. It deliberately permits structural containment and explicit `aria-owns` ownership. The `treeitemContract` checks naming only. It deliberately does not require `aria-expanded`,
-because leaf items do not need expansion state. For a future behavior patch, first decide whether
-Praxis Kit will add a tree-aware validation phase.
+The tree relationship validator checks ownership for both `treeitem` and `group`, including orphaned
+groups, invalid group owners, and multiple resolved owners. It also warns when treeitems owned by one
+tree mix `aria-selected` and `aria-checked`; either mechanism is permitted when used consistently,
+and nested trees are treated as separate selection scopes. It deliberately permits structural
+containment and explicit `aria-owns` ownership. The `treeitemContract` checks naming only. It does
+not require `aria-expanded`, because leaf items do not need expansion state. Structural tree
+relationship validation is implemented; runtime focus management and keyboard behavior are outside
+this static validation layer.
+
 Do not approximate these checks by requiring `aria-expanded` on every `treeitem`: leaf items do not
 need expansion state, and flat and nested tree representations are both valid. Likewise, do not
 require `aria-activedescendant` universally; APG permits focus-management alternatives.
@@ -379,9 +386,10 @@ The `gridContract` currently enforces an accessible name only. The grid-role aud
 characterization rather than adding `row`, `gridcell`, `columnheader`, or `rowheader` contracts
 without a demonstrated, universally applicable per-element requirement. Row/column counts and
 indices may be optional or context-dependent, and `aria-activedescendant` is one focus-management
-pattern rather than a universal requirement. Grid ownership, cell relationships, and whether a
-role is appropriate in a particular grid require structure or usage context not provided by the
-current single-element `AriaContext`.
+pattern rather than a universal requirement. The separate `validateAriaGridRelationships` utility
+checks caller-supplied grid/treegrid row ownership, rowgroup ownership, row-to-cell ownership, and
+present `aria-activedescendant` ownership; it does not infer relationships outside the supplied
+scope or validate keyboard behavior.
 
 ---
 
@@ -392,7 +400,7 @@ what closes sub-areas j, m and the `undefined` rows above.
 
 | ID     | Area             | Summary                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ------ | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **F7** | widget contracts | APG widget-contract audit in progress. Per-element naming/state contracts are implemented for tabs, combobox, option, treeitem, menuitem, radio/radiogroup, and checked menu items; supplied-scope relationship validators cover tabs, listbox/options, combobox popups, tree, grid, radiogroup, and menu/menubar ownership. Remaining work is conditional applicability and relationships requiring additional structural/document context. Post-0.1. |
+| **F7** | widget contracts | Core per-element naming/state contracts and supplied-scope relationship validators are implemented for tabs, listbox/options, combobox popups, tree, grid, radiogroup, and menu/menubar ownership. Remaining work is a focused APG coverage review for conditional applicability or requirements that need additional structural/document context; do not treat keyboard interaction as a static-contract requirement. Post-0.1. |
 | **F8** | implicit role    | Apply `getConditionalImplicitRole` to `<header>`/`<footer>` (top-level → `banner`/`contentinfo`, otherwise `generic`). **Deferred past 0.1** — needs ancestor visibility that `AriaContext` deliberately does not carry (single-element view); adding it is an architecture change, not a fix. Until then, header/footer are treated as always top-level — see the implicit-role table and **D4** below. |
 
 **Closed:** F1 (`<select>` combobox/listbox), F3 (`<input>` no-`type` → `textbox`), F4
@@ -407,6 +415,7 @@ on `feat/aria-audit-p1-close`.
 | 2026-09 | `fix/aria-html-standards-audit`             | Initial audit. C1–C8 allowed-role table corrections; F5 partial (`aria-checked`, `aria-orientation`); F1 `<select>` implicit combobox/listbox; F4 partial (`<select>` required-property exemption). This document created (was `.vscode/HTML_ARIA_AUDIT.md`).                                                                                                                                                                                                                                                                                                                                |
 | 2026-09 | `fix/aria-audit-bare-anchor-and-attr-table` | **F9** closed — `<a>`/`<area>` implicit role from `href`. **F5** closed — Name-Prohibited roles (`NAME_PROHIBITED_ROLES`); `aria-description` global; `ROLE_RESTRICTED_ATTRIBUTES` realigned to `aria-query` via `aria-support.generated.json` + spec-conformance tests (fixed real false positives on `aria-required`/`aria-readonly`/`aria-expanded`/`aria-haspopup`/`aria-invalid`).                                                                                                                                                                                                      |
 | 2026-09 | `feat/aria-audit-p1-close`                  | **F3** closed — `getInputImplicitRole` defaults `type ?? 'text'` → `textbox`; shared `LIST_ELIGIBLE_INPUT_TYPES` moved to `@praxis-kit/primitive` constants. **F2** closed — `inputElementSpec` and a new `selectElementSpec` are `dynamic` policies: `input[list]` on a text-like type and `select[multiple]`/`select[size>1]` narrow the permitted explicit-role set to `[]`. **F6** closed for allowed roles — `<img>` with no `alt` permits only `none`/`presentation` (`IMG_DECORATIVE_ROLES`). **F8** reframed as deviation **D4** (deferred past 0.1 — needs `AriaContext` ancestry). |
+| 2026-10 | `docs/aria-audit-final-reconciliation`       | Reconciled the F7 status with implemented relationship validators; removed stale statements that described tab references and tree hierarchy validation as outstanding; clarified the static validation boundary and retained F8 as an architectural deferral. |
 
 The separate `validateAriaGridRelationships` utility now checks caller-supplied grid/treegrid
 row ownership, row-to-cell ownership, and resolved `aria-activedescendant` ownership. It does not
