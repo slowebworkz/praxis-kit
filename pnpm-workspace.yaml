@@ -16,7 +16,7 @@ catalog:
   "@changesets/cli": ^3.0.3
 
   # Playwright
-  "@axe-core/playwright": ^4.13.0
+  "@axe-core/playwright": ^4.14.0
   "@eslint/js": ^10.0.1
   "@playwright/experimental-ct-react": ^1.62.1
   "@playwright/experimental-ct-vue": ^1.62.1
