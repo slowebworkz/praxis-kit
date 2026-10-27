@@ -24,6 +24,32 @@ import type {
 /** Internal prop used only to pass the combined resolver through automatic adapter composition. */
 export const COMPOSITION_STYLE_REQUEST_PROP = '__praxisCompositionStyleRequest'
 
+// Display modes are mutually exclusive. Keep this list aligned with the layout plugin's
+// reserved display props without making adapter-utils depend on the Tailwind package.
+const EXCLUSIVE_DISPLAY_KEYS = [
+  'flex',
+  'inline-flex',
+  'grid',
+  'inline-grid',
+  'block',
+  'inline-block',
+  'inline',
+  'hidden',
+  'contents',
+  'flow-root',
+  'list-item',
+  'table',
+  'inline-table',
+  'table-caption',
+  'table-cell',
+  'table-column',
+  'table-column-group',
+  'table-footer-group',
+  'table-header-group',
+  'table-row-group',
+  'table-row',
+] as const
+
 /** Validate the internal composition request before trusting a prop value at runtime. */
 export function isCompositionStyleRequest(value: unknown): value is CompositionStyleRequest {
   return isObject(value, true) && isFunction(value.resolveClasses)
@@ -192,6 +218,36 @@ export function composeStyleProps(
       if (source && copySelectedProp(result, source, name)) return
     }
   })
+
+  // Display props describe one mode, not independent toggles. Resolve the family from the
+  // highest-precedence source that specifies any display key, then discard display selections
+  // inherited from lower-precedence sources. This prevents e.g. primary `flex` defaults from
+  // coexisting with partner `grid` defaults. A source that explicitly sets a mode to false is
+  // still authoritative and must not fall through to a lower-priority mode.
+  if (EXCLUSIVE_DISPLAY_KEYS.some((name) => compositionOwnedKeys.has(name))) {
+    const displaySource = ownedSources.find(
+      (source) =>
+        source &&
+        EXCLUSIVE_DISPLAY_KEYS.some(
+          (name) =>
+            compositionOwnedKeys.has(name) &&
+            Object.hasOwn(source, name) &&
+            !isUndefined(source[name]),
+        ),
+    )
+
+    if (displaySource) {
+      for (const name of EXCLUSIVE_DISPLAY_KEYS) {
+        if (compositionOwnedKeys.has(name)) delete result[name]
+      }
+      iterate.forEachSet(compositionOwnedKeys, (name) => {
+        if ((EXCLUSIVE_DISPLAY_KEYS as readonly string[]).includes(name)) {
+          copySelectedProp(result, displaySource, name)
+        }
+      })
+    }
+  }
+
   return result
 }
 
