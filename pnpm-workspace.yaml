@@ -70,7 +70,7 @@ catalog:
   prettier-plugin-tailwindcss: ^0.8.1
 
   # React
-  react: ^19.3.0
+  react: ^19.3.1
   react-dom: ^19.3.1
 
   # Solid
