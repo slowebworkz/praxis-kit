@@ -26,7 +26,7 @@ import {
   finalizeComponent,
   invariant,
 } from '@praxis-kit/adapter-utils'
-import type { ComposeDefaultsValidationArgs } from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsValidation } from '@praxis-kit/adapter-utils'
 import type { ContractVariantsWithComposeOf } from '@praxis-kit/compose-props'
 import { isFunction, isString } from '@praxis-kit/guards'
 import { createElement, useCallback, useRef } from 'react'
@@ -83,8 +83,7 @@ export function createContractComponent<
 >(
   options: C & {
     readonly subComponents?: TSubComponents
-  },
-  ..._composeDefaultsValidation: ComposeDefaultsValidationArgs<C>
+  } & ComposeDefaultsValidation<C>
 ): MergeRecords<
   PolymorphicComponent<
     PolymorphicGenerics<

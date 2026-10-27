@@ -75,27 +75,27 @@ const ComposeDefaultsValid = createContractComponent({
 })
 void ComposeDefaultsValid
 
-// @ts-expect-error — `size` belongs to the primary component, not ComposeDefaultsSurface.
 const ComposeDefaultsInvalid = createContractComponent({
   tag: 'section',
   name: 'ComposeDefaultsInvalid',
   styling: { variants: { size: { small: 'size-small', large: 'size-large' } } },
+  // @ts-expect-error — `size` belongs to the primary component, not ComposeDefaultsSurface.
   compose: { with: ComposeDefaultsSurface, defaults: { size: 'small' } as const },
 })
 void ComposeDefaultsInvalid
 
-// @ts-expect-error — ordinary partner props are not declared variants and cannot be defaulted.
 const ComposeDefaultsInvalidOrdinary = createContractComponent({
   tag: 'section',
   name: 'ComposeDefaultsInvalidOrdinary',
+  // @ts-expect-error — ordinary partner props are not declared variants and cannot be defaulted.
   compose: { with: ComposeDefaultsSurface, defaults: { radius: 'sm' } as const },
 })
 void ComposeDefaultsInvalidOrdinary
 
-// @ts-expect-error — a declared partner variant still rejects values outside its declared set.
 const ComposeDefaultsInvalidValue = createContractComponent({
   tag: 'section',
   name: 'ComposeDefaultsInvalidValue',
+  // @ts-expect-error — a declared partner variant still rejects values outside its declared set.
   compose: { with: ComposeDefaultsSurface, defaults: { tone: 'bright' } as const },
 })
 void ComposeDefaultsInvalidValue

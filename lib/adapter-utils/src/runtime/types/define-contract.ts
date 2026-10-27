@@ -86,11 +86,47 @@ export type ComposeDefaultsConstraint<O> =
 
 export type DefineContractOptions<O extends ContractInput> = O & ComposeDefaultsConstraint<O>
 
+/** A property-level diagnostic attached to an invalid `compose.defaults` value. */
+type ComposeDefaultsError<K extends PropertyKey, Reason extends string> = {
+  readonly __composeDefaultsError__: `compose.defaults[${K & string}]: ${Reason}`
+}
+
+type InvalidIndividualComposeDefaultKeys<Defaults, Props> = {
+  [K in keyof Defaults]: K extends keyof Props
+    ? Defaults[K] extends Props[K]
+      ? never
+      : K
+    : K
+}[keyof Defaults]
+
+type ComposeDefaultsDiagnosticValues<Defaults, Props> = {
+  [K in keyof Defaults]: K extends keyof Props
+    ? Defaults[K] extends Props[K]
+      ? [InvalidIndividualComposeDefaultKeys<Defaults, Props>] extends [never]
+        ? Defaults[K] & ComposeDefaultsError<K, 'invalid combination of compose.defaults keys or values'>
+        : Defaults[K]
+      : Defaults[K] & ComposeDefaultsError<K, 'invalid value for this variant or plugin selector'>
+    : Defaults[K] & ComposeDefaultsError<K, 'not a declared variant or plugin selector of the composed component'>
+}
+
+type ComposeDefaultsDiagnostic<O> = O extends { readonly compose: infer Compose }
+  ? Compose extends { readonly defaults: infer Defaults }
+    ? {
+        readonly compose: Compose & {
+          readonly defaults: ComposeDefaultsDiagnosticValues<
+            Defaults,
+            RetainedComponentProps<ComposedComponentOf<O>>
+          >
+        }
+      }
+    : unknown
+  : unknown
+
 /**
- * Deferred public-factory validation for `compose.defaults`.
- *
- * A rest tuple checks the fully inferred options type after the primary parameter has inferred
- * `O`, avoiding the inference collapse caused by intersecting `O` with its own constraint.
+ * Validate `compose.defaults` on the options parameter itself so TypeScript reports the problem
+ * at the offending property instead of producing an unrelated rest-parameter arity error.
+ * `unknown` leaves valid options unchanged; invalid values acquire a message-bearing property type.
  */
-export type ComposeDefaultsValidationArgs<O> =
-  ComposeDefaultsConstraint<O> extends never ? [invalidComposeDefaults: never] : []
+export type ComposeDefaultsValidation<O> = ComposeDefaultsConstraint<O> extends never
+  ? ComposeDefaultsDiagnostic<O>
+  : unknown

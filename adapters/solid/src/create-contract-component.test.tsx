@@ -250,9 +250,9 @@ describe('createContractComponent (Solid adapter)', () => {
         variants: { intent: { ghost: 'partner-ghost', solid: 'partner-solid' } },
       },
     })
-    // @ts-expect-error compose.defaults is variant-only; `class` is rejected by the type but still honored at runtime
     const Card = createContractComponent({
       tag: 'div',
+      // @ts-expect-error compose.defaults is variant-only; `class` is rejected by the type but still honored at runtime
       compose: { with: Surface, defaults: { class: 'default-class', intent: 'ghost' } },
       styling: {
         base: 'primary-base',

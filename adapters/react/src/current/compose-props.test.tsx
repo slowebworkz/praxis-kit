@@ -201,6 +201,54 @@ defineContract({
   compose: { with: Surface, defaults: { raduis: 'lg' } },
 })
 
+// Valid defaults remain accepted by the public component factory.
+createContractComponent({
+  tag: 'section',
+  name: 'ValidFactoryComposeDefaults',
+  compose: { with: Surface, defaults: { shadow: true } },
+})
+
+// The public component factory should report invalid defaults on the offending property, with a
+// message-bearing expected type, rather than TS2554 from a validation rest parameter.
+createContractComponent({
+  tag: 'section',
+  name: 'InvalidFactoryComposeDefaultsKey',
+  compose: {
+    with: Surface,
+    defaults: {
+      // @ts-expect-error — diagnostic should identify this as an undeclared composed variant.
+      raduis: 'lg',
+    },
+  },
+})
+
+createContractComponent({
+  tag: 'section',
+  name: 'InvalidFactoryComposeDefaultsValue',
+  compose: {
+    with: Surface,
+    defaults: {
+      // @ts-expect-error — diagnostic should identify the invalid value for this variant.
+      shadow: 'yes',
+    },
+  },
+})
+
+// Mutually exclusive plugin selectors cannot be defaulted together through the public factory.
+createContractComponent({
+  tag: 'section',
+  name: 'InvalidFactoryExclusiveComposeDefaults',
+  compose: {
+    with: UnionPluginSurface,
+    defaults: {
+      // @ts-expect-error — `flex` and `grid` are exclusive in the plugin's selector union.
+      flex: true,
+      // @ts-expect-error — the diagnostic is reported on both members of the invalid combination.
+      grid: true,
+    },
+  },
+})
+
 // @ts-expect-error — `compose.defaults` cannot configure an ordinary prop, even with a valid value
 defineContract({
   tag: 'section',

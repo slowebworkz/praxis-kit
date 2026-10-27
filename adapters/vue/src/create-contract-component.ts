@@ -27,7 +27,7 @@ import {
   finalizeComponent,
   invariant,
 } from '@praxis-kit/adapter-utils'
-import type { ComposeDefaultsValidationArgs } from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsValidation } from '@praxis-kit/adapter-utils'
 import { isDefined, isString } from '@praxis-kit/guards'
 import { applyDisplayName } from './apply-display-name'
 import { buildRuntime } from './build-runtime'
@@ -77,8 +77,7 @@ export function createContractComponent<
 >(
   options: C & {
     readonly subComponents?: TSubComponents
-  },
-  ..._composeDefaultsValidation: ComposeDefaultsValidationArgs<C>
+  } & ComposeDefaultsValidation<C>
 ): MergeRecords<
   PolymorphicComponent<
     PolymorphicGenerics<
