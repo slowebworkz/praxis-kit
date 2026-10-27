@@ -2,6 +2,7 @@ export type {
   ComposedContractOf,
   ComposedPluginOf,
   ContractGenericsWithComposeOf,
+  ContractVariantsWithComposeOf,
   RecoveredContractOf,
 } from './compose-generics'
 export type {
