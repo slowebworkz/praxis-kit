@@ -75,7 +75,7 @@ catalog:
 
   # Solid
   solid-js: ^1.9.17
-  unplugin-solid: ^2.0.0
+  unplugin-solid: ^3.0.0
 
   # Svelte
   svelte: ^5.57.2
