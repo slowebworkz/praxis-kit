@@ -5,7 +5,6 @@ import type {
   ContractPresetOf,
   ContractPropsOf,
   ContractTagOf,
-  ContractVariantsOf,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
@@ -14,6 +13,7 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
+import type { ContractVariantsWithComposeOf } from '@praxis-kit/compose-props'
 import {
   diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
@@ -61,7 +61,7 @@ export function createContractComponent<
   const C extends SolidFactoryOptions,
   TDefault extends ElementType = ContractTagOf<C>,
   Props extends UnknownProps = ContractPropsOf<C>,
-  Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
+  Variants extends Readonly<VariantMap> = ContractVariantsWithComposeOf<C>,
   TPreset extends RecipeMap<VariantMap> = ContractPresetOf<C>,
   TPlugin extends AnyClassPluginFactory = ContractPluginOf<C>,
   TSubComponents extends Readonly<AnyRecord> = EmptyRecord,

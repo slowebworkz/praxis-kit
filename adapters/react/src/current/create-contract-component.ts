@@ -6,7 +6,6 @@ import type {
   ContractPresetOf,
   ContractPropsOf,
   ContractTagOf,
-  ContractVariantsOf,
   ElementForTag,
   ElementType,
   EmptyRecord,
@@ -28,6 +27,7 @@ import {
   invariant,
 } from '@praxis-kit/adapter-utils'
 import type { ComposeDefaultsValidationArgs } from '@praxis-kit/adapter-utils'
+import type { ContractVariantsWithComposeOf } from '@praxis-kit/compose-props'
 import { isFunction, isString } from '@praxis-kit/guards'
 import { createElement, useCallback, useRef } from 'react'
 import type { ComponentType, Ref } from 'react'
@@ -75,7 +75,7 @@ export function createContractComponent<
   const C extends ReactFactoryOptions,
   TDefault extends ElementType = ContractTagOf<C>,
   Props extends UnknownProps = ContractPropsOf<C>,
-  Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
+  Variants extends Readonly<VariantMap> = ContractVariantsWithComposeOf<C>,
   TPreset extends RecipeMap<VariantMap> = ContractPresetOf<C>,
   TPlugin extends AnyClassPluginFactory = ContractPluginOf<C>,
   TAllowed extends ElementType = ContractAllowedOf<C>,

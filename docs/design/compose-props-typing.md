@@ -176,11 +176,19 @@ type ContractGenericsWithComposeOf<C> =
 **Consumer-facing change:** each adapter's `ContractProps<T>` swaps its internal
 `ContractGenericsWithAllowedOf<C>` read for a `PolymorphicGenerics` built from
 `ContractGenericsWithComposeOf<C>`'s `props`/`variants`/`preset`, keeping `ContractTagOf<C>` and
-`ContractAllowedOf<C>` untouched. **Deliberately not** touching `createContractComponent`'s own
-return-type instantiation — `G` there stays exactly as today. The composed surface is a
-type-extraction-time concern, matching how `ContractProps` already diverges from the call
-signature's own non-generic fallback overload for a different, pre-existing reason (documented in
-that type's own comment).
+`ContractAllowedOf<C>` untouched. **Deliberately not** touching the rest of
+`createContractComponent`'s return-type instantiation — the composed _props_ surface (the partner's
+ordinary props and plugin props) is a type-extraction-time concern, matching how `ContractProps`
+already diverges from the call signature's own non-generic fallback overload for a different,
+pre-existing reason (documented in that type's own comment).
+
+**Amendment (finding #59): variants are the exception.** The partner's declared styling variants are
+public whenever `with` exists, and a `compose.defaults` variant that cannot be overridden inline in
+JSX is unusable as a normal attribute. So the `Variants` default of `createContractComponent` is now
+`ContractVariantsWithComposeOf<C>` (React current/legacy, Preact, Solid, Vue), which merges only the
+direct partner's variants. Partner ordinary and plugin props stay off the call signature (see the
+`DECISIONS.md` known limit). Svelte's return type is built from `ContractGenericsOf<C>` rather than
+`Variants`, and Lit/Web are out of scope for composition, so neither changed.
 
 ## 4. Model metadata and extraction — what's reused vs. new
 

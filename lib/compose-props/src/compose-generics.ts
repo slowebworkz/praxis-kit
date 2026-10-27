@@ -226,3 +226,21 @@ export type ContractGenericsWithComposeOf<C extends FactoryOptions> =
           >
         : never
     : never
+
+/**
+ * Only the variants half of `ContractGenericsWithComposeOf<C>`: `C`'s own styling variants with its
+ * direct partner's folded in, and `ContractVariantsOf<C>` untouched when there's nothing to
+ * compose. A composing component's *call signature* uses this so the partner's variants are usable
+ * inline (`<Card shadow />`), matching `ContractProps<typeof Card>`. Deliberately excludes the
+ * partner's ordinary and plugin props — those stay an extraction-time concern (see `DECISIONS.md`
+ * → composed plugin props known limit); composition variants are public whenever `with` exists, so
+ * unlike `MergePropsOf` this does not depend on `allProps`.
+ */
+export type ContractVariantsWithComposeOf<C extends FactoryOptions> =
+  ComposedContractOf<C> extends infer CC
+    ? [CC] extends [never]
+      ? ContractVariantsOf<C>
+      : CC extends FactoryOptions
+        ? MergeVariantsOf<C, CC>
+        : never
+    : never
