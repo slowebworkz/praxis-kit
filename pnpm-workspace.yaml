@@ -51,7 +51,7 @@ catalog:
   eslint-config-prettier: ^10.1.8
   eslint-plugin-boundaries: ^7.2.0
   eslint-plugin-import-x: ^4.17.1
-  eslint-plugin-unicorn: ^77.0.0
+  eslint-plugin-unicorn: ^79.0.0
 
   # Tooling
   guardz: ^1.14.0
