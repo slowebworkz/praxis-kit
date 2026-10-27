@@ -100,8 +100,11 @@ export { getCompositionStyleMetadata }
 
 /**
  * Build the shared resolver for a primary component and its direct Praxis partner.
- * Only variant keys declared by the partner are accepted from `compose.defaults`; ordinary
- * props remain the partner component's concern and are not mistaken for variant defaults.
+ * Only variant keys declared by the partner become resolver `defaultVariants` from
+ * `compose.defaults`; ordinary props remain the partner component's concern and are not mistaken
+ * for variant defaults. Plugin-owned selector defaults (e.g. `flex`) do not pass through here:
+ * `composeStyleProps` reads them per render, via the plugin's owned keys, at lower precedence than
+ * the primary's own selections.
  */
 export function createCompositionStyleResolver(
   primary: StyleMetadata,
