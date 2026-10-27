@@ -114,15 +114,41 @@ const PluginSurface = createContractComponent({
   styling: { base: '', plugin: createTailwindPipeline },
 } satisfies ReactFactoryOptions)
 
-// Plugin-owned selector props are styling inputs, but are not declared contract variants.
-// @ts-expect-error — compose.defaults only accepts variants declared in `styling.variants`
-defineContract({
+// Plugin-owned selector props declared by the composed component's plugin are valid defaults.
+const ValidPluginComposeDefaults = defineContract({
   tag: 'section',
-  name: 'InvalidPluginComposeDefaults',
+  name: 'ValidPluginComposeDefaults',
   compose: { with: PluginSurface, defaults: { flex: true } },
 })
+void ValidPluginComposeDefaults
 
-// Plugin-owned union selector props are still not contract variants and cannot be defaults.
+// Variants and plugin selectors from the same partner can be configured together.
+const VariantAndPluginSurface = createContractComponent({
+  tag: 'div',
+  name: 'VariantAndPluginSurface',
+  props: undefined as unknown as EmptyRecord,
+  styling: {
+    base: '',
+    variants: { shadow: { true: 'shadow-sm', false: 'shadow-none' } },
+    plugin: createTailwindPipeline,
+  },
+} satisfies ReactFactoryOptions)
+const ValidCombinedComposeDefaults = defineContract({
+  tag: 'section',
+  name: 'ValidCombinedComposeDefaults',
+  compose: { with: VariantAndPluginSurface, defaults: { shadow: true, flex: true } },
+})
+void ValidCombinedComposeDefaults
+
+// Plugin selector values retain their declared types.
+// @ts-expect-error — `flex` is a literal-true selector.
+defineContract({
+  tag: 'section',
+  name: 'InvalidPluginComposeDefaultsValue',
+  compose: { with: PluginSurface, defaults: { flex: 'row' } },
+})
+
+// Plugin-owned selectors shaped as a union keep their exclusivity when used as defaults.
 type ExclusiveLayoutProps =
   { flex: true; grid?: never } | { grid: true; flex?: never } | { flex?: never; grid?: never }
 const exclusiveLayoutPlugin = (() => ({
@@ -135,12 +161,37 @@ const UnionPluginSurface = createContractComponent({
   styling: { base: '', plugin: exclusiveLayoutPlugin },
 } satisfies ReactFactoryOptions)
 
-// @ts-expect-error — plugin-owned `flex` is not a declared contract variant
-// even when the plugin exposes a literal-true selector.
+// Union-shaped plugin selectors retain their supported literal values.
+const ValidUnionPluginComposeDefaults = defineContract({
+  tag: 'section',
+  name: 'ValidUnionPluginComposeDefaults',
+  compose: { with: UnionPluginSurface, defaults: { flex: true } },
+})
+void ValidUnionPluginComposeDefaults
+
+// The empty union member permits an empty defaults object.
+const ValidEmptyUnionPluginComposeDefaults = defineContract({
+  tag: 'section',
+  name: 'ValidEmptyUnionPluginComposeDefaults',
+  compose: { with: UnionPluginSurface, defaults: {} },
+})
+void ValidEmptyUnionPluginComposeDefaults
+
+// Mutually exclusive selectors cannot be defaulted together.
+// @ts-expect-error — `flex` and `grid` are exclusive in the plugin's selector union.
 defineContract({
   tag: 'section',
-  name: 'InvalidUnionPluginComposeDefaults',
-  compose: { with: UnionPluginSurface, defaults: { flex: true } },
+  name: 'InvalidExclusiveUnionPluginComposeDefaults',
+  compose: { with: UnionPluginSurface, defaults: { flex: true, grid: true } },
+})
+
+// The primary component's plugin cannot authorize selectors unsupported by the partner.
+// @ts-expect-error — Surface has no plugin that owns `flex`.
+defineContract({
+  tag: 'section',
+  name: 'PrimaryPluginDoesNotAuthorizePartnerDefaults',
+  styling: { base: '', plugin: createTailwindPipeline },
+  compose: { with: Surface, defaults: { flex: true } },
 })
 
 // @ts-expect-error — unknown keys are not valid compose.defaults keys
