@@ -64,7 +64,7 @@ catalog:
 
   # Lit
   lit: ^3.3.3
-  preact: ^10.29.8
+  preact: ^11.0.2
   preact-render-to-string: ^6.8.1
   prettier: ^3.9.10
   prettier-plugin-tailwindcss: ^0.8.1
