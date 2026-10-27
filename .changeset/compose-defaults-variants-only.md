@@ -2,5 +2,5 @@
 'praxis-kit': patch
 ---
 
-Restrict `compose.defaults` to the composed component's declared variants, excluding ordinary
-component props, plugin selector props, and attributes.
+Allow `compose.defaults` to configure the composed component's declared variants and its own
+plugin-owned selector props, while continuing to reject ordinary component props and attributes.
