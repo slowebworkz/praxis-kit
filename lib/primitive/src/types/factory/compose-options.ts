@@ -44,9 +44,10 @@ export type ComposeOptions = {
   readonly with: ComponentReference
   readonly allProps?: boolean
   /**
-   * Defaults for the variants and plugin-owned selector props declared by the component passed to
-   * `with`. `defineContract` validates these keys and values against the secondary component's
-   * retained contract when available. Ordinary props and attributes are not defaults.
+   * Defaults for the variants declared by the component passed to `with` and selector props
+   * contributed by its styling plugin. `defineContract` validates these keys and values against
+   * the secondary component's retained contract when available. Ordinary props and attributes are
+   * not defaults.
    * `object` is used here so the broad `FactoryOptions` constraint doesn't erase the literal keys
    * before that relationship can be checked.
    */

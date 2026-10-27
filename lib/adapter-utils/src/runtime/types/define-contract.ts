@@ -7,7 +7,17 @@ import type {
   VariantProps,
   VariantsOf,
 } from '@praxis-kit/core'
-import type { OmitIndexSignature } from 'type-fest'
+import type { OmitIndexSignature, Simplify } from 'type-fest'
+
+/** Variant props declared by a contract's `styling.variants`. */
+type ContractVariantDefaults<C extends FactoryOptions> = OmitIndexSignature<
+  VariantProps<VariantsOf<ContractGenericsOf<C>>>
+>
+
+/** Selector props contributed by a contract's own styling plugin. */
+type ContractPluginDefaults<C extends FactoryOptions> = OmitIndexSignature<
+  ExtractPluginProps<ContractPluginOf<C>>
+>
 
 /** Defaults accepted from a retained Praxis Kit component contract.
  *
@@ -17,8 +27,7 @@ import type { OmitIndexSignature } from 'type-fest'
  */
 export type RetainedComponentProps<T> = T extends { readonly __contract?: infer C }
   ? NonNullable<C> extends infer Contract extends FactoryOptions
-    ? OmitIndexSignature<VariantProps<VariantsOf<ContractGenericsOf<Contract>>>> &
-        OmitIndexSignature<ExtractPluginProps<ContractPluginOf<Contract>>>
+    ? Simplify<ContractVariantDefaults<Contract> & ContractPluginDefaults<Contract>>
     : never
   : never
 
@@ -48,13 +57,21 @@ export type HasRetainedComponentProps<Props> = [Props] extends [never] ? false :
 /** Keys present in any member of a union, rather than only keys common to every member. */
 export type KeysOfUnion<T> = T extends unknown ? keyof T : never
 
-/** Whether defaults contain only valid declared variant keys with valid values. */
+/** Whether defaults contain only supported variant and plugin-selector keys with valid values. */
 export type IsValidComposeDefaults<Defaults, Props> =
   Exclude<keyof Defaults, KeysOfUnion<Props>> extends never
     ? Defaults extends Partial<Props>
       ? true
       : false
     : false
+
+/** Skips validation without a retained contract; otherwise `never` unless defaults are valid. */
+type ValidateRetainedComposeDefaults<Defaults, Props> =
+  HasRetainedComponentProps<Props> extends false
+    ? unknown
+    : IsValidComposeDefaults<Defaults, Props> extends true
+      ? unknown
+      : never
 
 /**
  * Validate compose.defaults against the retained secondary component’s variants and plugin selectors.
@@ -64,13 +81,7 @@ export type ComposeDefaultsConstraint<O> =
   ComposeDefaultsOf<O> extends infer Defaults
     ? [Defaults] extends [never]
       ? unknown
-      : RetainedComponentProps<ComposedComponentOf<O>> extends infer Props
-        ? HasRetainedComponentProps<Props> extends false
-          ? unknown
-          : IsValidComposeDefaults<Defaults, Props> extends true
-            ? unknown
-            : never
-        : unknown
+      : ValidateRetainedComposeDefaults<Defaults, RetainedComponentProps<ComposedComponentOf<O>>>
     : unknown
 
 export type DefineContractOptions<O extends ContractInput> = O & ComposeDefaultsConstraint<O>
