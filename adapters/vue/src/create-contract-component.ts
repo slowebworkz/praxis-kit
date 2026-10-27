@@ -220,6 +220,7 @@ export function createContractComponent<
                             compose.defaults,
                             compositionClassResolver.partner,
                             compositionClassResolver.ownedKeys,
+                            state.value.normalizedProps,
                           ),
                           mergeCompositionClassNames(
                             partnerClassName,

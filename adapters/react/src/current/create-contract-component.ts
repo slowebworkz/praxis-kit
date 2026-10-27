@@ -203,12 +203,18 @@ export function createContractComponent<
       componentProps.asChild === undefined &&
       !isFunction(componentProps.render)
     ) {
+      let primaryResolvedProps: Readonly<AnyRecord> | undefined
       const innerElement = render({
         ...(compositionClassResolver
           ? { ...bundle, runtime: { ...bundle.runtime, resolveClasses: (): undefined => {} } }
           : bundle),
         props: componentProps,
         ref: null,
+        ...(compositionClassResolver && {
+          onNormalizedProps: (normalizedProps) => {
+            primaryResolvedProps = normalizedProps
+          },
+        }),
       })
       return createElement(compose.with as ComponentType<UnknownProps>, {
         ...filterOwnedProps(compose.defaults, bundle.ownedKeys, ['as']),
@@ -233,6 +239,7 @@ export function createContractComponent<
                       compose.defaults,
                       compositionClassResolver.partner,
                       compositionClassResolver.ownedKeys,
+                      primaryResolvedProps,
                     ),
                     mergeCompositionClassNames(
                       partnerClassName,

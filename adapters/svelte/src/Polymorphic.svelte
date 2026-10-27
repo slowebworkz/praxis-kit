@@ -198,6 +198,7 @@
             ...(bundle.compose?.allProps ? filterOwnedProps(rest, bundle.ownedKeys) : {}),
           },
           rest,
+          normalizedProps,
           cls as string | undefined,
           recipe,
         )

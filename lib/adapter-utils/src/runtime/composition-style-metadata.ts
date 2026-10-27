@@ -115,10 +115,12 @@ export function createOptionalCompositionStylePipeline(
  * `Object.hasOwn` alone can't be trusted for it because a dynamic props proxy (Solid's spread of
  * a computed object) reports keys that were never set.
  */
-function copySelectedProp(target: AnyRecord, source: Readonly<AnyRecord>, name: string): void {
+function copySelectedProp(target: AnyRecord, source: Readonly<AnyRecord>, name: string): boolean {
   // `!isUndefined`, not `isDefined`: a `null` selection is copied as-is, matching the ordinary
   // (non-composed) path, where `null` is not treated as unset the way `undefined` is.
-  if (Object.hasOwn(source, name) && !isUndefined(source[name])) target[name] = source[name]
+  if (!Object.hasOwn(source, name) || isUndefined(source[name])) return false
+  target[name] = source[name]
+  return true
 }
 
 /** Remove plugin-owned styling inputs before forwarding props to a child or host element. */
@@ -147,6 +149,7 @@ export function composeStyleProps(
   composeDefaults: object | undefined,
   partner: StyleMetadata,
   compositionOwnedKeys: ReadonlySet<string> = new Set(),
+  primaryResolvedProps: Readonly<AnyRecord> | undefined = {},
 ): AnyRecord {
   const result: AnyRecord = { ...partnerProps }
   // `compose.defaults` reach the resolver through `createCompositionStyleResolver` at the lowest
@@ -176,12 +179,17 @@ export function composeStyleProps(
   iterate.forEachEntry(primary.variants ?? {}, (name) => {
     copySelectedProp(result, componentProps, name)
   })
-  // Plugin-owned layout props are styling inputs even when compose.allProps is false. Explicit
-  // primary values win; otherwise a defined compose.defaults value remains a low-priority input.
+  // Plugin-owned styling props are inputs even when compose.allProps is false. Explicit primary
+  // selections win, followed by the primary's fully resolved defaults/normalize output, then
+  // compose.defaults. If none select a key, the partner's own defaults remain in effect.
+  const ownedSources = [
+    componentProps,
+    primaryResolvedProps,
+    composeDefaults as AnyRecord | undefined,
+  ]
   iterate.forEachSet(compositionOwnedKeys, (name) => {
-    copySelectedProp(result, componentProps, name)
-    if (isUndefined(result[name]) && composeDefaults) {
-      copySelectedProp(result, composeDefaults as Readonly<AnyRecord>, name)
+    for (const source of ownedSources) {
+      if (source && copySelectedProp(result, source, name)) return
     }
   })
   return result

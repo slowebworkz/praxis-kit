@@ -227,6 +227,7 @@ export function renderComposed<TProps extends KnownProps>(
                   defaults,
                   compositionClassResolver.partner,
                   compositionClassResolver.ownedKeys,
+                  normalizedProps(),
                 ),
                 mergeCompositionClassNames(defaultClass, known.class as string | undefined),
                 isString(known.recipe) ? known.recipe : undefined,

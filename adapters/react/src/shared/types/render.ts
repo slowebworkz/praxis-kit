@@ -32,4 +32,6 @@ export type RenderInput<TProps extends KnownProps = KnownProps> = Readonly<{
   filterProps: FilterPredicate
   slotValidator: SlotValidator
   childrenEvaluator?: ChildrenEvaluator
+  /** Observe the normalized props from this render without running normalizers a second time. */
+  onNormalizedProps?: (props: ResolvedProps) => void
 }>

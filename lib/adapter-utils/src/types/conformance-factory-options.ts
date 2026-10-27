@@ -50,6 +50,8 @@ export type ConformanceFactoryOptions = {
   tag?: string
   name?: string
   styling?: ConformanceStyling
+  /** Component-level default props, including plugin-owned styling selectors. */
+  defaults?: AnyRecord
   /** Determines whether a prop should be forwarded to the rendered element. */
   filterProps?: (key: string, variantKeys: ReadonlySet<string>) => boolean
   /** Child enforcement rules applied by the generated component. */

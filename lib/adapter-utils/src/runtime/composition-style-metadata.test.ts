@@ -126,6 +126,22 @@ describe('composition-owned props', () => {
     expect(composeStyleProps({}, {}, {}, { flex: true }, {}, ownedKeys)).toEqual({ flex: true })
   })
 
+  it('uses primary resolved defaults and normalization output before compose.defaults', () => {
+    const ownedKeys = new Set(['shadow'])
+
+    expect(
+      composeStyleProps({}, {}, {}, { shadow: false }, {}, ownedKeys, { shadow: true }),
+    ).toEqual({ shadow: true })
+  })
+
+  it('lets an explicit primary selection override its resolved value', () => {
+    const ownedKeys = new Set(['flex'])
+
+    expect(
+      composeStyleProps({}, { flex: false }, {}, { flex: true }, {}, ownedKeys, { flex: true }),
+    ).toEqual({ flex: false })
+  })
+
   it('filters owned props before child or host forwarding', () => {
     expect(
       filterOwnedProps(
