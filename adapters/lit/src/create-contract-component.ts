@@ -6,7 +6,7 @@ import {
   resolveTagAndNormalizedProps,
   toLooseBundle,
 } from '@praxis-kit/adapter-utils'
-import type { ComposeDefaultsValidationArgs } from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsValidation } from '@praxis-kit/adapter-utils'
 import type {
   AnyClassPluginFactory,
   AnyRecord,
@@ -118,8 +118,7 @@ export function createContractComponent<
 >(
   options: C & {
     readonly subComponents?: TSubComponents
-  },
-  ..._composeDefaultsValidation: ComposeDefaultsValidationArgs<C>
+  } & ComposeDefaultsValidation<C>
 ): MergeRecords<
   LitContractComponent<TVariants, ExtractPluginProps<TPlugin>, ContractGenericsOf<C>, C>,
   TSubComponents

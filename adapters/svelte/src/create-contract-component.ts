@@ -18,7 +18,7 @@ import {
   composeStyleProps,
   mergeCompositionClassNames,
 } from '@praxis-kit/adapter-utils'
-import type { ComposeDefaultsValidationArgs } from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsValidation } from '@praxis-kit/adapter-utils'
 import { isString } from '@praxis-kit/guards'
 import { buildRuntime } from './build-runtime'
 import type { SvelteFactoryOptions } from './svelte-options'
@@ -76,8 +76,7 @@ export function createContractComponent<
   TPreset extends RecipeMap<VariantMap> = ContractPresetOf<C>,
   TSubComponents extends Readonly<AnyRecord> = EmptyRecord,
 >(
-  options: C & { readonly subComponents?: TSubComponents },
-  ..._composeDefaultsValidation: ComposeDefaultsValidationArgs<C>
+  options: C & { readonly subComponents?: TSubComponents } & ComposeDefaultsValidation<C>
 ): MergeRecords<
   BuiltRuntime<ContractGenericsOf<C>, C> & { readonly __contract?: C },
   TSubComponents

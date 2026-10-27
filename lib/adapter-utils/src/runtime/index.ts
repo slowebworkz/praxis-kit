@@ -15,7 +15,7 @@ export {
 export type { RuntimeEngines, BuildEnginesChildrenOptions, AdapterDefaults } from './types'
 export type {
   ComposeDefaultsConstraint,
-  ComposeDefaultsValidationArgs,
+  ComposeDefaultsValidation,
   RetainedComponentProps,
 } from './types'
 
