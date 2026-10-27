@@ -114,9 +114,10 @@ describe('composition-owned props', () => {
     const ownedKeys = new Set(['flex', 'grid'])
     const defaults = { flex: true, grid: false }
 
+    // Display modes are exclusive: the explicit primary selection is authoritative, so the
+    // lower-precedence `grid` default is discarded rather than merged alongside it.
     expect(composeStyleProps({}, { flex: false }, {}, defaults, {}, ownedKeys)).toEqual({
       flex: false,
-      grid: false,
     })
   })
 
@@ -124,6 +125,64 @@ describe('composition-owned props', () => {
     const ownedKeys = new Set(['flex'])
 
     expect(composeStyleProps({}, {}, {}, { flex: true }, {}, ownedKeys)).toEqual({ flex: true })
+  })
+
+  it('uses primary resolved defaults and normalization output before compose.defaults', () => {
+    const ownedKeys = new Set(['shadow'])
+
+    expect(
+      composeStyleProps({}, {}, {}, { shadow: false }, {}, ownedKeys, { shadow: true }),
+    ).toEqual({ shadow: true })
+  })
+
+  it('lets an explicit primary selection override its resolved value', () => {
+    const ownedKeys = new Set(['flex'])
+
+    expect(
+      composeStyleProps({}, { flex: false }, {}, { flex: true }, {}, ownedKeys, { flex: true }),
+    ).toEqual({ flex: false })
+  })
+
+  it('keeps primary flex mode exclusive of lower-precedence grid defaults', () => {
+    const ownedKeys = new Set(['flex', 'inline-flex', 'grid', 'inline-grid'])
+
+    expect(
+      composeStyleProps(
+        { grid: true, 'inline-grid': true },
+        {},
+        {},
+        { grid: true },
+        {},
+        ownedKeys,
+        { flex: true },
+      ),
+    ).toEqual({ flex: true })
+  })
+
+  it('keeps an explicit primary inline-flex mode exclusive of partner display defaults', () => {
+    const ownedKeys = new Set(['flex', 'inline-flex', 'grid', 'inline-grid'])
+
+    expect(
+      composeStyleProps(
+        { flex: true, grid: true },
+        { 'inline-flex': true },
+        {},
+        undefined,
+        {},
+        ownedKeys,
+        { flex: true },
+      ),
+    ).toEqual({ 'inline-flex': true })
+  })
+
+  it('does not fall through to a lower-priority display mode when primary explicitly disables it', () => {
+    const ownedKeys = new Set(['flex', 'inline-flex', 'grid', 'inline-grid'])
+
+    expect(
+      composeStyleProps({ grid: true }, { flex: false }, {}, { grid: true }, {}, ownedKeys, {
+        flex: true,
+      }),
+    ).toEqual({ flex: false })
   })
 
   it('filters owned props before child or host forwarding', () => {

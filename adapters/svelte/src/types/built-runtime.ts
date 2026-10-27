@@ -34,6 +34,7 @@ export type ResolveComposedClasses = (
   tag: unknown,
   partnerProps: Readonly<AnyRecord>,
   componentProps: Readonly<AnyRecord>,
+  primaryResolvedProps: Readonly<AnyRecord>,
   callerClass: string | undefined,
   recipe: string | undefined,
 ) => string | undefined

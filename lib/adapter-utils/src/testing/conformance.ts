@@ -1208,6 +1208,29 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         },
       )
 
+      it.each([
+        ['contract defaults', { defaults: { flex: true } }],
+        ['normalize output', { normalize: (props: AnyRecord) => ({ ...props, flex: true }) }],
+      ] as const)(
+        'passes primary plugin-owned %s into the combined resolver',
+        (_source, primaryOptions) => {
+          const Surface = adapter.createComponent({
+            styling: { base: 'partner-base' },
+          })
+          const Card = adapter.createComponent({
+            ...primaryOptions,
+            compose: { with: Surface },
+            styling: { base: 'primary-base', plugin: compositionOwnedPropPlugin },
+          })
+
+          const { element, unmount } = adapter.render(Card)
+
+          expect(element.className).toContain('plugin-flex')
+          expect(element.getAttribute('flex')).toBeNull()
+          unmount()
+        },
+      )
+
       it('uses a partner plugin when the primary has none and resolves explicit owned props', () => {
         const Surface = adapter.createComponent({
           styling: { base: 'partner-base', plugin: compositionOwnedPropPlugin },

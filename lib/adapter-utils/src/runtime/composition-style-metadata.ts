@@ -24,6 +24,32 @@ import type {
 /** Internal prop used only to pass the combined resolver through automatic adapter composition. */
 export const COMPOSITION_STYLE_REQUEST_PROP = '__praxisCompositionStyleRequest'
 
+// Display modes are mutually exclusive. Keep this list aligned with the layout plugin's
+// reserved display props without making adapter-utils depend on the Tailwind package.
+const EXCLUSIVE_DISPLAY_KEYS = [
+  'flex',
+  'inline-flex',
+  'grid',
+  'inline-grid',
+  'block',
+  'inline-block',
+  'inline',
+  'hidden',
+  'contents',
+  'flow-root',
+  'list-item',
+  'table',
+  'inline-table',
+  'table-caption',
+  'table-cell',
+  'table-column',
+  'table-column-group',
+  'table-footer-group',
+  'table-header-group',
+  'table-row-group',
+  'table-row',
+] as const
+
 /** Validate the internal composition request before trusting a prop value at runtime. */
 export function isCompositionStyleRequest(value: unknown): value is CompositionStyleRequest {
   return isObject(value, true) && isFunction(value.resolveClasses)
@@ -115,10 +141,12 @@ export function createOptionalCompositionStylePipeline(
  * `Object.hasOwn` alone can't be trusted for it because a dynamic props proxy (Solid's spread of
  * a computed object) reports keys that were never set.
  */
-function copySelectedProp(target: AnyRecord, source: Readonly<AnyRecord>, name: string): void {
+function copySelectedProp(target: AnyRecord, source: Readonly<AnyRecord>, name: string): boolean {
   // `!isUndefined`, not `isDefined`: a `null` selection is copied as-is, matching the ordinary
   // (non-composed) path, where `null` is not treated as unset the way `undefined` is.
-  if (Object.hasOwn(source, name) && !isUndefined(source[name])) target[name] = source[name]
+  if (!Object.hasOwn(source, name) || isUndefined(source[name])) return false
+  target[name] = source[name]
+  return true
 }
 
 /** Remove plugin-owned styling inputs before forwarding props to a child or host element. */
@@ -147,6 +175,7 @@ export function composeStyleProps(
   composeDefaults: object | undefined,
   partner: StyleMetadata,
   compositionOwnedKeys: ReadonlySet<string> = new Set(),
+  primaryResolvedProps: Readonly<AnyRecord> | undefined = {},
 ): AnyRecord {
   const result: AnyRecord = { ...partnerProps }
   // `compose.defaults` reach the resolver through `createCompositionStyleResolver` at the lowest
@@ -176,14 +205,49 @@ export function composeStyleProps(
   iterate.forEachEntry(primary.variants ?? {}, (name) => {
     copySelectedProp(result, componentProps, name)
   })
-  // Plugin-owned layout props are styling inputs even when compose.allProps is false. Explicit
-  // primary values win; otherwise a defined compose.defaults value remains a low-priority input.
+  // Plugin-owned styling props are inputs even when compose.allProps is false. Explicit primary
+  // selections win, followed by the primary's fully resolved defaults/normalize output, then
+  // compose.defaults. If none select a key, the partner's own defaults remain in effect.
+  const ownedSources = [
+    componentProps,
+    primaryResolvedProps,
+    composeDefaults as AnyRecord | undefined,
+  ]
   iterate.forEachSet(compositionOwnedKeys, (name) => {
-    copySelectedProp(result, componentProps, name)
-    if (isUndefined(result[name]) && composeDefaults) {
-      copySelectedProp(result, composeDefaults as Readonly<AnyRecord>, name)
+    for (const source of ownedSources) {
+      if (source && copySelectedProp(result, source, name)) return
     }
   })
+
+  // Display props describe one mode, not independent toggles. Resolve the family from the
+  // highest-precedence source that specifies any display key, then discard display selections
+  // inherited from lower-precedence sources. This prevents e.g. primary `flex` defaults from
+  // coexisting with partner `grid` defaults. A source that explicitly sets a mode to false is
+  // still authoritative and must not fall through to a lower-priority mode.
+  if (EXCLUSIVE_DISPLAY_KEYS.some((name) => compositionOwnedKeys.has(name))) {
+    const displaySource = ownedSources.find(
+      (source) =>
+        source &&
+        EXCLUSIVE_DISPLAY_KEYS.some(
+          (name) =>
+            compositionOwnedKeys.has(name) &&
+            Object.hasOwn(source, name) &&
+            !isUndefined(source[name]),
+        ),
+    )
+
+    if (displaySource) {
+      for (const name of EXCLUSIVE_DISPLAY_KEYS) {
+        if (compositionOwnedKeys.has(name)) delete result[name]
+      }
+      iterate.forEachSet(compositionOwnedKeys, (name) => {
+        if ((EXCLUSIVE_DISPLAY_KEYS as readonly string[]).includes(name)) {
+          copySelectedProp(result, displaySource, name)
+        }
+      })
+    }
+  }
+
   return result
 }
 

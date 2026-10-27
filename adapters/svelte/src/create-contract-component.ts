@@ -101,7 +101,14 @@ export function createContractComponent<
     const configuredClass = compose.defaults ? Reflect.get(compose.defaults, 'class') : undefined
     const defaultClass =
       isString(configuredClass) || Array.isArray(configuredClass) ? configuredClass : undefined
-    bundle.resolveComposedClasses = (tag, partnerProps, componentProps, callerClass, recipe) =>
+    bundle.resolveComposedClasses = (
+      tag,
+      partnerProps,
+      componentProps,
+      primaryResolvedProps,
+      callerClass,
+      recipe,
+    ) =>
       resolveClasses(
         tag,
         composeStyleProps(
@@ -111,6 +118,7 @@ export function createContractComponent<
           compose.defaults,
           resolveClasses.partner,
           resolveClasses.ownedKeys,
+          primaryResolvedProps,
         ),
         mergeCompositionClassNames(defaultClass, callerClass),
         recipe,
