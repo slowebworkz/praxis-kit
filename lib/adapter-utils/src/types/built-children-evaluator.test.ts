@@ -1,5 +1,5 @@
 import { describe, it, expectTypeOf } from 'vitest'
-import type { ChildRuleInput, ChildrenEvaluator, EmptyRecord  } from '@praxis-kit/core'
+import type { ChildRuleInput, ChildrenEvaluator, EmptyRecord } from '@praxis-kit/core'
 import type { BuiltChildrenEvaluator } from './built-children-evaluator'
 
 // `BuiltChildrenEvaluator<TOptions>` must agree with `buildEngines`, which constructs a
