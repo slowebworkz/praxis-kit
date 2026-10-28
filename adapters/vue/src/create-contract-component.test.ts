@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { Comment, createTextVNode, defineComponent, h, ref } from 'vue'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
@@ -521,5 +522,53 @@ describe('createContractComponent — variants', () => {
     const wrapper = mount(box(Box), { props: { recipe: 'cta' } as never })
     expect(wrapper.element.className).toContain('bg-blue-500')
     expect(wrapper.element.className).toContain('text-lg')
+  })
+})
+
+
+const tailwindDisplayClasses = [
+  'md:flex',
+  'hover:flex',
+  'md:hidden',
+  'md:grid-cols-3',
+  'md:flex-row',
+  '!flex',
+  'flex!',
+  'md:!flex',
+  'md:flex!',
+  'rounded',
+].join(' ')
+
+function expectTailwindDisplayParity(className: string): void {
+  const tokens = className.split(/\s+/)
+  expect(tokens).toContain('grid')
+  for (const filtered of ['md:flex', 'hover:flex', 'md:hidden', 'md:flex-row']) {
+    expect(tokens).not.toContain(filtered)
+  }
+  for (const preserved of [
+    'base',
+    'md:grid-cols-3',
+    '!flex',
+    'flex!',
+    'md:!flex',
+    'md:flex!',
+    'rounded',
+  ]) {
+    expect(tokens).toContain(preserved)
+  }
+}
+
+describe('Tailwind display parity', () => {
+  it('uses explicit layout over a conflicting boolean and filters the same utilities', () => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+
+    const wrapper = mount(box(Box), {
+      props: { flex: true, layout: 'grid', class: tailwindDisplayClasses },
+    })
+
+    expectTailwindDisplayParity(wrapper.element.className)
   })
 })
