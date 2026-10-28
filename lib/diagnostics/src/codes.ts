@@ -121,6 +121,7 @@ export enum DiagnosticCode {
   TailwindDeadVariantClass = 'CSS6003',
   TailwindLayoutOnVoidTag = 'CSS6004',
   TailwindInvalidLayoutValue = 'CSS6005',
+  TailwindLayoutVariantConflict = 'CSS6006',
 
   // Plugin API contract violations (developer-facing, not user-facing)
   PluginInvalidShape = 'PLUGIN7001',
