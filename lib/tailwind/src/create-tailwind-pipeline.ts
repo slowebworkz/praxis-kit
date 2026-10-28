@@ -309,7 +309,7 @@ export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   const buildClassString: PipelineStage<TailwindPipelineContext, string> = (ctx) => {
     const built = builder.build(ctx.filtered)
     if (ctx.mode === 'none') return built
-    return ctx.filtered.some((t) => t.kind === 'layout' && t.value === ctx.mode)
+    return ctx.filtered.some((t) => t.kind === 'layout' && t.raw === ctx.mode)
       ? built
       : cn(ctx.mode, built)
   }

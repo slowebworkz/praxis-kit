@@ -439,6 +439,39 @@ describe('createTailwindPipeline — layout param overrides className tokens', (
     } as LayoutProps<typeof layoutKeys>)
     expect(warn).not.toHaveBeenCalled()
   })
+
+  it('keeps responsive display literals from replacing the unconditional display class', () => {
+    const cls =
+      resolve(pipeline, 'md:grid md:flex hover:flex md:hidden md:grid-cols-3 md:flex-row rounded', {
+        flex: true,
+        layout: 'grid',
+      }) ?? ''
+
+    const tokens = cls.split(/\s+/)
+    expect(tokens).toContain('grid')
+    expect(tokens).not.toContain('md:grid')
+    expect(tokens).not.toContain('md:flex')
+    expect(tokens).not.toContain('hover:flex')
+    expect(tokens).not.toContain('md:hidden')
+    expect(tokens).toContain('md:grid-cols-3')
+    expect(tokens).not.toContain('md:flex-row')
+    expect(tokens).toContain('rounded')
+  })
+
+  it('preserves important display escape hatches alongside explicit layout selection', () => {
+    const cls =
+      resolve(pipeline, 'md:!flex md:flex! md:!flex-col md:flex-col!', {
+        flex: true,
+        layout: 'grid',
+      }) ?? ''
+
+    const tokens = cls.split(/\s+/)
+    expect(tokens).toContain('grid')
+    expect(tokens).toContain('md:!flex')
+    expect(tokens).toContain('md:flex!')
+    expect(tokens).not.toContain('md:!flex-col')
+    expect(tokens).not.toContain('md:flex-col!')
+  })
 })
 
 describe('createTailwindPipeline — multiple display props (mutual exclusion)', () => {
