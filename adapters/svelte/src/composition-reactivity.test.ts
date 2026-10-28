@@ -9,6 +9,7 @@ import { render, cleanup } from '@testing-library/svelte'
 import { tick } from 'svelte'
 import Host from './composition-reactivity.test-host.svelte'
 import OwnedPropHost from './composition-owned-prop-reactivity.test-host.svelte'
+import TailwindDisplayParityHost from './tailwind-display-parity.test-host.svelte'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import { createContractComponent } from './create-contract-component'
 
@@ -125,5 +126,53 @@ describe('composition reactivity — plugin-owned props', () => {
     expect(element.className).not.toContain('flex')
     expect(element.className).not.toContain('gap-4')
     expect(element.className).toContain('rounded')
+  })
+})
+
+
+const tailwindDisplayClasses = [
+  'md:flex',
+  'hover:flex',
+  'md:hidden',
+  'md:grid-cols-3',
+  'md:flex-row',
+  '!flex',
+  'flex!',
+  'md:!flex',
+  'md:flex!',
+  'rounded',
+].join(' ')
+
+function expectTailwindDisplayParity(className: string): void {
+  const tokens = className.split(/\s+/)
+  expect(tokens).toContain('grid')
+  for (const filtered of ['md:flex', 'hover:flex', 'md:hidden', 'md:flex-row']) {
+    expect(tokens).not.toContain(filtered)
+  }
+  for (const preserved of [
+    'base',
+    'md:grid-cols-3',
+    '!flex',
+    'flex!',
+    'md:!flex',
+    'md:flex!',
+    'rounded',
+  ]) {
+    expect(tokens).toContain(preserved)
+  }
+}
+
+describe('Tailwind display parity', () => {
+  it('uses explicit layout over a conflicting boolean and filters the same utilities', () => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+
+    const { container } = render(TailwindDisplayParityHost, {
+      props: { bundle: Box, className: tailwindDisplayClasses },
+    })
+
+    expectTailwindDisplayParity(container.querySelector('div')!.className)
   })
 })

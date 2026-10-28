@@ -27,6 +27,7 @@ import { isWebContractComponent } from './is-web-contract-component'
 import { registerForSsr } from './render-to-string'
 import { isWebFactoryOptions } from './to-web-factory-options'
 import type { WebContractComponent, WebFactoryOptions, UnknownProps } from './types/index'
+import { isNonNull } from '@praxis-kit/guards'
 
 /**
  * Creates a plain `HTMLElement` subclass with praxis-kit contracts applied.
@@ -141,10 +142,17 @@ export function createContractComponent<
   // doc comment above.
   const observedAttrNames = ['variant-key', 'praxis-class', ...variantKeys, ...pluginKeys]
 
-  type InstanceProps = {
+  // The typed view of the element's praxis-owned properties, built from three parts so each
+  // one can be read (and changed) on its own.
+  type InstanceBaseProps = {
     recipe: string | undefined
     praxisClass: string | undefined
-  } & { [K in Extract<keyof TVariants, string>]?: string | null } & ExtractPluginProps<TPlugin>
+  }
+  // One property per declared variant dimension; `null` when its attribute has been removed.
+  type InstanceVariantProps = { [K in Extract<keyof TVariants, string>]?: string | null }
+  // Props owned by the class plugin (e.g. the Tailwind layout shorthands).
+  type InstancePluginProps = ExtractPluginProps<TPlugin>
+  type InstanceProps = InstanceBaseProps & InstanceVariantProps & InstancePluginProps
 
   // In SSR (Node) environments HTMLElement is not defined. The class still needs
   // to be created so registerForSsr() can register the bundle — but the element
@@ -239,7 +247,13 @@ export function createContractComponent<
 
       for (const key of variantKeys) {
         const val = self[key as Extract<keyof TVariants, string>] ?? this.getAttribute(key)
-        if (val != null) props[key] = val
+        if (isNonNull(val)) props[key] = val
+      }
+      for (const key of pluginKeys) {
+        // Plugin-owned props may be assigned directly without reflecting to an attribute.
+        // Fall back to the observed attribute so both input paths reach the pipeline.
+        const val = (self as unknown as AnyRecord)[key] ?? this.getAttribute(key)
+        if (isNonNull(val)) props[key] = val
       }
       return props
     }

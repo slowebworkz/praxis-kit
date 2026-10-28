@@ -31,6 +31,7 @@ import { isLitContractComponent } from './is-lit-contract-component'
 import { registerForSsr } from './render-to-string'
 import { isLitFactoryOptions } from './to-lit-factory-options'
 import type { LitContractComponent, LitFactoryOptions, UnknownProps } from './types'
+import { isNonNull } from '@praxis-kit/guards'
 
 /**
  * Creates a Lit custom element class with praxis-kit contracts applied.
@@ -247,6 +248,11 @@ export function createContractComponent<
         // so CVA falls back to defaultVariants when no explicit value is present.
         const val = self[key as Extract<keyof TVariants, string>]
         if (val != null) props[key] = val
+      })
+      iterate.forEach(pluginKeys, (key) => {
+        // Plugin-owned props may be set as Lit properties without reflecting to an attribute.
+        const val = (self as unknown as AnyRecord)[key]
+        if (isNonNull(val)) props[key] = val
       })
       return props
     }

@@ -4,6 +4,7 @@ import { h, Fragment, createRef, render } from 'preact'
 import { forwardRef } from 'preact/compat'
 import type { ComponentType, ComponentProps } from 'preact'
 import { silentDiagnostics, throwDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import type { AnyVNode, UnknownProps } from './types'
 import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
@@ -507,5 +508,58 @@ describe('ComponentProps<typeof Component> — extraction outside JSX', () => {
   it('includes an intrinsic attribute alongside disabled (type)', () => {
     const props: ButtonProps = { disabled: true, type: 'submit' }
     void props
+  })
+})
+
+
+const tailwindDisplayClasses = [
+  'md:flex',
+  'hover:flex',
+  'md:hidden',
+  'md:grid-cols-3',
+  'md:flex-row',
+  '!flex',
+  'flex!',
+  'md:!flex',
+  'md:flex!',
+  'rounded',
+].join(' ')
+
+function expectTailwindDisplayParity(className: string): void {
+  const tokens = className.split(/\s+/)
+  expect(tokens).toContain('grid')
+  for (const filtered of ['md:flex', 'hover:flex', 'md:hidden', 'md:flex-row']) {
+    expect(tokens).not.toContain(filtered)
+  }
+  for (const preserved of [
+    'base',
+    'md:grid-cols-3',
+    '!flex',
+    'flex!',
+    'md:!flex',
+    'md:flex!',
+    'rounded',
+  ]) {
+    expect(tokens).toContain(preserved)
+  }
+}
+
+describe('Tailwind display parity', () => {
+  it('uses explicit layout over a conflicting boolean and filters the same utilities', () => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+
+    mount(
+      h(box(Box), {
+        flex: true,
+        layout: 'grid',
+        className: tailwindDisplayClasses,
+      } as UnknownProps),
+    )
+
+    const element = container.querySelector('div')!
+    expectTailwindDisplayParity(element.className)
   })
 })

@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
+import { createContractComponent } from './create-contract-component'
 import {
   BoxElement,
   ButtonElement,
@@ -8,9 +10,30 @@ import {
   TabsContentElement,
 } from './test-components'
 
+const tailwindDisplayClasses = [
+  'md:flex',
+  'hover:flex',
+  'md:hidden',
+  'md:grid-cols-3',
+  'md:flex-row',
+  '!flex',
+  'flex!',
+  'md:!flex',
+  'md:flex!',
+  'rounded',
+].join(' ')
+const TailwindDisplayElement = createContractComponent({
+  tag: 'div',
+  name: 'TailwindDisplayParity',
+  styling: { base: 'base', plugin: createTailwindPipeline },
+})
+
 // Guard against duplicate registration — customElements.define() is global and
 // throws if the same name is defined twice in the same test runner process.
 beforeAll(() => {
+  if (!customElements.get('praxis-tailwind-display-parity')) {
+    customElements.define('praxis-tailwind-display-parity', TailwindDisplayElement)
+  }
   if (!customElements.get('praxis-box')) customElements.define('praxis-box', BoxElement)
   if (!customElements.get('praxis-button')) customElements.define('praxis-button', ButtonElement)
   if (!customElements.get('praxis-nav')) customElements.define('praxis-nav', NavElement)
@@ -325,4 +348,51 @@ describe('selective update guard', () => {
 
     expect(el.className).toBe(classBefore)
   })
+})
+
+
+function expectTailwindDisplayParity(className: string): void {
+  const tokens = className.split(/\s+/)
+  expect(tokens).toContain('grid')
+  for (const filtered of ['md:flex', 'hover:flex', 'md:hidden', 'md:flex-row']) {
+    expect(tokens).not.toContain(filtered)
+  }
+  for (const preserved of [
+    'base',
+    'md:grid-cols-3',
+    '!flex',
+    'flex!',
+    'md:!flex',
+    'md:flex!',
+    'rounded',
+  ]) {
+    expect(tokens).toContain(preserved)
+  }
+}
+
+describe('Tailwind display parity', () => {
+  it('uses explicit layout over a conflicting boolean and filters the same utilities', async () => {
+    const el = await mount('praxis-tailwind-display-parity', (element) => {
+      element.setAttribute('flex', 'true')
+      element.setAttribute('layout', 'grid')
+      element.setAttribute('praxis-class', tailwindDisplayClasses)
+    })
+
+    expectTailwindDisplayParity(el.className)
+  })
+  it('reads plugin-owned property values without requiring reflected attributes', async () => {
+    const el = await mount('praxis-tailwind-display-parity', (element) => {
+      const props = element as HTMLElement & {
+        flex: boolean
+        layout: string
+        praxisClass: string
+      }
+      props.flex = true
+      props.layout = 'grid'
+      props.praxisClass = tailwindDisplayClasses
+    })
+
+    expectTailwindDisplayParity(el.className)
+  })
+
 })

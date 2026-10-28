@@ -1043,3 +1043,56 @@ describe('createContractComponent (current / React 19)', () => {
     vi.restoreAllMocks()
   })
 })
+
+
+const tailwindDisplayClasses = [
+  'md:flex',
+  'hover:flex',
+  'md:hidden',
+  'md:grid-cols-3',
+  'md:flex-row',
+  '!flex',
+  'flex!',
+  'md:!flex',
+  'md:flex!',
+  'rounded',
+].join(' ')
+
+function expectTailwindDisplayParity(className: string): void {
+  const tokens = className.split(/\s+/)
+  expect(tokens).toContain('grid')
+  for (const filtered of ['md:flex', 'hover:flex', 'md:hidden', 'md:flex-row']) {
+    expect(tokens).not.toContain(filtered)
+  }
+  for (const preserved of [
+    'base',
+    'md:grid-cols-3',
+    '!flex',
+    'flex!',
+    'md:!flex',
+    'md:flex!',
+    'rounded',
+  ]) {
+    expect(tokens).toContain(preserved)
+  }
+}
+
+describe('Tailwind display parity', () => {
+  it('uses explicit layout over a conflicting boolean and filters the same utilities', () => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+
+    dom.mount(
+      createElement(box(Box), {
+        flex: true,
+        layout: 'grid',
+        className: tailwindDisplayClasses,
+      } as AnyRecord),
+    )
+
+    const element = dom.container.querySelector('div')!
+    expectTailwindDisplayParity(element.className)
+  })
+})

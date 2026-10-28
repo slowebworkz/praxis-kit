@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
+import { createContractComponent } from './create-contract-component'
 import {
   BoxElement,
   ButtonElement,
@@ -10,7 +12,28 @@ import {
 
 type WebEl = HTMLElement & { update(): void }
 
+const tailwindDisplayClasses = [
+  'md:flex',
+  'hover:flex',
+  'md:hidden',
+  'md:grid-cols-3',
+  'md:flex-row',
+  '!flex',
+  'flex!',
+  'md:!flex',
+  'md:flex!',
+  'rounded',
+].join(' ')
+const TailwindDisplayElement = createContractComponent({
+  tag: 'div',
+  name: 'TailwindDisplayParity',
+  styling: { base: 'base', plugin: createTailwindPipeline },
+})
+
 beforeAll(() => {
+  if (!customElements.get('web-tailwind-display-parity')) {
+    customElements.define('web-tailwind-display-parity', TailwindDisplayElement)
+  }
   if (!customElements.get('web-box'))
     customElements.define('web-box', BoxElement as unknown as CustomElementConstructor)
   if (!customElements.get('web-button'))
@@ -204,4 +227,50 @@ describe('Tabs — children enforcement', () => {
     // update() calls _applyPraxis() directly in synchronous test scope.
     expect(() => (root as WebEl).update()).toThrow()
   })
+})
+
+function expectTailwindDisplayParity(className: string): void {
+  const tokens = className.split(/\s+/)
+  expect(tokens).toContain('grid')
+  for (const filtered of ['md:flex', 'hover:flex', 'md:hidden', 'md:flex-row']) {
+    expect(tokens).not.toContain(filtered)
+  }
+  for (const preserved of [
+    'base',
+    'md:grid-cols-3',
+    '!flex',
+    'flex!',
+    'md:!flex',
+    'md:flex!',
+    'rounded',
+  ]) {
+    expect(tokens).toContain(preserved)
+  }
+}
+
+describe('Tailwind display parity', () => {
+  it('uses explicit layout over a conflicting boolean and filters the same utilities', () => {
+    const el = mount('web-tailwind-display-parity', (element) => {
+      element.setAttribute('flex', 'true')
+      element.setAttribute('layout', 'grid')
+      element.setAttribute('praxis-class', tailwindDisplayClasses)
+    })
+
+    expectTailwindDisplayParity(el.className)
+  })
+  it('reads plugin-owned property values without requiring reflected attributes', () => {
+    const el = mount('web-tailwind-display-parity', (element) => {
+      const props = element as HTMLElement & {
+        flex: boolean
+        layout: string
+        praxisClass: string
+      }
+      props.flex = true
+      props.layout = 'grid'
+      props.praxisClass = tailwindDisplayClasses
+    })
+
+    expectTailwindDisplayParity(el.className)
+  })
+
 })
