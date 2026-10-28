@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it, vi } from 'vitest'
+import type { AnyRecord } from '@praxis-kit/primitive'
 import {
   isBackdropClick,
   listenForPopoverToggle,
@@ -39,7 +40,9 @@ describe('syncDialogState', () => {
   ): void {
     const prototype = HTMLDialogElement.prototype
     const descriptor = Object.getOwnPropertyDescriptor(prototype, name)
-    const mock = vi.fn((this: HTMLDialogElement) => implementation(this))
+    const mock = vi.fn(function (this: HTMLDialogElement) {
+      implementation(this)
+    })
     Object.defineProperty(prototype, name, {
       configurable: true,
       writable: true,
@@ -50,29 +53,37 @@ describe('syncDialogState', () => {
       run(mock)
     } finally {
       if (descriptor) Object.defineProperty(prototype, name, descriptor)
-      else delete (prototype as unknown as Record<string, unknown>)[name]
+      else delete (prototype as unknown as AnyRecord)[name]
     }
   }
 
   it('opens a closed dialog modally', () => {
     const dialog = document.createElement('dialog')
-    withDialogMethod('showModal', (node) => {
-      Object.defineProperty(node, 'open', { configurable: true, value: true })
-    }, (showModal) => {
-      syncDialogState(dialog, true)
-      expect(showModal).toHaveBeenCalledOnce()
-    })
+    withDialogMethod(
+      'showModal',
+      (node) => {
+        Object.defineProperty(node, 'open', { configurable: true, value: true })
+      },
+      (showModal) => {
+        syncDialogState(dialog, true)
+        expect(showModal).toHaveBeenCalledOnce()
+      },
+    )
   })
 
   it('closes an open dialog', () => {
     const dialog = document.createElement('dialog')
     Object.defineProperty(dialog, 'open', { configurable: true, value: true })
-    withDialogMethod('close', (node) => {
-      Object.defineProperty(node, 'open', { configurable: true, value: false })
-    }, (close) => {
-      syncDialogState(dialog, false)
-      expect(close).toHaveBeenCalledOnce()
-    })
+    withDialogMethod(
+      'close',
+      (node) => {
+        Object.defineProperty(node, 'open', { configurable: true, value: false })
+      },
+      (close) => {
+        syncDialogState(dialog, false)
+        expect(close).toHaveBeenCalledOnce()
+      },
+    )
   })
 
   it('does not call native methods when already synchronized', () => {
@@ -90,13 +101,17 @@ describe('syncDialogState', () => {
   it('bypasses instance-level wrappers during synchronization', () => {
     const dialog = document.createElement('dialog')
     Object.defineProperty(dialog, 'showModal', { configurable: true, value: vi.fn() })
-    withDialogMethod('showModal', (node) => {
-      Object.defineProperty(node, 'open', { configurable: true, value: true })
-    }, (showModal) => {
-      syncDialogState(dialog, true)
-      expect(showModal).toHaveBeenCalledOnce()
-      expect(dialog.showModal).not.toHaveBeenCalled()
-    })
+    withDialogMethod(
+      'showModal',
+      (node) => {
+        Object.defineProperty(node, 'open', { configurable: true, value: true })
+      },
+      (showModal) => {
+        syncDialogState(dialog, true)
+        expect(showModal).toHaveBeenCalledOnce()
+        expect(dialog.showModal).not.toHaveBeenCalled()
+      },
+    )
   })
 })
 
