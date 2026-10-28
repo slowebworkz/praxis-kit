@@ -29,6 +29,9 @@
   "package/contract": {
     "gzip": 9137
   },
+  "package/dom": {
+    "gzip": 7843
+  },
   "package/guards": {
     "gzip": 8091
   },
