@@ -582,6 +582,79 @@ describe('createTailwindPipeline — reserved layout literals', () => {
   })
 })
 
+describe('createTailwindPipeline — reserved layout variant dimension', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('warns and ignores the layout variant while preserving display and other variants', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const pipeline = createTailwindPipeline(
+      {
+        variants: {
+          layout: { grid: 'text-red-500', flex: 'text-blue-500' },
+          pad: { sm: 'p-2', lg: 'p-8' },
+        },
+        defaultVariants: { layout: 'flex', pad: 'sm' },
+        recipeMap: { gridPreset: { layout: 'grid', pad: 'lg' } },
+        compoundVariants: [{ layout: 'grid', pad: 'sm', class: 'font-bold' }],
+      } as never,
+      warnDiagnostics,
+    )
+
+    await Promise.resolve()
+    expect(
+      warn.mock.calls.some((call) => /"layout" variant dimension conflicts/i.test(String(call[0]))),
+    ).toBe(true)
+
+    const cls =
+      pipeline.pipeline('div', { layout: 'grid', pad: 'sm' } as never, '', undefined) ?? ''
+    expect(cls).toContain('grid')
+    expect(cls).toContain('p-2')
+    expect(cls).not.toContain('text-red-500')
+    expect(cls).not.toContain('text-blue-500')
+    expect(cls).not.toContain('font-bold')
+
+    const recipeCls = pipeline.pipeline('div', { layout: 'grid' } as never, '', 'gridPreset') ?? ''
+    expect(recipeCls).toContain('grid')
+    expect(recipeCls).toContain('p-8')
+    expect(recipeCls).not.toContain('text-red-500')
+    expect(recipeCls).not.toContain('text-blue-500')
+  })
+
+  it('does not reuse precomputed classes generated for the conflicting layout dimension', () => {
+    const pipeline = createTailwindPipeline(
+      {
+        variants: {
+          layout: { grid: 'text-red-500', flex: 'text-blue-500' },
+          pad: { sm: 'p-2' },
+        },
+        precomputedClasses: {
+          '__none__|layout:s:grid|pad:s:sm': 'stale-layout-precomputed',
+          '__none__|pad:s:sm': 'precomputed-padding',
+        },
+      } as never,
+      silentDiagnostics,
+    )
+
+    const cls =
+      pipeline.pipeline('div', { layout: 'grid', pad: 'sm' } as never, '', undefined) ?? ''
+    expect(cls).toContain('grid')
+    expect(cls).toContain('p-2')
+    expect(cls).not.toContain('stale-layout-precomputed')
+    expect(cls).not.toContain('precomputed-padding')
+    expect(cls).not.toContain('text-red-500')
+  })
+
+  it('does not treat layout as a variant when no layout variant dimension is configured', () => {
+    const pipeline = createTailwindPipeline({ variants: { pad: { sm: 'p-2' } } }, silentDiagnostics)
+    const cls =
+      pipeline.pipeline('div', { layout: 'grid', pad: 'sm' } as never, '', undefined) ?? ''
+    expect(cls).toContain('grid')
+    expect(cls).toContain('p-2')
+  })
+})
+
 describe('createTailwindPipeline — dead-variant detection (Case B)', () => {
   afterEach(() => {
     vi.restoreAllMocks()

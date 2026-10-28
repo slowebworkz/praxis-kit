@@ -100,12 +100,13 @@ Plugin-owned layout props (`layout` and the boolean shorthand props) are inputs 
 not host attributes. They are reserved from normal forwarding and `compose.defaults`, including when
 `compose.allProps` is enabled. The single-valued `layout` prop accepts any `layoutKeys` value plus
 `'none'` (`'none'` means no display class; use `'hidden'` for `display: none`) and takes precedence
-over boolean shorthand props when both are present. Invalid runtime values are warned about and
-ignored, falling back to boolean shorthand props. This behavior applies only while automatic
-composition is active; an explicit `asChild` or custom `render` path takes precedence. As usual,
-Tailwind CSS generation and source detection remain the consuming application's build-time
-responsibility. For Tailwind v4, import the provided stylesheet as described below so
-runtime-injected display classes have generated CSS.
+over boolean shorthand props when both are present. The name `layout` is reserved for display
+selection and must not be used as a styling variant dimension; such a dimension is ignored with a
+diagnostic. Invalid runtime values are warned about and ignored, falling back to boolean shorthand
+props. This behavior applies only while automatic composition is active; an explicit `asChild` or
+custom `render` path takes precedence. As usual, Tailwind CSS generation and source detection remain
+the consuming application's build-time responsibility. For Tailwind v4, import the provided
+stylesheet as described below so runtime-injected display classes have generated CSS.
 
 ### Tailwind v4 setup (required)
 

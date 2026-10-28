@@ -10,6 +10,16 @@ export const TailwindDiagnostics = {
     }
   },
 
+  layoutVariantConflict(): DiagnosticInput {
+    return {
+      code: DiagnosticCode.TailwindLayoutVariantConflict,
+      category: DiagnosticCategory.Contract,
+      message:
+        '[createTailwindPipeline] The "layout" variant dimension conflicts with the reserved display-selection prop. ' +
+        'The variant dimension is ignored; use a different name for styling variants.',
+    }
+  },
+
   invalidLayoutValue(value: unknown): DiagnosticInput {
     const valueLabel = typeof value === 'string' ? JSON.stringify(value) : typeof value
     return {
