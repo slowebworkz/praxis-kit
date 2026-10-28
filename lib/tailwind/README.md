@@ -87,6 +87,24 @@ display class automatically and strips conflicting utilities based on the active
 Do not pass display classes as literal strings in `base`, `variants`, or `className` — the pipeline
 will warn (when `strict` is enabled) and strip them in favour of the prop-controlled value.
 
+### Responsive display classes and important overrides
+
+Ordinary display utilities are reserved for the `layout` prop or boolean shorthand props. This
+includes responsive and state-prefixed forms: classes such as `md:flex`, `hover:flex`, and
+`md:hidden` are filtered rather than used as responsive display overrides. A prefixed display
+utility does not replace the unconditional display class selected by the props. For example,
+`<Button flex className="md:flex" />` receives the base `flex` class; `md:flex` is filtered.
+
+Important display utilities are an intentional escape hatch. The classifier preserves important
+display utilities instead of treating them as ordinary reserved display tokens, so forms such as
+`!flex`, `md:!flex`, and Tailwind v4's trailing-important forms (`flex!`, `md:flex!`) pass through
+the pipeline. Use these only when you deliberately need to override the prop-controlled display
+behavior, and ensure your application generates the corresponding Tailwind CSS.
+
+This exception applies to display utilities, not to other layout-dependent utilities: important
+flex-direction utilities such as `!flex-col` are still filtered when they conflict with the selected
+layout family.
+
 ### Composition with `compose.with`
 
 When a Tailwind-enabled component is used as the direct `compose.with` partner, its plugin can be
