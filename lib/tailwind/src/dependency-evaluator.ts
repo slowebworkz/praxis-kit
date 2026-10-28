@@ -10,7 +10,8 @@ export class DependencyEvaluator {
   evaluate(token: ClassifiedToken, state: LayoutState): boolean {
     switch (token.kind) {
       case 'layout': {
-        return token.value === state.mode
+        // Compare raw text so only an unprefixed display literal can match the base mode.
+        return token.raw === state.mode
       }
 
       case 'conditional': {
