@@ -400,6 +400,42 @@ scope or validate keyboard behavior.
 
 ---
 
+## Built-in rule override identifiers
+
+`enforcement.ruleOverrides` can disable a built-in HTML rule with `false`, or replace its
+severity and/or message. These identifiers are stable API names; overrides do not affect custom
+rules supplied through `enforcement.aria` or `enforcement.rules`.
+
+| Rule | Identifier |
+| --- | --- |
+| Landmark role override | `html.landmark.role` |
+| Accessible name for named landmarks | `html.landmark.accessible-name` |
+| Explicit role not permitted for the element | `html.role.not-permitted` |
+| Unsupported input type | `html.input.supported-type` |
+| Input attribute `checked` requires a checkable type | `html.input.checked-type` |
+| Input attribute `multiple` requires a supported type | `html.input.multiple-type` |
+| Input attribute `maxLength` requires a text type | `html.input.maxLength-type` |
+| Input attribute `minLength` requires a text type | `html.input.minLength-type` |
+| Input attribute `pattern` requires a text type | `html.input.pattern-type` |
+| Input attribute `min` requires a numeric type | `html.input.min-type` |
+| Input attribute `max` requires a numeric type | `html.input.max-type` |
+| Input attribute `step` requires a numeric type | `html.input.step-type` |
+| Input attribute `accept` requires a file type | `html.input.accept-type` |
+| Input attribute `capture` requires a file type | `html.input.capture-type` |
+| Input attribute `size` requires a text type | `html.input.size-type` |
+| Input attribute `alt` requires an image type | `html.input.alt-type` |
+| Input attribute `height` requires an image type | `html.input.height-type` |
+| Input attribute `width` requires an image type | `html.input.width-type` |
+| Input accessible name | `html.input.accessible-name` |
+| Password input autocomplete | `html.input.password-autocomplete` |
+| `required` and `readOnly` conflict | `html.input.required-readonly-conflict` |
+| Dangerous anchor URL scheme | `html.anchor.dangerous-href` |
+| Anchor with `role="button"` and `href` | `html.anchor.role-button-with-href` |
+| `aria-disabled` on an active anchor | `html.anchor.aria-disabled-inert` |
+
+For example, `{ 'html.input.supported-type': { severity: 'error' } }` promotes unsupported input
+`type` values to errors, while `{ 'html.input.supported-type': false }` disables only that rule.
+
 ## Open work
 
 Tracked findings, roughly in priority order. None is a 0.1 blocker on its own; together they are

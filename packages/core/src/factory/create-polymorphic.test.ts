@@ -2,12 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   CollectingReporter,
   DefaultPolicy,
+  DiagnosticCode,
   Diagnostics,
   Severity,
   silentDiagnostics,
 } from '@praxis-kit/diagnostics'
 import { createPolymorphic } from './create-polymorphic'
-import type { AnyRecord } from '../types'
+import { BUILTIN_HTML_RULE_IDS } from '@praxis-kit/primitive'
+import { HTML_ARIA_RULES } from '../html'
+import type { AnyRecord, EnforcementOptions } from '../types'
 import type { ClassPluginFactory } from '@praxis-kit/styling'
 
 function makeCollecting() {
@@ -173,6 +176,173 @@ describe('createPolymorphic — resolveAria()', () => {
     })
     const result = runtime.resolveAria('span', { 'data-unsafe': 'x' })
     expect(result.props).not.toHaveProperty('data-unsafe')
+  })
+
+  it('can disable a named built-in HTML rule without disabling the rest of enforcement', () => {
+    const { reporter, diagnostics } = makeCollecting()
+    const runtime = createPolymorphic({
+      tag: 'input',
+      enforcement: {
+        diagnostics,
+        ruleOverrides: { 'html.input.supported-type': false },
+      },
+    })
+
+    runtime.resolveAria('input', { type: 'not-a-real-input-type' })
+
+    expect(
+      reporter.diagnostics.some(
+        (diagnostic) => diagnostic.code === DiagnosticCode.HtmlInputUnsupportedType,
+      ),
+    ).toBe(false)
+  })
+
+  it('does not apply built-in overrides to a custom rule with the same id', () => {
+    const { reporter, diagnostics } = makeCollecting()
+    const customRule = Object.assign(
+      () => [
+        {
+          valid: false as const,
+          severity: 'warning' as const,
+          fixable: false as const,
+          message: 'custom rule still runs',
+        },
+      ],
+      { id: 'html.input.supported-type' },
+    )
+    const runtime = createPolymorphic({
+      tag: 'input',
+      enforcement: {
+        diagnostics,
+        ruleOverrides: { 'html.input.supported-type': false },
+        rules: [customRule],
+      },
+    })
+
+    runtime.resolveAria('input', { type: 'not-a-real-input-type' })
+
+    expect(reporter.diagnostics.some((item) => item.message === 'custom rule still runs')).toBe(
+      true,
+    )
+  })
+
+  it('can override the severity and message of a named built-in HTML rule', () => {
+    const { reporter, diagnostics } = makeCollecting()
+    const runtime = createPolymorphic({
+      tag: 'input',
+      enforcement: {
+        diagnostics,
+        ruleOverrides: {
+          'html.input.supported-type': {
+            severity: 'error',
+            message: 'Use a supported input type.',
+          },
+        },
+      },
+    })
+
+    runtime.resolveAria('input', { type: 'not-a-real-input-type' })
+
+    const diagnostic = reporter.diagnostics.find(
+      (item) => item.code === DiagnosticCode.HtmlInputUnsupportedType,
+    )
+    expect(diagnostic).toMatchObject({
+      severity: Severity.Error,
+      message: 'Use a supported input type.',
+    })
+  })
+
+  describe('ruleOverrides combinations', () => {
+    type Overrides = NonNullable<EnforcementOptions['ruleOverrides']>
+    const INPUT_TYPE_MESSAGE =
+      'type="nope" is not a value defined by the HTML specification. Browsers silently fall back to type="text".'
+
+    function report(
+      tag: 'input' | 'ul',
+      props: AnyRecord,
+      code: DiagnosticCode,
+      ruleOverrides?: Overrides,
+    ) {
+      const { reporter, diagnostics } = makeCollecting()
+      const runtime = createPolymorphic({
+        tag,
+        enforcement: { diagnostics, ...(ruleOverrides && { ruleOverrides }) },
+      })
+      runtime.resolveAria(tag, props)
+      return reporter.diagnostics.find((item) => item.code === code)
+    }
+    const inputType = (ruleOverrides?: Overrides) =>
+      report('input', { type: 'nope' }, DiagnosticCode.HtmlInputUnsupportedType, ruleOverrides)
+    const roleNotPermitted = (ruleOverrides?: Overrides) =>
+      report('ul', { role: 'checkbox' }, DiagnosticCode.HtmlRoleNotPermitted, ruleOverrides)
+
+    it('promotes a warning to an error, keeping the original message', () => {
+      expect(inputType()).toMatchObject({ severity: Severity.Warning })
+      expect(inputType({ 'html.input.supported-type': { severity: 'error' } })).toMatchObject({
+        severity: Severity.Error,
+        message: INPUT_TYPE_MESSAGE,
+      })
+    })
+
+    it('demotes an error to a warning, keeping the original message', () => {
+      const original = roleNotPermitted()
+      expect(original).toMatchObject({ severity: Severity.Error })
+      expect(
+        roleNotPermitted({ 'html.role.not-permitted': { severity: 'warning' } }),
+      ).toMatchObject({
+        severity: Severity.Warning,
+        message: original?.message,
+      })
+    })
+
+    it('replaces only the message, keeping the original severity', () => {
+      expect(
+        inputType({ 'html.input.supported-type': { message: 'Use a supported input type.' } }),
+      ).toMatchObject({ severity: Severity.Warning, message: 'Use a supported input type.' })
+      expect(
+        roleNotPermitted({ 'html.role.not-permitted': { message: 'That role is not allowed.' } }),
+      ).toMatchObject({ severity: Severity.Error, message: 'That role is not allowed.' })
+    })
+
+    it('leaves a rule untouched when an empty override object is given', () => {
+      expect(inputType({ 'html.input.supported-type': {} })).toMatchObject({
+        severity: Severity.Warning,
+        message: INPUT_TYPE_MESSAGE,
+      })
+    })
+
+    it('only affects the targeted rule', () => {
+      const { reporter, diagnostics } = makeCollecting()
+      createPolymorphic({
+        tag: 'input',
+        enforcement: { diagnostics, ruleOverrides: { 'html.input.supported-type': false } },
+      }).resolveAria('input', { type: 'nope' })
+      // The accessible-name rule also fires for this input and is not disabled.
+      expect(
+        reporter.diagnostics.some(
+          (item) => item.code === DiagnosticCode.A11yInputMissingAccessibleName,
+        ),
+      ).toBe(true)
+    })
+
+    it('rejects an unknown rule identifier at compile time', () => {
+      createPolymorphic({
+        tag: 'input',
+        enforcement: {
+          ruleOverrides: {
+            // @ts-expect-error — 'html.input.supported-typ' is not a built-in rule identifier.
+            'html.input.supported-typ': false,
+          },
+        },
+      })
+    })
+  })
+
+  it('registers exactly the built-in rule identifiers the public key type declares', () => {
+    const registered = HTML_ARIA_RULES.map((rule) => rule.id)
+    expect(registered.every((id) => id !== undefined)).toBe(true)
+    expect(new Set(registered)).toEqual(new Set(BUILTIN_HTML_RULE_IDS))
+    expect(registered).toHaveLength(BUILTIN_HTML_RULE_IDS.length)
   })
 
   it('merges enforcement.aria and enforcement.rules — both run', () => {

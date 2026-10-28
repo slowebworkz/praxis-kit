@@ -111,6 +111,7 @@ export function resolveFactoryOptions<
     ...whenDefined('compoundVariants', styling?.compounds),
     ...whenDefined('normalizeFn', composedNormalizeFn),
     ...whenDefined('ariaRules', mergeAriaRules(enforcement?.aria, enforcement?.rules)),
+    ...whenDefined('ruleOverrides', enforcement?.ruleOverrides),
     ...whenDefined('childRules', enforcement?.children),
     ...whenDefined('exclusiveChildren', enforcement?.exclusiveChildren),
     ...whenDefined('allowText', enforcement?.allowText),

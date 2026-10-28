@@ -34,7 +34,7 @@ export const supportedInputTypeRule: AriaRule = Object.assign(
       },
     ]
   },
-  { readsProps: ['type'] as const, tags: ['input'] as const },
+  { id: 'html.input.supported-type', readsProps: ['type'] as const, tags: ['input'] as const },
 )
 
 export const checkedRequiresCheckableTypeRule = createInputAttributeTypeRule(policyFor('checked'))
@@ -81,6 +81,7 @@ export const inputAccessibleNameRule: AriaRule = Object.assign(
     return [{ valid: false, fixable: false, severity: diagnostic.severity, diagnostic }]
   },
   {
+    id: 'html.input.accessible-name',
     readsProps: ['type', 'aria-label', 'aria-labelledby', 'placeholder'] as const,
     tags: ['input'] as const,
   },
@@ -97,13 +98,20 @@ export const passwordAutocompleteRule: AriaRule = Object.assign(
     const diagnostic = InputAccessibilityDiagnostics.passwordMissingAutocomplete()
     return [{ valid: false, fixable: false, severity: diagnostic.severity, diagnostic }]
   },
-  { readsProps: ['type', 'autoComplete'] as const, tags: ['input'] as const },
+  {
+    id: 'html.input.password-autocomplete',
+    readsProps: ['type', 'autoComplete'] as const,
+    tags: ['input'] as const,
+  },
 )
 
 // Legal HTML (readOnly wins — the field is never editable, so `required` can never be satisfied
 // interactively) but almost always an unintended combination. Not auto-fixable: removing either
 // attribute would be guessing which one the author meant.
-export const requiredReadOnlyConflictRule = createMutuallyExclusiveRule(REQUIRED_READONLY_CONFLICT)
+export const requiredReadOnlyConflictRule = Object.assign(
+  createMutuallyExclusiveRule(REQUIRED_READONLY_CONFLICT),
+  { id: 'html.input.required-readonly-conflict' },
+)
 
 // Not "ARIA rules" — the first half are HTML/ARIA-in-HTML validity facts, the second half are
 // accessibility best-practice advisories. Neither is ARIA-specific.
