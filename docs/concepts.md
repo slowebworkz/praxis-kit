@@ -403,5 +403,10 @@ component demonstrates the intended division:
 - **praxis-kit** owns: tag resolution, class pipeline, ARIA roles, children enforcement
 - **Framework context** owns: active tab state, show/hide logic
 
+`subComponents` only attaches named component properties (for example, `Card.Header`) to the root;
+it does not make the root discover or forward props to consumer-placed JSX children. Put an event
+handler on the sub-component that handles it. The design rationale and alternatives are recorded in
+[compound event routing](design/compound-event-routing.md).
+
 This separation means the contract layer is framework-agnostic and the state layer is idiomatic to
 each framework.
