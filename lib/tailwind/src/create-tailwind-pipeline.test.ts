@@ -51,6 +51,51 @@ describe('createTailwindPipeline — none mode (no layout prop)', () => {
   })
 })
 
+describe('createTailwindPipeline — important modifiers', () => {
+  const pipeline = createTailwindPipeline({}, silentDiagnostics)
+
+  it.each(['!flex-col', 'flex-col!', 'md:!flex-col', 'md:flex-col!'])(
+    'strips %s in grid mode just like the non-important utility',
+    (className) => {
+      const cls = resolve(pipeline, `${className} rounded`, { grid: true }) ?? ''
+      expect(cls).not.toContain(className)
+      expect(cls).toContain('rounded')
+    },
+  )
+
+  it('filters important flex utilities but preserves important display classes', () => {
+    const cls =
+      resolve(pipeline, '!flex !flex-col flex! flex-col! md:!flex md:!flex-col', {
+        grid: true,
+      }) ?? ''
+
+    expect(cls).toContain('!flex')
+    expect(cls).toContain('flex!')
+    expect(cls).toContain('md:!flex')
+
+    expect(cls).not.toContain('!flex-col')
+    expect(cls).not.toContain('flex-col!')
+    expect(cls).not.toContain('md:!flex-col')
+  })
+
+  it.each(['!gap-4', 'gap-4!', 'md:!gap-4', 'md:gap-4!'])(
+    'filters %s as a gap utility when no layout is selected',
+    (className) => {
+      const cls = resolve(pipeline, `${className} rounded`) ?? ''
+      expect(cls).not.toContain(className)
+      expect(cls).toContain('rounded')
+    },
+  )
+
+  it('preserves important display classes as the existing escape hatch', () => {
+    const cls = resolve(pipeline, '!flex flex! md:!flex md:flex!', { grid: true }) ?? ''
+    expect(cls).toContain('!flex')
+    expect(cls).toContain('flex!')
+    expect(cls).toContain('md:!flex')
+    expect(cls).toContain('md:flex!')
+  })
+})
+
 describe('createTailwindPipeline — flex/grid item utilities (#40)', () => {
   const pipeline = createTailwindPipeline({}, silentDiagnostics)
 
