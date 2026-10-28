@@ -58,6 +58,20 @@ function resolveLayout(
   diagnostics: Diagnostics,
   props: LayoutProps<typeof layoutKeys> & AnyRecord,
 ): ResolvedLayout<typeof layoutKeys> {
+  // The single-valued prop is the explicit API and wins over shorthand booleans.
+  // This lets a caller override a component's boolean layout defaults without needing
+  // to unset them. Ignore shorthand conflicts when the explicit selection is present.
+  const requestedLayout: unknown = props.layout
+  if (requestedLayout !== undefined) {
+    if (
+      requestedLayout === 'none' ||
+      (isString(requestedLayout) && layoutKeys.some((key) => key === requestedLayout))
+    ) {
+      return requestedLayout as ResolvedLayout<typeof layoutKeys>
+    }
+    if (DEV) diagnostics.warn(TailwindDiagnostics.invalidLayoutValue(requestedLayout))
+  }
+
   const active: LayoutKey<typeof layoutKeys>[] = []
   iterate.forEach(layoutKeys, (key) => {
     if (props[key]) active.push(key)
@@ -195,9 +209,10 @@ function warnDeadVariants<V extends VariantMap>(
  * })
  * ```
  *
- * With the plugin active, pass any display prop (`flex`, `inline-flex`, `grid`,
- * `inline-grid`, `block`, `hidden`, etc.) as a boolean to control the display
- * mode. The pipeline injects the display class and strips conflicting utilities:
+ * With the plugin active, pass a single-valued `layout` prop (for example,
+ * `layout: 'grid'` or `layout: 'none'`) or a display shorthand prop (`flex: true`,
+ * `grid: true`, etc.). An explicit `layout` value overrides shorthand booleans. The
+ * pipeline injects the display class and strips conflicting utilities:
  * flex-family modes strip `grid-*`; grid-family modes strip `flex-*`; all other
  * display values (and no prop) strip both `flex-*` and `grid-*`.
  */

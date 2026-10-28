@@ -20,7 +20,7 @@ import type { ComponentProps, ReactElement } from 'react'
 import { defineContract } from '@praxis-kit/adapter-utils'
 import type { ClassPluginFactory } from '@praxis-kit/core'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
-import type { LayoutKeyName } from '@praxis-kit/tailwind'
+import type { LayoutPropName } from '@praxis-kit/tailwind'
 import { createContractComponent } from './create-contract-component'
 import type { ContractProps } from '../shared'
 
@@ -168,7 +168,7 @@ describe('ContractProps — data-* passthrough (finding #43)', () => {
     function BoxWrapper({
       'data-slot': slot = 'wrapper',
       ...rest
-    }: Omit<ContractProps<typeof Box>, LayoutKeyName>): ReactElement {
+    }: Omit<ContractProps<typeof Box>, LayoutPropName>): ReactElement {
       return <Box {...rest} data-slot={slot} />
     }
     const _el = <BoxWrapper data-slot="custom" />
@@ -230,7 +230,7 @@ describe('ContractProps — layout-union collapse (finding #44)', () => {
     // The realistic finding-#44 wrapper shape: take the contract minus the display props, forward
     // the rest. (Forwarding a flattened layout prop back onto the strict call signature still
     // needs an explicit branch or cast — that union is deliberately kept on the component.)
-    function BoxWrapper(props: Omit<ContractProps<typeof Box>, LayoutKeyName>): ReactElement {
+    function BoxWrapper(props: Omit<ContractProps<typeof Box>, LayoutPropName>): ReactElement {
       return <Box {...props} />
     }
     const _el = <BoxWrapper data-slot="custom" />

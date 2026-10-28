@@ -5,7 +5,6 @@ export type BuiltinHtmlRuleId = (typeof BUILTIN_HTML_RULE_IDS)[number]
 
 /** `false` disables the rule; an object replaces its severity and/or message. */
 export type RuleOverride =
-  | false
-  | { readonly severity?: 'error' | 'warning'; readonly message?: string }
+  false | { readonly severity?: 'error' | 'warning'; readonly message?: string }
 
 export type RuleOverrides = Readonly<Partial<Record<BuiltinHtmlRuleId, RuleOverride>>>

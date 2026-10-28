@@ -20,7 +20,7 @@ import type {
 } from '@praxis-kit/core'
 import type { CollisionError } from '@praxis-kit/compose-props'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
-import type { LayoutKeyName } from '@praxis-kit/tailwind'
+import type { LayoutPropName } from '@praxis-kit/tailwind'
 import type { OptionalKeysOf } from 'type-fest'
 import { createContractComponent } from '../create-contract-component'
 import type { AnyBuiltRuntime } from './built-runtime'
@@ -364,7 +364,7 @@ describe('ResolvedSlotProps<T> layout-union collapse', () => {
     expectTypeOf<Props['data-slot']>().toEqualTypeOf<string | number | boolean | undefined>()
     expectTypeOf<Props['partnerOnlyProp']>().toEqualTypeOf<string | undefined>()
 
-    type WithoutLayout = Omit<Props, LayoutKeyName>
+    type WithoutLayout = Omit<Props, LayoutPropName>
     type OnlyGrid = Pick<Props, 'grid'>
     type Merged = Props & { extra?: string }
 

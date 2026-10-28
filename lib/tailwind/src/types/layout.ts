@@ -16,7 +16,7 @@ export type LayoutKey<T extends readonly string[]> = TupleValues<T>
 // This is intentionally based on the map's values rather than its keys.
 export type LayoutFamily<M extends StringMap<string>> = ValueOf<M>
 
-// The resolved layout after shorthand props have been evaluated.
+// The resolved layout selected by either the explicit prop or shorthand props.
 export type ResolvedLayout<T extends readonly string[]> = LayoutKey<T> | 'none'
 
 // Produces a mutually exclusive object where exactly one property is `true`
@@ -31,18 +31,29 @@ type ExclusiveTrueProp<K extends PropertyKey> = {
 /**
  * Mutually exclusive layout shorthand props.
  *
- * Exactly one layout prop may be `true`, or none at all. Multiple `true`
- * props produce a compile-time error. If invalid props reach runtime, the
- * resolver warns and uses the first declared layout.
+ * At most one boolean shorthand prop may be `true`. The optional single-valued
+ * `layout` prop can be used instead, or alongside a shorthand; when present, it
+ * takes precedence. Multiple shorthand `true` props produce a compile-time error.
+ * If invalid shorthand combinations reach runtime without `layout`, the resolver
+ * warns and uses the first declared layout.
  */
-export type LayoutProps<T extends readonly string[]> =
+export type LayoutProps<T extends readonly string[]> = (
   ExclusiveTrueProp<LayoutKey<T>> | Partial<Record<LayoutKey<T>, never>>
+) & {
+  /**
+   * Explicit layout selection; when supplied, it overrides boolean shorthand props.
+   * `'none'` means no display class is injected; use `'hidden'` for `display: none`.
+   */
+  layout?: ResolvedLayout<T>
+}
 
 /**
- * `LayoutProps` flattened for the type-extraction path (`ContractProps<T>`): every layout key an
- * optional `true`, no mutual exclusivity. The component's own call signature keeps the strict
- * `LayoutProps` union; this is the shape a wrapper author wants for `Omit` / `Pick` /
- * rest-destructure, which the ~22-member union breaks. Declared as the `ClassPlugin` flat-props
- * generic so adapters never need to know the layout keys.
+ * `LayoutProps` flattened for the type-extraction path (`ContractProps<T>`): boolean shorthand
+ * keys are optional `true`s with no mutual exclusivity, alongside the typed single-valued `layout`
+ * prop. The component's own call signature keeps the strict `LayoutProps` union; this is the shape
+ * a wrapper author wants for `Omit` / `Pick` / rest-destructure, which the ~22-member union breaks.
+ * Declared as the `ClassPlugin` flat-props generic so adapters never need to know the layout keys.
  */
-export type FlatLayoutProps = { [K in LayoutKey<typeof layoutKeys>]?: true }
+export type FlatLayoutProps = { [K in LayoutKey<typeof layoutKeys>]?: true } & {
+  layout?: ResolvedLayout<typeof layoutKeys>
+}

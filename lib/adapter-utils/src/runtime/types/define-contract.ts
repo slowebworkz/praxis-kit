@@ -92,21 +92,22 @@ type ComposeDefaultsError<K extends PropertyKey, Reason extends string> = {
 }
 
 type InvalidIndividualComposeDefaultKeys<Defaults, Props> = {
-  [K in keyof Defaults]: K extends keyof Props
-    ? Defaults[K] extends Props[K]
-      ? never
-      : K
-    : K
+  [K in keyof Defaults]: K extends keyof Props ? (Defaults[K] extends Props[K] ? never : K) : K
 }[keyof Defaults]
 
 type ComposeDefaultsDiagnosticValues<Defaults, Props> = {
   [K in keyof Defaults]: K extends keyof Props
     ? Defaults[K] extends Props[K]
       ? [InvalidIndividualComposeDefaultKeys<Defaults, Props>] extends [never]
-        ? Defaults[K] & ComposeDefaultsError<K, 'invalid combination of compose.defaults keys or values'>
+        ? Defaults[K] &
+            ComposeDefaultsError<K, 'invalid combination of compose.defaults keys or values'>
         : Defaults[K]
       : Defaults[K] & ComposeDefaultsError<K, 'invalid value for this variant or plugin selector'>
-    : Defaults[K] & ComposeDefaultsError<K, 'not a declared variant or plugin selector of the composed component'>
+    : Defaults[K] &
+        ComposeDefaultsError<
+          K,
+          'not a declared variant or plugin selector of the composed component'
+        >
 }
 
 type ComposeDefaultsDiagnostic<O> = O extends { readonly compose: infer Compose }
@@ -127,6 +128,5 @@ type ComposeDefaultsDiagnostic<O> = O extends { readonly compose: infer Compose 
  * at the offending property instead of producing an unrelated rest-parameter arity error.
  * `unknown` leaves valid options unchanged; invalid values acquire a message-bearing property type.
  */
-export type ComposeDefaultsValidation<O> = ComposeDefaultsConstraint<O> extends never
-  ? ComposeDefaultsDiagnostic<O>
-  : unknown
+export type ComposeDefaultsValidation<O> =
+  ComposeDefaultsConstraint<O> extends never ? ComposeDefaultsDiagnostic<O> : unknown

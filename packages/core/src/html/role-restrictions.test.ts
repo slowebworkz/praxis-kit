@@ -142,9 +142,7 @@ describe('roleNotPermittedRule', () => {
     ] as const)('range/number input type=%s permits only its implicit role', (type, role) => {
       expect(roleNotPermittedRule(ctx('input', { type, role }, role))).toEqual([])
 
-      const [result] = roleNotPermittedRule(
-        ctx('input', { type, role: 'menu' }, role),
-      )
+      const [result] = roleNotPermittedRule(ctx('input', { type, role: 'menu' }, role))
       expect(result).toMatchObject({ valid: false, fixable: true })
     })
 
@@ -194,15 +192,7 @@ describe('roleNotPermittedRule', () => {
     {
       tag: 'article',
       implicitRole: 'article',
-      allowedRoles: [
-        'application',
-        'document',
-        'feed',
-        'main',
-        'none',
-        'presentation',
-        'region',
-      ],
+      allowedRoles: ['application', 'document', 'feed', 'main', 'none', 'presentation', 'region'],
     },
     {
       tag: 'aside',
@@ -229,16 +219,36 @@ describe('roleNotPermittedRule', () => {
       tag: 'a',
       implicitRole: 'link',
       allowedRoles: [
-        'button', 'checkbox', 'menuitem', 'menuitemcheckbox', 'menuitemradio',
-        'option', 'radio', 'switch', 'tab', 'treeitem',
+        'button',
+        'checkbox',
+        'menuitem',
+        'menuitemcheckbox',
+        'menuitemradio',
+        'option',
+        'radio',
+        'switch',
+        'tab',
+        'treeitem',
       ],
     },
     {
       tag: 'button',
       implicitRole: 'button',
       allowedRoles: [
-        'checkbox', 'combobox', 'gridcell', 'link', 'menuitem', 'menuitemcheckbox',
-        'menuitemradio', 'option', 'radio', 'separator', 'slider', 'switch', 'tab', 'treeitem',
+        'checkbox',
+        'combobox',
+        'gridcell',
+        'link',
+        'menuitem',
+        'menuitemcheckbox',
+        'menuitemradio',
+        'option',
+        'radio',
+        'separator',
+        'slider',
+        'switch',
+        'tab',
+        'treeitem',
       ],
     },
     ...(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as const).map((tag) => ({

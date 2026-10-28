@@ -76,7 +76,7 @@ export function createContractComponent<
   TPreset extends RecipeMap<VariantMap> = ContractPresetOf<C>,
   TSubComponents extends Readonly<AnyRecord> = EmptyRecord,
 >(
-  options: C & { readonly subComponents?: TSubComponents } & ComposeDefaultsValidation<C>
+  options: C & { readonly subComponents?: TSubComponents } & ComposeDefaultsValidation<C>,
 ): MergeRecords<
   BuiltRuntime<ContractGenericsOf<C>, C> & { readonly __contract?: C },
   TSubComponents

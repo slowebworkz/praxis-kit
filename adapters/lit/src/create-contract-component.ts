@@ -118,7 +118,7 @@ export function createContractComponent<
 >(
   options: C & {
     readonly subComponents?: TSubComponents
-  } & ComposeDefaultsValidation<C>
+  } & ComposeDefaultsValidation<C>,
 ): MergeRecords<
   LitContractComponent<TVariants, ExtractPluginProps<TPlugin>, ContractGenericsOf<C>, C>,
   TSubComponents

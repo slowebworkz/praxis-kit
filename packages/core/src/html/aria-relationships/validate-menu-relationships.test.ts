@@ -50,7 +50,11 @@ describe('ARIA menu relationships', () => {
     expect(
       validateAriaMenuRelationships([
         { id: 'menubar', props: { role: 'menubar' } },
-        { id: 'parent-item', parentId: 'menubar', props: { role: 'menuitem', 'aria-owns': 'submenu' } },
+        {
+          id: 'parent-item',
+          parentId: 'menubar',
+          props: { role: 'menuitem', 'aria-owns': 'submenu' },
+        },
         { id: 'submenu', props: { role: 'menu' } },
         { id: 'child-item', parentId: 'submenu', props: { role: 'menuitem' } },
       ]),

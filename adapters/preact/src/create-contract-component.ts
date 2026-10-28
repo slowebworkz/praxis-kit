@@ -79,7 +79,7 @@ export function createContractComponent<
 >(
   options: C & {
     readonly subComponents?: TSubComponents
-  } & ComposeDefaultsValidation<C>
+  } & ComposeDefaultsValidation<C>,
 ): MergeRecords<
   PolymorphicComponent<
     PolymorphicGenerics<

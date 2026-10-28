@@ -1,9 +1,9 @@
 # @praxis-kit/tailwind
 
 A **semantic bridge between Praxis layout props and Tailwind utility classes**. It wraps the core
-class pipeline with a display-aware resolver that manages every CSS `display` value as a reserved
-boolean prop, strips utilities that can't apply under the active display mode, and emits a
-deterministic class order.
+class pipeline with a display-aware resolver that manages CSS `display` values through boolean
+shorthand props or a single-valued `layout` prop, strips utilities that can't apply under the active
+display mode, and emits a deterministic class order.
 
 Under the hood it is a small layout-aware CSS resolution engine —
 `ClassClassifier → ClassifiedToken → LayoutState → DependencyEvaluator → ClassBuilder` — not a
@@ -62,9 +62,11 @@ const Button = createContractComponent({
 })
 ```
 
-With the plugin active, pass any display prop as a boolean to control the display mode. All CSS
-display values are reserved — the pipeline injects the display class automatically and strips
-conflicting utilities based on the active family:
+With the plugin active, pass a display shorthand prop as a boolean or use the single-valued `layout`
+prop to control the display mode. All CSS display values are reserved — the pipeline injects the
+display class automatically and strips conflicting utilities based on the active family.
+`layout="none"` means **do not inject a display class**; it does not mean `display: none`. Use
+`layout="hidden"` to apply Tailwind's `hidden` class and set `display: none`.
 
 | Prop                                                                                         | CSS class injected   | Strips                                                   |
 | -------------------------------------------------------------------------------------------- | -------------------- | -------------------------------------------------------- |
@@ -94,36 +96,42 @@ against both components' class contributions. If both components configure diffe
 factories, the primary component's factory wins and Praxis Kit reports `COMP1016`; plugin pipelines
 are not chained together.
 
-Plugin-owned layout props are inputs to class resolution, not host attributes. They are reserved
-from normal forwarding and `compose.defaults`, including when `compose.allProps` is enabled. This
-behavior applies only while automatic composition is active; an explicit `asChild` or custom
-`render` path takes precedence. As usual, Tailwind CSS generation and source detection remain the
-consuming application's build-time responsibility. For Tailwind v4, import the provided stylesheet
-as described below so runtime-injected display classes have generated CSS.
+Plugin-owned layout props (`layout` and the boolean shorthand props) are inputs to class resolution,
+not host attributes. They are reserved from normal forwarding and `compose.defaults`, including when
+`compose.allProps` is enabled. The single-valued `layout` prop accepts any `layoutKeys` value plus
+`'none'` (`'none'` means no display class; use `'hidden'` for `display: none`) and takes precedence
+over boolean shorthand props when both are present. Invalid runtime values are warned about and
+ignored, falling back to boolean shorthand props. This behavior applies only while automatic
+composition is active; an explicit `asChild` or custom `render` path takes precedence. As usual,
+Tailwind CSS generation and source detection remain the consuming application's build-time
+responsibility. For Tailwind v4, import the provided stylesheet as described below so
+runtime-injected display classes have generated CSS.
 
 ### Tailwind v4 setup (required)
 
-Display classes are assembled at runtime from boolean props, so they never appear as a literal
-string anywhere Tailwind's content scanner can find them — under Tailwind v4, their CSS is never
-generated unless you explicitly safelist them. Import the safelist alongside `tailwindcss` itself in
-your app's main CSS entry point:
+Display classes are assembled at runtime from `layout` or boolean shorthand props, so they never
+appear as a literal string anywhere Tailwind's content scanner can find them — under Tailwind v4,
+their CSS is never generated unless you explicitly safelist them. Import the safelist alongside
+`tailwindcss` itself in your app's main CSS entry point:
 
 ```css
 @import 'tailwindcss';
 @import 'praxis-kit/tailwind.css';
 ```
 
-Without this import, props like `<Button inline-block>` will not produce any `display` CSS.
+Without this import, props like `<Button inline-block>` or `<Button layout="grid">` will not produce
+any `display` CSS.
 
 ---
 
 ## Exports
 
-| Export                                                          | Description                                                                                                                            |
-| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `createTailwindPipeline`                                        | `ClassPluginFactory` — pass as `styling.plugin`; the runtime calls it                                                                  |
-| `layoutKeys`                                                    | The canonical layout-shorthand prop names (`flex`, `grid`, …); also read by `praxis-kit/vite-plugin`'s `designTokensPlugin`            |
-| `LayoutProps<T>` / `LayoutKey<T>` / `ResolvedLayout<T>` (types) | The mutually-exclusive layout-prop shape a component gains from the pipeline — `LayoutProps<typeof layoutKeys>` — for typing a wrapper |
+| Export                                                          | Description                                                                                                                                       |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `createTailwindPipeline`                                        | `ClassPluginFactory` — pass as `styling.plugin`; the runtime calls it                                                                             |
+| `layoutKeys`                                                    | The canonical boolean layout-shorthand values (`flex`, `grid`, …); also read by `praxis-kit/vite-plugin`'s `designTokensPlugin`                   |
+| `LayoutPropName` / `LayoutKeyName` (types)                      | `LayoutPropName` includes all plugin-owned props; `LayoutKeyName` names the boolean shorthand props only                                          |
+| `LayoutProps<T>` / `LayoutKey<T>` / `ResolvedLayout<T>` (types) | The layout-prop shape a component gains from the pipeline — `LayoutProps<typeof layoutKeys>` — including boolean shorthands and `layout` override |
 
 The classifier / dependency-evaluator / builder / layout-state classes and the
 token/pipeline-context types are implementation detail of `createTailwindPipeline`, not part of the

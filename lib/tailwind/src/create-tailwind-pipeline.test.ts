@@ -406,6 +406,39 @@ describe('createTailwindPipeline — layout param overrides className tokens', (
     expect(cls).toMatch(/\bgap-4\b/)
     expect(cls).not.toMatch(/\bflex-col\b/)
   })
+
+  it('explicit layout overrides a conflicting shorthand boolean', () => {
+    const cls = resolve(pipeline, 'flex flex-col grid-cols-3 gap-4 rounded', {
+      flex: true,
+      layout: 'grid',
+    })
+    expect(cls).toMatch(/\bgrid\b/)
+    expect(cls).toMatch(/\bgrid-cols-3\b/)
+    expect(cls).toMatch(/\bgap-4\b/)
+    expect(cls).not.toMatch(/\bflex-col\b/)
+  })
+
+  it('layout: none overrides a shorthand boolean and filters layout utilities', () => {
+    const cls = resolve(pipeline, 'flex flex-col grid-cols-3 gap-4 rounded', {
+      flex: true,
+      layout: 'none',
+    })
+    expect(cls).not.toMatch(/\bflex\b/)
+    expect(cls).not.toMatch(/\bflex-col\b/)
+    expect(cls).not.toMatch(/\bgrid-cols-3\b/)
+    expect(cls).not.toMatch(/\bgap-4\b/)
+    expect(cls).toMatch(/\brounded\b/)
+  })
+
+  it('explicit layout suppresses shorthand conflict warnings', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    resolve(pipeline, '', {
+      flex: true,
+      grid: true,
+      layout: 'block',
+    } as LayoutProps<typeof layoutKeys>)
+    expect(warn).not.toHaveBeenCalled()
+  })
 })
 
 describe('createTailwindPipeline — multiple display props (mutual exclusion)', () => {
@@ -719,6 +752,25 @@ describe('createTailwindPipeline — async-warn mode', () => {
     resolve(pipeline, '')
     expect(warn).not.toHaveBeenCalled()
   })
+
+  it.each(['mystery', ''])(
+    'warns and falls back to shorthand props for invalid layout %j',
+    async (layout) => {
+      const pipeline = createTailwindPipeline({}, makeAsyncWarnDiagnostics())
+      const cls = resolve(pipeline, 'flex-col grid-cols-3 gap-4 rounded', {
+        flex: true,
+        layout,
+      } as LayoutProps<typeof layoutKeys>)
+
+      expect(cls).toMatch(/\bflex\b/)
+      expect(cls).toContain('flex-col')
+      expect(cls).not.toContain('grid-cols-3')
+      expect(cls).not.toContain('mystery')
+      await Promise.resolve()
+      expect(warn).toHaveBeenCalledOnce()
+      expect(warn.mock.calls[0]![0]).toMatch(/invalid layout value/i)
+    },
+  )
 
   it('calls console.warn after microtask flush for reserved layout literals', async () => {
     const pipeline = createTailwindPipeline({ baseClassName: 'flex' }, makeAsyncWarnDiagnostics())

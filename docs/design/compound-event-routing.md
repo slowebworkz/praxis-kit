@@ -41,9 +41,9 @@ parent/descendant relationships.
 ### 1. Keep event handlers on the target sub-component — recommended
 
 Continue to let consumers put `onClick` (or another native/framework event prop) on the specific
-sub-component that handles it. If a root needs to coordinate multiple parts, use the framework's
-own state/context mechanism, which is already the documented division of responsibility for
-compound widgets.
+sub-component that handles it. If a root needs to coordinate multiple parts, use the framework's own
+state/context mechanism, which is already the documented division of responsibility for compound
+widgets.
 
 **Advantages:** no runtime machinery, no adapter divergence, ordinary framework semantics, and no
 ambiguity about which descendant receives a handler. This matches the existing component API.
@@ -65,9 +65,9 @@ This is a poor fit for the current API and adapter matrix.
 
 The root could publish a handler registry through context and each sub-component could consume its
 entry. This handles consumer-placed children without cloning, but it adds an ancestry/communication
-abstraction and framework-specific bindings across the adapter set. It also needs explicit
-semantics for nested instances, handler precedence, updates, cleanup, and sub-components rendered
-outside the root.
+abstraction and framework-specific bindings across the adapter set. It also needs explicit semantics
+for nested instances, handler precedence, updates, cleanup, and sub-components rendered outside the
+root.
 
 This is a substantial public/runtime commitment for a convenience that the current API already
 supports by placing the handler on the target component. The earlier ancestry-channel work is
@@ -79,7 +79,8 @@ child-to-parent reads.
 If a future compound API makes the root responsible for creating its header/content/footer parts,
 root-level handlers can be forwarded at the point those parts are instantiated. That is ordinary
 prop forwarding rather than child discovery. However, it is a different compound-component model
-from today's consumer-placed JSX children and should not be introduced solely to solve event routing.
+from today's consumer-placed JSX children and should not be introduced solely to solve event
+routing.
 
 ## Recommendation
 

@@ -62,12 +62,9 @@ describe('ClassClassifier — important modifiers', () => {
     expectUtility(token, base)
   })
 
-  it.each(['!gap-4', 'gap-4!', 'md:!gap-4', 'md:gap-4!'])(
-    'classifies %s as gap',
-    (token) => {
-      expectGap(token)
-    },
-  )
+  it.each(['!gap-4', 'gap-4!', 'md:!gap-4', 'md:gap-4!'])('classifies %s as gap', (token) => {
+    expectGap(token)
+  })
 
   it.each(['!items-center', 'items-center!', 'md:!items-center', 'md:items-center!'])(
     'classifies %s as shared',
