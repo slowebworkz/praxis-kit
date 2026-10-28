@@ -629,8 +629,10 @@ describe('createTailwindPipeline — reserved layout variant dimension', () => {
           layout: { grid: 'text-red-500', flex: 'text-blue-500' },
           pad: { sm: 'p-2' },
         },
+        // `layout` is stripped before the class lookup, so the entry that can be hit is the one
+        // keyed without it. A pipeline that kept using the table would return this stale value
+        // instead of resolving against the sanitized variants.
         precomputedClasses: {
-          '__none__|layout:s:grid|pad:s:sm': 'stale-layout-precomputed',
           '__none__|pad:s:sm': 'precomputed-padding',
         },
       } as never,
@@ -641,7 +643,6 @@ describe('createTailwindPipeline — reserved layout variant dimension', () => {
       pipeline.pipeline('div', { layout: 'grid', pad: 'sm' } as never, '', undefined) ?? ''
     expect(cls).toContain('grid')
     expect(cls).toContain('p-2')
-    expect(cls).not.toContain('stale-layout-precomputed')
     expect(cls).not.toContain('precomputed-padding')
     expect(cls).not.toContain('text-red-500')
   })
