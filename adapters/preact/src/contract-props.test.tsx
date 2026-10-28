@@ -20,7 +20,7 @@
 import { describe, it, expectTypeOf } from 'vitest'
 import type { ComponentProps, JSX } from 'preact'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
-import type { LayoutKeyName } from '@praxis-kit/tailwind'
+import type { LayoutPropName } from '@praxis-kit/tailwind'
 import { createContractComponent } from './create-contract-component'
 import type { ContractProps } from './types'
 
@@ -149,7 +149,7 @@ describe('ContractProps — layout-union collapse (finding #44)', () => {
   })
 
   it('a wrapper that does not re-expose layout props spreads onto <Box> with no cast', () => {
-    function BoxWrapper(props: Omit<ContractProps<typeof Box>, LayoutKeyName>): JSX.Element {
+    function BoxWrapper(props: Omit<ContractProps<typeof Box>, LayoutPropName>): JSX.Element {
       return <Box {...props} />
     }
     void BoxWrapper

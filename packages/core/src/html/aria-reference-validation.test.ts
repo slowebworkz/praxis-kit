@@ -47,11 +47,7 @@ describe('validateAriaIdReferences', () => {
     const second = { id: 'duplicate' }
 
     expect(
-      validateAriaIdReferences([
-        first,
-        second,
-        { props: { 'aria-controls': 'duplicate' } },
-      ]),
+      validateAriaIdReferences([first, second, { props: { 'aria-controls': 'duplicate' } }]),
     ).toEqual([
       {
         sourceIndex: 2,

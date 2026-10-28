@@ -3,7 +3,7 @@ import type { OwnedPropKeys } from '@praxis-kit/core'
 import { layoutKeys } from './layout-keys'
 import type { LayoutKey } from './types/layout'
 
-export const LAYOUT_OWNED_KEYS: OwnedPropKeys = new Set(layoutKeys)
+export const LAYOUT_OWNED_KEYS: OwnedPropKeys = new Set([...layoutKeys, 'layout'])
 
 // Maps each prop name to its filtering family.
 // flex/inline-flex → 'flex', grid/inline-grid → 'grid', all others → 'none'.

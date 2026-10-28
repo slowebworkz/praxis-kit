@@ -40,12 +40,9 @@ describe('createAriaReferenceIndex', () => {
     ])
   })
 
-  it.each(['', ' \t\n\f\r '])(
-    'returns an empty result for an empty IDREFS value (%j)',
-    (value) => {
-      expect(createAriaReferenceIndex([]).resolveList(value)).toEqual([])
-    },
-  )
+  it.each(['', ' \t\n\f\r '])('returns an empty result for an empty IDREFS value (%j)', (value) => {
+    expect(createAriaReferenceIndex([]).resolveList(value)).toEqual([])
+  })
 
   it('returns an empty result for a missing IDREFS value', () => {
     expect(createAriaReferenceIndex([]).resolveList(undefined)).toEqual([])

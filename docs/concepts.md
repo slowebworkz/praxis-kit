@@ -247,7 +247,8 @@ Built-in HTML rules can be individually adjusted with `enforcement.ruleOverrides
 disable one rule, or provide a replacement `severity` and/or `message`; overrides apply only to the
 built-in HTML rule library, not custom rules in `enforcement.aria` or `enforcement.rules`. For
 example, `{ 'html.input.supported-type': { severity: 'error' } }` promotes unsupported input types
-to errors. Rule IDs are stable public identifiers listed in the [HTML/ARIA audit](./accessibility/html-aria-audit.md#built-in-rule-override-identifiers).
+to errors. Rule IDs are stable public identifiers listed in the
+[HTML/ARIA audit](./accessibility/html-aria-audit.md#built-in-rule-override-identifiers).
 
 ## Variants and styling
 

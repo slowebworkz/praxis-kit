@@ -119,7 +119,7 @@ export function createContractComponent<
 >(
   options: C & {
     readonly subComponents?: TSubComponents
-  } & ComposeDefaultsValidation<C>
+  } & ComposeDefaultsValidation<C>,
 ): WebContractComponent<TVariants, ExtractPluginProps<TPlugin>, ContractGenericsOf<C>, C> &
   TSubComponents {
   invariant(isWebFactoryOptions(options), 'options is not a valid WebFactoryOptions object')

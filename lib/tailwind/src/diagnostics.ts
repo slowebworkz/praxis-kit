@@ -10,6 +10,17 @@ export const TailwindDiagnostics = {
     }
   },
 
+  invalidLayoutValue(value: unknown): DiagnosticInput {
+    const valueLabel = typeof value === 'string' ? JSON.stringify(value) : typeof value
+    return {
+      code: DiagnosticCode.TailwindInvalidLayoutValue,
+      category: DiagnosticCategory.Contract,
+      message:
+        `[createTailwindPipeline] Invalid layout value ${valueLabel}; ` +
+        'expected a supported display value or "none". Falling back to boolean display props.',
+    }
+  },
+
   reservedLayoutLiteral(reserved: string[]): DiagnosticInput {
     return {
       code: DiagnosticCode.TailwindReservedLayoutLiteral,

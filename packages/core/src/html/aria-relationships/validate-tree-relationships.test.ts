@@ -48,7 +48,11 @@ describe('ARIA tree relationships', () => {
     expect(
       validateAriaTreeRelationships([
         { id: 'tree', props: { role: 'tree' } },
-        { id: 'parent', parentId: 'tree', props: { role: 'treeitem', 'aria-expanded': 'true', 'aria-owns': 'explicit-group' } },
+        {
+          id: 'parent',
+          parentId: 'tree',
+          props: { role: 'treeitem', 'aria-expanded': 'true', 'aria-owns': 'explicit-group' },
+        },
         { id: 'nested-group', parentId: 'parent', props: { role: 'group' } },
         { id: 'child', parentId: 'nested-group', props: { role: 'treeitem' } },
         { id: 'explicit-group', props: { role: 'group' } },
@@ -60,8 +64,16 @@ describe('ARIA tree relationships', () => {
     expect(
       validateAriaTreeRelationships([
         { id: 'tree', props: { role: 'tree' } },
-        { id: 'first', parentId: 'tree', props: { role: 'treeitem', 'aria-expanded': 'true', 'aria-owns': 'group' } },
-        { id: 'second', parentId: 'tree', props: { role: 'treeitem', 'aria-expanded': 'true', 'aria-owns': 'group' } },
+        {
+          id: 'first',
+          parentId: 'tree',
+          props: { role: 'treeitem', 'aria-expanded': 'true', 'aria-owns': 'group' },
+        },
+        {
+          id: 'second',
+          parentId: 'tree',
+          props: { role: 'treeitem', 'aria-expanded': 'true', 'aria-owns': 'group' },
+        },
         { id: 'group', props: { role: 'group' } },
       ]).map(({ code, sourceIndex }) => [code, sourceIndex]),
     ).toContainEqual(['multiple-group-owners', 3])
@@ -131,11 +143,18 @@ describe('ARIA tree relationships', () => {
     expect(
       validateAriaTreeRelationships([
         { id: 'outer-tree', props: { role: 'tree' } },
-        { id: 'outer-item', parentId: 'outer-tree', props: { role: 'treeitem', 'aria-selected': 'true' } },
+        {
+          id: 'outer-item',
+          parentId: 'outer-tree',
+          props: { role: 'treeitem', 'aria-selected': 'true' },
+        },
         { id: 'inner-tree', parentId: 'outer-item', props: { role: 'tree' } },
-        { id: 'inner-item', parentId: 'inner-tree', props: { role: 'treeitem', 'aria-checked': 'true' } },
+        {
+          id: 'inner-item',
+          parentId: 'inner-tree',
+          props: { role: 'treeitem', 'aria-checked': 'true' },
+        },
       ]),
     ).toEqual([])
   })
-
 })

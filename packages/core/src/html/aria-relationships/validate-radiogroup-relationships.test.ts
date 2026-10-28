@@ -50,8 +50,6 @@ describe('ARIA radiogroup relationships', () => {
   })
 
   it('ignores elements that are not radios', () => {
-    expect(
-      validateAriaRadiogroupRelationships([{ props: { role: 'checkbox' } }]),
-    ).toEqual([])
+    expect(validateAriaRadiogroupRelationships([{ props: { role: 'checkbox' } }])).toEqual([])
   })
 })

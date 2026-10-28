@@ -63,12 +63,9 @@ describe('APG menuitem naming', () => {
     ])
   })
 
-  it.each(['aria-label', 'aria-labelledby'])(
-    'accepts role="menuitem" named by %s',
-    (attribute) => {
-      expect(menuitemContract.aria![0]!(ctx({ [attribute]: 'Save' }))).toEqual([])
-    },
-  )
+  it.each(['aria-label', 'aria-labelledby'])('accepts role="menuitem" named by %s', (attribute) => {
+    expect(menuitemContract.aria![0]!(ctx({ [attribute]: 'Save' }))).toEqual([])
+  })
 })
 
 describe('APG optional menu item states', () => {
@@ -194,7 +191,6 @@ describe('APG grid role coverage', () => {
   })
 })
 
-
 describe('APG toolbar naming', () => {
   it('warns when role="toolbar" has no accessible name', () => {
     expect(toolbarContract.aria![0]!(ctx({}))).toMatchObject([
@@ -202,10 +198,7 @@ describe('APG toolbar naming', () => {
     ])
   })
 
-  it.each(['aria-label', 'aria-labelledby'])(
-    'accepts role="toolbar" named by %s',
-    (attribute) => {
-      expect(toolbarContract.aria![0]!(ctx({ [attribute]: 'Formatting' }))).toEqual([])
-    },
-  )
+  it.each(['aria-label', 'aria-labelledby'])('accepts role="toolbar" named by %s', (attribute) => {
+    expect(toolbarContract.aria![0]!(ctx({ [attribute]: 'Formatting' }))).toEqual([])
+  })
 })
