@@ -28,13 +28,16 @@ function isDangerousUrl(href: unknown): href is string {
 
 // ─── Layer 1: HTML/security validity facts ─────────────────────────────────────────────────────
 
-export const dangerousHrefRule: AriaRule = createRemoveAttributeRule('href', {
-  when: ({ props }) => isDangerousUrl(props.href),
-  severity: 'warning',
-  diagnostic: ({ props }) => HtmlDiagnostics.anchor.dangerousHref(props.href as string),
-  readsProps: ['href'],
-  tags: ['a'],
-})
+export const dangerousHrefRule: AriaRule = Object.assign(
+  createRemoveAttributeRule('href', {
+    when: ({ props }) => isDangerousUrl(props.href),
+    severity: 'warning',
+    diagnostic: ({ props }) => HtmlDiagnostics.anchor.dangerousHref(props.href as string),
+    readsProps: ['href'],
+    tags: ['a'],
+  }),
+  { id: 'html.anchor.dangerous-href' },
+)
 
 // ─── Layer 2: accessibility best practices (legal HTML, still worth flagging) ────────────────
 
@@ -46,7 +49,11 @@ export const roleButtonWithHrefRule: AriaRule = Object.assign(
     const diagnostic = AnchorAccessibilityDiagnostics.roleButtonWithHref()
     return [invalidWithoutFix({ severity: diagnostic.severity, attribute: 'role', diagnostic })]
   },
-  { readsProps: ['role', 'href'] as const, tags: ['a'] as const },
+  {
+    id: 'html.anchor.role-button-with-href',
+    readsProps: ['role', 'href'] as const,
+    tags: ['a'] as const,
+  },
 )
 
 export const ariaDisabledInertRule: AriaRule = Object.assign(
@@ -62,7 +69,11 @@ export const ariaDisabledInertRule: AriaRule = Object.assign(
       invalidWithoutFix({ severity: diagnostic.severity, attribute: 'aria-disabled', diagnostic }),
     ]
   },
-  { readsProps: ['aria-disabled', 'href'] as const, tags: ['a'] as const },
+  {
+    id: 'html.anchor.aria-disabled-inert',
+    readsProps: ['aria-disabled', 'href'] as const,
+    tags: ['a'] as const,
+  },
 )
 
 // Not "ARIA rules" — the first is an HTML/security validity fact, the second two are

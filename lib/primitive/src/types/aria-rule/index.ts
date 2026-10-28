@@ -10,4 +10,5 @@ export type {
 } from './aria-result'
 export type { AriaRule } from './aria-rule'
 export type { FixKind, RemoveAttributeFixKind } from './fix-kind'
+export type { BuiltinHtmlRuleId, RuleOverride, RuleOverrides } from './rule-override'
 export type { Severity } from './severity'

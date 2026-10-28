@@ -12,6 +12,8 @@ import type { AriaResult } from './aria-result'
 export type AriaRule<C extends AriaContext = AriaContext> = ((
   context: C,
 ) => readonly AriaResult[]) & {
+  /** Stable identifier used to target this rule in enforcement.ruleOverrides. */
+  readonly id?: string
   readonly readsProps?: readonly string[]
   readonly tags?: readonly string[]
 }

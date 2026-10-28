@@ -9,10 +9,11 @@ import { roleNotPermittedRule } from './role-restrictions'
 // Attaches the `tags` an `AriaRule` applies to, so `AriaPolicyEngine` can skip calling it
 // for any other tag instead of paying for a call it would just no-op on internally.
 function defineAriaRule(
+  id: string,
   tags: HtmlTags,
   rule: (context: AriaContext) => readonly AriaResult[],
 ): AriaRule {
-  return Object.assign(rule, { tags })
+  return Object.assign(rule, { id, tags })
 }
 
 // Typed as `ReadonlySet<string>`, not the narrower literal union `new Set(LANDMARK_TAGS)`
@@ -30,6 +31,7 @@ const removeLandmarkRoleOverride: AriaFix = {
 }
 
 export const landmarkRoleRule = defineAriaRule(
+  'html.landmark.role',
   LANDMARK_TAGS,
   ({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] => {
     if (!LANDMARK_TAG_SET.has(tag) || !implicitRole) return []
@@ -73,6 +75,7 @@ const NAMED_LANDMARK_TAGS = ['nav', 'aside'] as const satisfies HtmlTags
 const NAMED_LANDMARK_TAG_SET: ReadonlySet<string> = new Set(NAMED_LANDMARK_TAGS)
 
 export const landmarkAccessibleNameRule = defineAriaRule(
+  'html.landmark.accessible-name',
   NAMED_LANDMARK_TAGS,
   (ctx: AriaContext): readonly AriaResult[] => {
     if (!ctx.implicitRole || !NAMED_LANDMARK_TAG_SET.has(ctx.tag)) return []
