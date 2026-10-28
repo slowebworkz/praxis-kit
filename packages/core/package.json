@@ -11,7 +11,8 @@
     "./props": "./src/props.ts",
     "./state": "./src/state/index.ts",
     "./styling": "./src/styling.ts",
-    "./internal/composition-style": "./src/factory/composition-style.ts"
+    "./internal/composition-style": "./src/factory/composition-style.ts",
+    "./dom-platform": "./src/dom-platform.ts"
   },
   "sideEffects": false,
   "description": "Framework-neutral enforcement: tag resolution, prop merge, variant class generation, children + ARIA policy",

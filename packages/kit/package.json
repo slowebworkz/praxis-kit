@@ -77,6 +77,10 @@
     "./utils": {
       "types": "./dist/utils/index.d.ts",
       "import": "./dist/utils/index.js"
+    },
+    "./dom": {
+      "types": "./dist/dom/index.d.ts",
+      "import": "./dist/dom/index.js"
     }
   },
   "typesVersions": {
@@ -131,6 +135,9 @@
       ],
       "utils": [
         "./dist/utils/index.d.ts"
+      ],
+      "dom": [
+        "./dist/dom/index.d.ts"
       ]
     }
   },
