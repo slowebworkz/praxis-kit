@@ -61,7 +61,7 @@ export function listenForPopoverToggle(
   onOpenChange: (open: boolean) => void,
 ): () => void {
   const handleToggle = (event: Event): void => {
-    const newState = (event as Event & { newState?: string }).newState
+    const { newState } = event as Event & { newState?: string }
     if (newState === 'open') onOpenChange(true)
     else if (newState === 'closed') onOpenChange(false)
   }
