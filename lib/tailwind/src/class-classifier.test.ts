@@ -52,6 +52,40 @@ describe('ClassClassifier — layout tokens', () => {
   })
 })
 
+describe('ClassClassifier — important modifiers', () => {
+  it.each([
+    ['!flex-col', 'flex-col'],
+    ['flex-col!', 'flex-col'],
+    ['md:!flex-col', 'flex-col'],
+    ['md:flex-col!', 'flex-col'],
+  ])('classifies %s using normalized base %s', (token, base) => {
+    expectUtility(token, base)
+  })
+
+  it.each(['!gap-4', 'gap-4!', 'md:!gap-4', 'md:gap-4!'])(
+    'classifies %s as gap',
+    (token) => {
+      expectGap(token)
+    },
+  )
+
+  it.each(['!items-center', 'items-center!', 'md:!items-center', 'md:items-center!'])(
+    'classifies %s as shared',
+    (token) => {
+      expectShared(token)
+    },
+  )
+
+  it.each([
+    ['!flex', '!flex'],
+    ['flex!', 'flex!'],
+    ['md:!flex', '!flex'],
+    ['md:flex!', 'flex!'],
+  ])('preserves important display class %s as the existing escape hatch', (token, base) => {
+    expectUtility(token, base)
+  })
+})
+
 describe('ClassClassifier — gap tokens', () => {
   it.each(['gap', 'gap-4', 'gap-x-2', 'hover:gap-4'])('classifies "%s" as gap', (token) => {
     expectGap(token)
