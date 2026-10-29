@@ -3,12 +3,13 @@
   import Polymorphic from './Polymorphic.svelte'
   import type { AnyBuiltRuntime } from './types/built-runtime'
 
-  let { bundle, className, layout, displayProps = {} }: {
+  let { bundle, className, layout, displayProps = {}, variantProps = {} }: {
     bundle: AnyBuiltRuntime
     className: string
     layout?: string
     displayProps?: StringMap<boolean>
+    variantProps?: StringMap<string>
   } = $props()
 </script>
 
-<Polymorphic {bundle} {...displayProps} layout={layout as never} class={className} />
+<Polymorphic {bundle} {...displayProps} {...variantProps} layout={layout as never} class={className} />

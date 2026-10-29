@@ -4,7 +4,11 @@ import { render as solidRender, cleanup } from '@solidjs/testing-library'
 import { createSignal } from 'solid-js'
 import { silentDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
-import { tailwindDisplayParitySuite } from '@praxis-kit/adapter-utils/testing'
+import {
+  TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+  TAILWIND_DISPLAY_PARITY_VARIANTS,
+  tailwindDisplayParitySuite,
+} from '@praxis-kit/adapter-utils/testing'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
 
@@ -586,12 +590,22 @@ describe('extracted prop type — extraction outside JSX', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: ({ displayProps, layout, baseClassName, className }) => {
+    props: ({ displayProps, layout, baseClassName, variantProps, className }) => {
       const Box = createContractComponent({
         tag: 'div',
-        styling: { base: baseClassName ?? 'base', plugin: createTailwindPipeline },
+        styling: {
+          base: baseClassName ?? 'base',
+          plugin: createTailwindPipeline,
+          variants: TAILWIND_DISPLAY_PARITY_VARIANTS,
+          compounds: TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+        },
       })
-      const props = { ...displayProps, layout, class: className } as AnyRecord
+      const props = {
+        ...displayProps,
+        ...variantProps,
+        layout,
+        class: className,
+      } as AnyRecord
       const { container } = solidRender(() => <Box {...props} />)
       return container.querySelector('div')!.className
     },

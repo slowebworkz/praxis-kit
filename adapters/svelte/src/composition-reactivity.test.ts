@@ -11,7 +11,11 @@ import Host from './composition-reactivity.test-host.svelte'
 import OwnedPropHost from './composition-owned-prop-reactivity.test-host.svelte'
 import TailwindDisplayParityHost from './tailwind-display-parity.test-host.svelte'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
-import { tailwindDisplayParitySuite } from '@praxis-kit/adapter-utils/testing'
+import {
+  TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+  TAILWIND_DISPLAY_PARITY_VARIANTS,
+  tailwindDisplayParitySuite,
+} from '@praxis-kit/adapter-utils/testing'
 import { createContractComponent } from './create-contract-component'
 
 afterEach(cleanup)
@@ -132,13 +136,18 @@ describe('composition reactivity — plugin-owned props', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: async ({ displayProps, layout, baseClassName, className }) => {
+    props: async ({ displayProps, layout, baseClassName, variantProps, className }) => {
       const Box = createContractComponent({
         tag: 'div',
-        styling: { base: baseClassName ?? 'base', plugin: createTailwindPipeline },
+        styling: {
+          base: baseClassName ?? 'base',
+          plugin: createTailwindPipeline,
+          variants: TAILWIND_DISPLAY_PARITY_VARIANTS,
+          compounds: TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+        },
       })
       const { container } = render(TailwindDisplayParityHost, {
-        props: { bundle: Box, className, layout, displayProps },
+        props: { bundle: Box, className, layout, displayProps, variantProps },
       })
       await tick()
       return container.querySelector('div')!.className

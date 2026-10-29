@@ -25,4 +25,8 @@ export type {
   TailwindDisplayParityAdapter,
   TailwindDisplayRenderer,
 } from './tailwind-display-parity'
-export { tailwindDisplayParitySuite } from './tailwind-display-parity'
+export {
+  TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+  TAILWIND_DISPLAY_PARITY_VARIANTS,
+  tailwindDisplayParitySuite,
+} from './tailwind-display-parity'

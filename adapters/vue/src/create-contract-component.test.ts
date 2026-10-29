@@ -3,7 +3,11 @@ import { mount } from '@vue/test-utils'
 import { Comment, createTextVNode, defineComponent, h, ref } from 'vue'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
-import { tailwindDisplayParitySuite } from '@praxis-kit/adapter-utils/testing'
+import {
+  TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+  TAILWIND_DISPLAY_PARITY_VARIANTS,
+  tailwindDisplayParitySuite,
+} from '@praxis-kit/adapter-utils/testing'
 import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
@@ -528,13 +532,18 @@ describe('createContractComponent — variants', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: ({ displayProps, layout, baseClassName, className }) => {
+    props: ({ displayProps, layout, baseClassName, variantProps, className }) => {
       const Box = createContractComponent({
         tag: 'div',
-        styling: { base: baseClassName ?? 'base', plugin: createTailwindPipeline },
+        styling: {
+          base: baseClassName ?? 'base',
+          plugin: createTailwindPipeline,
+          variants: TAILWIND_DISPLAY_PARITY_VARIANTS,
+          compounds: TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+        },
       })
       const wrapper = mount(box(Box), {
-        props: { ...displayProps, layout, class: className } as AnyRecord,
+        props: { ...displayProps, ...variantProps, layout, class: className } as AnyRecord,
       })
       return wrapper.element.className
     },

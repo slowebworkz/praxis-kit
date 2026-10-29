@@ -3,7 +3,11 @@ import { isDefined } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
-import { tailwindDisplayParitySuite } from '@praxis-kit/adapter-utils/testing'
+import {
+  TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+  TAILWIND_DISPLAY_PARITY_VARIANTS,
+  tailwindDisplayParitySuite,
+} from '@praxis-kit/adapter-utils/testing'
 import { createContractComponent } from './create-contract-component'
 import {
   BoxElement,
@@ -17,7 +21,12 @@ import {
 const TailwindDisplayElement = createContractComponent({
   tag: 'div',
   name: 'TailwindDisplayParity',
-  styling: { base: 'base', plugin: createTailwindPipeline },
+  styling: {
+    base: 'base',
+    plugin: createTailwindPipeline,
+    variants: TAILWIND_DISPLAY_PARITY_VARIANTS,
+    compounds: TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+  },
 })
 
 let tailwindDisplayBaseTagId = 0
@@ -27,7 +36,12 @@ function registerTailwindDisplayBaseElement(baseClassName: string): string {
   const Element = createContractComponent({
     tag: 'div',
     name: 'TailwindDisplayBaseParity',
-    styling: { base: baseClassName, plugin: createTailwindPipeline },
+    styling: {
+      base: baseClassName,
+      plugin: createTailwindPipeline,
+      variants: TAILWIND_DISPLAY_PARITY_VARIANTS,
+      compounds: TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+    },
   })
   customElements.define(tag, Element)
   return tag
@@ -357,7 +371,7 @@ describe('selective update guard', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    attribute: async ({ displayProps, layout, baseClassName, className }) =>
+    attribute: async ({ displayProps, layout, baseClassName, variantProps, className }) =>
       (
         await mount(
           baseClassName === undefined
@@ -367,12 +381,15 @@ tailwindDisplayParitySuite({
             iterate.forEachEntry(displayProps, (key, value) => {
               element.setAttribute(key, String(value))
             })
+            iterate.forEachEntry(variantProps ?? {}, (key, value) => {
+              element.setAttribute(key, String(value))
+            })
             if (isDefined(layout)) element.setAttribute('layout', layout)
             element.setAttribute('praxis-class', className)
           },
         )
       ).className,
-    property: async ({ displayProps, layout, baseClassName, className }) =>
+    property: async ({ displayProps, layout, baseClassName, variantProps, className }) =>
       (
         await mount(
           baseClassName === undefined
@@ -384,7 +401,7 @@ tailwindDisplayParitySuite({
                 layout?: string
                 praxisClass: string
               }
-            Object.assign(props, displayProps)
+            Object.assign(props, displayProps, variantProps)
             if (isDefined(layout)) props.layout = layout
             props.praxisClass = className
           },
