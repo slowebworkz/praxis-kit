@@ -41,7 +41,11 @@ const DISPLAY_CLASSES = [
   'rounded',
 ].join(' ')
 
-/** Responsive and state-prefixed display literals are filtered (they must not replace the base). */
+/**
+ * Responsive and state-prefixed display literals (`md:flex`, `hover:flex`, `md:hidden`) are
+ * filtered so they cannot replace the selected display, as are utilities incompatible with the
+ * selected `grid` layout family (`md:flex-row` is a flex-direction utility, not a display literal).
+ */
 const FILTERED = ['md:flex', 'hover:flex', 'md:hidden', 'md:flex-row']
 
 /** Compatible utilities, the component's own base class, and the important escape hatches. */
@@ -50,8 +54,16 @@ const PRESERVED = ['base', 'md:grid-cols-3', '!flex', 'flex!', 'md:!flex', 'md:f
 /** Runtime values that are not a display value; the pipeline must warn and ignore them. */
 const INVALID_LAYOUT_VALUES = ['mystery', ''] as const
 
+/**
+ * Splits a rendered class attribute into tokens after asserting it is canonical: no leading,
+ * trailing or repeated whitespace (splitting alone would hide those) and no duplicate tokens.
+ * Exact ordering is left unasserted, since adapters may merge classes in different orders.
+ */
 function tokensOf(className: string): string[] {
-  return className.split(/\s+/)
+  expect(className).not.toMatch(/^\s|\s$|\s{2,}/)
+  const tokens = className.split(/\s+/)
+  expect(tokens).toEqual([...new Set(tokens)])
+  return tokens
 }
 
 /**
@@ -77,16 +89,43 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
           for (const preserved of PRESERVED) expect(tokens).toContain(preserved)
         })
 
+        it('filters responsive display literals while preserving flex-mode utilities', async () => {
+          const className = await render({
+            flex: true,
+            layout: 'flex',
+            className:
+              'md:flex hover:flex md:hidden md:grid md:grid-cols-3 flex-row md:flex-row !flex flex! md:!flex md:flex! md:!flex-col rounded',
+          })
+          const tokens = tokensOf(className)
+
+          expect(tokens).toContain('flex')
+          expect(tokens).toContain('flex-row')
+          expect(tokens).toContain('md:flex-row')
+          expect(tokens).not.toContain('md:flex')
+          expect(tokens).not.toContain('hover:flex')
+          expect(tokens).not.toContain('md:hidden')
+          expect(tokens).not.toContain('md:grid')
+          expect(tokens).not.toContain('md:grid-cols-3')
+          expect(tokens).toContain('!flex')
+          expect(tokens).toContain('flex!')
+          expect(tokens).toContain('md:!flex')
+          expect(tokens).toContain('md:flex!')
+          expect(tokens).toContain('md:!flex-col')
+          expect(tokens).toContain('rounded')
+          expect(tokens).toContain('base')
+        })
+
         it('uses hidden as an explicit display value over the boolean shorthand', async () => {
           const className = await render({
             flex: true,
             layout: 'hidden',
-            className: 'flex-col grid-cols-3 gap-4 rounded',
+            className: 'flex grid flex-col grid-cols-3 gap-4 rounded',
           })
           const tokens = tokensOf(className)
 
           expect(tokens).toContain('hidden')
           expect(tokens).not.toContain('flex')
+          expect(tokens).not.toContain('grid')
           expect(tokens).not.toContain('flex-col')
           expect(tokens).not.toContain('grid-cols-3')
           expect(tokens).not.toContain('gap-4')
@@ -98,7 +137,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
           const className = await render({
             flex: true,
             layout: 'none',
-            className: 'flex flex-col grid-cols-3 gap-4 rounded',
+            className: 'flex grid flex-col grid-cols-3 gap-4 rounded',
           })
           const tokens = tokensOf(className)
 
@@ -123,8 +162,6 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
               })
               const tokens = tokensOf(className)
 
-              // Check raw output: splitting on whitespace hides repeated spaces.
-              expect(className).not.toMatch(/^\s|\s$|\s{2,}/)
               expect(tokens).toContain('flex')
               expect(tokens).toContain('flex-col')
               expect(tokens).toContain('rounded')
