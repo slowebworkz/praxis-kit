@@ -77,6 +77,23 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
           for (const preserved of PRESERVED) expect(tokens).toContain(preserved)
         })
 
+        it('uses hidden as an explicit display value over the boolean shorthand', async () => {
+          const className = await render({
+            flex: true,
+            layout: 'hidden',
+            className: 'flex-col grid-cols-3 gap-4 rounded',
+          })
+          const tokens = tokensOf(className)
+
+          expect(tokens).toContain('hidden')
+          expect(tokens).not.toContain('flex')
+          expect(tokens).not.toContain('flex-col')
+          expect(tokens).not.toContain('grid-cols-3')
+          expect(tokens).not.toContain('gap-4')
+          expect(tokens).toContain('base')
+          expect(tokens).toContain('rounded')
+        })
+
         it.each(INVALID_LAYOUT_VALUES)(
           'falls back to boolean layout for invalid value %j',
           async (layout) => {
