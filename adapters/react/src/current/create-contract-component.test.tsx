@@ -1047,10 +1047,10 @@ describe('createContractComponent (current / React 19)', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: ({ displayProps, layout, className }) => {
+    props: ({ displayProps, layout, baseClassName, className }) => {
       const Box = createContractComponent({
         tag: 'div',
-        styling: { base: 'base', plugin: createTailwindPipeline },
+        styling: { base: baseClassName ?? 'base', plugin: createTailwindPipeline },
       })
       dom.mount(createElement(box(Box), { ...displayProps, layout, className } as AnyRecord))
       return dom.container.querySelector('div')!.className

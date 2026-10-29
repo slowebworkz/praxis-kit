@@ -20,6 +20,19 @@ const TailwindDisplayElement = createContractComponent({
   styling: { base: 'base', plugin: createTailwindPipeline },
 })
 
+let tailwindDisplayBaseTagId = 0
+
+function registerTailwindDisplayBaseElement(baseClassName: string): string {
+  const tag = `praxis-tailwind-display-base-${++tailwindDisplayBaseTagId}`
+  const Element = createContractComponent({
+    tag: 'div',
+    name: 'TailwindDisplayBaseParity',
+    styling: { base: baseClassName, plugin: createTailwindPipeline },
+  })
+  customElements.define(tag, Element)
+  return tag
+}
+
 // Guard against duplicate registration — customElements.define() is global and
 // throws if the same name is defined twice in the same test runner process.
 beforeAll(() => {
@@ -344,28 +357,38 @@ describe('selective update guard', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    attribute: async ({ displayProps, layout, className }) =>
+    attribute: async ({ displayProps, layout, baseClassName, className }) =>
       (
-        await mount('praxis-tailwind-display-parity', (element) => {
-          iterate.forEachEntry(displayProps, (key, value) => {
-            element.setAttribute(key, String(value))
-          })
-          if (isDefined(layout)) element.setAttribute('layout', layout)
-          element.setAttribute('praxis-class', className)
-        })
+        await mount(
+          baseClassName === undefined
+            ? 'praxis-tailwind-display-parity'
+            : registerTailwindDisplayBaseElement(baseClassName),
+          (element) => {
+            iterate.forEachEntry(displayProps, (key, value) => {
+              element.setAttribute(key, String(value))
+            })
+            if (isDefined(layout)) element.setAttribute('layout', layout)
+            element.setAttribute('praxis-class', className)
+          },
+        )
       ).className,
-    property: async ({ displayProps, layout, className }) =>
+    property: async ({ displayProps, layout, baseClassName, className }) =>
       (
-        await mount('praxis-tailwind-display-parity', (element) => {
-          const props = element as HTMLElement &
-            AnyRecord & {
-              layout?: string
-              praxisClass: string
-            }
-          Object.assign(props, displayProps)
-          if (isDefined(layout)) props.layout = layout
-          props.praxisClass = className
-        })
+        await mount(
+          baseClassName === undefined
+            ? 'praxis-tailwind-display-parity'
+            : registerTailwindDisplayBaseElement(baseClassName),
+          (element) => {
+            const props = element as HTMLElement &
+              AnyRecord & {
+                layout?: string
+                praxisClass: string
+              }
+            Object.assign(props, displayProps)
+            if (isDefined(layout)) props.layout = layout
+            props.praxisClass = className
+          },
+        )
       ).className,
   },
 })

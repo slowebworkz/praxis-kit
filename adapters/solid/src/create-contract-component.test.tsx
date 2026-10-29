@@ -586,10 +586,10 @@ describe('extracted prop type — extraction outside JSX', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: ({ displayProps, layout, className }) => {
+    props: ({ displayProps, layout, baseClassName, className }) => {
       const Box = createContractComponent({
         tag: 'div',
-        styling: { base: 'base', plugin: createTailwindPipeline },
+        styling: { base: baseClassName ?? 'base', plugin: createTailwindPipeline },
       })
       const props = { ...displayProps, layout, class: className } as AnyRecord
       const { container } = solidRender(() => <Box {...props} />)

@@ -22,6 +22,19 @@ const TailwindDisplayElement = createContractComponent({
   styling: { base: 'base', plugin: createTailwindPipeline },
 })
 
+let tailwindDisplayBaseTagId = 0
+
+function registerTailwindDisplayBaseElement(baseClassName: string): string {
+  const tag = `web-tailwind-display-base-${++tailwindDisplayBaseTagId}`
+  const Element = createContractComponent({
+    tag: 'div',
+    name: 'TailwindDisplayBaseParity',
+    styling: { base: baseClassName, plugin: createTailwindPipeline },
+  })
+  customElements.define(tag, Element)
+  return tag
+}
+
 beforeAll(() => {
   if (!customElements.get('web-tailwind-display-parity')) {
     customElements.define('web-tailwind-display-parity', TailwindDisplayElement)
@@ -223,24 +236,34 @@ describe('Tabs — children enforcement', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    attribute: ({ displayProps, layout, className }) =>
-      mount('web-tailwind-display-parity', (element) => {
-        iterate.forEachEntry(displayProps, (key, value) => {
-          element.setAttribute(key, String(value))
-        })
-        if (isDefined(layout)) element.setAttribute('layout', layout)
-        element.setAttribute('praxis-class', className)
-      }).className,
-    property: ({ displayProps, layout, className }) =>
-      mount('web-tailwind-display-parity', (element) => {
-        const props = element as HTMLElement &
-          AnyRecord & {
-            layout?: string
-            praxisClass: string
-          }
-        Object.assign(props, displayProps)
-        if (isDefined(layout)) props.layout = layout
-        props.praxisClass = className
-      }).className,
+    attribute: ({ displayProps, layout, baseClassName, className }) =>
+      mount(
+        baseClassName === undefined
+          ? 'web-tailwind-display-parity'
+          : registerTailwindDisplayBaseElement(baseClassName),
+        (element) => {
+          iterate.forEachEntry(displayProps, (key, value) => {
+            element.setAttribute(key, String(value))
+          })
+          if (isDefined(layout)) element.setAttribute('layout', layout)
+          element.setAttribute('praxis-class', className)
+        },
+      ).className,
+    property: ({ displayProps, layout, baseClassName, className }) =>
+      mount(
+        baseClassName === undefined
+          ? 'web-tailwind-display-parity'
+          : registerTailwindDisplayBaseElement(baseClassName),
+        (element) => {
+          const props = element as HTMLElement &
+            AnyRecord & {
+              layout?: string
+              praxisClass: string
+            }
+          Object.assign(props, displayProps)
+          if (isDefined(layout)) props.layout = layout
+          props.praxisClass = className
+        },
+      ).className,
   },
 })
