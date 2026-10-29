@@ -879,6 +879,39 @@ describe('createTailwindPipeline — async-warn mode', () => {
     },
   )
 
+  it('suppresses invalid-layout warnings in production while preserving shorthand fallback', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.resetModules()
+
+    try {
+      const { createTailwindPipeline: createProductionTailwindPipeline } =
+        await import('./create-tailwind-pipeline')
+      const pipeline = createProductionTailwindPipeline({}, makeAsyncWarnDiagnostics())
+      // Widened to `string`: a `'mystery'` literal doesn't overlap `ResolvedLayout`, so the
+      // assertion would be rejected (TS2352); `string` does, as in the it.each case above.
+      const layout: string = 'mystery'
+      const cls = pipeline.pipeline(
+        'div',
+        { flex: true, layout } as LayoutProps<typeof layoutKeys>,
+        'flex-col grid-cols-3 gap-4 rounded',
+        undefined,
+      )
+
+      const tokens = (cls ?? '').split(/\s+/)
+      expect(tokens).toContain('flex')
+      expect(tokens).toContain('flex-col')
+      expect(tokens).toContain('gap-4')
+      expect(tokens).not.toContain('grid-cols-3')
+      expect(tokens).not.toContain('mystery')
+
+      await Promise.resolve()
+      expect(warn).not.toHaveBeenCalled()
+    } finally {
+      vi.unstubAllEnvs()
+      vi.resetModules()
+    }
+  })
+
   it('calls console.warn after microtask flush for reserved layout literals', async () => {
     const pipeline = createTailwindPipeline({ baseClassName: 'flex' }, makeAsyncWarnDiagnostics())
     resolve(pipeline, '')
