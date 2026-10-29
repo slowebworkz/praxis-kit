@@ -77,6 +77,48 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
           for (const preserved of PRESERVED) expect(tokens).toContain(preserved)
         })
 
+        it.each([
+          {
+            layout: 'inline-flex',
+            preserved: ['flex-col', 'gap-4'],
+            filtered: ['grid-cols-3'],
+          },
+          {
+            layout: 'inline-grid',
+            preserved: ['grid-cols-3', 'gap-4'],
+            filtered: ['flex-col'],
+          },
+          {
+            layout: 'block',
+            preserved: [],
+            filtered: ['flex-col', 'grid-cols-3', 'gap-4'],
+          },
+          {
+            layout: 'contents',
+            preserved: [],
+            filtered: ['flex-col', 'grid-cols-3', 'gap-4'],
+          },
+        ] as const)(
+          'resolves explicit $layout across display utility families',
+          async ({ layout, preserved, filtered }) => {
+            const tokens = tokensOf(
+              await render({
+                flex: true,
+                layout,
+                className: 'flex-col grid-cols-3 gap-4 rounded',
+              }),
+            )
+
+            expect(tokens).toContain(layout)
+            expect(tokens).not.toContain('flex')
+            expect(tokens).not.toContain('grid')
+            expect(tokens).toContain('base')
+            expect(tokens).toContain('rounded')
+            for (const token of preserved) expect(tokens).toContain(token)
+            for (const token of filtered) expect(tokens).not.toContain(token)
+          },
+        )
+
         it.each(INVALID_LAYOUT_VALUES)(
           'falls back to boolean layout for invalid value %j',
           async (layout) => {
