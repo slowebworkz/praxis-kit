@@ -5,7 +5,11 @@ import { forwardRef } from 'preact/compat'
 import type { ComponentType, ComponentProps } from 'preact'
 import { silentDiagnostics, throwDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
-import { tailwindDisplayParitySuite } from '@praxis-kit/adapter-utils/testing'
+import {
+  TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+  TAILWIND_DISPLAY_PARITY_VARIANTS,
+  tailwindDisplayParitySuite,
+} from '@praxis-kit/adapter-utils/testing'
 import type { AnyVNode, UnknownProps } from './types'
 import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
@@ -514,12 +518,19 @@ describe('ComponentProps<typeof Component> — extraction outside JSX', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: ({ displayProps, layout, baseClassName, className }) => {
+    props: ({ displayProps, layout, baseClassName, variantProps, className }) => {
       const Box = createContractComponent({
         tag: 'div',
-        styling: { base: baseClassName ?? 'base', plugin: createTailwindPipeline },
+        styling: {
+          base: baseClassName ?? 'base',
+          plugin: createTailwindPipeline,
+          variants: TAILWIND_DISPLAY_PARITY_VARIANTS,
+          compounds: TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+        },
       })
-      mount(h(box(Box), { ...displayProps, layout, className } as UnknownProps))
+      mount(
+        h(box(Box), { ...displayProps, ...variantProps, layout, className } as UnknownProps),
+      )
       return container.querySelector('div')!.className
     },
   },

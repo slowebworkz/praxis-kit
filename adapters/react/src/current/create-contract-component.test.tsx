@@ -12,7 +12,11 @@ import {
 } from '@praxis-kit/diagnostics'
 import type { ClassPluginFactory } from '@praxis-kit/styling'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
-import { tailwindDisplayParitySuite } from '@praxis-kit/adapter-utils/testing'
+import {
+  TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+  TAILWIND_DISPLAY_PARITY_VARIANTS,
+  tailwindDisplayParitySuite,
+} from '@praxis-kit/adapter-utils/testing'
 import type { AriaRule } from '@praxis-kit/core/contract'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import { box, useReactDom } from '../shared/test-utils'
@@ -1047,12 +1051,19 @@ describe('createContractComponent (current / React 19)', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: ({ displayProps, layout, baseClassName, className }) => {
+    props: ({ displayProps, layout, baseClassName, variantProps, className }) => {
       const Box = createContractComponent({
         tag: 'div',
-        styling: { base: baseClassName ?? 'base', plugin: createTailwindPipeline },
+        styling: {
+          base: baseClassName ?? 'base',
+          plugin: createTailwindPipeline,
+          variants: TAILWIND_DISPLAY_PARITY_VARIANTS,
+          compounds: TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+        },
       })
-      dom.mount(createElement(box(Box), { ...displayProps, layout, className } as AnyRecord))
+      dom.mount(
+        createElement(box(Box), { ...displayProps, ...variantProps, layout, className } as AnyRecord),
+      )
       return dom.container.querySelector('div')!.className
     },
   },

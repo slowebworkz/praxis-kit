@@ -13,6 +13,8 @@ export type TailwindDisplayInput = {
   readonly layout?: string
   /** Optional override for the component's configured base classes, used by base-parity cases. */
   readonly baseClassName?: string
+  /** Optional style-variant selections used to exercise variant and compound composition. */
+  readonly variantProps?: Readonly<StringMap<string>>
   readonly className: string
 }
 
@@ -30,6 +32,28 @@ export type TailwindDisplayParityAdapter = {
    */
   readonly renderers: Readonly<Record<string, TailwindDisplayRenderer>>
 }
+
+/**
+ * Shared style variants used by the cross-adapter suite. These deliberately mix flex/grid
+ * container utilities with responsive, state, and important modifiers so the Tailwind plugin
+ * must filter them after variant and compound resolution.
+ */
+export const TAILWIND_DISPLAY_PARITY_VARIANTS = {
+  tone: {
+    flex: 'flex-col md:flex-row hover:flex-col !flex-col gap-4',
+    grid: 'grid-cols-3 md:grid-cols-2 hover:grid-cols-2 !grid-cols-3 gap-4',
+    plain: 'rounded',
+  },
+  size: {
+    sm: 'p-2',
+    lg: 'p-4',
+  },
+} as const
+
+export const TAILWIND_DISPLAY_PARITY_COMPOUNDS = [
+  { tone: 'grid', size: 'lg', class: 'lg:grid-cols-4 md:!grid-cols-5' },
+  { tone: 'flex', size: 'lg', class: 'lg:flex-row md:!flex-col' },
+] as const
 
 /** A class string covering every kind of token the pipeline treats differently. */
 const DISPLAY_CLASSES = [
@@ -402,6 +426,101 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
             }
           },
         )
+
+        it('composes grid variants and matching compounds before filtering compatible utilities', async () => {
+          const tokens = tokensOf(
+            await render({
+              displayProps: {},
+              layout: 'grid',
+              variantProps: { tone: 'grid', size: 'lg' },
+              className: 'rounded md:grid-cols-4 hover:grid-cols-4 p-4',
+            }),
+          )
+
+          expect(tokens).toContain('grid')
+          expect(tokens).toContain('grid-cols-3')
+          expect(tokens).toContain('md:grid-cols-2')
+          expect(tokens).toContain('hover:grid-cols-2')
+          expect(tokens).toContain('!grid-cols-3')
+          expect(tokens).toContain('lg:grid-cols-4')
+          expect(tokens).toContain('md:!grid-cols-5')
+          expect(tokens).toContain('md:grid-cols-4')
+          expect(tokens).toContain('hover:grid-cols-4')
+          expect(tokens).toContain('p-4')
+          expect(tokens).toContain('rounded')
+        })
+
+        it('filters responsive, state, and important grid utilities from variants and compounds in flex mode', async () => {
+          const tokens = tokensOf(
+            await render({
+              displayProps: {},
+              layout: 'flex',
+              variantProps: { tone: 'grid', size: 'lg' },
+              className: 'md:grid-cols-4 hover:grid-cols-4 rounded',
+            }),
+          )
+
+          expect(tokens).toContain('flex')
+          expect(tokens).toContain('gap-4')
+          expect(tokens).toContain('p-4')
+          expect(tokens).toContain('rounded')
+          for (const filtered of [
+            'grid-cols-3',
+            'md:grid-cols-2',
+            'hover:grid-cols-2',
+            '!grid-cols-3',
+            'lg:grid-cols-4',
+            'md:!grid-cols-5',
+            'md:grid-cols-4',
+            'hover:grid-cols-4',
+          ]) {
+            expect(tokens).not.toContain(filtered)
+          }
+        })
+
+        it('filters responsive, state, and important flex utilities from variants and compounds in grid mode', async () => {
+          const tokens = tokensOf(
+            await render({
+              displayProps: {},
+              layout: 'grid',
+              variantProps: { tone: 'flex', size: 'lg' },
+              className: 'md:flex-row hover:flex-row rounded',
+            }),
+          )
+
+          expect(tokens).toContain('grid')
+          expect(tokens).toContain('p-4')
+          expect(tokens).toContain('rounded')
+          for (const filtered of [
+            'flex-col',
+            'md:flex-row',
+            'hover:flex-col',
+            '!flex-col',
+            'lg:flex-row',
+            'md:!flex-col',
+            'hover:flex-row',
+          ]) {
+            expect(tokens).not.toContain(filtered)
+          }
+        })
+
+        it('only applies compound classes when all variant dimensions match', async () => {
+          const tokens = tokensOf(
+            await render({
+              displayProps: {},
+              layout: 'grid',
+              variantProps: { tone: 'grid', size: 'sm' },
+              className: 'rounded',
+            }),
+          )
+
+          expect(tokens).toContain('grid-cols-3')
+          expect(tokens).toContain('md:grid-cols-2')
+          expect(tokens).toContain('p-2')
+          expect(tokens).not.toContain('p-4')
+          expect(tokens).not.toContain('lg:grid-cols-4')
+          expect(tokens).not.toContain('md:!grid-cols-5')
+        })
 
         it.each(INVALID_LAYOUT_VALUES)(
           'falls back to boolean layout for invalid value %j',
