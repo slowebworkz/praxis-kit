@@ -514,12 +514,12 @@ describe('ComponentProps<typeof Component> — extraction outside JSX', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: ({ flex, layout, className }) => {
+    props: ({ displayProps, layout, className }) => {
       const Box = createContractComponent({
         tag: 'div',
         styling: { base: 'base', plugin: createTailwindPipeline },
       })
-      mount(h(box(Box), { flex, layout, className } as UnknownProps))
+      mount(h(box(Box), { ...displayProps, layout, className } as UnknownProps))
       return container.querySelector('div')!.className
     },
   },

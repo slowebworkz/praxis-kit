@@ -1,4 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
+import { isDefined } from '@praxis-kit/guards'
+import { iterate } from '@praxis-kit/primitive'
+import type { AnyRecord } from '@praxis-kit/primitive'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import { tailwindDisplayParitySuite } from '@praxis-kit/adapter-utils/testing'
 import { createContractComponent } from './create-contract-component'
@@ -220,21 +223,23 @@ describe('Tabs — children enforcement', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    attribute: ({ flex, layout, className }) =>
+    attribute: ({ displayProps, layout, className }) =>
       mount('web-tailwind-display-parity', (element) => {
-        element.setAttribute('flex', String(flex))
-        element.setAttribute('layout', layout)
+        iterate.forEachEntry(displayProps, (key, value) => {
+          element.setAttribute(key, String(value))
+        })
+        if (isDefined(layout)) element.setAttribute('layout', layout)
         element.setAttribute('praxis-class', className)
       }).className,
-    property: ({ flex, layout, className }) =>
+    property: ({ displayProps, layout, className }) =>
       mount('web-tailwind-display-parity', (element) => {
-        const props = element as HTMLElement & {
-          flex: boolean
-          layout: string
-          praxisClass: string
-        }
-        props.flex = flex
-        props.layout = layout
+        const props = element as HTMLElement &
+          AnyRecord & {
+            layout?: string
+            praxisClass: string
+          }
+        Object.assign(props, displayProps)
+        if (isDefined(layout)) props.layout = layout
         props.praxisClass = className
       }).className,
   },

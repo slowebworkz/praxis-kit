@@ -1,14 +1,16 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { StringMap } from '@praxis-kit/primitive'
 
 /**
  * What a renderer is asked to mount: a component built with `createTailwindPipeline` and a
- * `base` class, given the boolean `flex` shorthand plus a (possibly conflicting) `layout` and a
- * caller class string.
+ * `base` class, given boolean display shorthands plus an optional (possibly conflicting) `layout`
+ * and a caller class string.
  */
 export type TailwindDisplayInput = {
-  /** Always `true`: `flex` is the boolean shorthand; `layout` takes precedence or falls back. */
-  readonly flex: true
-  readonly layout: string
+  /** Boolean display shorthands; when multiple are true, canonical `layoutKeys` order wins. */
+  readonly displayProps: Readonly<StringMap<boolean>>
+  /** Omit to resolve from boolean display shorthands. Invalid values also fall back to shorthands. */
+  readonly layout?: string
   readonly className: string
 }
 
@@ -68,9 +70,9 @@ function tokensOf(className: string): string[] {
 
 /**
  * Tailwind display parity suite. Verifies that every adapter, through each of its input paths,
- * resolves the single-valued `layout` prop the same way: it overrides a conflicting boolean
- * shorthand, prefixed display literals are filtered, important variants pass through, and an
- * invalid value warns and falls back to the boolean shorthand.
+ * resolves boolean display shorthands consistently, including canonical precedence for conflicts;
+ * explicit `layout` overrides shorthands, prefixed display literals are filtered, important
+ * variants pass through, and invalid `layout` values warn and fall back to shorthands.
  *
  * Run in a `// @vitest-environment jsdom` test file.
  */
@@ -80,7 +82,11 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
       describe(`via ${path}`, () => {
         it('uses explicit layout over a conflicting boolean and filters the same utilities', async () => {
           const tokens = tokensOf(
-            await render({ flex: true, layout: 'grid', className: DISPLAY_CLASSES }),
+            await render({
+              displayProps: { flex: true },
+              layout: 'grid',
+              className: DISPLAY_CLASSES,
+            }),
           )
 
           expect(tokens).toContain('grid')
@@ -91,7 +97,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
 
         it('filters responsive display literals while preserving flex-mode utilities', async () => {
           const className = await render({
-            flex: true,
+            displayProps: { flex: true },
             layout: 'flex',
             className:
               'md:flex hover:flex md:hidden md:grid md:grid-cols-3 flex-row md:flex-row !flex flex! md:!flex md:flex! md:!flex-col rounded',
@@ -146,7 +152,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
           async ({ layout, family }) => {
             const tokens = tokensOf(
               await render({
-                flex: true,
+                displayProps: { flex: true },
                 layout,
                 className:
                   'flex grid flex-col grid-cols-3 gap-4 md:gap-4 md:flex md:grid md:flex-row md:grid-cols-2 rounded',
@@ -196,13 +202,124 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
           },
         )
 
+        it.each([
+          { prop: 'flex', family: 'flex' },
+          { prop: 'inline-flex', family: 'flex' },
+          { prop: 'grid', family: 'grid' },
+          { prop: 'inline-grid', family: 'grid' },
+          { prop: 'block', family: 'none' },
+          { prop: 'inline', family: 'none' },
+          { prop: 'hidden', family: 'none' },
+        ] as const)(
+          'resolves the $prop shorthand when layout is omitted',
+          async ({ prop, family }) => {
+            const tokens = tokensOf(
+              await render({
+                displayProps: { [prop]: true },
+                className: 'flex grid flex-col grid-cols-3 gap-4 md:gap-4 rounded',
+              }),
+            )
+
+            expect(tokens).toContain(prop)
+            expect(tokens).toContain('base')
+            expect(tokens).toContain('rounded')
+            if (family === 'flex') {
+              expect(tokens).toContain('flex-col')
+              expect(tokens).toContain('gap-4')
+              expect(tokens).toContain('md:gap-4')
+              expect(tokens).not.toContain('grid-cols-3')
+            } else if (family === 'grid') {
+              expect(tokens).toContain('grid-cols-3')
+              expect(tokens).toContain('gap-4')
+              expect(tokens).toContain('md:gap-4')
+              expect(tokens).not.toContain('flex-col')
+            } else {
+              expect(tokens).not.toContain('flex-col')
+              expect(tokens).not.toContain('grid-cols-3')
+              expect(tokens).not.toContain('gap-4')
+              expect(tokens).not.toContain('md:gap-4')
+            }
+          },
+        )
+
+        it('uses canonical layout-key order and warns when multiple shorthand props are active', async () => {
+          const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+          try {
+            const tokens = tokensOf(
+              await render({
+                // Deliberately reverse the canonical order to prove resolution does not depend on
+                // caller object insertion order: `flex` precedes `inline-flex` and `grid`.
+                displayProps: { grid: true, 'inline-flex': true, flex: true },
+                className: 'flex-col grid-cols-3 gap-4 rounded',
+              }),
+            )
+
+            expect(tokens).toContain('flex')
+            expect(tokens).toContain('flex-col')
+            expect(tokens).not.toContain('grid-cols-3')
+            expect(tokens).toContain('gap-4')
+            expect(warn).toHaveBeenCalledWith(
+              expect.stringContaining('Multiple display props set (flex, inline-flex, grid)'),
+            )
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining('"flex" takes precedence'))
+          } finally {
+            warn.mockRestore()
+          }
+        })
+
+        it('lets a valid explicit layout override conflicting shorthand props without a conflict warning', async () => {
+          const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+          try {
+            const tokens = tokensOf(
+              await render({
+                displayProps: { flex: true, grid: true },
+                layout: 'grid',
+                className: 'flex-col grid-cols-3 gap-4 rounded',
+              }),
+            )
+
+            expect(tokens).toContain('grid')
+            expect(tokens).toContain('grid-cols-3')
+            expect(tokens).not.toContain('flex')
+            expect(tokens).not.toContain('flex-col')
+            expect(warn).not.toHaveBeenCalledWith(
+              expect.stringContaining('Multiple display props set'),
+            )
+          } finally {
+            warn.mockRestore()
+          }
+        })
+
+        it('falls back from an invalid explicit layout to shorthand precedence', async () => {
+          const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+          try {
+            const tokens = tokensOf(
+              await render({
+                displayProps: { grid: true, flex: true },
+                layout: 'mystery',
+                className: 'flex-col grid-cols-3 gap-4 rounded',
+              }),
+            )
+
+            expect(tokens).toContain('flex')
+            expect(tokens).toContain('flex-col')
+            expect(tokens).not.toContain('grid-cols-3')
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining('Invalid layout value'))
+            expect(warn).toHaveBeenCalledWith(
+              expect.stringContaining('Multiple display props set (flex, grid)'),
+            )
+          } finally {
+            warn.mockRestore()
+          }
+        })
+
         it.each(INVALID_LAYOUT_VALUES)(
           'falls back to boolean layout for invalid value %j',
           async (layout) => {
             const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
             try {
               const className = await render({
-                flex: true,
+                displayProps: { flex: true },
                 layout,
                 className: 'flex-col grid-cols-3 rounded',
               })
