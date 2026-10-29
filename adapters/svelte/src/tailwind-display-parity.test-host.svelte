@@ -2,7 +2,12 @@
   import Polymorphic from './Polymorphic.svelte'
   import type { AnyBuiltRuntime } from './types/built-runtime'
 
-  let { bundle, className }: { bundle: AnyBuiltRuntime; className: string } = $props()
+  let { bundle, className, layout = 'grid', flex = true }: {
+    bundle: AnyBuiltRuntime
+    className: string
+    layout?: string
+    flex?: boolean
+  } = $props()
 </script>
 
-<Polymorphic {bundle} flex={true} layout="grid" class={className} />
+<Polymorphic {bundle} {flex} layout={layout as never} class={className} />

@@ -19,3 +19,10 @@ export { hydrationParitySuite } from './hydration'
 
 export { conformancePerformanceSuite } from './performance'
 export { conformanceIsolationSuite } from './isolation'
+
+export type {
+  TailwindDisplayInput,
+  TailwindDisplayParityAdapter,
+  TailwindDisplayRenderer,
+} from './tailwind-display-parity'
+export { tailwindDisplayParitySuite } from './tailwind-display-parity'
