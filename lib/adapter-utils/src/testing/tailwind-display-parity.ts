@@ -115,82 +115,86 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
           expect(tokens).toContain('base')
         })
 
+        // Keep this matrix aligned with `layoutKeys` in `lib/tailwind/src/layout-keys.ts`.
+        // adapter-utils intentionally does not depend on the Tailwind package, so the shared
+        // suite lists the public display values locally rather than importing its implementation.
         it.each([
-          {
-            layout: 'inline-flex',
-            preserved: ['flex-col', 'gap-4'],
-            filtered: ['grid-cols-3'],
-          },
-          {
-            layout: 'inline-grid',
-            preserved: ['grid-cols-3', 'gap-4'],
-            filtered: ['flex-col'],
-          },
-          {
-            layout: 'block',
-            preserved: [],
-            filtered: ['flex-col', 'grid-cols-3', 'gap-4'],
-          },
-          {
-            layout: 'contents',
-            preserved: [],
-            filtered: ['flex-col', 'grid-cols-3', 'gap-4'],
-          },
+          { layout: 'flex', family: 'flex' },
+          { layout: 'inline-flex', family: 'flex' },
+          { layout: 'grid', family: 'grid' },
+          { layout: 'inline-grid', family: 'grid' },
+          { layout: 'block', family: 'none' },
+          { layout: 'inline-block', family: 'none' },
+          { layout: 'inline', family: 'none' },
+          { layout: 'hidden', family: 'none' },
+          { layout: 'contents', family: 'none' },
+          { layout: 'flow-root', family: 'none' },
+          { layout: 'list-item', family: 'none' },
+          { layout: 'table', family: 'none' },
+          { layout: 'inline-table', family: 'none' },
+          { layout: 'table-caption', family: 'none' },
+          { layout: 'table-cell', family: 'none' },
+          { layout: 'table-column', family: 'none' },
+          { layout: 'table-column-group', family: 'none' },
+          { layout: 'table-footer-group', family: 'none' },
+          { layout: 'table-header-group', family: 'none' },
+          { layout: 'table-row-group', family: 'none' },
+          { layout: 'table-row', family: 'none' },
+          { layout: 'none', family: 'none' },
         ] as const)(
           'resolves explicit $layout across display utility families',
-          async ({ layout, preserved, filtered }) => {
+          async ({ layout, family }) => {
             const tokens = tokensOf(
               await render({
                 flex: true,
                 layout,
-                className: 'flex grid flex-col grid-cols-3 gap-4 rounded',
+                className:
+                  'flex grid flex-col grid-cols-3 gap-4 md:gap-4 md:flex md:grid md:flex-row md:grid-cols-2 rounded',
               }),
             )
 
-            expect(tokens).toContain(layout)
-            expect(tokens).not.toContain('flex')
-            expect(tokens).not.toContain('grid')
+            // `none` is the pipeline's no-display state and intentionally injects no class.
+            if (layout === 'none') {
+              expect(tokens).not.toContain('none')
+            } else {
+              expect(tokens).toContain(layout)
+            }
+
+            // Caller display literals are filtered; the selected mode is injected by the pipeline.
+            if (layout !== 'flex') expect(tokens).not.toContain('flex')
+            if (layout !== 'grid') expect(tokens).not.toContain('grid')
+            expect(tokens).not.toContain('md:flex')
+            expect(tokens).not.toContain('md:grid')
+
+            // Family utilities (including their responsive variants) survive only in their own
+            // family; `md:flex-row` / `md:grid-cols-2` are not display literals.
+            if (family === 'flex') {
+              expect(tokens).toContain('flex-col')
+              expect(tokens).toContain('md:flex-row')
+              expect(tokens).toContain('gap-4')
+              expect(tokens).toContain('md:gap-4')
+              expect(tokens).not.toContain('grid-cols-3')
+              expect(tokens).not.toContain('md:grid-cols-2')
+            } else if (family === 'grid') {
+              expect(tokens).toContain('grid-cols-3')
+              expect(tokens).toContain('md:grid-cols-2')
+              expect(tokens).toContain('gap-4')
+              expect(tokens).toContain('md:gap-4')
+              expect(tokens).not.toContain('flex-col')
+              expect(tokens).not.toContain('md:flex-row')
+            } else {
+              expect(tokens).not.toContain('flex-col')
+              expect(tokens).not.toContain('md:flex-row')
+              expect(tokens).not.toContain('grid-cols-3')
+              expect(tokens).not.toContain('md:grid-cols-2')
+              expect(tokens).not.toContain('gap-4')
+              expect(tokens).not.toContain('md:gap-4')
+            }
+
             expect(tokens).toContain('base')
             expect(tokens).toContain('rounded')
-            for (const token of preserved) expect(tokens).toContain(token)
-            for (const token of filtered) expect(tokens).not.toContain(token)
           },
         )
-
-        it('uses hidden as an explicit display value over the boolean shorthand', async () => {
-          const className = await render({
-            flex: true,
-            layout: 'hidden',
-            className: 'flex grid flex-col grid-cols-3 gap-4 rounded',
-          })
-          const tokens = tokensOf(className)
-
-          expect(tokens).toContain('hidden')
-          expect(tokens).not.toContain('flex')
-          expect(tokens).not.toContain('grid')
-          expect(tokens).not.toContain('flex-col')
-          expect(tokens).not.toContain('grid-cols-3')
-          expect(tokens).not.toContain('gap-4')
-          expect(tokens).toContain('base')
-          expect(tokens).toContain('rounded')
-        })
-
-        it('uses none as an explicit display value over the boolean shorthand', async () => {
-          const className = await render({
-            flex: true,
-            layout: 'none',
-            className: 'flex grid flex-col grid-cols-3 gap-4 rounded',
-          })
-          const tokens = tokensOf(className)
-
-          expect(tokens).not.toContain('flex')
-          expect(tokens).not.toContain('grid')
-          expect(tokens).not.toContain('flex-col')
-          expect(tokens).not.toContain('grid-cols-3')
-          expect(tokens).not.toContain('gap-4')
-          expect(tokens).toContain('base')
-          expect(tokens).toContain('rounded')
-        })
 
         it.each(INVALID_LAYOUT_VALUES)(
           'falls back to boolean layout for invalid value %j',
