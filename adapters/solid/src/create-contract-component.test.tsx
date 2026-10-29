@@ -4,6 +4,7 @@ import { render as solidRender, cleanup } from '@solidjs/testing-library'
 import { createSignal } from 'solid-js'
 import { silentDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
+import { tailwindDisplayParitySuite } from '@praxis-kit/adapter-utils/testing'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
 
@@ -583,50 +584,16 @@ describe('extracted prop type — extraction outside JSX', () => {
   })
 })
 
-
-const tailwindDisplayClasses = [
-  'md:flex',
-  'hover:flex',
-  'md:hidden',
-  'md:grid-cols-3',
-  'md:flex-row',
-  '!flex',
-  'flex!',
-  'md:!flex',
-  'md:flex!',
-  'rounded',
-].join(' ')
-
-function expectTailwindDisplayParity(className: string): void {
-  const tokens = className.split(/\s+/)
-  expect(tokens).toContain('grid')
-  for (const filtered of ['md:flex', 'hover:flex', 'md:hidden', 'md:flex-row']) {
-    expect(tokens).not.toContain(filtered)
-  }
-  for (const preserved of [
-    'base',
-    'md:grid-cols-3',
-    '!flex',
-    'flex!',
-    'md:!flex',
-    'md:flex!',
-    'rounded',
-  ]) {
-    expect(tokens).toContain(preserved)
-  }
-}
-
-describe('Tailwind display parity', () => {
-  it('uses explicit layout over a conflicting boolean and filters the same utilities', () => {
-    const Box = createContractComponent({
-      tag: 'div',
-      styling: { base: 'base', plugin: createTailwindPipeline },
-    })
-
-    const { container } = solidRender(() => (
-      <Box flex layout="grid" class={tailwindDisplayClasses} />
-    ))
-
-    expectTailwindDisplayParity(container.querySelector('div')!.className)
-  })
+tailwindDisplayParitySuite({
+  renderers: {
+    props: ({ flex, layout, className }) => {
+      const Box = createContractComponent({
+        tag: 'div',
+        styling: { base: 'base', plugin: createTailwindPipeline },
+      })
+      const props = { flex, layout, class: className } as AnyRecord
+      const { container } = solidRender(() => <Box {...props} />)
+      return container.querySelector('div')!.className
+    },
+  },
 })
