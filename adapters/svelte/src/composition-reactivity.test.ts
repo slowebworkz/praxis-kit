@@ -132,13 +132,13 @@ describe('composition reactivity — plugin-owned props', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: async ({ flex, layout, className }) => {
+    props: async ({ displayProps, layout, className }) => {
       const Box = createContractComponent({
         tag: 'div',
         styling: { base: 'base', plugin: createTailwindPipeline },
       })
       const { container } = render(TailwindDisplayParityHost, {
-        props: { bundle: Box, className, layout, flex },
+        props: { bundle: Box, className, layout, displayProps },
       })
       await tick()
       return container.querySelector('div')!.className

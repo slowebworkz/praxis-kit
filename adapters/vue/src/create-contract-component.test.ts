@@ -528,12 +528,12 @@ describe('createContractComponent — variants', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: ({ flex, layout, className }) => {
+    props: ({ displayProps, layout, className }) => {
       const Box = createContractComponent({
         tag: 'div',
         styling: { base: 'base', plugin: createTailwindPipeline },
       })
-      const wrapper = mount(box(Box), { props: { flex, layout, class: className } as AnyRecord })
+      const wrapper = mount(box(Box), { props: { ...displayProps, layout, class: className } as AnyRecord })
       return wrapper.element.className
     },
   },

@@ -1047,12 +1047,12 @@ describe('createContractComponent (current / React 19)', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: ({ flex, layout, className }) => {
+    props: ({ displayProps, layout, className }) => {
       const Box = createContractComponent({
         tag: 'div',
         styling: { base: 'base', plugin: createTailwindPipeline },
       })
-      dom.mount(createElement(box(Box), { flex, layout, className } as AnyRecord))
+      dom.mount(createElement(box(Box), { ...displayProps, layout, className } as AnyRecord))
       return dom.container.querySelector('div')!.className
     },
   },
