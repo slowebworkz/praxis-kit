@@ -3,14 +3,16 @@ import type { StringMap } from '@praxis-kit/primitive'
 
 /**
  * What a renderer is asked to mount: a component built with `createTailwindPipeline` and a
- * `base` class, given boolean display shorthands plus an optional (possibly conflicting) `layout`
- * and a caller class string.
+ * base class, given boolean display shorthands plus an optional (possibly conflicting) `layout`
+ * and a caller class string. `baseClassName` overrides the default `base` class for focused tests.
  */
 export type TailwindDisplayInput = {
   /** Boolean display shorthands; when multiple are true, canonical `layoutKeys` order wins. */
   readonly displayProps: Readonly<StringMap<boolean>>
   /** Omit to resolve from boolean display shorthands. Invalid values also fall back to shorthands. */
   readonly layout?: string
+  /** Optional override for the component's configured base classes, used by base-parity cases. */
+  readonly baseClassName?: string
   readonly className: string
 }
 
@@ -312,6 +314,94 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
             warn.mockRestore()
           }
         })
+
+        it.each([
+          {
+            label: 'flex',
+            displayProps: { flex: true },
+            baseClassName:
+              'base grid grid-cols-3 !grid-cols-3 flex-col gap-4 md:grid-cols-2 md:!grid-cols-2 md:flex-row md:flex hover:grid !grid md:!grid rounded',
+            family: 'flex',
+          },
+          {
+            label: 'grid',
+            displayProps: { grid: true },
+            baseClassName:
+              'base flex flex-col !flex-col grid-cols-3 gap-4 md:flex-row md:!flex-row md:grid-cols-2 md:grid !flex md:!flex rounded',
+            family: 'grid',
+          },
+          {
+            label: 'no display mode',
+            displayProps: {},
+            baseClassName:
+              'base flex grid flex-col grid-cols-3 gap-4 md:flex md:grid justify-between items-center place-content-center justify-items-start self-center rounded',
+            family: 'none',
+          },
+        ] as const)(
+          'filters configured base classes correctly for $label and merges caller classes',
+          async ({ displayProps, baseClassName, family }) => {
+            const tokens = tokensOf(
+              await render({
+                displayProps,
+                baseClassName,
+                className: 'rounded p-4 rounded',
+              }),
+            )
+
+            expect(tokens).toContain('base')
+            expect(tokens).toContain('rounded')
+            expect(tokens).toContain('p-4')
+
+            if (family === 'flex') {
+              expect(tokens).toContain('flex')
+              expect(tokens).toContain('flex-col')
+              expect(tokens).toContain('md:flex-row')
+              expect(tokens).toContain('gap-4')
+              expect(tokens).not.toContain('grid')
+              expect(tokens).not.toContain('grid-cols-3')
+              expect(tokens).not.toContain('md:grid-cols-2')
+              expect(tokens).not.toContain('!grid-cols-3')
+              expect(tokens).not.toContain('md:!grid-cols-2')
+              expect(tokens).not.toContain('md:flex')
+              expect(tokens).not.toContain('hover:grid')
+              // Important display utilities are intentional escape hatches and survive filtering.
+              expect(tokens).toContain('!grid')
+              expect(tokens).toContain('md:!grid')
+            } else if (family === 'grid') {
+              expect(tokens).toContain('grid')
+              expect(tokens).toContain('grid-cols-3')
+              expect(tokens).toContain('md:grid-cols-2')
+              expect(tokens).toContain('gap-4')
+              expect(tokens).not.toContain('flex')
+              expect(tokens).not.toContain('flex-col')
+              expect(tokens).not.toContain('!flex-col')
+              expect(tokens).not.toContain('md:flex-row')
+              expect(tokens).not.toContain('md:!flex-row')
+              expect(tokens).not.toContain('md:flex')
+              expect(tokens).not.toContain('md:grid')
+              expect(tokens).toContain('!flex')
+              expect(tokens).toContain('md:!flex')
+            } else {
+              for (const filtered of [
+                'flex',
+                'grid',
+                'flex-col',
+                'grid-cols-3',
+                'gap-4',
+                'md:flex',
+                'md:grid',
+                'justify-between',
+                'items-center',
+                'place-content-center',
+                'justify-items-start',
+              ]) {
+                expect(tokens).not.toContain(filtered)
+              }
+              // Item utilities are parent-layout dependent and intentionally remain untouched.
+              expect(tokens).toContain('self-center')
+            }
+          },
+        )
 
         it.each(INVALID_LAYOUT_VALUES)(
           'falls back to boolean layout for invalid value %j',
