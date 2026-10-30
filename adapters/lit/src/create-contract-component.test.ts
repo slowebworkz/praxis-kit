@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
-import { isDefined } from '@praxis-kit/guards'
+import { isDefined, isUndefined } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
@@ -407,5 +407,28 @@ tailwindDisplayParitySuite({
           },
         )
       ).className,
+  },
+  reactivity: async (steps) => {
+    const el = await mount('praxis-tailwind-display-parity')
+    const snapshots: string[] = []
+    for (const step of steps) {
+      await update(el, (element) => {
+        const props = element as HTMLElement & AnyRecord & { layout?: string; praxisClass: string }
+        iterate.forEach(
+          ['flex', 'inline-flex', 'grid', 'inline-grid', 'block', 'inline', 'hidden'],
+          (key) => {
+            props[key] = false
+          },
+        )
+        iterate.forEachEntry(step.displayProps, (key, value) => {
+          props[key] = value
+        })
+        if (isUndefined(step.layout)) delete props.layout
+        else props.layout = step.layout
+        props.praxisClass = step.className
+      })
+      snapshots.push(el.className)
+    }
+    return snapshots
   },
 })

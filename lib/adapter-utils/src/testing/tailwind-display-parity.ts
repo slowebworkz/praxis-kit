@@ -25,7 +25,15 @@ export type TailwindDisplayInput = {
  */
 export type TailwindDisplayRenderer = (input: TailwindDisplayInput) => string | Promise<string>
 
+export type TailwindDisplayReactivityStep = {
+  readonly displayProps: Readonly<StringMap<boolean>>
+  readonly layout?: string
+  readonly className: string
+}
+
 export type TailwindDisplayParityAdapter = {
+  /** Mount once, apply each step to the same instance, and return className after every update. */
+  readonly reactivity?: (steps: readonly TailwindDisplayReactivityStep[]) => Promise<readonly string[]>
   /**
    * One renderer per way an adapter accepts props. Most adapters have a single path (`props`);
    * the element adapters (Lit, Web) have `attribute` and `property`.
@@ -104,6 +112,38 @@ function tokensOf(className: string): string[] {
  */
 export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter): void {
   describe('Tailwind display parity', () => {
+    const { reactivity } = adapter
+    if (reactivity) {
+      it('updates display and caller classes without retaining stale utilities', async () => {
+        const snapshots = await reactivity([
+          { displayProps: { flex: true }, className: 'flex-col grid-cols-3 rounded' },
+          { displayProps: { grid: true }, className: 'flex-col grid-cols-3 rounded' },
+          { displayProps: { block: true }, className: 'flex-col grid-cols-3 rounded' },
+          { displayProps: { block: true }, className: 'p-4 rounded-lg' },
+          { displayProps: { flex: true }, layout: 'grid', className: 'grid-cols-2 p-2' },
+        ])
+        expect(snapshots).toHaveLength(5)
+        const tokens = snapshots.map(tokensOf)
+        expect(tokens[0]).toContain('flex')
+        expect(tokens[0]).toContain('flex-col')
+        expect(tokens[0]).not.toContain('grid-cols-3')
+        expect(tokens[1]).toContain('grid')
+        expect(tokens[1]).toContain('grid-cols-3')
+        expect(tokens[1]).not.toContain('flex-col')
+        expect(tokens[2]).toContain('block')
+        expect(tokens[2]).not.toContain('flex-col')
+        expect(tokens[2]).not.toContain('grid-cols-3')
+        expect(tokens[3]).toContain('p-4')
+        expect(tokens[3]).toContain('rounded-lg')
+        expect(tokens[3]).not.toContain('rounded')
+        expect(tokens[3]).not.toContain('p-2')
+        expect(tokens[4]).toContain('grid')
+        expect(tokens[4]).toContain('grid-cols-2')
+        expect(tokens[4]).not.toContain('flex')
+        expect(tokens[4]).not.toContain('flex-col')
+        for (const snapshot of tokens) expect(snapshot).toContain('base')
+      })
+    }
     for (const [path, render] of Object.entries(adapter.renderers)) {
       describe(`via ${path}`, () => {
         it('uses explicit layout over a conflicting boolean and filters the same utilities', async () => {

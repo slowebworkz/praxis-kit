@@ -534,4 +534,11 @@ tailwindDisplayParitySuite({
       return container.querySelector('div')!.className
     },
   },
+  reactivity: async (steps) => {
+    const Box = createContractComponent({ tag: 'div', styling: { base: 'base', plugin: createTailwindPipeline } })
+    return steps.map((step) => {
+      mount(h(box(Box), { ...step.displayProps, layout: step.layout, className: step.className } as UnknownProps))
+      return container.querySelector('div')!.className
+    })
+  },
 })
