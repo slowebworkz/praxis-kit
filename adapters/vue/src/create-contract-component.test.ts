@@ -548,4 +548,26 @@ tailwindDisplayParitySuite({
       return wrapper.element.className
     },
   },
+  reactivity: async (steps) => {
+    const Box = createContractComponent({ tag: 'div', styling: { base: 'base', plugin: createTailwindPipeline } })
+    const wrapper = mount(box(Box), { props: {} })
+    const snapshots: string[] = []
+    for (const step of steps) {
+      await wrapper.setProps({
+        flex: false,
+        'inline-flex': false,
+        grid: false,
+        'inline-grid': false,
+        block: false,
+        inline: false,
+        hidden: false,
+        ...step.displayProps,
+        layout: step.layout,
+        class: step.className,
+      } as AnyRecord)
+      snapshots.push(wrapper.element.className)
+    }
+    wrapper.unmount()
+    return snapshots
+  },
 })

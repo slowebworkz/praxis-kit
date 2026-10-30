@@ -10,6 +10,7 @@ import { tick } from 'svelte'
 import Host from './composition-reactivity.test-host.svelte'
 import OwnedPropHost from './composition-owned-prop-reactivity.test-host.svelte'
 import TailwindDisplayParityHost from './tailwind-display-parity.test-host.svelte'
+import TailwindDisplayReactivityHost from './tailwind-display-reactivity.test-host.svelte'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import {
   TAILWIND_DISPLAY_PARITY_COMPOUNDS,
@@ -152,5 +153,20 @@ tailwindDisplayParitySuite({
       await tick()
       return container.querySelector('div')!.className
     },
+  },
+  reactivity: async (steps) => {
+    const Box = createContractComponent({ tag: 'div', styling: { base: 'base', plugin: createTailwindPipeline } })
+    const initial = steps[0]!
+    const { container, component } = render(TailwindDisplayReactivityHost, {
+      props: { bundle: Box, initial },
+    })
+    await tick()
+    const snapshots = [container.querySelector('div')!.className]
+    for (const step of steps.slice(1)) {
+      component.setStep(step)
+      await tick()
+      snapshots.push(container.querySelector('div')!.className)
+    }
+    return snapshots
   },
 })

@@ -283,4 +283,24 @@ tailwindDisplayParitySuite({
         },
       ).className,
   },
+  reactivity: async (steps) => {
+    const el = mount('web-tailwind-display-parity')
+    const snapshots: string[] = []
+    for (const step of steps) {
+      update(el, (element) => {
+        const props = element as HTMLElement & AnyRecord & { layout?: string; praxisClass: string }
+        iterate.forEach(['flex', 'inline-flex', 'grid', 'inline-grid', 'block', 'inline', 'hidden'], (key) => {
+          props[key] = false
+        })
+        iterate.forEachEntry(step.displayProps, (key, value) => {
+          props[key] = value
+        })
+        if (step.layout === undefined) delete props.layout
+        else props.layout = step.layout
+        props.praxisClass = step.className
+      })
+      snapshots.push(el.className)
+    }
+    return snapshots
+  },
 })

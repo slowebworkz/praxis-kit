@@ -610,4 +610,16 @@ tailwindDisplayParitySuite({
       return container.querySelector('div')!.className
     },
   },
+  reactivity: async (steps) => {
+    const Box = createContractComponent({ tag: 'div', styling: { base: 'base', plugin: createTailwindPipeline } })
+    const [props, setProps] = createSignal<AnyRecord>({})
+    const { container, unmount } = solidRender(() => <Box {...props()} />)
+    const snapshots: string[] = []
+    for (const step of steps) {
+      setProps({ ...step.displayProps, layout: step.layout, class: step.className })
+      snapshots.push(container.querySelector('div')!.className)
+    }
+    unmount()
+    return snapshots
+  },
 })
