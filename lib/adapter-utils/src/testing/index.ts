@@ -41,3 +41,12 @@ export {
   TAILWIND_COMPOSE_CONFLICT_COMPONENT,
   tailwindComposePluginParitySuite,
 } from './tailwind-compose-plugin-parity'
+
+export type {
+  TailwindAsChildPluginParityAdapter,
+  TailwindAsChildPluginResult,
+} from './tailwind-as-child-plugin-parity'
+export {
+  createCountedPlugin,
+  tailwindAsChildPluginParitySuite,
+} from './tailwind-as-child-plugin-parity'
