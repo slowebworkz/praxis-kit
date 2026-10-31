@@ -19,6 +19,8 @@ import {
   createComposeConflictFixture,
   TAILWIND_COMPOSE_CONFLICT_COMPONENT,
   tailwindComposePluginParitySuite,
+  createCountedPlugin,
+  tailwindAsChildPluginParitySuite,
 } from '@praxis-kit/adapter-utils/testing'
 import type { AriaRule } from '@praxis-kit/core/contract'
 import type { AnyRecord } from '@praxis-kit/primitive'
@@ -1143,5 +1145,87 @@ tailwindComposePluginParitySuite({
     dom.mount(createElement(box(Card), null))
     const element = dom.container.querySelector('div')!
     return { className: element.className, flexAttribute: element.getAttribute('flex') }
+  },
+})
+
+tailwindAsChildPluginParitySuite({
+  renderPrimaryPluginAsChild: () => {
+    const fixture = createComposeConflictFixture()
+    const primary = createCountedPlugin(createTailwindPipeline)
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const Card = createContractComponent({
+      tag: 'div',
+      enforcement: { diagnostics: fixture.diagnostics },
+      compose: { with: Surface },
+      styling: {
+        base: 'primary-base grid-cols-3 gap-4',
+        plugin: primary.plugin,
+      },
+    })
+    dom.mount(
+      createElement(
+        box(Card),
+        { asChild: true, ...({ flex: true, className: 'caller-class' } as AnyRecord) },
+        createElement('button', { className: 'child-class' }),
+      ),
+    )
+    fixture.afterComposition()
+    const element = dom.container.querySelector('button')!
+    const result = fixture.result({
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    })
+    return {
+      className: result.className,
+      flexAttribute: result.flexAttribute,
+      partnerFactoryCallsDuringAsChild: result.partnerFactoryCallsDuringComposition,
+      primaryFactoryCallsDuringAsChild: primary.calls(),
+    }
+  },
+  renderNestedAsChild: () => {
+    const fixture = createComposeConflictFixture()
+    const primary = createCountedPlugin(createTailwindPipeline)
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const Inner = createContractComponent({ tag: 'span', styling: { base: 'child-base' } })
+    const Card = createContractComponent({
+      tag: 'div',
+      enforcement: { diagnostics: fixture.diagnostics },
+      compose: { with: Surface },
+      styling: {
+        base: 'primary-base grid-cols-3 gap-4',
+        plugin: primary.plugin,
+      },
+    })
+    dom.mount(
+      createElement(
+        box(Card),
+        { asChild: true, flex: true, className: 'caller-class' },
+        createElement(
+          box(Inner),
+          { asChild: true },
+          createElement('button', { className: 'child-class' }),
+        ),
+      ),
+    )
+    fixture.afterComposition()
+    const element = dom.container.querySelector('button')!
+    const result = fixture.result({
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    })
+    return {
+      className: result.className,
+      flexAttribute: result.flexAttribute,
+      partnerFactoryCallsDuringAsChild: result.partnerFactoryCallsDuringComposition,
+      primaryFactoryCallsDuringAsChild: primary.calls(),
+    }
   },
 })

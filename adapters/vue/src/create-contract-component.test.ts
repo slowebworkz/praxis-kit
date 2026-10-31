@@ -10,6 +10,8 @@ import {
   createComposeConflictFixture,
   TAILWIND_COMPOSE_CONFLICT_COMPONENT,
   tailwindComposePluginParitySuite,
+  createCountedPlugin,
+  tailwindAsChildPluginParitySuite,
 } from '@praxis-kit/adapter-utils/testing'
 import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
@@ -630,6 +632,85 @@ tailwindComposePluginParitySuite({
     return {
       className: wrapper.element.className,
       flexAttribute: wrapper.element.getAttribute('flex'),
+    }
+  },
+})
+
+tailwindAsChildPluginParitySuite({
+  renderPrimaryPluginAsChild: () => {
+    const fixture = createComposeConflictFixture()
+    const primary = createCountedPlugin(createTailwindPipeline)
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const Card = createContractComponent({
+      tag: 'div',
+      enforcement: { diagnostics: fixture.diagnostics },
+      compose: { with: Surface },
+      styling: {
+        base: 'primary-base grid-cols-3 gap-4',
+        plugin: primary.plugin,
+      },
+    })
+    const wrapper = mount(box(Card), {
+      props: { asChild: true, flex: true, class: 'caller-class' } as AnyRecord,
+      slots: { default: () => [h('button', { class: 'child-class' })] },
+    })
+    fixture.afterComposition()
+    const result = fixture.result({
+      className: wrapper.element.className,
+      flexAttribute: wrapper.element.getAttribute('flex'),
+    })
+    return {
+      className: result.className,
+      flexAttribute: result.flexAttribute,
+      partnerFactoryCallsDuringAsChild: result.partnerFactoryCallsDuringComposition,
+      primaryFactoryCallsDuringAsChild: primary.calls(),
+    }
+  },
+  renderNestedAsChild: () => {
+    const fixture = createComposeConflictFixture()
+    const primary = createCountedPlugin(createTailwindPipeline)
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const Inner = createContractComponent({ tag: 'span', styling: { base: 'child-base' } })
+    const Card = createContractComponent({
+      tag: 'div',
+      enforcement: { diagnostics: fixture.diagnostics },
+      compose: { with: Surface },
+      styling: {
+        base: 'primary-base grid-cols-3 gap-4',
+        plugin: primary.plugin,
+      },
+    })
+    const wrapper = mount(box(Card), {
+      props: { asChild: true, flex: true, class: 'caller-class' } as AnyRecord,
+      slots: {
+        default: () => [
+          h(box(Inner), { asChild: true }, {
+            default: () => [h('button', { class: 'child-class' })],
+          }),
+        ],
+      },
+    })
+    fixture.afterComposition()
+    // asChild collapses the wrappers: the mounted root element is the innermost <button>.
+    const element = wrapper.element
+    expect(element.tagName).toBe('BUTTON')
+    const result = fixture.result({
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    })
+    return {
+      className: result.className,
+      flexAttribute: result.flexAttribute,
+      partnerFactoryCallsDuringAsChild: result.partnerFactoryCallsDuringComposition,
+      primaryFactoryCallsDuringAsChild: primary.calls(),
     }
   },
 })
