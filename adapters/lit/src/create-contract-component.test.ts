@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
-import { isDefined, isUndefined } from '@praxis-kit/guards'
+import { isDefined } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
@@ -413,19 +413,21 @@ tailwindDisplayParitySuite({
     const snapshots: string[] = []
     for (const step of steps) {
       await update(el, (element) => {
-        const props = element as HTMLElement & AnyRecord & { layout?: string; praxisClass: string }
+        const props = element as HTMLElement & AnyRecord & { layout?: string | undefined; praxisClass: string }
         iterate.forEach(
           ['flex', 'inline-flex', 'grid', 'inline-grid', 'block', 'inline', 'hidden'],
           (key) => {
             props[key] = false
           },
         )
-        iterate.forEachEntry(step.displayProps, (key, value) => {
+        iterate.forEachEntry(step.displayProps ?? {}, (key, value) => {
           props[key] = value
         })
-        if (isUndefined(step.layout)) delete props.layout
-        else props.layout = step.layout
-        props.praxisClass = step.className
+        // Lit installs reactive accessors on the prototype; deleting the
+        // property would not clear its backing value. Assign undefined so
+        // Lit observes the reset and the plugin omits the explicit layout.
+        props.layout = step.layout
+        props.praxisClass = step.className ?? ''
       })
       snapshots.push(el.className)
     }

@@ -561,7 +561,7 @@ tailwindDisplayParitySuite({
         block: false,
         inline: false,
         hidden: false,
-        ...step.displayProps,
+        ...(step.displayProps ?? {}),
         layout: step.layout,
         class: step.className,
       } as AnyRecord)

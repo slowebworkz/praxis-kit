@@ -13,6 +13,7 @@
     "aria:regen": "node --experimental-strip-types scripts/generate-aria-support.ts",
     "test": "pnpm -r --if-present test",
     "test:ci": "pnpm -r --if-present test",
+    "test:adapters": "pnpm --filter \"./adapters/*\" --if-present test",
     "test:related": "pnpm -r --if-present test:related",
     "metrics:collect": "pnpm --filter @praxis-kit/metrics collect",
     "metrics:report": "pnpm --filter @praxis-kit/metrics report",
