@@ -1051,9 +1051,9 @@ describe('createContractComponent (current / React 19)', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: ({ displayProps, layout, baseClassName, variantProps, className }) => {
+    props: ({ tag = 'div', displayProps, layout, baseClassName, variantProps, className }) => {
       const Box = createContractComponent({
-        tag: 'div',
+        tag,
         styling: {
           base: baseClassName ?? 'base',
           plugin: createTailwindPipeline,
@@ -1062,9 +1062,14 @@ tailwindDisplayParitySuite({
         },
       })
       dom.mount(
-        createElement(box(Box), { ...displayProps, ...variantProps, layout, className } as AnyRecord),
+        createElement(box(Box), {
+          ...displayProps,
+          ...variantProps,
+          layout,
+          className,
+        } as AnyRecord),
       )
-      return dom.container.querySelector('div')!.className
+      return dom.container.querySelector(tag)!.className
     },
   },
   reactivity: async (steps) => {
@@ -1073,7 +1078,13 @@ tailwindDisplayParitySuite({
       styling: { base: 'base', plugin: createTailwindPipeline },
     })
     return steps.map((step) => {
-      dom.mount(createElement(box(Box), { ...(step.displayProps ?? {}), layout: step.layout, className: step.className } as AnyRecord))
+      dom.mount(
+        createElement(box(Box), {
+          ...(step.displayProps ?? {}),
+          layout: step.layout,
+          className: step.className,
+        } as AnyRecord),
+      )
       return dom.container.querySelector('div')!.className
     })
   },

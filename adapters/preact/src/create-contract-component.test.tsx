@@ -518,9 +518,9 @@ describe('ComponentProps<typeof Component> — extraction outside JSX', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: ({ displayProps, layout, baseClassName, variantProps, className }) => {
+    props: ({ tag = 'div', displayProps, layout, baseClassName, variantProps, className }) => {
       const Box = createContractComponent({
-        tag: 'div',
+        tag,
         styling: {
           base: baseClassName ?? 'base',
           plugin: createTailwindPipeline,
@@ -528,16 +528,23 @@ tailwindDisplayParitySuite({
           compounds: TAILWIND_DISPLAY_PARITY_COMPOUNDS,
         },
       })
-      mount(
-        h(box(Box), { ...displayProps, ...variantProps, layout, className } as UnknownProps),
-      )
-      return container.querySelector('div')!.className
+      mount(h(box(Box), { ...displayProps, ...variantProps, layout, className } as UnknownProps))
+      return container.querySelector(tag)!.className
     },
   },
   reactivity: async (steps) => {
-    const Box = createContractComponent({ tag: 'div', styling: { base: 'base', plugin: createTailwindPipeline } })
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
     return steps.map((step) => {
-      mount(h(box(Box), { ...(step.displayProps ?? {}), layout: step.layout, className: step.className } as UnknownProps))
+      mount(
+        h(box(Box), {
+          ...(step.displayProps ?? {}),
+          layout: step.layout,
+          className: step.className,
+        } as UnknownProps),
+      )
       return container.querySelector('div')!.className
     })
   },

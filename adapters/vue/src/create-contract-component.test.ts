@@ -532,9 +532,9 @@ describe('createContractComponent — variants', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: ({ displayProps, layout, baseClassName, variantProps, className }) => {
+    props: ({ tag = 'div', displayProps, layout, baseClassName, variantProps, className }) => {
       const Box = createContractComponent({
-        tag: 'div',
+        tag,
         styling: {
           base: baseClassName ?? 'base',
           plugin: createTailwindPipeline,
@@ -549,7 +549,10 @@ tailwindDisplayParitySuite({
     },
   },
   reactivity: async (steps) => {
-    const Box = createContractComponent({ tag: 'div', styling: { base: 'base', plugin: createTailwindPipeline } })
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
     const wrapper = mount(box(Box), { props: {} })
     const snapshots: string[] = []
     for (const step of steps) {

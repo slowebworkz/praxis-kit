@@ -7,6 +7,8 @@ import type { StringMap } from '@praxis-kit/primitive'
  * and a caller class string. `baseClassName` overrides the default `base` class for focused tests.
  */
 export type TailwindDisplayInput = {
+  /** Underlying element tag; defaults to div. Void-element parity uses img/input. */
+  readonly tag?: string
   /** Boolean display shorthands; when multiple are true, canonical `layoutKeys` order wins. */
   readonly displayProps: Readonly<StringMap<boolean>>
   /** Omit to resolve from boolean display shorthands. Invalid values also fall back to shorthands. */
@@ -36,7 +38,9 @@ export type TailwindDisplayReactivityStep = {
 
 export type TailwindDisplayParityAdapter = {
   /** Mount once, apply each step to the same instance, and return className after every update. */
-  readonly reactivity?: (steps: readonly TailwindDisplayReactivityStep[]) => Promise<readonly string[]>
+  readonly reactivity?: (
+    steps: readonly TailwindDisplayReactivityStep[],
+  ) => Promise<readonly string[]>
   /**
    * One renderer per way an adapter accepts props. Most adapters have a single path (`props`);
    * the element adapters (Lit, Web) have `attribute` and `property`.
@@ -199,6 +203,64 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
     }
     for (const [path, render] of Object.entries(adapter.renderers)) {
       describe(`via ${path}`, () => {
+        // The void-element warning only reports that the layout is ineffective; it does not remove
+        // utilities. Ordinary display-family filtering still applies, so compatible utilities
+        // (e.g. `gap-4`) stay in the class list even though they do nothing on a void element.
+        it.each([
+          { tag: 'img', prop: 'flex' },
+          { tag: 'input', prop: 'grid' },
+        ])(
+          'warns for $prop on void <$tag> without removing family-compatible utilities',
+          async ({ tag, prop }) => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+            try {
+              const className = await render({
+                tag,
+                displayProps: { [prop]: true },
+                className: 'flex-col grid-cols-3 gap-4 rounded',
+              })
+              const tokens = tokensOf(className)
+              expect(tokens).toContain(prop)
+              expect(tokens).toContain('rounded')
+              expect(warn).toHaveBeenCalledWith(expect.stringContaining(`<${tag}>`))
+              expect(warn).toHaveBeenCalledWith(expect.stringContaining(`"${prop}"`))
+              // Family filtering is unchanged by the warning: the other family's utilities are
+              // dropped, while the selected family's (and shared `gap-4`) are kept.
+              if (prop === 'flex') {
+                expect(tokens).toContain('flex-col')
+                expect(tokens).toContain('gap-4')
+                expect(tokens).not.toContain('grid-cols-3')
+              } else {
+                expect(tokens).toContain('grid-cols-3')
+                expect(tokens).toContain('gap-4')
+                expect(tokens).not.toContain('flex-col')
+              }
+            } finally {
+              warn.mockRestore()
+            }
+          },
+        )
+
+        it('does not warn for neutral display on a void element', async () => {
+          const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+          try {
+            const tokens = tokensOf(
+              await render({
+                tag: 'img',
+                displayProps: { block: true },
+                className: 'flex-col grid-cols-3 rounded',
+              }),
+            )
+            expect(tokens).toContain('block')
+            expect(tokens).toContain('rounded')
+            expect(tokens).not.toContain('flex-col')
+            expect(tokens).not.toContain('grid-cols-3')
+            expect(warn).not.toHaveBeenCalled()
+          } finally {
+            warn.mockRestore()
+          }
+        })
+
         it('uses explicit layout over a conflicting boolean and filters the same utilities', async () => {
           const tokens = tokensOf(
             await render({
