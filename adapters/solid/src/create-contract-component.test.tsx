@@ -616,7 +616,7 @@ tailwindDisplayParitySuite({
     const { container, unmount } = solidRender(() => <Box {...props()} />)
     const snapshots: string[] = []
     for (const step of steps) {
-      setProps({ ...step.displayProps, layout: step.layout, class: step.className })
+      setProps({ ...(step.displayProps ?? {}), layout: step.layout, class: step.className })
       snapshots.push(container.querySelector('div')!.className)
     }
     unmount()

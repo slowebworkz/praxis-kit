@@ -1073,7 +1073,7 @@ tailwindDisplayParitySuite({
       styling: { base: 'base', plugin: createTailwindPipeline },
     })
     return steps.map((step) => {
-      dom.mount(createElement(box(Box), { ...step.displayProps, layout: step.layout, className: step.className } as AnyRecord))
+      dom.mount(createElement(box(Box), { ...(step.displayProps ?? {}), layout: step.layout, className: step.className } as AnyRecord))
       return dom.container.querySelector('div')!.className
     })
   },

@@ -26,9 +26,12 @@ export type TailwindDisplayInput = {
 export type TailwindDisplayRenderer = (input: TailwindDisplayInput) => string | Promise<string>
 
 export type TailwindDisplayReactivityStep = {
-  readonly displayProps: Readonly<StringMap<boolean>>
+  /** Omitted props are removed from the mounted component; an empty map clears all shorthands. */
+  readonly displayProps?: Readonly<StringMap<boolean>>
+  /** Omission removes the explicit layout prop. */
   readonly layout?: string
-  readonly className: string
+  /** Omission removes the caller class prop. */
+  readonly className?: string
 }
 
 export type TailwindDisplayParityAdapter = {
@@ -142,6 +145,54 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
         expect(tokens[4]).not.toContain('flex')
         expect(tokens[4]).not.toContain('flex-col')
         for (const snapshot of tokens) expect(snapshot).toContain('base')
+      })
+
+      it('resets explicit layout, shorthand props, and caller classes without stale utilities', async () => {
+        const snapshots = await reactivity([
+          {
+            displayProps: { grid: true },
+            layout: 'grid',
+            className: 'grid-cols-2 flex-col rounded-lg',
+          },
+          {
+            displayProps: { flex: true },
+            className: 'flex-col grid-cols-3 rounded',
+          },
+          {
+            displayProps: {},
+            className: 'flex-col grid-cols-3 rounded',
+          },
+          {
+            displayProps: { flex: true },
+            className: 'flex-col rounded',
+          },
+          {
+            displayProps: { flex: true },
+          },
+        ])
+        expect(snapshots).toHaveLength(5)
+        const tokens = snapshots.map(tokensOf)
+
+        expect(tokens[0]).toContain('grid')
+        expect(tokens[0]).toContain('grid-cols-2')
+        expect(tokens[0]).not.toContain('flex-col')
+
+        // Removing layout falls back to the still-present boolean shorthand.
+        expect(tokens[1]).toContain('flex')
+        expect(tokens[1]).toContain('flex-col')
+        expect(tokens[1]).not.toContain('grid-cols-3')
+
+        // Clearing all display shorthands removes the injected display and family utilities.
+        expect(tokens[2]).not.toContain('flex')
+        expect(tokens[2]).not.toContain('grid')
+        expect(tokens[2]).not.toContain('flex-col')
+        expect(tokens[2]).not.toContain('grid-cols-3')
+
+        // Caller-class replacement and removal must not leave prior classes behind.
+        expect(tokens[3]).toContain('flex-col')
+        expect(tokens[3]).not.toContain('rounded')
+        expect(tokens[3]).not.toContain('rounded-lg')
+        expect(tokens[4]).toEqual(['base'])
       })
     }
     for (const [path, render] of Object.entries(adapter.renderers)) {
