@@ -190,9 +190,11 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
 
         // Caller-class replacement and removal must not leave prior classes behind.
         expect(tokens[3]).toContain('flex-col')
-        expect(tokens[3]).not.toContain('rounded')
+        expect(tokens[3]).toContain('rounded')
         expect(tokens[3]).not.toContain('rounded-lg')
-        expect(tokens[4]).toEqual(['base'])
+        expect(tokens[3]).not.toContain('grid-cols-3')
+        // Omitting className drops every caller class; only the base and selected display remain.
+        expect([...tokens[4]!].sort()).toEqual(['base', 'flex'])
       })
     }
     for (const [path, render] of Object.entries(adapter.renderers)) {
