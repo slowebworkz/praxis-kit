@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
-import { isDefined } from '@praxis-kit/guards'
+import { isDefined, isUndefined } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
@@ -47,6 +47,17 @@ function registerTailwindDisplayBaseElement(baseClassName: string): string {
   return tag
 }
 
+function registerTailwindDisplayTag(elementTag: string): string {
+  const tag = `praxis-tailwind-display-void-${++tailwindDisplayBaseTagId}`
+  const Element = createContractComponent({
+    tag: elementTag,
+    name: 'TailwindDisplayVoidParity',
+    styling: { base: 'base', plugin: createTailwindPipeline },
+  })
+  customElements.define(tag, Element)
+  return tag
+}
+
 // Guard against duplicate registration — customElements.define() is global and
 // throws if the same name is defined twice in the same test runner process.
 beforeAll(() => {
@@ -66,6 +77,9 @@ beforeAll(() => {
 
 type LitEl = HTMLElement & { updateComplete: Promise<boolean>; requestUpdate(): void }
 
+// Registered elements are Lit elements at runtime; narrow once instead of at every call site.
+const asLit = (el: HTMLElement): LitEl => el as unknown as LitEl
+
 // Connect first so Lit's property system is fully initialized, then apply
 // attributes, then force a Lit update cycle.
 // requestUpdate() is needed for non-reactive attributes (aria-*, role, data-*)
@@ -73,19 +87,19 @@ type LitEl = HTMLElement & { updateComplete: Promise<boolean>; requestUpdate(): 
 async function mount<T extends HTMLElement>(tag: string, setup?: (el: T) => void): Promise<T> {
   const el = document.createElement(tag) as T
   document.body.appendChild(el)
-  await (el as unknown as LitEl).updateComplete
+  await asLit(el).updateComplete
   if (setup) {
     setup(el)
-    ;(el as unknown as LitEl).requestUpdate()
-    await (el as unknown as LitEl).updateComplete
+    asLit(el).requestUpdate()
+    await asLit(el).updateComplete
   }
   return el
 }
 
 async function update(el: HTMLElement, fn: (el: HTMLElement) => void): Promise<void> {
   fn(el)
-  ;(el as unknown as LitEl).requestUpdate()
-  await (el as unknown as LitEl).updateComplete
+  asLit(el).requestUpdate()
+  await asLit(el).updateComplete
 }
 
 afterEach(() => {
@@ -305,13 +319,13 @@ describe('Tabs — children enforcement', () => {
     root.appendChild(document.createElement('praxis-tabs-trigger'))
     root.appendChild(document.createElement('praxis-tabs-content'))
     document.body.appendChild(root)
-    await expect((root as unknown as LitEl).updateComplete).resolves.toBeDefined()
+    await expect(asLit(root).updateComplete).resolves.toBeDefined()
   })
 
   it('throws when required children are missing (strict: throw)', async () => {
     const root = document.createElement('praxis-tabs-root')
     document.body.appendChild(root)
-    await expect((root as unknown as LitEl).updateComplete).rejects.toThrow()
+    await expect(asLit(root).updateComplete).rejects.toThrow()
   })
 })
 
@@ -371,12 +385,21 @@ describe('selective update guard', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    attribute: async ({ displayProps, layout, baseClassName, variantProps, className }) =>
+    attribute: async ({
+      tag = 'div',
+      displayProps,
+      layout,
+      baseClassName,
+      variantProps,
+      className,
+    }) =>
       (
         await mount(
-          baseClassName === undefined
-            ? 'praxis-tailwind-display-parity'
-            : registerTailwindDisplayBaseElement(baseClassName),
+          tag === 'div'
+            ? isUndefined(baseClassName)
+              ? 'praxis-tailwind-display-parity'
+              : registerTailwindDisplayBaseElement(baseClassName)
+            : registerTailwindDisplayTag(tag),
           (element) => {
             iterate.forEachEntry(displayProps, (key, value) => {
               element.setAttribute(key, String(value))
@@ -389,12 +412,21 @@ tailwindDisplayParitySuite({
           },
         )
       ).className,
-    property: async ({ displayProps, layout, baseClassName, variantProps, className }) =>
+    property: async ({
+      tag = 'div',
+      displayProps,
+      layout,
+      baseClassName,
+      variantProps,
+      className,
+    }) =>
       (
         await mount(
-          baseClassName === undefined
-            ? 'praxis-tailwind-display-parity'
-            : registerTailwindDisplayBaseElement(baseClassName),
+          tag === 'div'
+            ? isUndefined(baseClassName)
+              ? 'praxis-tailwind-display-parity'
+              : registerTailwindDisplayBaseElement(baseClassName)
+            : registerTailwindDisplayTag(tag),
           (element) => {
             const props = element as HTMLElement &
               AnyRecord & {
@@ -413,7 +445,8 @@ tailwindDisplayParitySuite({
     const snapshots: string[] = []
     for (const step of steps) {
       await update(el, (element) => {
-        const props = element as HTMLElement & AnyRecord & { layout?: string | undefined; praxisClass: string }
+        const props = element as HTMLElement &
+          AnyRecord & { layout?: string | undefined; praxisClass: string }
         iterate.forEach(
           ['flex', 'inline-flex', 'grid', 'inline-grid', 'block', 'inline', 'hidden'],
           (key) => {

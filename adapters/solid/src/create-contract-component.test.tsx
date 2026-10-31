@@ -590,9 +590,9 @@ describe('extracted prop type — extraction outside JSX', () => {
 
 tailwindDisplayParitySuite({
   renderers: {
-    props: ({ displayProps, layout, baseClassName, variantProps, className }) => {
+    props: ({ tag = 'div', displayProps, layout, baseClassName, variantProps, className }) => {
       const Box = createContractComponent({
-        tag: 'div',
+        tag,
         styling: {
           base: baseClassName ?? 'base',
           plugin: createTailwindPipeline,
@@ -607,11 +607,14 @@ tailwindDisplayParitySuite({
         class: className,
       } as AnyRecord
       const { container } = solidRender(() => <Box {...props} />)
-      return container.querySelector('div')!.className
+      return container.querySelector(tag)!.className
     },
   },
   reactivity: async (steps) => {
-    const Box = createContractComponent({ tag: 'div', styling: { base: 'base', plugin: createTailwindPipeline } })
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
     const [props, setProps] = createSignal<AnyRecord>({})
     const { container, unmount } = solidRender(() => <Box {...props()} />)
     const snapshots: string[] = []
