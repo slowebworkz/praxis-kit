@@ -8,6 +8,9 @@ import {
   TAILWIND_DISPLAY_PARITY_COMPOUNDS,
   TAILWIND_DISPLAY_PARITY_VARIANTS,
   tailwindDisplayParitySuite,
+  createComposeConflictFixture,
+  TAILWIND_COMPOSE_CONFLICT_COMPONENT,
+  tailwindComposePluginParitySuite,
 } from '@praxis-kit/adapter-utils/testing'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
@@ -624,5 +627,58 @@ tailwindDisplayParitySuite({
     }
     unmount()
     return snapshots
+  },
+})
+
+tailwindComposePluginParitySuite({
+  renderPartnerPlugin: () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4 rounded', plugin: createTailwindPipeline },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { allProps: true, with: Surface },
+      styling: { base: 'border' },
+    })
+    const { container } = solidRender(() => <Card {...({ flex: true } as AnyRecord)} />)
+    const element = container.querySelector('div')!
+    return { className: element.className, flexAttribute: element.getAttribute('flex') }
+  },
+  renderPrimaryWins: () => {
+    const fixture = createComposeConflictFixture()
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const Card = createContractComponent({
+      tag: 'div',
+      name: TAILWIND_COMPOSE_CONFLICT_COMPONENT,
+      enforcement: { diagnostics: fixture.diagnostics },
+      compose: { allProps: true, with: Surface },
+      styling: { base: 'primary-base', plugin: fixture.primaryPlugin },
+    })
+    fixture.afterComposition()
+    const { container } = solidRender(() => <Card />)
+    const element = container.querySelector('div')!
+    return fixture.result({
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    })
+  },
+  renderOwnedDefault: () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: createTailwindPipeline },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { allProps: true, with: Surface, defaults: { flex: true } as never },
+      styling: { base: 'primary-base' },
+    })
+    const { container } = solidRender(() => <Card />)
+    const element = container.querySelector('div')!
+    return { className: element.className, flexAttribute: element.getAttribute('flex') }
   },
 })

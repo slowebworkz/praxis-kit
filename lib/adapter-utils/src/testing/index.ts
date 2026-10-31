@@ -30,3 +30,14 @@ export {
   TAILWIND_DISPLAY_PARITY_VARIANTS,
   tailwindDisplayParitySuite,
 } from './tailwind-display-parity'
+
+export type {
+  TailwindComposeParityAdapter,
+  TailwindComposePrimaryWinsResult,
+  TailwindComposeRenderResult,
+} from './tailwind-compose-plugin-parity'
+export {
+  createComposeConflictFixture,
+  TAILWIND_COMPOSE_CONFLICT_COMPONENT,
+  tailwindComposePluginParitySuite,
+} from './tailwind-compose-plugin-parity'

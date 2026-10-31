@@ -257,7 +257,9 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
             expect(tokens).not.toContain('grid-cols-3')
             // Only the void-element layout warning is under test; element adapters may log unrelated
             // contract warnings (e.g. Lit's marker nodes inside a void tag).
-            expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('can never have children'))
+            expect(warn).not.toHaveBeenCalledWith(
+              expect.stringContaining('can never have children'),
+            )
           } finally {
             warn.mockRestore()
           }

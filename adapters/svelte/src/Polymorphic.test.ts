@@ -2,6 +2,13 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { render, cleanup } from '@testing-library/svelte'
 import { createRawSnippet } from 'svelte'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
+import {
+  createComposeConflictFixture,
+  TAILWIND_COMPOSE_CONFLICT_COMPONENT,
+  tailwindComposePluginParitySuite,
+} from '@praxis-kit/adapter-utils/testing'
+
 import { silentDiagnostics, throwDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
 import Polymorphic from './Polymorphic.svelte'
 import InnerButton from './component-reference-as.test-host.svelte'
@@ -690,4 +697,57 @@ describe('Polymorphic (Svelte adapter)', () => {
       expect(container.querySelector('button')).toBeNull()
     })
   })
+})
+
+tailwindComposePluginParitySuite({
+  renderPartnerPlugin: () => {
+    const surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4 rounded', plugin: createTailwindPipeline },
+    })
+    const card = createContractComponent({
+      tag: 'div',
+      compose: { allProps: true, with: surface },
+      styling: { base: 'border' },
+    })
+    const { container } = render(Polymorphic, { bundle: card, flex: true })
+    const element = container.querySelector('div')!
+    return { className: element.className, flexAttribute: element.getAttribute('flex') }
+  },
+  renderPrimaryWins: () => {
+    const fixture = createComposeConflictFixture()
+    const surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const card = createContractComponent({
+      tag: 'div',
+      name: TAILWIND_COMPOSE_CONFLICT_COMPONENT,
+      enforcement: { diagnostics: fixture.diagnostics },
+      compose: { allProps: true, with: surface },
+      styling: { base: 'primary-base', plugin: fixture.primaryPlugin },
+    })
+    fixture.afterComposition()
+    const { container } = render(Polymorphic, { bundle: card })
+    const element = container.querySelector('div')!
+    return fixture.result({
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    })
+  },
+  renderOwnedDefault: () => {
+    const surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: createTailwindPipeline },
+    })
+    const card = createContractComponent({
+      tag: 'div',
+      compose: { allProps: true, with: surface, defaults: { flex: true } as never },
+      styling: { base: 'primary-base' },
+    })
+    const { container } = render(Polymorphic, { bundle: card })
+    const element = container.querySelector('div')!
+    return { className: element.className, flexAttribute: element.getAttribute('flex') }
+  },
 })
