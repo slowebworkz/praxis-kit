@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import type { ConformanceAdapter, ConformanceComponent } from './types'
-import { silentDiagnostics } from '@praxis-kit/diagnostics'
+import { expectClassNames, silentCreate } from './helpers'
+
+// How many times `token` appears as a whole word in a class string.
+const occurrences = (className: string, token: string): number =>
+  (className.match(new RegExp(`\\b${token}\\b`, 'g')) ?? []).length
 
 /**
  * Performance conformance suite.
@@ -17,33 +21,46 @@ import { silentDiagnostics } from '@praxis-kit/diagnostics'
 export function conformancePerformanceSuite<C extends ConformanceComponent = ConformanceComponent>(
   adapter: ConformanceAdapter<C>,
 ): void {
+  // These cases only inspect rendered classes, so diagnostics are silenced throughout.
+  const create = silentCreate(adapter)
+
+  // Shared by the two compound-variant cases: `size: lg` + `intent: primary` adds `compound-cls`.
+  const createCompoundBox = () =>
+    create({
+      styling: {
+        base: 'base',
+        variants: {
+          size: { sm: 'text-sm', lg: 'text-lg' },
+          intent: { primary: 'bg-blue', ghost: 'bg-transparent' },
+        },
+        compounds: [{ size: 'lg', intent: 'primary', class: 'compound-cls' }],
+      },
+    })
+
   describe('conformance — deterministic class generation', () => {
     // ── Same props → stable output ──────────────────────────────────────────
 
     it('repeated renders with identical props produce the same className', () => {
-      const Box = adapter.createComponent({
+      const Box = create({
         styling: {
           base: 'box-base',
           variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
           defaults: { size: 'sm' },
         },
-        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const result = adapter.render(Box, { size: 'lg' })
       const first = result.element.className
 
-      result.rerender({ size: 'lg' })
-      expect(result.element.className).toBe(first)
-
-      result.rerender({ size: 'lg' })
-      expect(result.element.className).toBe(first)
+      for (let i = 0; i < 2; i++) {
+        result.rerender({ size: 'lg' })
+        expect(result.element.className).toBe(first)
+      }
     })
 
     it('repeated renders without props produce the same className', () => {
-      const Box = adapter.createComponent({
+      const Box = create({
         styling: { base: 'base', variants: { size: { sm: 'text-sm' } }, defaults: { size: 'sm' } },
-        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const result = adapter.render(Box)
@@ -56,10 +73,7 @@ export function conformancePerformanceSuite<C extends ConformanceComponent = Con
     // ── Variant changes produce different output ──────────────────────────────
 
     it('different variant values produce different className', () => {
-      const Box = adapter.createComponent({
-        styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-        enforcement: { diagnostics: silentDiagnostics },
-      })
+      const Box = create({ styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } } })
 
       const result = adapter.render(Box, { size: 'sm' })
       const small = result.element.className
@@ -68,114 +82,88 @@ export function conformancePerformanceSuite<C extends ConformanceComponent = Con
       const large = result.element.className
 
       expect(small).not.toBe(large)
-      expect(small).toContain('text-sm')
-      expect(large).toContain('text-lg')
+      expectClassNames(small, { has: ['text-sm'] })
+      expectClassNames(large, { has: ['text-lg'] })
     })
 
     // ── Base class stability ───────────────────────────────────────────────────
 
     it('base class is always present after multiple variant changes', () => {
-      const Box = adapter.createComponent({
+      const Box = create({
         styling: {
           base: 'base-cls',
           variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
         },
-        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const result = adapter.render(Box, { size: 'sm' })
-      expect(result.element.className).toContain('base-cls')
+      expectClassNames(result.element.className, { has: ['base-cls'] })
 
-      result.rerender({ size: 'lg' })
-      expect(result.element.className).toContain('base-cls')
-
-      result.rerender({ size: 'sm' })
-      expect(result.element.className).toContain('base-cls')
+      for (const size of ['lg', 'sm']) {
+        result.rerender({ size })
+        expectClassNames(result.element.className, { has: ['base-cls'] })
+      }
     })
 
     // ── Interleaved renders don't cross-contaminate ───────────────────────────
 
     it('interleaved renders of two components are independent', () => {
-      const Box = adapter.createComponent({
+      const Box = create({
         styling: { base: 'box', variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-        enforcement: { diagnostics: silentDiagnostics },
       })
-      const Button = adapter.createComponent({
+      const Button = create({
         styling: { base: 'btn', variants: { intent: { primary: 'btn-primary' } } },
-        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const boxResult = adapter.render(Box, { size: 'sm' })
       const btnResult = adapter.render(Button, { intent: 'primary' })
 
-      expect(boxResult.element.className).toContain('box')
-      expect(boxResult.element.className).toContain('text-sm')
-      expect(btnResult.element.className).toContain('btn')
-      expect(btnResult.element.className).toContain('btn-primary')
+      expectClassNames(boxResult.element.className, { has: ['box', 'text-sm'] })
+      expectClassNames(btnResult.element.className, { has: ['btn', 'btn-primary'] })
 
       boxResult.rerender({ size: 'lg' })
 
       // Button must be unaffected by Box re-render
-      expect(btnResult.element.className).toContain('btn')
-      expect(btnResult.element.className).toContain('btn-primary')
-      expect(btnResult.element.className).not.toContain('text-lg')
+      expectClassNames(btnResult.element.className, {
+        has: ['btn', 'btn-primary'],
+        lacks: ['text-lg'],
+      })
     })
 
     // ── Compound variant idempotency and activation/deactivation ─────────────
 
     it('compound variant output is stable across repeated renders', () => {
-      const Box = adapter.createComponent({
-        styling: {
-          base: 'base',
-          variants: {
-            size: { sm: 'text-sm', lg: 'text-lg' },
-            intent: { primary: 'bg-blue', ghost: 'bg-transparent' },
-          },
-          compounds: [{ size: 'lg', intent: 'primary', class: 'compound-cls' }],
-        },
-        enforcement: { diagnostics: silentDiagnostics },
-      })
+      const Box = createCompoundBox()
 
       const result = adapter.render(Box, { size: 'lg', intent: 'primary' })
       const first = result.element.className
-      expect(first).toContain('compound-cls')
+      expectClassNames(first, { has: ['compound-cls'] })
 
       result.rerender({ size: 'lg', intent: 'primary' })
       expect(result.element.className).toBe(first)
     })
 
     it('compound class appears and disappears correctly across re-renders', () => {
-      const Box = adapter.createComponent({
-        styling: {
-          base: 'base',
-          variants: {
-            size: { sm: 'text-sm', lg: 'text-lg' },
-            intent: { primary: 'bg-blue', ghost: 'bg-transparent' },
-          },
-          compounds: [{ size: 'lg', intent: 'primary', class: 'compound-cls' }],
-        },
-        enforcement: { diagnostics: silentDiagnostics },
-      })
+      const Box = createCompoundBox()
 
       const result = adapter.render(Box, { size: 'lg', intent: 'primary' })
-      expect(result.element.className).toContain('compound-cls')
+      expectClassNames(result.element.className, { has: ['compound-cls'] })
 
       result.rerender({ size: 'lg', intent: 'ghost' })
-      expect(result.element.className).not.toContain('compound-cls')
+      expectClassNames(result.element.className, { lacks: ['compound-cls'] })
 
       result.rerender({ size: 'lg', intent: 'primary' })
-      expect(result.element.className).toContain('compound-cls')
+      expectClassNames(result.element.className, { has: ['compound-cls'] })
     })
 
     // ── Class duplication ─────────────────────────────────────────────────────
 
     it('repeated re-renders do not accumulate duplicate classes', () => {
-      const Box = adapter.createComponent({
+      const Box = create({
         styling: {
           base: 'base',
           variants: { size: { lg: 'text-lg' } },
         },
-        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const result = adapter.render(Box, { size: 'lg' })
@@ -183,50 +171,45 @@ export function conformancePerformanceSuite<C extends ConformanceComponent = Con
       result.rerender({ size: 'lg' })
 
       const cls = result.element.className
-      expect((cls.match(/\btext-lg\b/g) ?? []).length).toBe(1)
-      expect((cls.match(/\bbase\b/g) ?? []).length).toBe(1)
+      expect(occurrences(cls, 'text-lg')).toBe(1)
+      expect(occurrences(cls, 'base')).toBe(1)
     })
 
     // ── Multiple instances of the same component ──────────────────────────────
 
     it('two instances of the same component are independent', () => {
-      const Box = adapter.createComponent({
+      const Box = create({
         styling: { base: 'box', variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const a = adapter.render(Box, { size: 'sm' })
       const b = adapter.render(Box, { size: 'lg' })
 
-      expect(a.element.className).toContain('text-sm')
-      expect(a.element.className).not.toContain('text-lg')
-      expect(b.element.className).toContain('text-lg')
-      expect(b.element.className).not.toContain('text-sm')
+      expectClassNames(a.element.className, { has: ['text-sm'], lacks: ['text-lg'] })
+      expectClassNames(b.element.className, { has: ['text-lg'], lacks: ['text-sm'] })
 
       a.rerender({ size: 'lg' })
 
-      expect(a.element.className).toContain('text-lg')
+      expectClassNames(a.element.className, { has: ['text-lg'] })
       // b must be unaffected
-      expect(b.element.className).toContain('text-lg')
-      expect(b.element.className).not.toContain('text-sm')
+      expectClassNames(b.element.className, { has: ['text-lg'], lacks: ['text-sm'] })
     })
 
     // ── Undefined vs omitted props ────────────────────────────────────────────
 
     it('omitted variant prop and undefined variant prop produce the same default output', () => {
-      const Box = adapter.createComponent({
+      const Box = create({
         styling: {
           variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
           defaults: { size: 'sm' },
         },
-        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const withUndefined = adapter.render(Box, { size: undefined }).element.className
       const withOmitted = adapter.render(Box).element.className
 
       expect(withUndefined).toBe(withOmitted)
-      expect(withOmitted).toContain('text-sm')
+      expectClassNames(withOmitted, { has: ['text-sm'] })
     })
   })
 }

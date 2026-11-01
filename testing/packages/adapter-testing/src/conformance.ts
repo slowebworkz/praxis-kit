@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import type { MockInstance } from 'vitest'
 import { createClassPipeline } from '@praxis-kit/core'
 import type { AnyRecord, ClassPluginFactory } from '@praxis-kit/core'
 import type { ConformanceAdapter, ConformanceComponent, ConformanceFactoryOptions } from './types'
+import { expectClassNames } from './helpers'
 import { throwDiagnostics, warnDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
 import { dynamic } from '@praxis-kit/primitive'
 export type {
@@ -25,6 +27,21 @@ const compositionOwnedPropPlugin: ClassPluginFactory<{ flex?: boolean }> = (opti
       const classes = resolveClasses(tag, props, className, recipe) ?? ''
       return props.flex === true ? [classes, 'plugin-flex'].filter(Boolean).join(' ') : classes
     },
+  }
+}
+
+const tagOf = (element: Element): string => element.tagName.toLowerCase()
+
+// A child-rule matcher that accepts every child, so a rule exercises cardinality alone.
+const matchAnyChild = (c: unknown): c is unknown => !!c || !c
+
+// Runs `run` with `console.warn` silenced and always restores it, even if an assertion throws.
+function withWarnSpy(run: (warnSpy: MockInstance<typeof console.warn>) => void): void {
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  try {
+    run(warnSpy)
+  } finally {
+    warnSpy.mockRestore()
   }
 }
 
@@ -65,19 +82,19 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       it('renders default tag (div)', () => {
         const Box = adapter.createComponent({})
         const { element } = adapter.render(Box)
-        expect(element.tagName.toLowerCase()).toBe('div')
+        expect(tagOf(element)).toBe('div')
       })
 
       it('renders a different tag via the as prop', () => {
         const Box = adapter.createComponent({})
         const { element } = adapter.render(Box, { as: 'section' })
-        expect(element.tagName.toLowerCase()).toBe('section')
+        expect(tagOf(element)).toBe('section')
       })
 
       it('respects a custom tag option', () => {
         const Box = adapter.createComponent({ tag: 'span' })
         const { element } = adapter.render(Box)
-        expect(element.tagName.toLowerCase()).toBe('span')
+        expect(tagOf(element)).toBe('span')
       })
     })
 
@@ -93,8 +110,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
     it('merges caller class with base class', () => {
       const Box = adapter.createComponent({ styling: { base: 'base' } })
       const { element } = adapter.render(Box, { class: 'extra' })
-      expect(element.className).toContain('base')
-      expect(element.className).toContain('extra')
+      expectClassNames(element.className, { has: ['base', 'extra'] })
     })
   })
 
@@ -239,7 +255,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         const Box = adapter.createComponent({})
         adapter.render(Box, { as: 'button', ref })
         expect(ref.current).toBeInstanceOf(HTMLElement)
-        expect(ref.current!.tagName.toLowerCase()).toBe('button')
+        expect(tagOf(ref.current!)).toBe('button')
       })
 
       if (caps.asChild)
@@ -248,7 +264,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           const Box = adapter.createComponent({})
           adapter.render(Box, { asChild: true, ref }, [{ tag: 'button' }])
           expect(ref.current).toBeInstanceOf(HTMLElement)
-          expect(ref.current!.tagName.toLowerCase()).toBe('button')
+          expect(tagOf(ref.current!)).toBe('button')
         })
     })
   }
@@ -270,7 +286,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       it('renders the child element type instead of the default tag', () => {
         const Box = adapter.createComponent({})
         const { element } = adapter.render(Box, { asChild: true }, [{ tag: 'button' }])
-        expect(element.tagName.toLowerCase()).toBe('button')
+        expect(tagOf(element)).toBe('button')
       })
 
       it('merges base class onto the asChild element', () => {
@@ -303,9 +319,8 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         const { element } = adapter.render(BoxA, { asChild: true }, [
           { component: BoxB, props: { asChild: true }, children: [{ tag: 'button' }] },
         ])
-        expect(element.className).toContain('class-a')
-        expect(element.className).toContain('class-b')
-        expect(element.tagName.toLowerCase()).toBe('button')
+        expectClassNames(element.className, { has: ['class-a', 'class-b'] })
+        expect(tagOf(element)).toBe('button')
       })
     })
 
@@ -328,14 +343,12 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           styling: { base: 'class-b' },
         })
         const { element } = adapter.render(BoxB)
-        expect(element.className).toContain('class-a')
-        expect(element.className).toContain('class-b')
+        expectClassNames(element.className, { has: ['class-a', 'class-b'] })
       })
 
       if (caps.tagPolymorphism) {
         it("uses the composing parent's default tag even when the partner disallows it", () => {
-          const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-          try {
+          withWarnSpy((warnSpy) => {
             const Surface = adapter.createComponent({
               tag: 'nav',
               enforcement: {
@@ -355,18 +368,15 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
             })
 
             const { element } = adapter.render(Card)
-            expect(element.tagName.toLowerCase()).toBe('div')
+            expect(tagOf(element)).toBe('div')
             expect(warnSpy).not.toHaveBeenCalled()
-          } finally {
-            warnSpy.mockRestore()
-          }
+          })
         })
 
         it.each([false, true])(
           'validates an explicit as override against the parent contract (allProps=%s)',
           (allProps) => {
-            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-            try {
+            withWarnSpy((warnSpy) => {
               const Surface = adapter.createComponent({
                 tag: 'section',
                 enforcement: {
@@ -384,18 +394,15 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
               })
 
               const { element } = adapter.render(Card, { as: 'article' })
-              expect(element.tagName.toLowerCase()).toBe('article')
+              expect(tagOf(element)).toBe('article')
               expect(element.hasAttribute('as')).toBe(false)
               expect(warnSpy).not.toHaveBeenCalled()
-            } finally {
-              warnSpy.mockRestore()
-            }
+            })
           },
         )
 
         it('reports an explicit as value allowed only by the composed partner', () => {
-          const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-          try {
+          withWarnSpy((warnSpy) => {
             const Surface = adapter.createComponent({
               tag: 'section',
               enforcement: {
@@ -417,9 +424,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
             expect(warnSpy.mock.calls.flat().join(' ')).toMatch(
               /COMP1009.*"as" prop received "main"/,
             )
-          } finally {
-            warnSpy.mockRestore()
-          }
+          })
         })
       }
 
@@ -430,7 +435,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           compose: { with: Surface, allProps: true },
         })
         const { element } = adapter.render(Card, { as: 'section', 'data-testid': 'composed' })
-        expect(element.tagName.toLowerCase()).toBe('section')
+        expect(tagOf(element)).toBe('section')
         expect(element.getAttribute('data-testid')).toBe('composed')
         expect(element.querySelector('[data-testid="composed"]')).toBeNull()
       })
@@ -450,9 +455,8 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
             styling: { base: 'class-b' },
           })
           const { element } = adapter.render(BoxB, { asChild: true }, [{ tag: 'a' }])
-          expect(element.tagName.toLowerCase()).toBe('a')
-          expect(element.className).toContain('class-b')
-          expect(element.className).not.toContain('class-a')
+          expect(tagOf(element)).toBe('a')
+          expectClassNames(element.className, { has: ['class-b'], lacks: ['class-a'] })
         })
 
         if (caps.tagPolymorphism)
@@ -462,8 +466,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           ])(
             'explicit asChild delegates $mode element selection to the child contract',
             ({ childProps, expectedTag }) => {
-              const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-              try {
+              withWarnSpy((warnSpy) => {
                 const Surface = adapter.createComponent({
                   tag: 'section',
                   enforcement: {
@@ -484,11 +487,9 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
                 const { element } = adapter.render(Card, { asChild: true }, [
                   { component: Surface, props: childProps },
                 ])
-                expect(element.tagName.toLowerCase()).toBe(expectedTag)
+                expect(tagOf(element)).toBe(expectedTag)
                 expect(warnSpy).not.toHaveBeenCalled()
-              } finally {
-                warnSpy.mockRestore()
-              }
+              })
             },
           )
       }
@@ -500,7 +501,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           const BoxB = adapter.createComponent({ tag: 'button', compose: { with: BoxA } })
           adapter.render(BoxB, { ref })
           expect(ref.current).toBeInstanceOf(HTMLElement)
-          expect(ref.current!.tagName.toLowerCase()).toBe('button')
+          expect(tagOf(ref.current!)).toBe('button')
         })
 
       it('without allProps, a variant the partner declares is still selected on the composing component', () => {
@@ -537,8 +538,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         })
 
         const { element } = adapter.render(BoxB, { intent: 'ghost', size: 'lg' })
-        expect(element.className).toContain('parent-compound-ghost-lg')
-        expect(element.className).toContain('child-base')
+        expectClassNames(element.className, { has: ['parent-compound-ghost-lg', 'child-base'] })
       })
 
       it('resolves child compound variants from compose.defaults', () => {
@@ -633,8 +633,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           compose: { with: BoxA, defaults: { intent: 'ghost', size: 'lg' } },
         })
         const { element } = adapter.render(BoxB)
-        expect(element.className).toContain('intent-ghost')
-        expect(element.className).toContain('size-lg')
+        expectClassNames(element.className, { has: ['intent-ghost', 'size-lg'] })
       })
 
       it('allows partial compose.defaults without defaulting unspecified variants', () => {
@@ -650,9 +649,10 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           compose: { with: BoxA, defaults: { intent: 'ghost' } },
         })
         const { element } = adapter.render(BoxB)
-        expect(element.className).toContain('intent-ghost')
-        expect(element.className).not.toContain('size-sm')
-        expect(element.className).not.toContain('size-lg')
+        expectClassNames(element.className, {
+          has: ['intent-ghost'],
+          lacks: ['size-sm', 'size-lg'],
+        })
       })
 
       it('forwards allProps over compose.defaults when both specify the same prop', () => {
@@ -663,8 +663,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           compose: { with: BoxA, allProps: true, defaults: { intent: 'ghost' } },
         })
         const { element } = adapter.render(BoxB, { intent: 'solid' })
-        expect(element.className).toContain('intent-solid')
-        expect(element.className).not.toContain('intent-ghost')
+        expectClassNames(element.className, { has: ['intent-solid'], lacks: ['intent-ghost'] })
       })
 
       it('with allProps: true, explicit asChild/ref/children still win over forwarded props', () => {
@@ -674,7 +673,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           compose: { with: BoxA, allProps: true },
         })
         const { element } = adapter.render(BoxB, { 'data-testid': 'inner' })
-        expect(element.tagName.toLowerCase()).toBe('button')
+        expect(tagOf(element)).toBe('button')
         expect(element.getAttribute('data-testid')).toBe('inner')
       })
 
@@ -694,22 +693,18 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       })
 
       it('does not warn for an empty compose configuration', () => {
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-        try {
+        withWarnSpy((warnSpy) => {
           adapter.createComponent({
             enforcement: { diagnostics: warnDiagnostics },
             // Empty compose is inert and should not trigger incomplete-config diagnostics.
             compose: {} as unknown as NonNullable<ConformanceFactoryOptions['compose']>,
           })
           expect(warnSpy).not.toHaveBeenCalled()
-        } finally {
-          warnSpy.mockRestore()
-        }
+        })
       })
 
       it('warns at construction when compose options are supplied without "with"', () => {
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-        try {
+        withWarnSpy((warnSpy) => {
           adapter.createComponent({
             enforcement: { diagnostics: warnDiagnostics },
             // Deliberately incomplete: the type requires `with`, the runtime diagnostic covers JS callers.
@@ -719,14 +714,11 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           })
           const output = warnSpy.mock.calls.flat().join(' ')
           expect(output).toContain('compose.allProps has no effect without compose.with')
-        } finally {
-          warnSpy.mockRestore()
-        }
+        })
       })
 
       it('diagnoses compose.defaults even when the supplied defaults object is empty', () => {
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-        try {
+        withWarnSpy((warnSpy) => {
           adapter.createComponent({
             enforcement: { diagnostics: warnDiagnostics },
             compose: { defaults: {} } as unknown as NonNullable<
@@ -735,14 +727,11 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           })
           const output = warnSpy.mock.calls.flat().join(' ')
           expect(output).toContain('compose.defaults has no effect without compose.with')
-        } finally {
-          warnSpy.mockRestore()
-        }
+        })
       })
 
       it('reports both composition-only options in one diagnostic when with is missing', () => {
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-        try {
+        withWarnSpy((warnSpy) => {
           adapter.createComponent({
             enforcement: { diagnostics: warnDiagnostics },
             compose: { allProps: false, defaults: {} } as unknown as NonNullable<
@@ -754,9 +743,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           expect(output).toContain(
             'compose.allProps and compose.defaults have no effect without compose.with',
           )
-        } finally {
-          warnSpy.mockRestore()
-        }
+        })
       })
     })
 
@@ -793,13 +780,16 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
             [{ tag: 'button' }],
           )
 
-          expect(element.tagName.toLowerCase()).toBe('button')
-          expect(element.className).toContain('primary-base')
-          expect(element.className).toContain('primary-size-lg')
-          expect(element.className).not.toContain('partner-base')
-          expect(element.className).not.toContain('partner-intent-ghost')
-          expect(element.className).not.toContain('partner-tone-quiet')
-          expect(element.className).not.toContain('partner-tone-loud')
+          expect(tagOf(element)).toBe('button')
+          expectClassNames(element.className, {
+            has: ['primary-base', 'primary-size-lg'],
+            lacks: [
+              'partner-base',
+              'partner-intent-ghost',
+              'partner-tone-quiet',
+              'partner-tone-loud',
+            ],
+          })
         })
 
       it('combines partner and primary classes in the specified contribution order', () => {
@@ -855,9 +845,8 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
 
         const { element } = adapter.render(Card)
 
-        expect(element.tagName.toLowerCase()).toBe('section')
-        expect(element.className).toContain('partner-section')
-        expect(element.className).toContain('primary-section')
+        expect(tagOf(element)).toBe('section')
+        expectClassNames(element.className, { has: ['partner-section', 'primary-section'] })
       })
 
       it('uses primary defaults over compose.defaults for compatible shared variants', () => {
@@ -875,10 +864,10 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         })
 
         const { element } = adapter.render(Card)
-        expect(element.className).toContain('partner-solid')
-        expect(element.className).toContain('primary-solid')
-        expect(element.className).not.toContain('partner-ghost')
-        expect(element.className).not.toContain('primary-ghost')
+        expectClassNames(element.className, {
+          has: ['partner-solid', 'primary-solid'],
+          lacks: ['partner-ghost', 'primary-ghost'],
+        })
       })
 
       it('resolves a partner-only recipe while a handler forwarded through allProps fires once', () => {
@@ -903,9 +892,10 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         })
         element.click()
 
-        expect(element.className).toContain('partner-loud')
-        expect(element.className).toContain('primary-base')
-        expect(element.className).not.toContain('partner-quiet')
+        expectClassNames(element.className, {
+          has: ['partner-loud', 'primary-base'],
+          lacks: ['partner-quiet'],
+        })
         expect(calls).toBe(1)
       })
 
@@ -933,12 +923,10 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         const { element } = adapter.render(Card, { recipe: 'emphasis' })
 
         // The primary recipe wins the shared `tone` key; unique recipe keys still merge.
-        expect(element.className).toContain('partner-loud')
-        expect(element.className).toContain('primary-loud')
-        expect(element.className).toContain('partner-lg')
-        expect(element.className).toContain('primary-compact')
-        expect(element.className).not.toContain('partner-quiet')
-        expect(element.className).not.toContain('primary-quiet')
+        expectClassNames(element.className, {
+          has: ['partner-loud', 'primary-loud', 'partner-lg', 'primary-compact'],
+          lacks: ['partner-quiet', 'primary-quiet'],
+        })
       })
 
       it('resolves a partner-only recipe without allProps when its variant is undefined', () => {
@@ -954,9 +942,10 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         })
 
         const { element } = adapter.render(Card, { recipe: 'emphasis', tone: undefined })
-        expect(element.className).toContain('partner-loud')
-        expect(element.className).toContain('primary-base')
-        expect(element.className).not.toContain('partner-quiet')
+        expectClassNames(element.className, {
+          has: ['partner-loud', 'primary-base'],
+          lacks: ['partner-quiet'],
+        })
       })
 
       it('follows the documented precedence: explicit > recipe > primary default > compose.defaults > partner default', () => {
@@ -989,26 +978,23 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         expect(classes(card({ tone: 'loud' }))).toContain('partner-loud')
         // 3. a primary default beats compose.defaults
         const primaryDefault = classes(card({ tone: 'loud' }, 'quiet'))
-        expect(primaryDefault).toContain('partner-quiet')
-        expect(primaryDefault).toContain('primary-quiet')
-        expect(primaryDefault).not.toContain('loud')
+        expectClassNames(primaryDefault, {
+          has: ['partner-quiet', 'primary-quiet'],
+          lacks: ['loud'],
+        })
         // 2. a recipe beats a primary default
         const recipe = classes(card({ tone: 'quiet' }, 'quiet'), { recipe: 'emphasis' })
-        expect(recipe).toContain('partner-loud')
-        expect(recipe).not.toContain('partner-quiet')
+        expectClassNames(recipe, { has: ['partner-loud'], lacks: ['partner-quiet'] })
         // 1. an explicit selection beats a recipe
         const explicit = classes(card({ tone: 'loud' }, 'loud'), {
           recipe: 'emphasis',
           tone: 'quiet',
         })
-        expect(explicit).toContain('partner-quiet')
-        expect(explicit).toContain('primary-quiet')
-        expect(explicit).not.toContain('loud')
+        expectClassNames(explicit, { has: ['partner-quiet', 'primary-quiet'], lacks: ['loud'] })
       })
 
       it('uses the primary definition for incompatible variants and diagnoses once at construction', () => {
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-        try {
+        withWarnSpy((warnSpy) => {
           const Surface = adapter.createComponent({
             styling: {
               variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
@@ -1027,12 +1013,9 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           expect(constructionWarnings).toContain('Incompatible composed variant "tone"')
 
           const { element } = adapter.render(Card)
-          expect(element.className).toContain('primary-bold')
-          expect(element.className).not.toContain('partner-')
+          expectClassNames(element.className, { has: ['primary-bold'], lacks: ['partner-'] })
           expect(warnSpy).toHaveBeenCalledTimes(1)
-        } finally {
-          warnSpy.mockRestore()
-        }
+        })
       })
 
       it('keeps the primary default when a partner recipe selects a value outside the primary variant definition', () => {
@@ -1052,8 +1035,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         })
 
         const { element } = adapter.render(Card, { recipe: 'emphasis' })
-        expect(element.className).toContain('primary-bold')
-        expect(element.className).not.toContain('partner-')
+        expectClassNames(element.className, { has: ['primary-bold'], lacks: ['partner-'] })
       })
 
       it('does not let an unsupported value activate a partner compound on an incompatible variant', () => {
@@ -1107,13 +1089,16 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         })
 
         const supported = adapter.render(Card, { tone: 'calm', size: 'lg' })
-        expect(supported.element.className).toContain('partner-compound-supported-array')
-        expect(supported.element.className).not.toContain('partner-compound-unsupported-array')
+        expectClassNames(supported.element.className, {
+          has: ['partner-compound-supported-array'],
+          lacks: ['partner-compound-unsupported-array'],
+        })
         supported.unmount()
 
         const unsupported = adapter.render(Card, { tone: 'loud', size: 'lg' })
-        expect(unsupported.element.className).not.toContain('partner-compound-supported-array')
-        expect(unsupported.element.className).not.toContain('partner-compound-unsupported-array')
+        expectClassNames(unsupported.element.className, {
+          lacks: ['partner-compound-supported-array', 'partner-compound-unsupported-array'],
+        })
       })
 
       if (adapter.createExternalPartner)
@@ -1127,9 +1112,9 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
           const { element } = adapter.render(Card, { size: 'lg', class: 'caller-class' })
 
           expect(element).toBeTruthy()
-          expect(element.className).toContain('primary-base')
-          expect(element.className).toContain('primary-size-lg')
-          expect(element.className).toContain('caller-class')
+          expectClassNames(element.className, {
+            has: ['primary-base', 'primary-size-lg', 'caller-class'],
+          })
         })
 
       it('keeps ordinary styling when allProps is supplied without a composition target', () => {
@@ -1146,9 +1131,10 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
 
         const { element } = adapter.render(Box, { tone: 'loud' })
 
-        expect(element.className).toContain('primary-base')
-        expect(element.className).toContain('primary-loud')
-        expect(element.className).not.toContain('primary-quiet')
+        expectClassNames(element.className, {
+          has: ['primary-base', 'primary-loud'],
+          lacks: ['primary-quiet'],
+        })
       })
 
       it('activates partner variants selected on the composing component without allProps', () => {
@@ -1164,9 +1150,9 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         })
 
         const { element } = adapter.render(Card, { intent: 'ghost', size: 'lg' })
-        expect(element.className).toContain('primary-size-lg')
-        expect(element.className).toContain('partner-intent-ghost')
-        expect(element.className).toContain('partner-compound-ghost')
+        expectClassNames(element.className, {
+          has: ['primary-size-lg', 'partner-intent-ghost', 'partner-compound-ghost'],
+        })
       })
 
       it('does not turn an unrelated, non-variant prop into a styling input', () => {
@@ -1179,8 +1165,10 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         })
 
         const { element } = adapter.render(Card, { notAVariant: 'ghost' })
-        expect(element.className).toContain('primary-base')
-        expect(element.className).not.toContain('partner-intent-ghost')
+        expectClassNames(element.className, {
+          has: ['primary-base'],
+          lacks: ['partner-intent-ghost'],
+        })
       })
 
       it.each([false, true])(
@@ -1199,9 +1187,9 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
             'data-testid': 'plugin-card',
           })
 
-          expect(element.className).toContain('partner-base')
-          expect(element.className).toContain('primary-base')
-          expect(element.className).toContain('plugin-flex')
+          expectClassNames(element.className, {
+            has: ['partner-base', 'primary-base', 'plugin-flex'],
+          })
           expect(element.getAttribute('flex')).toBeNull()
           expect(element.getAttribute('data-testid')).toBe('plugin-card')
           unmount()
@@ -1312,8 +1300,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
         },
       })
       const { element } = adapter.render(Box, { recipe: 'cta' })
-      expect(element.className).toContain('bg-blue')
-      expect(element.className).toContain('text-lg')
+      expectClassNames(element.className, { has: ['bg-blue', 'text-lg'] })
     })
   })
 
@@ -1324,9 +1311,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       const Group = adapter.createComponent({
         enforcement: {
           diagnostics: throwDiagnostics,
-          children: [
-            { name: 'Item', match: (c): c is unknown => !!c || !c, cardinality: { min: 2 } },
-          ],
+          children: [{ name: 'Item', match: matchAnyChild, cardinality: { min: 2 } }],
         },
       })
       // 1 child provided; rule requires at least 2
@@ -1337,9 +1322,7 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       const Group = adapter.createComponent({
         enforcement: {
           diagnostics: throwDiagnostics,
-          children: [
-            { name: 'Item', match: (c): c is unknown => !!c || !c, cardinality: { max: 2 } },
-          ],
+          children: [{ name: 'Item', match: matchAnyChild, cardinality: { max: 2 } }],
         },
       })
       // 3 children provided; rule allows at most 2
@@ -1349,41 +1332,41 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
     })
 
     it('warns but does not throw when warnDiagnostics', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-      const Group = adapter.createComponent({
-        enforcement: {
-          diagnostics: warnDiagnostics,
-          children: [
-            {
-              name: 'Item',
-              match: (c): c is unknown => !!c || !c,
-              cardinality: { min: 2, max: 2 },
-            },
-          ],
-        },
+      withWarnSpy((warnSpy) => {
+        const Group = adapter.createComponent({
+          enforcement: {
+            diagnostics: warnDiagnostics,
+            children: [
+              {
+                name: 'Item',
+                match: matchAnyChild,
+                cardinality: { min: 2, max: 2 },
+              },
+            ],
+          },
+        })
+        expect(() => adapter.render(Group, {}, [{ tag: 'span' }])).not.toThrow()
+        expect(warnSpy).toHaveBeenCalled()
       })
-      expect(() => adapter.render(Group, {}, [{ tag: 'span' }])).not.toThrow()
-      expect(warnSpy).toHaveBeenCalled()
-      warnSpy.mockRestore()
     })
 
     it('is silent when silentDiagnostics', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-      const Group = adapter.createComponent({
-        enforcement: {
-          diagnostics: silentDiagnostics,
-          children: [
-            {
-              name: 'Item',
-              match: (c): c is unknown => !!c || !c,
-              cardinality: { min: 2, max: 2 },
-            },
-          ],
-        },
+      withWarnSpy((warnSpy) => {
+        const Group = adapter.createComponent({
+          enforcement: {
+            diagnostics: silentDiagnostics,
+            children: [
+              {
+                name: 'Item',
+                match: matchAnyChild,
+                cardinality: { min: 2, max: 2 },
+              },
+            ],
+          },
+        })
+        expect(() => adapter.render(Group, {}, [{ tag: 'span' }])).not.toThrow()
+        expect(warnSpy).not.toHaveBeenCalled()
       })
-      expect(() => adapter.render(Group, {}, [{ tag: 'span' }])).not.toThrow()
-      expect(warnSpy).not.toHaveBeenCalled()
-      warnSpy.mockRestore()
     })
   })
 
@@ -1444,9 +1427,9 @@ export function conformanceSuite<C extends ConformanceComponent = ConformanceCom
       it('switches rendered tag on rerender with a new as prop', () => {
         const Box = adapter.createComponent({})
         const result = adapter.render(Box, { as: 'div' })
-        expect(result.element.tagName.toLowerCase()).toBe('div')
+        expect(tagOf(result.element)).toBe('div')
         result.rerender({ as: 'section' })
-        expect(result.element.tagName.toLowerCase()).toBe('section')
+        expect(tagOf(result.element)).toBe('section')
       })
   })
 }

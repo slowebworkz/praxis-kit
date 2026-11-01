@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { ConformanceAdapter, ConformanceComponent } from './types'
-import { silentDiagnostics } from '@praxis-kit/diagnostics'
+import { expectClassNames, silentCreate } from './helpers'
 
 /**
  * Isolation conformance suite.
@@ -17,60 +17,44 @@ export function conformanceIsolationSuite<C extends ConformanceComponent = Confo
   adapter: ConformanceAdapter<C>,
 ): void {
   const caps = { domPropFiltering: true, ...adapter.capabilities }
+  // These cases only inspect rendered output, so diagnostics are silenced throughout.
+  const create = silentCreate(adapter)
 
   describe('conformance — component isolation', () => {
     // ── Independent class pipelines ───────────────────────────────────────────
 
     it('two components with different base classes render independently', () => {
-      const Box = adapter.createComponent({
-        styling: { base: 'box-base' },
-        enforcement: { diagnostics: silentDiagnostics },
-      })
-      const Button = adapter.createComponent({
-        styling: { base: 'btn-base' },
-        enforcement: { diagnostics: silentDiagnostics },
-      })
+      const Box = create({ styling: { base: 'box-base' } })
+      const Button = create({ styling: { base: 'btn-base' } })
 
       const boxEl = adapter.render(Box).element
       const btnEl = adapter.render(Button).element
 
-      expect(boxEl.className).toContain('box-base')
-      expect(boxEl.className).not.toContain('btn-base')
-      expect(btnEl.className).toContain('btn-base')
-      expect(btnEl.className).not.toContain('box-base')
+      expectClassNames(boxEl.className, { has: ['box-base'], lacks: ['btn-base'] })
+      expectClassNames(btnEl.className, { has: ['btn-base'], lacks: ['box-base'] })
     })
 
     it('variant definitions on one component do not affect another', () => {
-      const Box = adapter.createComponent({
-        styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-        enforcement: { diagnostics: silentDiagnostics },
-      })
-      const Button = adapter.createComponent({
+      const Box = create({ styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } } })
+      const Button = create({
         styling: { variants: { intent: { primary: 'bg-blue', ghost: 'bg-transparent' } } },
-        enforcement: { diagnostics: silentDiagnostics },
       })
 
       const boxEl = adapter.render(Box, { size: 'lg' }).element
       const btnEl = adapter.render(Button, { intent: 'primary' }).element
 
-      expect(boxEl.className).toContain('text-lg')
-      expect(boxEl.className).not.toContain('bg-blue')
-      expect(btnEl.className).toContain('bg-blue')
-      expect(btnEl.className).not.toContain('text-lg')
+      expectClassNames(boxEl.className, { has: ['text-lg'], lacks: ['bg-blue'] })
+      expectClassNames(btnEl.className, { has: ['bg-blue'], lacks: ['text-lg'] })
     })
 
     it('default variants on one component do not apply to another', () => {
-      const Box = adapter.createComponent({
+      const Box = create({
         styling: {
           variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
           defaults: { size: 'lg' },
         },
-        enforcement: { diagnostics: silentDiagnostics },
       })
-      const Button = adapter.createComponent({
-        styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-        enforcement: { diagnostics: silentDiagnostics },
-      })
+      const Button = create({ styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } } })
 
       // Render Box twice to warm any default cache, then render Button fresh.
       adapter.render(Box)
@@ -78,21 +62,15 @@ export function conformanceIsolationSuite<C extends ConformanceComponent = Confo
       const btnEl = adapter.render(Button).element
 
       // Box has a default; Button does not — no default must leak.
-      expect(btnEl.className).not.toContain('text-lg')
-      expect(btnEl.className).not.toContain('text-sm')
+      expectClassNames(btnEl.className, { lacks: ['text-lg', 'text-sm'] })
     })
 
     // ── Independent filterProps ───────────────────────────────────────────────
 
     if (caps.domPropFiltering)
       it('filterProps on one component does not filter on another', () => {
-        const Filtered = adapter.createComponent({
-          filterProps: (key) => key === 'loading',
-          enforcement: { diagnostics: silentDiagnostics },
-        })
-        const Plain = adapter.createComponent({
-          enforcement: { diagnostics: silentDiagnostics },
-        })
+        const Filtered = create({ filterProps: (key) => key === 'loading' })
+        const Plain = create()
 
         const filteredEl = adapter.render(Filtered, { 'data-id': 'a', loading: 'true' }).element
         const plainEl = adapter.render(Plain, { 'data-id': 'b', loading: 'true' }).element
@@ -107,14 +85,8 @@ export function conformanceIsolationSuite<C extends ConformanceComponent = Confo
     // ── Independent naming ────────────────────────────────────────────────────
 
     it('displayName is independent per component', () => {
-      const Box = adapter.createComponent({
-        name: 'Box',
-        enforcement: { diagnostics: silentDiagnostics },
-      })
-      const Button = adapter.createComponent({
-        name: 'Button',
-        enforcement: { diagnostics: silentDiagnostics },
-      })
+      const Box = create({ name: 'Box' })
+      const Button = create({ name: 'Button' })
 
       expect(Box.displayName).toBe('Box')
       expect(Button.displayName).toBe('Button')
@@ -123,14 +95,10 @@ export function conformanceIsolationSuite<C extends ConformanceComponent = Confo
     // ── Re-render isolation ───────────────────────────────────────────────────
 
     it('re-rendering one component does not change the other', () => {
-      const Box = adapter.createComponent({
+      const Box = create({
         styling: { base: 'box', variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-        enforcement: { diagnostics: silentDiagnostics },
       })
-      const Button = adapter.createComponent({
-        styling: { base: 'btn' },
-        enforcement: { diagnostics: silentDiagnostics },
-      })
+      const Button = create({ styling: { base: 'btn' } })
 
       const boxResult = adapter.render(Box, { size: 'sm' })
       const btnResult = adapter.render(Button)
@@ -150,10 +118,7 @@ export function conformanceIsolationSuite<C extends ConformanceComponent = Confo
       const variants = { size: { sm: 'text-sm', lg: 'text-lg' } }
       const snapshot = JSON.stringify(variants)
 
-      adapter.createComponent({
-        styling: { variants },
-        enforcement: { diagnostics: silentDiagnostics },
-      })
+      create({ styling: { variants } })
 
       expect(JSON.stringify(variants)).toBe(snapshot)
     })
