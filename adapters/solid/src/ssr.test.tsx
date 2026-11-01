@@ -39,4 +39,7 @@ ssrConformanceSuite({
     const Comp = component
     return renderToString(() => <Comp {...(props as UnknownProps)} />)
   },
+  // `asChild` takes a render-function child here, which `ChildSpec` cannot describe (the same
+  // reason the DOM conformance adapter opts out).
+  capabilities: { asChild: false },
 })

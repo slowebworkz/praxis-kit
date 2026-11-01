@@ -27,7 +27,8 @@ ssrConformanceSuite({
 
   renderToString: (component, props = {}) => renderContractToString(component, props),
 
-  capabilities: { tagPolymorphism: false, compose: false },
+  // No `asChild` concept for custom elements.
+  capabilities: { tagPolymorphism: false, compose: false, asChild: false },
 })
 
 describe('renderContractToString — web-specific', () => {

@@ -144,4 +144,7 @@ ssrConformanceSuite<SvelteSSRComponent>({
     } as never)
     return html
   },
+  // `asChild` takes a snippet child here, which `ChildSpec` cannot describe (the same reason the
+  // DOM conformance adapter opts out).
+  capabilities: { asChild: false },
 })

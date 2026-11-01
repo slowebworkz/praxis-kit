@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { AnyRecord } from '@praxis-kit/core'
 import type {
+  ChildSpec,
   ConformanceComponent,
   ConformanceFactoryOptions,
   SsrConformanceAdapter,
@@ -21,14 +22,17 @@ const openTag = (tag: string): RegExp => new RegExp(`<${tag}[\\s>]`)
 export function ssrConformanceSuite<C extends ConformanceComponent = ConformanceComponent>(
   adapter: SsrConformanceAdapter<C>,
 ): void {
-  const caps = { tagPolymorphism: true, compose: true, ...adapter.capabilities }
+  const caps = { tagPolymorphism: true, compose: true, asChild: true, ...adapter.capabilities }
 
   // These cases only inspect the HTML, so diagnostics are silenced throughout.
   const create = silentCreate(adapter)
 
   // Create a component from `options` and render it to HTML (sync and async renderers alike).
-  const renderHtml = async (options: ConformanceFactoryOptions = {}, props?: AnyRecord) =>
-    adapter.renderToString(create(options), props)
+  const renderHtml = async (
+    options: ConformanceFactoryOptions = {},
+    props?: AnyRecord,
+    children?: ChildSpec[],
+  ) => adapter.renderToString(create(options), props, children)
 
   // ── basic rendering ─────────────────────────────────────────────────────────
 
@@ -128,6 +132,27 @@ export function ssrConformanceSuite<C extends ConformanceComponent = Conformance
           expect(html).toMatch(openTag('button'))
           expect(html).not.toMatch(openTag('nav'))
         })
+    })
+
+  // ── asChild ───────────────────────────────────────────────────────────────────
+
+  if (caps.asChild)
+    describe('ssr — asChild', () => {
+      it('asChild renders child element type, not the default tag', async () => {
+        const html = await renderHtml({ tag: 'nav' }, { asChild: true }, [
+          { tag: 'a', props: { href: '#target' } },
+        ])
+        expectContains(html, { has: ['<a ', 'href="#target"'], lacks: ['<nav'] })
+      })
+
+      it('merges slot class with child class during asChild SSR', async () => {
+        const html = await renderHtml(
+          { tag: 'div', styling: { base: 'slot-cls' } },
+          { asChild: true },
+          [{ tag: 'span', props: { class: 'child-cls' } }],
+        )
+        expectContains(html, { has: ['slot-cls', 'child-cls'] })
+      })
     })
 
   // ── prop forwarding ───────────────────────────────────────────────────────────

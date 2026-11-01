@@ -4,7 +4,7 @@ import { createElement } from 'react'
 import type { ComponentType, ReactNode } from 'react'
 import { renderToString } from 'react-dom/server'
 import { ssrConformanceSuite } from '@praxis-kit/adapter-testing'
-import type { BareFactoryOptions } from '@praxis-kit/adapter-testing'
+import type { BareFactoryOptions, ChildSpec } from '@praxis-kit/adapter-testing'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import type { UnknownProps } from '../shared'
 import { createContractComponent } from './create-contract-component'
@@ -25,42 +25,35 @@ describe('createContractComponent — SSR (react-dom/server)', () => {
     expect(ssr(Button, { 'aria-checked': 'true' })).not.toContain('aria-checked')
   })
 
-  it('asChild renders child element type, not the default tag', () => {
-    const Nav = createContractComponent({
-      tag: 'nav',
-      enforcement: { diagnostics: silentDiagnostics },
-    })
-    const html = ssr(Nav, { asChild: true }, createElement('a', { href: '#target' }, 'link'))
-    expect(html).toContain('<a ')
-    expect(html).toContain('href="#target"')
-    expect(html).not.toContain('<nav')
-  })
-
-  it('merges slot class with child class during asChild SSR', () => {
-    const Box = createContractComponent({
-      tag: 'div',
-      styling: { base: 'slot-cls' },
-      enforcement: { diagnostics: silentDiagnostics },
-    })
-    const html = ssr(Box, { asChild: true }, createElement('span', { className: 'child-cls' }))
-    expect(html).toContain('slot-cls')
-    expect(html).toContain('child-cls')
-  })
-
   // `compose` SSR coverage comes from the shared `ssrConformanceSuite` registration below
   // ("ssr — compose"), not a separate test here.
 })
+
+// React takes `className`, the suite's neutral `class`.
+function toReactProps(props: UnknownProps): UnknownProps {
+  const { class: cls, ...rest } = props
+  return (cls !== undefined ? { ...rest, className: cls } : rest) as UnknownProps
+}
+
+function toNode(child: ChildSpec): ReactNode {
+  const props = toReactProps((child.props ?? {}) as UnknownProps)
+  const kids = (child.children ?? []).map(toNode)
+  return 'tag' in child
+    ? createElement(child.tag, props, ...kids)
+    : createElement(child.component as unknown as ComponentType<UnknownProps>, props, ...kids)
+}
 
 ssrConformanceSuite({
   createComponent: (options) =>
     createContractComponent(options as BareFactoryOptions) as ComponentType<UnknownProps> & {
       displayName?: string
     },
-  renderToString: (component, props = {}) => {
-    const { class: cls, ...rest } = props
-    const normalized = cls !== undefined ? { ...rest, className: cls } : rest
-    return renderToString(
-      createElement(component as ComponentType<UnknownProps>, normalized as UnknownProps),
-    )
-  },
+  renderToString: (component, props = {}, children = []) =>
+    renderToString(
+      createElement(
+        component as ComponentType<UnknownProps>,
+        toReactProps(props as UnknownProps),
+        ...children.map(toNode),
+      ),
+    ),
 })
