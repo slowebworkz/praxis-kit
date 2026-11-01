@@ -50,3 +50,11 @@ export {
   createCountedPlugin,
   tailwindAsChildPluginParitySuite,
 } from './tailwind-as-child-plugin-parity'
+
+export type {
+  TailwindPolymorphicElementInput,
+  TailwindPolymorphicElementParityAdapter,
+  TailwindPolymorphicElementResult,
+  TailwindPolymorphicElementStep,
+} from './tailwind-polymorphic-element-parity'
+export { tailwindPolymorphicElementParitySuite } from './tailwind-polymorphic-element-parity'

@@ -21,6 +21,7 @@ import {
   tailwindComposePluginParitySuite,
   createCountedPlugin,
   tailwindAsChildPluginParitySuite,
+  tailwindPolymorphicElementParitySuite,
 } from '@praxis-kit/adapter-utils/testing'
 import type { AriaRule } from '@praxis-kit/core/contract'
 import type { AnyRecord } from '@praxis-kit/primitive'
@@ -1227,5 +1228,59 @@ tailwindAsChildPluginParitySuite({
       partnerFactoryCallsDuringAsChild: result.partnerFactoryCallsDuringComposition,
       primaryFactoryCallsDuringAsChild: primary.calls(),
     }
+  },
+})
+
+
+tailwindPolymorphicElementParitySuite({
+  render: ({ as, displayProps, className }) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    dom.mount(
+      createElement(
+        box(Box),
+        {
+          ...displayProps,
+          ...(as === undefined ? {} : { as }),
+          alt: as === 'img' ? '' : undefined,
+          className,
+        } as AnyRecord,
+      ),
+    )
+    const element = dom.container.firstElementChild as HTMLElement
+    return {
+      tagName: element.tagName.toLowerCase(),
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    }
+  },
+  reactivity: async (steps) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    const results = []
+    for (const step of steps) {
+      dom.mount(
+        createElement(
+          box(Box),
+          {
+            ...step.displayProps,
+            as: step.as,
+            alt: step.as === 'img' ? '' : undefined,
+            className: step.className,
+          } as AnyRecord,
+        ),
+      )
+      const element = dom.container.firstElementChild as HTMLElement
+      results.push({
+        tagName: element.tagName.toLowerCase(),
+        className: element.className,
+        flexAttribute: element.getAttribute('flex'),
+      })
+    }
+    return results
   },
 })
