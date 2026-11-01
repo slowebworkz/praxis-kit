@@ -183,7 +183,6 @@ tailwindDisplayParitySuite({
   },
 })
 
-
 tailwindPolymorphicElementParitySuite({
   render: async ({ as, displayProps, className }) => {
     const bundle = createContractComponent({

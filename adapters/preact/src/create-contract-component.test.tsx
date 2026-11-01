@@ -652,11 +652,7 @@ tailwindAsChildPluginParitySuite({
       h(
         box(Card),
         { asChild: true, flex: true, className: 'caller-class' },
-        h(
-          box(Inner),
-          { asChild: true },
-          h('button', { className: 'child-class' }),
-        ),
+        h(box(Inner), { asChild: true }, h('button', { className: 'child-class' })),
       ),
     )
     fixture.afterComposition()
@@ -674,7 +670,6 @@ tailwindAsChildPluginParitySuite({
   },
 })
 
-
 tailwindPolymorphicElementParitySuite({
   render: ({ as, displayProps, className }) => {
     const Box = createContractComponent({
@@ -682,15 +677,12 @@ tailwindPolymorphicElementParitySuite({
       styling: { base: 'base', plugin: createTailwindPipeline },
     })
     mount(
-      h(
-        box(Box),
-        {
-          ...displayProps,
-          ...(as === undefined ? {} : { as }),
-          alt: as === 'img' ? '' : undefined,
-          className,
-        } as UnknownProps,
-      ),
+      h(box(Box), {
+        ...displayProps,
+        ...(as === undefined ? {} : { as }),
+        alt: as === 'img' ? '' : undefined,
+        className,
+      } as UnknownProps),
     )
     const element = container.firstElementChild as HTMLElement
     return {
@@ -707,15 +699,12 @@ tailwindPolymorphicElementParitySuite({
     const results = []
     for (const step of steps) {
       mount(
-        h(
-          box(Box),
-          {
-            ...step.displayProps,
-            as: step.as,
-            alt: step.as === 'img' ? '' : undefined,
-            className: step.className,
-          } as UnknownProps,
-        ),
+        h(box(Box), {
+          ...step.displayProps,
+          as: step.as,
+          alt: step.as === 'img' ? '' : undefined,
+          className: step.className,
+        } as UnknownProps),
       )
       const element = container.firstElementChild as HTMLElement
       results.push({

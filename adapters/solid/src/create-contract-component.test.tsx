@@ -690,9 +690,7 @@ tailwindAsChildPluginParitySuite({
       },
     })
     const { container } = solidRender(() => (
-      <Card
-        {...({ asChild: true, flex: true, class: 'caller-class' } as AnyRecord)}
-      >
+      <Card {...({ asChild: true, flex: true, class: 'caller-class' } as AnyRecord)}>
         {(props) => <button {...props} class={`child-class ${props.class ?? ''}`} />}
       </Card>
     ))
@@ -751,7 +749,6 @@ tailwindAsChildPluginParitySuite({
     }
   },
 })
-
 
 tailwindPolymorphicElementParitySuite({
   render: ({ as, displayProps, className }) => {

@@ -1214,7 +1214,6 @@ tailwindAsChildPluginParitySuite({
   },
 })
 
-
 tailwindPolymorphicElementParitySuite({
   render: ({ as, displayProps, className }) => {
     const Box = createContractComponent({
@@ -1222,15 +1221,12 @@ tailwindPolymorphicElementParitySuite({
       styling: { base: 'base', plugin: createTailwindPipeline },
     })
     dom.mount(
-      createElement(
-        box(Box),
-        {
-          ...displayProps,
-          ...(as === undefined ? {} : { as }),
-          alt: as === 'img' ? '' : undefined,
-          className,
-        } as AnyRecord,
-      ),
+      createElement(box(Box), {
+        ...displayProps,
+        ...(as === undefined ? {} : { as }),
+        alt: as === 'img' ? '' : undefined,
+        className,
+      } as AnyRecord),
     )
     const element = dom.container.firstElementChild as HTMLElement
     return {
@@ -1247,15 +1243,12 @@ tailwindPolymorphicElementParitySuite({
     const results = []
     for (const step of steps) {
       dom.mount(
-        createElement(
-          box(Box),
-          {
-            ...step.displayProps,
-            as: step.as,
-            alt: step.as === 'img' ? '' : undefined,
-            className: step.className,
-          } as AnyRecord,
-        ),
+        createElement(box(Box), {
+          ...step.displayProps,
+          as: step.as,
+          alt: step.as === 'img' ? '' : undefined,
+          className: step.className,
+        } as AnyRecord),
       )
       const element = dom.container.firstElementChild as HTMLElement
       results.push({

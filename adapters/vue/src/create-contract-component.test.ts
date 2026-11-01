@@ -662,9 +662,13 @@ tailwindAsChildPluginParitySuite({
       props: { asChild: true, flex: true, class: 'caller-class' } as AnyRecord,
       slots: {
         default: () => [
-          h(box(Inner), { asChild: true }, {
-            default: () => [h('button', { class: 'child-class' })],
-          }),
+          h(
+            box(Inner),
+            { asChild: true },
+            {
+              default: () => [h('button', { class: 'child-class' })],
+            },
+          ),
         ],
       },
     })
@@ -684,7 +688,6 @@ tailwindAsChildPluginParitySuite({
     }
   },
 })
-
 
 tailwindPolymorphicElementParitySuite({
   render: ({ as, displayProps, className }) => {
