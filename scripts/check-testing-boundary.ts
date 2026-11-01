@@ -3,7 +3,7 @@
 // Enforces the testing workspace's one-way dependency rule: production packages must never
 // depend on `testing/packages/*` (testing packages may depend on production packages).
 //
-// Run: pnpm check:testing-boundary
+// Run: pnpm check:testing-boundary      Tests: pnpm test:scripts
 //
 // Two independent checks, because a manifest-only check misses imports that bypass package.json
 // (a path alias or a relative `../../testing/...` import) and a source-only check misses a
@@ -12,15 +12,25 @@
 //      `devDependencies`. `dependencies` / `peerDependencies` / `optionalDependencies` are
 //      violations. `packages/kit` (the published package) may not reference one at all.
 //   2. Source — non-test source files of production packages must not import a testing package
-//      (by name or by relative path into `testing/packages/`). Test files, test-host fixtures,
-//      test/E2E configs and the conformance-adapter helpers are exempt: they exist to run tests.
+//      (by name, or by a relative path that resolves into `testing/packages/`). Test files, test
+//      hosts, test/E2E configs and the conformance-adapter helpers are exempt: they exist to run
+//      tests.
+//
+// Imports are found by parsing each file with the TypeScript compiler (a real AST walk), so
+// comments and string literals are never mistaken for imports, and every executable form is seen:
+// `import`/`import type`, `export … from`, `import x = require()`, dynamic `import()`, `require()`
+// and `import('…')` types. Svelte/Vue files are scanned through their `<script>` blocks.
+//
+// The rule logic (`findViolations`, `importSpecifiers`) is pure and exported so it can be tested
+// without a filesystem; `main()` is the only part that reads the repo.
 //
 // Like generate-repo-state.ts, this reads pnpm-workspace.yaml with a narrow line-based reader
 // (quoted `<dir>/*` globs only) rather than pulling in a YAML dependency for a short list.
 
 import type { AnyRecord } from '@praxis-kit/primitive'
+import ts from 'typescript'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { dirname, join, relative } from 'node:path'
+import { dirname, join, posix, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -38,11 +48,126 @@ const TEST_SUPPORT_FILE = [
   /(?:^|\/)make-conformance-adapter\.[cm]?[jt]sx?$/,
 ]
 
-interface WorkspacePackage {
+export interface WorkspacePackage {
   name: string
   dir: string // repo-relative, forward slashes
   pkg: AnyRecord
 }
+
+/** A source file to scan: repo-relative path (forward slashes) and its contents. */
+export interface SourceFile {
+  path: string
+  text: string
+}
+
+export function isTestSupportFile(path: string): boolean {
+  return TEST_SUPPORT_FILE.some((pattern) => pattern.test(path))
+}
+
+function scriptKindOf(path: string): ts.ScriptKind {
+  if (/\.tsx$/.test(path)) return ts.ScriptKind.TSX
+  if (/\.jsx$/.test(path)) return ts.ScriptKind.JSX
+  if (/\.[cm]?js$/.test(path)) return ts.ScriptKind.JS
+  return ts.ScriptKind.TS
+}
+
+// The source text to parse for a file: the file itself, or each `<script>` block of an SFC.
+function parseableSources(path: string, text: string): { text: string; kind: ts.ScriptKind }[] {
+  if (/\.(?:svelte|vue)$/.test(path)) {
+    return [...text.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map((m) => ({
+      text: m[1] as string,
+      kind: ts.ScriptKind.TS,
+    }))
+  }
+  return [{ text, kind: scriptKindOf(path) }]
+}
+
+const isStringLike = (node: ts.Node | undefined): node is ts.StringLiteralLike =>
+  node !== undefined && ts.isStringLiteralLike(node)
+
+/** Every module specifier the file's executable source imports, in source order. */
+export function importSpecifiers(path: string, text: string): string[] {
+  const found: string[] = []
+  for (const source of parseableSources(path, text)) {
+    const file = ts.createSourceFile(path, source.text, ts.ScriptTarget.Latest, true, source.kind)
+    const visit = (node: ts.Node): void => {
+      if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
+        if (isStringLike(node.moduleSpecifier)) found.push(node.moduleSpecifier.text)
+      } else if (ts.isImportEqualsDeclaration(node)) {
+        const ref = node.moduleReference
+        if (ts.isExternalModuleReference(ref) && isStringLike(ref.expression)) {
+          found.push(ref.expression.text)
+        }
+      } else if (ts.isCallExpression(node)) {
+        const callee = node.expression
+        const isDynamicImport = callee.kind === ts.SyntaxKind.ImportKeyword
+        const isRequire = ts.isIdentifier(callee) && callee.text === 'require'
+        if ((isDynamicImport || isRequire) && isStringLike(node.arguments[0])) {
+          found.push(node.arguments[0].text)
+        }
+      } else if (ts.isImportTypeNode(node)) {
+        const arg = node.argument
+        if (ts.isLiteralTypeNode(arg) && isStringLike(arg.literal)) found.push(arg.literal.text)
+      }
+      ts.forEachChild(node, visit)
+    }
+    visit(file)
+  }
+  return found
+}
+
+// Does `specifier`, written in `fromPath`, name a testing package -- by package name, or by a
+// relative path that resolves into `testing/packages/`?
+function reachesTesting(fromPath: string, specifier: string, testingNames: Set<string>): boolean {
+  if (specifier.startsWith('.')) {
+    const resolved = posix.normalize(posix.join(posix.dirname(fromPath), specifier))
+    return resolved.startsWith(TESTING_PREFIX)
+  }
+  return [...testingNames].some((n) => specifier === n || specifier.startsWith(n + '/'))
+}
+
+/**
+ * The testing-boundary violations for the given workspace. Pure: pass the discovered packages and
+ * the source files of every package (testing packages' files are ignored here), get messages back.
+ */
+export function findViolations(packages: WorkspacePackage[], files: SourceFile[]): string[] {
+  const testingNames = new Set(
+    packages.filter((p) => p.dir.startsWith(TESTING_PREFIX)).map((p) => p.name),
+  )
+  const production = packages.filter((p) => !p.dir.startsWith(TESTING_PREFIX))
+  const violations: string[] = []
+
+  for (const pkg of production) {
+    const fields =
+      pkg.dir === PUBLISHED_PACKAGE_DIR
+        ? [...PRODUCTION_DEP_FIELDS, 'devDependencies']
+        : PRODUCTION_DEP_FIELDS
+    for (const field of fields) {
+      for (const dep of Object.keys((pkg.pkg[field] as AnyRecord | undefined) ?? {})) {
+        if (!testingNames.has(dep)) continue
+        violations.push(
+          `${pkg.dir}/package.json: ${field} lists testing package ${dep}` +
+            (field === 'devDependencies' ? ' (the published package may not reference one)' : ''),
+        )
+      }
+    }
+  }
+
+  const productionDirs = production.map((p) => p.dir + '/')
+  for (const file of files) {
+    if (!productionDirs.some((dir) => file.path.startsWith(dir))) continue
+    if (isTestSupportFile(file.path)) continue
+    for (const specifier of importSpecifiers(file.path, file.text)) {
+      if (reachesTesting(file.path, specifier, testingNames)) {
+        violations.push(`${file.path}: production source imports "${specifier}"`)
+      }
+    }
+  }
+
+  return violations
+}
+
+// ── repository access (the only part that touches the filesystem) ────────────────────────────
 
 function readJson(path: string): AnyRecord {
   return JSON.parse(readFileSync(path, 'utf-8')) as AnyRecord
@@ -89,55 +214,31 @@ function* walk(dir: string): Generator<string> {
   }
 }
 
-// `from '…'`, side-effect `import '…'`, dynamic `import('…')` and `require('…')`.
-const SPECIFIER = /(?:\bfrom\s*|\bimport\s*\(?\s*|\brequire\s*\(\s*)(['"])([^'"\n]+)\1/g
-
 function main(): void {
   const packages = discoverPackages()
-  const testing = packages.filter((p) => p.dir.startsWith(TESTING_PREFIX))
-  const testingNames = new Set(testing.map((p) => p.name))
-  const production = packages.filter((p) => !p.dir.startsWith(TESTING_PREFIX))
-  const violations: string[] = []
-
-  for (const pkg of production) {
-    const fields =
-      pkg.dir === PUBLISHED_PACKAGE_DIR
-        ? [...PRODUCTION_DEP_FIELDS, 'devDependencies']
-        : PRODUCTION_DEP_FIELDS
-    for (const field of fields) {
-      for (const dep of Object.keys((pkg.pkg[field] as AnyRecord | undefined) ?? {})) {
-        if (!testingNames.has(dep)) continue
-        violations.push(
-          `${pkg.dir}/package.json: ${field} lists testing package ${dep}` +
-            (field === 'devDependencies' ? ' (the published package may not reference one)' : ''),
-        )
-      }
-    }
-
-    const srcRoot = join(ROOT, pkg.dir)
-    for (const file of walk(srcRoot)) {
-      const rel = relative(ROOT, file).split('\\').join('/')
-      if (TEST_SUPPORT_FILE.some((pattern) => pattern.test(rel))) continue
-      const text = readFileSync(file, 'utf-8')
-      for (const match of text.matchAll(SPECIFIER)) {
-        const specifier = match[2] as string
-        const byName = [...testingNames].some(
-          (n) => specifier === n || specifier.startsWith(n + '/'),
-        )
-        const byPath = specifier.startsWith('.') && specifier.includes('/' + TESTING_PREFIX)
-        if (byName || byPath) violations.push(`${rel}: production source imports "${specifier}"`)
-      }
+  const testingCount = packages.filter((p) => p.dir.startsWith(TESTING_PREFIX)).length
+  const files: SourceFile[] = []
+  for (const pkg of packages.filter((p) => !p.dir.startsWith(TESTING_PREFIX))) {
+    for (const file of walk(join(ROOT, pkg.dir))) {
+      files.push({
+        path: relative(ROOT, file).split('\\').join('/'),
+        text: readFileSync(file, 'utf-8'),
+      })
     }
   }
 
+  const violations = findViolations(packages, files)
   if (violations.length > 0) {
     console.error('Testing boundary violations (production must not depend on testing):\n')
     for (const v of violations) console.error(`  ✗ ${v}`)
     process.exit(1)
   }
   console.log(
-    `Testing boundary OK — ${testing.length} testing package(s), ${production.length} production package(s) checked.`,
+    `Testing boundary OK — ${testingCount} testing package(s), ${packages.length - testingCount} production package(s) checked.`,
   )
 }
 
-main()
+// Run only when executed directly, so the tests can import the pure functions above.
+if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main()
+}

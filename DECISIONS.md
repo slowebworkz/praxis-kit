@@ -3882,8 +3882,14 @@ conformance contract" follow-up was waiting on — so the infrastructure moved t
 - **The one-way rule is enforced, not just documented.** `pnpm check:testing-boundary`
   (`scripts/check-testing-boundary.ts`, part of `pnpm check`) fails if a production package lists a
   testing package outside `devDependencies`, if `packages/kit` references one at all, or if non-test
-  production source imports one (by name or relative path). Test files, test hosts,
-  Playwright/Vitest configs and `make-conformance-adapter.ts` are exempt.
+  production source imports one (by name, or by a relative path that resolves into
+  `testing/packages/`). Test files, test hosts, Playwright/Vitest configs and
+  `make-conformance-adapter.ts` are exempt. Imports are found by parsing each file with the
+  TypeScript compiler, not a regex, so comments and strings are never mistaken for imports and
+  `export … from`, `import x = require()`, dynamic `import()`, `require()` and `import('…')` types
+  are all seen (Svelte/Vue via their `<script>` blocks). The rule logic is pure and covered by
+  `pnpm test:scripts` (also part of `pnpm check`), including mutation-checked cases for each rule: a
+  regex scanner, a substring path test and a missing exemption each make the tests fail.
 
 **Deferred (deliberately)**
 
