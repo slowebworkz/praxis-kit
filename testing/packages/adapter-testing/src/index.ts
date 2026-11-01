@@ -19,3 +19,6 @@ export { hydrationParitySuite } from './hydration'
 
 export { conformancePerformanceSuite } from './performance'
 export { conformanceIsolationSuite } from './isolation'
+
+export type { CompoundComponentAdapter, CompoundRender } from './compound-component'
+export { compoundComponentSuite } from './compound-component'
