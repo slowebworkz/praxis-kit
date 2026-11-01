@@ -39,6 +39,26 @@ export default defineConfig({
             find: '@praxis-kit/core/styling',
             replacement: resolve('../../packages/core/src/styling.ts'),
           },
+          {
+            find: '@praxis-kit/core/aria',
+            replacement: resolve('../../packages/core/src/aria.ts'),
+          },
+          {
+            find: '@praxis-kit/core/props',
+            replacement: resolve('../../packages/core/src/props.ts'),
+          },
+          {
+            find: '@praxis-kit/core/state',
+            replacement: resolve('../../packages/core/src/state/index.ts'),
+          },
+          {
+            find: '@praxis-kit/core/internal/composition-style',
+            replacement: resolve('../../packages/core/src/factory/composition-style.ts'),
+          },
+          {
+            find: '@praxis-kit/core/dom-platform',
+            replacement: resolve('../../packages/core/src/dom-platform.ts'),
+          },
           { find: '@praxis-kit/core', replacement: resolve('../../packages/core/src/index.ts') },
 
           { find: /^@praxis-kit\/primitive\/(.+)$/, replacement: `${primitiveRoot}/$1/index.ts` },
