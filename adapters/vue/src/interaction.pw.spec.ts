@@ -56,7 +56,8 @@ test.describe('button keyboard activation', () => {
     const btn = page.locator('#root > button')
     await btn.focus()
     await press(page, 'Enter')
-    expect(clicks.count).toBe(1)
+    // The handler runs in the browser and reports back asynchronously, so poll for the count.
+    await expect.poll(() => clicks.count).toBe(1)
   })
 
   test('Space key fires click handler', async ({ mount, page }) => {
@@ -65,7 +66,8 @@ test.describe('button keyboard activation', () => {
     const btn = page.locator('#root > button')
     await btn.focus()
     await press(page, 'Space')
-    expect(clicks.count).toBe(1)
+    // The handler runs in the browser and reports back asynchronously, so poll for the count.
+    await expect.poll(() => clicks.count).toBe(1)
   })
 
   test('disabled button is not focusable', async ({ mount, page }) => {
@@ -88,7 +90,8 @@ test.describe('anchor keyboard activation', () => {
     const anchor = page.locator('#root > a')
     await anchor.focus()
     await press(page, 'Enter')
-    expect(clicks.count).toBe(1)
+    // The handler runs in the browser and reports back asynchronously, so poll for the count.
+    await expect.poll(() => clicks.count).toBe(1)
   })
 })
 
@@ -129,7 +132,8 @@ test.describe('axe WCAG sweep', () => {
     await page.locator('#root').evaluate((el) => {
       const label = document.createElement('span')
       label.id = 'btn-label'
-      label.textContent = 'Confirm deletion'
+      // Must contain the button's visible text ("Submit"): axe's label-in-name rule (WCAG 2.5.3).
+      label.textContent = 'Submit and confirm deletion'
       el.prepend(label)
     })
     await sweepAxeLocator(page, page.locator('#root > button'))
