@@ -15,7 +15,7 @@ import {
   createCountedPlugin,
   tailwindAsChildPluginParitySuite,
   tailwindPolymorphicElementParitySuite,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/tailwind-testing'
 import type { AnyVNode, UnknownProps } from './types'
 import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
@@ -293,7 +293,7 @@ describe('createContractComponent (Preact adapter)', () => {
   })
 
   // `compose` (declarative asChild composition) is covered by the shared conformance suite
-  // (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`, "conformance —
+  // (`conformance.test.tsx` → `testing/packages/adapter-testing/src/conformance.ts`, "conformance —
   // compose") rather than duplicated here — same convention as `asChild` itself.
 
   it('asChild warns when it drops a text sibling it cannot compose onto the slotted element', () => {

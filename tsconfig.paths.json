@@ -3,6 +3,10 @@
     "paths": {
       "@praxis-kit/adapter-utils": ["./lib/adapter-utils/src"],
       "@praxis-kit/adapter-utils/*": ["./lib/adapter-utils/src/*"],
+      "@praxis-kit/adapter-testing": ["./testing/packages/adapter-testing/src"],
+      "@praxis-kit/adapter-testing/*": [
+        "./testing/packages/adapter-testing/src/*"
+      ],
       "@praxis-kit/compose-props": ["./lib/compose-props/src"],
       "@praxis-kit/compose-props/*": ["./lib/compose-props/src/*"],
       "@praxis-kit/contract": ["./lib/contract/src"],
@@ -39,7 +43,13 @@
       "@praxis-kit/styling": ["./lib/styling/src"],
       "@praxis-kit/styling/*": ["./lib/styling/src/*"],
       "@praxis-kit/tailwind": ["./lib/tailwind/src"],
-      "@praxis-kit/tailwind/*": ["./lib/tailwind/src/*"]
+      "@praxis-kit/tailwind/*": ["./lib/tailwind/src/*"],
+      "@praxis-kit/tailwind-testing": [
+        "./testing/packages/tailwind-testing/src"
+      ],
+      "@praxis-kit/tailwind-testing/*": [
+        "./testing/packages/tailwind-testing/src/*"
+      ]
     }
   }
 }

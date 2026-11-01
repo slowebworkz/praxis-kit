@@ -13,6 +13,8 @@ const config = [
         { type: 'contract', pattern: 'lib/contract/**/*' },
         { type: 'styling', pattern: 'lib/styling/**/*' },
         { type: 'adapter-utils', pattern: 'lib/adapter-utils/**/*' },
+        { type: 'adapter-testing', pattern: 'testing/packages/adapter-testing/**/*' },
+        { type: 'tailwind-testing', pattern: 'testing/packages/tailwind-testing/**/*' },
         { type: 'bench', pattern: 'qa/bench/**/*' },
         { type: 'core', pattern: 'packages/core/**/*' },
         { type: 'react', pattern: 'adapters/react/**/*' },

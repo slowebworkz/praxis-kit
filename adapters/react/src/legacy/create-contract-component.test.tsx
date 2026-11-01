@@ -285,7 +285,7 @@ describe('createContractComponent (legacy / React 18)', () => {
   })
 
   // `compose` (declarative asChild composition) is covered by the shared conformance suite
-  // (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`, "conformance —
+  // (`conformance.test.tsx` → `testing/packages/adapter-testing/src/conformance.ts`, "conformance —
   // compose") rather than duplicated here — same convention as `asChild` itself.
 
   it('applies filterProps', () => {

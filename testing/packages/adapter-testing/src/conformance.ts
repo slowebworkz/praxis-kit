@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createClassPipeline } from '@praxis-kit/core'
 import type { AnyRecord, ClassPluginFactory } from '@praxis-kit/core'
-import type { ConformanceAdapter, ConformanceComponent, ConformanceFactoryOptions } from '../types'
+import type { ConformanceAdapter, ConformanceComponent, ConformanceFactoryOptions } from './types'
 import { throwDiagnostics, warnDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
 import { dynamic } from '@praxis-kit/primitive'
 export type {
@@ -12,7 +12,7 @@ export type {
   ConformanceFactoryOptions,
   ConformanceRef,
   RenderResult,
-} from '../types'
+} from './types'
 
 // Minimal plugin used to exercise the real adapter composition path without coupling the
 // adapter-utils test harness to a framework-specific plugin package. Its `flex` prop is an

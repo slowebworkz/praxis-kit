@@ -13,8 +13,8 @@
 // this output disagree even with itself across calls to the same component.
 
 import { describe, it, expect } from 'vitest'
-import { ssrConformanceSuite } from '@praxis-kit/adapter-utils/testing'
-import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
+import { ssrConformanceSuite } from '@praxis-kit/adapter-testing'
+import type { BareFactoryOptions } from '@praxis-kit/adapter-testing'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import { createContractComponent } from './create-contract-component'
 import { renderContractToString } from './render-to-string'

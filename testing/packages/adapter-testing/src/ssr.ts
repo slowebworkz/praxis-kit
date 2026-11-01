@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import type { AnyRecord } from '@praxis-kit/core'
-import type { ConformanceComponent, SsrConformanceAdapter } from '../types'
+import type { ConformanceComponent, SsrConformanceAdapter } from './types'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
 
-export type { SsrConformanceAdapter } from '../types'
+export type { SsrConformanceAdapter } from './types'
 
 /**
  * SSR conformance suite. Verifies that components render correctly to HTML

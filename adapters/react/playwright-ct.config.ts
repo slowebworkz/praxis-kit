@@ -49,8 +49,12 @@ export default defineConfig({
             replacement: resolve('../../lib/contract-props/src/index.ts'),
           },
           {
-            find: '@praxis-kit/adapter-utils/testing',
-            replacement: resolve('../../lib/adapter-utils/src/testing/index.ts'),
+            find: '@praxis-kit/adapter-testing',
+            replacement: resolve('../../testing/packages/adapter-testing/src/index.ts'),
+          },
+          {
+            find: '@praxis-kit/tailwind-testing',
+            replacement: resolve('../../testing/packages/tailwind-testing/src/index.ts'),
           },
           {
             find: '@praxis-kit/adapter-utils',

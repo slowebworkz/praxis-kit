@@ -1,10 +1,10 @@
 import { beforeEach, afterEach, describe, it, expect } from 'vitest'
 import type { AnyRecord, StringMap } from '@praxis-kit/primitive'
 import { iterate } from '@praxis-kit/primitive'
-import type { ConformanceComponent, HydrationConformanceAdapter } from '../types'
+import type { ConformanceComponent, HydrationConformanceAdapter } from './types'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
 
-export type { HydrationConformanceAdapter } from '../types'
+export type { HydrationConformanceAdapter } from './types'
 
 type Attributes = StringMap<string>
 

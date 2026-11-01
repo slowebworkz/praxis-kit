@@ -13,7 +13,7 @@ import {
   createCountedPlugin,
   tailwindAsChildPluginParitySuite,
   tailwindPolymorphicElementParitySuite,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/tailwind-testing'
 import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
@@ -346,8 +346,8 @@ describe('createContractComponent — asChild', () => {
   })
 
   // `compose`'s renders-through/tag-conflict/props-land/explicit-asChild-wins cases are covered
-  // by the shared conformance suite (`conformance.test.ts` → `lib/adapter-utils/src/testing/
-  // conformance.ts`, "conformance — compose"). This adapter keeps only the one case that suite
+  // by the shared conformance suite (`conformance.test.ts` → `testing/packages/adapter-testing/
+  // src/conformance.ts`, "conformance — compose"). This adapter keeps only the one case that suite
   // can't express generically: Vue's `ref` resolves to the component instance, not the host
   // element, so `onElement` (not `createRef`) is this adapter's real contract for reaching it.
 

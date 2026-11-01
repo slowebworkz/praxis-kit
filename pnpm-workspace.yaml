@@ -5,6 +5,7 @@ packages:
   - "plugins/*"
   - "tooling/*"
   - "qa/*"
+  - "testing/packages/*"
   - "examples/*"
 
 allowBuilds:

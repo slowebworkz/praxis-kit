@@ -40,7 +40,9 @@ export type TailwindAsChildPluginParityAdapter = {
  * Svelte is intentionally excluded: its adapter currently declares `capabilities.asChild: false`.
  * Lit and Web also do not expose this component-composition/asChild contract.
  */
-export function tailwindAsChildPluginParitySuite(adapter: TailwindAsChildPluginParityAdapter): void {
+export function tailwindAsChildPluginParitySuite(
+  adapter: TailwindAsChildPluginParityAdapter,
+): void {
   describe('Tailwind explicit asChild plugin parity', () => {
     it('keeps the primary Tailwind plugin on the explicit asChild path', async () => {
       const result = await adapter.renderPrimaryPluginAsChild()

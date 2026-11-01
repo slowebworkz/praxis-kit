@@ -18,7 +18,7 @@ import {
   TAILWIND_DISPLAY_PARITY_VARIANTS,
   tailwindDisplayParitySuite,
   tailwindPolymorphicElementParitySuite,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/tailwind-testing'
 import { createContractComponent } from './create-contract-component'
 
 afterEach(cleanup)

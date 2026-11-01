@@ -9,6 +9,7 @@
   "updateInternalDependencies": "patch",
   "privatePackages": { "version": true, "tag": true },
   "ignore": [
+    "@praxis-kit/adapter-testing",
     "@praxis-kit/adapter-utils",
     "@praxis-kit/bench",
     "@praxis-kit/bundle-analysis",
@@ -31,6 +32,7 @@
     "@praxis-kit/styling",
     "@praxis-kit/svelte",
     "@praxis-kit/tailwind",
+    "@praxis-kit/tailwind-testing",
     "@praxis-kit/tree-shaking-tests",
     "@praxis-kit/typescript-plugin",
     "@praxis-kit/vite-plugin",

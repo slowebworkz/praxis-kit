@@ -4,8 +4,8 @@ import {
   conformanceA11ySuite,
   conformancePerformanceSuite,
   conformanceIsolationSuite,
-} from '@praxis-kit/adapter-utils/testing'
-import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/adapter-testing'
+import type { BareFactoryOptions } from '@praxis-kit/adapter-testing'
 import { makeReactConformanceAdapter } from '../shared/make-conformance-adapter'
 import type { ReactConformanceComponent } from '../shared/make-conformance-adapter'
 import { createContractComponent } from './create-contract-component'

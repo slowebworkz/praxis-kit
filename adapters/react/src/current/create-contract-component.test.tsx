@@ -22,7 +22,7 @@ import {
   createCountedPlugin,
   tailwindAsChildPluginParitySuite,
   tailwindPolymorphicElementParitySuite,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/tailwind-testing'
 import type { AriaRule } from '@praxis-kit/core/contract'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import { box, useReactDom } from '../shared/test-utils'
@@ -552,7 +552,7 @@ describe('createContractComponent (current / React 19)', () => {
   })
 
   // `compose` (declarative asChild composition) is covered by the shared conformance suite
-  // (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`, "conformance —
+  // (`conformance.test.tsx` → `testing/packages/adapter-testing/src/conformance.ts`, "conformance —
   // compose") rather than duplicated here — same convention as `asChild` itself.
 
   it('applies filterProps — strips matching keys before DOM forwarding', () => {

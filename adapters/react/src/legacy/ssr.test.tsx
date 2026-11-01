@@ -2,8 +2,8 @@
 import { createElement } from 'react'
 import type { ComponentType } from 'react'
 import { renderToString } from 'react-dom/server'
-import { ssrConformanceSuite } from '@praxis-kit/adapter-utils/testing'
-import type { BareFactoryOptions } from '@praxis-kit/adapter-utils/testing'
+import { ssrConformanceSuite } from '@praxis-kit/adapter-testing'
+import type { BareFactoryOptions } from '@praxis-kit/adapter-testing'
 import type { UnknownProps } from '../shared'
 import { createContractComponent } from './create-contract-component'
 

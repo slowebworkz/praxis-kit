@@ -1,10 +1,6 @@
 import { createElement, createRef, act } from 'react'
 import { createRoot } from 'react-dom/client'
-import type {
-  ConformanceAdapter,
-  BareFactoryOptions,
-  ChildSpec,
-} from '@praxis-kit/adapter-utils/testing'
+import type { ConformanceAdapter, BareFactoryOptions, ChildSpec } from '@praxis-kit/adapter-testing'
 import type { ComponentType, ReactNode } from 'react'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import type { UnknownProps } from './types'

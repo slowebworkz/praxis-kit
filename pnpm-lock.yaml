@@ -382,6 +382,12 @@ importers:
         specifier: 'catalog:'
         version: 5.10.0
     devDependencies:
+      '@praxis-kit/adapter-testing':
+        specifier: workspace:*
+        version: link:../../testing/packages/adapter-testing
+      '@praxis-kit/tailwind-testing':
+        specifier: workspace:*
+        version: link:../../testing/packages/tailwind-testing
       jsdom:
         specifier: 'catalog:'
         version: 30.1.3
@@ -422,6 +428,12 @@ importers:
         specifier: 'catalog:'
         version: 5.10.0
     devDependencies:
+      '@praxis-kit/adapter-testing':
+        specifier: workspace:*
+        version: link:../../testing/packages/adapter-testing
+      '@praxis-kit/tailwind-testing':
+        specifier: workspace:*
+        version: link:../../testing/packages/tailwind-testing
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.5
@@ -474,9 +486,15 @@ importers:
       '@playwright/experimental-ct-react':
         specifier: 'catalog:'
         version: 1.62.1(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.0))(yaml@2.9.0)
+      '@praxis-kit/adapter-testing':
+        specifier: workspace:*
+        version: link:../../testing/packages/adapter-testing
       '@praxis-kit/playwright':
         specifier: workspace:*
         version: link:../../lib/playwright
+      '@praxis-kit/tailwind-testing':
+        specifier: workspace:*
+        version: link:../../testing/packages/tailwind-testing
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.5
@@ -529,6 +547,12 @@ importers:
         specifier: 'catalog:'
         version: 5.10.0
     devDependencies:
+      '@praxis-kit/adapter-testing':
+        specifier: workspace:*
+        version: link:../../testing/packages/adapter-testing
+      '@praxis-kit/tailwind-testing':
+        specifier: workspace:*
+        version: link:../../testing/packages/tailwind-testing
       '@solidjs/testing-library':
         specifier: 'catalog:'
         version: 0.8.10(solid-js@1.9.17)
@@ -572,6 +596,12 @@ importers:
         specifier: 'catalog:'
         version: 5.10.0
     devDependencies:
+      '@praxis-kit/adapter-testing':
+        specifier: workspace:*
+        version: link:../../testing/packages/adapter-testing
+      '@praxis-kit/tailwind-testing':
+        specifier: workspace:*
+        version: link:../../testing/packages/tailwind-testing
       '@sveltejs/vite-plugin-svelte':
         specifier: 'catalog:'
         version: 7.3.1(svelte@5.57.2(@typescript-eslint/types@8.68.0))(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.0))
@@ -618,9 +648,15 @@ importers:
       '@playwright/experimental-ct-vue':
         specifier: 'catalog:'
         version: 1.62.1(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.0))(vue@3.5.44(typescript@6.0.3))(yaml@2.9.0)
+      '@praxis-kit/adapter-testing':
+        specifier: workspace:*
+        version: link:../../testing/packages/adapter-testing
       '@praxis-kit/playwright':
         specifier: workspace:*
         version: link:../../lib/playwright
+      '@praxis-kit/tailwind-testing':
+        specifier: workspace:*
+        version: link:../../testing/packages/tailwind-testing
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.5
@@ -670,6 +706,12 @@ importers:
         specifier: 'catalog:'
         version: 5.10.0
     devDependencies:
+      '@praxis-kit/adapter-testing':
+        specifier: workspace:*
+        version: link:../../testing/packages/adapter-testing
+      '@praxis-kit/tailwind-testing':
+        specifier: workspace:*
+        version: link:../../testing/packages/tailwind-testing
       jsdom:
         specifier: 'catalog:'
         version: 30.1.3
@@ -1234,6 +1276,47 @@ importers:
       vue:
         specifier: 'catalog:'
         version: 3.5.44(typescript@6.0.3)
+
+  testing/packages/adapter-testing:
+    dependencies:
+      '@praxis-kit/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../../lib/diagnostics
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../../lib/primitive
+      type-fest:
+        specifier: 'catalog:'
+        version: 5.10.0
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.5
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@types/node@26.6.5)(@vitest/ui@4.1.11)(jsdom@30.1.3)(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.0))
+
+  testing/packages/tailwind-testing:
+    dependencies:
+      '@praxis-kit/diagnostics':
+        specifier: workspace:*
+        version: link:../../../lib/diagnostics
+      '@praxis-kit/primitive':
+        specifier: workspace:*
+        version: link:../../../lib/primitive
+      '@praxis-kit/styling':
+        specifier: workspace:*
+        version: link:../../../lib/styling
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.5
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@types/node@26.6.5)(@vitest/ui@4.1.11)(jsdom@30.1.3)(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.0))
 
   tooling/codemod:
     dependencies:

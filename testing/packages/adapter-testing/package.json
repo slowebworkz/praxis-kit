@@ -1,0 +1,27 @@
+{
+  "name": "@praxis-kit/adapter-testing",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "description": "Cross-framework adapter conformance suites (conformance, a11y, SSR, hydration, performance, isolation) and the ConformanceAdapter contract each adapter implements",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@praxis-kit/core": "workspace:*",
+    "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "type-fest": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "vitest": ">=4.0.0"
+  }
+}

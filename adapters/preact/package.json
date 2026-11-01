@@ -28,6 +28,8 @@
     "preact": ">=10.11"
   },
   "devDependencies": {
+    "@praxis-kit/adapter-testing": "workspace:*",
+    "@praxis-kit/tailwind-testing": "workspace:*",
     "@types/node": "catalog:",
     "jsdom": "catalog:",
     "preact": "catalog:",

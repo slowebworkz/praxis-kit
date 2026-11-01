@@ -31,6 +31,8 @@
     { "path": "./qa/bundle-analysis" },
     { "path": "./qa/metrics" },
     { "path": "./qa/tree-shaking-tests" },
+    { "path": "./testing/packages/adapter-testing" },
+    { "path": "./testing/packages/tailwind-testing" },
     { "path": "./tooling/codemod" }
   ]
 }

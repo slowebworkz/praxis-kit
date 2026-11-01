@@ -14,7 +14,7 @@ import {
   createCountedPlugin,
   tailwindAsChildPluginParitySuite,
   tailwindPolymorphicElementParitySuite,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/tailwind-testing'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
 
@@ -247,7 +247,7 @@ describe('createContractComponent (Solid adapter)', () => {
   })
 
   // `compose`'s renders-through/tag-conflict/props-land/ref cases are covered by the shared
-  // conformance suite (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`,
+  // conformance suite (`conformance.test.tsx` → `testing/packages/adapter-testing/src/conformance.ts`,
   // "conformance — compose"). That suite can't express the "explicit asChild wins" case for
   // Solid, though (its own `asChild: false` capability — Solid's asChild needs a literal
   // render-function child, incompatible with the harness's `ChildSpec`), so this one case stays

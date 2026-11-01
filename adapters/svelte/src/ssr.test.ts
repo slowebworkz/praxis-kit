@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest'
 import { render } from 'svelte/server'
-import { ssrConformanceSuite } from '@praxis-kit/adapter-utils/testing'
-import type { BareFactoryOptions, ConformanceComponent } from '@praxis-kit/adapter-utils/testing'
+import { ssrConformanceSuite } from '@praxis-kit/adapter-testing'
+import type { BareFactoryOptions, ConformanceComponent } from '@praxis-kit/adapter-testing'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import Polymorphic from './Polymorphic.svelte'
 import InnerButton from './component-reference-as.test-host.svelte'
