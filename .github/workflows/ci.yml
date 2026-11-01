@@ -53,3 +53,53 @@ jobs:
       # enforced by `eslint-plugin-boundaries` (`configs/architecture.ts`) and the `import-x/no-cycle`
       # rule, and `repo-state` covers the dependency-graph snapshot. Both tools were removed from the
       # root deps. `repo-state` and `qa/metrics` run via `pnpm verify:release`. See DECISIONS.md.
+
+  # Real-browser component tests (React and Vue). They are deliberately not part of `pnpm test`
+  # -- they need a downloaded Chromium -- so without this job nothing runs them and they rot: the
+  # CT bundle was silently broken for a long time before this existed. Installs the headless shell
+  # only (~210 MB) and caches it by Playwright version, so most runs skip the download.
+  playwright-ct:
+    name: Playwright component tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 12.3.4
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve Playwright version
+        id: playwright
+        run:
+          echo "version=$(pnpm --filter @praxis-kit/react exec playwright --version | sed
+          's/^Version //')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      # A cache hit restores the browser but not the OS libraries it needs, so those are installed
+      # separately; a miss installs both.
+      - name: Install Chromium and system dependencies
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run:
+          pnpm --filter @praxis-kit/react exec playwright install --with-deps --only-shell chromium
+
+      - name: Install system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter @praxis-kit/react exec playwright install-deps chromium
+
+      - name: Run Playwright component tests
+        run: pnpm test:pw

@@ -3904,6 +3904,24 @@ conformance contract" follow-up was waiting on — so the infrastructure moved t
   tests and its `@praxis-kit/pipeline` type import (testing → production is the allowed direction).
   The `-testing` suffix matches the other packages. Nothing excluded it by path: `qa/metrics`'
   `SOURCE_PACKAGES` is an include list, so the move needed only a comment fix there.
+
+  **The CT suites were broken and ungated.** They are deliberately not part of `pnpm test` (they
+  need a downloaded Chromium) and no workflow ran them, so they rotted unnoticed: the CT bundle did
+  not build (the configs aliased only 3 of `@praxis-kit/core`'s 8 subpath exports, so
+  `@praxis-kit/core/internal/composition-style` resolved to `…/index.ts/internal/…`), and once it
+  built two Vue specs failed (click counts read in Node through an async callback and asserted
+  without waiting; an `aria-labelledby` fixture whose label omitted the button's visible text, which
+  axe correctly flags). Fixed as test/config bugs, not product bugs. A new `playwright-ct` CI job
+  now runs `pnpm test:pw`, installing the headless shell only (~210 MB) and caching it by Playwright
+  version, so they cannot rot silently again. Browser binaries live in the Playwright cache outside
+  `node_modules`; they are not part of any package, and the published `praxis-kit` has no Playwright
+  dependency.
+
+  **Not moved to `praxis-components`.** That repo is downstream and React-only (it already runs
+  browser tests through Vitest browser mode), so moving the specs there would lose the Vue coverage
+  and find adapter regressions only after publishing. Rewriting these as Vitest browser tests to
+  share that toolchain remains an option, as a separate effort.
+
 - **`compoundComponentSuite` and `onElementSuite`** in `adapter-testing`: the runtime half of the
   per-adapter `compound-component` and `on-element` tests, which were the same scenarios copied into
   every adapter. The compile-time `expectTypeOf` checks, a native-`<dialog>` assertion and the

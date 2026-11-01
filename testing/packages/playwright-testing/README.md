@@ -9,3 +9,15 @@ Private and source-exporting; consumed as a `devDependency` by the adapters that
 specs (React and Vue). Requires `@playwright/test` as a peer dependency. It has its own unit tests
 for the diagnostics helpers (`pnpm --filter @praxis-kit/playwright-testing test`). See
 [`../../README.md`](../../README.md) for the workspace rules.
+
+## Running the suites that use it
+
+The React and Vue component tests are not part of `pnpm test` because they need a browser:
+
+```sh
+pnpm --filter @praxis-kit/react exec playwright install --only-shell chromium   # once, ~210 MB
+pnpm test:pw
+```
+
+Browsers are downloaded to Playwright's cache outside the repo, never into a package. CI runs
+`pnpm test:pw` in its own `playwright-ct` job (see `.github/workflows/ci.yml`).
