@@ -12,6 +12,7 @@ import {
   tailwindComposePluginParitySuite,
   createCountedPlugin,
   tailwindAsChildPluginParitySuite,
+  tailwindPolymorphicElementParitySuite,
 } from '@praxis-kit/adapter-utils/testing'
 import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
@@ -712,5 +713,52 @@ tailwindAsChildPluginParitySuite({
       partnerFactoryCallsDuringAsChild: result.partnerFactoryCallsDuringComposition,
       primaryFactoryCallsDuringAsChild: primary.calls(),
     }
+  },
+})
+
+
+tailwindPolymorphicElementParitySuite({
+  render: ({ as, displayProps, className }) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    const wrapper = mount(box(Box), {
+      props: {
+        ...displayProps,
+        ...(as === undefined ? {} : { as }),
+        alt: as === 'img' ? '' : undefined,
+        class: className,
+      } as AnyRecord,
+    })
+    return {
+      tagName: wrapper.element.tagName.toLowerCase(),
+      className: wrapper.element.className,
+      flexAttribute: wrapper.element.getAttribute('flex'),
+    }
+  },
+  reactivity: async (steps) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    const wrapper = mount(box(Box), { props: {} })
+    const results = []
+    for (const step of steps) {
+      await wrapper.setProps({
+        flex: false,
+        as: step.as,
+        alt: step.as === 'img' ? '' : undefined,
+        ...(step.displayProps ?? {}),
+        class: step.className,
+      } as AnyRecord)
+      results.push({
+        tagName: wrapper.element.tagName.toLowerCase(),
+        className: wrapper.element.className,
+        flexAttribute: wrapper.element.getAttribute('flex'),
+      })
+    }
+    wrapper.unmount()
+    return results
   },
 })

@@ -11,11 +11,13 @@ import Host from './composition-reactivity.test-host.svelte'
 import OwnedPropHost from './composition-owned-prop-reactivity.test-host.svelte'
 import TailwindDisplayParityHost from './tailwind-display-parity.test-host.svelte'
 import TailwindDisplayReactivityHost from './tailwind-display-reactivity.test-host.svelte'
+import TailwindPolymorphicElementHost from './tailwind-polymorphic-element.test-host.svelte'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import {
   TAILWIND_DISPLAY_PARITY_COMPOUNDS,
   TAILWIND_DISPLAY_PARITY_VARIANTS,
   tailwindDisplayParitySuite,
+  tailwindPolymorphicElementParitySuite,
 } from '@praxis-kit/adapter-utils/testing'
 import { createContractComponent } from './create-contract-component'
 
@@ -178,5 +180,51 @@ tailwindDisplayParitySuite({
       snapshots.push(container.querySelector('div')!.className)
     }
     return snapshots
+  },
+})
+
+
+tailwindPolymorphicElementParitySuite({
+  render: async ({ as, displayProps, className }) => {
+    const bundle = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    const { container } = render(TailwindPolymorphicElementHost, {
+      props: { bundle, initial: { ...(as === undefined ? {} : { as }), displayProps, className } },
+    })
+    await tick()
+    const element = container.firstElementChild as HTMLElement
+    return {
+      tagName: element.tagName.toLowerCase(),
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    }
+  },
+  reactivity: async (steps) => {
+    const bundle = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    const initial = steps[0]!
+    const { container, component } = render(TailwindPolymorphicElementHost, {
+      props: { bundle, initial },
+    })
+    await tick()
+    const read = () => {
+      const element = container.firstElementChild as HTMLElement
+      return {
+        tagName: element.tagName.toLowerCase(),
+        className: element.className,
+        flexAttribute: element.getAttribute('flex'),
+      }
+    }
+    const results = [read()]
+    for (const step of steps.slice(1)) {
+      component.setStep(step)
+      await tick()
+      results.push(read())
+    }
+    return results
   },
 })

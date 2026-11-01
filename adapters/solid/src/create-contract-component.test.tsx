@@ -13,6 +13,7 @@ import {
   tailwindComposePluginParitySuite,
   createCountedPlugin,
   tailwindAsChildPluginParitySuite,
+  tailwindPolymorphicElementParitySuite,
 } from '@praxis-kit/adapter-utils/testing'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
@@ -762,5 +763,61 @@ tailwindAsChildPluginParitySuite({
       partnerFactoryCallsDuringAsChild: result.partnerFactoryCallsDuringComposition,
       primaryFactoryCallsDuringAsChild: primary.calls(),
     }
+  },
+})
+
+
+tailwindPolymorphicElementParitySuite({
+  render: ({ as, displayProps, className }) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    const props = {
+      ...displayProps,
+      ...(as === undefined ? {} : { as }),
+      alt: as === 'img' ? '' : undefined,
+      class: className,
+    } as AnyRecord
+    const { container } = solidRender(() => <Box {...props} />)
+    const element = container.firstElementChild as HTMLElement
+    return {
+      tagName: element.tagName.toLowerCase(),
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    }
+  },
+  reactivity: async (steps) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    const [props, setProps] = createSignal<AnyRecord>({
+      ...steps[0]!.displayProps,
+      as: steps[0]!.as,
+      alt: steps[0]!.as === 'img' ? '' : undefined,
+      class: steps[0]!.className,
+    })
+    const { container, unmount } = solidRender(() => <Box {...props()} />)
+    const read = () => {
+      const element = container.firstElementChild as HTMLElement
+      return {
+        tagName: element.tagName.toLowerCase(),
+        className: element.className,
+        flexAttribute: element.getAttribute('flex'),
+      }
+    }
+    const results = [read()]
+    for (const step of steps.slice(1)) {
+      setProps({
+        ...step.displayProps,
+        as: step.as,
+        alt: step.as === 'img' ? '' : undefined,
+        class: step.className,
+      })
+      results.push(read())
+    }
+    unmount()
+    return results
   },
 })
