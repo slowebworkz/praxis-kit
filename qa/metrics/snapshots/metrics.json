@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-01T18:34:54.640Z",
+  "generated": "2026-11-01T22:25:20.466Z",
   "bundles": {
     "package/contract-only": 8468,
     "package/guards-only": 7877,
@@ -28,8 +28,8 @@
     "violations": 0,
     "exports": {
       "@praxis-kit/adapter-testing": {
-        "values": 6,
-        "types": 9
+        "values": 8,
+        "types": 14
       },
       "@praxis-kit/adapter-utils": {
         "values": 46,
@@ -83,7 +83,7 @@
         "values": 3,
         "types": 10
       },
-      "@praxis-kit/playwright": {
+      "@praxis-kit/playwright-testing": {
         "values": 35,
         "types": 4
       },
