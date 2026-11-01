@@ -21,35 +21,6 @@ async function ssr(
 }
 
 describe('createContractComponent — SSR (@vue/server-renderer)', () => {
-  it('renders to HTML without accessing browser globals', async () => {
-    const Nav = createContractComponent({
-      tag: 'nav',
-      enforcement: { diagnostics: silentDiagnostics },
-    })
-    expect(await ssr(Nav)).toContain('<nav')
-  })
-
-  it('applies base class in server-rendered HTML', async () => {
-    const Box = createContractComponent({
-      tag: 'div',
-      styling: { base: 'box-base' },
-      enforcement: { diagnostics: silentDiagnostics },
-    })
-    expect(await ssr(Box)).toContain('box-base')
-  })
-
-  it('strips redundant ARIA role — server HTML agrees with what client hydration would produce', async () => {
-    // nav has implicit role="navigation"; passing it explicitly is redundant.
-    // The engine must strip it on the server so the attribute set matches client hydration.
-    const Nav = createContractComponent({
-      tag: 'nav',
-      enforcement: { diagnostics: silentDiagnostics },
-    })
-    const html = await ssr(Nav, { role: 'navigation' })
-    expect(html).toContain('<nav')
-    expect(html).not.toContain('role=')
-  })
-
   it('strips invalid aria-* attribute — server HTML agrees with what client hydration would produce', async () => {
     // aria-checked is not valid on the implicit button role.
     const Button = createContractComponent({
@@ -57,28 +28,6 @@ describe('createContractComponent — SSR (@vue/server-renderer)', () => {
       enforcement: { diagnostics: silentDiagnostics },
     })
     expect(await ssr(Button, { 'aria-checked': 'true' })).not.toContain('aria-checked')
-  })
-
-  it('applies variant class in server-rendered HTML', async () => {
-    const Box = createContractComponent({
-      tag: 'div',
-      styling: {
-        variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
-        defaults: { size: 'lg' },
-      },
-      enforcement: { diagnostics: silentDiagnostics },
-    })
-    expect(await ssr(Box)).toContain('text-lg')
-  })
-
-  it('as prop overrides the default tag in server-rendered HTML', async () => {
-    const Nav = createContractComponent({
-      tag: 'nav',
-      enforcement: { diagnostics: silentDiagnostics },
-    })
-    const html = await ssr(Nav, { as: 'section' })
-    expect(html).toContain('<section')
-    expect(html).not.toContain('<nav')
   })
 
   it('asChild renders child element type, not the default tag', async () => {

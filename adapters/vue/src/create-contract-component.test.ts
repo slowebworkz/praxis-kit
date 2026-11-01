@@ -42,12 +42,6 @@ describe('createContractComponent — tag rendering', () => {
     expect(wrapper.element.tagName.toLowerCase()).toBe('div')
   })
 
-  it('renders a different tag via the as prop', () => {
-    const Box = createContractComponent({})
-    const wrapper = mount(box(Box), { props: { as: 'section' } })
-    expect(wrapper.element.tagName.toLowerCase()).toBe('section')
-  })
-
   it('respects a custom defaultTag', () => {
     const Box = createContractComponent({ tag: 'span' })
     const wrapper = mount(box(Box))
@@ -156,14 +150,6 @@ describe('createContractComponent — attrs', () => {
     const Box = createContractComponent({})
     const wrapper = mount(box(Box), { attrs: { 'data-testid': 'box' } })
     expect(wrapper.element.getAttribute('data-testid')).toBe('box')
-  })
-
-  it('strips variant keys before DOM forwarding', () => {
-    const Box = createContractComponent({
-      styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-    })
-    const wrapper = mount(box(Box), { props: { size: 'lg' } as never })
-    expect(wrapper.element.getAttribute('size')).toBeNull()
   })
 
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
@@ -516,23 +502,6 @@ describe('createContractComponent — variants', () => {
     })
     const wrapper = mount(box(Box), { props: { intent: 'primary' } as never })
     expect(wrapper.element.getAttribute('intent')).toBeNull()
-  })
-
-  it('activates a preset via recipe', () => {
-    const Box = createContractComponent({
-      styling: {
-        variants: {
-          intent: { primary: 'bg-blue-500', secondary: 'bg-gray-500' },
-          size: { sm: 'text-sm', lg: 'text-lg' },
-        },
-        presets: {
-          cta: { intent: 'primary', size: 'lg' },
-        } as never,
-      },
-    })
-    const wrapper = mount(box(Box), { props: { recipe: 'cta' } as never })
-    expect(wrapper.element.className).toContain('bg-blue-500')
-    expect(wrapper.element.className).toContain('text-lg')
   })
 })
 

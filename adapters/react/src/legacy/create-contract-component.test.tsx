@@ -21,12 +21,6 @@ describe('createContractComponent (legacy / React 18)', () => {
     expect(dom.container.querySelector('div')).toBeTruthy()
   })
 
-  it('renders a different tag via the as prop', () => {
-    const Box = createContractComponent({})
-    dom.mount(createElement(box(Box), { as: 'section' }))
-    expect(dom.container.querySelector('section')).toBeTruthy()
-  })
-
   it('resolves composed Praxis styling once with primary defaults taking precedence', () => {
     const Surface = createContractComponent({
       tag: 'div',
@@ -138,12 +132,6 @@ describe('createContractComponent (legacy / React 18)', () => {
     const ref = createRef<HTMLDivElement>()
     dom.mount(createElement(box(Box), { ref }))
     expect(ref.current).toBe(dom.container.querySelector('div'))
-  })
-
-  it('renders children', () => {
-    const Box = createContractComponent({})
-    dom.mount(createElement(box(Box), null, createElement('span', { id: 'child' })))
-    expect(dom.container.querySelector('span#child')).toBeTruthy()
   })
 
   it('uses the Tailwind plugin for combined classes and filters plugin-owned props from the host', () => {

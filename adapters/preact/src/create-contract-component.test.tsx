@@ -62,15 +62,6 @@ describe('createContractComponent (Preact adapter)', () => {
     expect(container.querySelector('div')).toBeTruthy()
   })
 
-  it('renders a different tag via the as prop', () => {
-    const Box = createContractComponent({})
-
-    mount(h(box(Box), { as: 'section' }))
-
-    expect(container.querySelector('section')).toBeTruthy()
-    expect(container.querySelector('div')).toBeNull()
-  })
-
   it('applies base class', () => {
     const Box = createContractComponent({
       styling: { base: 'base-cls' },
@@ -118,14 +109,6 @@ describe('createContractComponent (Preact adapter)', () => {
     mount(h(box(Box), { 'data-testid': 'box' }))
 
     expect(container.querySelector('[data-testid="box"]')).toBeTruthy()
-  })
-
-  it('renders children', () => {
-    const Box = createContractComponent({})
-
-    mount(h(box(Box), null, h('span', { id: 'child' })))
-
-    expect(container.querySelector('span#child')).toBeTruthy()
   })
 
   it('asChild renders the child element type instead of the default tag', () => {

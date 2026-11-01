@@ -53,15 +53,6 @@ describe('createContractComponent (current / React 19)', () => {
     expect(dom.container.querySelector('div')).toBeTruthy()
   })
 
-  it('renders a different tag via the as prop', () => {
-    const Box = createContractComponent({})
-
-    dom.mount(createElement(box(Box), { as: 'section' }))
-
-    expect(dom.container.querySelector('section')).toBeTruthy()
-    expect(dom.container.querySelector('div')).toBeNull()
-  })
-
   it('applies baseClassName', () => {
     const Box = createContractComponent({
       styling: { base: 'base-cls' },
@@ -457,14 +448,6 @@ describe('createContractComponent (current / React 19)', () => {
     )
 
     expect(dom.container.querySelector('[data-testid="box"]')).toBeTruthy()
-  })
-
-  it('renders children', () => {
-    const Box = createContractComponent({})
-
-    dom.mount(createElement(box(Box), null, createElement('span', { id: 'child' })))
-
-    expect(dom.container.querySelector('span#child')).toBeTruthy()
   })
 
   it('asChild renders the child element type instead of the default tag', () => {

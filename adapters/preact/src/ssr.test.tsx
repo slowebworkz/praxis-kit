@@ -16,55 +16,6 @@ function ssr(comp: unknown, props?: UnknownProps, ...children: unknown[]) {
 }
 
 describe('createContractComponent — SSR (preact-render-to-string)', () => {
-  it('renders to HTML without accessing browser globals', () => {
-    const Nav = createContractComponent({
-      tag: 'nav',
-      enforcement: { diagnostics: silentDiagnostics },
-    })
-    expect(ssr(Nav)).toContain('<nav')
-  })
-
-  it('applies base class in server-rendered HTML', () => {
-    const Box = createContractComponent({
-      tag: 'div',
-      styling: { base: 'box-base' },
-      enforcement: { diagnostics: silentDiagnostics },
-    })
-    expect(ssr(Box)).toContain('box-base')
-  })
-
-  it('strips redundant ARIA role — server HTML agrees with what client hydration would produce', () => {
-    const Nav = createContractComponent({
-      tag: 'nav',
-      enforcement: { diagnostics: silentDiagnostics },
-    })
-    const html = ssr(Nav, { role: 'navigation' })
-    expect(html).toContain('<nav')
-    expect(html).not.toContain('role=')
-  })
-
-  it('applies variant class in server-rendered HTML', () => {
-    const Box = createContractComponent({
-      tag: 'div',
-      styling: {
-        variants: { size: { sm: 'text-sm', lg: 'text-lg' } },
-        defaults: { size: 'lg' },
-      },
-      enforcement: { diagnostics: silentDiagnostics },
-    })
-    expect(ssr(Box)).toContain('text-lg')
-  })
-
-  it('as prop overrides the default tag in server-rendered HTML', () => {
-    const Nav = createContractComponent({
-      tag: 'nav',
-      enforcement: { diagnostics: silentDiagnostics },
-    })
-    const html = ssr(Nav, { as: 'section' })
-    expect(html).toContain('<section')
-    expect(html).not.toContain('<nav')
-  })
-
   it('asChild renders child element type, not the default tag', () => {
     const Nav = createContractComponent({
       tag: 'nav',

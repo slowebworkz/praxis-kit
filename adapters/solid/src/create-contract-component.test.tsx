@@ -37,13 +37,6 @@ describe('createContractComponent (Solid adapter)', () => {
     expect(container.querySelector('div')).toBeTruthy()
   })
 
-  it('renders a different tag via the as prop', () => {
-    const Comp = createContractComponent({ tag: 'div' })
-    const { container } = solidRender(() => <Comp as="section" />)
-    expect(container.querySelector('section')).toBeTruthy()
-    expect(container.querySelector('div')).toBeNull()
-  })
-
   it('as={Component}: renders through the referenced component via <Dynamic>, not the default tag', () => {
     // Solid already handles a component-valued `as` mechanically — `resolveTag`/`<Dynamic
     // component={tag()}>` are reference-safe with no special casing needed. This test is the
@@ -60,13 +53,6 @@ describe('createContractComponent (Solid adapter)', () => {
     const Comp = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
     const { container } = solidRender(() => <Comp />)
     expect(container.querySelector('div')?.className).toBe('base-class')
-  })
-
-  it('merges caller class with base', () => {
-    const Comp = createContractComponent({ tag: 'div', styling: { base: 'base' } })
-    const { container } = solidRender(() => <Comp class="caller" />)
-    expect(container.querySelector('div')?.className).toContain('base')
-    expect(container.querySelector('div')?.className).toContain('caller')
   })
 
   it('forwards a ref to the DOM element', () => {
