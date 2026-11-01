@@ -24,10 +24,8 @@ export type {
   TailwindAsChildPluginParityAdapter,
   TailwindAsChildPluginResult,
 } from './tailwind-as-child-plugin-parity'
-export {
-  createCountedPlugin,
-  tailwindAsChildPluginParitySuite,
-} from './tailwind-as-child-plugin-parity'
+export { tailwindAsChildPluginParitySuite } from './tailwind-as-child-plugin-parity'
+export { createCountedPlugin } from './helpers'
 
 export type {
   TailwindPolymorphicElementInput,
