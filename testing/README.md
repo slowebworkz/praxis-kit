@@ -16,9 +16,9 @@ packages: they are created when something lands there and are run through their 
 
 ## Packages
 
-- [`adapter-testing`](packages/adapter-testing) — the cross-framework adapter conformance suites
-  (conformance, a11y, SSR, hydration, performance, isolation) and the `ConformanceAdapter` contract
-  each adapter implements.
+- [`adapter-testing`](packages/adapter-testing) — the cross-framework adapter suites (conformance,
+  a11y, SSR, hydration, performance, isolation, compound component, `onElement`) and the
+  `ConformanceAdapter` contract each adapter implements.
 - [`tailwind-testing`](packages/tailwind-testing) — the cross-adapter Tailwind parity suites
   (display, compose plugin, asChild plugin, polymorphic element).
 

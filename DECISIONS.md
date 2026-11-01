@@ -3889,8 +3889,27 @@ conformance contract" follow-up was waiting on — so the infrastructure moved t
 
 - `test-utils`, `test-fixtures`, `test-matchers`, `component-testing`, `accessibility-testing` —
   created only when real reuse appears, not for organisational symmetry. The first `test-utils`
-  candidate is already visible: the whitespace-tokenising helper (`className.split(/\s+/)` /
-  `tokensOf`) is repeated across the Tailwind suites, and its doubled-backslash regex typo recurred
-  in four of them. Extract it when the next suite needs it.
+  candidate is now cross-package: `adapter-testing` and `tailwind-testing` each carry their own
+  `withWarnSpy` and a near-identical has/lacks assertion (`expectContains` / `expectTokenList`),
+  kept separate because neither testing package may depend on the other. The whitespace-tokenising
+  `tokensOf` that was once repeated across the Tailwind suites is already shared inside
+  `tailwind-testing` (its doubled-backslash regex typo had recurred in four suites).
 - `lib/playwright` is also non-production test tooling but a separate concern (Playwright CT
   helpers, not Vitest suites); relocating it is not part of this slice.
+
+**Follow-ups on the same branch**
+
+- **`compoundComponentSuite` and `onElementSuite`** in `adapter-testing`: the runtime half of the
+  per-adapter `compound-component` and `on-element` tests, which were the same scenarios copied into
+  every adapter. The compile-time `expectTypeOf` checks, a native-`<dialog>` assertion and the
+  `onElement` lifecycle matrix (host swaps, throwing hooks) stay in each adapter, because they
+  depend on that adapter's own types or ref mechanics.
+- The `onElement` suite found that **Solid re-invokes the hook on any prop change** (previous
+  cleanup first), where the other seven adapters leave the registration alone: Solid's render
+  spreads `{...domProps()} ref`, and the props memo recomputes on every change. The old Solid test
+  never changed a prop. It is recorded as the `hookReRunsOnPropChange` capability instead of being
+  hidden, and the suite still asserts nothing leaks. Whether to fix the adapter is open.
+- Surveyed and deliberately **not** moved: `define-contract`, `contract-props`,
+  `compose-call-signature`, `polymorphic-props` and `compose-props` are entirely type-level
+  (`expectTypeOf`, no runtime assertions) and tied to each adapter's own types; `normalize-children`
+  unit-tests each adapter's own internal normaliser with framework-specific elements.
