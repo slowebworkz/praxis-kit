@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/experimental-ct-react'
-import { clickAndFocus, press, tabTo, expectFocused, sweepAxeLocator } from '@praxis-kit/playwright'
+import {
+  clickAndFocus,
+  press,
+  tabTo,
+  expectFocused,
+  sweepAxeLocator,
+} from '@praxis-kit/playwright-testing'
 import { Button, AlertRegion } from './interaction.pw.fixtures'
 
 // ---------------------------------------------------------------------------

@@ -23,7 +23,7 @@
     "@praxis-kit/lit",
     "@praxis-kit/pipeline",
     "@praxis-kit/pipeline-kit",
-    "@praxis-kit/playwright",
+    "@praxis-kit/playwright-testing",
     "@praxis-kit/preact",
     "@praxis-kit/primitive",
     "@praxis-kit/react",

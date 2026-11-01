@@ -16,7 +16,6 @@
     { "path": "./lib/foundation" },
     { "path": "./lib/guards" },
     { "path": "./lib/pipeline" },
-    { "path": "./lib/playwright" },
     { "path": "./lib/pipeline-kit" },
     { "path": "./lib/primitive" },
     { "path": "./lib/runtime" },
@@ -32,6 +31,7 @@
     { "path": "./qa/metrics" },
     { "path": "./qa/tree-shaking-tests" },
     { "path": "./testing/packages/adapter-testing" },
+    { "path": "./testing/packages/playwright-testing" },
     { "path": "./testing/packages/tailwind-testing" },
     { "path": "./tooling/codemod" }
   ]

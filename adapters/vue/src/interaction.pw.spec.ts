@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/experimental-ct-vue'
-import { clickAndFocus, press, tabTo, expectFocused, sweepAxeLocator } from '@praxis-kit/playwright'
+import {
+  clickAndFocus,
+  press,
+  tabTo,
+  expectFocused,
+  sweepAxeLocator,
+} from '@praxis-kit/playwright-testing'
 import Button from './interaction.pw.fixtures/Button.vue'
 import AlertRegion from './interaction.pw.fixtures/AlertRegion.vue'
 

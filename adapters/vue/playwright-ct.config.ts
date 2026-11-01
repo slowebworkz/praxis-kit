@@ -66,8 +66,8 @@ export default defineConfig({
           },
           { find: '@praxis-kit/styling', replacement: resolve('../../lib/styling/src/index.ts') },
           {
-            find: '@praxis-kit/playwright',
-            replacement: resolve('../../lib/playwright/src/index.ts'),
+            find: '@praxis-kit/playwright-testing',
+            replacement: resolve('../../testing/packages/playwright-testing/src/index.ts'),
           },
         ],
       },

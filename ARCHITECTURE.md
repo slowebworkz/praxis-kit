@@ -18,7 +18,6 @@ lib/                     internal implementation modules (private: true, not pub
   runtime/               tree/render-context primitives backing the Custom Element adapters
   pipeline/ pipeline-kit/ generic compose/run/pass abstractions used by a few of the above
   tailwind/              Tailwind layout-aware class pipeline (built for @praxis-kit/tailwind)
-  playwright/            shared Playwright fixtures for adapter interaction tests
 
 packages/                published artifacts (versioned, npm-facing)
   core/                  capability-driven factory (createPolymorphic) composing lib/ modules
@@ -35,8 +34,9 @@ tooling/                 the praxis-codemod CLI
 qa/                      cross-cutting verification: tree-shaking tests, bundle analysis, metrics, bench
 testing/                 reusable test infrastructure (private; production never depends on it)
   packages/              adapter-testing (conformance, a11y, SSR, hydration, performance, isolation,
-                         compound-component and onElement suites) and tailwind-testing (Tailwind
-                         parity suites) — see testing/README.md
+                         compound-component and onElement suites), tailwind-testing (Tailwind
+                         parity suites), playwright-testing (Playwright CT helpers) — see
+                         testing/README.md
 ```
 
 Dependency direction: `lib/primitive` ← `lib/contract`/`lib/styling`/`lib/diagnostics` ←

@@ -3894,11 +3894,16 @@ conformance contract" follow-up was waiting on — so the infrastructure moved t
   kept separate because neither testing package may depend on the other. The whitespace-tokenising
   `tokensOf` that was once repeated across the Tailwind suites is already shared inside
   `tailwind-testing` (its doubled-backslash regex typo had recurred in four suites).
-- `lib/playwright` is also non-production test tooling but a separate concern (Playwright CT
-  helpers, not Vitest suites); relocating it is not part of this slice.
 
 **Follow-ups on the same branch**
 
+- **`lib/playwright` → `testing/packages/playwright-testing`** (`@praxis-kit/playwright-testing`).
+  Originally left out as "a separate concern", it is non-production test tooling (Playwright CT
+  helpers: ARIA snapshot assertions, keyboard sequences, axe sweeps, cardinality console catchers)
+  and only the React and Vue CT specs use it, so it belongs with the rest. It keeps its own unit
+  tests and its `@praxis-kit/pipeline` type import (testing → production is the allowed direction).
+  The `-testing` suffix matches the other packages. Nothing excluded it by path: `qa/metrics`'
+  `SOURCE_PACKAGES` is an include list, so the move needed only a comment fix there.
 - **`compoundComponentSuite` and `onElementSuite`** in `adapter-testing`: the runtime half of the
   per-adapter `compound-component` and `on-element` tests, which were the same scenarios copied into
   every adapter. The compile-time `expectTypeOf` checks, a native-`<dialog>` assertion and the
