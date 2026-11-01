@@ -1,9 +1,10 @@
 // Internal helpers shared by the conformance suites. Not part of the package's public surface
 // (see index.ts) — suites import from here directly.
 
-import { expect } from 'vitest'
+import { expect, vi } from 'vitest'
+import type { MockInstance } from 'vitest'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
-import type { ConformanceComponent, ConformanceFactoryOptions } from './types'
+import type { ConformanceAdapter, ConformanceComponent, ConformanceFactoryOptions } from './types'
 
 // Asserts that every `has` token is, and every `lacks` token is not, a substring of `text`.
 export function expectContains(
@@ -28,3 +29,34 @@ export function silentCreate<C extends ConformanceComponent>(adapter: {
       enforcement: { ...options.enforcement, diagnostics: silentDiagnostics },
     })
 }
+
+export const tagOf = (element: Element): string => element.tagName.toLowerCase()
+
+// A child-rule matcher that accepts every child, so a rule exercises cardinality alone.
+export const matchAnyChild = (c: unknown): c is unknown => !!c || !c
+
+// Runs `run` with `console.warn` silenced and always restores it, even if an assertion throws.
+export function withWarnSpy(run: (warnSpy: MockInstance<typeof console.warn>) => void): void {
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  try {
+    run(warnSpy)
+  } finally {
+    warnSpy.mockRestore()
+  }
+}
+
+// The conformance suite's capability defaults: everything on except composition styling and
+// dynamic child rules, which an adapter opts in to. Shared so the split-out sections agree.
+export function resolveConformanceCapabilities(adapter: Pick<ConformanceAdapter, 'capabilities'>) {
+  return {
+    asChild: true,
+    compose: true,
+    compositionStyling: false,
+    tagPolymorphism: true,
+    domPropFiltering: true,
+    dynamicChildRules: false,
+    ...adapter.capabilities,
+  }
+}
+
+export type ConformanceCaps = ReturnType<typeof resolveConformanceCapabilities>
