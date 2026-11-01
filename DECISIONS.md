@@ -441,8 +441,8 @@ framework-neutral, so its semantic test matrix should match react's):
   slotted child), element replacement (ref moves), unmount (ref → null). +4
   `create-contract-component.test.tsx` cases.
 - **Follow-up:** these (nested children, the ref matrix, polymorphic `as`, ARIA normalization)
-  belong in the shared `conformanceSuite` (`lib/adapter-utils/src/testing/`) so every adapter runs
-  one matrix rather than each re-deriving it; react's `normalize-children.test` should gain the
+  belong in the shared `conformanceSuite` (now `testing/packages/adapter-testing`) so every adapter
+  runs one matrix rather than each re-deriving it; react's `normalize-children.test` should gain the
   matching nested-children cases when that consolidation happens.
 
 **Architecture note** (review, no action): do **not** abstract react + preact's
@@ -632,21 +632,22 @@ true (react/preact/vue each needed at least one real correctness fix during revi
   worth more generic machinery to eliminate.
 
 **Follow-up (substantial — not this slice): a shared, explicit cross-adapter conformance contract.**
-`lib/adapter-utils/src/testing` already gives every adapter (react/preact/vue/solid) one shared
+`lib/adapter-utils/src/testing` (since moved to `testing/packages/adapter-testing` — see "Testing
+workspace" below) already gives every adapter (react/preact/vue/solid) one shared
 `conformanceSuite`/`conformanceA11ySuite`/`conformancePerformanceSuite`/
 `conformanceIsolationSuite`/`ssrConformanceSuite` — each adapter supplies a small
 `ConformanceAdapter` (create/render/rerender/cleanup/capabilities) and the suites run the same
 assertions against it. What's proposed and not yet true: (1) organizing it as its own package
-(`packages/adapter-conformance` or similar) rather than a `testing` subpath of `lib/adapter-utils`;
-(2) more granular named sub-suites per concern (refs, slots/asChild specifically, SSR hydration
-parity) rather than the current coarser grouping; (3) a documented per-adapter capability/exception
-matrix (`capabilities: { asChild: false, … }` already exists as a mechanism — formalizing what it
-covers and why per adapter is the gap). The value case the reviewer raised is real: this is exactly
-the mechanism that would catch a "React: asChild resolves defaults / Solid: asChild forgets
-defaults" class of drift automatically instead of by manual review — but it's a cross-cutting
-restructuring across every already-merged adapter, sized for its own slice once `svelte`/`lit`/`web`
-exist too (more data points on what's genuinely shared vs. framework-specific before committing to
-the sub-suite boundaries).
+(`packages/adapter-conformance` or similar) rather than a `testing` subpath of `lib/adapter-utils`
+(done — see "Testing workspace"); (2) more granular named sub-suites per concern (refs,
+slots/asChild specifically, SSR hydration parity) rather than the current coarser grouping; (3) a
+documented per-adapter capability/exception matrix (`capabilities: { asChild: false, … }` already
+exists as a mechanism — formalizing what it covers and why per adapter is the gap). The value case
+the reviewer raised is real: this is exactly the mechanism that would catch a "React: asChild
+resolves defaults / Solid: asChild forgets defaults" class of drift automatically instead of by
+manual review — but it's a cross-cutting restructuring across every already-merged adapter, sized
+for its own slice once `svelte`/`lit`/`web` exist too (more data points on what's genuinely shared
+vs. framework-specific before committing to the sub-suite boundaries).
 
 ### `adapters/svelte` — port scope and adaptations
 
@@ -1719,12 +1720,12 @@ infrastructure this exposed: `SsrConformanceAdapter` (`lib/adapter-utils`) had n
 `capabilities.tagPolymorphism` gate at all — unlike the DOM-side `ConformanceAdapter`, which already
 skips its "as changes the tag" tests when that capability is `false` — so `ssrConformanceSuite`
 universally asserted real `as`-driven tag polymorphism with no opt-out. Added the same gate to the
-SSR suite (`lib/adapter-utils/src/types/ssr-conformance-adapter.ts`,
-`lib/adapter-utils/src/testing/ssr.ts`) and set `capabilities: { tagPolymorphism: false }` on Lit's
-`ssrConformanceSuite` call, matching what it already declares for the DOM suite. This is a genuine
-gap in the reference implementation too (`../pk` has the identical unconditional SSR test, and the
-same `renderToString` behavior) — worth carrying upstream, and directly relevant to Web's eventual
-port, which shares `renderBundleToString` and has the identical fixed-tag constraint.
+SSR suite (`testing/packages/adapter-testing/src/types/ssr-conformance-adapter.ts`,
+`testing/packages/adapter-testing/src/ssr.ts`) and set `capabilities: { tagPolymorphism: false }` on
+Lit's `ssrConformanceSuite` call, matching what it already declares for the DOM suite. This is a
+genuine gap in the reference implementation too (`../pk` has the identical unconditional SSR test,
+and the same `renderToString` behavior) — worth carrying upstream, and directly relevant to Web's
+eventual port, which shares `renderBundleToString` and has the identical fixed-tag constraint.
 
 New regression coverage: `ssr.test.ts` asserts `renderToString` output is byte-identical with and
 without an `as` key, and that `options.tag` still renders regardless of an unsupported-looking `as`
@@ -3846,3 +3847,50 @@ combined and nested partners are never walked, so there is no flat-shape collisi
   plugin props in `ContractProps` while those props remain absent from the primary component's
   strict call signature. This follows the runtime-aligned primary-plugin selection policy and is
   tested.
+
+### Testing workspace — reusable test infrastructure leaves the production packages (2026-11-01)
+
+The shared cross-adapter suites lived in `lib/adapter-utils/src/testing` (exported as
+`@praxis-kit/adapter-utils/testing`), with their eight contract types in `adapter-utils/src/types`.
+That put a `./testing` export and an optional `vitest` peer dependency on a production package and
+let the Tailwind parity suites keep growing inside it. The adapter set is now complete
+(react/preact/vue/solid/svelte/lit/web) — the trigger the earlier "shared, explicit cross-adapter
+conformance contract" follow-up was waiting on — so the infrastructure moved to a first-class
+`testing/` workspace.
+
+**What landed**
+
+- `testing/packages/*` is a pnpm workspace glob. Two packages: **`@praxis-kit/adapter-testing`**
+  (conformance, a11y, SSR, hydration, performance and isolation suites plus the `ConformanceAdapter`
+  contract types) and **`@praxis-kit/tailwind-testing`** (the display, compose-plugin,
+  asChild-plugin and polymorphic-element parity suites). Both are private, source-exporting (no
+  build step) and carry `vitest` as a required peer dependency.
+- **Neither package depends on `adapter-utils`**, and `tailwind-testing` still does not depend on
+  `@praxis-kit/tailwind` — the suites only ever needed `core`/`diagnostics`/`primitive`/`styling`.
+  Adapters take both as `devDependencies` and keep `adapter-utils` as a runtime dependency.
+- `lib/adapter-utils` lost its `./testing` export, its `vitest` peer dependency and the eight
+  conformance types. Nothing in production code referenced any of them.
+
+**Decisions**
+
+- **Only `testing/packages/*` is a workspace glob.** `testing/integration/` and `testing/e2e/` are
+  reserved homes for repo-level suites with their own Vitest/Playwright config; they are not pnpm
+  packages and do not exist yet (no empty placeholders).
+- **No compatibility shim.** Re-exporting from `adapter-utils/testing` would make a production
+  package depend on testing packages. `adapter-utils` is private, so all ~28 consumers were migrated
+  in the same change (a one-off AST-based import rewrite with an explicit symbol-ownership map).
+- **The one-way rule is enforced, not just documented.** `pnpm check:testing-boundary`
+  (`scripts/check-testing-boundary.ts`, part of `pnpm check`) fails if a production package lists a
+  testing package outside `devDependencies`, if `packages/kit` references one at all, or if non-test
+  production source imports one (by name or relative path). Test files, test hosts,
+  Playwright/Vitest configs and `make-conformance-adapter.ts` are exempt.
+
+**Deferred (deliberately)**
+
+- `test-utils`, `test-fixtures`, `test-matchers`, `component-testing`, `accessibility-testing` —
+  created only when real reuse appears, not for organisational symmetry. The first `test-utils`
+  candidate is already visible: the whitespace-tokenising helper (`className.split(/\s+/)` /
+  `tokensOf`) is repeated across the Tailwind suites, and its doubled-backslash regex typo recurred
+  in four of them. Extract it when the next suite needs it.
+- `lib/playwright` is also non-production test tooling but a separate concern (Playwright CT
+  helpers, not Vitest suites); relocating it is not part of this slice.
