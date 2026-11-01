@@ -1,89 +1,61 @@
 // @vitest-environment jsdom
 /**
- * Proves the `onElement` compound mechanism end-to-end in Solid: the real DOM element
- * reaches the hook once per mount, getProps() reflects current props without
- * re-registering, and the returned cleanup fires on unmount. Uses a native `<dialog>`
- * element as the motivating case — showModal()/close() and the dialog's own native
- * close/cancel events require the real node, not a props-based synthetic handler.
+ * `onElement` coverage for Solid. The behaviour — the real element reaches the hook, getProps()
+ * tracks current props without re-registering, the returned cleanup fires on unmount — is the
+ * shared `onElementSuite`; this file supplies Solid's mounting. Uses a native `<dialog>` as the
+ * motivating case: showModal()/close() and the dialog's own native close/cancel events require
+ * the real node, not a props-based synthetic handler.
  */
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { render as solidRender, cleanup } from '@solidjs/testing-library'
 import { createSignal } from 'solid-js'
+import type { JSX } from 'solid-js'
+import { onElementSuite } from '@praxis-kit/adapter-testing'
+import type { OnElementAdapter } from '@praxis-kit/adapter-testing'
 import { createContractComponent } from './create-contract-component'
 
 afterEach(cleanup)
 
-describe('onElement (event-handler wiring)', () => {
-  it('receives the real element and can call native imperative methods on it', () => {
-    let received: Element | undefined
+const adapter: OnElementAdapter = {
+  mount: (hook, label) => {
     const Dialog = createContractComponent({
       tag: 'dialog' as const,
       name: 'Dialog',
-      onElement: (el) => {
-        received = el
+      onElement: hook,
+    })
+    const [current, setCurrent] = createSignal<string | undefined>(label)
+
+    // `label` isn't a declared prop of Dialog, so view the component through a loose props type
+    // and pass it as a plain attribute. Spreading `{ label: current() }` instead would make the
+    // whole props object one dynamic spread, invalidating every read — including the `ref`
+    // getter that registers `onElement` — and re-fire the hook on each change.
+    const LooseDialog = Dialog as unknown as (props: { label?: string | undefined }) => JSX.Element
+    const { container, unmount } = solidRender(() => <LooseDialog label={current()} />)
+    return {
+      element: container.querySelector('dialog')!,
+      setLabel: (next) => {
+        setCurrent(next)
       },
-    })
-
-    const { container } = solidRender(() => <Dialog />)
-    expect(received).toBeInstanceOf(HTMLDialogElement)
-    expect(received).toBe(container.querySelector('dialog'))
-  })
-
-  it('getProps() reflects current props without re-registering the listener', () => {
-    let listenerAttachCount = 0
-    const Dialog = createContractComponent({
-      tag: 'dialog' as const,
-      name: 'Dialog',
-      onElement: (el, getProps) => {
-        const handleClose = () => (getProps() as { onDialogClose?: () => void }).onDialogClose?.()
-        el.addEventListener('close', handleClose)
-        listenerAttachCount++
-        return () => el.removeEventListener('close', handleClose)
-      },
-    })
-
-    // A signal holding a function value is ambiguous in Solid (createSignal treats a function
-    // argument as a lazy initializer, not a value to store as-is). Sidestep that entirely: the
-    // JSX-passed prop is one stable closure that indirects through a reactive id, so calling it
-    // always dispatches to whichever handler is currently selected — proving getProps() sees the
-    // live prop value without onElement ever re-registering its listener.
-    const firstOnClose = vi.fn()
-    const secondOnClose = vi.fn()
-    const handlers = [firstOnClose, secondOnClose]
-    const [activeIndex, setActiveIndex] = createSignal(0)
-    const onDialogClose = () => handlers[activeIndex()]!()
-
-    // onDialogClose isn't a declared prop of Dialog; spreading requires an object type, so
-    // `any` is the escape hatch here.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { container } = solidRender(() => <Dialog {...({ onDialogClose } as any)} />)
-    container.querySelector('dialog')!.dispatchEvent(new Event('close'))
-    expect(firstOnClose).toHaveBeenCalledTimes(1)
-    expect(secondOnClose).not.toHaveBeenCalled()
-
-    setActiveIndex(1)
-    expect(listenerAttachCount).toBe(1)
-    container.querySelector('dialog')!.dispatchEvent(new Event('close'))
-    expect(secondOnClose).toHaveBeenCalledTimes(1)
-    expect(firstOnClose).toHaveBeenCalledTimes(1)
-  })
-
-  it('runs the returned cleanup on unmount', () => {
-    const cleanupFn = vi.fn()
-    const Dialog = createContractComponent({
-      tag: 'dialog' as const,
-      name: 'Dialog',
-      onElement: () => cleanupFn,
-    })
-
-    const { unmount } = solidRender(() => <Dialog />)
-    expect(cleanupFn).not.toHaveBeenCalled()
-    unmount()
-    expect(cleanupFn).toHaveBeenCalledTimes(1)
-  })
-
-  it('a plain component with no onElement option is unaffected', () => {
+      unmount,
+    }
+  },
+  mountPlain: () => {
     const Plain = createContractComponent({ tag: 'div' as const, name: 'Plain' })
-    expect(() => solidRender(() => <Plain />)).not.toThrow()
+    solidRender(() => <Plain />)
+  },
+  // Known divergence: any prop change re-applies `ref`, so the hook re-runs (previous cleanup
+  // first). The old Solid test never changed a prop, so it never exercised this.
+  capabilities: { hookReRunsOnPropChange: true },
+}
+
+onElementSuite(adapter)
+
+describe('onElement (native host)', () => {
+  it('receives a native element it can call imperative methods on', async () => {
+    let received: Element | undefined
+    await adapter.mount((el) => {
+      received = el
+    })
+    expect(received).toBeInstanceOf(HTMLDialogElement)
   })
 })

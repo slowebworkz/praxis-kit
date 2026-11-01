@@ -22,3 +22,6 @@ export { conformanceIsolationSuite } from './isolation'
 
 export type { CompoundComponentAdapter, CompoundRender } from './compound-component'
 export { compoundComponentSuite } from './compound-component'
+
+export type { OnElementAdapter, OnElementHook, OnElementMounted } from './on-element'
+export { onElementSuite } from './on-element'

@@ -1,101 +1,54 @@
 /**
- * Proves the `onElement` compound mechanism end-to-end in Lit: the real DOM element
- * reaches the hook once per connect, getProps() reflects current props without
- * re-registering, and the returned cleanup fires on disconnect. Lit's generated class
- * always registers under a consumer-chosen hyphenated custom-element name (never
- * literally `dialog`), so this uses a plain custom tag rather than native `<dialog>`
- * semantics — the mechanism itself is what's under test here, not showModal()/close().
+ * `onElement` coverage for Lit. The behaviour — the real element reaches the hook, getProps()
+ * tracks current props without re-registering, the returned cleanup fires — is the shared
+ * `onElementSuite`; this file supplies Lit's mounting. Lit's generated class always registers
+ * under a consumer-chosen hyphenated custom-element name (never literally `dialog`), so this
+ * uses a plain custom tag: the element handed to the hook is the custom-element instance itself.
+ * "Unmount" is disconnecting it from the document, and a "prop" is a string attribute — the
+ * shape of current prop Lit's getProps() supports, which reads attributes plus declared
+ * reactive properties.
  */
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { afterEach } from 'vitest'
+import { onElementSuite } from '@praxis-kit/adapter-testing'
 import { createContractComponent } from './create-contract-component'
 
 type LitEl = HTMLElement & { updateComplete: Promise<boolean> }
 
-function define(name: string, ctor: CustomElementConstructor) {
-  if (!customElements.get(name)) customElements.define(name, ctor)
+let sequence = 0
+
+function define(ctor: CustomElementConstructor): string {
+  const name = `pk-on-element-${++sequence}`
+  customElements.define(name, ctor)
+  return name
 }
 
 afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('onElement (event-handler wiring)', () => {
-  it('receives the real element and it is the custom element instance itself', async () => {
-    let received: Element | undefined
-    const Widget = createContractComponent({
-      tag: 'div',
-      name: 'Widget',
-      onElement: (el) => {
-        received = el
+onElementSuite({
+  mount: async (hook, label) => {
+    const Widget = createContractComponent({ tag: 'div', name: 'Widget', onElement: hook })
+    const el = document.createElement(define(Widget))
+    if (label !== undefined) el.setAttribute('label', label)
+    document.body.appendChild(el)
+    await (el as unknown as LitEl).updateComplete
+
+    return {
+      element: el,
+      setLabel: async (next) => {
+        el.setAttribute('label', next)
+        await (el as unknown as LitEl).updateComplete
       },
-    })
-    define('pk-on-element-widget', Widget)
-
-    const el = document.createElement('pk-on-element-widget')
-    document.body.appendChild(el)
-    await (el as unknown as LitEl).updateComplete
-
-    expect(received).toBe(el)
-  })
-
-  it('getProps() reflects current props without re-registering the listener', async () => {
-    // getProps() is backed by _buildProps(), which (like Web) reads attributes plus declared
-    // reactive properties — never arbitrary function-valued instance properties, since Lit's own
-    // prop-collection loop can't distinguish those from unrelated properties a consumer might
-    // set. A string attribute is the shape of "current prop" Lit's getProps() actually supports.
-    let listenerAttachCount = 0
-    const seen: (string | undefined)[] = []
-    const Widget = createContractComponent({
-      tag: 'div',
-      name: 'WidgetProps',
-      onElement: (el, getProps) => {
-        const handleClose = () => seen.push((getProps() as { label?: string }).label)
-        el.addEventListener('close', handleClose)
-        listenerAttachCount++
-        return () => el.removeEventListener('close', handleClose)
+      unmount: () => {
+        document.body.removeChild(el)
       },
-    })
-    define('pk-on-element-widget-props', Widget)
-
-    const el = document.createElement('pk-on-element-widget-props')
-    el.setAttribute('label', 'first')
-    document.body.appendChild(el)
-    await (el as unknown as LitEl).updateComplete
-
-    el.dispatchEvent(new Event('close'))
-    expect(seen).toEqual(['first'])
-
-    el.setAttribute('label', 'second')
-    await (el as unknown as LitEl).updateComplete
-    expect(listenerAttachCount).toBe(1)
-    el.dispatchEvent(new Event('close'))
-    expect(seen).toEqual(['first', 'second'])
-  })
-
-  it('runs the returned cleanup on disconnect', async () => {
-    const cleanup = vi.fn()
-    const Widget = createContractComponent({
-      tag: 'div',
-      name: 'WidgetCleanup',
-      onElement: () => cleanup,
-    })
-    define('pk-on-element-widget-cleanup', Widget)
-
-    const el = document.createElement('pk-on-element-widget-cleanup')
-    document.body.appendChild(el)
-    await (el as unknown as LitEl).updateComplete
-    expect(cleanup).not.toHaveBeenCalled()
-
-    document.body.removeChild(el)
-    expect(cleanup).toHaveBeenCalledTimes(1)
-  })
-
-  it('a plain component with no onElement option is unaffected', async () => {
+    }
+  },
+  mountPlain: async () => {
     const Plain = createContractComponent({ tag: 'div', name: 'PlainOnElement' })
-    define('pk-on-element-plain', Plain)
-
-    const el = document.createElement('pk-on-element-plain')
-    expect(() => document.body.appendChild(el)).not.toThrow()
+    const el = document.createElement(define(Plain))
+    document.body.appendChild(el)
     await (el as unknown as LitEl).updateComplete
-  })
+  },
 })
