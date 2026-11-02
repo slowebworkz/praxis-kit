@@ -9,6 +9,8 @@ export type {
 } from './conformance'
 export { conformanceSuite } from './conformance'
 
+export { classToClassName } from './class-name'
+
 export { conformanceA11ySuite } from './a11y'
 
 export type { SsrConformanceAdapter } from './ssr'

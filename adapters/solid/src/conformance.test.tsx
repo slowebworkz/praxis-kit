@@ -9,6 +9,7 @@ import {
   conformanceIsolationSuite,
 } from '@praxis-kit/adapter-testing'
 import type { AnyRecord } from '@praxis-kit/core'
+import { isFunction, isObject } from '@praxis-kit/guards'
 import type {
   BareFactoryOptions,
   ChildSpec,
@@ -33,7 +34,7 @@ function toSolidElement(c: ChildSpec): unknown {
 }
 
 function isRefObject(v: unknown): v is ConformanceRef {
-  return v !== null && typeof v === 'object' && 'current' in v
+  return isObject(v) && 'current' in v
 }
 
 function normalizeProps(props: AnyRecord): UnknownProps {
@@ -80,9 +81,7 @@ const adapter: ConformanceAdapter<SolidConformanceComponent> = {
   // Not a Praxis component: no retained styling metadata. Solid's asChild contract hands the
   // children render function its slot props.
   createExternalPartner: () => (props: { children?: unknown }) =>
-    typeof props.children === 'function'
-      ? (props.children as (p: object) => unknown)({})
-      : props.children,
+    isFunction(props.children) ? (props.children as (p: object) => unknown)({}) : props.children,
   capabilities: { asChild: false, dynamicChildRules: true, compositionStyling: true },
 }
 

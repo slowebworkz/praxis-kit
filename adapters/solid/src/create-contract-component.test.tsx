@@ -17,6 +17,7 @@ import {
 } from '@praxis-kit/tailwind-testing'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
+import { definedProp } from '@praxis-kit/test-utils'
 
 afterEach(cleanup)
 
@@ -758,7 +759,7 @@ tailwindPolymorphicElementParitySuite({
     })
     const props = {
       ...displayProps,
-      ...(as === undefined ? {} : { as }),
+      ...definedProp('as', as),
       alt: as === 'img' ? '' : undefined,
       class: className,
     } as AnyRecord

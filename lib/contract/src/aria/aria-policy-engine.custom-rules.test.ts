@@ -5,6 +5,10 @@ import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import { isString } from '@praxis-kit/guards'
 import type { AnyRecord } from '@praxis-kit/primitive'
 
+// A copy of `props` without `key`, for the fix functions below.
+const without = (props: AnyRecord, key: string): AnyRecord =>
+  Object.fromEntries(Object.entries(props).filter(([k]) => k !== key))
+
 // A hand-rolled scheme check (startsWith, regex, or manual whitespace/case normalization) is
 // inherently incomplete — it has to independently reproduce every quirk of URL scheme parsing
 // (embedded whitespace stripping, case-insensitivity, etc.) to be safe, and is easy to get subtly
@@ -55,9 +59,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
             'data-custom' in props
               ? {
                   applied: true as const,
-                  next: Object.fromEntries(
-                    Object.entries(props).filter(([k]) => k !== 'data-custom'),
-                  ),
+                  next: without(props, 'data-custom'),
                   previous: props,
                 }
               : { applied: false as const, next: props },
@@ -170,7 +172,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
             attribute: 'href',
             apply: ({ props }: { props: AnyRecord }) => ({
               applied: true as const,
-              next: Object.fromEntries(Object.entries(props).filter(([k]) => k !== 'href')),
+              next: without(props, 'href'),
               previous: props,
             }),
           },
@@ -208,7 +210,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
               attribute: 'href',
               apply: ({ props }: { props: AnyRecord }) => ({
                 applied: true as const,
-                next: Object.fromEntries(Object.entries(props).filter(([k]) => k !== 'href')),
+                next: without(props, 'href'),
                 previous: props,
               }),
             },
@@ -248,9 +250,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
             return 'data-high' in props
               ? {
                   applied: true as const,
-                  next: Object.fromEntries(
-                    Object.entries(props).filter(([k]) => k !== 'data-high'),
-                  ),
+                  next: without(props, 'data-high'),
                   previous: props,
                 }
               : { applied: false as const, next: props }
@@ -273,7 +273,7 @@ describe('AriaPolicyEngine — custom rules via constructor', () => {
             return 'data-low' in props
               ? {
                   applied: true as const,
-                  next: Object.fromEntries(Object.entries(props).filter(([k]) => k !== 'data-low')),
+                  next: without(props, 'data-low'),
                   previous: props,
                 }
               : { applied: false as const, next: props }

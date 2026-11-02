@@ -30,6 +30,7 @@
   "devDependencies": {
     "@praxis-kit/adapter-testing": "workspace:*",
     "@praxis-kit/tailwind-testing": "workspace:*",
+    "@praxis-kit/test-utils": "workspace:*",
     "@sveltejs/vite-plugin-svelte": "catalog:",
     "@testing-library/svelte": "catalog:",
     "jsdom": "catalog:",

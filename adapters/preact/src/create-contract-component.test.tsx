@@ -16,6 +16,7 @@ import {
   tailwindAsChildPluginParitySuite,
   tailwindPolymorphicElementParitySuite,
 } from '@praxis-kit/tailwind-testing'
+import { definedProp } from '@praxis-kit/test-utils'
 import type { AnyVNode, UnknownProps } from './types'
 import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
@@ -679,7 +680,7 @@ tailwindPolymorphicElementParitySuite({
     mount(
       h(box(Box), {
         ...displayProps,
-        ...(as === undefined ? {} : { as }),
+        ...definedProp('as', as),
         alt: as === 'img' ? '' : undefined,
         className,
       } as UnknownProps),

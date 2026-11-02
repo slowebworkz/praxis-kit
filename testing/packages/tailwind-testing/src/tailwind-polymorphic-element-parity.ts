@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { definedProp } from '@praxis-kit/test-utils'
 import { CALLER_MIXED_WITH_GAP, expectContains, tokensOf, withWarnSpy } from './helpers'
 
 export type TailwindPolymorphicElementInput = {
@@ -37,7 +38,7 @@ function expectFlexResolution(result: TailwindPolymorphicElementResult): void {
 // The input shared by every scenario here: flex display with the mixed caller classes. `as` is
 // left out entirely (not set to undefined) when no override is wanted.
 const flexInput = (as?: string): TailwindPolymorphicElementInput => ({
-  ...(as === undefined ? {} : { as }),
+  ...definedProp('as', as),
   displayProps: { flex: true },
   className: CALLER_MIXED_WITH_GAP,
 })

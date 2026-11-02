@@ -3977,3 +3977,14 @@ Closes the three items the testing-workspace entry left open.
   Svelte's `as` swap is exercised through its `.svelte` harness — so they run only the first two
   scenarios. Checked by running the pre-fix Solid adapter against the suite: it fails the
   once-after-updates and re-registration scenarios.
+- **Survey of `iterate` and `@praxis-kit/guards` in the tests.** Both were already in wide use
+  (every adapter depends on them), so the sweep was small. Applied: `isObject` / `isNullish` in the
+  Lit conformance renderer and `isObject` / `isFunction` in Solid's (the guard also removes a cast).
+  Deliberately **not** applied: `x !== undefined` → `isDefined(x)` (guardz's `isDefined` also
+  rejects `null`, and several sites rely on that difference), `.map().join()` chains (`iterate.map`
+  is lazy and would need spreading), and order assertions on `Object.keys`. What the survey did find
+  was duplication, not missing guards: the `class` → `className` re-keying (6 copies) is now
+  `classToClassName` in `adapter-testing`; the `...(as === undefined ? {} : { as })` idiom (6
+  copies) is `definedProp('as', as)` in `test-utils` (so the five adapters that use it list
+  `test-utils` as a devDependency); and `aria-policy-engine.custom-rules.test.ts` has a local
+  `without(props, key)` for its five copies of the entries/filter/fromEntries omit.
