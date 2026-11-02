@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
+import { CALLER_MIXED_WITH_GAP, expectTokenList, tokensOf, withWarnSpy } from './helpers'
 
 export type TailwindPolymorphicElementInput = {
   /** Omit to use the component's configured default tag. */
@@ -25,23 +26,21 @@ export type TailwindPolymorphicElementParityAdapter = {
   ) => Promise<readonly TailwindPolymorphicElementResult[]>
 }
 
-function tokensOf(className: string): string[] {
-  expect(className).not.toMatch(/^\s|\s$|\s{2,}/)
-  const tokens = className.split(/\s+/)
-  expect(tokens).toEqual([...new Set(tokens)])
-  return tokens
-}
-
 function expectFlexResolution(result: TailwindPolymorphicElementResult): void {
-  const tokens = tokensOf(result.className)
-  expect(tokens).toContain('base')
-  expect(tokens).toContain('flex')
-  expect(tokens).toContain('flex-col')
-  expect(tokens).toContain('gap-4')
-  expect(tokens).toContain('rounded')
-  expect(tokens).not.toContain('grid-cols-3')
+  expectTokenList(tokensOf(result.className), {
+    has: ['base', 'flex', 'flex-col', 'gap-4', 'rounded'],
+    lacks: ['grid-cols-3'],
+  })
   expect(result.flexAttribute).toBeNull()
 }
+
+// The input shared by every scenario here: flex display with the mixed caller classes. `as` is
+// left out entirely (not set to undefined) when no override is wanted.
+const flexInput = (as?: string): TailwindPolymorphicElementInput => ({
+  ...(as === undefined ? {} : { as }),
+  displayProps: { flex: true },
+  className: CALLER_MIXED_WITH_GAP,
+})
 
 /**
  * Verifies that the Tailwind pipeline receives the resolved polymorphic host tag, not merely the
@@ -56,83 +55,51 @@ export function tailwindPolymorphicElementParitySuite(
 ): void {
   describe('Tailwind polymorphic element parity', () => {
     it('uses the configured default host when no as override is supplied', async () => {
-      const result = await adapter.render({
-        displayProps: { flex: true },
-        className: 'flex-col grid-cols-3 gap-4 rounded',
-      })
+      const result = await adapter.render(flexInput())
 
       expect(result.tagName).toBe('div')
       expectFlexResolution(result)
     })
 
     it('applies the same Tailwind resolution to an overridden non-void host', async () => {
-      const result = await adapter.render({
-        as: 'section',
-        displayProps: { flex: true },
-        className: 'flex-col grid-cols-3 gap-4 rounded',
-      })
+      const result = await adapter.render(flexInput('section'))
 
       expect(result.tagName).toBe('section')
       expectFlexResolution(result)
     })
 
     it('uses the resolved void host for Tailwind diagnostics', async () => {
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-      try {
-        const result = await adapter.render({
-          as: 'img',
-          displayProps: { flex: true },
-          className: 'flex-col grid-cols-3 gap-4 rounded',
-        })
+      await withWarnSpy(async (warn) => {
+        const result = await adapter.render(flexInput('img'))
 
         expect(result.tagName).toBe('img')
         expectFlexResolution(result)
         expect(warn).toHaveBeenCalledWith(expect.stringContaining('<img>'))
         expect(warn).toHaveBeenCalledWith(expect.stringContaining('"flex"'))
-      } finally {
-        warn.mockRestore()
-      }
+      })
     })
 
     const { reactivity } = adapter
     if (reactivity) {
       it('re-resolves the host tag and void diagnostic after a polymorphic element change', async () => {
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-        try {
+        await withWarnSpy(async (warn) => {
           const results = await reactivity([
-            {
-              as: 'div',
-              displayProps: { flex: true },
-              className: 'flex-col grid-cols-3 gap-4 rounded',
-            },
-            {
-              as: 'img',
-              displayProps: { flex: true },
-              className: 'flex-col grid-cols-3 gap-4 rounded',
-            },
-            {
-              as: 'section',
-              displayProps: { flex: true },
-              className: 'flex-col rounded-lg',
-            },
+            flexInput('div'),
+            flexInput('img'),
+            { as: 'section', displayProps: { flex: true }, className: 'flex-col rounded-lg' },
           ])
 
           expect(results.map((result) => result.tagName)).toEqual(['div', 'img', 'section'])
           expectFlexResolution(results[0]!)
           expectFlexResolution(results[1]!)
-          const finalTokens = tokensOf(results[2]!.className)
-          expect(finalTokens).toContain('base')
-          expect(finalTokens).toContain('flex')
-          expect(finalTokens).toContain('flex-col')
-          expect(finalTokens).toContain('rounded-lg')
-          expect(finalTokens).not.toContain('rounded')
-          expect(finalTokens).not.toContain('grid-cols-3')
+          expectTokenList(tokensOf(results[2]!.className), {
+            has: ['base', 'flex', 'flex-col', 'rounded-lg'],
+            lacks: ['rounded', 'grid-cols-3'],
+          })
           expect(results[2]!.flexAttribute).toBeNull()
           expect(warn).toHaveBeenCalledWith(expect.stringContaining('<img>'))
           expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('<section>'))
-        } finally {
-          warn.mockRestore()
-        }
+        })
       })
     }
   })

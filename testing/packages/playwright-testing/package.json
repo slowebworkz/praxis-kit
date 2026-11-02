@@ -1,5 +1,5 @@
 {
-  "name": "@praxis-kit/playwright",
+  "name": "@praxis-kit/playwright-testing",
   "version": "0.0.0",
   "private": true,
   "type": "module",

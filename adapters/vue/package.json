@@ -29,7 +29,9 @@
   },
   "devDependencies": {
     "@playwright/experimental-ct-vue": "catalog:",
-    "@praxis-kit/playwright": "workspace:*",
+    "@praxis-kit/adapter-testing": "workspace:*",
+    "@praxis-kit/playwright-testing": "workspace:*",
+    "@praxis-kit/tailwind-testing": "workspace:*",
     "@types/node": "catalog:",
     "@vitejs/plugin-vue": "catalog:",
     "@vue/compiler-dom": "catalog:",

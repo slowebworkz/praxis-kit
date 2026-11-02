@@ -15,7 +15,7 @@ import {
   createCountedPlugin,
   tailwindAsChildPluginParitySuite,
   tailwindPolymorphicElementParitySuite,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/tailwind-testing'
 import type { AnyVNode, UnknownProps } from './types'
 import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
@@ -60,15 +60,6 @@ describe('createContractComponent (Preact adapter)', () => {
     mount(h(box(Box), null))
 
     expect(container.querySelector('div')).toBeTruthy()
-  })
-
-  it('renders a different tag via the as prop', () => {
-    const Box = createContractComponent({})
-
-    mount(h(box(Box), { as: 'section' }))
-
-    expect(container.querySelector('section')).toBeTruthy()
-    expect(container.querySelector('div')).toBeNull()
   })
 
   it('applies base class', () => {
@@ -118,14 +109,6 @@ describe('createContractComponent (Preact adapter)', () => {
     mount(h(box(Box), { 'data-testid': 'box' }))
 
     expect(container.querySelector('[data-testid="box"]')).toBeTruthy()
-  })
-
-  it('renders children', () => {
-    const Box = createContractComponent({})
-
-    mount(h(box(Box), null, h('span', { id: 'child' })))
-
-    expect(container.querySelector('span#child')).toBeTruthy()
   })
 
   it('asChild renders the child element type instead of the default tag', () => {
@@ -293,7 +276,7 @@ describe('createContractComponent (Preact adapter)', () => {
   })
 
   // `compose` (declarative asChild composition) is covered by the shared conformance suite
-  // (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`, "conformance —
+  // (`conformance.test.tsx` → `testing/packages/adapter-testing/src/conformance.ts`, "conformance —
   // compose") rather than duplicated here — same convention as `asChild` itself.
 
   it('asChild warns when it drops a text sibling it cannot compose onto the slotted element', () => {
@@ -669,11 +652,7 @@ tailwindAsChildPluginParitySuite({
       h(
         box(Card),
         { asChild: true, flex: true, className: 'caller-class' },
-        h(
-          box(Inner),
-          { asChild: true },
-          h('button', { className: 'child-class' }),
-        ),
+        h(box(Inner), { asChild: true }, h('button', { className: 'child-class' })),
       ),
     )
     fixture.afterComposition()
@@ -691,7 +670,6 @@ tailwindAsChildPluginParitySuite({
   },
 })
 
-
 tailwindPolymorphicElementParitySuite({
   render: ({ as, displayProps, className }) => {
     const Box = createContractComponent({
@@ -699,15 +677,12 @@ tailwindPolymorphicElementParitySuite({
       styling: { base: 'base', plugin: createTailwindPipeline },
     })
     mount(
-      h(
-        box(Box),
-        {
-          ...displayProps,
-          ...(as === undefined ? {} : { as }),
-          alt: as === 'img' ? '' : undefined,
-          className,
-        } as UnknownProps,
-      ),
+      h(box(Box), {
+        ...displayProps,
+        ...(as === undefined ? {} : { as }),
+        alt: as === 'img' ? '' : undefined,
+        className,
+      } as UnknownProps),
     )
     const element = container.firstElementChild as HTMLElement
     return {
@@ -724,15 +699,12 @@ tailwindPolymorphicElementParitySuite({
     const results = []
     for (const step of steps) {
       mount(
-        h(
-          box(Box),
-          {
-            ...step.displayProps,
-            as: step.as,
-            alt: step.as === 'img' ? '' : undefined,
-            className: step.className,
-          } as UnknownProps,
-        ),
+        h(box(Box), {
+          ...step.displayProps,
+          as: step.as,
+          alt: step.as === 'img' ? '' : undefined,
+          className: step.className,
+        } as UnknownProps),
       )
       const element = container.firstElementChild as HTMLElement
       results.push({

@@ -14,7 +14,7 @@ import {
   createCountedPlugin,
   tailwindAsChildPluginParitySuite,
   tailwindPolymorphicElementParitySuite,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/tailwind-testing'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
 
@@ -37,13 +37,6 @@ describe('createContractComponent (Solid adapter)', () => {
     expect(container.querySelector('div')).toBeTruthy()
   })
 
-  it('renders a different tag via the as prop', () => {
-    const Comp = createContractComponent({ tag: 'div' })
-    const { container } = solidRender(() => <Comp as="section" />)
-    expect(container.querySelector('section')).toBeTruthy()
-    expect(container.querySelector('div')).toBeNull()
-  })
-
   it('as={Component}: renders through the referenced component via <Dynamic>, not the default tag', () => {
     // Solid already handles a component-valued `as` mechanically — `resolveTag`/`<Dynamic
     // component={tag()}>` are reference-safe with no special casing needed. This test is the
@@ -60,13 +53,6 @@ describe('createContractComponent (Solid adapter)', () => {
     const Comp = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
     const { container } = solidRender(() => <Comp />)
     expect(container.querySelector('div')?.className).toBe('base-class')
-  })
-
-  it('merges caller class with base', () => {
-    const Comp = createContractComponent({ tag: 'div', styling: { base: 'base' } })
-    const { container } = solidRender(() => <Comp class="caller" />)
-    expect(container.querySelector('div')?.className).toContain('base')
-    expect(container.querySelector('div')?.className).toContain('caller')
   })
 
   it('forwards a ref to the DOM element', () => {
@@ -247,7 +233,7 @@ describe('createContractComponent (Solid adapter)', () => {
   })
 
   // `compose`'s renders-through/tag-conflict/props-land/ref cases are covered by the shared
-  // conformance suite (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`,
+  // conformance suite (`conformance.test.tsx` → `testing/packages/adapter-testing/src/conformance.ts`,
   // "conformance — compose"). That suite can't express the "explicit asChild wins" case for
   // Solid, though (its own `asChild: false` capability — Solid's asChild needs a literal
   // render-function child, incompatible with the harness's `ChildSpec`), so this one case stays
@@ -704,9 +690,7 @@ tailwindAsChildPluginParitySuite({
       },
     })
     const { container } = solidRender(() => (
-      <Card
-        {...({ asChild: true, flex: true, class: 'caller-class' } as AnyRecord)}
-      >
+      <Card {...({ asChild: true, flex: true, class: 'caller-class' } as AnyRecord)}>
         {(props) => <button {...props} class={`child-class ${props.class ?? ''}`} />}
       </Card>
     ))
@@ -765,7 +749,6 @@ tailwindAsChildPluginParitySuite({
     }
   },
 })
-
 
 tailwindPolymorphicElementParitySuite({
   render: ({ as, displayProps, className }) => {

@@ -72,6 +72,7 @@ const config = [
             // every lib/package's vitest.config.ts lives outside its `include: ["src"]` tsconfig
             'lib/*/vitest.config.ts',
             'packages/*/vitest.config.ts',
+            'testing/packages/*/vitest.config.ts',
             'examples/*/vite.config.ts',
             // workspace vitest configs live outside any tsconfig include
             'runtime/*/vitest.config.ts',

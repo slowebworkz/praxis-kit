@@ -13,7 +13,7 @@ import {
   createCountedPlugin,
   tailwindAsChildPluginParitySuite,
   tailwindPolymorphicElementParitySuite,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/tailwind-testing'
 import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
@@ -40,12 +40,6 @@ describe('createContractComponent — tag rendering', () => {
     const Box = createContractComponent({})
     const wrapper = mount(box(Box))
     expect(wrapper.element.tagName.toLowerCase()).toBe('div')
-  })
-
-  it('renders a different tag via the as prop', () => {
-    const Box = createContractComponent({})
-    const wrapper = mount(box(Box), { props: { as: 'section' } })
-    expect(wrapper.element.tagName.toLowerCase()).toBe('section')
   })
 
   it('respects a custom defaultTag', () => {
@@ -156,14 +150,6 @@ describe('createContractComponent — attrs', () => {
     const Box = createContractComponent({})
     const wrapper = mount(box(Box), { attrs: { 'data-testid': 'box' } })
     expect(wrapper.element.getAttribute('data-testid')).toBe('box')
-  })
-
-  it('strips variant keys before DOM forwarding', () => {
-    const Box = createContractComponent({
-      styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-    })
-    const wrapper = mount(box(Box), { props: { size: 'lg' } as never })
-    expect(wrapper.element.getAttribute('size')).toBeNull()
   })
 
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
@@ -346,8 +332,8 @@ describe('createContractComponent — asChild', () => {
   })
 
   // `compose`'s renders-through/tag-conflict/props-land/explicit-asChild-wins cases are covered
-  // by the shared conformance suite (`conformance.test.ts` → `lib/adapter-utils/src/testing/
-  // conformance.ts`, "conformance — compose"). This adapter keeps only the one case that suite
+  // by the shared conformance suite (`conformance.test.ts` → `testing/packages/adapter-testing/
+  // src/conformance.ts`, "conformance — compose"). This adapter keeps only the one case that suite
   // can't express generically: Vue's `ref` resolves to the component instance, not the host
   // element, so `onElement` (not `createRef`) is this adapter's real contract for reaching it.
 
@@ -517,23 +503,6 @@ describe('createContractComponent — variants', () => {
     const wrapper = mount(box(Box), { props: { intent: 'primary' } as never })
     expect(wrapper.element.getAttribute('intent')).toBeNull()
   })
-
-  it('activates a preset via recipe', () => {
-    const Box = createContractComponent({
-      styling: {
-        variants: {
-          intent: { primary: 'bg-blue-500', secondary: 'bg-gray-500' },
-          size: { sm: 'text-sm', lg: 'text-lg' },
-        },
-        presets: {
-          cta: { intent: 'primary', size: 'lg' },
-        } as never,
-      },
-    })
-    const wrapper = mount(box(Box), { props: { recipe: 'cta' } as never })
-    expect(wrapper.element.className).toContain('bg-blue-500')
-    expect(wrapper.element.className).toContain('text-lg')
-  })
 })
 
 tailwindDisplayParitySuite({
@@ -693,9 +662,13 @@ tailwindAsChildPluginParitySuite({
       props: { asChild: true, flex: true, class: 'caller-class' } as AnyRecord,
       slots: {
         default: () => [
-          h(box(Inner), { asChild: true }, {
-            default: () => [h('button', { class: 'child-class' })],
-          }),
+          h(
+            box(Inner),
+            { asChild: true },
+            {
+              default: () => [h('button', { class: 'child-class' })],
+            },
+          ),
         ],
       },
     })
@@ -715,7 +688,6 @@ tailwindAsChildPluginParitySuite({
     }
   },
 })
-
 
 tailwindPolymorphicElementParitySuite({
   render: ({ as, displayProps, className }) => {

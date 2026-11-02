@@ -22,7 +22,7 @@ import {
   createCountedPlugin,
   tailwindAsChildPluginParitySuite,
   tailwindPolymorphicElementParitySuite,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/tailwind-testing'
 import type { AriaRule } from '@praxis-kit/core/contract'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import { box, useReactDom } from '../shared/test-utils'
@@ -51,15 +51,6 @@ describe('createContractComponent (current / React 19)', () => {
     dom.mount(createElement(box(Box), null))
 
     expect(dom.container.querySelector('div')).toBeTruthy()
-  })
-
-  it('renders a different tag via the as prop', () => {
-    const Box = createContractComponent({})
-
-    dom.mount(createElement(box(Box), { as: 'section' }))
-
-    expect(dom.container.querySelector('section')).toBeTruthy()
-    expect(dom.container.querySelector('div')).toBeNull()
   })
 
   it('applies baseClassName', () => {
@@ -459,14 +450,6 @@ describe('createContractComponent (current / React 19)', () => {
     expect(dom.container.querySelector('[data-testid="box"]')).toBeTruthy()
   })
 
-  it('renders children', () => {
-    const Box = createContractComponent({})
-
-    dom.mount(createElement(box(Box), null, createElement('span', { id: 'child' })))
-
-    expect(dom.container.querySelector('span#child')).toBeTruthy()
-  })
-
   it('asChild renders the child element type instead of the default tag', () => {
     const Box = createContractComponent({})
 
@@ -552,7 +535,7 @@ describe('createContractComponent (current / React 19)', () => {
   })
 
   // `compose` (declarative asChild composition) is covered by the shared conformance suite
-  // (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`, "conformance —
+  // (`conformance.test.tsx` → `testing/packages/adapter-testing/src/conformance.ts`, "conformance —
   // compose") rather than duplicated here — same convention as `asChild` itself.
 
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
@@ -1231,7 +1214,6 @@ tailwindAsChildPluginParitySuite({
   },
 })
 
-
 tailwindPolymorphicElementParitySuite({
   render: ({ as, displayProps, className }) => {
     const Box = createContractComponent({
@@ -1239,15 +1221,12 @@ tailwindPolymorphicElementParitySuite({
       styling: { base: 'base', plugin: createTailwindPipeline },
     })
     dom.mount(
-      createElement(
-        box(Box),
-        {
-          ...displayProps,
-          ...(as === undefined ? {} : { as }),
-          alt: as === 'img' ? '' : undefined,
-          className,
-        } as AnyRecord,
-      ),
+      createElement(box(Box), {
+        ...displayProps,
+        ...(as === undefined ? {} : { as }),
+        alt: as === 'img' ? '' : undefined,
+        className,
+      } as AnyRecord),
     )
     const element = dom.container.firstElementChild as HTMLElement
     return {
@@ -1264,15 +1243,12 @@ tailwindPolymorphicElementParitySuite({
     const results = []
     for (const step of steps) {
       dom.mount(
-        createElement(
-          box(Box),
-          {
-            ...step.displayProps,
-            as: step.as,
-            alt: step.as === 'img' ? '' : undefined,
-            className: step.className,
-          } as AnyRecord,
-        ),
+        createElement(box(Box), {
+          ...step.displayProps,
+          as: step.as,
+          alt: step.as === 'img' ? '' : undefined,
+          className: step.className,
+        } as AnyRecord),
       )
       const element = dom.container.firstElementChild as HTMLElement
       results.push({

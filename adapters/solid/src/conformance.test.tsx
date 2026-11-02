@@ -7,14 +7,14 @@ import {
   conformanceA11ySuite,
   conformancePerformanceSuite,
   conformanceIsolationSuite,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/adapter-testing'
 import type { AnyRecord } from '@praxis-kit/core'
 import type {
   BareFactoryOptions,
   ChildSpec,
   ConformanceAdapter,
   ConformanceRef,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/adapter-testing'
 import type { UnknownProps } from './types'
 import { createContractComponent } from './create-contract-component'
 

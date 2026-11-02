@@ -14,11 +14,10 @@ lib/                     internal implementation modules (private: true, not pub
   styling/               variant resolver (CVA), class pipeline, class-plugin API
   diagnostics/           the Diagnostics class, severity/policy model, reporters, silent/warn/throw presets
   adapter-utils/         shared logic used by every framework adapter (runtime wiring, prop
-                         normalization, slot validation, SSR host-state, testing harness)
+                         normalization, slot validation, SSR host-state)
   runtime/               tree/render-context primitives backing the Custom Element adapters
   pipeline/ pipeline-kit/ generic compose/run/pass abstractions used by a few of the above
   tailwind/              Tailwind layout-aware class pipeline (built for @praxis-kit/tailwind)
-  playwright/            shared Playwright fixtures for adapter interaction tests
 
 packages/                published artifacts (versioned, npm-facing)
   core/                  capability-driven factory (createPolymorphic) composing lib/ modules
@@ -32,13 +31,21 @@ adapters/                framework adapters — react, preact, vue, solid, svelt
 
 plugins/                 eslint-plugin and the TypeScript language-service plugin
 tooling/                 the praxis-codemod CLI
-qa/                      cross-cutting verification: tree-shaking tests, conformance harness, bench
+qa/                      cross-cutting verification: tree-shaking tests, bundle analysis, metrics, bench
+testing/                 reusable test infrastructure (private; production never depends on it)
+  packages/              adapter-testing (conformance, a11y, SSR, hydration, performance, isolation,
+                         compound-component and onElement suites), tailwind-testing (Tailwind
+                         parity suites), playwright-testing (Playwright CT helpers) — see
+                         testing/README.md
 ```
 
 Dependency direction: `lib/primitive` ← `lib/contract`/`lib/styling`/`lib/diagnostics` ←
 `packages/core` ← `lib/adapter-utils` ← `adapters/<framework>`. Dependencies flow upward only,
 enforced by `eslint-plugin-boundaries` via the root `eslint.config.ts` + `configs/architecture.ts`
 (not `dependency-cruiser` — this repo has no `.dependency-cruiser.cjs`).
+
+`testing/packages/*` may depend on any of the above, but no production package may depend on it;
+`pnpm check:testing-boundary` enforces that.
 
 ---
 

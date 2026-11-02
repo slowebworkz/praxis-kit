@@ -1,0 +1,26 @@
+{
+  "name": "@praxis-kit/tailwind-testing",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "description": "Cross-adapter Tailwind parity suites (display, compose plugin, asChild plugin, polymorphic element); deliberately independent of @praxis-kit/tailwind",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/primitive": "workspace:*",
+    "@praxis-kit/styling": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "vitest": ">=4.0.0"
+  }
+}

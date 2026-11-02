@@ -5,12 +5,8 @@ import {
   conformanceA11ySuite,
   conformancePerformanceSuite,
   conformanceIsolationSuite,
-} from '@praxis-kit/adapter-utils/testing'
-import type {
-  BareFactoryOptions,
-  ChildSpec,
-  ConformanceAdapter,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/adapter-testing'
+import type { BareFactoryOptions, ChildSpec, ConformanceAdapter } from '@praxis-kit/adapter-testing'
 import type { ComponentType, VNode } from 'preact'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import type { UnknownProps } from './types'

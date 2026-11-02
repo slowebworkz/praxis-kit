@@ -1,26 +1,4 @@
 export type {
-  BareFactoryOptions,
-  ChildSpec,
-  ConformanceAdapter,
-  ConformanceComponent,
-  ConformanceFactoryOptions,
-  ConformanceRef,
-  RenderResult,
-} from './conformance'
-export { conformanceSuite } from './conformance'
-
-export { conformanceA11ySuite } from './a11y'
-
-export type { SsrConformanceAdapter } from './ssr'
-export { ssrConformanceSuite } from './ssr'
-
-export type { HydrationConformanceAdapter } from './hydration'
-export { hydrationParitySuite } from './hydration'
-
-export { conformancePerformanceSuite } from './performance'
-export { conformanceIsolationSuite } from './isolation'
-
-export type {
   TailwindDisplayInput,
   TailwindDisplayParityAdapter,
   TailwindDisplayRenderer,
@@ -46,10 +24,8 @@ export type {
   TailwindAsChildPluginParityAdapter,
   TailwindAsChildPluginResult,
 } from './tailwind-as-child-plugin-parity'
-export {
-  createCountedPlugin,
-  tailwindAsChildPluginParitySuite,
-} from './tailwind-as-child-plugin-parity'
+export { tailwindAsChildPluginParitySuite } from './tailwind-as-child-plugin-parity'
+export { createCountedPlugin } from './helpers'
 
 export type {
   TailwindPolymorphicElementInput,

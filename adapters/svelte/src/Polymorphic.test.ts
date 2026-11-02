@@ -7,7 +7,7 @@ import {
   createComposeConflictFixture,
   TAILWIND_COMPOSE_CONFLICT_COMPONENT,
   tailwindComposePluginParitySuite,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/tailwind-testing'
 
 import { silentDiagnostics, throwDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
 import Polymorphic from './Polymorphic.svelte'
@@ -266,7 +266,7 @@ describe('Polymorphic (Svelte adapter)', () => {
 
   describe('compose: declarative asChild composition', () => {
     // `compose`'s renders-through/tag-conflict/props-land cases are covered by the shared
-    // conformance suite (`conformance.test.ts` → `lib/adapter-utils/src/testing/conformance.ts`,
+    // conformance suite (`conformance.test.ts` → `testing/packages/adapter-testing/src/conformance.ts`,
     // "conformance — compose"). That suite can't express two cases for Svelte: "explicit asChild
     // wins" (its own `asChild: false` capability — Svelte's asChild needs a literal snippet
     // child) and ref-forwarding (Svelte has no `createRef`-style contract; `onElement` is this

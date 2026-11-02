@@ -32,7 +32,9 @@
   },
   "devDependencies": {
     "@playwright/experimental-ct-react": "catalog:",
-    "@praxis-kit/playwright": "workspace:*",
+    "@praxis-kit/adapter-testing": "workspace:*",
+    "@praxis-kit/playwright-testing": "workspace:*",
+    "@praxis-kit/tailwind-testing": "workspace:*",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

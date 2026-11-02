@@ -20,13 +20,13 @@ import {
   conformanceSuite,
   conformancePerformanceSuite,
   conformanceIsolationSuite,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/adapter-testing'
 import type {
   BareFactoryOptions,
   ChildSpec,
   ConformanceAdapter,
   ConformanceFactoryOptions,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/adapter-testing'
 import { createContractComponent } from './create-contract-component'
 import type { LitConformanceComponent, LitConformanceEl } from './types/index'
 import type { AnyRecord } from '@praxis-kit/core'

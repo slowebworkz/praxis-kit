@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest'
 import { render } from 'svelte/server'
-import { ssrConformanceSuite } from '@praxis-kit/adapter-utils/testing'
-import type { BareFactoryOptions, ConformanceComponent } from '@praxis-kit/adapter-utils/testing'
+import { ssrConformanceSuite } from '@praxis-kit/adapter-testing'
+import type { BareFactoryOptions, ConformanceComponent } from '@praxis-kit/adapter-testing'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import Polymorphic from './Polymorphic.svelte'
 import InnerButton from './component-reference-as.test-host.svelte'
@@ -12,17 +12,6 @@ import type { AnyBuiltRuntime } from './types/built-runtime'
 type SvelteSSRComponent = ConformanceComponent & { _bundle: AnyBuiltRuntime }
 
 describe('Polymorphic — SSR (svelte/server render)', () => {
-  it('renders to HTML without accessing browser globals', () => {
-    const bundle = createContractComponent({ tag: 'div' })
-    expect(() => render(Polymorphic, { props: { bundle } })).not.toThrow()
-  })
-
-  it('applies base class in server-rendered HTML', () => {
-    const bundle = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
-    const { html } = render(Polymorphic, { props: { bundle } })
-    expect(html).toContain('base-class')
-  })
-
   it('renders through a component-reference "as" in server-rendered HTML, not the default tag', () => {
     // Svelte has no custom SSR string-serialization path (unlike Lit/Web) — this renders through
     // the real `svelte/server` compiler output, exercising the same template branch
@@ -41,18 +30,6 @@ describe('Polymorphic — SSR (svelte/server render)', () => {
     })
     const { html } = render(Polymorphic, { props: { bundle, role: 'button' } })
     expect(html).not.toContain('role=')
-  })
-
-  it('applies variant class in server-rendered HTML', () => {
-    const bundle = createContractComponent({
-      tag: 'div',
-      styling: {
-        base: 'box',
-        variants: { intent: { primary: 'box--primary' } },
-      },
-    })
-    const { html } = render(Polymorphic, { props: { bundle, intent: 'primary' } })
-    expect(html).toContain('box--primary')
   })
 
   it('as prop overrides the default tag in server-rendered HTML', () => {
@@ -167,4 +144,7 @@ ssrConformanceSuite<SvelteSSRComponent>({
     } as never)
     return html
   },
+  // `asChild` takes a snippet child here, which `ChildSpec` cannot describe (the same reason the
+  // DOM conformance adapter opts out).
+  capabilities: { asChild: false },
 })

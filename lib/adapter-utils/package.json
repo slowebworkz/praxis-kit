@@ -4,11 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./testing": "./src/testing/index.ts"
+    ".": "./src/index.ts"
   },
   "sideEffects": false,
-  "description": "Shared adapter machinery: the canonical prop-normalization / children / slot / class-resolution render path, plus the cross-framework conformance suites",
+  "description": "Shared adapter machinery: the canonical prop-normalization / children / slot / class-resolution render path",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -27,13 +26,5 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "vitest": "catalog:"
-  },
-  "peerDependencies": {
-    "vitest": ">=4.0.0"
-  },
-  "peerDependenciesMeta": {
-    "vitest": {
-      "optional": true
-    }
   }
 }
