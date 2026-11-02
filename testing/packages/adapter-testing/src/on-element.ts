@@ -30,16 +30,6 @@ export type OnElementAdapter = {
   ) => OnElementMounted | Promise<OnElementMounted>
   /** Mount a component created without an `onElement` option. Must not throw. */
   readonly mountPlain: () => void | Promise<void>
-  /** Known divergences from the standard contract. Unset means the standard behaviour. */
-  readonly capabilities?: {
-    /**
-     * true where changing a prop re-invokes the hook on the same element, running the previous
-     * cleanup first, instead of leaving the registration alone. Solid does this today: its
-     * `<Dynamic {...domProps()} ref>` spread re-applies `ref` whenever the props memo recomputes.
-     * The suite still requires that nothing leaks — one `close` listener, not two.
-     */
-    readonly hookReRunsOnPropChange?: boolean
-  }
 }
 
 /**
@@ -78,7 +68,7 @@ export function onElementSuite(adapter: OnElementAdapter): void {
 
       // Same element, new props — the hook must not fire again, yet getProps() sees the update.
       await mounted.setLabel('second')
-      expect(attachCount).toBe(adapter.capabilities?.hookReRunsOnPropChange ? 2 : 1)
+      expect(attachCount).toBe(1)
       mounted.element.dispatchEvent(new Event('close'))
       expect(seen).toEqual(['first', 'second'])
     })

@@ -113,24 +113,35 @@ export function createContractComponent<
     // Solid ref callbacks fire once, at element creation — a natural fit for "mount". They
     // don't fire again with null on unmount (unlike React), so cleanup is registered via
     // Solid's own onCleanup instead of a second ref invocation.
-    const propsWithRef = onElement
-      ? mergeProps(props, {
-          get ref() {
-            const consumerRef = (props as { ref?: unknown }).ref
-            return (el: Element) => {
-              if (isFunction(consumerRef)) (consumerRef as (e: Element) => void)(el)
-              // The real element's actual tag is only known at runtime; `onElement`'s parameter
-              // type narrows that per-component via `TDefault`/`allowed`, which Solid's ref
-              // contract itself can't express — see `FactoryOptions.onElement`.
-              const cleanup = onElement(
-                el as Parameters<NonNullable<typeof onElement>>[0],
-                () => props as unknown as Readonly<Props>,
-              )
-              if (cleanup) onCleanup(cleanup)
-            }
-          },
-        })
-      : props
+    //
+    // Solid's spread re-invokes `ref` whenever the spread props change, even when the element is
+    // the same, and an `onCleanup` registered from inside that effect runs on every re-run. So the
+    // registration is tracked per instance: the hook runs once per element, and its cleanup is
+    // owned by the component (run on unmount, or just before a swapped host element registers).
+    let registered: { el: Element; cleanup: (() => void) | void } | undefined
+    const elementRef = (el: Element) => {
+      if (registered?.el === el) return
+      const consumerRef = (props as { ref?: unknown }).ref
+      if (isFunction(consumerRef)) (consumerRef as (e: Element) => void)(el)
+      registered?.cleanup?.()
+      registered = {
+        el,
+        // The real element's actual tag is only known at runtime; `onElement`'s parameter
+        // type narrows that per-component via `TDefault`/`allowed`, which Solid's ref
+        // contract itself can't express — see `FactoryOptions.onElement`.
+        cleanup: onElement?.(
+          el as Parameters<NonNullable<typeof onElement>>[0],
+          () => props as unknown as Readonly<Props>,
+        ),
+      }
+    }
+    if (onElement) {
+      onCleanup(() => {
+        registered?.cleanup?.()
+        registered = undefined
+      })
+    }
+    const propsWithRef = onElement ? mergeProps(props, { ref: elementRef }) : props
 
     // `compose` makes this component always render `asChild` into `compose.with`, synthesized
     // natively for Solid's render-callback composition model — see `renderComposed`'s own doc

@@ -43,9 +43,6 @@ const adapter: OnElementAdapter = {
     const Plain = createContractComponent({ tag: 'div' as const, name: 'Plain' })
     solidRender(() => <Plain />)
   },
-  // Known divergence: any prop change re-applies `ref`, so the hook re-runs (previous cleanup
-  // first). The old Solid test never changed a prop, so it never exercised this.
-  capabilities: { hookReRunsOnPropChange: true },
 }
 
 onElementSuite(adapter)
