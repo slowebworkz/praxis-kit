@@ -14,7 +14,8 @@
   "dependencies": {
     "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
-    "@praxis-kit/styling": "workspace:*"
+    "@praxis-kit/styling": "workspace:*",
+    "@praxis-kit/test-utils": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "catalog:",

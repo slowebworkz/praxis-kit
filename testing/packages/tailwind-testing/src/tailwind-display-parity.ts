@@ -3,7 +3,7 @@ import type { StringMap } from '@praxis-kit/primitive'
 import {
   CALLER_MIXED,
   CALLER_MIXED_WITH_GAP,
-  expectTokenList,
+  expectContains,
   tokensOf,
   withWarnSpy,
 } from './helpers'
@@ -149,7 +149,7 @@ function expectFamilyUtilities(
 ): void {
   const base = FAMILY_UTILITIES[family]
   const extra = responsive ? FAMILY_RESPONSIVE_UTILITIES[family] : { has: [], lacks: [] }
-  expectTokenList(tokens, {
+  expectContains(tokens, {
     has: [...base.has, ...extra.has],
     lacks: [...base.lacks, ...extra.lacks],
   })
@@ -177,11 +177,11 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
         ])
         expect(snapshots).toHaveLength(5)
         const tokens = snapshots.map(tokensOf)
-        expectTokenList(tokens[0]!, { has: ['flex', 'flex-col'], lacks: ['grid-cols-3'] })
-        expectTokenList(tokens[1]!, { has: ['grid', 'grid-cols-3'], lacks: ['flex-col'] })
-        expectTokenList(tokens[2]!, { has: ['block'], lacks: ['flex-col', 'grid-cols-3'] })
-        expectTokenList(tokens[3]!, { has: ['p-4', 'rounded-lg'], lacks: ['rounded', 'p-2'] })
-        expectTokenList(tokens[4]!, { has: ['grid', 'grid-cols-2'], lacks: ['flex', 'flex-col'] })
+        expectContains(tokens[0]!, { has: ['flex', 'flex-col'], lacks: ['grid-cols-3'] })
+        expectContains(tokens[1]!, { has: ['grid', 'grid-cols-3'], lacks: ['flex-col'] })
+        expectContains(tokens[2]!, { has: ['block'], lacks: ['flex-col', 'grid-cols-3'] })
+        expectContains(tokens[3]!, { has: ['p-4', 'rounded-lg'], lacks: ['rounded', 'p-2'] })
+        expectContains(tokens[4]!, { has: ['grid', 'grid-cols-2'], lacks: ['flex', 'flex-col'] })
         for (const snapshot of tokens) expect(snapshot).toContain('base')
       })
 
@@ -211,16 +211,16 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
         expect(snapshots).toHaveLength(5)
         const tokens = snapshots.map(tokensOf)
 
-        expectTokenList(tokens[0]!, { has: ['grid', 'grid-cols-2'], lacks: ['flex-col'] })
+        expectContains(tokens[0]!, { has: ['grid', 'grid-cols-2'], lacks: ['flex-col'] })
 
         // Removing layout falls back to the still-present boolean shorthand.
-        expectTokenList(tokens[1]!, { has: ['flex', 'flex-col'], lacks: ['grid-cols-3'] })
+        expectContains(tokens[1]!, { has: ['flex', 'flex-col'], lacks: ['grid-cols-3'] })
 
         // Clearing all display shorthands removes the injected display and family utilities.
-        expectTokenList(tokens[2]!, { lacks: ['flex', 'grid', 'flex-col', 'grid-cols-3'] })
+        expectContains(tokens[2]!, { lacks: ['flex', 'grid', 'flex-col', 'grid-cols-3'] })
 
         // Caller-class replacement and removal must not leave prior classes behind.
-        expectTokenList(tokens[3]!, {
+        expectContains(tokens[3]!, {
           has: ['flex-col', 'rounded'],
           lacks: ['rounded-lg', 'grid-cols-3'],
         })
@@ -246,15 +246,15 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
                 className: CALLER_MIXED_WITH_GAP,
               })
               const tokens = tokensOf(className)
-              expectTokenList(tokens, { has: [prop, 'rounded'] })
+              expectContains(tokens, { has: [prop, 'rounded'] })
               expect(warn).toHaveBeenCalledWith(expect.stringContaining(`<${tag}>`))
               expect(warn).toHaveBeenCalledWith(expect.stringContaining(`"${prop}"`))
               // Family filtering is unchanged by the warning: the other family's utilities are
               // dropped, while the selected family's (and shared `gap-4`) are kept.
               if (prop === 'flex') {
-                expectTokenList(tokens, { has: ['flex-col', 'gap-4'], lacks: ['grid-cols-3'] })
+                expectContains(tokens, { has: ['flex-col', 'gap-4'], lacks: ['grid-cols-3'] })
               } else {
-                expectTokenList(tokens, { has: ['grid-cols-3', 'gap-4'], lacks: ['flex-col'] })
+                expectContains(tokens, { has: ['grid-cols-3', 'gap-4'], lacks: ['flex-col'] })
               }
             })
           },
@@ -269,7 +269,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
                 className: CALLER_MIXED,
               }),
             )
-            expectTokenList(tokens, {
+            expectContains(tokens, {
               has: ['block', 'rounded'],
               lacks: ['flex-col', 'grid-cols-3'],
             })
@@ -290,7 +290,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
             }),
           )
 
-          expectTokenList(tokens, { has: ['grid', ...PRESERVED], lacks: ['flex', ...FILTERED] })
+          expectContains(tokens, { has: ['grid', ...PRESERVED], lacks: ['flex', ...FILTERED] })
         })
 
         it('filters responsive display literals while preserving flex-mode utilities', async () => {
@@ -302,7 +302,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
           })
           const tokens = tokensOf(className)
 
-          expectTokenList(tokens, {
+          expectContains(tokens, {
             has: [
               'flex',
               'flex-row',
@@ -367,12 +367,12 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
             // Caller display literals are filtered; the selected mode is injected by the pipeline.
             if (layout !== 'flex') expect(tokens).not.toContain('flex')
             if (layout !== 'grid') expect(tokens).not.toContain('grid')
-            expectTokenList(tokens, { lacks: ['md:flex', 'md:grid'] })
+            expectContains(tokens, { lacks: ['md:flex', 'md:grid'] })
 
             // Family utilities (including their responsive variants) survive only in their own family.
             expectFamilyUtilities(tokens, family, { responsive: true })
 
-            expectTokenList(tokens, { has: ['base', 'rounded'] })
+            expectContains(tokens, { has: ['base', 'rounded'] })
           },
         )
 
@@ -394,7 +394,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
               }),
             )
 
-            expectTokenList(tokens, { has: [prop, 'base', 'rounded'] })
+            expectContains(tokens, { has: [prop, 'base', 'rounded'] })
             expectFamilyUtilities(tokens, family)
           },
         )
@@ -410,7 +410,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
               }),
             )
 
-            expectTokenList(tokens, { has: ['flex', 'flex-col', 'gap-4'], lacks: ['grid-cols-3'] })
+            expectContains(tokens, { has: ['flex', 'flex-col', 'gap-4'], lacks: ['grid-cols-3'] })
             expect(warn).toHaveBeenCalledWith(
               expect.stringContaining('Multiple display props set (flex, inline-flex, grid)'),
             )
@@ -428,7 +428,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
               }),
             )
 
-            expectTokenList(tokens, { has: ['grid', 'grid-cols-3'], lacks: ['flex', 'flex-col'] })
+            expectContains(tokens, { has: ['grid', 'grid-cols-3'], lacks: ['flex', 'flex-col'] })
             expect(warn).not.toHaveBeenCalledWith(
               expect.stringContaining('Multiple display props set'),
             )
@@ -445,7 +445,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
               }),
             )
 
-            expectTokenList(tokens, { has: ['flex', 'flex-col'], lacks: ['grid-cols-3'] })
+            expectContains(tokens, { has: ['flex', 'flex-col'], lacks: ['grid-cols-3'] })
             expect(warn).toHaveBeenCalledWith(expect.stringContaining('Invalid layout value'))
             expect(warn).toHaveBeenCalledWith(
               expect.stringContaining('Multiple display props set (flex, grid)'),
@@ -486,10 +486,10 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
               }),
             )
 
-            expectTokenList(tokens, { has: ['base', 'rounded', 'p-4'] })
+            expectContains(tokens, { has: ['base', 'rounded', 'p-4'] })
 
             if (family === 'flex') {
-              expectTokenList(tokens, {
+              expectContains(tokens, {
                 has: ['flex', 'flex-col', 'md:flex-row', 'gap-4'],
                 lacks: [
                   'grid',
@@ -502,9 +502,9 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
                 ],
               })
               // Important display utilities are intentional escape hatches and survive filtering.
-              expectTokenList(tokens, { has: ['!grid', 'md:!grid'] })
+              expectContains(tokens, { has: ['!grid', 'md:!grid'] })
             } else if (family === 'grid') {
-              expectTokenList(tokens, {
+              expectContains(tokens, {
                 has: ['grid', 'grid-cols-3', 'md:grid-cols-2', 'gap-4', '!flex', 'md:!flex'],
                 lacks: [
                   'flex',
@@ -518,7 +518,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
               })
             } else {
               // Item utilities are parent-layout dependent and intentionally remain untouched.
-              expectTokenList(tokens, {
+              expectContains(tokens, {
                 has: ['self-center'],
                 lacks: [
                   'flex',
@@ -548,7 +548,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
             }),
           )
 
-          expectTokenList(tokens, {
+          expectContains(tokens, {
             has: [
               'grid',
               ...GRID_TONE_UTILITIES,
@@ -570,7 +570,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
             }),
           )
 
-          expectTokenList(tokens, {
+          expectContains(tokens, {
             has: ['flex', 'gap-4', 'p-4', 'rounded'],
             lacks: [...GRID_TONE_UTILITIES, ...GRID_COMPOUND_UTILITIES, ...CALLER_GRID_UTILITIES],
           })
@@ -586,7 +586,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
             }),
           )
 
-          expectTokenList(tokens, {
+          expectContains(tokens, {
             has: ['grid', 'p-4', 'rounded'],
             lacks: [...FLEX_TONE_UTILITIES, ...FLEX_COMPOUND_UTILITIES, ...CALLER_FLEX_UTILITIES],
           })
@@ -602,7 +602,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
             }),
           )
 
-          expectTokenList(tokens, {
+          expectContains(tokens, {
             has: ['grid-cols-3', 'md:grid-cols-2', 'p-2'],
             lacks: ['p-4', ...GRID_COMPOUND_UTILITIES],
           })
@@ -620,7 +620,7 @@ export function tailwindDisplayParitySuite(adapter: TailwindDisplayParityAdapter
               const tokens = tokensOf(className)
 
               // The invalid value itself must not leak into the class list (nor an empty token).
-              expectTokenList(tokens, {
+              expectContains(tokens, {
                 has: ['flex', 'flex-col', 'rounded'],
                 lacks: ['grid-cols-3', '', ...(layout === '' ? [] : [layout])],
               })

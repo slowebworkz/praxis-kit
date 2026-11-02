@@ -16,6 +16,7 @@ const config = [
         { type: 'adapter-testing', pattern: 'testing/packages/adapter-testing/**/*' },
         { type: 'playwright-testing', pattern: 'testing/packages/playwright-testing/**/*' },
         { type: 'tailwind-testing', pattern: 'testing/packages/tailwind-testing/**/*' },
+        { type: 'test-utils', pattern: 'testing/packages/test-utils/**/*' },
         { type: 'bench', pattern: 'qa/bench/**/*' },
         { type: 'core', pattern: 'packages/core/**/*' },
         { type: 'react', pattern: 'adapters/react/**/*' },

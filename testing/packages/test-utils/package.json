@@ -1,0 +1,23 @@
+{
+  "name": "@praxis-kit/test-utils",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false,
+  "description": "Small Vitest helpers shared by the testing packages (has/lacks assertions, console.warn spying); no praxis-kit dependencies",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest run --changed"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "vitest": ">=4.0.0"
+  }
+}

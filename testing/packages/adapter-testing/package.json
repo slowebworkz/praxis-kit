@@ -15,6 +15,7 @@
     "@praxis-kit/core": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
+    "@praxis-kit/test-utils": "workspace:*",
     "type-fest": "catalog:"
   },
   "devDependencies": {

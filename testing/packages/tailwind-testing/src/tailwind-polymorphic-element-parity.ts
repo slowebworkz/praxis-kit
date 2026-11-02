@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CALLER_MIXED_WITH_GAP, expectTokenList, tokensOf, withWarnSpy } from './helpers'
+import { CALLER_MIXED_WITH_GAP, expectContains, tokensOf, withWarnSpy } from './helpers'
 
 export type TailwindPolymorphicElementInput = {
   /** Omit to use the component's configured default tag. */
@@ -27,7 +27,7 @@ export type TailwindPolymorphicElementParityAdapter = {
 }
 
 function expectFlexResolution(result: TailwindPolymorphicElementResult): void {
-  expectTokenList(tokensOf(result.className), {
+  expectContains(tokensOf(result.className), {
     has: ['base', 'flex', 'flex-col', 'gap-4', 'rounded'],
     lacks: ['grid-cols-3'],
   })
@@ -92,7 +92,7 @@ export function tailwindPolymorphicElementParitySuite(
           expect(results.map((result) => result.tagName)).toEqual(['div', 'img', 'section'])
           expectFlexResolution(results[0]!)
           expectFlexResolution(results[1]!)
-          expectTokenList(tokensOf(results[2]!.className), {
+          expectContains(tokensOf(results[2]!.className), {
             has: ['base', 'flex', 'flex-col', 'rounded-lg'],
             lacks: ['rounded', 'grid-cols-3'],
           })
