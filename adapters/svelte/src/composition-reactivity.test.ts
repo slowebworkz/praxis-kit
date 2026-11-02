@@ -19,6 +19,7 @@ import {
   tailwindDisplayParitySuite,
   tailwindPolymorphicElementParitySuite,
 } from '@praxis-kit/tailwind-testing'
+import { definedProp } from '@praxis-kit/test-utils'
 import { createContractComponent } from './create-contract-component'
 
 afterEach(cleanup)
@@ -190,7 +191,7 @@ tailwindPolymorphicElementParitySuite({
       styling: { base: 'base', plugin: createTailwindPipeline },
     })
     const { container } = render(TailwindPolymorphicElementHost, {
-      props: { bundle, initial: { ...(as === undefined ? {} : { as }), displayProps, className } },
+      props: { bundle, initial: { ...definedProp('as', as), displayProps, className } },
     })
     await tick()
     const element = container.firstElementChild as HTMLElement

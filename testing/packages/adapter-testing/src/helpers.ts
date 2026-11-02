@@ -1,19 +1,11 @@
 // Internal helpers shared by the conformance suites. Not part of the package's public surface
 // (see index.ts) — suites import from here directly.
 
-import { expect, vi } from 'vitest'
-import type { MockInstance } from 'vitest'
+import { expectContains } from '@praxis-kit/test-utils'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
 import type { ConformanceAdapter, ConformanceComponent, ConformanceFactoryOptions } from './types'
 
-// Asserts that every `has` token is, and every `lacks` token is not, a substring of `text`.
-export function expectContains(
-  text: string,
-  { has = [], lacks = [] }: { has?: readonly string[]; lacks?: readonly string[] },
-): void {
-  for (const token of has) expect(text).toContain(token)
-  for (const token of lacks) expect(text).not.toContain(token)
-}
+export { expectContains, withWarnSpy } from '@praxis-kit/test-utils'
 
 // `expectContains` under the name that says what it is checking, for class strings.
 export const expectClassNames: typeof expectContains = expectContains
@@ -34,16 +26,6 @@ export const tagOf = (element: Element): string => element.tagName.toLowerCase()
 
 // A child-rule matcher that accepts every child, so a rule exercises cardinality alone.
 export const matchAnyChild = (c: unknown): c is unknown => !!c || !c
-
-// Runs `run` with `console.warn` silenced and always restores it, even if an assertion throws.
-export function withWarnSpy(run: (warnSpy: MockInstance<typeof console.warn>) => void): void {
-  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-  try {
-    run(warnSpy)
-  } finally {
-    warnSpy.mockRestore()
-  }
-}
 
 // The conformance suite's capability defaults: everything on except composition styling and
 // dynamic child rules, which an adapter opts in to. Shared so the split-out sections agree.

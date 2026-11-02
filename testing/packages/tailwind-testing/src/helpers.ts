@@ -2,25 +2,14 @@
 // `createCountedPlugin` is part of the package's public surface (re-exported by index.ts).
 
 import { expect, vi } from 'vitest'
-import type { MockInstance } from 'vitest'
+import { expectContains, withWarnSpy } from '@praxis-kit/test-utils'
+import type { ContainsSpec } from '@praxis-kit/test-utils'
 import type { ClassPluginFactory } from '@praxis-kit/styling'
 
-// Asserts that every `has` token is, and every `lacks` token is not, a member of `tokens`.
-export function expectTokenList(
-  tokens: readonly string[],
-  { has = [], lacks = [] }: { has?: readonly string[]; lacks?: readonly string[] },
-): void {
-  for (const token of has) expect(tokens).toContain(token)
-  for (const token of lacks) expect(tokens).not.toContain(token)
-}
-
-// As `expectTokenList`, for a raw class string: splits on whitespace and compares whole tokens,
-// so `flex` does not match `flex-col`.
-export function expectTokens(
-  className: string,
-  spec: { has?: readonly string[]; lacks?: readonly string[] },
-): void {
-  expectTokenList(className.split(/\s+/), spec)
+// `expectContains` for a raw class string: splits on whitespace and compares whole tokens, so
+// `flex` does not match `flex-col`.
+export function expectTokens(className: string, spec: ContainsSpec): void {
+  expectContains(className.split(/\s+/), spec)
 }
 
 /**
@@ -42,17 +31,7 @@ export function tokensOf(className: string): string[] {
 export const CALLER_MIXED = 'flex-col grid-cols-3 rounded'
 export const CALLER_MIXED_WITH_GAP = 'flex-col grid-cols-3 gap-4 rounded'
 
-// Runs `run` with `console.warn` silenced and always restores it, even if an assertion throws.
-export async function withWarnSpy(
-  run: (warn: MockInstance<typeof console.warn>) => void | Promise<void>,
-): Promise<void> {
-  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-  try {
-    await run(warn)
-  } finally {
-    warn.mockRestore()
-  }
-}
+export { expectContains, withWarnSpy }
 
 /**
  * Wraps a real plugin factory so a test can count its invocations. A bare `vi.fn(factory)` loses

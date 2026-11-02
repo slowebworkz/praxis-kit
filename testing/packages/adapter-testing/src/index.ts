@@ -9,6 +9,8 @@ export type {
 } from './conformance'
 export { conformanceSuite } from './conformance'
 
+export { classToClassName } from './class-name'
+
 export { conformanceA11ySuite } from './a11y'
 
 export type { SsrConformanceAdapter } from './ssr'
@@ -23,5 +25,10 @@ export { conformanceIsolationSuite } from './isolation'
 export type { CompoundComponentAdapter, CompoundRender } from './compound-component'
 export { compoundComponentSuite } from './compound-component'
 
-export type { OnElementAdapter, OnElementHook, OnElementMounted } from './on-element'
+export type {
+  OnElementAdapter,
+  OnElementHook,
+  OnElementMounted,
+  OnElementSwappable,
+} from './on-element'
 export { onElementSuite } from './on-element'

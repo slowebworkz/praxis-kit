@@ -1,12 +1,13 @@
 /**
  * `onElement` coverage for Vue. The shared behaviour — the real element reaches the hook,
  * getProps() tracks current props without re-registering, the returned cleanup fires on
- * unmount — is the shared `onElementSuite`; this file supplies Vue's mounting, keeps the
- * assertion that needs a native `<dialog>` host, and the lifecycle matrix below, which exercises
- * this adapter's own ref/registration mechanics. showModal()/close() and the dialog's own native
- * close/cancel events require the real node, not a props-based synthetic handler.
+ * unmount, and the host-replacement lifecycle — is the shared `onElementSuite`; this file
+ * supplies Vue's mounting and keeps what is specific to Vue: the assertion that needs a native
+ * `<dialog>` host and how the element is reached through `as` and the `asChild` slot.
+ * showModal()/close() and the dialog's own native close/cancel events require the real node, not a
+ * props-based synthetic handler.
  */
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { h } from 'vue'
 import { createContractComponent } from './create-contract-component'
@@ -34,6 +35,16 @@ const adapter: OnElementAdapter = {
     const Plain = createContractComponent({ tag: 'div', name: 'Plain' })
     mount(box(Plain))
   },
+  mountSwappable: (hook) => {
+    const Box = createContractComponent({ tag: 'div', name: 'Box', onElement: hook })
+    const wrapper = mount(box(Box), { props: { as: 'section' } })
+    return {
+      setHost: async (tag) => {
+        await wrapper.setProps({ as: tag })
+      },
+      unmount: () => wrapper.unmount(),
+    }
+  },
 }
 
 onElementSuite(adapter)
@@ -54,7 +65,7 @@ describe('onElement (native host)', () => {
  * IS the adapter's contract for reaching the real DOM node, so it is exercised across every
  * render path here (mirrors the react/preact ref matrix).
  */
-describe('onElement lifecycle', () => {
+describe('onElement (host resolution)', () => {
   it('receives the `as`-overridden host element', () => {
     let received: Element | undefined
     const Box = createContractComponent({
@@ -85,67 +96,5 @@ describe('onElement lifecycle', () => {
     })
     expect(received).toBe(wrapper.element)
     expect(received?.tagName.toLowerCase()).toBe('a')
-  })
-
-  it('runs the previous cleanup before registering against a replacement element', async () => {
-    const log: string[] = []
-    const Box = createContractComponent({
-      tag: 'div',
-      name: 'Box',
-      onElement: (el) => {
-        const tag = el.tagName.toLowerCase()
-        log.push(`register:${tag}`)
-        return () => log.push(`cleanup:${tag}`)
-      },
-    })
-
-    const wrapper = mount(box(Box), { props: { as: 'section' } })
-    await wrapper.setProps({ as: 'article' })
-
-    expect(log).toEqual(['register:section', 'cleanup:section', 'register:article'])
-  })
-
-  it('runs cleanup exactly once on unmount', () => {
-    const cleanup = vi.fn()
-    const Box = createContractComponent({ tag: 'div', name: 'Box', onElement: () => cleanup })
-
-    const wrapper = mount(box(Box))
-    wrapper.unmount()
-    wrapper.unmount()
-    expect(cleanup).toHaveBeenCalledTimes(1)
-  })
-
-  it('tolerates an onElement that returns nothing', () => {
-    const Box = createContractComponent({
-      tag: 'div',
-      name: 'Box',
-      onElement: () => {
-        /* no cleanup */
-      },
-    })
-
-    const wrapper = mount(box(Box))
-    expect(() => wrapper.unmount()).not.toThrow()
-  })
-
-  it('a throwing onElement on a replacement element does not re-run the prior cleanup on unmount', async () => {
-    const firstCleanup = vi.fn()
-    let calls = 0
-    const Box = createContractComponent({
-      tag: 'div',
-      name: 'Box',
-      onElement: () => {
-        calls += 1
-        if (calls === 1) return firstCleanup
-        throw new Error('onElement failed on the replacement element')
-      },
-    })
-
-    const wrapper = mount(box(Box), { props: { as: 'section' } })
-    await expect(wrapper.setProps({ as: 'article' })).rejects.toThrow('onElement failed')
-    expect(firstCleanup).toHaveBeenCalledTimes(1)
-
-    wrapper.unmount()
-    expect(firstCleanup).toHaveBeenCalledTimes(1)
   })
 })

@@ -434,6 +434,9 @@ importers:
       '@praxis-kit/tailwind-testing':
         specifier: workspace:*
         version: link:../../testing/packages/tailwind-testing
+      '@praxis-kit/test-utils':
+        specifier: workspace:*
+        version: link:../../testing/packages/test-utils
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.5
@@ -495,6 +498,9 @@ importers:
       '@praxis-kit/tailwind-testing':
         specifier: workspace:*
         version: link:../../testing/packages/tailwind-testing
+      '@praxis-kit/test-utils':
+        specifier: workspace:*
+        version: link:../../testing/packages/test-utils
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.5
@@ -553,6 +559,9 @@ importers:
       '@praxis-kit/tailwind-testing':
         specifier: workspace:*
         version: link:../../testing/packages/tailwind-testing
+      '@praxis-kit/test-utils':
+        specifier: workspace:*
+        version: link:../../testing/packages/test-utils
       '@solidjs/testing-library':
         specifier: 'catalog:'
         version: 0.8.10(solid-js@1.9.17)
@@ -602,6 +611,9 @@ importers:
       '@praxis-kit/tailwind-testing':
         specifier: workspace:*
         version: link:../../testing/packages/tailwind-testing
+      '@praxis-kit/test-utils':
+        specifier: workspace:*
+        version: link:../../testing/packages/test-utils
       '@sveltejs/vite-plugin-svelte':
         specifier: 'catalog:'
         version: 7.3.1(svelte@5.57.2(@typescript-eslint/types@8.68.0))(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.0))
@@ -657,6 +669,9 @@ importers:
       '@praxis-kit/tailwind-testing':
         specifier: workspace:*
         version: link:../../testing/packages/tailwind-testing
+      '@praxis-kit/test-utils':
+        specifier: workspace:*
+        version: link:../../testing/packages/test-utils
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.5
@@ -1269,6 +1284,9 @@ importers:
       '@praxis-kit/primitive':
         specifier: workspace:*
         version: link:../../../lib/primitive
+      '@praxis-kit/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       type-fest:
         specifier: 'catalog:'
         version: 5.10.0
@@ -1310,6 +1328,18 @@ importers:
       '@praxis-kit/styling':
         specifier: workspace:*
         version: link:../../../lib/styling
+      '@praxis-kit/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.5
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@types/node@26.6.5)(@vitest/ui@4.1.11)(jsdom@30.1.3)(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.0))
+
+  testing/packages/test-utils:
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

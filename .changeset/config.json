@@ -33,6 +33,7 @@
     "@praxis-kit/svelte",
     "@praxis-kit/tailwind",
     "@praxis-kit/tailwind-testing",
+    "@praxis-kit/test-utils",
     "@praxis-kit/tree-shaking-tests",
     "@praxis-kit/typescript-plugin",
     "@praxis-kit/vite-plugin",

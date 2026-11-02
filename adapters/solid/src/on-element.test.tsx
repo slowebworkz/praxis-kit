@@ -43,9 +43,18 @@ const adapter: OnElementAdapter = {
     const Plain = createContractComponent({ tag: 'div' as const, name: 'Plain' })
     solidRender(() => <Plain />)
   },
-  // Known divergence: any prop change re-applies `ref`, so the hook re-runs (previous cleanup
-  // first). The old Solid test never changed a prop, so it never exercised this.
-  capabilities: { hookReRunsOnPropChange: true },
+  mountSwappable: (hook) => {
+    const Box = createContractComponent({ tag: 'div' as const, name: 'Box', onElement: hook })
+    const [host, setHost] = createSignal('section')
+    const LooseBox = Box as unknown as (props: { as?: string }) => JSX.Element
+    const { unmount } = solidRender(() => <LooseBox as={host()} />)
+    return {
+      setHost: (tag) => {
+        setHost(tag)
+      },
+      unmount,
+    }
+  },
 }
 
 onElementSuite(adapter)

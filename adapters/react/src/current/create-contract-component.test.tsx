@@ -28,6 +28,7 @@ import type { AnyRecord } from '@praxis-kit/primitive'
 import { box, useReactDom } from '../shared/test-utils'
 import { Slottable } from '../shared'
 import { COMPOSITION_STYLE_REQUEST_PROP } from '@praxis-kit/adapter-utils'
+import { definedProp } from '@praxis-kit/test-utils'
 import { createContractComponent } from './create-contract-component'
 
 const dom = useReactDom()
@@ -1223,7 +1224,7 @@ tailwindPolymorphicElementParitySuite({
     dom.mount(
       createElement(box(Box), {
         ...displayProps,
-        ...(as === undefined ? {} : { as }),
+        ...definedProp('as', as),
         alt: as === 'img' ? '' : undefined,
         className,
       } as AnyRecord),

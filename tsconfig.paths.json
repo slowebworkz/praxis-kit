@@ -53,7 +53,9 @@
       ],
       "@praxis-kit/tailwind-testing/*": [
         "./testing/packages/tailwind-testing/src/*"
-      ]
+      ],
+      "@praxis-kit/test-utils": ["./testing/packages/test-utils/src"],
+      "@praxis-kit/test-utils/*": ["./testing/packages/test-utils/src/*"]
     }
   }
 }

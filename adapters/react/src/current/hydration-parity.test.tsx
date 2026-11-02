@@ -4,7 +4,7 @@ import { createElement, act } from 'react'
 import type { ComponentType, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createRoot } from 'react-dom/client'
-import { hydrationParitySuite } from '@praxis-kit/adapter-testing'
+import { classToClassName, hydrationParitySuite } from '@praxis-kit/adapter-testing'
 import type { BareFactoryOptions } from '@praxis-kit/adapter-testing'
 import { parseAttributes, parseNormalizedAttributes } from '@praxis-kit/primitive/tests'
 import { silentDiagnostics } from '@praxis-kit/diagnostics'
@@ -144,8 +144,7 @@ hydrationParitySuite({
       displayName?: string
     },
   renderToString: (component, props = {}) => {
-    const { class: cls, ...rest } = props
-    const normalized = cls !== undefined ? { ...rest, className: cls } : rest
+    const normalized = classToClassName(props)
     return renderToStaticMarkup(
       createElement(component as ComponentType<UnknownProps>, normalized as UnknownProps),
     )
@@ -154,8 +153,7 @@ hydrationParitySuite({
     hydContainer = document.createElement('div')
     document.body.appendChild(hydContainer)
     const root = createRoot(hydContainer)
-    const { class: cls, ...rest } = props
-    const normalized = cls !== undefined ? { ...rest, className: cls } : rest
+    const normalized = classToClassName(props)
     await act(async () =>
       root.render(
         createElement(component as ComponentType<UnknownProps>, normalized as UnknownProps),

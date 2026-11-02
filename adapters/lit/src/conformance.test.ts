@@ -30,6 +30,7 @@ import type {
 import { createContractComponent } from './create-contract-component'
 import type { LitConformanceComponent, LitConformanceEl } from './types/index'
 import type { AnyRecord } from '@praxis-kit/core'
+import { isNullish, isObject } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import type { StringMap } from '@praxis-kit/primitive'
 
@@ -87,18 +88,14 @@ function applyProps(
       return
     }
     if (key === 'style') {
-      applyStyle(
-        el,
-        typeof value === 'object' && value !== null ? (value as AnyRecord) : {},
-        prevStyle,
-      )
+      applyStyle(el, isObject(value, true) ? value : {}, prevStyle)
       return
     }
     if (value === true) {
       el.setAttribute(key, '')
       return
     }
-    if (value === false || value === null || value === undefined) {
+    if (value === false || isNullish(value)) {
       el.removeAttribute(key)
       return
     }

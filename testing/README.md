@@ -21,6 +21,8 @@ packages: they are created when something lands there and are run through their 
   `ConformanceAdapter` contract each adapter implements.
 - [`tailwind-testing`](packages/tailwind-testing) — the cross-adapter Tailwind parity suites
   (display, compose plugin, asChild plugin, polymorphic element).
+- [`test-utils`](packages/test-utils) — the few helpers (`expectContains`, `withWarnSpy`,
+  `definedProp`) that more than one testing package needs; no praxis-kit dependencies.
 - [`playwright-testing`](packages/playwright-testing) — Playwright component-test helpers: ARIA
   snapshot assertions, keyboard sequences, axe sweeps and console/diagnostic catchers. Used by the
   React and Vue CT specs.

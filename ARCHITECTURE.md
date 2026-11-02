@@ -35,8 +35,8 @@ qa/                      cross-cutting verification: tree-shaking tests, bundle 
 testing/                 reusable test infrastructure (private; production never depends on it)
   packages/              adapter-testing (conformance, a11y, SSR, hydration, performance, isolation,
                          compound-component and onElement suites), tailwind-testing (Tailwind
-                         parity suites), playwright-testing (Playwright CT helpers) — see
-                         testing/README.md
+                         parity suites), playwright-testing (Playwright CT helpers), test-utils
+                         (shared Vitest helpers) — see testing/README.md
 ```
 
 Dependency direction: `lib/primitive` ← `lib/contract`/`lib/styling`/`lib/diagnostics` ←

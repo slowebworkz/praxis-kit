@@ -17,6 +17,7 @@ import {
 import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
+import { definedProp } from '@praxis-kit/test-utils'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function box(comp: unknown): any {
@@ -698,7 +699,7 @@ tailwindPolymorphicElementParitySuite({
     const wrapper = mount(box(Box), {
       props: {
         ...displayProps,
-        ...(as === undefined ? {} : { as }),
+        ...definedProp('as', as),
         alt: as === 'img' ? '' : undefined,
         class: className,
       } as AnyRecord,
