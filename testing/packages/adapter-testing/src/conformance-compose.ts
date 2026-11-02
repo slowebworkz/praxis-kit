@@ -209,6 +209,31 @@ export function composeConformance<C extends ConformanceComponent>(
         expect(element.className).toContain('intent-ghost')
       })
 
+      it('with allProps: true, filters primary-only variants but forwards shared variants and ordinary props', () => {
+        const Partner = adapter.createComponent({
+          styling: { variants: { intent: { ghost: 'partner-intent-ghost' } } },
+        })
+        const Primary = adapter.createComponent({
+          compose: { with: Partner, allProps: true },
+          styling: {
+            variants: {
+              appearance: { elevated: 'primary-appearance-elevated' },
+              intent: { ghost: 'primary-intent-ghost' },
+            },
+          },
+        })
+        const { element } = adapter.render(Primary, {
+          appearance: 'elevated',
+          intent: 'ghost',
+          'data-testid': 'composition-variant-filter',
+        })
+
+        expect(element.hasAttribute('appearance')).toBe(false)
+        expect(element.getAttribute('data-testid')).toBe('composition-variant-filter')
+        expect(element.className).toContain('primary-appearance-elevated')
+        expect(element.className).toContain('partner-intent-ghost')
+      })
+
       it('resolves compound variants declared on the composing parent', () => {
         const BoxA = adapter.createComponent({ styling: { base: 'child-base' } })
         const BoxB = adapter.createComponent({
