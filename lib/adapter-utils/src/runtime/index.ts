@@ -23,6 +23,8 @@ export {
   attachCompositionStyleMetadata,
   composeStyleProps,
   filterOwnedProps,
+  filterAllPropsForPartner,
+  getPrimaryOnlyCompositionVariantKeys,
   getCompositionStyleMetadata,
   createCompositionStyleResolver,
   createOptionalCompositionStylePipeline,

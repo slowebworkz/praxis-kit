@@ -6,6 +6,7 @@ import {
   attachCompositionStyleMetadata,
   composeStyleProps,
   filterOwnedProps,
+  getPrimaryOnlyCompositionVariantKeys,
   createOptionalCompositionStylePipeline,
   getCompositionStyleMetadata,
 } from './composition-style-metadata'
@@ -27,6 +28,21 @@ describe('composition style metadata', () => {
       baseClassName: 'base',
       pluginFactory,
     })
+  })
+
+  it('identifies primary-only variant keys while retaining shared partner variants', () => {
+    const primary = new Set(['appearance', 'intent', 'size'])
+    const partner = () => {}
+    attachCompositionStyleMetadata(partner, {
+      variants: { intent: { ghost: 'ghost' }, size: { sm: 'small' } },
+    } as never)
+
+    expect(getPrimaryOnlyCompositionVariantKeys(primary, partner)).toEqual(['appearance'])
+    expect(getPrimaryOnlyCompositionVariantKeys(primary, () => {})).toEqual([
+      'appearance',
+      'intent',
+      'size',
+    ])
   })
 
   it('retains standard resolved styling fields without exposing metadata as an enumerable property', () => {

@@ -147,6 +147,7 @@ export function renderComposed<TProps extends KnownProps>(
     ownedKeys: ReadonlySet<string>
   },
   reservedOwnedKeys: ReadonlySet<string> = new Set(),
+  primaryOnlyVariantKeys: readonly string[] = [],
 ): SolidElement {
   const [knownRaw, rest] = splitProps(props, SPLIT_KEYS)
   const known = knownRaw as unknown as KnownProps
@@ -159,6 +160,7 @@ export function renderComposed<TProps extends KnownProps>(
     'ref',
     'children',
     ...reservedOwnedKeys,
+    ...primaryOnlyVariantKeys,
   ])
 
   const tag = createMemo(() => resolveTag(runtime, known.as))
@@ -220,7 +222,9 @@ export function renderComposed<TProps extends KnownProps>(
                 composeStyleProps(
                   {
                     ...filterOwnedProps(defaults, reservedOwnedKeys),
-                    ...(allProps ? filterOwnedProps(props, reservedOwnedKeys) : {}),
+                    ...(allProps
+                      ? filterOwnedProps(props, reservedOwnedKeys, primaryOnlyVariantKeys)
+                      : {}),
                   },
                   props,
                   compositionClassResolver.primary,

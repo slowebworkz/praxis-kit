@@ -17,6 +17,7 @@ import type { ContractVariantsWithComposeOf } from '@praxis-kit/compose-props'
 import {
   diagnoseIncompleteComposition,
   attachCompositionStyleMetadata,
+  getPrimaryOnlyCompositionVariantKeys,
   finalizeComponent,
   invariant,
 } from '@praxis-kit/adapter-utils'
@@ -160,6 +161,7 @@ export function createContractComponent<
         compose.defaults,
         compositionClassResolver,
         bundle.ownedKeys,
+        getPrimaryOnlyCompositionVariantKeys(bundle.runtime.options.variantKeys, compose.with),
       )
     }
 

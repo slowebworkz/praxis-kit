@@ -152,6 +152,24 @@ function copySelectedProp(target: AnyRecord, source: Readonly<AnyRecord>, name: 
   return true
 }
 
+/**
+ * Variant props declared only by the composing (primary) component must not be forwarded
+ * to its composition partner as ordinary attributes. Keep shared variants forwardable so
+ * the partner can resolve its own styling contract. External partners have no Praxis style
+ * metadata, so all primary variant keys are considered primary-only.
+ */
+export function getPrimaryOnlyCompositionVariantKeys(
+  primaryVariantKeys: ReadonlySet<string>,
+  partner: unknown,
+): string[] {
+  const partnerVariants = getCompositionStyleMetadata(partner)?.variants
+  const result: string[] = []
+  iterate.forEachSet(primaryVariantKeys, (key) => {
+    if (!partnerVariants || !Object.hasOwn(partnerVariants, key)) result.push(key)
+  })
+  return result
+}
+
 /** Remove plugin-owned styling inputs before forwarding props to a child or host element. */
 export function filterOwnedProps(
   props: object | undefined,
@@ -164,6 +182,23 @@ export function filterOwnedProps(
     if (!ownedKeys.has(key) && !omittedKeys.includes(key)) result[key] = value
   })
   return result
+}
+
+/**
+ * The `compose.allProps` forwarding filter: the primary's raw props minus plugin-owned keys and
+ * variants only the primary declares (see `getPrimaryOnlyCompositionVariantKeys`).
+ */
+export function filterAllPropsForPartner(
+  props: object | undefined,
+  ownedKeys: ReadonlySet<string>,
+  primaryVariantKeys: ReadonlySet<string>,
+  partner: unknown,
+  omittedKeys: readonly string[] = [],
+): AnyRecord {
+  return filterOwnedProps(props, ownedKeys, [
+    ...omittedKeys,
+    ...getPrimaryOnlyCompositionVariantKeys(primaryVariantKeys, partner),
+  ])
 }
 
 /**

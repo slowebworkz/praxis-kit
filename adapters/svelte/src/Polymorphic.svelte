@@ -22,6 +22,7 @@
   import {
     applyFilter,
     filterOwnedProps,
+    filterAllPropsForPartner,
     mergeClassNames,
     mergeSlotProps,
     resolveNormalizedProps,
@@ -195,7 +196,9 @@
           tag,
           {
             ...filterOwnedProps(bundle.compose?.defaults, bundle.ownedKeys),
-            ...(bundle.compose?.allProps ? filterOwnedProps(rest, bundle.ownedKeys) : {}),
+            ...(bundle.compose?.allProps
+              ? filterAllPropsForPartner(rest, bundle.ownedKeys, bundle.runtime.options.variantKeys, bundle.compose?.with)
+              : {}),
           },
           rest,
           normalizedProps,
@@ -269,7 +272,9 @@
   <Polymorphic
     bundle={With}
     {...filterOwnedProps(bundle.compose.defaults, bundle.ownedKeys)}
-    {...(bundle.compose.allProps ? filterOwnedProps(rest, bundle.ownedKeys) : {})}
+    {...(bundle.compose.allProps
+      ? filterAllPropsForPartner(rest, bundle.ownedKeys, bundle.runtime.options.variantKeys, With)
+      : {})}
     asChild
   >
     {#snippet children(withProps)}

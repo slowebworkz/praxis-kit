@@ -19,6 +19,7 @@ import {
   attachCompositionStyleMetadata,
   composeStyleProps,
   filterOwnedProps,
+  filterAllPropsForPartner,
   mergeCompositionClassNames,
   COMPOSITION_STYLE_REQUEST_PROP,
   isCompositionStyleRequest,
@@ -187,7 +188,13 @@ export function createContractComponent<
       return h(compose.with as ComponentType<UnknownProps>, {
         ...filterOwnedProps(compose.defaults, bundle.ownedKeys, ['as']),
         ...(compose.allProps
-          ? filterOwnedProps(componentProps, bundle.ownedKeys, ['as'])
+          ? filterAllPropsForPartner(
+              componentProps,
+              bundle.ownedKeys,
+              bundle.runtime.options.variantKeys,
+              compose.with,
+              ['as'],
+            )
           : undefined),
         ...(compositionClassResolver
           ? {
