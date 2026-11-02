@@ -3937,8 +3937,43 @@ conformance contract" follow-up was waiting on — so the infrastructure moved t
   cleanup first), where the other seven adapters leave the registration alone: Solid's render
   spreads `{...domProps()} ref`, and the props memo recomputes on every change. The old Solid test
   never changed a prop. It is recorded as the `hookReRunsOnPropChange` capability instead of being
-  hidden, and the suite still asserts nothing leaks. Whether to fix the adapter is open.
+  hidden, and the suite still asserts nothing leaks. Whether to fix the adapter was left open; it
+  was fixed afterwards — see "Testing follow-ups" below.
 - Surveyed and deliberately **not** moved: `define-contract`, `contract-props`,
   `compose-call-signature`, `polymorphic-props` and `compose-props` are entirely type-level
   (`expectTypeOf`, no runtime assertions) and tied to each adapter's own types; `normalize-children`
   unit-tests each adapter's own internal normaliser with framework-specific elements.
+
+### Testing follow-ups — Solid `onElement` fix, `test-utils`, `onElement` lifecycle suite (2026-11-01)
+
+Closes the three items the testing-workspace entry left open.
+
+- **Solid runs `onElement` once per element.** The earlier diagnosis (a changing `ref` identity) was
+  incomplete. Solid's `spread` re-invokes `props.ref` in its own render effect whenever the spread
+  props change, whatever the identity, and an `onCleanup` registered from inside that effect runs on
+  _every_ re-run — so the old code did not just re-register the hook, it ran the cleanup on each
+  prop update (a listener removed and re-added, or worse, left detached by a hook that does not
+  re-attach). The adapter now tracks the registration per instance (`registered`), skips a repeat
+  call for the same element, runs the previous cleanup before registering a replacement, and owns
+  cleanup at component level. The state is cleared _before_ the hook runs, so a hook that throws on
+  a replacement cannot leave a spent cleanup to run again on unmount (found by the new suite). The
+  `hookReRunsOnPropChange` capability is removed; no adapter diverges from the contract now. A
+  consumer `ref` on a component with `onElement` is likewise called once per element, not on every
+  prop change.
+- **`@praxis-kit/test-utils`** holds the two helpers the testing packages had copied:
+  `expectContains` (one function for string-substring and token-list-membership, replacing
+  `expectTokenList`) and `withWarnSpy` (synchronous for sync callbacks so a caller that does not
+  await still sees the spy restored; settles-then-restores for async ones). It has no praxis-kit
+  dependencies and its own tests. `tokensOf` and `expectTokens` stay in `tailwind-testing` — they
+  encode Tailwind-specific expectations — and `tagOf`/`silentCreate` stay in `adapter-testing`
+  because they use its types. Rule going forward: a helper moves here only when a second testing
+  package would otherwise copy it.
+- **`onElementSuite` lifecycle scenarios.** Cleanup runs exactly once however many updates came
+  first; a hook may return nothing; and, for adapters that supply `mountSwappable` (React ×2,
+  Preact, Vue, Solid), the previous cleanup runs before the replacement registers and a throwing
+  hook does not re-run a spent cleanup. The four copies of the lifecycle matrix in React ×2, Preact
+  and Vue are removed (Vue keeps its two host-resolution tests, which are about its own `as` and
+  `asChild` slot). Lit, Web and Svelte have no `mountSwappable` — Lit/Web hosts cannot change, and
+  Svelte's `as` swap is exercised through its `.svelte` harness — so they run only the first two
+  scenarios. Checked by running the pre-fix Solid adapter against the suite: it fails the
+  once-after-updates and re-registration scenarios.

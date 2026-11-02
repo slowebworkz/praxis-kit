@@ -43,6 +43,18 @@ const adapter: OnElementAdapter = {
     const Plain = createContractComponent({ tag: 'div' as const, name: 'Plain' })
     solidRender(() => <Plain />)
   },
+  mountSwappable: (hook) => {
+    const Box = createContractComponent({ tag: 'div' as const, name: 'Box', onElement: hook })
+    const [host, setHost] = createSignal('section')
+    const LooseBox = Box as unknown as (props: { as?: string }) => JSX.Element
+    const { unmount } = solidRender(() => <LooseBox as={host()} />)
+    return {
+      setHost: (tag) => {
+        setHost(tag)
+      },
+      unmount,
+    }
+  },
 }
 
 onElementSuite(adapter)
