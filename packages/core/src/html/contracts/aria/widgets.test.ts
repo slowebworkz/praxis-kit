@@ -9,6 +9,8 @@ import {
   checkboxContract,
   gridContract,
   listboxContract,
+  menuContract,
+  menubarContract,
   menuitemContract,
   menuitemcheckboxContract,
   menuitemradioContract,
@@ -78,8 +80,10 @@ describe('required widget states', () => {
 
 describe('contracts that carry no element-local rule', () => {
   // Content-named roles can't be checked without seeing children, option's aria-selected is the
-  // engine's job, and toolbar/tablist names aren't required by WAI-ARIA 1.2.
+  // engine's job, and toolbar/tablist/menu/menubar names aren't required by WAI-ARIA 1.2.
   it.each([
+    ['menu', menuContract],
+    ['menubar', menubarContract],
     ['menuitem', menuitemContract],
     ['treeitem', treeitemContract],
     ['option', optionContract],
@@ -89,7 +93,7 @@ describe('contracts that carry no element-local rule', () => {
     expect(contract.aria).toEqual([])
   })
 
-  it('toolbar and tablist naming stays available as an opt-in rule', () => {
+  it('toolbar, tablist, menu and menubar naming stays available as an opt-in rule', () => {
     expect(requireAccessibleName(ctx({}))).toMatchObject([{ valid: false, severity: 'warning' }])
     expect(requireAccessibleName(ctx({ 'aria-label': 'Formatting' }))).toEqual([])
   })
@@ -250,6 +254,8 @@ describe('widget contracts end to end through the policy engine', () => {
   it.each([
     ['toolbar', toolbarContract],
     ['tablist', tablistContract],
+    ['menu', menuContract],
+    ['menubar', menubarContract],
   ] as const)('does not require a name on role="%s"', (role, contract) => {
     expect(codes(contract, 'div', { role })).toEqual([])
   })

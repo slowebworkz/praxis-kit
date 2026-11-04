@@ -6,8 +6,8 @@ Widget-role contracts now follow the WAI-ARIA 1.2 role definitions:
 
 - `widgetContracts.menuitem` and `.treeitem` no longer ask for `aria-label`, so content-named items
   like `<li role="menuitem">Open</li>` are no longer flagged.
-- `widgetContracts.toolbar` and `.tablist` no longer require a name (1.2 doesn't). Pass
-  `requireAccessibleName` in `enforcement.aria` to keep requiring one.
+- `widgetContracts.toolbar`, `.tablist`, `.menu` and `.menubar` no longer require a name (1.2
+  doesn't). Pass `requireAccessibleName` in `enforcement.aria` to keep requiring one.
 - A missing `aria-selected` on `role="option"` is reported once instead of twice.
 - `role="combobox"` now also requires `aria-controls`, as WAI-ARIA 1.2 does, alongside
   `aria-expanded`.

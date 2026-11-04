@@ -14,8 +14,8 @@ import { ariaContract } from '../helpers'
 //   `treegrid`, `listbox`, `tree`, `combobox`, `tabpanel`, `radiogroup`) must be named by
 //   `aria-label`/`aria-labelledby`, so those contracts check for one.
 //
-// Roles the spec does not mark "name required" (`toolbar`, `tablist`, `menu`, `menubar`) are
-// documented in their own comments.
+// Roles the spec does not mark "name required" (`toolbar`, `tablist`, `menu`, `menubar`) carry no
+// name rule; each says so in its own comment.
 
 /**
  * `<dialog>` — must have an accessible name (aria-label or aria-labelledby).
@@ -36,9 +36,14 @@ export const alertdialogContract = ariaContract([requireAccessibleName])
 
 /**
  * `role="menu"` — keyboard-navigable pop-up list of actions or functions.
+ *
+ * Carries no rule. WAI-ARIA 1.2 gives `menu` a name from author only and does not mark it name
+ * required; whether it needs a label depends on the page (for example, a menu button's menu is
+ * usually labelled by its button). Pass `requireAccessibleName` in `enforcement.aria` to require
+ * one.
  * APG: https://www.w3.org/WAI/ARIA/apg/patterns/menu/
  */
-export const menuContract = ariaContract([requireAccessibleName])
+export const menuContract = ariaContract([])
 
 /**
  * `role="menuitem"` — an actionable item within a menu or menubar.
@@ -52,9 +57,12 @@ export const menuitemContract = ariaContract([])
 
 /**
  * `role="menubar"` — persistent horizontal menu bar of menu items.
+ *
+ * Carries no rule, for the same reason as `menu`: name from author only, not name required in
+ * WAI-ARIA 1.2. Pass `requireAccessibleName` in `enforcement.aria` to require one.
  * APG: https://www.w3.org/WAI/ARIA/apg/patterns/menubar/
  */
-export const menubarContract = ariaContract([requireAccessibleName])
+export const menubarContract = ariaContract([])
 
 /**
  * `role="tree"` — hierarchical list where items can be expanded or collapsed.

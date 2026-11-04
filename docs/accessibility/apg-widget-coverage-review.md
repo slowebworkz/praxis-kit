@@ -73,9 +73,9 @@ the WAI-ARIA 1.2 role definitions and ran them through the policy engine. It reo
 findings 1 and 5:
 
 - **Naming was over-applied.** `menuitem` and `treeitem` were treated as needing `aria-label`, but
-  their name may come from content, which a single-element contract cannot see. `toolbar` and
-  `tablist` are not name-required in 1.2. These checks were removed (naming stays available as the
-  exported `requireAccessibleName` rule).
+  their name may come from content, which a single-element contract cannot see. `toolbar`,
+  `tablist`, `menu` and `menubar` are not name-required in 1.2. These checks were removed (naming
+  stays available as the exported `requireAccessibleName` rule).
 - **`option` was checked twice**, producing two diagnostics for one omission; the engine's check is
   now the only one.
 - **`combobox`** now also requires `aria-controls`, as 1.2 does.

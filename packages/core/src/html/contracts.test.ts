@@ -886,9 +886,7 @@ describe('widget contracts', () => {
   }
 
   it.each([
-    ['menuContract', menuContract],
     ['comboboxContract', comboboxContract],
-    ['menubarContract', menubarContract],
     ['treeContract', treeContract],
     ['gridContract', gridContract],
     ['listboxContract', listboxContract],
@@ -915,18 +913,6 @@ describe('widget contracts', () => {
     ['radiogroup', radiogroupContract],
   ])('widgetContracts[%s] is the correct contract', (role, expected) => {
     expect(widgetContracts[role]).toBe(expected)
-  })
-
-  it('requireAccessibleName fires via menuContract when aria-label is absent', () => {
-    const rule = menuContract.aria![0]!
-    const results = rule(ctx('ul', {}))
-    expect(results).toMatchObject([{ valid: false, severity: 'warning' }])
-  })
-
-  it('requireAccessibleName passes via menuContract when aria-label is present', () => {
-    const rule = menuContract.aria![0]!
-    const results = rule(ctx('ul', { 'aria-label': 'File' }))
-    expect(results).toEqual([])
   })
 
   it('widgetContracts contains exactly the expected roles', () => {
@@ -961,7 +947,6 @@ describe('widget contracts', () => {
   // widget's accessible name only. They do not inspect descendants or enforce
   // widget-specific states and ID relationships.
   it.each([
-    ['menu', menuContract, { 'aria-label': 'Actions' }],
     ['tree', treeContract, { 'aria-label': 'Folders' }],
     ['grid', gridContract, { 'aria-label': 'Results' }],
     ['listbox', listboxContract, { 'aria-label': 'Choices' }],
