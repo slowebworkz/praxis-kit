@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-02T00:43:48.954Z",
+  "generated": "2026-11-04T00:51:31.900Z",
   "bundles": {
     "package/contract-only": 8468,
     "package/guards-only": 7877,
@@ -32,7 +32,7 @@
         "types": 15
       },
       "@praxis-kit/adapter-utils": {
-        "values": 46,
+        "values": 48,
         "types": 30
       },
       "@praxis-kit/codemod": {
@@ -188,8 +188,8 @@
     },
     "lib/adapter-utils": {
       "files": 41,
-      "functions": 53,
-      "loc": 1449
+      "functions": 55,
+      "loc": 1484
     },
     "packages/core": {
       "files": 92,
