@@ -1,5 +1,118 @@
 # praxis-kit
 
+## 1.4.0
+
+### Minor Changes
+
+- c8f33f4: Add a `toolbar` widget contract that warns when the toolbar has no accessible name.
+  Keyboard navigation and focus management remain outside the static contract.
+- eaeaa8a: Add widget contracts for `tab`, `tabpanel`, `option`, `radio`, `checkbox`,
+  `menuitemcheckbox`, `menuitemradio` and `treeitem`. They warn when the role's required state
+  (`aria-selected` / `aria-checked`) or accessible name is missing; an explicit `"false"` state is
+  valid. Relationship checks that need ancestry stay out of scope.
+- e96bc7e: Add `validateAriaComboboxRelationships` to `praxis-kit/html` to validate declared
+  combobox `aria-controls` references and supported popup roles within a caller-supplied element
+  scope.
+- 3bc3295: Add `validateAriaGridRelationships` to `praxis-kit/html` to validate row and cell
+  ownership, plus grid active-descendant ownership, within a caller-supplied element scope.
+- ebcec4c: Validate ARIA grid and treegrid rowgroup ownership, warning when rowgroups are orphaned
+  or associated with multiple grid owners.
+- dafff83: Add `validateAriaListboxRelationships` to `praxis-kit/html`. For a caller-supplied,
+  ordered element scope (with optional `parentIndex` ancestry), it reports `role="option"` elements
+  with no listbox owner (by ancestry or `aria-owns`) and `aria-activedescendant` references on a
+  listbox that are missing, ambiguous, not an option, or not owned by that listbox.
+- e358cda: Add document-scope validation for ARIA menu item ownership.
+- 3e47762: Add an accessible-name contract for `role="menuitem"` and expose it through
+  `widgetContracts`.
+- 865cd7b: Add `validateAriaRadiogroupRelationships` to `praxis-kit/html` to validate radio
+  membership in radiogroups using caller-supplied structural and explicit ownership context.
+- 2a3989d: Add `createAriaReferenceIndex` to `praxis-kit/html`, a read-only ID index for a
+  caller-supplied ARIA validation scope. It resolves `aria-labelledby`/`aria-controls`-style IDREF
+  tokens and reports missing and duplicate IDs separately instead of picking one.
+- bfe88fc: Add `validateAriaIdReferences` to `praxis-kit/html`. For a caller-supplied element scope,
+  it reports `aria-labelledby`, `aria-controls` and `aria-activedescendant` ID tokens that are
+  missing or ambiguous (duplicate IDs). It does not validate target roles, ancestry or ownership.
+- b9ba4e9: Add `validateAriaTabRelationships` to `praxis-kit/html`. For a caller-supplied element
+  scope, it warns when a `role="tab"` controls a uniquely resolved target that is not a `tabpanel`,
+  and when a `tabpanel`'s uniquely resolved `aria-labelledby` targets do not include a `tab`.
+  Missing and ambiguous references are not guessed at.
+- 5de8e4f: Validate ARIA tree group ownership, including orphaned groups, invalid owners, and
+  conflicting resolved ownership.
+- 9e45137: Add `validateAriaTreeRelationships` to `praxis-kit/html` to check tree/treeitem
+  ownership, active-descendant ownership, and conditional `aria-expanded` applicability within a
+  caller-supplied element scope.
+- da0f311: Add `ContractInputProps<T, Mode>` to the React and Preact adapters: the strict,
+  unflattened counterpart to `ContractProps`. It describes the component's own call signature
+  (mutually exclusive plugin props such as `flex`/`grid` stay exclusive), so a value annotated with
+  it can be spread back into the component, which a flattened `ContractProps` value cannot.
+- 09c59ad: Add the `praxis-kit/dom` subpath with framework-neutral helpers for native dialog and
+  popover behavior: backdrop-click detection, `closedBy` feature detection, dialog state
+  synchronization, and Popover API toggle subscription.
+- 1a85522: Class plugins can now declare a flattened prop shape for the type-extraction path.
+  `ClassPlugin` and `ClassPluginFactory` take an optional second `TFlatProps` generic (defaulting to
+  `TProps`), with new `ExtractPluginFlatProps` and `FlattenPluginProps` helpers.
+  `createTailwindPipeline` declares `FlatLayoutProps`, so `ContractProps<T>` on the React and Preact
+  adapters no longer needs adapter-side knowledge of the Tailwind layout keys. Public
+  `ContractProps` output is unchanged.
+- 18a85b0: Add a single-valued `layout` prop to the Tailwind class pipeline. It overrides boolean
+  display shorthand props, allowing callers to replace component defaults without explicitly
+  unsetting them. The prop is reserved from host-attribute forwarding and is included in
+  `LayoutPropName` for wrapper types. `layout="none"` means no display class is injected; use
+  `layout="hidden"` for `display: none`. Invalid runtime values warn and fall back to boolean
+  shorthand props. Conflicting `variants.layout` definitions are ignored with development diagnostic
+  `CSS6006`; rename styling variants to avoid the reserved display-selection prop. TypeScript does
+  not yet reject this conflict at definition time.
+
+### Patch Changes
+
+- 742d592: Add a `combobox` widget contract that warns when the role has no accessible name.
+  Required properties and popup relationships are unchanged.
+- 4bb5d5d: Warn when a supplied listbox scope mixes `aria-selected` and `aria-checked` across its
+  owned options.
+- 07ea79b: Warn when a tabpanel's resolved `aria-labelledby` points to a different tab than the tab
+  that resolves its `aria-controls` relationship. Reciprocal attributes remain optional.
+- 61c517d: Warn when a supplied tree scope mixes `aria-selected` and `aria-checked` across its owned
+  treeitems. Either mechanism remains valid when used consistently, and nested trees are evaluated
+  independently.
+- 50758d6: With `compose.allProps`, variant props declared only by the composing component are no
+  longer forwarded to its partner as DOM attributes. Variants shared with a Praxis partner still
+  forward, and every primary variant is withheld from an external (non-Praxis) partner.
+- 9dc4f65: Fix `compose.allProps` forwarding so the composing component's consumed `as` prop is not
+  passed to its composed partner, preserving single-element polymorphic rendering across React,
+  Preact, Vue, and Solid. Add shared adapter conformance coverage for the regression; Svelte already
+  consumes `as` before forwarding its remaining props.
+- 2e588fa: A composing component's call signature now accepts the `compose.with` partner's declared
+  styling variants inline (for example `<Card shadow />`), matching `ContractProps`. Previously such
+  a variant could be defaulted through `compose.defaults` but not overridden in JSX. Applies to
+  React, Preact, Solid and Vue; the partner's ordinary and plugin props are unchanged.
+- 2bcaf17: Allow `compose.defaults` to configure the composed component's declared variants and its
+  own plugin-owned selector props, while continuing to reject ordinary component props and
+  attributes.
+- f8b9987: Report invalid `compose.defaults` values at the offending property with a descriptive
+  type error, rather than an unrelated `TS2554` rest-parameter arity error.
+- b71c78f: Preserve the primary component's resolved defaults and `normalize` output for
+  plugin-owned selector props when composing with `compose.with`, and keep mutually exclusive
+  display modes (`flex`, `grid`, …) from the highest-precedence source so lower-precedence defaults
+  can't add a conflicting mode.
+- 97e7669: Treat the Tailwind important modifier consistently in `praxis-kit/tailwind`: `!flex-col`
+  and `md:!grid-cols-2` are now filtered under a conflicting layout mode exactly like `flex-col!`,
+  instead of leaking through. Important display utilities (`!flex`, `flex!`, `md:!flex`) are
+  unchanged and still bypass the reserved-display filter.
+- 3ae51b3: Fix base display-class injection when a matching display utility has a variant prefix.
+  Previously, `<Box flex className="md:flex">` could render only `md:flex`, omitting the base `flex`
+  class.
+
+  Responsive and state-prefixed display literals such as `hover:flex` and `md:hidden` are filtered
+  from the resolved class string rather than standing in for the unconditional display class
+  selected by `layout` or boolean shorthand props. This is a visible class-output change for
+  affected cases. Important display utilities such as `md:!flex` remain available as the documented
+  escape hatch.
+
+- 28a83aa: Enforce the composing component's `allowedAs` contract in Solid's `compose.with` render
+  path, matching ordinary rendering when consumers supply an explicit `as` override.
+- 7660ada: Add per-rule overrides for built-in HTML enforcement rules, including disabling a rule or
+  replacing its severity and message.
+
 ## 1.3.0
 
 ### Minor Changes
