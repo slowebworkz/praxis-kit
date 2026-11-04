@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest'
 import { isDefined, isUndefined } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import type { AnyRecord } from '@praxis-kit/primitive'
@@ -13,6 +13,7 @@ import {
   BoxElement,
   ButtonElement,
   NavElement,
+  StrictNavElement,
   TabsRootElement,
   TabsTriggerElement,
   TabsContentElement,
@@ -67,6 +68,8 @@ beforeAll(() => {
   if (!customElements.get('praxis-box')) customElements.define('praxis-box', BoxElement)
   if (!customElements.get('praxis-button')) customElements.define('praxis-button', ButtonElement)
   if (!customElements.get('praxis-nav')) customElements.define('praxis-nav', NavElement)
+  if (!customElements.get('praxis-nav-strict'))
+    customElements.define('praxis-nav-strict', StrictNavElement)
   if (!customElements.get('praxis-tabs-root'))
     customElements.define('praxis-tabs-root', TabsRootElement)
   if (!customElements.get('praxis-tabs-trigger'))
@@ -304,10 +307,27 @@ describe('Nav — ARIA pipeline', () => {
     expect(el.getAttribute('aria-label')).toBe('Main')
   })
 
-  it('strips redundant role="navigation" from a <nav> element', async () => {
-    // <nav> has implicit role="navigation"; an explicit redundant role is stripped.
-    const el = await mount('praxis-nav', (e) => e.setAttribute('role', 'navigation'))
-    expect(el.getAttribute('role')).toBeNull()
+  it('keeps a redundant role="navigation" in warn mode and reports it', async () => {
+    // <nav> has implicit role="navigation". `warn` mode is report-only: it warns but leaves the
+    // author's attribute alone.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const el = await mount('praxis-nav', (e) => e.setAttribute('role', 'navigation'))
+      expect(el.getAttribute('role')).toBe('navigation')
+      expect(warn).toHaveBeenCalled()
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  it('strips a redundant role="navigation" in throw mode', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const el = await mount('praxis-nav-strict', (e) => e.setAttribute('role', 'navigation'))
+      expect(el.getAttribute('role')).toBeNull()
+    } finally {
+      warn.mockRestore()
+    }
   })
 })
 
@@ -342,7 +362,9 @@ describe('selective update guard', () => {
   })
 
   it('runs the pipeline on manual requestUpdate() — required for ARIA/role changes', async () => {
-    const el = await mount('praxis-nav', (e) => e.setAttribute('role', 'navigation'))
+    // Uses the throw-mode nav: warn mode no longer strips, so only here is the pipeline run
+    // observable through the role disappearing.
+    const el = await mount('praxis-nav-strict', (e) => e.setAttribute('role', 'navigation'))
     // role should have been stripped by the ARIA engine on the first pipeline run.
     expect(el.getAttribute('role')).toBeNull()
     // Re-apply the attribute and force a manual pipeline flush.

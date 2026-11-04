@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest'
 import { isDefined, isUndefined } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import type { AnyRecord } from '@praxis-kit/primitive'
@@ -13,6 +13,7 @@ import {
   BoxElement,
   ButtonElement,
   NavElement,
+  StrictNavElement,
   TabsRootElement,
   TabsTriggerElement,
   TabsContentElement,
@@ -77,6 +78,8 @@ beforeAll(() => {
     customElements.define('web-button', ButtonElement as unknown as CustomElementConstructor)
   if (!customElements.get('web-nav'))
     customElements.define('web-nav', NavElement as unknown as CustomElementConstructor)
+  if (!customElements.get('web-nav-strict'))
+    customElements.define('web-nav-strict', StrictNavElement as unknown as CustomElementConstructor)
   if (!customElements.get('web-tabs-root'))
     customElements.define('web-tabs-root', TabsRootElement as unknown as CustomElementConstructor)
   if (!customElements.get('web-tabs-trigger'))
@@ -222,10 +225,28 @@ describe('Nav — ARIA pipeline', () => {
     expect(el.getAttribute('aria-label')).toBe('Main')
   })
 
-  it('strips redundant role="navigation" from a <nav> element', () => {
-    const el = mount('web-nav', (e) => e.setAttribute('role', 'navigation'))
-    update(el, () => {})
-    expect(el.getAttribute('role')).toBeNull()
+  it('keeps a redundant role="navigation" in warn mode and reports it', () => {
+    // `warn` mode is report-only: it warns but leaves the author's attribute alone.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const el = mount('web-nav', (e) => e.setAttribute('role', 'navigation'))
+      update(el, () => {})
+      expect(el.getAttribute('role')).toBe('navigation')
+      expect(warn).toHaveBeenCalled()
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  it('strips a redundant role="navigation" in throw mode', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const el = mount('web-nav-strict', (e) => e.setAttribute('role', 'navigation'))
+      update(el, () => {})
+      expect(el.getAttribute('role')).toBeNull()
+    } finally {
+      warn.mockRestore()
+    }
   })
 })
 
@@ -240,7 +261,8 @@ describe('update() — manual pipeline trigger', () => {
   })
 
   it('strips aria attribute removed by the engine after update()', () => {
-    const el = mount('web-nav')
+    // Throw-mode nav: warn mode no longer removes attributes, so use a mode that still fixes.
+    const el = mount('web-nav-strict')
     el.setAttribute('role', 'navigation')
     ;(el as WebEl).update()
     expect(el.getAttribute('role')).toBeNull()
