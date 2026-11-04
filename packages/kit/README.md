@@ -65,15 +65,16 @@ none (see above), and no other entry touches it.
 
 ## Runtime bundle size
 
-Praxis Kit is a contract runtime, not a minimal Slot primitive. Its React minimal-consumer
-bundle is approximately **40 KB gzipped** (`package/react-minimal`: 39,857 bytes in the current
-bundle-analysis snapshot). That includes the contract/ARIA validation machinery and should be
+Praxis Kit is a contract runtime, not a minimal Slot primitive. Its React minimal-consumer bundle is
+approximately **40 KB gzipped** (the exact figure is the `package/react-minimal` entry in
+[`qa/tree-shaking-tests/snapshots/gzip.json`](../../qa/tree-shaking-tests/snapshots/gzip.json),
+which the release gate checks). That includes the contract/ARIA validation machinery and should be
 compared with the feature set it provides, not directly with a ~1 KB Slot-only primitive.
 
-Bundle sizes are measured and regression-gated by
-[`qa/bundle-analysis`](../../qa/bundle-analysis) and
-[`qa/tree-shaking-tests`](../../qa/tree-shaking-tests). Actual application output depends on which
-entry points and features are imported and on the consumer's bundler/tree-shaking configuration.
+Bundle sizes are measured and regression-gated by [`qa/bundle-analysis`](../../qa/bundle-analysis)
+and [`qa/tree-shaking-tests`](../../qa/tree-shaking-tests). Actual application output depends on
+which entry points and features are imported and on the consumer's bundler/tree-shaking
+configuration.
 
 ## Verifying a release candidate
 
