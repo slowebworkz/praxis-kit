@@ -126,23 +126,29 @@ describe('getConditionalImplicitRole', () => {
 
   it('returns the landmark role when a non-empty aria-labelledby is present', () => {
     expect(getConditionalImplicitRole('section', undefined, 'heading-id')).toBe('region')
+    expect(getConditionalImplicitRole('form', undefined, 'heading-id')).toBe('form')
   })
 
   it('returns undefined when neither aria-label nor aria-labelledby is present', () => {
     expect(getConditionalImplicitRole('section', undefined, undefined)).toBeUndefined()
+    expect(getConditionalImplicitRole('form', undefined, undefined)).toBeUndefined()
   })
 
-  it('returns undefined for an empty-string aria-label', () => {
-    expect(getConditionalImplicitRole('section', '', undefined)).toBeUndefined()
-  })
+  it.each(['', '   ', '\t\n '])(
+    'returns undefined for an empty or whitespace-only aria-label (%j)',
+    (ariaLabel) => {
+      expect(getConditionalImplicitRole('section', ariaLabel, undefined)).toBeUndefined()
+      expect(getConditionalImplicitRole('form', ariaLabel, undefined)).toBeUndefined()
+    },
+  )
 
-  it('returns undefined for a whitespace-only aria-label', () => {
-    expect(getConditionalImplicitRole('section', '   ', undefined)).toBeUndefined()
-  })
-
-  it('returns undefined for a whitespace-only aria-labelledby', () => {
-    expect(getConditionalImplicitRole('section', undefined, '  \t\n ')).toBeUndefined()
-  })
+  it.each(['', '  \t\n '])(
+    'returns undefined for an empty or whitespace-only aria-labelledby (%j)',
+    (ariaLabelledBy) => {
+      expect(getConditionalImplicitRole('section', undefined, ariaLabelledBy)).toBeUndefined()
+      expect(getConditionalImplicitRole('form', undefined, ariaLabelledBy)).toBeUndefined()
+    },
+  )
 
   it('returns undefined for a tag that has no conditional landmark role', () => {
     expect(getConditionalImplicitRole('div', 'News', undefined)).toBeUndefined()

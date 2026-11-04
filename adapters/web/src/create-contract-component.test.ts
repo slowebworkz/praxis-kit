@@ -1,4 +1,14 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
+import { isDefined, isUndefined } from '@praxis-kit/guards'
+import { iterate } from '@praxis-kit/primitive'
+import type { AnyRecord } from '@praxis-kit/primitive'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
+import {
+  TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+  TAILWIND_DISPLAY_PARITY_VARIANTS,
+  tailwindDisplayParitySuite,
+} from '@praxis-kit/tailwind-testing'
+import { createContractComponent } from './create-contract-component'
 import {
   BoxElement,
   ButtonElement,
@@ -10,7 +20,57 @@ import {
 
 type WebEl = HTMLElement & { update(): void }
 
+const TailwindDisplayElement = createContractComponent({
+  tag: 'div',
+  name: 'TailwindDisplayParity',
+  styling: {
+    base: 'base',
+    plugin: createTailwindPipeline,
+    variants: TAILWIND_DISPLAY_PARITY_VARIANTS,
+    compounds: TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+  },
+})
+
+let tailwindDisplayBaseTagId = 0
+
+function registerTailwindDisplayBaseElement(baseClassName: string): string {
+  const tag = `web-tailwind-display-base-${++tailwindDisplayBaseTagId}`
+  const Element = createContractComponent({
+    tag: 'div',
+    name: 'TailwindDisplayBaseParity',
+    styling: {
+      base: baseClassName,
+      plugin: createTailwindPipeline,
+      variants: TAILWIND_DISPLAY_PARITY_VARIANTS,
+      compounds: TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+    },
+  })
+  customElements.define(tag, Element)
+  return tag
+}
+
+function registerTailwindDisplayTag(elementTag: string): string {
+  const tag = `web-tailwind-display-void-${++tailwindDisplayBaseTagId}`
+  const Element = createContractComponent({
+    tag: elementTag,
+    name: 'TailwindDisplayVoidParity',
+    styling: { base: 'base', plugin: createTailwindPipeline },
+  })
+  customElements.define(tag, Element)
+  return tag
+}
+
+function resolveTailwindDisplayTag(elementTag: string, baseClassName: string | undefined): string {
+  if (elementTag !== 'div') return registerTailwindDisplayTag(elementTag)
+  return isUndefined(baseClassName)
+    ? 'web-tailwind-display-parity'
+    : registerTailwindDisplayBaseElement(baseClassName)
+}
+
 beforeAll(() => {
+  if (!customElements.get('web-tailwind-display-parity')) {
+    customElements.define('web-tailwind-display-parity', TailwindDisplayElement)
+  }
   if (!customElements.get('web-box'))
     customElements.define('web-box', BoxElement as unknown as CustomElementConstructor)
   if (!customElements.get('web-button'))
@@ -204,4 +264,56 @@ describe('Tabs — children enforcement', () => {
     // update() calls _applyPraxis() directly in synchronous test scope.
     expect(() => (root as WebEl).update()).toThrow()
   })
+})
+
+tailwindDisplayParitySuite({
+  renderers: {
+    attribute: ({ tag = 'div', displayProps, layout, baseClassName, variantProps, className }) =>
+      mount(resolveTailwindDisplayTag(tag, baseClassName), (element) => {
+        iterate.forEachEntry(displayProps, (key, value) => {
+          element.setAttribute(key, String(value))
+        })
+        iterate.forEachEntry(variantProps ?? {}, (key, value) => {
+          element.setAttribute(key, String(value))
+        })
+        if (isDefined(layout)) element.setAttribute('layout', layout)
+        element.setAttribute('praxis-class', className)
+      }).className,
+    property: ({ tag = 'div', displayProps, layout, baseClassName, variantProps, className }) =>
+      mount(resolveTailwindDisplayTag(tag, baseClassName), (element) => {
+        const props = element as HTMLElement &
+          AnyRecord & {
+            layout?: string
+            praxisClass: string
+          }
+        Object.assign(props, displayProps, variantProps)
+        if (isDefined(layout)) props.layout = layout
+        props.praxisClass = className
+      }).className,
+  },
+  reactivity: async (steps) => {
+    const el = mount('web-tailwind-display-parity')
+    const snapshots: string[] = []
+    for (const step of steps) {
+      update(el, (element) => {
+        const props = element as HTMLElement &
+          AnyRecord & { layout?: string | undefined; praxisClass: string }
+        iterate.forEach(
+          ['flex', 'inline-flex', 'grid', 'inline-grid', 'block', 'inline', 'hidden'],
+          (key) => {
+            props[key] = false
+          },
+        )
+        iterate.forEachEntry(step.displayProps ?? {}, (key, value) => {
+          props[key] = value
+        })
+        // Keep the property present with an explicit undefined value so the
+        // next pipeline pass can distinguish a reset from a stale value.
+        props.layout = step.layout
+        props.praxisClass = step.className ?? ''
+      })
+      snapshots.push(el.className)
+    }
+    return snapshots
+  },
 })

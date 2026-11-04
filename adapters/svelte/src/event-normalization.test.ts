@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, cleanup } from '@testing-library/svelte'
+import { createRawSnippet } from 'svelte'
 import Polymorphic from './Polymorphic.svelte'
 import { createContractComponent } from './create-contract-component'
 
@@ -61,6 +62,29 @@ describe('event-key normalization — a component-level "on" name is still treat
     // The handler is never called directly — it only fires if something dispatches a
     // "valuechange" CustomEvent, which nothing in this adapter does.
     expect(handler).not.toHaveBeenCalled()
+  })
+})
+
+describe('event-key normalization — the supported route for component-level callbacks', () => {
+  it('asChild hands "on"-prefixed callbacks to the snippet as authored, without lowercasing', () => {
+    // The asChild path builds its props with buildSlotProps, which skips normalizeEventKeys: the
+    // caller-authored snippet receives the callback under its original name and decides how to
+    // use it. This is the supported way to pass a component-level callback such as onValueChange
+    // through a bundle without it being treated as a native-element event.
+    const handler = vi.fn()
+    const bundle = createContractComponent({ tag: 'div' })
+    let received: Record<string, unknown> = {}
+    const children = createRawSnippet<[Record<string, unknown>]>((getProps) => ({
+      render() {
+        received = getProps()
+        return '<span>child</span>'
+      },
+    }))
+
+    render(Polymorphic, { bundle, asChild: true, onValueChange: handler, children })
+
+    expect(received['onValueChange']).toBe(handler)
+    expect('onvaluechange' in received).toBe(false)
   })
 })
 

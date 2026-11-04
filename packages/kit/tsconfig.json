@@ -5,6 +5,7 @@
     "guards.ts",
     "html.ts",
     "utils.ts",
+    "dom.ts",
     "svelte-polymorphic-runtime.ts",
     "./tsdown.config.ts",
     "./scripts/postbuild.ts",

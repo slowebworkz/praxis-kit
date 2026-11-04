@@ -1,80 +1,61 @@
 /**
- * Proves the `onElement` compound mechanism end-to-end in Vue: the real DOM element
- * reaches the hook once per mount, getProps() reflects current props without
- * re-registering, and the returned cleanup fires on unmount. Uses a native `<dialog>`
- * element as the motivating case — showModal()/close() and the dialog's own native
- * close/cancel events require the real node, not a props-based synthetic handler.
+ * `onElement` coverage for Vue. The shared behaviour — the real element reaches the hook,
+ * getProps() tracks current props without re-registering, the returned cleanup fires on
+ * unmount, and the host-replacement lifecycle — is the shared `onElementSuite`; this file
+ * supplies Vue's mounting and keeps what is specific to Vue: the assertion that needs a native
+ * `<dialog>` host and how the element is reached through `as` and the `asChild` slot.
+ * showModal()/close() and the dialog's own native close/cancel events require the real node, not a
+ * props-based synthetic handler.
  */
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { h } from 'vue'
 import { createContractComponent } from './create-contract-component'
+import { onElementSuite } from '@praxis-kit/adapter-testing'
+import type { OnElementAdapter } from '@praxis-kit/adapter-testing'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function box(comp: unknown): any {
   return comp
 }
 
-describe('onElement (event-handler wiring)', () => {
-  it('receives the real element and can call native imperative methods on it', () => {
-    let received: Element | undefined
-    const Dialog = createContractComponent({
-      tag: 'dialog',
-      name: 'Dialog',
-      onElement: (el) => {
-        received = el
+const adapter: OnElementAdapter = {
+  mount: (hook, label) => {
+    const Dialog = createContractComponent({ tag: 'dialog', name: 'Dialog', onElement: hook })
+    const wrapper = mount(box(Dialog), { props: label === undefined ? {} : { label } })
+    return {
+      element: wrapper.element,
+      setLabel: async (next) => {
+        await wrapper.setProps({ label: next })
       },
-    })
-
-    const wrapper = mount(box(Dialog))
-    expect(received).toBeInstanceOf(HTMLDialogElement)
-    expect(received).toBe(wrapper.element.querySelector('dialog') ?? wrapper.element)
-  })
-
-  it('getProps() reflects current props without re-registering the listener', async () => {
-    let listenerAttachCount = 0
-    const Dialog = createContractComponent({
-      tag: 'dialog',
-      name: 'Dialog',
-      onElement: (el, getProps) => {
-        const handleClose = () => (getProps() as { onDialogClose?: () => void }).onDialogClose?.()
-        el.addEventListener('close', handleClose)
-        listenerAttachCount++
-        return () => el.removeEventListener('close', handleClose)
-      },
-    })
-
-    const firstOnClose = vi.fn()
-    const wrapper = mount(box(Dialog), { props: { onDialogClose: firstOnClose } })
-    const dialogEl = wrapper.element as HTMLDialogElement
-    dialogEl.dispatchEvent(new Event('close'))
-    expect(firstOnClose).toHaveBeenCalledTimes(1)
-
-    const onDialogClose = vi.fn()
-    await wrapper.setProps({ onDialogClose })
-    expect(listenerAttachCount).toBe(1)
-    dialogEl.dispatchEvent(new Event('close'))
-    expect(onDialogClose).toHaveBeenCalledTimes(1)
-    expect(firstOnClose).toHaveBeenCalledTimes(1)
-  })
-
-  it('runs the returned cleanup on unmount', () => {
-    const cleanup = vi.fn()
-    const Dialog = createContractComponent({
-      tag: 'dialog',
-      name: 'Dialog',
-      onElement: () => cleanup,
-    })
-
-    const wrapper = mount(box(Dialog))
-    expect(cleanup).not.toHaveBeenCalled()
-    wrapper.unmount()
-    expect(cleanup).toHaveBeenCalledTimes(1)
-  })
-
-  it('a plain component with no onElement option is unaffected', () => {
+      unmount: () => wrapper.unmount(),
+    }
+  },
+  mountPlain: () => {
     const Plain = createContractComponent({ tag: 'div', name: 'Plain' })
-    expect(() => mount(box(Plain))).not.toThrow()
+    mount(box(Plain))
+  },
+  mountSwappable: (hook) => {
+    const Box = createContractComponent({ tag: 'div', name: 'Box', onElement: hook })
+    const wrapper = mount(box(Box), { props: { as: 'section' } })
+    return {
+      setHost: async (tag) => {
+        await wrapper.setProps({ as: tag })
+      },
+      unmount: () => wrapper.unmount(),
+    }
+  },
+}
+
+onElementSuite(adapter)
+
+describe('onElement (native host)', () => {
+  it('receives a native element it can call imperative methods on', async () => {
+    let received: Element | undefined
+    await adapter.mount((el) => {
+      received = el
+    })
+    expect(received).toBeInstanceOf(HTMLDialogElement)
   })
 })
 
@@ -84,7 +65,7 @@ describe('onElement (event-handler wiring)', () => {
  * IS the adapter's contract for reaching the real DOM node, so it is exercised across every
  * render path here (mirrors the react/preact ref matrix).
  */
-describe('onElement lifecycle', () => {
+describe('onElement (host resolution)', () => {
   it('receives the `as`-overridden host element', () => {
     let received: Element | undefined
     const Box = createContractComponent({
@@ -115,67 +96,5 @@ describe('onElement lifecycle', () => {
     })
     expect(received).toBe(wrapper.element)
     expect(received?.tagName.toLowerCase()).toBe('a')
-  })
-
-  it('runs the previous cleanup before registering against a replacement element', async () => {
-    const log: string[] = []
-    const Box = createContractComponent({
-      tag: 'div',
-      name: 'Box',
-      onElement: (el) => {
-        const tag = el.tagName.toLowerCase()
-        log.push(`register:${tag}`)
-        return () => log.push(`cleanup:${tag}`)
-      },
-    })
-
-    const wrapper = mount(box(Box), { props: { as: 'section' } })
-    await wrapper.setProps({ as: 'article' })
-
-    expect(log).toEqual(['register:section', 'cleanup:section', 'register:article'])
-  })
-
-  it('runs cleanup exactly once on unmount', () => {
-    const cleanup = vi.fn()
-    const Box = createContractComponent({ tag: 'div', name: 'Box', onElement: () => cleanup })
-
-    const wrapper = mount(box(Box))
-    wrapper.unmount()
-    wrapper.unmount()
-    expect(cleanup).toHaveBeenCalledTimes(1)
-  })
-
-  it('tolerates an onElement that returns nothing', () => {
-    const Box = createContractComponent({
-      tag: 'div',
-      name: 'Box',
-      onElement: () => {
-        /* no cleanup */
-      },
-    })
-
-    const wrapper = mount(box(Box))
-    expect(() => wrapper.unmount()).not.toThrow()
-  })
-
-  it('a throwing onElement on a replacement element does not re-run the prior cleanup on unmount', async () => {
-    const firstCleanup = vi.fn()
-    let calls = 0
-    const Box = createContractComponent({
-      tag: 'div',
-      name: 'Box',
-      onElement: () => {
-        calls += 1
-        if (calls === 1) return firstCleanup
-        throw new Error('onElement failed on the replacement element')
-      },
-    })
-
-    const wrapper = mount(box(Box), { props: { as: 'section' } })
-    await expect(wrapper.setProps({ as: 'article' })).rejects.toThrow('onElement failed')
-    expect(firstCleanup).toHaveBeenCalledTimes(1)
-
-    wrapper.unmount()
-    expect(firstCleanup).toHaveBeenCalledTimes(1)
   })
 })

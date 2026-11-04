@@ -19,9 +19,12 @@ where `./utils` is a directory), which TypeScript's bundler-mode resolution expa
 `./utils/index.ts` automatically but Node's own native ESM loader does not — it requires an exact
 file and throws on a bare directory specifier.
 
-This package's `index.ts` is a genuinely flat barrel — every export refers to a sibling file, never
-a directory — so it has none of that risk. **Keep it flat.** Adding a subdirectory here reintroduces
-the exact problem this package exists to avoid.
+This package's `index.ts` is a genuinely flat barrel — every export names an exact file (with its
+`.ts` extension), never a directory — so it has none of that risk. Source files are grouped into
+folders by purpose (`types/`, `collections/`, `observation/`, `utils/`), but **no folder has its own
+`index.ts`, and the barrel never re-exports a directory.** Keep it that way: a directory-style
+re-export (`export * from './collections'`) reintroduces the exact problem this package exists to
+avoid.
 
 Every export below has zero dependency on anything else in `@praxis-kit/primitive` (confirmed before
 moving, not assumed) — that's what made each one safe to extract without pulling `lib/primitive`'s

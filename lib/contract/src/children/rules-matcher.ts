@@ -1,6 +1,6 @@
 import type { MatchMatrix, NormalizedChildRule } from '../types'
 import { iterate } from '@praxis-kit/primitive'
-import { isObject } from '@praxis-kit/guards'
+import { isObject, isUndefined } from '@praxis-kit/guards'
 
 /** Reads child.type without assuming a framework — works for React elements and Vue vnodes. */
 function getChildType(child: unknown): unknown | undefined {
@@ -36,7 +36,7 @@ function buildPartialIndex(rules: NormalizedChildRule[]): PartialIndex {
 
   iterate.forEach(rules, (rule, ri) => {
     const t = rule!.type
-    if (t === undefined) {
+    if (isUndefined(t)) {
       untypedIndices.push(ri)
     } else if (typeIndex.has(t)) {
       duplicateTypes.add(t)
@@ -93,9 +93,9 @@ export class RuleMatcher {
     iterate.forEach(children, (child, ci) => {
       // Phase 1 — O(1): type dispatch for indexed rules.
       const t = getChildType(child)
-      if (t !== undefined) {
+      if (!isUndefined(t)) {
         const ri = this.#typeIndex.get(t)
-        if (ri !== undefined) {
+        if (!isUndefined(ri)) {
           let childEntry = forward.get(ci)
           if (!childEntry) {
             childEntry = new Set()

@@ -12,6 +12,7 @@ export type {
   PolymorphicProps,
   PolymorphicWithAllowedAs,
   PolymorphicWithAsChild,
+  ContractInputProps,
   ContractProps,
   ElementRef,
 } from './types'

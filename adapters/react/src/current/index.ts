@@ -7,6 +7,7 @@ export type {
   PolymorphicWithAsChild,
   PolymorphicWithRender,
   PolymorphicComponent,
+  ContractInputProps,
   ContractProps,
   ElementRef,
   RenderCallbackProps,

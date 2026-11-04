@@ -125,6 +125,27 @@ describe('roleNotPermittedRule', () => {
       }
     })
 
+    it('radio permits menuitemradio and rejects other unlisted alternates', () => {
+      expect(
+        roleNotPermittedRule(ctx('input', { type: 'radio', role: 'menuitemradio' }, 'radio')),
+      ).toEqual([])
+
+      const [result] = roleNotPermittedRule(
+        ctx('input', { type: 'radio', role: 'switch' }, 'radio'),
+      )
+      expect(result).toMatchObject({ valid: false, fixable: true })
+    })
+
+    it.each([
+      ['range', 'slider'],
+      ['number', 'spinbutton'],
+    ] as const)('range/number input type=%s permits only its implicit role', (type, role) => {
+      expect(roleNotPermittedRule(ctx('input', { type, role }, role))).toEqual([])
+
+      const [result] = roleNotPermittedRule(ctx('input', { type, role: 'menu' }, role))
+      expect(result).toMatchObject({ valid: false, fixable: true })
+    })
+
     it('input type=email with a list attribute accepts combobox (implicit-role path)', () => {
       // `list` flips the implicit role to combobox; role === implicitRole early-returns.
       expect(
@@ -159,6 +180,155 @@ describe('roleNotPermittedRule', () => {
       expect(combobox).toMatchObject({ valid: false })
     })
   })
+
+  // Exhaustive characterization of the static ALLOWED_ROLES map. Keep this matrix aligned with
+  // role-restrictions.ts and the "Allowed explicit role per element" table in the accessibility
+  // audit. Conditional element specs (input/img/select/table) have their own tests below.
+  const STATIC_ALLOWED_ROLE_CASES: ReadonlyArray<{
+    tag: string
+    implicitRole: string | undefined
+    allowedRoles: readonly string[]
+  }> = [
+    {
+      tag: 'article',
+      implicitRole: 'article',
+      allowedRoles: ['application', 'document', 'feed', 'main', 'none', 'presentation', 'region'],
+    },
+    {
+      tag: 'aside',
+      implicitRole: 'complementary',
+      allowedRoles: ['feed', 'none', 'note', 'presentation', 'region', 'search'],
+    },
+    {
+      tag: 'footer',
+      implicitRole: 'contentinfo',
+      allowedRoles: ['group', 'none', 'presentation'],
+    },
+    {
+      tag: 'header',
+      implicitRole: 'banner',
+      allowedRoles: ['group', 'none', 'presentation'],
+    },
+    { tag: 'main', implicitRole: 'main', allowedRoles: [] },
+    {
+      tag: 'nav',
+      implicitRole: 'navigation',
+      allowedRoles: ['menu', 'menubar', 'none', 'presentation', 'tablist'],
+    },
+    {
+      tag: 'a',
+      implicitRole: 'link',
+      allowedRoles: [
+        'button',
+        'checkbox',
+        'menuitem',
+        'menuitemcheckbox',
+        'menuitemradio',
+        'option',
+        'radio',
+        'switch',
+        'tab',
+        'treeitem',
+      ],
+    },
+    {
+      tag: 'button',
+      implicitRole: 'button',
+      allowedRoles: [
+        'checkbox',
+        'combobox',
+        'gridcell',
+        'link',
+        'menuitem',
+        'menuitemcheckbox',
+        'menuitemradio',
+        'option',
+        'radio',
+        'separator',
+        'slider',
+        'switch',
+        'tab',
+        'treeitem',
+      ],
+    },
+    ...(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as const).map((tag) => ({
+      tag,
+      implicitRole: 'heading',
+      allowedRoles: ['tab', 'presentation', 'none'],
+    })),
+    {
+      tag: 'ul',
+      implicitRole: 'list',
+      allowedRoles: [
+        'group',
+        'listbox',
+        'menu',
+        'menubar',
+        'none',
+        'presentation',
+        'radiogroup',
+        'tablist',
+        'toolbar',
+        'tree',
+      ],
+    },
+    {
+      tag: 'ol',
+      implicitRole: 'list',
+      allowedRoles: [
+        'group',
+        'listbox',
+        'menu',
+        'menubar',
+        'none',
+        'presentation',
+        'radiogroup',
+        'tablist',
+        'toolbar',
+        'tree',
+      ],
+    },
+    {
+      tag: 'li',
+      implicitRole: 'listitem',
+      allowedRoles: [
+        'menuitem',
+        'menuitemcheckbox',
+        'menuitemradio',
+        'option',
+        'none',
+        'presentation',
+        'radio',
+        'separator',
+        'tab',
+        'treeitem',
+      ],
+    },
+    { tag: 'dialog', implicitRole: 'dialog', allowedRoles: ['alertdialog'] },
+    {
+      tag: 'fieldset',
+      implicitRole: 'group',
+      allowedRoles: ['none', 'presentation', 'radiogroup'],
+    },
+    { tag: 'label', implicitRole: undefined, allowedRoles: [] },
+  ]
+
+  it.each(STATIC_ALLOWED_ROLE_CASES)(
+    '$tag accepts every role in its static allowed-role set',
+    ({ tag, implicitRole, allowedRoles }) => {
+      for (const role of allowedRoles) {
+        expect(roleNotPermittedRule(ctx(tag, { role }, implicitRole))).toEqual([])
+      }
+    },
+  )
+
+  it.each(STATIC_ALLOWED_ROLE_CASES)(
+    '$tag rejects a role outside its static allowed-role set',
+    ({ tag, implicitRole }) => {
+      const [result] = roleNotPermittedRule(ctx(tag, { role: 'alert' }, implicitRole))
+      expect(result).toMatchObject({ valid: false, severity: 'error', fixable: true })
+    },
+  )
 
   // ─── F2: <input list> and <select multiple/size> second discriminators ───
 

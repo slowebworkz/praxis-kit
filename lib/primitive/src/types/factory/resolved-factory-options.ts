@@ -6,7 +6,7 @@ import type {
   StringMap,
   TagMap,
 } from '../primitives'
-import type { AriaRule } from '../aria-rule'
+import type { AriaRule, RuleOverrides } from '../aria-rule'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 import type { NormalizeFn } from './factory-options'
 import type { PropNormalizer } from './prop-normalizer'
@@ -48,6 +48,7 @@ export type ResolvedFactoryOptions<
   readonly exclusiveChildren?: boolean
   readonly allowText?: boolean
   readonly ariaRules?: readonly AriaRule[]
+  readonly ruleOverrides?: RuleOverrides
   readonly allowedAs?: readonly ElementType[]
   readonly nativeTagBehavior?: boolean
   readonly precomputedClasses?: Readonly<StringMap<string>>

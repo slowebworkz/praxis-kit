@@ -1,156 +1,65 @@
 // @vitest-environment jsdom
 /**
- * Proves the `onElement` compound mechanism end-to-end in the React 18 (legacy, forwardRef)
- * adapter: the real DOM element reaches the hook once per mount, getProps() reflects current
- * props without re-registering, and the returned cleanup fires on unmount. Uses a native
- * `<dialog>` element as the motivating case — showModal()/close() and the dialog's own native
- * close/cancel events require the real node, not a props-based synthetic handler.
+ * `onElement` coverage for the React 18 (legacy, forwardRef) adapter. The shared behaviour — the
+ * real element reaches the hook, getProps() tracks current props without re-registering, the
+ * returned cleanup fires on unmount, and the host-replacement lifecycle — is the shared
+ * `onElementSuite`; this file supplies React's mounting and keeps the assertion that needs a
+ * native `<dialog>` host. showModal()/close() and the dialog's own native close/cancel events
+ * require the real node, not a props-based synthetic handler.
  */
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { createElement } from 'react'
 import { box, useReactDom } from '../shared/test-utils'
 import { createContractComponent } from './create-contract-component'
+import { onElementSuite } from '@praxis-kit/adapter-testing'
+import type { OnElementAdapter } from '@praxis-kit/adapter-testing'
 
-describe('onElement (event-handler wiring, legacy)', () => {
+describe('onElement (shared contract, legacy)', () => {
   const dom = useReactDom()
 
-  it('receives the real element and can call native imperative methods on it', () => {
+  const adapter: OnElementAdapter = {
+    mount: (hook, label) => {
+      const Dialog = createContractComponent({
+        tag: 'dialog' as const,
+        name: 'Dialog',
+        onElement: hook,
+      })
+      dom.mount(createElement(box(Dialog), label === undefined ? null : { label }))
+      return {
+        element: dom.container.querySelector('dialog')!,
+        setLabel: (next) => {
+          dom.mount(createElement(box(Dialog), { label: next }))
+        },
+        unmount: () => {
+          dom.mount(createElement('div'))
+        },
+      }
+    },
+    mountPlain: () => {
+      const Plain = createContractComponent({ tag: 'div' as const, name: 'Plain' })
+      dom.mount(createElement(box(Plain)))
+    },
+    mountSwappable: (hook) => {
+      const Box = createContractComponent({ tag: 'div' as const, name: 'Box', onElement: hook })
+      dom.mount(createElement(box(Box), { as: 'section' }))
+      return {
+        setHost: (tag) => {
+          dom.mount(createElement(box(Box), { as: tag }))
+        },
+        unmount: () => {
+          dom.mount(createElement('div'))
+        },
+      }
+    },
+  }
+
+  onElementSuite(adapter)
+
+  it('receives a native element it can call imperative methods on', async () => {
     let received: Element | undefined
-    const Dialog = createContractComponent({
-      tag: 'dialog' as const,
-      name: 'Dialog',
-      onElement: (el) => {
-        received = el
-      },
+    await adapter.mount((el) => {
+      received = el
     })
-
-    dom.mount(createElement(box(Dialog)))
     expect(received).toBeInstanceOf(HTMLDialogElement)
-    expect(received).toBe(dom.container.querySelector('dialog'))
-  })
-
-  it('getProps() reflects current props without re-registering the listener', () => {
-    // Deliberately not named `onClose` — React 19 already wires that prop to the dialog's
-    // native `close` event itself; keeping the prop name distinct isolates what onElement
-    // actually does here even though this is the pre-19 adapter.
-    let listenerAttachCount = 0
-    const Dialog = createContractComponent({
-      tag: 'dialog' as const,
-      name: 'Dialog',
-      onElement: (el, getProps) => {
-        const handleClose = () => (getProps() as { onDialogClose?: () => void }).onDialogClose?.()
-        el.addEventListener('close', handleClose)
-        listenerAttachCount++
-        return () => el.removeEventListener('close', handleClose)
-      },
-    })
-
-    const firstOnClose = vi.fn()
-    dom.mount(createElement(box(Dialog), { onDialogClose: firstOnClose }))
-    dom.container.querySelector('dialog')!.dispatchEvent(new Event('close'))
-    expect(firstOnClose).toHaveBeenCalledTimes(1)
-
-    // Re-render with a new handler — same element, so onElement must not re-fire.
-    const onDialogClose = vi.fn()
-    dom.mount(createElement(box(Dialog), { onDialogClose }))
-    expect(listenerAttachCount).toBe(1)
-    dom.container.querySelector('dialog')!.dispatchEvent(new Event('close'))
-    expect(onDialogClose).toHaveBeenCalledTimes(1)
-    expect(firstOnClose).toHaveBeenCalledTimes(1)
-  })
-
-  it('runs the returned cleanup on unmount', () => {
-    const cleanup = vi.fn()
-    const Dialog = createContractComponent({
-      tag: 'dialog' as const,
-      name: 'Dialog',
-      onElement: () => cleanup,
-    })
-
-    dom.mount(createElement(box(Dialog)))
-    expect(cleanup).not.toHaveBeenCalled()
-    dom.mount(createElement('div'))
-    expect(cleanup).toHaveBeenCalledTimes(1)
-  })
-
-  it('a plain component with no onElement option is unaffected', () => {
-    const Plain = createContractComponent({ tag: 'div' as const, name: 'Plain' })
-    expect(() => dom.mount(createElement(box(Plain)))).not.toThrow()
-  })
-})
-
-/**
- * Lifecycle matrix for the callback-ref registration in `create-contract-component.ts` — the
- * React 18 (forwardRef) adapter's copy mirrors the React 19 one, so the same reasoning applies.
- */
-describe('onElement lifecycle (legacy)', () => {
-  const dom = useReactDom()
-
-  it('runs the previous cleanup before registering against a replacement element', () => {
-    const log: string[] = []
-    const Box = createContractComponent({
-      tag: 'div' as const,
-      name: 'Box',
-      onElement: (el) => {
-        const tag = el.tagName.toLowerCase()
-        log.push(`register:${tag}`)
-        return () => log.push(`cleanup:${tag}`)
-      },
-    })
-
-    dom.mount(createElement(box(Box), { as: 'section' }))
-    dom.mount(createElement(box(Box), { as: 'article' }))
-
-    expect(log).toEqual(['register:section', 'cleanup:section', 'register:article'])
-  })
-
-  it('runs cleanup exactly once on unmount', () => {
-    const cleanup = vi.fn()
-    const Box = createContractComponent({
-      tag: 'div' as const,
-      name: 'Box',
-      onElement: () => cleanup,
-    })
-
-    dom.mount(createElement(box(Box)))
-    dom.mount(createElement('span'))
-    dom.mount(createElement('p'))
-    expect(cleanup).toHaveBeenCalledTimes(1)
-  })
-
-  it('tolerates an onElement that returns nothing', () => {
-    const Box = createContractComponent({
-      tag: 'div' as const,
-      name: 'Box',
-      onElement: () => {
-        /* no cleanup */
-      },
-    })
-
-    expect(() => {
-      dom.mount(createElement(box(Box)))
-      dom.mount(createElement('span'))
-    }).not.toThrow()
-  })
-
-  it('a throwing onElement does not leave a stale, already-run cleanup to fire on unmount', () => {
-    const firstCleanup = vi.fn()
-    let calls = 0
-    const Box = createContractComponent({
-      tag: 'div' as const,
-      name: 'Box',
-      onElement: () => {
-        calls += 1
-        if (calls === 1) return firstCleanup
-        throw new Error('onElement failed on the replacement element')
-      },
-    })
-
-    dom.mount(createElement(box(Box), { as: 'section' }))
-    expect(() => dom.mount(createElement(box(Box), { as: 'article' }))).toThrow('onElement failed')
-    expect(firstCleanup).toHaveBeenCalledTimes(1)
-
-    dom.mount(createElement('span'))
-    expect(firstCleanup).toHaveBeenCalledTimes(1)
   })
 })

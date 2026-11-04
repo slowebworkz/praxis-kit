@@ -164,5 +164,8 @@ export const roleNotPermittedRule: AriaRule = Object.assign(
       },
     ]
   },
-  { readsProps: ['role', 'type', 'alt', 'list', 'multiple', 'size'] as const },
+  {
+    id: 'html.role.not-permitted',
+    readsProps: ['role', 'type', 'alt', 'list', 'multiple', 'size'] as const,
+  },
 )

@@ -6,13 +6,13 @@ import {
   conformanceA11ySuite,
   conformancePerformanceSuite,
   conformanceIsolationSuite,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/adapter-testing'
 import type {
   BareFactoryOptions,
   ChildSpec,
   ConformanceAdapter,
   ConformanceComponent,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/adapter-testing'
 import Polymorphic from './Polymorphic.svelte'
 import { createContractComponent } from './create-contract-component'
 import type { AnyBuiltRuntime } from './types/built-runtime'
@@ -45,10 +45,12 @@ const adapter: ConformanceAdapter<SvelteComponent> = {
     // expect for compose.with. Unwrap it before handing options to the real implementation.
     const compose = options.compose
     const unwrappedOptions =
-      compose !== undefined
+      compose?.with !== undefined
         ? { ...options, compose: { ...compose, with: (compose.with as SvelteComponent)._bundle } }
         : options
-    const bundle = createContractComponent(unwrappedOptions as BareFactoryOptions) as AnyBuiltRuntime
+    const bundle = createContractComponent(
+      unwrappedOptions as BareFactoryOptions,
+    ) as AnyBuiltRuntime
     return {
       displayName: options.name ?? 'PolymorphicComponent',
       _bundle: bundle,
@@ -100,7 +102,12 @@ const adapter: ConformanceAdapter<SvelteComponent> = {
   },
   setup: () => {},
   cleanup: () => cleanup(),
-  capabilities: { asChild: false },
+  // Bundle-shaped but not a Praxis component: spreading drops the non-enumerable styling metadata.
+  createExternalPartner: (): SvelteComponent => ({
+    displayName: 'External',
+    _bundle: { ...(createContractComponent({}) as AnyBuiltRuntime) },
+  }),
+  capabilities: { asChild: false, compositionStyling: true },
 }
 
 conformanceSuite(adapter)

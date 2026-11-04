@@ -68,9 +68,10 @@ function collectArchitecture(): Snapshot['architecture'] {
 
 // ── complexity ────────────────────────────────────────────────────────────────
 //
-// Of the 11 real lib/* directories, excluded: lib/pipeline (no real production consumer yet)
-// and lib/playwright (Playwright-CT test helpers, not shipped runtime code — the same tier as
-// the qa/* packages this scan already excludes). Included, beyond a narrower cut: contract-props
+// Of the real lib/* directories, excluded: lib/pipeline (no real production consumer yet).
+// The Playwright-CT helpers used to be excluded here as test tooling; they now live under
+// testing/packages/ with the other test infrastructure, outside this scan. Included, beyond a
+// narrower cut: contract-props
 // and diagnostics (both load-bearing, threaded through every adapter's enforcement path),
 // tailwind (a real, substantial shipped styling-stack member), pipeline-kit (a real
 // packages/core dependency), and runtime (a real adapter dependency). Framework adapters

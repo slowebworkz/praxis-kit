@@ -9,6 +9,7 @@ import {
   audioContract,
   buttonContract,
   colgroupContract,
+  comboboxContract,
   datalistContract,
   detailsContract,
   dlContract,
@@ -24,17 +25,25 @@ import {
   listContract,
   menubarContract,
   menuContract,
+  menuitemContract,
+  menuitemcheckboxContract,
+  menuitemradioContract,
   objectContract,
+  optionContract,
   optgroupContract,
   pContract,
   pictureContract,
+  radioContract,
   radiogroupContract,
   selectContract,
   tableBodyContract,
   tableContract,
   tableRowContract,
   tablistContract,
+  tabpanelContract,
+  toolbarContract,
   treeContract,
+  treeitemContract,
   videoContract,
   voidContract,
   widgetContracts,
@@ -879,11 +888,14 @@ describe('widget contracts', () => {
 
   it.each([
     ['menuContract', menuContract],
+    ['comboboxContract', comboboxContract],
     ['menubarContract', menubarContract],
     ['treeContract', treeContract],
+    ['treeitemContract', treeitemContract],
     ['gridContract', gridContract],
     ['listboxContract', listboxContract],
     ['tablistContract', tablistContract],
+    ['tabpanelContract', tabpanelContract],
     ['radiogroupContract', radiogroupContract],
   ] as const)('%s has a single aria rule (requireAccessibleName)', (_name, contract) => {
     expect(contract.aria).toHaveLength(1)
@@ -891,14 +903,33 @@ describe('widget contracts', () => {
 
   it.each([
     ['menu', menuContract],
+    ['menuitem', menuitemContract],
+    ['combobox', comboboxContract],
+    ['menuitemcheckbox', menuitemcheckboxContract],
+    ['menuitemradio', menuitemradioContract],
     ['menubar', menubarContract],
     ['tree', treeContract],
+    ['treeitem', treeitemContract],
     ['grid', gridContract],
     ['listbox', listboxContract],
     ['tablist', tablistContract],
+    ['tabpanel', tabpanelContract],
+    ['option', optionContract],
     ['radiogroup', radiogroupContract],
   ])('widgetContracts[%s] is the correct contract', (role, expected) => {
     expect(widgetContracts[role]).toBe(expected)
+  })
+
+  it('requireAccessibleName fires via menuitemContract when aria-label is absent', () => {
+    const rule = menuitemContract.aria![0]!
+    const results = rule(ctx('button', {}))
+    expect(results).toMatchObject([{ valid: false, severity: 'warning' }])
+  })
+
+  it('requireAccessibleName passes via menuitemContract when aria-label is present', () => {
+    const rule = menuitemContract.aria![0]!
+    const results = rule(ctx('button', { 'aria-label': 'Save' }))
+    expect(results).toEqual([])
   })
 
   it('requireAccessibleName fires via menuContract when aria-label is absent', () => {
@@ -915,7 +946,68 @@ describe('widget contracts', () => {
 
   it('widgetContracts contains exactly the expected roles', () => {
     expect(Object.keys(widgetContracts).sort()).toEqual(
-      ['grid', 'listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'tree'].sort(),
+      [
+        'checkbox',
+        'combobox',
+        'grid',
+        'listbox',
+        'menu',
+        'menuitem',
+        'menuitemcheckbox',
+        'menuitemradio',
+        'menubar',
+        'option',
+        'radio',
+        'radiogroup',
+        'tab',
+        'tablist',
+        'tabpanel',
+        'toolbar',
+        'tree',
+        'treeitem',
+      ].sort(),
     )
+  })
+
+  // Characterization for the APG audit: these contracts currently validate the
+  // widget's accessible name only. They do not inspect descendants or enforce
+  // widget-specific states and ID relationships.
+  it.each([
+    ['menu', menuContract, { 'aria-label': 'Actions' }],
+    ['tree', treeContract, { 'aria-label': 'Folders' }],
+    ['grid', gridContract, { 'aria-label': 'Results' }],
+    ['listbox', listboxContract, { 'aria-label': 'Choices' }],
+    ['combobox', comboboxContract, { 'aria-label': 'Search' }],
+    ['tablist', tablistContract, { 'aria-label': 'Sections' }],
+    ['toolbar', toolbarContract, { 'aria-label': 'Formatting' }],
+    ['radiogroup', radiogroupContract, { 'aria-label': 'Size' }],
+  ] as const)(
+    '%s does not currently enforce APG-specific relationships or states',
+    (_name, contract, props) => {
+      const rule = contract.aria![0]!
+      expect(rule(ctx('div', props))).toEqual([])
+    },
+  )
+
+  it('radio requires aria-checked while radiogroup requires an accessible name', () => {
+    expect(radioContract.aria![0]!(ctx('div', {}))).toMatchObject([
+      { valid: false, severity: 'warning' },
+    ])
+    expect(radioContract.aria![0]!(ctx('div', { 'aria-checked': false }))).toEqual([])
+
+    expect(radiogroupContract.aria![0]!(ctx('div', {}))).toMatchObject([
+      { valid: false, severity: 'warning' },
+    ])
+    expect(radiogroupContract.aria![0]!(ctx('div', { 'aria-label': 'Size' }))).toEqual([])
+  })
+
+  it('requireAccessibleName fires via comboboxContract when aria-label is absent', () => {
+    expect(comboboxContract.aria![0]!(ctx('input', {}))).toMatchObject([
+      { valid: false, severity: 'warning' },
+    ])
+  })
+
+  it('requireAccessibleName passes via comboboxContract when aria-label is present', () => {
+    expect(comboboxContract.aria![0]!(ctx('input', { 'aria-label': 'Search' }))).toEqual([])
   })
 })

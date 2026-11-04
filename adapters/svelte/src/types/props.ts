@@ -48,5 +48,12 @@ export interface PolymorphicComponentProps {
   /** Selects a named preset from `styling.presets`. */
   recipe?: string
   children?: Snippet | Snippet<[UnknownProps]>
+  /**
+   * Any other prop is forwarded. On a rendered host element every `on`-prefixed key is a native
+   * DOM event handler (camelCase `onClick` is lowercased to `onclick`), so a component-level
+   * callback such as `onValueChange` is bound as a DOM listener and never called as a plain
+   * callback. Pass component callbacks through `asChild` (the snippet receives props as authored)
+   * or name them without an `on` prefix. See `src/event-normalization.test.ts`.
+   */
   [key: string]: unknown
 }

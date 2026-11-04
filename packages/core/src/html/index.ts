@@ -1,4 +1,16 @@
 export type { HtmlContractMap } from './contracts'
+export { createAriaReferenceIndex } from './aria-reference-index'
+export type {
+  AriaIdElement,
+  AriaIdReferenceResolution,
+  AriaReferenceIndex,
+} from './aria-reference-index'
+export { validateAriaIdReferences } from './aria-reference-validation'
+export type {
+  AriaReferenceAttribute,
+  AriaReferenceDiagnostic,
+  AriaReferenceElement,
+} from './aria-reference-validation'
 export { getHtmlChildrenEvaluator } from './evaluators'
 export { getHtmlPropNormalizers } from './prop-normalizers'
 export {
@@ -60,3 +72,24 @@ export {
   radiogroupContract,
   widgetContracts,
 } from './contracts'
+export { validateAriaTabRelationships } from './aria-relationships'
+export type { AriaTabRelationshipDiagnostic } from './aria-relationships'
+
+export { validateAriaListboxRelationships } from './aria-listbox-relationship-validation'
+export type {
+  AriaListboxElement,
+  AriaListboxRelationshipDiagnostic,
+  AriaListboxRelationshipIssue,
+} from './aria-listbox-relationship-validation'
+export { validateAriaTreeRelationships } from './aria-relationships'
+export type { AriaTreeRelationshipDiagnostic } from './aria-relationships'
+export { validateAriaGridRelationships } from './aria-relationships'
+export type { AriaGridRelationshipDiagnostic } from './aria-relationships'
+
+export { validateAriaComboboxRelationships } from './aria-relationships'
+export type { AriaComboboxRelationshipDiagnostic } from './aria-relationships'
+
+export { validateAriaRadiogroupRelationships } from './aria-relationships'
+export type { AriaRadiogroupRelationshipDiagnostic } from './aria-relationships'
+export { validateAriaMenuRelationships } from './aria-relationships'
+export type { AriaMenuRelationshipDiagnostic } from './aria-relationships'

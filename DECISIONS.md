@@ -220,9 +220,28 @@ First pass (branch `fix/aria-html-standards-audit`): corrected the allowed-role 
 `aria-expanded`. The `AriaPolicyEngine` / `createAriaPipeline` architecture did not change — this is
 a data-correctness pass.
 
-Still open (tracked in the audit doc's "Open work" table): the full WAI-ARIA 1.2 §6 pass on the
-role→attribute table incl. prohibited properties (F5), the APG widget-contract audit (F7), and the
-`undefined` allowed-role rows that need ancestry the single-element context lacks.
+F7 cross-element relationships are handled by opt-in utilities that take a caller-supplied element
+scope (the design is in `docs/accessibility/aria-relationship-validation-design.md`, the code-level
+readiness review in `docs/accessibility/aria-relationship-validation-readiness.md`). They are
+implemented, not proposed: an internal ID index plus validators for ID references, tabs,
+listbox/options, combobox popups, tree, grid, radiogroup and menu/menubar ownership. They are not
+DOM walkers, and the single-element `AriaContext` and `AriaPolicyEngine` are unchanged.
+
+The role→attribute realignment and prohibited-property handling tracked as F5 are closed; see
+`docs/accessibility/html-aria-audit.md` and its change log. The focused APG widget-contract review
+(F7) is complete; findings and boundaries are recorded in
+`docs/accessibility/apg-widget-coverage-review.md`. Within the explicit-role `widgetContracts`
+registry, per-element contracts cover accessible names for `menu`, `menubar`, `menuitem`,
+`combobox`, `listbox`, `tree`, `treeitem`, `grid`, `tablist`, `tabpanel`, `toolbar` and
+`radiogroup`, plus required state presence for `tab`, `option`, `radio`, `checkbox`,
+`menuitemcheckbox` and `menuitemradio`. The separately registered native `<dialog>` `dialogContract`
+is part of `htmlContracts` and is outside this F7 widget-role matrix. The supplied-scope
+relationship validators cover ownership, ID references, active descendants and consistent selection
+mechanisms. F7 closure means the explicit-role registry was reviewed and its supported boundary
+documented; it does not claim exhaustive coverage of every APG pattern or promote keyboard
+interaction, focus management, or state transitions into static contracts. New widget patterns can
+be considered as separately scoped work. The separate `undefined` allowed-role rows also remain open
+where they need ancestry the single-element context lacks.
 
 ## Resolved
 
@@ -422,8 +441,8 @@ framework-neutral, so its semantic test matrix should match react's):
   slotted child), element replacement (ref moves), unmount (ref → null). +4
   `create-contract-component.test.tsx` cases.
 - **Follow-up:** these (nested children, the ref matrix, polymorphic `as`, ARIA normalization)
-  belong in the shared `conformanceSuite` (`lib/adapter-utils/src/testing/`) so every adapter runs
-  one matrix rather than each re-deriving it; react's `normalize-children.test` should gain the
+  belong in the shared `conformanceSuite` (now `testing/packages/adapter-testing`) so every adapter
+  runs one matrix rather than each re-deriving it; react's `normalize-children.test` should gain the
   matching nested-children cases when that consolidation happens.
 
 **Architecture note** (review, no action): do **not** abstract react + preact's
@@ -613,21 +632,22 @@ true (react/preact/vue each needed at least one real correctness fix during revi
   worth more generic machinery to eliminate.
 
 **Follow-up (substantial — not this slice): a shared, explicit cross-adapter conformance contract.**
-`lib/adapter-utils/src/testing` already gives every adapter (react/preact/vue/solid) one shared
+`lib/adapter-utils/src/testing` (since moved to `testing/packages/adapter-testing` — see "Testing
+workspace" below) already gives every adapter (react/preact/vue/solid) one shared
 `conformanceSuite`/`conformanceA11ySuite`/`conformancePerformanceSuite`/
 `conformanceIsolationSuite`/`ssrConformanceSuite` — each adapter supplies a small
 `ConformanceAdapter` (create/render/rerender/cleanup/capabilities) and the suites run the same
 assertions against it. What's proposed and not yet true: (1) organizing it as its own package
-(`packages/adapter-conformance` or similar) rather than a `testing` subpath of `lib/adapter-utils`;
-(2) more granular named sub-suites per concern (refs, slots/asChild specifically, SSR hydration
-parity) rather than the current coarser grouping; (3) a documented per-adapter capability/exception
-matrix (`capabilities: { asChild: false, … }` already exists as a mechanism — formalizing what it
-covers and why per adapter is the gap). The value case the reviewer raised is real: this is exactly
-the mechanism that would catch a "React: asChild resolves defaults / Solid: asChild forgets
-defaults" class of drift automatically instead of by manual review — but it's a cross-cutting
-restructuring across every already-merged adapter, sized for its own slice once `svelte`/`lit`/`web`
-exist too (more data points on what's genuinely shared vs. framework-specific before committing to
-the sub-suite boundaries).
+(`packages/adapter-conformance` or similar) rather than a `testing` subpath of `lib/adapter-utils`
+(done — see "Testing workspace"); (2) more granular named sub-suites per concern (refs,
+slots/asChild specifically, SSR hydration parity) rather than the current coarser grouping; (3) a
+documented per-adapter capability/exception matrix (`capabilities: { asChild: false, … }` already
+exists as a mechanism — formalizing what it covers and why per adapter is the gap). The value case
+the reviewer raised is real: this is exactly the mechanism that would catch a "React: asChild
+resolves defaults / Solid: asChild forgets defaults" class of drift automatically instead of by
+manual review — but it's a cross-cutting restructuring across every already-merged adapter, sized
+for its own slice once `svelte`/`lit`/`web` exist too (more data points on what's genuinely shared
+vs. framework-specific before committing to the sub-suite boundaries).
 
 ### `adapters/svelte` — port scope and adaptations
 
@@ -1700,12 +1720,12 @@ infrastructure this exposed: `SsrConformanceAdapter` (`lib/adapter-utils`) had n
 `capabilities.tagPolymorphism` gate at all — unlike the DOM-side `ConformanceAdapter`, which already
 skips its "as changes the tag" tests when that capability is `false` — so `ssrConformanceSuite`
 universally asserted real `as`-driven tag polymorphism with no opt-out. Added the same gate to the
-SSR suite (`lib/adapter-utils/src/types/ssr-conformance-adapter.ts`,
-`lib/adapter-utils/src/testing/ssr.ts`) and set `capabilities: { tagPolymorphism: false }` on Lit's
-`ssrConformanceSuite` call, matching what it already declares for the DOM suite. This is a genuine
-gap in the reference implementation too (`../pk` has the identical unconditional SSR test, and the
-same `renderToString` behavior) — worth carrying upstream, and directly relevant to Web's eventual
-port, which shares `renderBundleToString` and has the identical fixed-tag constraint.
+SSR suite (`testing/packages/adapter-testing/src/types/ssr-conformance-adapter.ts`,
+`testing/packages/adapter-testing/src/ssr.ts`) and set `capabilities: { tagPolymorphism: false }` on
+Lit's `ssrConformanceSuite` call, matching what it already declares for the DOM suite. This is a
+genuine gap in the reference implementation too (`../pk` has the identical unconditional SSR test,
+and the same `renderToString` behavior) — worth carrying upstream, and directly relevant to Web's
+eventual port, which shares `renderBundleToString` and has the identical fixed-tag constraint.
 
 New regression coverage: `ssr.test.ts` asserts `renderToString` output is byte-identical with and
 without an `as` key, and that `options.tag` still renders regardless of an unsupported-looking `as`
@@ -3467,19 +3487,19 @@ immediately (not re-debugged as a fresh credentials issue) if it recurs. If this
 time, stop guessing and jump to `8.0.0`.
 
 **Third occurrence (2026-10-12): happened exactly as predicted, resolved by probing, not by
-jumping.** The next `changeset`-computed bump from `1.0.3` was `1.1.0` (minor) — landing squarely
-on a _known_-blocked number from the list above, not even a fresh hidden one. Re-reading this
-entry's own "if this happens a third time, stop guessing and jump to `8.0.0`" literally would have
-meant a major-version jump for a release with zero breaking changes — reconsidered: the old line's
-visible history jumps straight from `1.1.1` to `2.0.0`, meaning nothing between them was ever
-published, so `1.1.2` was almost certainly free without guessing blindly. Published as `1.1.2`
-instead — same incremental-probing approach as the original `1.0.0`/`1.0.1` → `1.0.2` resolution,
-preserving the real semver meaning (still a minor-level bump) instead of a major-version number
-that would have falsely signaled breaking changes and contradicted `docs/api-stability.md`'s "1.x"
-framing. **Revised guidance:** before jumping to `8.0.0`, always check whether the old line's
-_next_ visible version after the collision is a different major (as it was here) — that gap is
-very likely unpublished-and-safe, and probing it first avoids an unnecessarily large, misleading
-version jump. Only fall back to `8.0.0` if that gap number _also_ collides.
+jumping.** The next `changeset`-computed bump from `1.0.3` was `1.1.0` (minor) — landing squarely on
+a _known_-blocked number from the list above, not even a fresh hidden one. Re-reading this entry's
+own "if this happens a third time, stop guessing and jump to `8.0.0`" literally would have meant a
+major-version jump for a release with zero breaking changes — reconsidered: the old line's visible
+history jumps straight from `1.1.1` to `2.0.0`, meaning nothing between them was ever published, so
+`1.1.2` was almost certainly free without guessing blindly. Published as `1.1.2` instead — same
+incremental-probing approach as the original `1.0.0`/`1.0.1` → `1.0.2` resolution, preserving the
+real semver meaning (still a minor-level bump) instead of a major-version number that would have
+falsely signaled breaking changes and contradicted `docs/api-stability.md`'s "1.x" framing.
+**Revised guidance:** before jumping to `8.0.0`, always check whether the old line's _next_ visible
+version after the collision is a different major (as it was here) — that gap is very likely
+unpublished-and-safe, and probing it first avoids an unnecessarily large, misleading version jump.
+Only fall back to `8.0.0` if that gap number _also_ collides.
 
 ### Runtime performance audit — caches, Proxy, and the fresh-component cost (2026-10-05)
 
@@ -3569,41 +3589,41 @@ already recurse through genuine component calls the same way CSR does.
 
 ### Guards migration to `guardz` — accepted bundle-size cost (2026-10-11)
 
-All guard functions used across the workspace now live in a new `@praxis-kit/guards` package
-(moved out of `lib/primitive/src/guards/` and `lib/foundation/src/type-guards.ts`), and every
-foundational guard (`isString`, `isNumber`, `isFunction`, `isDefined`, etc.) is now sourced from
-`guardz` rather than hand-rolled, re-exported from `@praxis-kit/guards` alongside the
-domain-specific guards (ARIA, children, contract, variants) that were only relocated, not
-rewritten. `lib/primitive` and `lib/diagnostics` import `guardz` directly instead of through
-`@praxis-kit/guards`, since both sit below it in the dependency graph (`@praxis-kit/guards`
-depends on `@praxis-kit/primitive`) — importing through it would be a package-graph cycle.
+All guard functions used across the workspace now live in a new `@praxis-kit/guards` package (moved
+out of `lib/primitive/src/guards/` and `lib/foundation/src/type-guards.ts`), and every foundational
+guard (`isString`, `isNumber`, `isFunction`, `isDefined`, etc.) is now sourced from `guardz` rather
+than hand-rolled, re-exported from `@praxis-kit/guards` alongside the domain-specific guards (ARIA,
+children, contract, variants) that were only relocated, not rewritten. `lib/primitive` and
+`lib/diagnostics` import `guardz` directly instead of through `@praxis-kit/guards`, since both sit
+below it in the dependency graph (`@praxis-kit/guards` depends on `@praxis-kit/primitive`) —
+importing through it would be a package-graph cycle.
 
-**Cost, measured, not assumed:** `guardz@1.14.0` publishes as plain CommonJS — no `"type":
-"module"`, no `"exports"` map, no `"sideEffects": false`. No bundler can tree-shake its named
-exports; importing a single function from it pulls its entire compiled module graph into the
-bundle. `qa/tree-shaking-tests`' `source/*` scenarios (which build from this repo's real
-TypeScript source, the path an app actually bundles) regressed 41–47%, about +9.1–9.2KB gzipped
-per scenario, the moment any guard import touched `guardz`.
+**Cost, measured, not assumed:** `guardz@1.14.0` publishes as plain CommonJS — no
+`"type": "module"`, no `"exports"` map, no `"sideEffects": false`. No bundler can tree-shake its
+named exports; importing a single function from it pulls its entire compiled module graph into the
+bundle. `qa/tree-shaking-tests`' `source/*` scenarios (which build from this repo's real TypeScript
+source, the path an app actually bundles) regressed 41–47%, about +9.1–9.2KB gzipped per scenario,
+the moment any guard import touched `guardz`.
 
 **Correction (2026-10-12): the `package/*` numbers above were wrong — measured against a broken
-build, not the real one.** `tsconfig.paths.json` never got a `@praxis-kit/guards` path mapping
-added alongside its `tsconfig.json` `references` entry (the omission CI later caught as PR #141's
+build, not the real one.** `tsconfig.paths.json` never got a `@praxis-kit/guards` path mapping added
+alongside its `tsconfig.json` `references` entry (the omission CI later caught as PR #141's
 "`[MISSING_EXPORT] isObject is not exported by lib/guards/src/index.d.ts`" build failure — see the
 fix commit for the root cause). With that mapping missing, `packages/kit`'s own build was silently
 failing/stale, so what `qa/tree-shaking-tests`/`qa/bundle-analysis` measured as the "`package/*`
 baseline" was leftover dist output from before the guards migration existed on disk — not the real
-thing. Once the path mapping (and a second miss — `postbuild.ts`'s `POLYMORPHIC_IMPORT_REWRITES`
-not yet knowing about the new `@praxis-kit/guards` specifier) were both fixed and `packages/kit`
-actually built end-to-end, the real published-package cost turned out to be **every
-`praxis-kit/*` entry point gaining roughly +15KB gzipped (+66–70%)** — `react-minimal` 22.7KB →
-37.8KB, `vue-minimal` 22.0KB → 36.9KB, and so on across every adapter, plus `guards`-only
-(356B → 7.8KB) and `contract-only` (969B → 8.5KB) ballooning even harder since they're otherwise
-tiny. Only `package/utils-only`, which never touches a guard, is unaffected. This is **not** a
-from-source-only dev cost — it ships to every consumer installing `praxis-kit` from npm.
+thing. Once the path mapping (and a second miss — `postbuild.ts`'s `POLYMORPHIC_IMPORT_REWRITES` not
+yet knowing about the new `@praxis-kit/guards` specifier) were both fixed and `packages/kit`
+actually built end-to-end, the real published-package cost turned out to be **every `praxis-kit/*`
+entry point gaining roughly +15KB gzipped (+66–70%)** — `react-minimal` 22.7KB → 37.8KB,
+`vue-minimal` 22.0KB → 36.9KB, and so on across every adapter, plus `guards`-only (356B → 7.8KB) and
+`contract-only` (969B → 8.5KB) ballooning even harder since they're otherwise tiny. Only
+`package/utils-only`, which never touches a guard, is unaffected. This is **not** a from-source-only
+dev cost — it ships to every consumer installing `praxis-kit` from npm.
 
-**Decision: accept the cost, update the baseline — reconfirmed with the real numbers.** Put
-directly to the same tradeoff as before, now with the corrected ~+15KB/entry-point figure instead
-of the originally-reported "`package/*` unaffected": accept and move
+**Decision: accept the cost, update the baseline — reconfirmed with the real numbers.** Put directly
+to the same tradeoff as before, now with the corrected ~+15KB/entry-point figure instead of the
+originally-reported "`package/*` unaffected": accept and move
 `qa/tree-shaking-tests`/`qa/bundle-analysis`'s `snapshots/gzip.json` baselines to the real sizes, or
 revert the `guardz` adoption (keep the `@praxis-kit/guards` file reorganization, source its
 foundational guards from hand-rolled code again). Reconfirmed accept.
@@ -3617,13 +3637,13 @@ complaint from a published-package consumer.
 ### `compose: { with: Component }` — declarative `asChild` composition (2026-10-12)
 
 Added `compose` to `FactoryOptions`, following finding #50 in `praxis-components`'
-`PRAXIS-KIT-FINDINGS.md` (foundational `asChild` composition — the `Surface`+`Box`→`Card`
-proposal). `compose: { with: Button }` makes an ordinary consumer call of a component render
-exactly as a hand-written `<Button asChild><ThisComponent {...props} /></Button>` already does —
-confirmed before implementing that this nested-component-into-component `asChild` shape was
-already real, tested machinery (not something new to build): `mergeSlotProps`/`SlotValidator`
-operate purely on prop objects and `isValidElement`-style checks, agnostic to whether the `asChild`
-target is a DOM tag or another contract component.
+`PRAXIS-KIT-FINDINGS.md` (foundational `asChild` composition — the `Surface`+`Box`→`Card` proposal).
+`compose: { with: Button }` makes an ordinary consumer call of a component render exactly as a
+hand-written `<Button asChild><ThisComponent {...props} /></Button>` already does — confirmed before
+implementing that this nested-component-into-component `asChild` shape was already real, tested
+machinery (not something new to build): `mergeSlotProps`/`SlotValidator` operate purely on prop
+objects and `isValidElement`-style checks, agnostic to whether the `asChild` target is a DOM tag or
+another contract component.
 
 **Scope decisions, confirmed with the requester before implementing:**
 
@@ -3631,44 +3651,44 @@ target is a DOM tag or another contract component.
   routes to `with`, which always renders bare. This matches the existing hand-written pattern
   exactly (`<Button asChild>` receives no props in that pattern either).
 - Synthesized natively per adapter, not through one shared mechanism: React/Preact/Vue reuse their
-  existing clone-based `asChild` (render `with` with `asChild: true` and this component's own
-  normal output as its child — zero new merge logic, it's the same path a hand-written nested
-  `asChild` call already takes). Solid/Svelte have no clone step at all, so `compose` instead
-  renders `with` through its own render-callback/snippet mode, with a synthesized callback that
-  merges `with`'s handed-back props onto this component's own resolved output — discovered and
-  fixed along the way: `mergeSlotProps` special-cases `className` (React/Preact's prop name) for
-  concatenation, which silently fails to concatenate `class` (Solid's/Svelte's own prop name) —
-  worked around with a small `mergeComposedProps` wrapper in each of those two adapters that
-  overrides just that one key via `mergeClassNames` directly. Lit/Web have no `asChild` concept at
-  all, so `compose` is accepted (shared `FactoryOptions` field) but has no effect there.
-- An explicit `asChild`/`render` from the consumer always wins over `compose` — same precedence
-  `as` already has over `defaultTag`. Implemented as a conditional guard in each adapter's
-  generated component, checked before dispatching to `render()`/the adapter's own render pipeline.
+  existing clone-based `asChild` (render `with` with `asChild: true` and this component's own normal
+  output as its child — zero new merge logic, it's the same path a hand-written nested `asChild`
+  call already takes). Solid/Svelte have no clone step at all, so `compose` instead renders `with`
+  through its own render-callback/snippet mode, with a synthesized callback that merges `with`'s
+  handed-back props onto this component's own resolved output — discovered and fixed along the way:
+  `mergeSlotProps` special-cases `className` (React/Preact's prop name) for concatenation, which
+  silently fails to concatenate `class` (Solid's/Svelte's own prop name) — worked around with a
+  small `mergeComposedProps` wrapper in each of those two adapters that overrides just that one key
+  via `mergeClassNames` directly. Lit/Web have no `asChild` concept at all, so `compose` is accepted
+  (shared `FactoryOptions` field) but has no effect there.
+- An explicit `asChild`/`render` from the consumer always wins over `compose` — same precedence `as`
+  already has over `defaultTag`. Implemented as a conditional guard in each adapter's generated
+  component, checked before dispatching to `render()`/the adapter's own render pipeline.
 - No new runtime validation or narrower type (e.g. a `HasContract`-based constraint) for `with` —
   follows `FactoryOptions.subComponents`' own existing precedent of trusting an unvalidated
-  component-reference value. `compose.with` reuses the existing `ComponentReference` type (added
-  for the `as`/`allowedAs` component-reference feature), kept at `lib/primitive`'s level with no
-  change to `resolveFactoryOptions`/`ResolvedFactoryOptions` — like `subComponents`/`onElement`,
-  each adapter reads `options.compose` directly off the raw options object, since it's a
-  render-dispatch concern, not a tag/props/class/aria pipeline concern.
+  component-reference value. `compose.with` reuses the existing `ComponentReference` type (added for
+  the `as`/`allowedAs` component-reference feature), kept at `lib/primitive`'s level with no change
+  to `resolveFactoryOptions`/`ResolvedFactoryOptions` — like `subComponents`/`onElement`, each
+  adapter reads `options.compose` directly off the raw options object, since it's a render-dispatch
+  concern, not a tag/props/class/aria pipeline concern.
 - **Multi-level chaining is explicitly out of scope.** `with` is always invoked with
   `asChild: true`, which — per the conflict rule above — means `with`'s own `compose` check never
   fires for that invocation. Composing three or more components through nested `compose.with`
   references does not cascade automatically with this design; shipping one-hop composition first
   matches the original proposal's own "small proof of concept, not a broad redesign" framing.
 
-**Svelte-specific note:** unlike the other four adapters, Svelte's `createContractComponent`
-returns a plain bundle object, not a component (Svelte components must come from `.svelte` files)
-— so `compose.with` on this adapter is a bundle, not a component reference, and `Polymorphic.svelte`
+**Svelte-specific note:** unlike the other four adapters, Svelte's `createContractComponent` returns
+a plain bundle object, not a component (Svelte components must come from `.svelte` files) — so
+`compose.with` on this adapter is a bundle, not a component reference, and `Polymorphic.svelte`
 renders it by importing and recursing into itself (`<Polymorphic bundle={with} asChild>`), a
 standard, supported Svelte pattern for this kind of structural composition.
 
 ### GitHub Sponsors — still not yet, reassessed at `v1.1.2` (2026-10-12)
 
 Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule. Conclusion unchanged from the
-`v1.0.0` reassessment above: **not yet**, and the revisit trigger from that entry still hasn't
-fired — checked directly (`gh api repos/.../praxis-kit`, `gh issue list`, `gh pr list`, 2026-10-12):
-0 stars, 0 forks, 0 watchers, no external issues, no external PRs. `npm` downloads for the trailing
+`v1.0.0` reassessment above: **not yet**, and the revisit trigger from that entry still hasn't fired
+— checked directly (`gh api repos/.../praxis-kit`, `gh issue list`, `gh pr list`, 2026-10-12): 0
+stars, 0 forks, 0 watchers, no external issues, no external PRs. `npm` downloads for the trailing
 month sit at 523 (`api.npmjs.org`, 2026-09-12 → 2026-10-11) — still indistinguishable from
 registry-mirror/CI noise on a package with no known external consumers, not a usage signal. The
 package itself is healthier than at `v1.0.0` (three releases shipped on schedule, a real
@@ -3688,3 +3708,283 @@ indistinguishable from registry-mirror/CI noise. Shipped since the last reassess
 (`compose.allProps` cross-adapter feature plus a dedicated merge-semantics audit and fix pass) —
 real engineering progress, but adoption signals haven't moved. **Revisit trigger unchanged:** a
 star/issue/PR from a non-maintainer account, or the next version tag.
+
+### GitHub Sponsors — still not yet, reassessed at `v1.3.0` (2026-10-14)
+
+Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule. Conclusion unchanged from the
+`v1.2.0` reassessment above: **not yet**, and the revisit trigger still hasn't fired — checked
+directly (`gh api repos/.../praxis-kit`, `gh issue list`, `gh pr list`, 2026-10-14): 0 stars, 0
+forks, 0 watchers, 5 open issues (all maintainer-filed, not external reports), and every open/merged
+PR since the last reassessment is either mine or Dependabot's — no community contributions. `npm`
+downloads for the trailing month sit at 513 (`api.npmjs.org`, 2026-09-13 → 2026-10-12) — identical
+to the `v1.2.0` reading, still indistinguishable from registry-mirror/CI noise. Shipped since the
+last reassessment: `v1.3.0` (compose-aware `ContractProps<T>` for finding #54, across
+React/Preact/Vue/Solid) — real engineering progress, but adoption signals still haven't moved.
+**Revisit trigger unchanged:** a star/issue/PR from a non-maintainer account, or the next version
+tag.
+
+### Composition resolver bundle cost — accept, update baselines (2026-10-20)
+
+**Question:** can the composition resolver be structured so components that never use `compose`
+avoid the runtime and bundled-code overhead? **Measured against the baselines recorded at
+`c90fda0`** (`qa/tree-shaking-tests` and `qa/bundle-analysis`, `pnpm gzip`): `source/*` scenarios
+grew ~430–490 B gzip (svelte +1189 B), `package/*` entry points ~+1.0 KB (lit/web) to ~+1.7 KB
+(react/preact/solid/vue) — roughly 4.5% of a ~37–39 KB entry point, inside the 5% gate but close to
+it. `package/contract-only`, `guards-only`, `utils-only` are unchanged. Isolated esbuild gzip
+estimate of the composition-specific code: ≈0.7 KB for `createCompositionClassPipeline` plus ≈0.3 KB
+for the core wrapper in `composition-style.ts` — about 1 KB, which matches the package-level delta.
+
+**Runtime:** no per-render cost for non-composing components.
+`createOptionalCompositionStyleResolver` returns `undefined` when `compose.with` is absent, so
+`compositionClassResolver` is never set and the render path is unchanged. The only cost is a
+one-time construction-time pass through `composePipelines` per component.
+
+**Why the bytes can't be dropped without an API change:** `compose` is a runtime option on
+`createPolymorphic`, so `create-polymorphic.ts` must import the resolver statically; a bundler
+cannot prove a given consumer never passes `compose`. Making it tree-shakeable would need an opt-in
+registration entry point (e.g. a `compose` subpath that injects the resolver factory) touching every
+adapter and the public API, for ~1 KB on a feature that is a headline capability. Dynamic import
+doesn't fit (resolver is needed synchronously at construction).
+
+**Decision: accept the cost, update both `snapshots/gzip.json` baselines** (`tree-shaking-tests` and
+`bundle-analysis`, via `gzip:update`). Cheap follow-ups that don't change the API, left optional:
+return before building the pipeline object when `compose?.with === undefined`, and mark the
+module-level `composePipelines(...)` call `/*#__PURE__*/`. **Revisit trigger:** package entry points
+approaching the 5% gate again, or a third optional capability that would justify the opt-in
+registration pattern.
+
+**Correction (same day) — the gate is measured against `develop`, not `c90fda0`.** The figures above
+were deltas from the `c90fda0` baselines, which already contained part of this branch's growth, so
+they understated the regression and "inside the 5% gate" was wrong. Against `develop`'s committed
+baselines the branch is over the gate: every `source/*` scenario is +5.6–5.8% (lit/web +4.0%),
+`source/solid` is **+7.3%** (+2.2 KB), and `package/solid` is +6.2%; the other `package/*` entry
+points are +3.0–4.9%. Solid carries roughly 400 B more than the other adapters, so part of its
+growth is adapter-specific (its composition integration), not the shared resolver. The updated
+baselines in this branch must not be read as having cleared the gate: they only hold if the
+`develop` → branch growth is explicitly accepted at merge.
+
+**Solid outlier investigated — no removable waste.** The ~400 B gzip Solid carries over the other
+adapters (`source/solid` +7.3% vs +5.7%) is Solid's own composition code, measured per file against
+`develop` (esbuild minify + gzip, unbundled): `render.tsx` 925 → 1101 B (+176),
+`create-contract-component.ts` 564 → 681 B (+117), `build-runtime.ts` 346 → 368 B (+22) — about +315
+B, matching the gap in the scenario's per-module output. It is behavior, not bloat: the
+combined-class memo with a reactive getter, the `untrack`ed slot-props proxy that preserves DOM
+identity, `compose.defaults.class` handling, the diagnostic call, and metadata attachment. Solid's
+percentage is also higher because its `develop` baseline is the smallest (29.9 KB). Nothing was
+trimmed. **Optional follow-up:** the `{ resolve, primary, partner }` resolver wrapper is assembled
+per adapter; a shared `adapter-utils` helper would remove that duplication and a few dozen bytes per
+adapter. **Decision stands:** accept the growth against `develop` and reset the baselines at merge.
+
+**Baseline refresh after plugin-composition work (2026-10-24).** After `a12b0d1` reset the
+baselines, PRs #168–#171 (shared guards, plugin flattening, `compose.with` rendering contract,
+Tailwind plugin composition) grew every non-trivial scenario again: `source/*` +270–350 B,
+`package/*` entry points +200–260 B (~0.6–0.9%), `package/html-only` +504 B (~2.2%);
+`contract-only`/`guards-only` within 20 B, `utils-only` unchanged. All are well inside the 5% gate
+against the prior baselines, and the type-only `compose.defaults` enforcement in this branch adds no
+runtime bytes. Accepted; both `snapshots/gzip.json` baselines reset via `gzip:update`. This closes
+the release gate opened by the resolver-cost entry above.
+
+### Composition class-plugin selection — primary factory wins (2026-10-21)
+
+**Decision:** the automatic composition class resolver uses exactly one class-plugin factory,
+selected from the primary component first and the retained direct `compose.with` partner second. If
+neither component declares a factory, composition keeps using the ordinary class pipeline. If both
+declare the same factory function, instantiate it once for the merged style options. If both declare
+different factory functions, select the primary factory and emit the construction-time
+`CompositionPluginConflict` diagnostic (`COMP1016`, `DiagnosticCategory.Composition`). The
+diagnostic explains that the primary factory was selected and the partner factory was not run.
+
+The selected factory receives the merged composition `ClassPipelineOptions` and the primary
+runtime's configured diagnostics instance through the existing plugin validation and
+guarded-pipeline path. Plugin-owned keys are supplied to combined class resolution as styling inputs
+and reserved from ordinary child/DOM forwarding; they are not made conditional on
+`compose.allProps`.
+
+**No arbitrary plugin composition or nested-plugin cascading.** We will not combine, sequence, or
+otherwise reconcile different plugin pipelines, and we will not walk through nested partners to
+collect plugin factories. Only the primary and the retained direct partner participate in selection.
+An external or unannotated partner retains the existing fallback behavior; no plugin metadata is
+inferred from framework component internals. The ordinary per-contract pipeline remains unchanged
+for non-composed renders. This decision does not imply Tailwind CSS generation, source detection, or
+safelist behavior; those remain build-time consumer responsibilities.
+
+**Rationale:** plugin factories represent executable policy, not mergeable style metadata. Choosing
+a single deterministic factory avoids inventing a generic composition algebra for arbitrary plugins
+and keeps composition framework-independent. Primary precedence also makes the component whose
+contract is being rendered authoritative when two plugin policies conflict, while the diagnostic
+makes the otherwise surprising ignored partner configuration visible.
+
+### Plugin-owned flattened props — types follow the runtime selection (2026-10-21)
+
+`ContractProps<T>` flattens the Tailwind plugin's ~22-way mutually exclusive layout union for the
+type-extraction path. That knowledge used to live in each adapter (`LayoutKeyName`,
+`FlattenLayout`); it now lives with the plugin. `ClassPlugin<TProps, TFlatProps>` carries both the
+strict call-site props and a flat extraction shape (`TFlatProps` defaults to `TProps`, i.e. no
+flattening), and `FlattenPluginProps<P, TPlugin>` (`@praxis-kit/primitive`) applies it without
+naming any plugin's keys. `createTailwindPipeline` declares `FlatLayoutProps`.
+
+**Which plugin is flattened follows the runtime selection**, per "Composition class-plugin selection
+— primary factory wins" above: `ComposedPluginOf<C>` (`@praxis-kit/compose-props`) is `C`'s own
+plugin if it sets one, otherwise the direct partner's — and only when `compose.allProps: true`,
+because a partner whose props stay private contributes no props to flatten. Plugins are never
+combined and nested partners are never walked, so there is no flat-shape collision policy to define.
+
+**Scope and deferrals**
+
+- **React and Preact only; Svelte is a tracked follow-up.** Svelte keeps its own `FlattenLayout` in
+  `resolved-slot-props.ts` (and its `LayoutKeyName` import). `ResolvedSlotProps<G>` receives only
+  the merged generics, and Svelte's `BuiltRuntime<G, TOptions>` does not retain `styling.plugin`
+  (the inferred `TOptions` carries only `enforcement`), so a bundle-aware variant has no plugin to
+  recover. Doing this needs `createContractComponent` to carry the plugin type through the bundle —
+  a design change of its own, not a mechanical port.
+- **`ContractInputProps` is the strict own-contract shape, not composed extraction props.** React
+  derives it from `ContractGenericsWithAllowedOf<C>` to preserve the component's allowed-tag
+  narrowing; Preact derives it from `ContractGenericsOf<C>`. Neither uses
+  `ContractGenericsWithComposeOf<C>`, because that projection intentionally includes partner props
+  for extraction and can be wider than the component's actual call signature. Vue and Solid do not
+  export this alias because their `ContractProps` has no separate flattened shape today.
+- **Known limit:** a composed component whose partner alone owns the plugin can expose the partner's
+  plugin props in `ContractProps` while those props remain absent from the primary component's
+  strict call signature. This follows the runtime-aligned primary-plugin selection policy and is
+  tested.
+
+### Testing workspace — reusable test infrastructure leaves the production packages (2026-11-01)
+
+The shared cross-adapter suites lived in `lib/adapter-utils/src/testing` (exported as
+`@praxis-kit/adapter-utils/testing`), with their eight contract types in `adapter-utils/src/types`.
+That put a `./testing` export and an optional `vitest` peer dependency on a production package and
+let the Tailwind parity suites keep growing inside it. The adapter set is now complete
+(react/preact/vue/solid/svelte/lit/web) — the trigger the earlier "shared, explicit cross-adapter
+conformance contract" follow-up was waiting on — so the infrastructure moved to a first-class
+`testing/` workspace.
+
+**What landed**
+
+- `testing/packages/*` is a pnpm workspace glob. Two packages: **`@praxis-kit/adapter-testing`**
+  (conformance, a11y, SSR, hydration, performance and isolation suites plus the `ConformanceAdapter`
+  contract types) and **`@praxis-kit/tailwind-testing`** (the display, compose-plugin,
+  asChild-plugin and polymorphic-element parity suites). Both are private, source-exporting (no
+  build step) and carry `vitest` as a required peer dependency.
+- **Neither package depends on `adapter-utils`**, and `tailwind-testing` still does not depend on
+  `@praxis-kit/tailwind` — the suites only ever needed `core`/`diagnostics`/`primitive`/`styling`.
+  Adapters take both as `devDependencies` and keep `adapter-utils` as a runtime dependency.
+- `lib/adapter-utils` lost its `./testing` export, its `vitest` peer dependency and the eight
+  conformance types. Nothing in production code referenced any of them.
+
+**Decisions**
+
+- **Only `testing/packages/*` is a workspace glob.** `testing/integration/` and `testing/e2e/` are
+  reserved homes for repo-level suites with their own Vitest/Playwright config; they are not pnpm
+  packages and do not exist yet (no empty placeholders).
+- **No compatibility shim.** Re-exporting from `adapter-utils/testing` would make a production
+  package depend on testing packages. `adapter-utils` is private, so all ~28 consumers were migrated
+  in the same change (a one-off AST-based import rewrite with an explicit symbol-ownership map).
+- **The one-way rule is enforced, not just documented.** `pnpm check:testing-boundary`
+  (`scripts/check-testing-boundary.ts`, part of `pnpm check`) fails if a production package lists a
+  testing package outside `devDependencies`, if `packages/kit` references one at all, or if non-test
+  production source imports one (by name, or by a relative path that resolves into
+  `testing/packages/`). Test files, test hosts, Playwright/Vitest configs and
+  `make-conformance-adapter.ts` are exempt. Imports are found by parsing each file with the
+  TypeScript compiler, not a regex, so comments and strings are never mistaken for imports and
+  `export … from`, `import x = require()`, dynamic `import()`, `require()` and `import('…')` types
+  are all seen (Svelte/Vue via their `<script>` blocks). The rule logic is pure and covered by
+  `pnpm test:scripts` (also part of `pnpm check`), including mutation-checked cases for each rule: a
+  regex scanner, a substring path test and a missing exemption each make the tests fail.
+
+**Deferred (deliberately)**
+
+- `test-utils`, `test-fixtures`, `test-matchers`, `component-testing`, `accessibility-testing` —
+  created only when real reuse appears, not for organisational symmetry. The first `test-utils`
+  candidate is now cross-package: `adapter-testing` and `tailwind-testing` each carry their own
+  `withWarnSpy` and a near-identical has/lacks assertion (`expectContains` / `expectTokenList`),
+  kept separate because neither testing package may depend on the other. The whitespace-tokenising
+  `tokensOf` that was once repeated across the Tailwind suites is already shared inside
+  `tailwind-testing` (its doubled-backslash regex typo had recurred in four suites).
+
+**Follow-ups on the same branch**
+
+- **`lib/playwright` → `testing/packages/playwright-testing`** (`@praxis-kit/playwright-testing`).
+  Originally left out as "a separate concern", it is non-production test tooling (Playwright CT
+  helpers: ARIA snapshot assertions, keyboard sequences, axe sweeps, cardinality console catchers)
+  and only the React and Vue CT specs use it, so it belongs with the rest. It keeps its own unit
+  tests and its `@praxis-kit/pipeline` type import (testing → production is the allowed direction).
+  The `-testing` suffix matches the other packages. Nothing excluded it by path: `qa/metrics`'
+  `SOURCE_PACKAGES` is an include list, so the move needed only a comment fix there.
+
+  **The CT suites were broken and ungated.** They are deliberately not part of `pnpm test` (they
+  need a downloaded Chromium) and no workflow ran them, so they rotted unnoticed: the CT bundle did
+  not build (the configs aliased only 3 of `@praxis-kit/core`'s 8 subpath exports, so
+  `@praxis-kit/core/internal/composition-style` resolved to `…/index.ts/internal/…`), and once it
+  built two Vue specs failed (click counts read in Node through an async callback and asserted
+  without waiting; an `aria-labelledby` fixture whose label omitted the button's visible text, which
+  axe correctly flags). Fixed as test/config bugs, not product bugs. A new `playwright-ct` CI job
+  now runs `pnpm test:pw`, installing the headless shell only (~210 MB) and caching it by Playwright
+  version, so they cannot rot silently again. Browser binaries live in the Playwright cache outside
+  `node_modules`; they are not part of any package, and the published `praxis-kit` has no Playwright
+  dependency.
+
+  **Not moved to `praxis-components`.** That repo is downstream and React-only (it already runs
+  browser tests through Vitest browser mode), so moving the specs there would lose the Vue coverage
+  and find adapter regressions only after publishing. Rewriting these as Vitest browser tests to
+  share that toolchain remains an option, as a separate effort.
+
+- **`compoundComponentSuite` and `onElementSuite`** in `adapter-testing`: the runtime half of the
+  per-adapter `compound-component` and `on-element` tests, which were the same scenarios copied into
+  every adapter. The compile-time `expectTypeOf` checks, a native-`<dialog>` assertion and the
+  `onElement` lifecycle matrix (host swaps, throwing hooks) stay in each adapter, because they
+  depend on that adapter's own types or ref mechanics.
+- The `onElement` suite found that **Solid re-invokes the hook on any prop change** (previous
+  cleanup first), where the other seven adapters leave the registration alone: Solid's render
+  spreads `{...domProps()} ref`, and the props memo recomputes on every change. The old Solid test
+  never changed a prop. It is recorded as the `hookReRunsOnPropChange` capability instead of being
+  hidden, and the suite still asserts nothing leaks. Whether to fix the adapter was left open; it
+  was fixed afterwards — see "Testing follow-ups" below.
+- Surveyed and deliberately **not** moved: `define-contract`, `contract-props`,
+  `compose-call-signature`, `polymorphic-props` and `compose-props` are entirely type-level
+  (`expectTypeOf`, no runtime assertions) and tied to each adapter's own types; `normalize-children`
+  unit-tests each adapter's own internal normaliser with framework-specific elements.
+
+### Testing follow-ups — Solid `onElement` fix, `test-utils`, `onElement` lifecycle suite (2026-11-01)
+
+Closes the three items the testing-workspace entry left open.
+
+- **Solid runs `onElement` once per element.** The earlier diagnosis (a changing `ref` identity) was
+  incomplete. Solid's `spread` re-invokes `props.ref` in its own render effect whenever the spread
+  props change, whatever the identity, and an `onCleanup` registered from inside that effect runs on
+  _every_ re-run — so the old code did not just re-register the hook, it ran the cleanup on each
+  prop update (a listener removed and re-added, or worse, left detached by a hook that does not
+  re-attach). The adapter now tracks the registration per instance (`registered`), skips a repeat
+  call for the same element, runs the previous cleanup before registering a replacement, and owns
+  cleanup at component level. The state is cleared _before_ the hook runs, so a hook that throws on
+  a replacement cannot leave a spent cleanup to run again on unmount (found by the new suite). The
+  `hookReRunsOnPropChange` capability is removed; no adapter diverges from the contract now. A
+  consumer `ref` on a component with `onElement` is likewise called once per element, not on every
+  prop change.
+- **`@praxis-kit/test-utils`** holds the two helpers the testing packages had copied:
+  `expectContains` (one function for string-substring and token-list-membership, replacing
+  `expectTokenList`) and `withWarnSpy` (synchronous for sync callbacks so a caller that does not
+  await still sees the spy restored; settles-then-restores for async ones). It has no praxis-kit
+  dependencies and its own tests. `tokensOf` and `expectTokens` stay in `tailwind-testing` — they
+  encode Tailwind-specific expectations — and `tagOf`/`silentCreate` stay in `adapter-testing`
+  because they use its types. Rule going forward: a helper moves here only when a second testing
+  package would otherwise copy it.
+- **`onElementSuite` lifecycle scenarios.** Cleanup runs exactly once however many updates came
+  first; a hook may return nothing; and, for adapters that supply `mountSwappable` (React ×2,
+  Preact, Vue, Solid), the previous cleanup runs before the replacement registers and a throwing
+  hook does not re-run a spent cleanup. The four copies of the lifecycle matrix in React ×2, Preact
+  and Vue are removed (Vue keeps its two host-resolution tests, which are about its own `as` and
+  `asChild` slot). Lit, Web and Svelte have no `mountSwappable` — Lit/Web hosts cannot change, and
+  Svelte's `as` swap is exercised through its `.svelte` harness — so they run only the first two
+  scenarios. Checked by running the pre-fix Solid adapter against the suite: it fails the
+  once-after-updates and re-registration scenarios.
+- **Survey of `iterate` and `@praxis-kit/guards` in the tests.** Both were already in wide use
+  (every adapter depends on them), so the sweep was small. Applied: `isObject` / `isNullish` in the
+  Lit conformance renderer and `isObject` / `isFunction` in Solid's (the guard also removes a cast).
+  Deliberately **not** applied: `x !== undefined` → `isDefined(x)` (guardz's `isDefined` also
+  rejects `null`, and several sites rely on that difference), `.map().join()` chains (`iterate.map`
+  is lazy and would need spreading), and order assertions on `Object.keys`. What the survey did find
+  was duplication, not missing guards: the `class` → `className` re-keying (6 copies) is now
+  `classToClassName` in `adapter-testing`; the `...(as === undefined ? {} : { as })` idiom (6
+  copies) is `definedProp('as', as)` in `test-utils` (so the five adapters that use it list
+  `test-utils` as a devDependency); and `aria-policy-engine.custom-rules.test.ts` has a local
+  `without(props, key)` for its five copies of the entries/filter/fromEntries omit.

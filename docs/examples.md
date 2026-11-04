@@ -25,7 +25,7 @@ Installs a real `pnpm pack` tarball of `praxis-kit` into an isolated consumer di
 every public subpath from it — the one place in the repo that tests against what actually ships to
 npm, rather than a workspace link.
 
-### The conformance suite (`lib/adapter-utils/src/testing`)
+### The conformance suite (`testing/packages/adapter-testing`)
 
 Every adapter runs the same behavioral contract — variant resolution, `as` (VDOM adapters; Lit/Web
 declare `tagPolymorphism: false` and skip it), ARIA enforcement, children contracts, SSR, hydration

@@ -1,10 +1,6 @@
 import { createElement, createRef, act } from 'react'
 import { createRoot } from 'react-dom/client'
-import type {
-  ConformanceAdapter,
-  BareFactoryOptions,
-  ChildSpec,
-} from '@praxis-kit/adapter-utils/testing'
+import type { ConformanceAdapter, BareFactoryOptions, ChildSpec } from '@praxis-kit/adapter-testing'
 import type { ComponentType, ReactNode } from 'react'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import type { UnknownProps } from './types'
@@ -67,5 +63,8 @@ export function makeReactConformanceAdapter(
       if (container?.parentNode) container.parentNode.removeChild(container)
     },
     createRef: () => createRef<HTMLElement>(),
+    // Not a Praxis component: no retained styling metadata, renders its asChild-style children.
+    createExternalPartner: () => (props: { children?: unknown }) => props.children ?? null,
+    capabilities: { compositionStyling: true },
   }
 }

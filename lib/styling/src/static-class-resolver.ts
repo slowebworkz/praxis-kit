@@ -1,5 +1,6 @@
 import { LRUCache } from '@praxis-kit/primitive'
 import type { StringMap } from '@praxis-kit/primitive'
+import { isDefined, isString } from '@praxis-kit/guards'
 
 export class StaticClassResolver {
   readonly #baseClass: string
@@ -22,10 +23,10 @@ export class StaticClassResolver {
   resolve(tag: unknown, skipTagMap = false): string {
     // When a preset (recipe) is active it owns the visual treatment; tag-map overrides
     // would conflict with preset intent, so they are bypassed.
-    if (typeof tag !== 'string' || skipTagMap) return this.#baseClass
+    if (!isString(tag) || skipTagMap) return this.#baseClass
 
     const cached = this.#cache.get(tag)
-    if (cached !== undefined) return cached
+    if (isDefined(cached)) return cached
 
     const result = this.#resolveTag(tag)
     this.#cache.set(tag, result)

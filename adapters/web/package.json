@@ -23,6 +23,8 @@
     "type-fest": "catalog:"
   },
   "devDependencies": {
+    "@praxis-kit/adapter-testing": "workspace:*",
+    "@praxis-kit/tailwind-testing": "workspace:*",
     "jsdom": "catalog:",
     "vitest": "catalog:"
   }

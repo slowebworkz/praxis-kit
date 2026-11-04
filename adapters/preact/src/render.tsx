@@ -243,8 +243,10 @@ export function render<TProps extends KnownProps>({
   filterProps,
   slotValidator,
   childrenEvaluator,
+  onNormalizedProps,
 }: RenderInput<TProps>): AnyVNode {
   const state = prepareRenderState(runtime, props, filterProps)
+  onNormalizedProps?.(state.normalizedProps)
 
   // Memoized on first access. Child normalization is shared between development
   // validation and Slot rendering so it runs at most once per render. The evaluators get the

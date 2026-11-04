@@ -1,16 +1,13 @@
 // @vitest-environment jsdom
 import { h, createRef, render } from 'preact'
 import {
+  classToClassName,
   conformanceSuite,
   conformanceA11ySuite,
   conformancePerformanceSuite,
   conformanceIsolationSuite,
-} from '@praxis-kit/adapter-utils/testing'
-import type {
-  BareFactoryOptions,
-  ChildSpec,
-  ConformanceAdapter,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/adapter-testing'
+import type { BareFactoryOptions, ChildSpec, ConformanceAdapter } from '@praxis-kit/adapter-testing'
 import type { ComponentType, VNode } from 'preact'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import type { UnknownProps } from './types'
@@ -29,11 +26,6 @@ function toVNode(c: ChildSpec): VNode<UnknownProps> {
   return h(c.tag as string, (c.props ?? {}) as UnknownProps) as VNode<UnknownProps>
 }
 
-function normalizeClass<T extends AnyRecord>(props: T): T {
-  const { class: cls, ...rest } = props
-  return (cls !== undefined ? { ...rest, className: cls } : rest) as T
-}
-
 let container: HTMLElement
 
 const adapter: ConformanceAdapter<PreactConformanceComponent> = {
@@ -43,7 +35,7 @@ const adapter: ConformanceAdapter<PreactConformanceComponent> = {
     const wrapper = document.createElement('div')
     container.appendChild(wrapper)
     const doRender = (p: AnyRecord, ch: ChildSpec[]) => {
-      render(h(component, normalizeClass(p) as UnknownProps, ...ch.map(toVNode)), wrapper)
+      render(h(component, classToClassName(p) as UnknownProps, ...ch.map(toVNode)), wrapper)
     }
     doRender(props, children)
     return {
@@ -68,6 +60,9 @@ const adapter: ConformanceAdapter<PreactConformanceComponent> = {
     if (container?.parentNode) container.parentNode.removeChild(container)
   },
   createRef: () => createRef<HTMLElement>(),
+  // Not a Praxis component: no retained styling metadata, renders its asChild-style children.
+  createExternalPartner: () => (props: { children?: unknown }) => props.children ?? null,
+  capabilities: { compositionStyling: true },
 }
 
 conformanceSuite(adapter)

@@ -1,13 +1,17 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   CollectingReporter,
   DefaultPolicy,
+  DiagnosticCode,
   Diagnostics,
   Severity,
   silentDiagnostics,
 } from '@praxis-kit/diagnostics'
 import { createPolymorphic } from './create-polymorphic'
-import type { AnyRecord } from '../types'
+import { BUILTIN_HTML_RULE_IDS } from '@praxis-kit/primitive'
+import { HTML_ARIA_RULES } from '../html'
+import type { AnyRecord, EnforcementOptions } from '../types'
+import type { ClassPluginFactory } from '@praxis-kit/styling'
 
 function makeCollecting() {
   const reporter = new CollectingReporter()
@@ -57,6 +61,50 @@ describe('createPolymorphic — resolveProps()', () => {
 // ---------------------------------------------------------------------------
 
 describe('createPolymorphic — resolveClasses()', () => {
+  it('constructs the optional composition resolver in the core runtime', () => {
+    const partner = () => null
+    Object.defineProperty(partner, Symbol.for('@praxis-kit/composition-style-metadata'), {
+      value: {
+        baseClassName: 'partner-base',
+        variants: { tone: { quiet: 'partner-quiet' } },
+      },
+    })
+
+    const runtime = createPolymorphic({
+      styling: { base: 'primary-base' },
+      compose: { with: partner as never },
+    })
+
+    expect(runtime.compositionClassResolver?.('div', { tone: 'quiet' })).toContain('partner-base')
+    expect(runtime.compositionClassResolver?.('div', { tone: 'quiet' })).toContain('primary-base')
+    expect(runtime.compositionClassResolver?.('div', { tone: 'quiet' })).toContain('partner-quiet')
+  })
+
+  it('reports an incompatible composed variant through the runtime diagnostics, with the component name', () => {
+    const { reporter, diagnostics } = makeCollecting()
+    const partner = () => null
+    Object.defineProperty(partner, Symbol.for('@praxis-kit/composition-style-metadata'), {
+      value: { variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } } },
+    })
+
+    createPolymorphic({
+      name: 'Card',
+      enforcement: { diagnostics },
+      styling: { variants: { tone: { calm: 'primary-calm', bold: 'primary-bold' } } },
+      compose: { with: partner as never },
+    })
+
+    const collisions = reporter.diagnostics.filter((d) => d.code === 'COMP1014')
+    expect(collisions).toHaveLength(1)
+    expect(collisions[0]?.message).toContain('Incompatible composed variant "tone"')
+    expect(collisions[0]?.component).toBe('Card')
+  })
+
+  it('does not construct a composition resolver without a target', () => {
+    const runtime = createPolymorphic({ styling: { base: 'base' } })
+    expect(runtime.compositionClassResolver).toBeUndefined()
+  })
+
   it('returns base class', () => {
     const runtime = createPolymorphic({ styling: { base: 'rounded-lg' } })
     expect(runtime.resolveClasses('div', {})).toContain('rounded-lg')
@@ -128,6 +176,173 @@ describe('createPolymorphic — resolveAria()', () => {
     })
     const result = runtime.resolveAria('span', { 'data-unsafe': 'x' })
     expect(result.props).not.toHaveProperty('data-unsafe')
+  })
+
+  it('can disable a named built-in HTML rule without disabling the rest of enforcement', () => {
+    const { reporter, diagnostics } = makeCollecting()
+    const runtime = createPolymorphic({
+      tag: 'input',
+      enforcement: {
+        diagnostics,
+        ruleOverrides: { 'html.input.supported-type': false },
+      },
+    })
+
+    runtime.resolveAria('input', { type: 'not-a-real-input-type' })
+
+    expect(
+      reporter.diagnostics.some(
+        (diagnostic) => diagnostic.code === DiagnosticCode.HtmlInputUnsupportedType,
+      ),
+    ).toBe(false)
+  })
+
+  it('does not apply built-in overrides to a custom rule with the same id', () => {
+    const { reporter, diagnostics } = makeCollecting()
+    const customRule = Object.assign(
+      () => [
+        {
+          valid: false as const,
+          severity: 'warning' as const,
+          fixable: false as const,
+          message: 'custom rule still runs',
+        },
+      ],
+      { id: 'html.input.supported-type' },
+    )
+    const runtime = createPolymorphic({
+      tag: 'input',
+      enforcement: {
+        diagnostics,
+        ruleOverrides: { 'html.input.supported-type': false },
+        rules: [customRule],
+      },
+    })
+
+    runtime.resolveAria('input', { type: 'not-a-real-input-type' })
+
+    expect(reporter.diagnostics.some((item) => item.message === 'custom rule still runs')).toBe(
+      true,
+    )
+  })
+
+  it('can override the severity and message of a named built-in HTML rule', () => {
+    const { reporter, diagnostics } = makeCollecting()
+    const runtime = createPolymorphic({
+      tag: 'input',
+      enforcement: {
+        diagnostics,
+        ruleOverrides: {
+          'html.input.supported-type': {
+            severity: 'error',
+            message: 'Use a supported input type.',
+          },
+        },
+      },
+    })
+
+    runtime.resolveAria('input', { type: 'not-a-real-input-type' })
+
+    const diagnostic = reporter.diagnostics.find(
+      (item) => item.code === DiagnosticCode.HtmlInputUnsupportedType,
+    )
+    expect(diagnostic).toMatchObject({
+      severity: Severity.Error,
+      message: 'Use a supported input type.',
+    })
+  })
+
+  describe('ruleOverrides combinations', () => {
+    type Overrides = NonNullable<EnforcementOptions['ruleOverrides']>
+    const INPUT_TYPE_MESSAGE =
+      'type="nope" is not a value defined by the HTML specification. Browsers silently fall back to type="text".'
+
+    function report(
+      tag: 'input' | 'ul',
+      props: AnyRecord,
+      code: DiagnosticCode,
+      ruleOverrides?: Overrides,
+    ) {
+      const { reporter, diagnostics } = makeCollecting()
+      const runtime = createPolymorphic({
+        tag,
+        enforcement: { diagnostics, ...(ruleOverrides && { ruleOverrides }) },
+      })
+      runtime.resolveAria(tag, props)
+      return reporter.diagnostics.find((item) => item.code === code)
+    }
+    const inputType = (ruleOverrides?: Overrides) =>
+      report('input', { type: 'nope' }, DiagnosticCode.HtmlInputUnsupportedType, ruleOverrides)
+    const roleNotPermitted = (ruleOverrides?: Overrides) =>
+      report('ul', { role: 'checkbox' }, DiagnosticCode.HtmlRoleNotPermitted, ruleOverrides)
+
+    it('promotes a warning to an error, keeping the original message', () => {
+      expect(inputType()).toMatchObject({ severity: Severity.Warning })
+      expect(inputType({ 'html.input.supported-type': { severity: 'error' } })).toMatchObject({
+        severity: Severity.Error,
+        message: INPUT_TYPE_MESSAGE,
+      })
+    })
+
+    it('demotes an error to a warning, keeping the original message', () => {
+      const original = roleNotPermitted()
+      expect(original).toMatchObject({ severity: Severity.Error })
+      expect(
+        roleNotPermitted({ 'html.role.not-permitted': { severity: 'warning' } }),
+      ).toMatchObject({
+        severity: Severity.Warning,
+        message: original?.message,
+      })
+    })
+
+    it('replaces only the message, keeping the original severity', () => {
+      expect(
+        inputType({ 'html.input.supported-type': { message: 'Use a supported input type.' } }),
+      ).toMatchObject({ severity: Severity.Warning, message: 'Use a supported input type.' })
+      expect(
+        roleNotPermitted({ 'html.role.not-permitted': { message: 'That role is not allowed.' } }),
+      ).toMatchObject({ severity: Severity.Error, message: 'That role is not allowed.' })
+    })
+
+    it('leaves a rule untouched when an empty override object is given', () => {
+      expect(inputType({ 'html.input.supported-type': {} })).toMatchObject({
+        severity: Severity.Warning,
+        message: INPUT_TYPE_MESSAGE,
+      })
+    })
+
+    it('only affects the targeted rule', () => {
+      const { reporter, diagnostics } = makeCollecting()
+      createPolymorphic({
+        tag: 'input',
+        enforcement: { diagnostics, ruleOverrides: { 'html.input.supported-type': false } },
+      }).resolveAria('input', { type: 'nope' })
+      // The accessible-name rule also fires for this input and is not disabled.
+      expect(
+        reporter.diagnostics.some(
+          (item) => item.code === DiagnosticCode.A11yInputMissingAccessibleName,
+        ),
+      ).toBe(true)
+    })
+
+    it('rejects an unknown rule identifier at compile time', () => {
+      createPolymorphic({
+        tag: 'input',
+        enforcement: {
+          ruleOverrides: {
+            // @ts-expect-error — 'html.input.supported-typ' is not a built-in rule identifier.
+            'html.input.supported-typ': false,
+          },
+        },
+      })
+    })
+  })
+
+  it('registers exactly the built-in rule identifiers the public key type declares', () => {
+    const registered = HTML_ARIA_RULES.map((rule) => rule.id)
+    expect(registered.every((id) => id !== undefined)).toBe(true)
+    expect(new Set(registered)).toEqual(new Set(BUILTIN_HTML_RULE_IDS))
+    expect(registered).toHaveLength(BUILTIN_HTML_RULE_IDS.length)
   })
 
   it('merges enforcement.aria and enforcement.rules — both run', () => {
@@ -259,5 +474,115 @@ describe('createPolymorphic — options.htmlChildrenEvaluatorFn', () => {
     runtime.options.htmlChildrenEvaluatorFn?.('picture')?.evaluate([{ type: 'div' }])
     expect(warn).toHaveBeenCalled()
     warn.mockRestore()
+  })
+})
+
+describe('createPolymorphic — composition plugin selection', () => {
+  const metadataKey = Symbol.for('@praxis-kit/composition-style-metadata')
+
+  // Cast through the real factory type: `as never` would make `createPolymorphic` infer `never`.
+  const asPlugin = (factory: unknown) => factory as ClassPluginFactory
+
+  function partnerWith(pluginFactory?: unknown) {
+    const partner = () => null
+    Object.defineProperty(partner, metadataKey, {
+      value: {
+        baseClassName: 'partner-base',
+        ...(pluginFactory !== undefined && { pluginFactory }),
+      },
+    })
+    return partner
+  }
+
+  const pluginA = vi.fn((options: { baseClassName?: string }) => ({
+    pipeline: () => `plugin-a:${options.baseClassName ?? ''}`,
+    ownedKeys: new Set(['flex']),
+  }))
+  const pluginB = vi.fn(() => ({ pipeline: () => 'plugin-b' }))
+
+  beforeEach(() => {
+    pluginA.mockClear()
+    pluginB.mockClear()
+  })
+
+  it('selects the primary factory and passes merged styling options', () => {
+    const runtime = createPolymorphic({
+      styling: { base: 'primary-base', plugin: asPlugin(pluginA) },
+      compose: { with: partnerWith(pluginB) as never },
+    })
+
+    expect(pluginA).toHaveBeenCalledTimes(2)
+    expect(pluginA.mock.calls[1]?.[0].baseClassName).toBe('partner-base primary-base')
+    expect(pluginB).not.toHaveBeenCalled()
+    expect(runtime.compositionClassResolver?.('div', {})).toBe('plugin-a:partner-base primary-base')
+    expect(runtime.compositionClassResolver?.ownedKeys).toEqual(new Set(['flex']))
+  })
+
+  it('selects a primary-only factory when the partner has none', () => {
+    const runtime = createPolymorphic({
+      styling: { base: 'primary-base', plugin: asPlugin(pluginA) },
+      compose: { with: partnerWith() as never },
+    })
+
+    expect(pluginA).toHaveBeenCalledTimes(2)
+    expect(runtime.compositionClassResolver?.('div', {})).toBe('plugin-a:partner-base primary-base')
+  })
+
+  it('selects the partner factory when the primary has none', () => {
+    const runtime = createPolymorphic({
+      styling: { base: 'primary-base' },
+      compose: { with: partnerWith(pluginB) as never },
+    })
+
+    expect(pluginB).toHaveBeenCalledTimes(1)
+    expect(runtime.compositionClassResolver?.('div', {})).toBe('plugin-b')
+  })
+
+  it('instantiates a shared factory once for the composition pipeline', () => {
+    const shared = vi.fn(() => ({ pipeline: () => 'shared' }))
+    const runtime = createPolymorphic({
+      styling: { plugin: asPlugin(shared) },
+      compose: { with: partnerWith(shared) as never },
+    })
+
+    // One standalone pipeline and one merged composition pipeline. The shared factory is not
+    // invoked separately for the primary and partner within composition.
+    expect(shared).toHaveBeenCalledTimes(2)
+    expect(runtime.compositionClassResolver?.('div', {})).toBe('shared')
+  })
+
+  it('warns with COMP1016 and keeps the primary factory when factories conflict', () => {
+    const { reporter, diagnostics } = makeCollecting()
+    const runtime = createPolymorphic({
+      name: 'Composed',
+      enforcement: { diagnostics },
+      styling: { plugin: asPlugin(pluginA) },
+      compose: { with: partnerWith(pluginB) as never },
+    })
+
+    const conflicts = reporter.diagnostics.filter((diagnostic) => diagnostic.code === 'COMP1016')
+    expect(conflicts).toHaveLength(1)
+    expect(conflicts[0]?.component).toBe('Composed')
+    expect(pluginB).not.toHaveBeenCalled()
+    expect(runtime.compositionClassResolver?.('div', {})).toContain('plugin-a:')
+  })
+
+  it('uses the default class pipeline when neither contract declares a plugin', () => {
+    const runtime = createPolymorphic({
+      styling: { base: 'primary-base' },
+      compose: { with: partnerWith() as never },
+    })
+
+    expect(runtime.compositionClassResolver?.('div', {})).toBe('partner-base primary-base')
+    expect(runtime.compositionClassResolver?.ownedKeys).toEqual(new Set())
+  })
+
+  it('does not activate composition for an external partner without retained metadata', () => {
+    const runtime = createPolymorphic({
+      styling: { plugin: asPlugin(pluginA) },
+      compose: { with: (() => null) as never },
+    })
+
+    expect(runtime.compositionClassResolver).toBeUndefined()
   })
 })

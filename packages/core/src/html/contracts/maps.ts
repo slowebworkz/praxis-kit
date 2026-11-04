@@ -2,15 +2,26 @@ import type { HtmlContractMap } from '@praxis-kit/contract'
 import type { ContractGroup } from './types'
 import { buildMap } from './build-map'
 import {
+  checkboxContract,
+  comboboxContract,
   dialogContract,
   gridContract,
   landmarkContract,
   listboxContract,
   menuContract,
+  menuitemContract,
+  menuitemcheckboxContract,
+  menuitemradioContract,
   menubarContract,
+  optionContract,
+  radioContract,
   radiogroupContract,
+  tabContract,
   tablistContract,
+  tabpanelContract,
+  toolbarContract,
   treeContract,
+  treeitemContract,
 } from './aria'
 import { LANDMARK_TAGS, TEXT_ONLY_TAGS, VOID_TAGS } from './categories'
 import {
@@ -99,7 +110,7 @@ export const htmlContracts: HtmlContractMap = {
 }
 
 /**
- * Built-in contracts for WAI-ARIA composite widget roles.
+ * Built-in contracts for WAI-ARIA widget roles.
  *
  * Use these when semantics are provided by an explicit `role` attribute rather
  * than the HTML element itself.
@@ -119,11 +130,22 @@ export const htmlContracts: HtmlContractMap = {
  * composite widgets.
  */
 export const widgetContracts: HtmlContractMap = {
+  checkbox: checkboxContract,
+  combobox: comboboxContract,
   menu: menuContract,
+  menuitem: menuitemContract,
+  menuitemcheckbox: menuitemcheckboxContract,
+  menuitemradio: menuitemradioContract,
   menubar: menubarContract,
   tree: treeContract,
+  treeitem: treeitemContract,
   grid: gridContract,
   listbox: listboxContract,
+  option: optionContract,
   tablist: tablistContract,
+  tabpanel: tabpanelContract,
+  toolbar: toolbarContract,
+  radio: radioContract,
   radiogroup: radiogroupContract,
+  tab: tabContract,
 }

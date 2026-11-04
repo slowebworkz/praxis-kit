@@ -11,7 +11,15 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { assembleCompoundComponent } from '@praxis-kit/adapter-utils'
+import {
+  diagnoseIncompleteComposition,
+  assembleCompoundComponent,
+  attachCompositionStyleMetadata,
+  composeStyleProps,
+  mergeCompositionClassNames,
+} from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsValidation } from '@praxis-kit/adapter-utils'
+import { isString } from '@praxis-kit/guards'
 import { buildRuntime } from './build-runtime'
 import type { SvelteFactoryOptions } from './svelte-options'
 import type { BuiltRuntime } from './types/built-runtime'
@@ -61,15 +69,18 @@ import type { UnknownProps } from './types'
  * `C` itself below, not a separate parameter.
  */
 export function createContractComponent<
-  C extends SvelteFactoryOptions,
+  const C extends SvelteFactoryOptions,
   TDefault extends ElementType = ContractTagOf<C>,
   Props extends UnknownProps = ContractPropsOf<C>,
   Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
   TPreset extends RecipeMap<VariantMap> = ContractPresetOf<C>,
   TSubComponents extends Readonly<AnyRecord> = EmptyRecord,
 >(
-  options: C & { readonly subComponents?: TSubComponents },
-): MergeRecords<BuiltRuntime<ContractGenericsOf<C>, C>, TSubComponents> {
+  options: C & { readonly subComponents?: TSubComponents } & ComposeDefaultsValidation<C>,
+): MergeRecords<
+  BuiltRuntime<ContractGenericsOf<C>, C> & { readonly __contract?: C },
+  TSubComponents
+> {
   // `options` (a single, formally independent type parameter `C`) no longer sufficiently
   // overlaps with the reconstructed `SvelteFactoryOptions<...> & C` for a direct cast the way the
   // old, separately-threaded generics did — see `@praxis-kit/react`'s identical comment. `C` is
@@ -79,6 +90,39 @@ export function createContractComponent<
   const bundle = buildRuntime(
     options as unknown as SvelteFactoryOptions<TDefault, Props, Variants, TPreset> & C,
   ) as unknown as BuiltRuntime<ContractGenericsOf<C>, C>
+
+  attachCompositionStyleMetadata(bundle, bundle.runtime.options, options.styling?.plugin)
+  diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
+
+  const { compose } = options
+  const resolveClasses = bundle.compositionClassResolver
+  if (compose && resolveClasses) {
+    const configuredClass = compose.defaults ? Reflect.get(compose.defaults, 'class') : undefined
+    const defaultClass =
+      isString(configuredClass) || Array.isArray(configuredClass) ? configuredClass : undefined
+    bundle.resolveComposedClasses = (
+      tag,
+      partnerProps,
+      componentProps,
+      primaryResolvedProps,
+      callerClass,
+      recipe,
+    ) =>
+      resolveClasses(
+        tag,
+        composeStyleProps(
+          partnerProps,
+          componentProps,
+          bundle.runtime.options,
+          compose.defaults,
+          resolveClasses.partner,
+          resolveClasses.ownedKeys,
+          primaryResolvedProps,
+        ),
+        mergeCompositionClassNames(defaultClass, callerClass),
+        recipe,
+      )
+  }
 
   return assembleCompoundComponent(bundle, options.subComponents)
 }

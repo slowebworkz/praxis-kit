@@ -17,9 +17,18 @@
  * No runtime assertions are made. These tests exist to catch type regressions.
  */
 import { describe, it, expectTypeOf } from 'vitest'
+import { defineContract } from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsConstraint, RetainedComponentProps } from '@praxis-kit/adapter-utils'
+import type { EmptyRecord, ClassPluginFactory } from '@praxis-kit/core'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
 import type { CollisionError, ContractGenericsWithComposeOf } from '@praxis-kit/compose-props'
 import { createContractComponent } from './create-contract-component'
-import type { ContractProps, PolymorphicWithAllowedAs, ReactFactoryOptions } from '../shared'
+import type {
+  ContractInputProps,
+  ContractProps,
+  PolymorphicWithAllowedAs,
+  ReactFactoryOptions,
+} from '../shared'
 
 /**
  * `satisfies ReactFactoryOptions` is not just documentation here — confirmed by direct
@@ -37,6 +46,231 @@ const surfaceOptions = {
   styling: { variants: { shadow: { true: 'shadow-sm', false: 'shadow-none' } } },
 } satisfies ReactFactoryOptions
 const Surface = createContractComponent(surfaceOptions)
+
+describe('compose.defaults diagnostic types — factory-retained partner', () => {
+  it('retains the partner variants when queried after factory inference', () => {
+    type PartnerVariantKeys = keyof RetainedComponentProps<typeof Surface>
+    type ShadowValue = RetainedComponentProps<typeof Surface>['shadow']
+
+    expectTypeOf<PartnerVariantKeys>().toEqualTypeOf<'shadow'>()
+    expectTypeOf<ShadowValue>().toEqualTypeOf<boolean | undefined>()
+  })
+
+  it('evaluates the defaults constraint correctly once the options type is concrete', () => {
+    type ValidOptions = {
+      compose: { with: typeof Surface; defaults: { shadow: true } }
+    }
+    type InvalidOrdinaryOptions = {
+      compose: { with: typeof Surface; defaults: { radius: 'sm' } }
+    }
+    type InvalidPrimaryOnlyOptions = {
+      styling: { variants: { tone: { quiet: string; loud: string } } }
+      compose: { with: typeof Surface; defaults: { tone: 'quiet' } }
+    }
+
+    expectTypeOf<ComposeDefaultsConstraint<ValidOptions>>().toEqualTypeOf<unknown>()
+    expectTypeOf<ComposeDefaultsConstraint<InvalidOrdinaryOptions>>().toEqualTypeOf<never>()
+    expectTypeOf<ComposeDefaultsConstraint<InvalidPrimaryOnlyOptions>>().toEqualTypeOf<never>()
+  })
+})
+
+// `compose.defaults` is validated against the secondary component's variants, not ordinary props.
+const ValidComposeDefaults = defineContract({
+  tag: 'section',
+  name: 'ValidComposeDefaults',
+  compose: { with: Surface, defaults: { shadow: true } },
+})
+void ValidComposeDefaults
+
+// Defaults are partial: callers can configure one supported variant without specifying other
+// variants or ordinary props.
+const ValidPartialComposeDefaults = defineContract({
+  tag: 'section',
+  name: 'ValidPartialComposeDefaults',
+  compose: { with: Surface, defaults: { shadow: false } },
+})
+void ValidPartialComposeDefaults
+
+// Omitted and empty defaults are both valid and preserve the existing composition API.
+defineContract({ tag: 'section', name: 'ComposeDefaultsOmitted', compose: { with: Surface } })
+defineContract({
+  tag: 'section',
+  name: 'ComposeDefaultsEmpty',
+  compose: { with: Surface, defaults: {} },
+})
+
+// Components without a retained Praxis Kit contract intentionally skip defaults validation.
+const ExternalSurface = (_props: { external?: string }) => null
+defineContract({
+  tag: 'section',
+  name: 'ExternalComposeDefaults',
+  compose: { with: ExternalSurface, defaults: { external: 42, unknown: true } },
+})
+
+const PluginSurface = createContractComponent({
+  tag: 'div',
+  name: 'PluginSurface',
+  props: undefined as unknown as EmptyRecord,
+  styling: { base: '', plugin: createTailwindPipeline },
+} satisfies ReactFactoryOptions)
+
+// Plugin-owned selector props declared by the composed component's plugin are valid defaults.
+const ValidPluginComposeDefaults = defineContract({
+  tag: 'section',
+  name: 'ValidPluginComposeDefaults',
+  compose: { with: PluginSurface, defaults: { flex: true } },
+})
+void ValidPluginComposeDefaults
+
+// Variants and plugin selectors from the same partner can be configured together.
+const VariantAndPluginSurface = createContractComponent({
+  tag: 'div',
+  name: 'VariantAndPluginSurface',
+  props: undefined as unknown as EmptyRecord,
+  styling: {
+    base: '',
+    variants: { shadow: { true: 'shadow-sm', false: 'shadow-none' } },
+    plugin: createTailwindPipeline,
+  },
+} satisfies ReactFactoryOptions)
+const ValidCombinedComposeDefaults = defineContract({
+  tag: 'section',
+  name: 'ValidCombinedComposeDefaults',
+  compose: { with: VariantAndPluginSurface, defaults: { shadow: true, flex: true } },
+})
+void ValidCombinedComposeDefaults
+
+// Plugin selector values retain their declared types.
+// @ts-expect-error — `flex` is a literal-true selector.
+defineContract({
+  tag: 'section',
+  name: 'InvalidPluginComposeDefaultsValue',
+  compose: { with: PluginSurface, defaults: { flex: 'row' } },
+})
+
+// Plugin-owned selectors shaped as a union keep their exclusivity when used as defaults.
+type ExclusiveLayoutProps =
+  { flex: true; grid?: never } | { grid: true; flex?: never } | { flex?: never; grid?: never }
+const exclusiveLayoutPlugin = (() => ({
+  pipeline: () => '',
+})) as unknown as ClassPluginFactory<ExclusiveLayoutProps>
+const UnionPluginSurface = createContractComponent({
+  tag: 'div',
+  name: 'UnionPluginSurface',
+  props: undefined as unknown as EmptyRecord,
+  styling: { base: '', plugin: exclusiveLayoutPlugin },
+} satisfies ReactFactoryOptions)
+
+// Union-shaped plugin selectors retain their supported literal values.
+const ValidUnionPluginComposeDefaults = defineContract({
+  tag: 'section',
+  name: 'ValidUnionPluginComposeDefaults',
+  compose: { with: UnionPluginSurface, defaults: { flex: true } },
+})
+void ValidUnionPluginComposeDefaults
+
+// The empty union member permits an empty defaults object.
+const ValidEmptyUnionPluginComposeDefaults = defineContract({
+  tag: 'section',
+  name: 'ValidEmptyUnionPluginComposeDefaults',
+  compose: { with: UnionPluginSurface, defaults: {} },
+})
+void ValidEmptyUnionPluginComposeDefaults
+
+// Mutually exclusive selectors cannot be defaulted together.
+// @ts-expect-error — `flex` and `grid` are exclusive in the plugin's selector union.
+defineContract({
+  tag: 'section',
+  name: 'InvalidExclusiveUnionPluginComposeDefaults',
+  compose: { with: UnionPluginSurface, defaults: { flex: true, grid: true } },
+})
+
+// The primary component's plugin cannot authorize selectors unsupported by the partner.
+// @ts-expect-error — Surface has no plugin that owns `flex`.
+defineContract({
+  tag: 'section',
+  name: 'PrimaryPluginDoesNotAuthorizePartnerDefaults',
+  styling: { base: '', plugin: createTailwindPipeline },
+  compose: { with: Surface, defaults: { flex: true } },
+})
+
+// @ts-expect-error — unknown keys are not valid compose.defaults keys
+defineContract({
+  tag: 'section',
+  name: 'InvalidComposeDefaultsKey',
+  compose: { with: Surface, defaults: { raduis: 'lg' } },
+})
+
+// Valid defaults remain accepted by the public component factory.
+createContractComponent({
+  tag: 'section',
+  name: 'ValidFactoryComposeDefaults',
+  compose: { with: Surface, defaults: { shadow: true } },
+})
+
+// The public component factory should report invalid defaults on the offending property, with a
+// message-bearing expected type, rather than TS2554 from a validation rest parameter.
+createContractComponent({
+  tag: 'section',
+  name: 'InvalidFactoryComposeDefaultsKey',
+  compose: {
+    with: Surface,
+    defaults: {
+      // @ts-expect-error — diagnostic should identify this as an undeclared composed variant.
+      raduis: 'lg',
+    },
+  },
+})
+
+createContractComponent({
+  tag: 'section',
+  name: 'InvalidFactoryComposeDefaultsValue',
+  compose: {
+    with: Surface,
+    defaults: {
+      // @ts-expect-error — diagnostic should identify the invalid value for this variant.
+      shadow: 'yes',
+    },
+  },
+})
+
+// Mutually exclusive plugin selectors cannot be defaulted together through the public factory.
+createContractComponent({
+  tag: 'section',
+  name: 'InvalidFactoryExclusiveComposeDefaults',
+  compose: {
+    with: UnionPluginSurface,
+    defaults: {
+      // @ts-expect-error — `flex` and `grid` are exclusive in the plugin's selector union.
+      flex: true,
+      // @ts-expect-error — the diagnostic is reported on both members of the invalid combination.
+      grid: true,
+    },
+  },
+})
+
+// @ts-expect-error — `compose.defaults` cannot configure an ordinary prop, even with a valid value
+defineContract({
+  tag: 'section',
+  name: 'InvalidComposeDefaultsOrdinaryProp',
+  compose: { with: Surface, defaults: { radius: 'sm' } },
+})
+
+// @ts-expect-error — Surface's shadow variant only accepts booleans
+defineContract({
+  tag: 'section',
+  name: 'InvalidComposeDefaultsVariant',
+  compose: { with: Surface, defaults: { shadow: 'yes' } },
+})
+
+// @ts-expect-error — `tone` is declared only by the primary component, not by Surface, so it is
+// not Surface's variant to default: compose.defaults is owned by the composed (secondary) contract.
+defineContract({
+  tag: 'section',
+  name: 'InvalidComposeDefaultsPrimaryOnlyVariant',
+  styling: { variants: { tone: { quiet: 'tone-quiet', loud: 'tone-loud' } } },
+  compose: { with: Surface, defaults: { tone: 'quiet' } },
+})
 
 const cardOptions = {
   tag: 'section',
@@ -226,6 +460,7 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
       tag: 'div',
       name: 'NoForwardSurface',
       props: undefined as unknown as { radius?: 'sm' | 'lg' },
+      styling: { variants: { tone: { quiet: 'text-muted', loud: 'text-strong' } } },
     } satisfies ReactFactoryOptions
     const NoForwardSurface = createContractComponent(noForwardSurfaceOptions)
 
@@ -238,8 +473,10 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     const NoForwardCard = createContractComponent(noForwardCardOptions)
     void NoForwardCard
 
-    type HasRadius = 'radius' extends keyof ContractProps<typeof NoForwardCard> ? true : false
+    type NoForwardProps = ContractProps<typeof NoForwardCard>
+    type HasRadius = 'radius' extends keyof NoForwardProps ? true : false
     expectTypeOf<HasRadius>().toEqualTypeOf<false>()
+    expectTypeOf<NoForwardProps['tone']>().toEqualTypeOf<'quiet' | 'loud' | undefined>()
   })
 
   it('(9) a real variant collision surfaces as a diagnostic at that exact key; non-colliding variants on either side keep their real values', () => {
@@ -276,19 +513,336 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
           color: { red: 'text-red', blue: 'text-blue' },
         },
       },
-      compose: { allProps: true, with: VariantCollidingSurface },
+      // Variant visibility is composition styling behavior, independent of raw prop forwarding.
+      compose: { allProps: false, with: VariantCollidingSurface },
     } satisfies ReactFactoryOptions
     const VariantCollidingCard = createContractComponent(variantCollidingCardOptions)
     void VariantCollidingCard
 
     // The colliding key itself: a real diagnostic value, not `never`.
     type ShadowType = ContractProps<typeof VariantCollidingCard>['shadow']
-    expectTypeOf<ShadowType>().toEqualTypeOf<CollisionError<'shadow'> | undefined>()
+    // The primary's own values stay usable; the collision is still surfaced in the prop type, and
+    // the partner's conflicting values are not accepted.
+    expectTypeOf<ShadowType>().toEqualTypeOf<'yes' | 'no' | CollisionError<'shadow'> | undefined>()
 
     // Non-colliding variant keys from both sides keep their own real, usable value types.
     type SizeType = ContractProps<typeof VariantCollidingCard>['size']
     type ColorType = ContractProps<typeof VariantCollidingCard>['color']
     expectTypeOf<SizeType>().toEqualTypeOf<'sm' | 'lg' | undefined>()
     expectTypeOf<ColorType>().toEqualTypeOf<'red' | 'blue' | undefined>()
+  })
+})
+
+describe('compose.with preserves plugin-contributed layout props', () => {
+  // `createTailwindPipeline` contributes layout props through a mutually-exclusive union.
+  // The composed Surface intentionally has no layout plugin and does not declare `flex` or
+  // `grid`; composition must not erase the primary component's plugin-contributed props.
+  const LayoutCard = createContractComponent(
+    defineContract({
+      tag: 'section',
+      name: 'LayoutCard',
+      props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+      styling: { base: '', plugin: createTailwindPipeline },
+      enforcement: { allowedAs: ['section', 'article'] as const },
+      compose: { allProps: true, with: Surface },
+    }),
+  )
+
+  it('preserves flex and grid in the public ContractProps extraction', () => {
+    expectTypeOf<ContractProps<typeof LayoutCard>['flex']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<ContractProps<typeof LayoutCard>['grid']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<ContractProps<typeof LayoutCard>['radius']>().toEqualTypeOf<
+      'sm' | 'lg' | undefined
+    >()
+  })
+
+  it('preserves plugin-contributed layout props in every wrapper mode', () => {
+    expectTypeOf<ContractProps<typeof LayoutCard, 'asChild'>['flex']>().toEqualTypeOf<
+      true | undefined
+    >()
+    expectTypeOf<ContractProps<typeof LayoutCard, 'render'>['flex']>().toEqualTypeOf<
+      true | undefined
+    >()
+  })
+
+  it('keeps extracted layout props usable with Pick, Omit, and rest destructuring', () => {
+    type Picked = Pick<ContractProps<typeof LayoutCard>, 'flex' | 'grid' | 'radius'>
+    expectTypeOf<Picked>().toEqualTypeOf<{
+      flex?: true
+      grid?: true
+      radius?: 'sm' | 'lg'
+    }>()
+
+    type WithoutFlex = Omit<ContractProps<typeof LayoutCard>, 'flex'>
+    expectTypeOf<WithoutFlex['grid']>().toEqualTypeOf<true | undefined>()
+
+    function readProps(props: ContractProps<typeof LayoutCard>): void {
+      const { flex: _flex, grid: _grid, ...rest } = props
+      expectTypeOf(rest).toBeObject()
+    }
+    void readProps
+  })
+
+  it('does not weaken the component call signature’s mutually exclusive layout props', () => {
+    const _validFlex = <LayoutCard flex />
+    const _validGrid = <LayoutCard grid />
+    void _validFlex
+    void _validGrid
+
+    // @ts-expect-error — composition must preserve the Tailwind plugin's strict call-site union.
+    const _invalid = <LayoutCard flex grid />
+    void _invalid
+  })
+
+  it('lets a ContractInputProps value be spread back into the component', () => {
+    // The original failure: an annotated `ContractProps` value is flattened and can't be spread.
+    // `ContractInputProps` keeps the strict union the call signature accepts, so it can.
+    const input: ContractInputProps<typeof LayoutCard> = { flex: true }
+    const _spread = <LayoutCard {...input} />
+    void _spread
+
+    // @ts-expect-error — the strict input still rejects two display props at once.
+    const _both: ContractInputProps<typeof LayoutCard> = { flex: true, grid: true }
+    void _both
+  })
+
+  it('does not widen the primary component’s allowedAs when composing a plugin-bearing partner', () => {
+    const _section = <LayoutCard as="section" />
+    const _article = <LayoutCard as="article" />
+    void _section
+    void _article
+
+    // @ts-expect-error — Surface's default `div` is not in LayoutCard's allowedAs.
+    const _div = <LayoutCard as="div" />
+    void _div
+  })
+
+  it('preserves plugin-contributed props when the composed partner owns the plugin', () => {
+    const LayoutSurface = createContractComponent(
+      defineContract({
+        tag: 'div',
+        name: 'LayoutSurface',
+        styling: { base: '', plugin: createTailwindPipeline },
+      }),
+    )
+    const ComposedLayoutCard = createContractComponent(
+      defineContract({
+        tag: 'article',
+        name: 'ComposedLayoutCard',
+        props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+        compose: { allProps: true, with: LayoutSurface },
+      }),
+    )
+    void ComposedLayoutCard
+
+    expectTypeOf<ContractProps<typeof ComposedLayoutCard>['flex']>().toEqualTypeOf<
+      true | undefined
+    >()
+    expectTypeOf<ContractProps<typeof ComposedLayoutCard>['grid']>().toEqualTypeOf<
+      true | undefined
+    >()
+    expectTypeOf<ContractProps<typeof ComposedLayoutCard, 'asChild'>['flex']>().toEqualTypeOf<
+      true | undefined
+    >()
+    expectTypeOf<ContractProps<typeof ComposedLayoutCard, 'render'>['flex']>().toEqualTypeOf<
+      true | undefined
+    >()
+
+    // ContractInputProps mirrors the primary component's own call signature, not the composed
+    // extraction projection. Partner-owned plugin props are therefore absent from strict input.
+    type InputProps = ContractInputProps<typeof ComposedLayoutCard>
+    expectTypeOf<'flex' extends keyof InputProps ? true : false>().toEqualTypeOf<false>()
+    expectTypeOf<'grid' extends keyof InputProps ? true : false>().toEqualTypeOf<false>()
+    expectTypeOf<'variant' extends keyof InputProps ? true : false>().toEqualTypeOf<true>()
+  })
+
+  it('flattens the partner-owned plugin union in the extracted props', () => {
+    const LayoutSurface = createContractComponent(
+      defineContract({
+        tag: 'div',
+        name: 'FlatPartnerSurface',
+        styling: { base: '', plugin: createTailwindPipeline },
+      }),
+    )
+    const FlatPartnerCard = createContractComponent(
+      defineContract({
+        tag: 'article',
+        name: 'FlatPartnerCard',
+        props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+        compose: { allProps: true, with: LayoutSurface },
+      }),
+    )
+    void FlatPartnerCard
+    type Props = ContractProps<typeof FlatPartnerCard>
+
+    type Picked = Pick<Props, 'flex' | 'grid' | 'variant'>
+    expectTypeOf<Picked>().toEqualTypeOf<{
+      flex?: true
+      grid?: true
+      variant?: 'elevated' | 'flat'
+    }>()
+
+    type WithoutFlex = Omit<Props, 'flex'>
+    expectTypeOf<WithoutFlex['grid']>().toEqualTypeOf<true | undefined>()
+
+    // Flattened, not a union: a value with both keys is a valid extracted shape.
+    const _both: Props = { flex: true, grid: true }
+    void _both
+
+    function readProps(props: Props): void {
+      const { flex: _flex, grid: _grid, ...rest } = props
+      expectTypeOf(rest).toBeObject()
+    }
+    void readProps
+  })
+
+  it('does not select a plugin from beyond the direct composed partner', () => {
+    const PluginSurface = createContractComponent(
+      defineContract({
+        tag: 'div',
+        name: 'NestedPluginSurface',
+        styling: { base: '', plugin: createTailwindPipeline },
+      }),
+    )
+    const MiddleSurface = createContractComponent(
+      defineContract({
+        tag: 'div',
+        name: 'NestedMiddleSurface',
+        compose: { allProps: true, with: PluginSurface },
+      }),
+    )
+    const OuterSurface = createContractComponent(
+      defineContract({
+        tag: 'article',
+        name: 'NestedOuterSurface',
+        compose: { allProps: true, with: MiddleSurface },
+      }),
+    )
+
+    void OuterSurface
+    type Props = ContractProps<typeof OuterSurface>
+    type InputProps = ContractInputProps<typeof OuterSurface>
+
+    // Plugin selection follows the runtime's one-level policy: OuterSurface has no plugin and its
+    // direct partner has no plugin, so the nested PluginSurface's flat shape is not selected here.
+    // The nested strict union remains present in the recursively composed props projection.
+    expectTypeOf<Props['flex']>().toEqualTypeOf<true | undefined>()
+    // @ts-expect-error — nested layout keys remain mutually exclusive at this extraction boundary.
+    const _notFlat: Props = { flex: true, grid: true }
+    // Strict input is the outer contract only; nested partner props are not accepted.
+    expectTypeOf<'flex' extends keyof InputProps ? true : false>().toEqualTypeOf<false>()
+    void _notFlat
+  })
+
+  it('does not add partner plugin props when allProps keeps them private', () => {
+    const PrivateSurface = createContractComponent(
+      defineContract({
+        tag: 'div',
+        name: 'PrivatePartnerSurface',
+        styling: { base: '', plugin: createTailwindPipeline },
+      }),
+    )
+    const PrivateCard = createContractComponent(
+      defineContract({
+        tag: 'article',
+        name: 'PrivatePartnerCard',
+        props: undefined as unknown as { variant?: 'elevated' | 'flat' },
+        compose: { allProps: false, with: PrivateSurface },
+      }),
+    )
+    void PrivateCard
+    type Props = ContractProps<typeof PrivateCard>
+    expectTypeOf<'flex' extends keyof Props ? true : false>().toEqualTypeOf<false>()
+  })
+
+  it('preserves mutually exclusive plugin props when both components contribute the same union', () => {
+    const LayoutSurface = createContractComponent(
+      defineContract({
+        tag: 'div',
+        name: 'SharedLayoutSurface',
+        styling: { base: '', plugin: createTailwindPipeline },
+      }),
+    )
+    const SharedLayoutCard = createContractComponent(
+      defineContract({
+        tag: 'article',
+        name: 'SharedLayoutCard',
+        styling: { base: '', plugin: createTailwindPipeline },
+        compose: { allProps: true, with: LayoutSurface },
+      }),
+    )
+
+    // Both contracts contribute the same mutually-exclusive `{ flex } | { grid } | {}` union.
+    // Merging must retain the usable member props instead of resolving cross-member collisions
+    // to `never` or widening the union into a shape that accepts both layout flags.
+    expectTypeOf<ContractProps<typeof SharedLayoutCard>['flex']>().toEqualTypeOf<true | undefined>()
+    expectTypeOf<ContractProps<typeof SharedLayoutCard>['grid']>().toEqualTypeOf<true | undefined>()
+
+    const _validFlex = <SharedLayoutCard flex />
+    const _validGrid = <SharedLayoutCard grid />
+    void _validFlex
+    void _validGrid
+
+    // @ts-expect-error — the same mutually-exclusive layout choices remain exclusive after merging.
+    const _invalid = <SharedLayoutCard flex grid />
+    void _invalid
+  })
+
+  describe('flattening follows the runtime plugin selection (primary wins)', () => {
+    type ToneStrict = { tone: 'a'; mood?: never } | { mood: 'b'; tone?: never }
+    type ToneFlat = { tone?: 'a'; mood?: 'b' }
+    const tonePlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<
+      ToneStrict,
+      ToneFlat
+    >
+
+    type SizeStrict = { size: 'x'; dense?: never } | { dense: 'y'; size?: never }
+    type SizeFlat = { size?: 'x'; dense?: 'y' }
+    const sizePlugin = (() => ({ pipeline: () => '' })) as unknown as ClassPluginFactory<
+      SizeStrict,
+      SizeFlat
+    >
+
+    const ToneSurface = createContractComponent({
+      tag: 'div',
+      name: 'ToneSurface',
+      props: undefined as unknown as EmptyRecord,
+      styling: { base: '', plugin: tonePlugin },
+    } satisfies ReactFactoryOptions)
+
+    it('flattens only the primary plugin when both the primary and the partner set one', () => {
+      // Mirrors DECISIONS.md "Composition class-plugin selection — primary factory wins": only the
+      // primary's plugin is selected, so only its flat shape is applied.
+      const SizedCard = createContractComponent({
+        tag: 'article',
+        name: 'SizedCard',
+        props: undefined as unknown as EmptyRecord,
+        styling: { base: '', plugin: sizePlugin },
+        compose: { allProps: true, with: ToneSurface },
+      } satisfies ReactFactoryOptions)
+      void SizedCard
+      type Props = ContractProps<typeof SizedCard>
+
+      const _flatPrimary: Props = { size: 'x', dense: 'y' }
+      void _flatPrimary
+    })
+
+    it('flattens the partner plugin when the primary sets none', () => {
+      const ToneCard = createContractComponent({
+        tag: 'article',
+        name: 'ToneCard',
+        props: undefined as unknown as EmptyRecord,
+        compose: { allProps: true, with: ToneSurface },
+      } satisfies ReactFactoryOptions)
+      void ToneCard
+      type Props = ContractProps<typeof ToneCard>
+
+      expectTypeOf<Pick<Props, 'tone' | 'mood'>>().toEqualTypeOf<{
+        tone?: 'a'
+        mood?: 'b'
+      }>()
+      const _both: Props = { tone: 'a', mood: 'b' }
+      void _both
+    })
   })
 })

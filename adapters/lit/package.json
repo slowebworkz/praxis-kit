@@ -26,6 +26,8 @@
     "lit": ">=3.0"
   },
   "devDependencies": {
+    "@praxis-kit/adapter-testing": "workspace:*",
+    "@praxis-kit/tailwind-testing": "workspace:*",
     "jsdom": "catalog:",
     "lit": "catalog:",
     "vitest": "catalog:"

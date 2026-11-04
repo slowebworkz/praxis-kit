@@ -121,4 +121,9 @@ export type RenderInput<TProps extends KnownProps = KnownProps> = Readonly<{
    * Optional evaluator used to enforce child composition rules at runtime.
    */
   childrenEvaluator?: ChildrenEvaluator
+
+  /**
+   * Observe the normalized props from this render without running normalizers a second time.
+   */
+  onNormalizedProps?: (props: ResolvedProps) => void
 }>

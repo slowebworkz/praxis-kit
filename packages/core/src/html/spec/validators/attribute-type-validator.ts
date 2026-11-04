@@ -32,5 +32,9 @@ export function createInputAttributeTypeRule({
       },
     ]
   }
-  return Object.assign(rule, { readsProps: ['type', attribute] as const, tags: ['input'] as const })
+  return Object.assign(rule, {
+    id: `html.input.${attribute}-type`,
+    readsProps: ['type', attribute] as const,
+    tags: ['input'] as const,
+  })
 }

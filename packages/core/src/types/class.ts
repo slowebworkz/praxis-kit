@@ -56,7 +56,9 @@ export type {
   AnyClassPluginFactory,
   ClassPlugin,
   ClassPluginFactory,
+  ExtractPluginFlatProps,
   ExtractPluginProps,
+  FlattenPluginProps,
   OwnedPropKeys,
   PluginInstance,
 } from '@praxis-kit/primitive'

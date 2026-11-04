@@ -1,5 +1,5 @@
-import { clsx } from 'clsx'
-import type { ClassValue } from 'clsx'
+import { cn } from '@praxis-kit/primitive'
+import type { ClassValue } from '@praxis-kit/primitive'
 import { isRecord, isObject, isNullish } from '@praxis-kit/guards'
 
 export const PROP_MERGE_POLICIES = ['chain', 'concat', 'shallow-merge', 'child-wins'] as const
@@ -19,13 +19,13 @@ export function chainHandlers(childHandler: EventHandler, slotHandler: EventHand
 }
 
 export function mergeClassNames(slot: unknown, child: unknown): string {
-  return clsx(slot as ClassValue, child as ClassValue)
+  return cn(slot as ClassValue, child as ClassValue)
 }
 
 export function mergeStyles(slot: unknown, child: unknown): unknown {
   // A nullish child `style` (e.g. from `style={cond ? styleObj : undefined}`) falls back to
   // slot's value instead of wiping it out, mirroring how `mergeClassNames` already degrades
-  // gracefully (clsx skips a nullish operand) rather than discarding the other side's value —
+  // gracefully (cn/clsx skips a nullish operand) rather than discarding the other side's value —
   // this was the one asymmetry between the two policies for the structurally identical input.
   // Scoped to nullish specifically, not "any non-record child": a child style that's present but
   // the *wrong type* (a string, say) still wins as-is, same as before — that's a different,

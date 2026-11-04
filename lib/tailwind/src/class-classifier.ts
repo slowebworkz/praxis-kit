@@ -1,14 +1,32 @@
-import type { LAYOUT_FAMILY_MAP } from './constants'
 import { LAYOUT_OWNED_KEYS } from './constants'
 import type { layoutKeys } from './layout-keys'
-import type { ClassifiedToken, ClassToken, LayoutFamily, LayoutKey } from './types'
+import type { ClassifiedToken, ClassToken, ConditionalToken, LayoutKey } from './types'
+import { isNonNull } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import type { StringMap } from '@praxis-kit/primitive'
+
+// The families a conditional token can require — taken from `ConditionalToken` so the
+// `Exclude<…, 'none'>` lives in one place (types/classified-token.ts).
+type ConditionalFamily = ConditionalToken['requires']
+
+// Selector-prefix → family the token requires. `satisfies` checks each value against
+// `ConditionalFamily` while `as const` keeps the literal keys and values.
+type ConditionalPrefixMap = StringMap<ConditionalFamily>
 
 const CONDITIONALS = {
   '[&.flex': 'flex',
   '[&.grid': 'grid',
-} as const satisfies Readonly<StringMap<Exclude<LayoutFamily<typeof LAYOUT_FAMILY_MAP>, 'none'>>>
+} as const satisfies Readonly<ConditionalPrefixMap>
+
+// Hoisted: `classify` runs for every class token on every render, so don't rebuild this array
+// per call.
+const CONDITIONAL_ENTRIES = Object.entries(CONDITIONALS)
+
+// Narrows to a layout key without a cast at the use site. Backed by the owned-keys set so the
+// runtime check and the type can't drift from `layoutKeys`.
+function isLayoutKey(base: string): base is LayoutKey<typeof layoutKeys> {
+  return LAYOUT_OWNED_KEYS.has(base)
+}
 
 // Flex/grid *item* (and item-placement) properties. Unlike container properties,
 // these resolve against the element's PARENT display mode — an element is very
@@ -59,6 +77,9 @@ const SHARED_PREFIXES: readonly RegExp[] = [
 
 export class ClassClassifier {
   static #getBaseUtility(token: string): string {
+    // Most tokens have no variant prefix; the scan below only ever returns on a `:`.
+    if (!token.includes(':')) return token
+
     let depth = 0
 
     return (
@@ -75,18 +96,29 @@ export class ClassClassifier {
   }
 
   classify(token: ClassToken): ClassifiedToken {
-    const base = ClassClassifier.#getBaseUtility(token)
+    const rawBase = ClassClassifier.#getBaseUtility(token)
+    // Tailwind v4 accepts the important modifier before or after the utility
+    // (`!flex-col` / `flex-col!`). Strip it for dependency classification so
+    // both spellings follow the same rules; keep `raw` unchanged for output.
+    const leadingBang = rawBase.startsWith('!')
+    const trailingBang = rawBase.endsWith('!')
+    const hasImportantModifier = leadingBang || trailingBang
+    const base = hasImportantModifier
+      ? rawBase.slice(leadingBang ? 1 : 0, trailingBang ? -1 : undefined)
+      : rawBase
 
-    if (LAYOUT_OWNED_KEYS.has(base)) {
-      return {
-        kind: 'layout',
-        value: base as LayoutKey<typeof layoutKeys>,
-        raw: token,
-      }
+    if (isLayoutKey(base)) {
+      // Preserve important display utilities as utilities, not layout tokens.
+      // Their important marker remains in `base`, so the dependency evaluator
+      // does not treat them as ordinary reserved display classes. This preserves
+      // the existing `!flex` / `md:!flex` escape hatch. Changing that behavior
+      // would be a separate compatibility decision.
+      if (hasImportantModifier) return { kind: 'utility', base: rawBase, raw: token }
+      return { kind: 'layout', value: base, raw: token }
     }
 
     const conditional: ClassifiedToken | null = iterate.find(
-      Object.entries(CONDITIONALS),
+      CONDITIONAL_ENTRIES,
       ([prefix, requires]) => {
         return token.startsWith(prefix)
           ? {
@@ -97,7 +129,7 @@ export class ClassClassifier {
           : null
       },
     )
-    if (conditional !== null) return conditional
+    if (isNonNull(conditional)) return conditional
 
     if (base === 'gap' || base.startsWith('gap-')) {
       return { kind: 'gap', raw: token }

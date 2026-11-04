@@ -51,6 +51,51 @@ describe('createTailwindPipeline — none mode (no layout prop)', () => {
   })
 })
 
+describe('createTailwindPipeline — important modifiers', () => {
+  const pipeline = createTailwindPipeline({}, silentDiagnostics)
+
+  it.each(['!flex-col', 'flex-col!', 'md:!flex-col', 'md:flex-col!'])(
+    'strips %s in grid mode just like the non-important utility',
+    (className) => {
+      const cls = resolve(pipeline, `${className} rounded`, { grid: true }) ?? ''
+      expect(cls).not.toContain(className)
+      expect(cls).toContain('rounded')
+    },
+  )
+
+  it('filters important flex utilities but preserves important display classes', () => {
+    const cls =
+      resolve(pipeline, '!flex !flex-col flex! flex-col! md:!flex md:!flex-col', {
+        grid: true,
+      }) ?? ''
+
+    expect(cls).toContain('!flex')
+    expect(cls).toContain('flex!')
+    expect(cls).toContain('md:!flex')
+
+    expect(cls).not.toContain('!flex-col')
+    expect(cls).not.toContain('flex-col!')
+    expect(cls).not.toContain('md:!flex-col')
+  })
+
+  it.each(['!gap-4', 'gap-4!', 'md:!gap-4', 'md:gap-4!'])(
+    'filters %s as a gap utility when no layout is selected',
+    (className) => {
+      const cls = resolve(pipeline, `${className} rounded`) ?? ''
+      expect(cls).not.toContain(className)
+      expect(cls).toContain('rounded')
+    },
+  )
+
+  it('preserves important display classes as the existing escape hatch', () => {
+    const cls = resolve(pipeline, '!flex flex! md:!flex md:flex!', { grid: true }) ?? ''
+    expect(cls).toContain('!flex')
+    expect(cls).toContain('flex!')
+    expect(cls).toContain('md:!flex')
+    expect(cls).toContain('md:flex!')
+  })
+})
+
 describe('createTailwindPipeline — flex/grid item utilities (#40)', () => {
   const pipeline = createTailwindPipeline({}, silentDiagnostics)
 
@@ -361,6 +406,72 @@ describe('createTailwindPipeline — layout param overrides className tokens', (
     expect(cls).toMatch(/\bgap-4\b/)
     expect(cls).not.toMatch(/\bflex-col\b/)
   })
+
+  it('explicit layout overrides a conflicting shorthand boolean', () => {
+    const cls = resolve(pipeline, 'flex flex-col grid-cols-3 gap-4 rounded', {
+      flex: true,
+      layout: 'grid',
+    })
+    expect(cls).toMatch(/\bgrid\b/)
+    expect(cls).toMatch(/\bgrid-cols-3\b/)
+    expect(cls).toMatch(/\bgap-4\b/)
+    expect(cls).not.toMatch(/\bflex-col\b/)
+  })
+
+  it('layout: none overrides a shorthand boolean and filters layout utilities', () => {
+    const cls = resolve(pipeline, 'flex flex-col grid-cols-3 gap-4 rounded', {
+      flex: true,
+      layout: 'none',
+    })
+    expect(cls).not.toMatch(/\bflex\b/)
+    expect(cls).not.toMatch(/\bflex-col\b/)
+    expect(cls).not.toMatch(/\bgrid-cols-3\b/)
+    expect(cls).not.toMatch(/\bgap-4\b/)
+    expect(cls).toMatch(/\brounded\b/)
+  })
+
+  it('explicit layout suppresses shorthand conflict warnings', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    resolve(pipeline, '', {
+      flex: true,
+      grid: true,
+      layout: 'block',
+    } as LayoutProps<typeof layoutKeys>)
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('keeps responsive display literals from replacing the unconditional display class', () => {
+    const cls =
+      resolve(pipeline, 'md:grid md:flex hover:flex md:hidden md:grid-cols-3 md:flex-row rounded', {
+        flex: true,
+        layout: 'grid',
+      }) ?? ''
+
+    const tokens = cls.split(/\s+/)
+    expect(tokens).toContain('grid')
+    expect(tokens).not.toContain('md:grid')
+    expect(tokens).not.toContain('md:flex')
+    expect(tokens).not.toContain('hover:flex')
+    expect(tokens).not.toContain('md:hidden')
+    expect(tokens).toContain('md:grid-cols-3')
+    expect(tokens).not.toContain('md:flex-row')
+    expect(tokens).toContain('rounded')
+  })
+
+  it('preserves important display escape hatches alongside explicit layout selection', () => {
+    const cls =
+      resolve(pipeline, 'md:!flex md:flex! md:!flex-col md:flex-col!', {
+        flex: true,
+        layout: 'grid',
+      }) ?? ''
+
+    const tokens = cls.split(/\s+/)
+    expect(tokens).toContain('grid')
+    expect(tokens).toContain('md:!flex')
+    expect(tokens).toContain('md:flex!')
+    expect(tokens).not.toContain('md:!flex-col')
+    expect(tokens).not.toContain('md:flex-col!')
+  })
 })
 
 describe('createTailwindPipeline — multiple display props (mutual exclusion)', () => {
@@ -501,6 +612,80 @@ describe('createTailwindPipeline — reserved layout literals', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     silent.pipeline('div', { flex: true }, 'flex rounded', undefined)
     expect(warn.mock.calls.some((c) => /reserved display class/i.test(String(c[0])))).toBe(false)
+  })
+})
+
+describe('createTailwindPipeline — reserved layout variant dimension', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('warns and ignores the layout variant while preserving display and other variants', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const pipeline = createTailwindPipeline(
+      {
+        variants: {
+          layout: { grid: 'text-red-500', flex: 'text-blue-500' },
+          pad: { sm: 'p-2', lg: 'p-8' },
+        },
+        defaultVariants: { layout: 'flex', pad: 'sm' },
+        recipeMap: { gridPreset: { layout: 'grid', pad: 'lg' } },
+        compoundVariants: [{ layout: 'grid', pad: 'sm', class: 'font-bold' }],
+      } as never,
+      warnDiagnostics,
+    )
+
+    await Promise.resolve()
+    expect(
+      warn.mock.calls.some((call) => /"layout" variant dimension conflicts/i.test(String(call[0]))),
+    ).toBe(true)
+
+    const cls =
+      pipeline.pipeline('div', { layout: 'grid', pad: 'sm' } as never, '', undefined) ?? ''
+    expect(cls).toContain('grid')
+    expect(cls).toContain('p-2')
+    expect(cls).not.toContain('text-red-500')
+    expect(cls).not.toContain('text-blue-500')
+    expect(cls).not.toContain('font-bold')
+
+    const recipeCls = pipeline.pipeline('div', { layout: 'grid' } as never, '', 'gridPreset') ?? ''
+    expect(recipeCls).toContain('grid')
+    expect(recipeCls).toContain('p-8')
+    expect(recipeCls).not.toContain('text-red-500')
+    expect(recipeCls).not.toContain('text-blue-500')
+  })
+
+  it('does not reuse precomputed classes generated for the conflicting layout dimension', () => {
+    const pipeline = createTailwindPipeline(
+      {
+        variants: {
+          layout: { grid: 'text-red-500', flex: 'text-blue-500' },
+          pad: { sm: 'p-2' },
+        },
+        // `layout` is stripped before the class lookup, so the entry that can be hit is the one
+        // keyed without it. A pipeline that kept using the table would return this stale value
+        // instead of resolving against the sanitized variants.
+        precomputedClasses: {
+          '__none__|pad:s:sm': 'precomputed-padding',
+        },
+      } as never,
+      silentDiagnostics,
+    )
+
+    const cls =
+      pipeline.pipeline('div', { layout: 'grid', pad: 'sm' } as never, '', undefined) ?? ''
+    expect(cls).toContain('grid')
+    expect(cls).toContain('p-2')
+    expect(cls).not.toContain('precomputed-padding')
+    expect(cls).not.toContain('text-red-500')
+  })
+
+  it('does not treat layout as a variant when no layout variant dimension is configured', () => {
+    const pipeline = createTailwindPipeline({ variants: { pad: { sm: 'p-2' } } }, silentDiagnostics)
+    const cls =
+      pipeline.pipeline('div', { layout: 'grid', pad: 'sm' } as never, '', undefined) ?? ''
+    expect(cls).toContain('grid')
+    expect(cls).toContain('p-2')
   })
 })
 
@@ -673,6 +858,58 @@ describe('createTailwindPipeline — async-warn mode', () => {
     const pipeline = createTailwindPipeline({ baseClassName: 'flex' }, makeAsyncWarnDiagnostics())
     resolve(pipeline, '')
     expect(warn).not.toHaveBeenCalled()
+  })
+
+  it.each(['mystery', ''])(
+    'warns and falls back to shorthand props for invalid layout %j',
+    async (layout) => {
+      const pipeline = createTailwindPipeline({}, makeAsyncWarnDiagnostics())
+      const cls = resolve(pipeline, 'flex-col grid-cols-3 gap-4 rounded', {
+        flex: true,
+        layout,
+      } as LayoutProps<typeof layoutKeys>)
+
+      expect(cls).toMatch(/\bflex\b/)
+      expect(cls).toContain('flex-col')
+      expect(cls).not.toContain('grid-cols-3')
+      expect(cls).not.toContain('mystery')
+      await Promise.resolve()
+      expect(warn).toHaveBeenCalledOnce()
+      expect(warn.mock.calls[0]![0]).toMatch(/invalid layout value/i)
+    },
+  )
+
+  it('suppresses invalid-layout warnings in production while preserving shorthand fallback', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.resetModules()
+
+    try {
+      const { createTailwindPipeline: createProductionTailwindPipeline } =
+        await import('./create-tailwind-pipeline')
+      const pipeline = createProductionTailwindPipeline({}, makeAsyncWarnDiagnostics())
+      // Widened to `string`: a `'mystery'` literal doesn't overlap `ResolvedLayout`, so the
+      // assertion would be rejected (TS2352); `string` does, as in the it.each case above.
+      const layout: string = 'mystery'
+      const cls = pipeline.pipeline(
+        'div',
+        { flex: true, layout } as LayoutProps<typeof layoutKeys>,
+        'flex-col grid-cols-3 gap-4 rounded',
+        undefined,
+      )
+
+      const tokens = (cls ?? '').split(/\s+/)
+      expect(tokens).toContain('flex')
+      expect(tokens).toContain('flex-col')
+      expect(tokens).toContain('gap-4')
+      expect(tokens).not.toContain('grid-cols-3')
+      expect(tokens).not.toContain('mystery')
+
+      await Promise.resolve()
+      expect(warn).not.toHaveBeenCalled()
+    } finally {
+      vi.unstubAllEnvs()
+      vi.resetModules()
+    }
   })
 
   it('calls console.warn after microtask flush for reserved layout literals', async () => {

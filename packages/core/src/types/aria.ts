@@ -11,8 +11,11 @@ export type {
   AriaPhase,
   AriaResult,
   AriaRule,
+  BuiltinHtmlRuleId,
   FixKind,
   RemoveAttributeFixKind,
+  RuleOverride,
+  RuleOverrides,
   Severity,
   ValidResult,
 } from '@praxis-kit/primitive'

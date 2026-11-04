@@ -58,6 +58,21 @@ describe('LayoutProps — valid usages', () => {
     const _props: Props = {}
     void _props
   })
+
+  it('accepts an explicit layout value', () => {
+    const _props: Props = { layout: 'grid' }
+    void _props
+  })
+
+  it('accepts layout: none to explicitly disable layout selection', () => {
+    const _props: Props = { layout: 'none' }
+    void _props
+  })
+
+  it('allows an explicit layout value alongside one shorthand boolean', () => {
+    const _props: Props = { flex: true, layout: 'grid' }
+    void _props
+  })
 })
 
 // ─── Rejected usages ─────────────────────────────────────────────────────────
@@ -96,6 +111,12 @@ describe('LayoutProps — rejected usages', () => {
   it('rejects block: false (only true or absent is valid)', () => {
     // @ts-expect-error — false is not assignable to the LayoutProps union
     const _props: Props = { block: false }
+    void _props
+  })
+
+  it('rejects unknown explicit layout values', () => {
+    // @ts-expect-error — explicit layout must be a known display value or 'none'
+    const _props: Props = { layout: 'mystery' }
     void _props
   })
 })

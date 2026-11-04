@@ -11,6 +11,14 @@ updates:
     # is the repository's default branch, so Dependabot reads this file from it. See CLAUDE.md.
     target-branch: "develop"
 
+    # `react` and `react-dom` publish in lockstep and `react-dom` peer-requires the matching
+    # `react` version, so a lone `react-dom` bump breaks every React test file. Bump them together.
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+
     ignore:
       # TS 7 breaks plugins/typescript's tsserverlibrary import and the CommonJS build's
       # moduleResolution setup; tsdown also flags TS 7's API as unstable. See CLAUDE.md.
@@ -26,6 +34,12 @@ updates:
       # in pnpm-workspace.yaml once `@playwright/experimental-ct-*` catches up; then drop this.
       - dependency-name: "@playwright/test"
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
+
+      # `unplugin-solid` 3.x peer-requires `solid-js` ^2 (RC) and `@solidjs/web`; the repo is on
+      # `solid-js` 1.x, so the bump fails to resolve `@solidjs/web`. Drop this when moving to
+      # Solid 2.
+      - dependency-name: "unplugin-solid"
+        update-types: ["version-update:semver-major"]
 
     # `aria-query` is WAI-ARIA reference data, not a normal dependency — a bump can move the
     # role→attribute-support fixture. Its bump PR must run `pnpm aria:regen`, commit the

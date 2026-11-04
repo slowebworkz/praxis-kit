@@ -1,5 +1,6 @@
 import type { PropNormalizer } from '../types'
 import { disabledProps, invalidProps, readonlyProps } from '@praxis-kit/contract'
+import { isString } from '@praxis-kit/guards'
 
 const HTML_FORM_NORMALIZERS: ReadonlyMap<string, readonly PropNormalizer[]> = new Map([
   ['button', [disabledProps]],
@@ -11,5 +12,5 @@ const HTML_FORM_NORMALIZERS: ReadonlyMap<string, readonly PropNormalizer[]> = ne
 ])
 
 export function getHtmlPropNormalizers(tag: unknown): readonly PropNormalizer[] | undefined {
-  return typeof tag === 'string' ? HTML_FORM_NORMALIZERS.get(tag) : undefined
+  return isString(tag) ? HTML_FORM_NORMALIZERS.get(tag) : undefined
 }

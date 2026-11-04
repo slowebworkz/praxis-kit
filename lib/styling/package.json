@@ -14,6 +14,7 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
+    "@praxis-kit/guards": "workspace:*",
     "@praxis-kit/primitive": "workspace:*",
     "class-variance-authority": "catalog:"
   },

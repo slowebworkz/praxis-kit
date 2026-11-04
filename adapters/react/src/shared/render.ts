@@ -365,8 +365,10 @@ export function render<TProps extends KnownProps>({
   filterProps,
   slotValidator,
   childrenEvaluator,
+  onNormalizedProps,
 }: RenderInput<TProps>): ReactElement {
   const state = prepareRenderState(runtime, props, filterProps)
+  onNormalizedProps?.(state.normalizedProps)
 
   /**
    * Lazily normalizes children on first access.

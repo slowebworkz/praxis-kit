@@ -11,8 +11,4 @@ export type { TagChild, FlowContentChild } from '@praxis-kit/guards'
 // `COMPONENT_DEFAULT_TAG` of its own, so every `isTag()`-based check — built-in HTML contracts
 // included — silently stops recognizing it as a valid child. `markComponentTag` stamps the symbol
 // onto the wrapper so it's recognized the same way the original component was.
-export {
-  COMPONENT_DEFAULT_TAG,
-  getComponentDefaultTag,
-  markComponentTag,
-} from '@praxis-kit/guards'
+export { COMPONENT_DEFAULT_TAG, getComponentDefaultTag, markComponentTag } from '@praxis-kit/guards'

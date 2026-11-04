@@ -86,16 +86,52 @@ snippet's parameter explicitly:
 {#snippet children(props: ResolvedSlotProps<GenericsOf<typeof buttonBundle>>)}
 ```
 
+### Composition styling paths
+
+With `compose.with`, styling resolves one of two ways:
+
+- **Combined path** — the target is a Praxis bundle (it retains styling metadata). Partner and
+  primary styling resolve once through the shared pipeline, in contribution order, and the partner's
+  own separately-resolved class is superseded.
+- **Fallback path** — the target is bundle-shaped but has no retained metadata. The partner is
+  rendered with `asChild` and its slot props are merged onto the primary's element.
+
+Both paths agree on base classes, the caller class, a `class` supplied through `compose.defaults`,
+explicit primary variant values affecting the primary contribution, single handler delivery, and
+explicit `asChild` precedence. They intentionally differ in how the partner's own variants are
+selected: on the combined path, a variant the partner declares (shared with the primary or
+partner-only) is selected from the composing component's props whenever `compose.with` exists, so
+`allProps` gates only ordinary prop forwarding. The fallback has no partner metadata and only
+reaches the partner through `allProps`. Both behaviours are pinned in `src/Polymorphic.test.ts` →
+"composition styling".
+
+### Event handlers vs. component callbacks
+
+On a rendered host element (and on the component-reference `as` path's DOM output), every
+`on`-prefixed prop is treated as a **native DOM event handler**. A camelCase `onClick` is lowercased
+to `onclick` so Svelte binds it; any other `on`-prefixed name — including a component-level callback
+such as `onValueChange` — gets the same treatment, so it is bound as a listener for a DOM event of
+that name and is **never called as a plain callback**.
+
+To pass a component-level callback through a bundle:
+
+- Use `asChild`. Your snippet receives the props exactly as authored (`onValueChange` keeps its name
+  and value), and you decide how to use them.
+- Or name the callback without an `on` prefix (for example `valueChange`).
+
+This is an API constraint of rendering through `<svelte:element>`, not an implementation detail. It
+is pinned by `src/event-normalization.test.ts`.
+
 ---
 
 ## Exports
 
-| Export                                    | Description                                                                                        |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `createContractComponent`                 | Factory: styling + ARIA enforcement + children validation — returns a bundle, not a component      |
-| `./Polymorphic.svelte`                    | The component every bundle renders through (separate subpath — a `.svelte` file, not a JS export)  |
-| `SvelteFactoryOptions` (type)             | Factory options with Svelte-specific extensions                                                    |
-| `BuiltRuntime` / `AnyBuiltRuntime` (type) | The bundle `createContractComponent` returns                                                       |
-| `GenericsOf<T>` (type)                    | Recovers the `PolymorphicGenerics` a bundle was built from                                         |
-| `ResolvedSlotProps<G>` (type)             | Props an `asChild` snippet receives — annotate with `ResolvedSlotProps<GenericsOf<typeof bundle>>` |
-| `PolymorphicComponentProps` (type)        | Props of `<Polymorphic>` itself, for wrapping it                                                   |
+| Export                                    | Description                                                                                                 |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `createContractComponent`                 | Factory: styling + ARIA enforcement + children validation — returns a bundle, not a component               |
+| `./Polymorphic.svelte`                    | The component every bundle renders through (separate subpath — a `.svelte` file, not a JS export)           |
+| `SvelteFactoryOptions` (type)             | Factory options with Svelte-specific extensions                                                             |
+| `BuiltRuntime` / `AnyBuiltRuntime` (type) | The bundle `createContractComponent` returns                                                                |
+| `GenericsOf<T>` (type)                    | Recovers bundle generics, including the direct partner’s own props/variants when `compose.allProps` is true |
+| `ResolvedSlotProps<G>` (type)             | Props an `asChild` snippet receives — annotate with `ResolvedSlotProps<GenericsOf<typeof bundle>>`          |
+| `PolymorphicComponentProps` (type)        | Props of `<Polymorphic>` itself, for wrapping it                                                            |

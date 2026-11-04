@@ -40,6 +40,7 @@ const ENTRIES = [
   'guards',
   'html',
   'utils',
+  'dom',
 ]
 
 const PEERS = [
@@ -83,6 +84,7 @@ const TYPE_CHECK_ENTRIES: StringMap<string> = {
   guards: 'COMPONENT_DEFAULT_TAG',
   html: 'ANCHOR_RULES',
   utils: 'memoize',
+  dom: 'isBackdropClick',
 }
 
 function run(cmd: string, args: string[], cwd: string): string {

@@ -20,7 +20,7 @@ import type { ComponentProps, ReactElement } from 'react'
 import { defineContract } from '@praxis-kit/adapter-utils'
 import type { ClassPluginFactory } from '@praxis-kit/core'
 import { createTailwindPipeline } from '@praxis-kit/tailwind'
-import type { LayoutKeyName } from '@praxis-kit/tailwind'
+import type { LayoutPropName } from '@praxis-kit/tailwind'
 import { createContractComponent } from './create-contract-component'
 import type { ContractProps } from '../shared'
 
@@ -144,7 +144,7 @@ describe('ContractProps — data-* passthrough (finding #43)', () => {
     // Mirrors `createTailwindPipeline`, whose plugin props are a mutually-exclusive union
     // (`{ flex: true } | { grid: true } | …`) — before finding #43's fix that union distributed
     // through `ContractProps` and `data-slot` was no longer a common member. Finding #44's
-    // `FlattenLayout` then collapses the union entirely, so `data-slot` is a plain member here.
+    // `FlattenPluginProps` then collapses the union entirely, so `data-slot` is a plain member here.
     // Shape matches `LayoutProps`: one-of the exclusive `true`s, or none of them.
     type LayoutUnion =
       { flex: true; grid?: never } | { grid: true; flex?: never } | { flex?: never; grid?: never }
@@ -168,7 +168,7 @@ describe('ContractProps — data-* passthrough (finding #43)', () => {
     function BoxWrapper({
       'data-slot': slot = 'wrapper',
       ...rest
-    }: Omit<ContractProps<typeof Box>, LayoutKeyName>): ReactElement {
+    }: Omit<ContractProps<typeof Box>, LayoutPropName>): ReactElement {
       return <Box {...rest} data-slot={slot} />
     }
     const _el = <BoxWrapper data-slot="custom" />
@@ -187,7 +187,7 @@ describe('ContractProps — layout-union collapse (finding #44)', () => {
   // ~22-member mutually-exclusive union. Before the fix that union distributed through
   // `ContractProps`, so the extracted type was a ~22-way union with no common member: a
   // rest-destructure tripped `TS2700`, `Omit`/`Pick`/`Merge` tripped `TS2590`, and any prop the
-  // union doesn't share (`data-slot`) was inaccessible. `FlattenLayout` collapses it to one flat
+  // union doesn't share (`data-slot`) was inaccessible. `FlattenPluginProps` collapses it to one flat
   // object where each layout key is an optional `true` — for the `ContractProps` extraction path
   // only; the strict union stays on the component's own call overloads (asserted last).
   const Box = createContractComponent(
@@ -230,7 +230,7 @@ describe('ContractProps — layout-union collapse (finding #44)', () => {
     // The realistic finding-#44 wrapper shape: take the contract minus the display props, forward
     // the rest. (Forwarding a flattened layout prop back onto the strict call signature still
     // needs an explicit branch or cast — that union is deliberately kept on the component.)
-    function BoxWrapper(props: Omit<ContractProps<typeof Box>, LayoutKeyName>): ReactElement {
+    function BoxWrapper(props: Omit<ContractProps<typeof Box>, LayoutPropName>): ReactElement {
       return <Box {...props} />
     }
     const _el = <BoxWrapper data-slot="custom" />

@@ -6,7 +6,6 @@ import type {
   ContractPresetOf,
   ContractPropsOf,
   ContractTagOf,
-  ContractVariantsOf,
   ElementForTag,
   ElementType,
   EmptyRecord,
@@ -16,8 +15,21 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { finalizeComponent, invariant } from '@praxis-kit/adapter-utils'
-import { isFunction } from '@praxis-kit/guards'
+import {
+  diagnoseIncompleteComposition,
+  attachCompositionStyleMetadata,
+  composeStyleProps,
+  filterOwnedProps,
+  filterAllPropsForPartner,
+  mergeCompositionClassNames,
+  COMPOSITION_STYLE_REQUEST_PROP,
+  isCompositionStyleRequest,
+  finalizeComponent,
+  invariant,
+} from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsValidation } from '@praxis-kit/adapter-utils'
+import type { ContractVariantsWithComposeOf } from '@praxis-kit/compose-props'
+import { isFunction, isString } from '@praxis-kit/guards'
 import { createElement, useCallback, useRef } from 'react'
 import type { ComponentType, Ref } from 'react'
 import type { PolymorphicComponent, ReactFactoryOptions, UnknownProps } from '../shared'
@@ -61,10 +73,10 @@ import { buildRuntime } from './build-runtime'
  * `C` is now the single authoritative input; these are its projection, not a fresh inference.
  */
 export function createContractComponent<
-  C extends ReactFactoryOptions,
+  const C extends ReactFactoryOptions,
   TDefault extends ElementType = ContractTagOf<C>,
   Props extends UnknownProps = ContractPropsOf<C>,
-  Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
+  Variants extends Readonly<VariantMap> = ContractVariantsWithComposeOf<C>,
   TPreset extends RecipeMap<VariantMap> = ContractPresetOf<C>,
   TPlugin extends AnyClassPluginFactory = ContractPluginOf<C>,
   TAllowed extends ElementType = ContractAllowedOf<C>,
@@ -72,7 +84,7 @@ export function createContractComponent<
 >(
   options: C & {
     readonly subComponents?: TSubComponents
-  },
+  } & ComposeDefaultsValidation<C>,
 ): MergeRecords<
   PolymorphicComponent<
     PolymorphicGenerics<
@@ -107,14 +119,28 @@ export function createContractComponent<
   )
   /** Captured once from the factory options so the callback ref below can remain stable. */
   const { onElement, compose } = options
+  diagnoseIncompleteComposition(compose, options.name, bundle.runtime.options.diagnostics)
+  const compositionClassResolver = bundle.compositionClassResolver
 
   function Component({ ref, ...props }: UnknownProps & { ref?: Ref<unknown> }) {
     /**
      * Keep current on every render so the stable callback ref can always read the latest
      * props via getProps() without re-registering.
      */
-    const propsRef = useRef(props)
-    propsRef.current = props
+    const compositionStyleRequestValue = props[COMPOSITION_STYLE_REQUEST_PROP]
+    const compositionStyleRequest = isCompositionStyleRequest(compositionStyleRequestValue)
+      ? compositionStyleRequestValue
+      : undefined
+    const { [COMPOSITION_STYLE_REQUEST_PROP]: _compositionStyleRequest, ...componentProps } = props
+    const renderBundle =
+      compositionStyleRequest && componentProps.asChild === true
+        ? {
+            ...bundle,
+            runtime: { ...bundle.runtime, resolveClasses: compositionStyleRequest.resolveClasses },
+          }
+        : bundle
+    const propsRef = useRef(componentProps)
+    propsRef.current = componentProps
     const cleanupRef = useRef<(() => void) | undefined>(undefined)
 
     /**
@@ -159,35 +185,96 @@ export function createContractComponent<
      * `compose` makes this component always render `asChild` into `compose.with`, as if the
      * consumer had hand-written `<With asChild><ThisComponent {...props} /></With>` — but only
      * when the consumer didn't already take explicit control via their own `asChild`/`render`.
-     * `render({ ...bundle, props, ref: null })` produces this component's own normal-mode output
-     * (no ref — the ref belongs on `with`'s own Slot, not the inner element); `with` is then
-     * rendered as an ordinary element with `asChild: true`, so `with`'s own generated component
+     * When both contracts are Praxis components, the inner render suppresses its local classes;
+     * the partner receives a private resolver request and applies the combined classes exactly
+     * once through its Slot. External components retain the existing two-component fallback.
+     * The inner render receives no ref — the ref belongs on `with`'s own Slot, not the inner
+     * element. `with` is then rendered as an ordinary element with `asChild: true`, so its
+     * generated component
      * runs its own `render()` pipeline from here, exactly as it already does for a hand-written
      * nested `asChild` call (including its own `allowedAs`/`nativeTagBehavior` checks).
-     * `compose.allProps` additionally spreads this component's own raw props onto `with` (before
-     * the `asChild`/`ref`/`children` overrides below, so those three always win) — opt-in, since
-     * it lets `with`'s own contract resolve variants/`compounds` against props it wasn't
-     * necessarily written to expect.
+     * `compose.allProps` additionally spreads this component's own raw props onto `with`, except
+     * `as`, which the inner render has already consumed. The `asChild`/`ref`/`children` overrides
+     * below always win. This controls raw prop forwarding only; combined styling resolution is
+     * independent of this option.
      */
-    if (compose?.with !== undefined && props.asChild === undefined && !isFunction(props.render)) {
-      const innerElement = render({ ...bundle, props, ref: null })
+    if (
+      compose?.with !== undefined &&
+      componentProps.asChild === undefined &&
+      !isFunction(componentProps.render)
+    ) {
+      let primaryResolvedProps: Readonly<AnyRecord> | undefined
+      const innerElement = render({
+        ...(compositionClassResolver
+          ? { ...bundle, runtime: { ...bundle.runtime, resolveClasses: (): undefined => {} } }
+          : bundle),
+        props: componentProps,
+        ref: null,
+        ...(compositionClassResolver && {
+          onNormalizedProps: (normalizedProps) => {
+            primaryResolvedProps = normalizedProps
+          },
+        }),
+      })
       return createElement(compose.with as ComponentType<UnknownProps>, {
-        ...(compose.allProps ? props : undefined),
+        ...filterOwnedProps(compose.defaults, bundle.ownedKeys, ['as']),
+        ...(compose.allProps
+          ? filterAllPropsForPartner(
+              componentProps,
+              bundle.ownedKeys,
+              bundle.runtime.options.variantKeys,
+              compose.with,
+              ['as'],
+            )
+          : undefined),
+        ...(compositionClassResolver
+          ? {
+              [COMPOSITION_STYLE_REQUEST_PROP]: {
+                resolveClasses: (
+                  tag: unknown,
+                  partnerProps: AnyRecord,
+                  partnerClassName?: string | string[],
+                  partnerRecipe?: string,
+                ) =>
+                  compositionClassResolver(
+                    tag,
+                    composeStyleProps(
+                      partnerProps,
+                      componentProps,
+                      bundle.runtime.options,
+                      compose.defaults,
+                      compositionClassResolver.partner,
+                      compositionClassResolver.ownedKeys,
+                      primaryResolvedProps,
+                    ),
+                    mergeCompositionClassNames(
+                      partnerClassName,
+                      componentProps.className as string | string[] | undefined,
+                    ),
+                    isString(componentProps.recipe) ? componentProps.recipe : partnerRecipe,
+                  ),
+              },
+            }
+          : undefined),
         asChild: true,
         ref: mergedRef ?? null,
         children: innerElement,
       })
     }
 
-    return render({ ...bundle, props, ref: mergedRef ?? null })
+    return render({ ...renderBundle, props: componentProps, ref: mergedRef ?? null })
   }
 
   applyDisplayName(Component, options.name)
   const { defaultTag } = bundle.runtime.options
-  const assembled = finalizeComponent(
-    Component,
-    typeof defaultTag === 'string' ? defaultTag : undefined,
-    options.subComponents,
+  const assembled = attachCompositionStyleMetadata(
+    finalizeComponent(
+      Component,
+      isString(defaultTag) ? defaultTag : undefined,
+      options.subComponents,
+    ),
+    bundle.runtime.options,
+    options.styling?.plugin,
   )
 
   type G = PolymorphicGenerics<

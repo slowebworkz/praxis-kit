@@ -1,10 +1,11 @@
 import type { OmitIndexSignature } from 'type-fest'
 import type {
+  AnyClassPluginFactory,
   AnyRecord,
   ContractAllowedOf,
   ContractGenericsOf,
+  ContractPluginOf,
   ContractPresetOf,
-  ContractPropsOf,
   ContractTagOf,
   ContractVariantsOf,
   ElementType,
@@ -14,7 +15,6 @@ import type {
   PropsOf,
   RecipeMap,
   VariantMap,
-  VariantsOf,
 } from '@praxis-kit/primitive'
 import type { HasContract } from '@praxis-kit/contract-props'
 import type { MergeComposedProps } from './merge-policy'
@@ -26,24 +26,23 @@ import type { MergeComposedProps } from './merge-policy'
  * untyped/untrusted at the type level, so this must degrade gracefully rather than require `with`
  * to be a praxis-kit component.
  */
-export type RecoveredContractOf<T> = T extends HasContract<infer C extends FactoryOptions>
-  ? C
-  : never
+export type RecoveredContractOf<T> =
+  T extends HasContract<infer C extends FactoryOptions> ? C : never
 
 /**
- * `C`'s composed partner's contract, or `never` if `C` doesn't compose, composition isn't
- * `allProps`, or `with` isn't a recognizable praxis-kit component. Isolates the three-way gate
- * (compose present / `allProps` true / `with` recognizable) in one place instead of repeating it
- * at every downstream read.
+ * `C`'s direct composed partner's contract, or `never` if `C` has no `compose.with` or
+ * `with` isn't a recognizable Praxis component. Composition styling variants are public whenever
+ * `with` exists; `allProps` gates only the partner's ordinary props, handled separately by
+ * `MergePropsOf`.
  */
 export type ComposedContractOf<C extends FactoryOptions> = C extends {
-  compose: { allProps: true; with: infer W }
+  compose: { with: infer W }
 }
   ? RecoveredContractOf<W>
   : never
 
 /**
- * Every one of the five named types below exists for the same reason: a generic argument fed
+ * Each named helper below exists for the same reason: a generic argument fed
  * into `PolymorphicGenerics<...>` from within `ContractGenericsWithComposeOf`'s own
  * self-referential conditional needs an `extends infer X extends Constraint ? X : Constraint`
  * guard, confirmed necessary by a real-component test
@@ -51,10 +50,35 @@ export type ComposedContractOf<C extends FactoryOptions> = C extends {
  * silently widening to the full default `ElementType` when passed through unguarded — even
  * though it resolves correctly in total isolation, and even though sibling arguments in the same
  * call resolved correctly unguarded. This is TypeScript silently falling back to a type
- * parameter's own default rather than erroring, for a generic argument that depends on this
- * alias's own self-reference, not a rule about which position breaks — so every argument gets
- * its own named, guarded type, not only the one a specific test happened to catch.
+ * parameter's own default rather than erroring, for a generic argument that depends on this alias's
+ * own self-reference, not a rule about which position breaks — so every argument gets its own
+ * named, guarded type, not only the one a specific test happened to catch.
  */
+/** A contract that sets no `styling.plugin` projects the wide `AnyClassPluginFactory`. */
+type HasPlugin<C extends FactoryOptions> = [AnyClassPluginFactory] extends [ContractPluginOf<C>]
+  ? false
+  : true
+
+/**
+ * The one class-plugin factory whose props `ContractGenericsWithComposeOf<C>` carries, matching
+ * the runtime selection (`DECISIONS.md` → "Composition class-plugin selection — primary factory
+ * wins"): `C`'s own plugin if it sets one, otherwise the *direct* partner's — and only when
+ * `compose.allProps: true`, the same condition `MergePropsOf` uses to fold a partner's props in
+ * (a partner whose props stay private contributes no plugin props to flatten). Plugins are never
+ * combined and nested partners are never walked. Lets a caller flatten plugin-contributed props
+ * without knowing which plugin, or which contract in the chain, owns them.
+ */
+export type ComposedPluginOf<C extends FactoryOptions> =
+  HasPlugin<C> extends true
+    ? ContractPluginOf<C>
+    : C extends { compose: { allProps: true } }
+      ? [ComposedContractOf<C>] extends [never]
+        ? ContractPluginOf<C>
+        : ComposedContractOf<C> extends infer CC extends FactoryOptions
+          ? ContractPluginOf<CC>
+          : never
+      : ContractPluginOf<C>
+
 type DefaultTagOf<C extends FactoryOptions> =
   ContractTagOf<C> extends infer TDefault extends ElementType ? TDefault : ElementType
 
@@ -63,20 +87,57 @@ type PresetOf<C extends FactoryOptions> =
     ? TPreset
     : Readonly<EmptyRecord>
 
+/**
+ * Merge partner recipes first and primary recipes second, matching runtime recipe precedence.
+ * Duplicate recipe names retain partner-only variant selections while primary values override
+ * the same variant key. Only the direct partner's declared preset map is used here; nested
+ * composition remains the partner component's own rendering responsibility.
+ */
+type MergePresetMaps<
+  Partner extends RecipeMap<Readonly<VariantMap>>,
+  Primary extends RecipeMap<Readonly<VariantMap>>,
+> = {
+  [Name in keyof Partner | keyof Primary]: Name extends keyof Primary
+    ? Name extends keyof Partner
+      ? MergeSelections<Partner[Name], Primary[Name]>
+      : Primary[Name]
+    : Name extends keyof Partner
+      ? Partner[Name]
+      : never
+}
+
+/** One recipe's variant selections: the primary's value wins a shared variant key. */
+type MergeSelections<Partner, Primary> = {
+  [Key in keyof Partner | keyof Primary]: Key extends keyof Primary
+    ? Primary[Key]
+    : Key extends keyof Partner
+      ? Partner[Key]
+      : never
+}
+
 type AllowedOf<C extends FactoryOptions> =
   ContractAllowedOf<C> extends infer TAllowed extends ElementType ? TAllowed : ElementType
 
 /**
- * `C`'s own props/variants with the index signature `ContractPropsOf<C>`/`ContractVariantsOf<C>`
- * carry (`DeclaredPropsFrom`'s `& AnyRecord`, `@praxis-kit/primitive`) stripped first. Once two
- * such index-signature-carrying objects are unioned via `keyof Own | keyof Composed`, `keyof`
- * absorbs every literal key into the bare `string` the index signature already implies, so
- * `MergeComposedProps`'s per-key mapped type would silently degrade to iterating over `string`
- * instead of each contract's actual declared keys. Stripping here, before the merge, keeps
- * `keyof` resolved to the real literal key union on both sides.
+ * Strips index signatures before composition. The effective props and variants can carry index
+ * signatures from the primitive contract types. Once two such objects are merged, `keyof` can
+ * absorb every literal key into the broad index signature, preventing `MergeComposedProps` from
+ * iterating over each contract's actual declared keys.
  */
-type OwnPropsOf<C extends FactoryOptions> = OmitIndexSignature<ContractPropsOf<C>>
-type OwnVariantsOf<C extends FactoryOptions> = OmitIndexSignature<ContractVariantsOf<C>>
+type StripIndexSignature<T> = T extends object ? OmitIndexSignature<T> : T
+
+/**
+ * `C`'s own effective props, including props contributed by plugins, with index signatures
+ * stripped before composition. Deriving these from `ContractGenericsOf<C>` rather than
+ * `ContractPropsOf<C>` is important: raw contract props do not necessarily include plugin
+ * contributions such as layout variants (`flex`, `grid`, etc.).
+ *
+ * Keep the conditional distributive: a layout plugin can contribute a mutually exclusive union.
+ * Distributing before stripping index signatures preserves member-specific keys so composition
+ * doesn't lose a key such as `flex` when the composed partner doesn't declare it.
+ */
+type OwnPropsOf<C extends FactoryOptions> = StripIndexSignature<PropsOf<ContractGenericsOf<C>>>
+type OwnVariantsOf<C extends FactoryOptions> = StripIndexSignature<ContractVariantsOf<C>>
 
 /**
  * The composed partner's own effective props/variants — **recursing on
@@ -88,12 +149,14 @@ type OwnVariantsOf<C extends FactoryOptions> = OmitIndexSignature<ContractVarian
  * this distinction is the one the validation spike's nested-composition assertion caught on the
  * first implementation attempt. Index-signature-stripped for the same reason as `OwnPropsOf`.
  */
-type ComposedPropsOf<CC extends FactoryOptions> = OmitIndexSignature<
+type ComposedPropsOf<CC extends FactoryOptions> = StripIndexSignature<
   PropsOf<ContractGenericsWithComposeOf<CC>>
 >
-type ComposedVariantsOf<CC extends FactoryOptions> = OmitIndexSignature<
-  VariantsOf<ContractGenericsWithComposeOf<CC>>
->
+
+/** Only the direct partner's own styling variants are merged; nested composition remains
+ *  that component's rendering responsibility and is not flattened into this component's style
+ *  contract. */
+type ComposedVariantsOf<CC extends FactoryOptions> = OwnVariantsOf<CC>
 
 /**
  * `C`'s own props merged with `CC`'s, guarded against `AnyRecord` — `MergeComposedProps` always
@@ -102,12 +165,14 @@ type ComposedVariantsOf<CC extends FactoryOptions> = OmitIndexSignature<
  * other argument in this file is guarded, not because props merging can actually fail the
  * constraint.
  */
-type MergePropsOf<C extends FactoryOptions, CC extends FactoryOptions> = MergeComposedProps<
-  OwnPropsOf<C>,
-  ComposedPropsOf<CC>
-> extends infer MergedProps extends AnyRecord
-  ? MergedProps
-  : AnyRecord
+type MergePropsOf<C extends FactoryOptions, CC extends FactoryOptions> = C extends {
+  compose: { allProps: true }
+}
+  ? MergeComposedProps<OwnPropsOf<C>, ComposedPropsOf<CC>> extends infer MergedProps extends
+      AnyRecord
+    ? MergedProps
+    : AnyRecord
+  : OwnPropsOf<C>
 
 /**
  * `C`'s own variants merged with `CC`'s, guarded against `Readonly<VariantMap>`.
@@ -120,13 +185,26 @@ type MergePropsOf<C extends FactoryOptions, CC extends FactoryOptions> = MergeCo
  * trigger for a real collision anymore — kept only for the same "guard every self-referential
  * argument" reason every other argument in this file is guarded.
  */
-type MergeVariantsOf<C extends FactoryOptions, CC extends FactoryOptions> = MergeComposedProps<
-  OwnVariantsOf<C>,
-  ComposedVariantsOf<CC>,
-  true
-> extends infer MergedVariants extends Readonly<VariantMap>
-  ? MergedVariants
-  : never
+type MergeVariantsOf<C extends FactoryOptions, CC extends FactoryOptions> =
+  MergeComposedProps<
+    OwnVariantsOf<C>,
+    ComposedVariantsOf<CC>,
+    true
+  > extends infer MergedVariants extends Readonly<VariantMap>
+    ? MergedVariants
+    : never
+
+/**
+ * `C`'s presets merged with `CC`'s, guarded against the recipe constraint on the merged variants
+ * for the same self-reference reason as the other `Merge*Of` helpers. The fallback is `C`'s own
+ * presets, i.e. composition adds nothing it cannot prove well-formed.
+ */
+type MergePresetsOf<C extends FactoryOptions, CC extends FactoryOptions> =
+  MergePresetMaps<PresetOf<CC>, PresetOf<C>> extends infer MergedPresets extends RecipeMap<
+    MergeVariantsOf<C, CC>
+  >
+    ? MergedPresets
+    : PresetOf<C>
 
 /**
  * The `PolymorphicGenerics` a composing component's `ContractProps<T>` actually needs — `C`'s own
@@ -143,8 +221,26 @@ export type ContractGenericsWithComposeOf<C extends FactoryOptions> =
             DefaultTagOf<C>,
             MergePropsOf<C, CC>,
             MergeVariantsOf<C, CC>,
-            PresetOf<C>,
+            MergePresetsOf<C, CC>,
             AllowedOf<C>
           >
+        : never
+    : never
+
+/**
+ * Only the variants half of `ContractGenericsWithComposeOf<C>`: `C`'s own styling variants with its
+ * direct partner's folded in, and `ContractVariantsOf<C>` untouched when there's nothing to
+ * compose. A composing component's *call signature* uses this so the partner's variants are usable
+ * inline (`<Card shadow />`), matching `ContractProps<typeof Card>`. Deliberately excludes the
+ * partner's ordinary and plugin props — those stay an extraction-time concern (see `DECISIONS.md`
+ * → composed plugin props known limit); composition variants are public whenever `with` exists, so
+ * unlike `MergePropsOf` this does not depend on `allProps`.
+ */
+export type ContractVariantsWithComposeOf<C extends FactoryOptions> =
+  ComposedContractOf<C> extends infer CC
+    ? [CC] extends [never]
+      ? ContractVariantsOf<C>
+      : CC extends FactoryOptions
+        ? MergeVariantsOf<C, CC>
         : never
     : never

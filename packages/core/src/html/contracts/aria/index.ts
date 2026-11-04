@@ -1,11 +1,22 @@
 export { landmarkContract } from './landmarks'
 export {
+  checkboxContract,
+  comboboxContract,
   dialogContract,
   gridContract,
   listboxContract,
   menuContract,
+  menuitemContract,
+  menuitemcheckboxContract,
+  menuitemradioContract,
   menubarContract,
+  optionContract,
+  radioContract,
   radiogroupContract,
+  tabContract,
+  tabpanelContract,
   tablistContract,
+  toolbarContract,
   treeContract,
+  treeitemContract,
 } from './widgets'

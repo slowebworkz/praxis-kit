@@ -3,8 +3,21 @@ import { describe, it, expect, afterEach, vi } from 'vitest'
 import { render as solidRender, cleanup } from '@solidjs/testing-library'
 import { createSignal } from 'solid-js'
 import { silentDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
+import {
+  TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+  TAILWIND_DISPLAY_PARITY_VARIANTS,
+  tailwindDisplayParitySuite,
+  createComposeConflictFixture,
+  TAILWIND_COMPOSE_CONFLICT_COMPONENT,
+  tailwindComposePluginParitySuite,
+  createCountedPlugin,
+  tailwindAsChildPluginParitySuite,
+  tailwindPolymorphicElementParitySuite,
+} from '@praxis-kit/tailwind-testing'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
+import { definedProp } from '@praxis-kit/test-utils'
 
 afterEach(cleanup)
 
@@ -25,13 +38,6 @@ describe('createContractComponent (Solid adapter)', () => {
     expect(container.querySelector('div')).toBeTruthy()
   })
 
-  it('renders a different tag via the as prop', () => {
-    const Comp = createContractComponent({ tag: 'div' })
-    const { container } = solidRender(() => <Comp as="section" />)
-    expect(container.querySelector('section')).toBeTruthy()
-    expect(container.querySelector('div')).toBeNull()
-  })
-
   it('as={Component}: renders through the referenced component via <Dynamic>, not the default tag', () => {
     // Solid already handles a component-valued `as` mechanically — `resolveTag`/`<Dynamic
     // component={tag()}>` are reference-safe with no special casing needed. This test is the
@@ -48,13 +54,6 @@ describe('createContractComponent (Solid adapter)', () => {
     const Comp = createContractComponent({ tag: 'div', styling: { base: 'base-class' } })
     const { container } = solidRender(() => <Comp />)
     expect(container.querySelector('div')?.className).toBe('base-class')
-  })
-
-  it('merges caller class with base', () => {
-    const Comp = createContractComponent({ tag: 'div', styling: { base: 'base' } })
-    const { container } = solidRender(() => <Comp class="caller" />)
-    expect(container.querySelector('div')?.className).toContain('base')
-    expect(container.querySelector('div')?.className).toContain('caller')
   })
 
   it('forwards a ref to the DOM element', () => {
@@ -193,6 +192,31 @@ describe('createContractComponent (Solid adapter)', () => {
     expect(container.querySelector('a')?.getAttribute('data-slot')).toBe('no')
   })
 
+  it('asChild updates the mounted element in place and runs the render function once', () => {
+    // A slot-prop change (here, the resolved class) must not re-run the render function and
+    // rebuild its element: that would drop focus, uncontrolled input state, and any ref held on
+    // the element.
+    const Comp = createContractComponent({ tag: 'div', styling: { base: 'base' } })
+    const [extra, setExtra] = createSignal('a')
+    let renderFnCalls = 0
+    const { container } = solidRender(() => (
+      <Comp asChild class={extra()}>
+        {(props) => {
+          renderFnCalls++
+          return <a {...props} />
+        }}
+      </Comp>
+    ))
+    const element = container.querySelector('a')!
+
+    setExtra('b')
+
+    expect(container.querySelector('a')).toBe(element)
+    expect(element.className).toContain('b')
+    expect(element.className).not.toContain(' a')
+    expect(renderFnCalls).toBe(1)
+  })
+
   it('asChild forwards ref to the rendered element', () => {
     const Comp = createContractComponent({ tag: 'div' })
     let el: HTMLAnchorElement | undefined
@@ -210,27 +234,223 @@ describe('createContractComponent (Solid adapter)', () => {
   })
 
   // `compose`'s renders-through/tag-conflict/props-land/ref cases are covered by the shared
-  // conformance suite (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`,
+  // conformance suite (`conformance.test.tsx` → `testing/packages/adapter-testing/src/conformance.ts`,
   // "conformance — compose"). That suite can't express the "explicit asChild wins" case for
   // Solid, though (its own `asChild: false` capability — Solid's asChild needs a literal
   // render-function child, incompatible with the harness's `ChildSpec`), so this one case stays
   // adapter-specific, same convention `asChild` itself already uses.
 
-  it('compose: an explicit asChild from the consumer wins over compose', () => {
-    const BoxA = createContractComponent({ tag: 'div', styling: { base: 'class-a' } })
+  it('compose: a class supplied through compose.defaults survives combined styling', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'partner-base',
+        variants: { intent: { ghost: 'partner-ghost', solid: 'partner-solid' } },
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      // @ts-expect-error compose.defaults is variant-only; `class` is rejected by the type but still honored at runtime
+      compose: { with: Surface, defaults: { class: 'default-class', intent: 'ghost' } },
+      styling: {
+        base: 'primary-base',
+        variants: { intent: { ghost: 'primary-ghost', solid: 'primary-solid' } },
+        defaults: { intent: 'solid' },
+      },
+    })
+
+    const { container } = solidRender(() => <Card class="caller-class" />)
+    const className = container.querySelector('div')!.className
+
+    expect(className).toContain('default-class')
+    expect(className).toContain('caller-class')
+    expect(className).toContain('partner-base')
+    expect(className).toContain('primary-base')
+    expect(className).toContain('partner-solid')
+    expect(className).not.toContain('partner-ghost')
+    expect(className).not.toContain('primary-ghost')
+  })
+
+  it('compose: reactively updates plugin-owned flex styling selected from the partner', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4', plugin: createTailwindPipeline },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'rounded' },
+    })
+    const [flex, setFlex] = createSignal(false)
+    const { container } = solidRender(() => (
+      <Card
+        {...({
+          get flex() {
+            return flex()
+          },
+        } as AnyRecord)}
+      />
+    ))
+    const element = container.querySelector('div')!
+
+    // Without a display prop the Tailwind plugin drops container utilities (`grid-cols-3`,
+    // `gap-4`); `flex` selects the flex family, which keeps `gap-4` and still drops `grid-cols-3`.
+    expect(element.className).toContain('rounded')
+    expect(element.className).not.toContain('flex')
+    expect(element.className).not.toContain('gap-4')
+
+    setFlex(true)
+    expect(container.querySelector('div')).toBe(element)
+    expect(element.className).toContain('flex')
+    expect(element.className).toContain('gap-4')
+    expect(element.className).not.toContain('grid-cols-3')
+
+    setFlex(false)
+    expect(element.className).not.toContain('flex')
+    expect(element.className).not.toContain('gap-4')
+    expect(element.className).toContain('rounded')
+  })
+
+  it('compose: updates both styling contributions when a shared variant changes', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'partner-base',
+        variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: {
+        base: 'primary-base',
+        variants: { tone: { quiet: 'primary-quiet', loud: 'primary-loud' } },
+      },
+    })
+    const [tone, setTone] = createSignal<'quiet' | 'loud'>('quiet')
+    const { container } = solidRender(() => <Card tone={tone()} />)
+
+    const element = container.querySelector('div')!
+    expect(element.className).toContain('partner-quiet')
+    expect(element.className).toContain('primary-quiet')
+
+    setTone('loud')
+
+    expect(element.className).toContain('partner-loud')
+    expect(element.className).toContain('primary-loud')
+    expect(element.className).not.toContain('partner-quiet')
+    expect(element.className).not.toContain('primary-quiet')
+  })
+
+  it('compose: reactively resolves a partner-only recipe', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'partner-base',
+        variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+        presets: { emphasis: { tone: 'loud' } },
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+    const [recipe, setRecipe] = createSignal<string | undefined>(undefined)
+    const { container } = solidRender(() => (
+      // `emphasis` belongs only to Surface. Spread keeps this runtime regression test focused on
+      // forwarding rather than requiring the primary component to declare the partner's recipe.
+      <Card
+        {...({
+          get recipe() {
+            return recipe()
+          },
+        } as AnyRecord)}
+      />
+    ))
+
+    const element = container.querySelector('div')!
+    expect(element.className).toContain('partner-base')
+    expect(element.className).toContain('primary-base')
+    expect(element.className).not.toContain('partner-loud')
+
+    setRecipe('emphasis')
+
+    expect(element.className).toContain('partner-loud')
+    expect(element.className).toContain('primary-base')
+    expect(element.className).not.toContain('partner-quiet')
+  })
+
+  it('compose: reactively forwards partner-only variants when allProps is enabled', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'partner-base',
+        variants: { tone: { quiet: 'partner-quiet', loud: 'partner-loud' } },
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface, allProps: true },
+      styling: { base: 'primary-base' },
+    })
+    const [tone, setTone] = createSignal<'quiet' | 'loud'>('quiet')
+    const { container } = solidRender(() => (
+      // `tone` is intentionally defined only by Surface, so use a spread to exercise runtime
+      // forwarding without widening Card's public variant contract.
+      <Card
+        {...({
+          get tone() {
+            return tone()
+          },
+        } as AnyRecord)}
+      />
+    ))
+
+    const element = container.querySelector('div')!
+    expect(element.className).toContain('partner-quiet')
+    expect(element.className).toContain('primary-base')
+
+    setTone('loud')
+
+    // A styling-only change updates the mounted element in place; it is not replaced.
+    expect(container.querySelector('div')).toBe(element)
+    expect(element.isConnected).toBe(true)
+    expect(element.className).toContain('partner-loud')
+    expect(element.className).toContain('primary-base')
+    expect(element.className).not.toContain('partner-quiet')
+  })
+
+  it('compose: an explicit asChild from the consumer uses only primary styling', () => {
+    const BoxA = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'partner-base',
+        variants: { intent: { ghost: 'partner-intent-ghost' } },
+        presets: { emphasis: { intent: 'ghost' } },
+      },
+    })
     const BoxB = createContractComponent({
       tag: 'button',
-      compose: { with: BoxA },
-      styling: { base: 'class-b' },
+      compose: { with: BoxA, defaults: { intent: 'ghost' } },
+      styling: {
+        base: 'primary-base',
+        variants: { size: { lg: 'primary-size-lg' } },
+        presets: { emphasis: { size: 'lg' } },
+      },
     })
 
     const { container } = solidRender(() => (
-      <BoxB asChild>{(props: AnyRecord) => <a {...props} />}</BoxB>
+      <BoxB asChild {...({ recipe: 'emphasis' } as AnyRecord)}>
+        {(props: AnyRecord) => <a {...props} />}
+      </BoxB>
     ))
 
     const el = container.querySelector('a')!
-    expect(el.className).toContain('class-b')
-    expect(el.className).not.toContain('class-a')
+    expect(el.className).toContain('primary-base')
+    expect(el.className).toContain('primary-size-lg')
+    expect(el.className).not.toContain('partner-base')
+    expect(el.className).not.toContain('partner-intent-ghost')
     expect(container.querySelector('button')).toBeNull()
   })
 
@@ -359,4 +579,229 @@ describe('extracted prop type — extraction outside JSX', () => {
     const props: ButtonProps = { disabled: true, type: 'submit' }
     void props
   })
+})
+
+tailwindDisplayParitySuite({
+  renderers: {
+    props: ({ tag = 'div', displayProps, layout, baseClassName, variantProps, className }) => {
+      const Box = createContractComponent({
+        tag,
+        styling: {
+          base: baseClassName ?? 'base',
+          plugin: createTailwindPipeline,
+          variants: TAILWIND_DISPLAY_PARITY_VARIANTS,
+          compounds: TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+        },
+      })
+      const props = {
+        ...displayProps,
+        ...variantProps,
+        layout,
+        class: className,
+      } as AnyRecord
+      const { container } = solidRender(() => <Box {...props} />)
+      return container.querySelector(tag)!.className
+    },
+  },
+  reactivity: async (steps) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    const [props, setProps] = createSignal<AnyRecord>({})
+    const { container, unmount } = solidRender(() => <Box {...props()} />)
+    const snapshots: string[] = []
+    for (const step of steps) {
+      setProps({ ...(step.displayProps ?? {}), layout: step.layout, class: step.className })
+      snapshots.push(container.querySelector('div')!.className)
+    }
+    unmount()
+    return snapshots
+  },
+})
+
+tailwindComposePluginParitySuite({
+  renderPartnerPlugin: () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4 rounded', plugin: createTailwindPipeline },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { allProps: true, with: Surface },
+      styling: { base: 'border' },
+    })
+    const { container } = solidRender(() => <Card {...({ flex: true } as AnyRecord)} />)
+    const element = container.querySelector('div')!
+    return { className: element.className, flexAttribute: element.getAttribute('flex') }
+  },
+  renderPrimaryWins: () => {
+    const fixture = createComposeConflictFixture()
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const Card = createContractComponent({
+      tag: 'div',
+      name: TAILWIND_COMPOSE_CONFLICT_COMPONENT,
+      enforcement: { diagnostics: fixture.diagnostics },
+      compose: { allProps: true, with: Surface },
+      styling: { base: 'primary-base', plugin: fixture.primaryPlugin },
+    })
+    fixture.afterComposition()
+    const { container } = solidRender(() => <Card />)
+    const element = container.querySelector('div')!
+    return fixture.result({
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    })
+  },
+  renderOwnedDefault: () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: createTailwindPipeline },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { allProps: true, with: Surface, defaults: { flex: true } as never },
+      styling: { base: 'primary-base' },
+    })
+    const { container } = solidRender(() => <Card />)
+    const element = container.querySelector('div')!
+    return { className: element.className, flexAttribute: element.getAttribute('flex') }
+  },
+})
+
+tailwindAsChildPluginParitySuite({
+  renderPrimaryPluginAsChild: () => {
+    const fixture = createComposeConflictFixture()
+    const primary = createCountedPlugin(createTailwindPipeline)
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: {
+        base: 'primary-base grid-cols-3 gap-4',
+        plugin: primary.plugin,
+      },
+    })
+    const { container } = solidRender(() => (
+      <Card {...({ asChild: true, flex: true, class: 'caller-class' } as AnyRecord)}>
+        {(props) => <button {...props} class={`child-class ${props.class ?? ''}`} />}
+      </Card>
+    ))
+    fixture.afterComposition()
+    const element = container.querySelector('button')!
+    const result = fixture.result({
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    })
+    return {
+      className: result.className,
+      flexAttribute: result.flexAttribute,
+      partnerFactoryCallsDuringAsChild: result.partnerFactoryCallsDuringComposition,
+      primaryFactoryCallsDuringAsChild: primary.calls(),
+    }
+  },
+  renderNestedAsChild: () => {
+    const fixture = createComposeConflictFixture()
+    const primary = createCountedPlugin(createTailwindPipeline)
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const Inner = createContractComponent({ tag: 'span', styling: { base: 'child-base' } })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: {
+        base: 'primary-base grid-cols-3 gap-4',
+        plugin: primary.plugin,
+      },
+    })
+    const { container } = solidRender(() => (
+      <Card {...({ asChild: true, flex: true, class: 'caller-class' } as AnyRecord)}>
+        {(outerProps) => (
+          <Inner asChild {...outerProps}>
+            {(innerProps) => (
+              <button {...innerProps} class={`child-class ${innerProps.class ?? ''}`} />
+            )}
+          </Inner>
+        )}
+      </Card>
+    ))
+    fixture.afterComposition()
+    const element = container.querySelector('button')!
+    const result = fixture.result({
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    })
+    return {
+      className: result.className,
+      flexAttribute: result.flexAttribute,
+      partnerFactoryCallsDuringAsChild: result.partnerFactoryCallsDuringComposition,
+      primaryFactoryCallsDuringAsChild: primary.calls(),
+    }
+  },
+})
+
+tailwindPolymorphicElementParitySuite({
+  render: ({ as, displayProps, className }) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    const props = {
+      ...displayProps,
+      ...definedProp('as', as),
+      alt: as === 'img' ? '' : undefined,
+      class: className,
+    } as AnyRecord
+    const { container } = solidRender(() => <Box {...props} />)
+    const element = container.firstElementChild as HTMLElement
+    return {
+      tagName: element.tagName.toLowerCase(),
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    }
+  },
+  reactivity: async (steps) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    const [props, setProps] = createSignal<AnyRecord>({
+      ...steps[0]!.displayProps,
+      as: steps[0]!.as,
+      alt: steps[0]!.as === 'img' ? '' : undefined,
+      class: steps[0]!.className,
+    })
+    const { container, unmount } = solidRender(() => <Box {...props()} />)
+    const read = () => {
+      const element = container.firstElementChild as HTMLElement
+      return {
+        tagName: element.tagName.toLowerCase(),
+        className: element.className,
+        flexAttribute: element.getAttribute('flex'),
+      }
+    }
+    const results = [read()]
+    for (const step of steps.slice(1)) {
+      setProps({
+        ...step.displayProps,
+        as: step.as,
+        alt: step.as === 'img' ? '' : undefined,
+        class: step.className,
+      })
+      results.push(read())
+    }
+    unmount()
+    return results
+  },
 })

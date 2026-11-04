@@ -20,6 +20,11 @@ export enum DiagnosticCode {
   CardinalityMax = 'COMP1007',
   PositionViolation = 'COMP1008',
   AllowedAsViolation = 'COMP1009',
+  CompositionVariantCollision = 'COMP1014',
+  CompositionOptionsWithoutWith = 'COMP1015',
+  // Allocated; emitted once composition selects a class-plugin factory (see
+  // docs/design/tailwind-composition-plugin-integration.md, Phase 2).
+  CompositionPluginConflict = 'COMP1016',
 
   // Slot protocol
   SlotExclusive = 'SLOT1001',
@@ -115,6 +120,8 @@ export enum DiagnosticCode {
   TailwindReservedLayoutLiteral = 'CSS6002',
   TailwindDeadVariantClass = 'CSS6003',
   TailwindLayoutOnVoidTag = 'CSS6004',
+  TailwindInvalidLayoutValue = 'CSS6005',
+  TailwindLayoutVariantConflict = 'CSS6006',
 
   // Plugin API contract violations (developer-facing, not user-facing)
   PluginInvalidShape = 'PLUGIN7001',

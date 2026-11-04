@@ -171,19 +171,25 @@ describe('ContractGenericsWithComposeOf against mocked contracts', () => {
   it('step 4 — a same-named child-wins prop with incompatible types surfaces as CollisionError', () => {
     type SurfaceContract = MockContract<{ variant: 'raised' | 'sunken' }>
     type Surface = MockComponent<SurfaceContract>
-    type Card = MockContract<{ variant: 'elevated' | 'flat' }, Record<string, never>, MockCompose<Surface>>
+    type Card = MockContract<
+      { variant: 'elevated' | 'flat' },
+      Record<string, never>,
+      MockCompose<Surface>
+    >
 
     type Resolved = ContractGenericsWithComposeOf<Card>
 
-    expectTypeOf<Resolved['props']['variant']>().toEqualTypeOf<
-      CollisionError<'variant'>
-    >()
+    expectTypeOf<Resolved['props']['variant']>().toEqualTypeOf<CollisionError<'variant'>>()
   })
 
   it('step 5 — nested composition resolves transitively through the partner’s own __contract', () => {
     type BaseContract = MockContract<{ as: 'div' | 'span' }>
     type Base = MockComponent<BaseContract>
-    type SurfaceContract = MockContract<{ radius: 'sm' | 'lg' }, Record<string, never>, MockCompose<Base>>
+    type SurfaceContract = MockContract<
+      { radius: 'sm' | 'lg' },
+      Record<string, never>,
+      MockCompose<Base>
+    >
     type Surface = MockComponent<SurfaceContract>
     type Card = MockContract<
       { variant: 'elevated' | 'flat' },

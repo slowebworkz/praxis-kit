@@ -35,7 +35,6 @@ import type { CollisionError, ContractGenericsWithComposeOf } from '@praxis-kit/
  * always-present index signature. */
 type NamedKeysOf<T> = OmitIndexSignature<T>
 
-
 const surfaceOptions = {
   tag: 'div',
   name: 'Surface',
@@ -131,8 +130,12 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     const NestedCard = createContractComponent(nestedCardOptions)
     void NestedCard
 
-    type HasVariant = 'variant' extends keyof NamedKeysOf<ContractProps<typeof NestedCard>> ? true : false
-    type HasRadius = 'radius' extends keyof NamedKeysOf<ContractProps<typeof NestedCard>> ? true : false
+    type HasVariant = 'variant' extends keyof NamedKeysOf<ContractProps<typeof NestedCard>>
+      ? true
+      : false
+    type HasRadius = 'radius' extends keyof NamedKeysOf<ContractProps<typeof NestedCard>>
+      ? true
+      : false
     type HasTone = 'tone' extends keyof NamedKeysOf<ContractProps<typeof NestedCard>> ? true : false
     expectTypeOf<HasVariant>().toEqualTypeOf<true>()
     expectTypeOf<HasRadius>().toEqualTypeOf<true>()
@@ -223,7 +226,9 @@ describe('ContractProps<typeof Card> through the real, wired extraction path', (
     void VariantCollidingCard
 
     type ShadowType = ContractProps<typeof VariantCollidingCard>['shadow']
-    expectTypeOf<ShadowType>().toEqualTypeOf<CollisionError<'shadow'> | undefined>()
+    // The primary's own values stay usable; the collision is still surfaced in the prop type, and
+    // the partner's conflicting values are not accepted.
+    expectTypeOf<ShadowType>().toEqualTypeOf<'yes' | 'no' | CollisionError<'shadow'> | undefined>()
 
     type SizeType = ContractProps<typeof VariantCollidingCard>['size']
     type ColorType = ContractProps<typeof VariantCollidingCard>['color']

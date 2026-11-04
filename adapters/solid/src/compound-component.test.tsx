@@ -1,34 +1,50 @@
 // @vitest-environment jsdom
 /**
- * Proves the `subComponents` compound-component mechanism end-to-end in
- * Solid: typed compound output, rendering the attached sub-components as
- * ordinary children, and non-regression for plain (non-compound) usage.
+ * `subComponents` (compound component) coverage for Solid. The runtime behaviour — assembling,
+ * rendering as children, non-regression for plain usage — is the shared `compoundComponentSuite`;
+ * this file supplies Solid's mounting and adds the compile-time half, which depends on Solid's
+ * own component types.
  */
-import { describe, it, expect, expectTypeOf, afterEach } from 'vitest'
+import { describe, it, expectTypeOf, afterEach } from 'vitest'
 import { render as solidRender, cleanup } from '@solidjs/testing-library'
 import type { EmptyRecord, PolymorphicGenerics } from '@praxis-kit/core'
+import { compoundComponentSuite } from '@praxis-kit/adapter-testing'
 import type { PolymorphicComponent } from './types'
 import { createContractComponent } from './create-contract-component'
 
 afterEach(cleanup)
 
-describe('subComponents (compound component generation)', () => {
-  const Header = createContractComponent({ tag: 'header' as const, name: 'CardHeader' })
-  const Content = createContractComponent({ tag: 'div' as const, name: 'CardContent' })
-  const Footer = createContractComponent({ tag: 'footer' as const, name: 'CardFooter' })
+const Header = createContractComponent({ tag: 'header' as const, name: 'CardHeader' })
+const Content = createContractComponent({ tag: 'div' as const, name: 'CardContent' })
+const Footer = createContractComponent({ tag: 'footer' as const, name: 'CardFooter' })
 
-  const Card = createContractComponent({
-    tag: 'section' as const,
-    name: 'Card',
-    subComponents: { Header, Content, Footer },
-  })
+const Card = createContractComponent({
+  tag: 'section' as const,
+  name: 'Card',
+  subComponents: { Header, Content, Footer },
+})
 
-  it('assembles the sub-components onto the root, like Object.assign would', () => {
-    expect(Card.Header).toBe(Header)
-    expect(Card.Content).toBe(Content)
-    expect(Card.Footer).toBe(Footer)
-  })
+const Plain = createContractComponent({ tag: 'div' as const, name: 'Plain' })
 
+compoundComponentSuite({
+  components: { Card, Header, Content, Footer, Plain },
+  renderCompound: () => {
+    const { container } = solidRender(() => (
+      <Card>
+        <Card.Header />
+        <Card.Content />
+        <Card.Footer />
+      </Card>
+    ))
+    const section = container.querySelector('section')!
+    return { header: section.querySelector('header'), footer: section.querySelector('footer') }
+  },
+  renderPlain: () => {
+    solidRender(() => <Plain>{'span content'}</Plain>)
+  },
+})
+
+describe('subComponents (compound component generation) — types', () => {
   it('has the correct compile-time type for each sub-component', () => {
     expectTypeOf(Card.Header).toEqualTypeOf(Header)
     expectTypeOf(Card.Content).toEqualTypeOf(Content)
@@ -40,26 +56,10 @@ describe('subComponents (compound component generation)', () => {
     expectTypeOf<RootProps>().toMatchTypeOf<{ as?: unknown }>()
   })
 
-  it('renders the assembled sub-components as ordinary children', () => {
-    const { container } = solidRender(() => (
-      <Card>
-        <Card.Header />
-        <Card.Content />
-        <Card.Footer />
-      </Card>
-    ))
-    const section = container.querySelector('section')!
-    expect(section.querySelector('header')).toBeTruthy()
-    expect(section.querySelector('footer')).toBeTruthy()
-  })
-
-  it('a plain (non-compound) component is unaffected — no subComponents option', () => {
-    const Plain = createContractComponent({ tag: 'div' as const, name: 'Plain' })
+  it('a plain (non-compound) component keeps the plain polymorphic type', () => {
     type Expected = PolymorphicComponent<
       PolymorphicGenerics<'div', EmptyRecord, Readonly<EmptyRecord>>
     >
     expectTypeOf(Plain).toMatchTypeOf({} as Expected)
-
-    expect(() => solidRender(() => <Plain>{'span content'}</Plain>)).not.toThrow()
   })
 })

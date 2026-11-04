@@ -7,7 +7,6 @@ import type {
   ContractPresetOf,
   ContractPropsOf,
   ContractTagOf,
-  ContractVariantsOf,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
@@ -16,7 +15,21 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { finalizeComponent, invariant } from '@praxis-kit/adapter-utils'
+import type { ContractVariantsWithComposeOf } from '@praxis-kit/compose-props'
+import {
+  diagnoseIncompleteComposition,
+  attachCompositionStyleMetadata,
+  composeStyleProps,
+  filterOwnedProps,
+  filterAllPropsForPartner,
+  mergeCompositionClassNames,
+  COMPOSITION_STYLE_REQUEST_PROP,
+  isCompositionStyleRequest,
+  finalizeComponent,
+  invariant,
+} from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsValidation } from '@praxis-kit/adapter-utils'
+import { isDefined, isString } from '@praxis-kit/guards'
 import { applyDisplayName } from './apply-display-name'
 import { buildRuntime } from './build-runtime'
 import { isPolymorphicComponent } from './is-polymorphic-component'
@@ -55,17 +68,17 @@ import type { VueFactoryOptions } from './vue-options'
  * this adapter's pre-refactor behavior — Vue never threaded it as its own generic.
  */
 export function createContractComponent<
-  C extends VueFactoryOptions,
+  const C extends VueFactoryOptions,
   TDefault extends ElementType = ContractTagOf<C>,
   Props extends UnknownProps = ContractPropsOf<C>,
-  Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
+  Variants extends Readonly<VariantMap> = ContractVariantsWithComposeOf<C>,
   TPreset extends RecipeMap<VariantMap> = ContractPresetOf<C>,
   TPlugin extends AnyClassPluginFactory = ContractPluginOf<C>,
   TSubComponents extends Readonly<AnyRecord> = EmptyRecord,
 >(
   options: C & {
     readonly subComponents?: TSubComponents
-  },
+  } & ComposeDefaultsValidation<C>,
 ): MergeRecords<
   PolymorphicComponent<
     PolymorphicGenerics<
@@ -88,7 +101,9 @@ export function createContractComponent<
   const bundle = buildRuntime(
     options as unknown as VueFactoryOptions<TDefault, Props, Variants, TPreset, TPlugin>,
   )
+  diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
+  const compositionClassResolver = bundle.compositionClassResolver
 
   const Component = defineComponent({
     // normalizeOptions always supplies `name`, so displayName is always defined here —
@@ -96,10 +111,36 @@ export function createContractComponent<
     name: bundle.runtime.options.displayName ?? 'PolymorphicComponent',
     inheritAttrs: false,
     setup(_, { attrs, slots }) {
+      // The resolver request is an internal bridge between generated components, never a
+      // consumer prop and never something that should reach normalized or DOM-bound props.
+      const cleanAttrs = computed(() => {
+        const { [COMPOSITION_STYLE_REQUEST_PROP]: _request, ...rest } = attrs
+        return rest as KnownProps
+      })
+      const compositionStyleRequest = computed(() => {
+        const value = attrs[COMPOSITION_STYLE_REQUEST_PROP]
+        return isCompositionStyleRequest(value) ? value : undefined
+      })
+      const renderRuntime = computed(() => {
+        const request = compositionStyleRequest.value
+        if (request && attrs['asChild'] === true) {
+          return { ...bundle.runtime, resolveClasses: request.resolveClasses }
+        }
+        if (
+          compositionClassResolver &&
+          isDefined(compose?.with) &&
+          attrs['asChild'] === undefined
+        ) {
+          // The primary is represented by the combined resolver on `compose.with`; its child
+          // vnode must not contribute a second, independently-resolved primary class string.
+          return { ...bundle.runtime, resolveClasses: (): undefined => {} }
+        }
+        return bundle.runtime
+      })
       // Cache derived render state using Vue's dependency tracking so prop resolution only
       // recomputes when attrs change.
       const state = computed(() =>
-        prepareRenderState(bundle.runtime, attrs as KnownProps, bundle.filterProps),
+        prepareRenderState(renderRuntime.value, cleanAttrs.value, bundle.filterProps),
       )
 
       // setup() runs once per component instance, so this callback remains stable across
@@ -135,7 +176,13 @@ export function createContractComponent<
         : undefined
 
       return () => {
-        const innerVNode = render({ ...bundle, state: state.value, slots, elementRef: onElementRef })
+        const innerVNode = render({
+          ...bundle,
+          runtime: renderRuntime.value,
+          state: state.value,
+          slots,
+          elementRef: onElementRef,
+        })
 
         // `compose` makes this component always render `asChild` into `compose.with`, as if the
         // consumer had hand-written `<With asChild><ThisComponent v-bind="attrs" /></With>` — but
@@ -149,7 +196,50 @@ export function createContractComponent<
         if (compose?.with !== undefined && attrs['asChild'] === undefined) {
           return h(
             compose.with as VueComponent,
-            { ...(compose.allProps ? attrs : undefined), asChild: true },
+            {
+              ...filterOwnedProps(compose.defaults, bundle.ownedKeys),
+              ...(compose.allProps
+                ? filterAllPropsForPartner(
+                    cleanAttrs.value,
+                    bundle.ownedKeys,
+                    bundle.runtime.options.variantKeys,
+                    compose.with,
+                    ['as'],
+                  )
+                : undefined),
+              ...(compositionClassResolver
+                ? {
+                    [COMPOSITION_STYLE_REQUEST_PROP]: {
+                      resolveClasses: (
+                        tag: unknown,
+                        partnerProps: AnyRecord,
+                        partnerClassName?: string | string[],
+                        partnerRecipe?: string,
+                      ) => {
+                        const recipe = cleanAttrs.value['recipe']
+                        return compositionClassResolver(
+                          tag,
+                          composeStyleProps(
+                            partnerProps,
+                            cleanAttrs.value,
+                            bundle.runtime.options,
+                            compose.defaults,
+                            compositionClassResolver.partner,
+                            compositionClassResolver.ownedKeys,
+                            state.value.normalizedProps,
+                          ),
+                          mergeCompositionClassNames(
+                            partnerClassName,
+                            cleanAttrs.value['class'] as string | string[] | undefined,
+                          ),
+                          isString(recipe) ? recipe : partnerRecipe,
+                        )
+                      },
+                    },
+                  }
+                : {}),
+              asChild: true,
+            },
             { default: () => innerVNode },
           )
         }
@@ -161,10 +251,14 @@ export function createContractComponent<
 
   applyDisplayName(Component, options.name)
   const { defaultTag } = bundle.runtime.options
-  const assembled = finalizeComponent(
-    Component,
-    typeof defaultTag === 'string' ? defaultTag : undefined,
-    options.subComponents,
+  const assembled = attachCompositionStyleMetadata(
+    finalizeComponent(
+      Component,
+      isString(defaultTag) ? defaultTag : undefined,
+      options.subComponents,
+    ),
+    bundle.runtime.options,
+    options.styling?.plugin,
   )
 
   type G = PolymorphicGenerics<

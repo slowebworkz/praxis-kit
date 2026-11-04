@@ -5,13 +5,13 @@ import {
   conformanceA11ySuite,
   conformancePerformanceSuite,
   conformanceIsolationSuite,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/adapter-testing'
 import type {
   BareFactoryOptions,
   ChildSpec,
   ConformanceAdapter,
   ConformanceComponent,
-} from '@praxis-kit/adapter-utils/testing'
+} from '@praxis-kit/adapter-testing'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import { createContractComponent } from './create-contract-component'
 import type { Component, VNode } from 'vue'
@@ -57,6 +57,12 @@ const adapter: ConformanceAdapter<ConformanceComponent> = {
   },
   setup: () => {},
   cleanup: () => {},
+  // Not a Praxis component: no retained styling metadata, renders its default slot unchanged.
+  createExternalPartner:
+    () =>
+    (_props: unknown, { slots }: { slots: { default?: () => unknown } }) =>
+      slots.default?.(),
+  capabilities: { compositionStyling: true },
 }
 
 conformanceSuite(adapter)

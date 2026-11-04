@@ -278,4 +278,14 @@ export default defineConfig([
     fixedExtension: false,
     deps: { neverBundle: [diagnostics] },
   },
+
+  // DOM platform helpers — framework-neutral wrappers around native dialog/popover behavior.
+  {
+    entry: { 'dom/index': './dom.ts' },
+    format: ['esm'],
+    dts: dts(),
+    tsconfig: 'tsconfig.json',
+    fixedExtension: false,
+    deps: { neverBundle: [diagnostics] },
+  },
 ])

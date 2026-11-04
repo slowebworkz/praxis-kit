@@ -142,7 +142,13 @@ actually resolve.
 ## `compose`: declarative `asChild` composition
 
 `compose: { with: Component }` on `FactoryOptions` makes a component always render composed
-`asChild` into another praxis-kit component, declaratively — no hand-written wrapper needed:
+`asChild` into another praxis-kit component, declaratively — no hand-written wrapper needed. The
+`with` property is required by the public `ComposeOptions` TypeScript type: `compose: {}` and
+`compose: { allProps: true }` are incomplete declarations and should be corrected by supplying a
+composition target. The runtime also checks incomplete declarations defensively: a missing `with`
+does not activate composition styling, and supplying `allProps` or `defaults` without `with` emits a
+construction-time diagnostic. An empty `compose: {}` remains silent at runtime, but is not a
+supported typed declaration:
 
 ```tsx
 const Surface = createContractComponent({ styling: { base: 'surface' } })
@@ -164,27 +170,40 @@ renders exactly as if the consumer had hand-written:
 </Surface>
 ```
 
-All consumer props land on the composing component's own contract exactly as an ordinary call
-would — `with` always renders bare, contributing only its own resolved classes/handlers/attributes
-onto whatever the composing component renders as, via the same merge policy `asChild` already
-uses. If the consumer explicitly passes `asChild` or `render` themselves, that always wins —
-`compose` only applies to an otherwise-ordinary call, the same precedence `as` already has over
-`defaultTag`.
+All consumer props land on the composing component's own contract exactly as an ordinary call would
+— `with` always renders bare, contributing only its own resolved classes/handlers/attributes onto
+whatever the composing component renders as, via the same merge policy `asChild` already uses. If
+the consumer explicitly passes `asChild` or `render` themselves, that always wins — `compose` only
+applies to an otherwise-ordinary call, the same precedence `as` already has over `defaultTag`.
 
 **Adapter support.** `compose` is accepted by every adapter's `FactoryOptions`, but synthesized
-natively per adapter rather than through one shared mechanism, matching each adapter's own
-`asChild` composition model:
+natively per adapter rather than through one shared mechanism, matching each adapter's own `asChild`
+composition model:
 
-| Adapter            | How `compose` is synthesized                                                                        |
-| ------------------- | ----------------------------------------------------------------------------------------------------- |
-| React, Preact, Vue | Clone-based, same as a hand-written nested `asChild` call — `with` renders with `asChild: true` and this component's own normal output as its single child |
+| Adapter            | How `compose` is synthesized                                                                                                                                                |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| React, Preact, Vue | Clone-based, same as a hand-written nested `asChild` call — `with` renders with `asChild: true` and this component's own normal output as its single child                  |
 | Solid, Svelte      | `with` renders through its own render-callback/snippet `asChild` mode; the synthesized callback merges `with`'s handed-back props onto this component's own resolved output |
-| Lit, Web           | No effect — these adapters have no `asChild` concept for `compose` to compose into                   |
+| Lit, Web           | No effect — these adapters have no `asChild` concept for `compose` to compose into                                                                                          |
+
+**Styling plugins.** When automatic `compose` is active and either component uses a
+`styling.plugin`, Praxis Kit constructs one composition pipeline from the merged styling metadata.
+The primary component's plugin factory takes precedence; if it has no plugin, the direct partner's
+factory is used. If both specify different factories, Praxis Kit reports `COMP1016` and keeps the
+primary factory. It does not combine arbitrary plugin pipelines or cascade plugin selection through
+multiple composition levels. The ordinary, non-composed render path continues to use the component's
+own styling pipeline.
+
+The selected plugin's owned props participate in combined class resolution even when `allProps` is
+false, but those props are reserved for styling and are not forwarded to the host element or child
+through ordinary prop forwarding or `compose.defaults`. Explicit consumer `asChild` or custom
+`render` still takes precedence over automatic `compose`; the composition-selected plugin applies
+only when the automatic composition resolver is active.
 
 Multi-level `compose` chaining (`with` itself also declaring its own `compose.with`) does not
 cascade automatically — `with` is always invoked with `asChild: true`, so its own `compose` check
-never fires for that invocation. Composing through more than one hop currently requires an
-explicit intermediate layer.
+never fires for that invocation. Composing through more than one hop currently requires an explicit
+intermediate layer.
 
 ## Contracts
 
@@ -223,6 +242,13 @@ It:
 This runs automatically for any component with `enforcement` declared — no separate
 `enforcement.aria` configuration is required to get the built-in checks;
 `enforcement.aria`/`enforcement.rules` layer _additional_, component-specific rules on top of them.
+
+Built-in HTML rules can be individually adjusted with `enforcement.ruleOverrides`. Use `false` to
+disable one rule, or provide a replacement `severity` and/or `message`; overrides apply only to the
+built-in HTML rule library, not custom rules in `enforcement.aria` or `enforcement.rules`. For
+example, `{ 'html.input.supported-type': { severity: 'error' } }` promotes unsupported input types
+to errors. Rule IDs are stable public identifiers listed in the
+[HTML/ARIA audit](./accessibility/html-aria-audit.md#built-in-rule-override-identifiers).
 
 ## Variants and styling
 
@@ -377,6 +403,11 @@ component demonstrates the intended division:
 
 - **praxis-kit** owns: tag resolution, class pipeline, ARIA roles, children enforcement
 - **Framework context** owns: active tab state, show/hide logic
+
+`subComponents` only attaches named component properties (for example, `Card.Header`) to the root;
+it does not make the root discover or forward props to consumer-placed JSX children. Put an event
+handler on the sub-component that handles it. The design rationale and alternatives are recorded in
+[compound event routing](design/compound-event-routing.md).
 
 This separation means the contract layer is framework-agnostic and the state layer is idiomatic to
 each framework.

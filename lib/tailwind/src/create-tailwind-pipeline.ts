@@ -2,7 +2,7 @@ import { cn, createClassPipeline } from '@praxis-kit/core'
 import { ConsoleReporter, DefaultPolicy, Diagnostics, Severity } from '@praxis-kit/diagnostics'
 import { composePipelines } from '@praxis-kit/pipeline-kit'
 import { VOID_TAGS, iterate } from '@praxis-kit/primitive'
-import { isString } from '@praxis-kit/guards'
+import { isDefined, isObject, isString } from '@praxis-kit/guards'
 
 import { ClassBuilder } from './class-builder'
 import { ClassClassifier } from './class-classifier'
@@ -26,6 +26,7 @@ import type {
   ClassifiedToken,
   CompoundVariant,
   LayoutKey,
+  FlatLayoutProps,
   LayoutProps,
   ResolvedLayout,
   TailwindPipelineArgs,
@@ -57,6 +58,20 @@ function resolveLayout(
   diagnostics: Diagnostics,
   props: LayoutProps<typeof layoutKeys> & AnyRecord,
 ): ResolvedLayout<typeof layoutKeys> {
+  // The single-valued prop is the explicit API and wins over shorthand booleans.
+  // This lets a caller override a component's boolean layout defaults without needing
+  // to unset them. Ignore shorthand conflicts when the explicit selection is present.
+  const requestedLayout: unknown = props.layout
+  if (requestedLayout !== undefined) {
+    if (
+      requestedLayout === 'none' ||
+      (isString(requestedLayout) && layoutKeys.some((key) => key === requestedLayout))
+    ) {
+      return requestedLayout as ResolvedLayout<typeof layoutKeys>
+    }
+    if (DEV) diagnostics.warn(TailwindDiagnostics.invalidLayoutValue(requestedLayout))
+  }
+
   const active: LayoutKey<typeof layoutKeys>[] = []
   iterate.forEach(layoutKeys, (key) => {
     if (props[key]) active.push(key)
@@ -86,6 +101,52 @@ function warnReservedLayoutLiterals(diagnostics: Diagnostics, tokens: Classified
   if (reserved.length === 0) return
 
   diagnostics.warn(TailwindDiagnostics.reservedLayoutLiteral(reserved))
+}
+
+function hasLayoutVariant<V extends VariantMap>(options: ClassPipelineOptions<V>): boolean {
+  return Boolean(options.variants && Object.hasOwn(options.variants, 'layout'))
+}
+
+function omitLayoutVariant<V extends VariantMap>(
+  options: ClassPipelineOptions<V>,
+): ClassPipelineOptions<V> {
+  if (!hasLayoutVariant(options)) return options
+
+  const withoutLayoutKey = (value: unknown): AnyRecord => {
+    if (!isObject(value, true)) return {}
+    return Object.fromEntries(Object.entries(value).filter(([key]) => key !== 'layout'))
+  }
+
+  const variants = withoutLayoutKey(options.variants)
+  const defaultVariants = options.defaultVariants
+    ? withoutLayoutKey(options.defaultVariants)
+    : undefined
+  const recipeMap = options.recipeMap
+    ? Object.fromEntries(
+        Object.entries(options.recipeMap).map(([name, target]) => [name, withoutLayoutKey(target)]),
+      )
+    : undefined
+  // A compound that depends on the reserved dimension must not become unconditional after
+  // that dimension is removed.
+  const compoundVariants = options.compoundVariants?.filter(
+    (compound) => !Object.hasOwn(compound, 'layout'),
+  )
+
+  return {
+    ...options,
+    variants,
+    defaultVariants,
+    recipeMap,
+    compoundVariants,
+    // The precomputed lookup was generated from the original variant dimensions and
+    // may still contain `layout` combinations. Re-resolve against the sanitized config.
+    precomputedClasses: undefined,
+  } as ClassPipelineOptions<V>
+}
+
+function omitLayoutProp(props: AnyRecord): AnyRecord {
+  const { layout: _layout, ...variantProps } = props
+  return variantProps
 }
 
 function getVariantConfig<V extends VariantMap>(
@@ -133,7 +194,7 @@ function resolveActiveSelection<V extends VariantMap>(
   const selection: VariantSelection = {}
   iterate.forEachKey(variants, (dim) => {
     const value = props[dim] ?? preset?.[dim] ?? defaults?.[dim]
-    if (value !== undefined && value !== null) selection[dim] = String(value)
+    if (isDefined(value)) selection[dim] = String(value)
   })
   return selection
 }
@@ -194,18 +255,26 @@ function warnDeadVariants<V extends VariantMap>(
  * })
  * ```
  *
- * With the plugin active, pass any display prop (`flex`, `inline-flex`, `grid`,
- * `inline-grid`, `block`, `hidden`, etc.) as a boolean to control the display
- * mode. The pipeline injects the display class and strips conflicting utilities:
+ * With the plugin active, pass a single-valued `layout` prop (for example,
+ * `layout: 'grid'` or `layout: 'none'`) or a display shorthand prop (`flex: true`,
+ * `grid: true`, etc.). An explicit `layout` value overrides shorthand booleans. The
+ * pipeline injects the display class and strips conflicting utilities:
  * flex-family modes strip `grid-*`; grid-family modes strip `flex-*`; all other
  * display values (and no prop) strip both `flex-*` and `grid-*`.
  */
 export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   options: ClassPipelineOptions<V>,
   diagnostics: Diagnostics,
-): ClassPlugin<LayoutProps<typeof layoutKeys>> {
-  const innerPipeline = createClassPipeline(options)
-  const compoundDims = compoundDimensions(getCompoundVariants(options))
+): ClassPlugin<LayoutProps<typeof layoutKeys>, FlatLayoutProps> {
+  const layoutVariantConflict = hasLayoutVariant(options)
+  if (DEV && layoutVariantConflict) diagnostics.warn(TailwindDiagnostics.layoutVariantConflict())
+
+  // `layout` belongs exclusively to display selection. Remove a conflicting variant dimension
+  // (including its defaults, recipe selections, and compound variants) rather than letting the
+  // same prop select both a display class and a styling variant.
+  const resolvedOptions = omitLayoutVariant(options)
+  const innerPipeline = createClassPipeline(resolvedOptions)
+  const compoundDims = compoundDimensions(getCompoundVariants(resolvedOptions))
 
   // Steps 1-4 + 6 of the original sequence: resolves layout mode (firing the
   // devDiagnostics conflict warning, unchanged in position), delegates to the
@@ -220,7 +289,10 @@ export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   ) => {
     // devDiagnostics fires regardless of strict — conflict is always a misconfiguration.
     const mode = resolveLayout(devDiagnostics, props)
-    const resolvedClasses = innerPipeline(tag, props, className, recipe) ?? ''
+    // Avoid allocating a copied props object on the common path. `layout` needs to be
+    // removed only when a conflicting variant dimension was configured and sanitized.
+    const variantProps = layoutVariantConflict ? omitLayoutProp(props) : props
+    const resolvedClasses = innerPipeline(tag, variantProps, className, recipe) ?? ''
     const tokens = classifyTokens(resolvedClasses)
     const state = new LayoutState(mode)
     const filtered = tokens.filter((token) => evaluator.evaluate(token, state))
@@ -230,14 +302,14 @@ export function createTailwindPipeline<V extends VariantMap = VariantMap>(
     // a component's own strict/diagnostics policy should be able to suppress.
     if (DEV) warnLayoutOnVoidTag(devDiagnostics, tag, state)
 
-    return { mode, state, filtered, tokens, props, recipe }
+    return { mode, state, filtered, tokens, props: variantProps, recipe }
   }
 
   // Steps 7-8: build the final string from the already-filtered tokens.
   const buildClassString: PipelineStage<TailwindPipelineContext, string> = (ctx) => {
     const built = builder.build(ctx.filtered)
     if (ctx.mode === 'none') return built
-    return ctx.filtered.some((t) => t.kind === 'layout' && t.value === ctx.mode)
+    return ctx.filtered.some((t) => t.kind === 'layout' && t.raw === ctx.mode)
       ? built
       : cn(ctx.mode, built)
   }
@@ -248,7 +320,7 @@ export function createTailwindPipeline<V extends VariantMap = VariantMap>(
   const emitDiagnosticsFromContext: PipelineStage<TailwindPipelineContext, void> = (ctx) => {
     if (!DEV) return
     warnReservedLayoutLiterals(diagnostics, ctx.tokens)
-    warnDeadVariants(diagnostics, options, compoundDims, ctx.props, ctx.recipe, ctx.state)
+    warnDeadVariants(diagnostics, resolvedOptions, compoundDims, ctx.props, ctx.recipe, ctx.state)
   }
 
   const combined: PipelineStage<TailwindPipelineContext, string> = (ctx) => {

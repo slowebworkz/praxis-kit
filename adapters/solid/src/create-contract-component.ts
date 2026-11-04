@@ -5,7 +5,6 @@ import type {
   ContractPresetOf,
   ContractPropsOf,
   ContractTagOf,
-  ContractVariantsOf,
   ElementType,
   EmptyRecord,
   ExtractPluginProps,
@@ -14,7 +13,15 @@ import type {
   RecipeMap,
   VariantMap,
 } from '@praxis-kit/core'
-import { finalizeComponent, invariant } from '@praxis-kit/adapter-utils'
+import type { ContractVariantsWithComposeOf } from '@praxis-kit/compose-props'
+import {
+  diagnoseIncompleteComposition,
+  attachCompositionStyleMetadata,
+  getPrimaryOnlyCompositionVariantKeys,
+  finalizeComponent,
+  invariant,
+} from '@praxis-kit/adapter-utils'
+import type { ComposeDefaultsValidation } from '@praxis-kit/adapter-utils'
 import { mergeProps, onCleanup } from 'solid-js'
 import { applyDisplayName } from './apply-display-name'
 import { buildRuntime } from './build-runtime'
@@ -23,6 +30,7 @@ import { render, renderComposed } from './render'
 import { isSolidFactoryOptions } from './to-solid-factory-options'
 import type { SolidFactoryOptions } from './solid-options'
 import type { KnownProps, PolymorphicComponent, SolidElement, UnknownProps } from './types'
+import { isFunction, isString } from '@praxis-kit/guards'
 
 /**
  * Creates a polymorphic Solid component with praxis-kit contracts applied.
@@ -51,17 +59,17 @@ import type { KnownProps, PolymorphicComponent, SolidElement, UnknownProps } fro
  * this adapter's pre-refactor behavior — Solid never threaded it as its own generic.
  */
 export function createContractComponent<
-  C extends SolidFactoryOptions,
+  const C extends SolidFactoryOptions,
   TDefault extends ElementType = ContractTagOf<C>,
   Props extends UnknownProps = ContractPropsOf<C>,
-  Variants extends Readonly<VariantMap> = ContractVariantsOf<C>,
+  Variants extends Readonly<VariantMap> = ContractVariantsWithComposeOf<C>,
   TPreset extends RecipeMap<VariantMap> = ContractPresetOf<C>,
   TPlugin extends AnyClassPluginFactory = ContractPluginOf<C>,
   TSubComponents extends Readonly<AnyRecord> = EmptyRecord,
 >(
   options: C & {
     readonly subComponents?: TSubComponents
-  },
+  } & ComposeDefaultsValidation<C>,
 ): MergeRecords<
   PolymorphicComponent<
     PolymorphicGenerics<
@@ -91,30 +99,51 @@ export function createContractComponent<
   const bundle = buildRuntime(
     options as unknown as SolidFactoryOptions<TDefault, Props, Variants, TPreset>,
   )
+  diagnoseIncompleteComposition(options.compose, options.name, bundle.runtime.options.diagnostics)
   const { onElement, compose } = options
+  const compositionClassResolver = bundle.compositionClassResolver
+    ? {
+        resolve: bundle.compositionClassResolver,
+        primary: bundle.runtime.options,
+        partner: bundle.compositionClassResolver.partner,
+        ownedKeys: bundle.compositionClassResolver.ownedKeys,
+      }
+    : undefined
 
   const Component = (props: UnknownProps): SolidElement => {
     // Solid ref callbacks fire once, at element creation — a natural fit for "mount". They
     // don't fire again with null on unmount (unlike React), so cleanup is registered via
     // Solid's own onCleanup instead of a second ref invocation.
-    const propsWithRef = onElement
-      ? mergeProps(props, {
-          get ref() {
-            const consumerRef = (props as { ref?: unknown }).ref
-            return (el: Element) => {
-              if (typeof consumerRef === 'function') (consumerRef as (e: Element) => void)(el)
-              // The real element's actual tag is only known at runtime; `onElement`'s parameter
-              // type narrows that per-component via `TDefault`/`allowed`, which Solid's ref
-              // contract itself can't express — see `FactoryOptions.onElement`.
-              const cleanup = onElement(
-                el as Parameters<NonNullable<typeof onElement>>[0],
-                () => props as unknown as Readonly<Props>,
-              )
-              if (cleanup) onCleanup(cleanup)
-            }
-          },
-        })
-      : props
+    //
+    // Solid's spread re-invokes `ref` whenever the spread props change, even when the element is
+    // the same, and an `onCleanup` registered from inside that effect runs on every re-run. So the
+    // registration is tracked per instance: the hook runs once per element, and its cleanup is
+    // owned by the component (run on unmount, or just before a swapped host element registers).
+    let registered: { el: Element; cleanup: (() => void) | void } | undefined
+    const elementRef = (el: Element) => {
+      if (registered?.el === el) return
+      const consumerRef = (props as { ref?: unknown }).ref
+      if (isFunction(consumerRef)) (consumerRef as (e: Element) => void)(el)
+      // Clear before running the hook: if it throws, the spent cleanup must not run again later.
+      const previous = registered
+      registered = undefined
+      previous?.cleanup?.()
+      // The real element's actual tag is only known at runtime; `onElement`'s parameter
+      // type narrows that per-component via `TDefault`/`allowed`, which Solid's ref
+      // contract itself can't express — see `FactoryOptions.onElement`.
+      const cleanup = onElement?.(
+        el as Parameters<NonNullable<typeof onElement>>[0],
+        () => props as unknown as Readonly<Props>,
+      )
+      registered = { el, cleanup }
+    }
+    if (onElement) {
+      onCleanup(() => {
+        registered?.cleanup?.()
+        registered = undefined
+      })
+    }
+    const propsWithRef = onElement ? mergeProps(props, { ref: elementRef }) : props
 
     // `compose` makes this component always render `asChild` into `compose.with`, synthesized
     // natively for Solid's render-callback composition model — see `renderComposed`'s own doc
@@ -129,6 +158,10 @@ export function createContractComponent<
         bundle.filterProps,
         known.ref,
         compose.allProps,
+        compose.defaults,
+        compositionClassResolver,
+        bundle.ownedKeys,
+        getPrimaryOnlyCompositionVariantKeys(bundle.runtime.options.variantKeys, compose.with),
       )
     }
 
@@ -140,10 +173,14 @@ export function createContractComponent<
 
   applyDisplayName(Component, options.name)
   const { defaultTag } = bundle.runtime.options
-  const assembled = finalizeComponent(
-    Component,
-    typeof defaultTag === 'string' ? defaultTag : undefined,
-    options.subComponents,
+  const assembled = attachCompositionStyleMetadata(
+    finalizeComponent(
+      Component,
+      isString(defaultTag) ? defaultTag : undefined,
+      options.subComponents,
+    ),
+    bundle.runtime.options,
+    options.styling?.plugin,
   )
 
   type G = PolymorphicGenerics<

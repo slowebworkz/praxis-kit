@@ -14,11 +14,10 @@ lib/                     internal implementation modules (private: true, not pub
   styling/               variant resolver (CVA), class pipeline, class-plugin API
   diagnostics/           the Diagnostics class, severity/policy model, reporters, silent/warn/throw presets
   adapter-utils/         shared logic used by every framework adapter (runtime wiring, prop
-                         normalization, slot validation, SSR host-state, testing harness)
+                         normalization, slot validation, SSR host-state)
   runtime/               tree/render-context primitives backing the Custom Element adapters
   pipeline/ pipeline-kit/ generic compose/run/pass abstractions used by a few of the above
   tailwind/              Tailwind layout-aware class pipeline (built for @praxis-kit/tailwind)
-  playwright/            shared Playwright fixtures for adapter interaction tests
 
 packages/                published artifacts (versioned, npm-facing)
   core/                  capability-driven factory (createPolymorphic) composing lib/ modules
@@ -32,13 +31,21 @@ adapters/                framework adapters — react, preact, vue, solid, svelt
 
 plugins/                 eslint-plugin and the TypeScript language-service plugin
 tooling/                 the praxis-codemod CLI
-qa/                      cross-cutting verification: tree-shaking tests, conformance harness, bench
+qa/                      cross-cutting verification: tree-shaking tests, bundle analysis, metrics, bench
+testing/                 reusable test infrastructure (private; production never depends on it)
+  packages/              adapter-testing (conformance, a11y, SSR, hydration, performance, isolation,
+                         compound-component and onElement suites), tailwind-testing (Tailwind
+                         parity suites), playwright-testing (Playwright CT helpers), test-utils
+                         (shared Vitest helpers) — see testing/README.md
 ```
 
 Dependency direction: `lib/primitive` ← `lib/contract`/`lib/styling`/`lib/diagnostics` ←
 `packages/core` ← `lib/adapter-utils` ← `adapters/<framework>`. Dependencies flow upward only,
 enforced by `eslint-plugin-boundaries` via the root `eslint.config.ts` + `configs/architecture.ts`
 (not `dependency-cruiser` — this repo has no `.dependency-cruiser.cjs`).
+
+`testing/packages/*` may depend on any of the above, but no production package may depend on it;
+`pnpm check:testing-boundary` enforces that.
 
 ---
 
@@ -173,8 +180,9 @@ flowchart TD
 ```
 
 `createPolymorphic(options)` unpacks the namespaced `FactoryOptions` into a flat
-`ResolvedFactoryOptions`, freezes it, builds the built-in HTML prop-normalizer and children-evaluator
-pipelines onto it once, builds the class pipeline once, and returns a lightweight runtime object. `validateFactoryOptions` (dev-only, `NODE_ENV !== 'production'`) checks the
+`ResolvedFactoryOptions`, freezes it, builds the built-in HTML prop-normalizer and
+children-evaluator pipelines onto it once, builds the class pipeline once, and returns a lightweight
+runtime object. `validateFactoryOptions` (dev-only, `NODE_ENV !== 'production'`) checks the
 _configuration itself_ for mistakes a component author could make — an `enforcement.aria`/
 `children` rule naming an unknown variant dimension, a compound condition naming an invalid variant
 value — independent of any particular render. `resolveClasses` similarly runs `validateRenderProps`
@@ -370,9 +378,9 @@ element is a violation and whether text/number children are permitted at all.
 
 `packages/core/src/html` exports `htmlContracts`, a keyed map of ready-made `EnforcementOptions`
 objects for HTML elements whose content model restricts direct children. `createPolymorphic` folds
-these in automatically via the `htmlChildrenEvaluatorFn` built for each component — a component author never
-constructs one directly; `runtime.options.htmlChildrenEvaluatorFn?.(tag)` gives the adapter the
-right evaluator for whatever tag the render resolved to.
+these in automatically via the `htmlChildrenEvaluatorFn` built for each component — a component
+author never constructs one directly; `runtime.options.htmlChildrenEvaluatorFn?.(tag)` gives the
+adapter the right evaluator for whatever tag the render resolved to.
 
 The contracts are authored against the public `ChildRuleInput` API using two helpers:
 
@@ -495,14 +503,14 @@ adapter — not by core itself.
 
 ### Phase 1: Factory time _(once per `createContractComponent` call)_
 
-| What runs                                                                                                                                                         | Where           |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| What runs                                                                                                                                                       | Where           |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
 | `resolveFactoryOptions` — unpacks `FactoryOptions` → frozen `ResolvedFactoryOptions`; builds the built-in HTML prop-normalizer and children-evaluator pipelines | `packages/core` |
-| `validateFactoryOptions` — dev-only sanity checks against the config itself                                                                                       | `packages/core` |
-| `createClassPipeline` — constructs `StaticClassResolver` (LRU 200) + `VariantClassResolver` (LRU 1 000)                                                           | `lib/styling`   |
-| `AriaPolicyEngine` — instantiated only when `enforcement` is declared; holds its own LRU plan cache (cap 100)                                                     | `lib/contract`  |
-| `ChildrenEvaluator` — instantiated only when `enforcement.children` is declared; normalizes rules once                                                            | `lib/contract`  |
-| `PolymorphicRuntime` — returned to the adapter; holds frozen options + all pipeline and engine instances                                                          | `packages/core` |
+| `validateFactoryOptions` — dev-only sanity checks against the config itself                                                                                     | `packages/core` |
+| `createClassPipeline` — constructs `StaticClassResolver` (LRU 200) + `VariantClassResolver` (LRU 1 000)                                                         | `lib/styling`   |
+| `AriaPolicyEngine` — instantiated only when `enforcement` is declared; holds its own LRU plan cache (cap 100)                                                   | `lib/contract`  |
+| `ChildrenEvaluator` — instantiated only when `enforcement.children` is declared; normalizes rules once                                                          | `lib/contract`  |
+| `PolymorphicRuntime` — returned to the adapter; holds frozen options + all pipeline and engine instances                                                        | `packages/core` |
 
 Pure; no DOM access, no framework involvement. Safe to call at module load time. All per-component
 state is captured in the runtime closure here — the capability-driven gate (`AriaPolicyEngine` and

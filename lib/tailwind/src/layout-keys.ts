@@ -47,3 +47,6 @@ export const layoutKeys = [
  * component's own call signature carries — where "only one may be `true`" is a useful error.
  */
 export type LayoutKeyName = (typeof layoutKeys)[number]
+
+/** All plugin-owned layout props, including the single-valued override. */
+export type LayoutPropName = LayoutKeyName | 'layout'

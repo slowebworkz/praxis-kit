@@ -1,13 +1,45 @@
 import { describe, expect, it } from 'vitest'
+import type { IntrinsicTag } from '@praxis-kit/primitive'
 import type { IntrinsicProps } from '../types'
 import { getImplicitRole } from './aria-role-policy'
 
+const STATIC_IMPLICIT_ROLE_CASES = [
+  ['article', 'article'],
+  ['aside', 'complementary'],
+  ['footer', 'contentinfo'],
+  ['header', 'banner'],
+  ['main', 'main'],
+  ['nav', 'navigation'],
+  ['button', 'button'],
+  ['textarea', 'textbox'],
+  ['h1', 'heading'],
+  ['h2', 'heading'],
+  ['h3', 'heading'],
+  ['h4', 'heading'],
+  ['h5', 'heading'],
+  ['h6', 'heading'],
+  ['ul', 'list'],
+  ['ol', 'list'],
+  ['li', 'listitem'],
+  ['table', 'table'],
+  ['tr', 'row'],
+  ['td', 'cell'],
+  ['th', 'columnheader'],
+  ['dialog', 'dialog'],
+  ['fieldset', 'group'],
+  ['figure', 'figure'],
+  ['meter', 'meter'],
+  ['output', 'status'],
+  ['progress', 'progressbar'],
+] as const satisfies readonly (readonly [IntrinsicTag, string])[]
+
 describe('getImplicitRole', () => {
-  it('resolves a static tag→role from the implicit-role record', () => {
-    expect(getImplicitRole('nav')).toBe('navigation')
-    expect(getImplicitRole('article')).toBe('article')
-    expect(getImplicitRole('h1')).toBe('heading')
-  })
+  it.each(STATIC_IMPLICIT_ROLE_CASES)(
+    'maps the static implicit role for <%s> to %s',
+    (tag, role) => {
+      expect(getImplicitRole(tag)).toBe(role)
+    },
+  )
 
   it('returns undefined for a tag with no implicit role', () => {
     expect(getImplicitRole('div')).toBeUndefined()

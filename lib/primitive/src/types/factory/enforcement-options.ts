@@ -1,5 +1,5 @@
 import type { ElementType } from '../primitives'
-import type { AriaRule } from '../aria-rule'
+import type { AriaRule, RuleOverrides } from '../aria-rule'
 import type { ChildRuleInput } from '../contracts'
 import type { PropNormalizer } from './prop-normalizer'
 import type { Diagnostics, DiagnosticsMode } from '@praxis-kit/diagnostics'
@@ -28,6 +28,13 @@ export type EnforcementOptions<TAllowed extends ElementType = ElementType> = {
    * misleading `aria` name to get the machinery it needs.
    */
   readonly rules?: readonly AriaRule[]
+  /**
+   * Overrides for the built-in HTML rule library (`BuiltinHtmlRuleId`). Use `false` to disable a
+   * rule, or set a replacement severity and/or message. Only the library's named rules are
+   * targetable: custom `aria`/`rules` entries and the checks internal to `AriaPolicyEngine` are
+   * not affected. Unknown identifiers are a compile error.
+   */
+  readonly ruleOverrides?: RuleOverrides
   /**
    * Declares which children are valid, by name, match predicate, and cardinality (e.g. "at
    * least 1, at most 4 `Button` children"). Open by default — children matching no rule are

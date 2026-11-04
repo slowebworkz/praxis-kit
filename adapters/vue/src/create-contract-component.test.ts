@@ -2,9 +2,22 @@ import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { Comment, createTextVNode, defineComponent, h, ref } from 'vue'
 import { warnDiagnostics } from '@praxis-kit/diagnostics'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
+import {
+  TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+  TAILWIND_DISPLAY_PARITY_VARIANTS,
+  tailwindDisplayParitySuite,
+  createComposeConflictFixture,
+  TAILWIND_COMPOSE_CONFLICT_COMPONENT,
+  tailwindComposePluginParitySuite,
+  createCountedPlugin,
+  tailwindAsChildPluginParitySuite,
+  tailwindPolymorphicElementParitySuite,
+} from '@praxis-kit/tailwind-testing'
 import { Slottable } from './slot'
 import { createContractComponent } from './create-contract-component'
 import type { AnyRecord } from '@praxis-kit/primitive'
+import { definedProp } from '@praxis-kit/test-utils'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function box(comp: unknown): any {
@@ -28,12 +41,6 @@ describe('createContractComponent — tag rendering', () => {
     const Box = createContractComponent({})
     const wrapper = mount(box(Box))
     expect(wrapper.element.tagName.toLowerCase()).toBe('div')
-  })
-
-  it('renders a different tag via the as prop', () => {
-    const Box = createContractComponent({})
-    const wrapper = mount(box(Box), { props: { as: 'section' } })
-    expect(wrapper.element.tagName.toLowerCase()).toBe('section')
   })
 
   it('respects a custom defaultTag', () => {
@@ -77,6 +84,53 @@ describe('createContractComponent — tag rendering', () => {
   })
 })
 
+describe('createContractComponent — composition styling', () => {
+  it('combines partner and primary base classes in contribution order', () => {
+    const Surface = createContractComponent({ styling: { base: 'partner-base' } })
+    const Card = createContractComponent({
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+    const wrapper = mount(box(Card))
+
+    expect(wrapper.element.className.indexOf('partner-base')).toBeGreaterThanOrEqual(0)
+    expect(wrapper.element.className.indexOf('primary-base')).toBeGreaterThan(
+      wrapper.element.className.indexOf('partner-base'),
+    )
+  })
+
+  it('preserves explicit asChild styling instead of applying automatic composition', () => {
+    const Surface = createContractComponent({ styling: { base: 'partner-base' } })
+    const Card = createContractComponent({
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+    const wrapper = mount(box(Card), {
+      props: { asChild: true },
+      slots: { default: () => h('button') },
+    })
+
+    expect(wrapper.element.tagName.toLowerCase()).toBe('button')
+    expect(wrapper.element.className).toContain('primary-base')
+    expect(wrapper.element.className).not.toContain('partner-base')
+  })
+
+  it('ignores malformed internal resolver requests and does not forward them to the DOM', () => {
+    const Surface = createContractComponent({ styling: { base: 'partner-base' } })
+    const wrapper = mount(box(Surface), {
+      props: {
+        asChild: true,
+        __praxisCompositionStyleRequest: { resolveClasses: 'not-a-function' },
+      } as never,
+      slots: { default: () => h('button') },
+    })
+
+    expect(wrapper.element.className).toContain('partner-base')
+    expect(wrapper.element.hasAttribute('__praxisCompositionStyleRequest')).toBe(false)
+    expect(wrapper.element.hasAttribute('__praxiscompositionstylerequest')).toBe(false)
+  })
+})
+
 describe('createContractComponent — class merging', () => {
   it('applies baseClassName', () => {
     const Box = createContractComponent({ styling: { base: 'base-cls' } })
@@ -97,14 +151,6 @@ describe('createContractComponent — attrs', () => {
     const Box = createContractComponent({})
     const wrapper = mount(box(Box), { attrs: { 'data-testid': 'box' } })
     expect(wrapper.element.getAttribute('data-testid')).toBe('box')
-  })
-
-  it('strips variant keys before DOM forwarding', () => {
-    const Box = createContractComponent({
-      styling: { variants: { size: { sm: 'text-sm', lg: 'text-lg' } } },
-    })
-    const wrapper = mount(box(Box), { props: { size: 'lg' } as never })
-    expect(wrapper.element.getAttribute('size')).toBeNull()
   })
 
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
@@ -287,8 +333,8 @@ describe('createContractComponent — asChild', () => {
   })
 
   // `compose`'s renders-through/tag-conflict/props-land/explicit-asChild-wins cases are covered
-  // by the shared conformance suite (`conformance.test.ts` → `lib/adapter-utils/src/testing/
-  // conformance.ts`, "conformance — compose"). This adapter keeps only the one case that suite
+  // by the shared conformance suite (`conformance.test.ts` → `testing/packages/adapter-testing/
+  // src/conformance.ts`, "conformance — compose"). This adapter keeps only the one case that suite
   // can't express generically: Vue's `ref` resolves to the component instance, not the host
   // element, so `onElement` (not `createRef`) is this adapter's real contract for reaching it.
 
@@ -458,21 +504,234 @@ describe('createContractComponent — variants', () => {
     const wrapper = mount(box(Box), { props: { intent: 'primary' } as never })
     expect(wrapper.element.getAttribute('intent')).toBeNull()
   })
+})
 
-  it('activates a preset via recipe', () => {
-    const Box = createContractComponent({
-      styling: {
-        variants: {
-          intent: { primary: 'bg-blue-500', secondary: 'bg-gray-500' },
-          size: { sm: 'text-sm', lg: 'text-lg' },
+tailwindDisplayParitySuite({
+  renderers: {
+    props: ({ tag = 'div', displayProps, layout, baseClassName, variantProps, className }) => {
+      const Box = createContractComponent({
+        tag,
+        styling: {
+          base: baseClassName ?? 'base',
+          plugin: createTailwindPipeline,
+          variants: TAILWIND_DISPLAY_PARITY_VARIANTS,
+          compounds: TAILWIND_DISPLAY_PARITY_COMPOUNDS,
         },
-        presets: {
-          cta: { intent: 'primary', size: 'lg' },
-        } as never,
+      })
+      const wrapper = mount(box(Box), {
+        props: { ...displayProps, ...variantProps, layout, class: className } as AnyRecord,
+      })
+      return wrapper.element.className
+    },
+  },
+  reactivity: async (steps) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    const wrapper = mount(box(Box), { props: {} })
+    const snapshots: string[] = []
+    for (const step of steps) {
+      await wrapper.setProps({
+        flex: false,
+        'inline-flex': false,
+        grid: false,
+        'inline-grid': false,
+        block: false,
+        inline: false,
+        hidden: false,
+        ...(step.displayProps ?? {}),
+        layout: step.layout,
+        class: step.className,
+      } as AnyRecord)
+      snapshots.push(wrapper.element.className)
+    }
+    wrapper.unmount()
+    return snapshots
+  },
+})
+
+tailwindComposePluginParitySuite({
+  renderPartnerPlugin: () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4 rounded', plugin: createTailwindPipeline },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { allProps: true, with: Surface },
+      styling: { base: 'border' },
+    })
+    const wrapper = mount(box(Card), { props: { flex: true } })
+    return {
+      className: wrapper.element.className,
+      flexAttribute: wrapper.element.getAttribute('flex'),
+    }
+  },
+  renderPrimaryWins: () => {
+    const fixture = createComposeConflictFixture()
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const Card = createContractComponent({
+      tag: 'div',
+      name: TAILWIND_COMPOSE_CONFLICT_COMPONENT,
+      enforcement: { diagnostics: fixture.diagnostics },
+      compose: { allProps: true, with: Surface },
+      styling: { base: 'primary-base', plugin: fixture.primaryPlugin },
+    })
+    fixture.afterComposition()
+    const wrapper = mount(box(Card))
+    return fixture.result({
+      className: wrapper.element.className,
+      flexAttribute: wrapper.element.getAttribute('flex'),
+    })
+  },
+  renderOwnedDefault: () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: createTailwindPipeline },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { allProps: true, with: Surface, defaults: { flex: true } as never },
+      styling: { base: 'primary-base' },
+    })
+    const wrapper = mount(box(Card))
+    return {
+      className: wrapper.element.className,
+      flexAttribute: wrapper.element.getAttribute('flex'),
+    }
+  },
+})
+
+tailwindAsChildPluginParitySuite({
+  renderPrimaryPluginAsChild: () => {
+    const fixture = createComposeConflictFixture()
+    const primary = createCountedPlugin(createTailwindPipeline)
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const Card = createContractComponent({
+      tag: 'div',
+      enforcement: { diagnostics: fixture.diagnostics },
+      compose: { with: Surface },
+      styling: {
+        base: 'primary-base grid-cols-3 gap-4',
+        plugin: primary.plugin,
       },
     })
-    const wrapper = mount(box(Box), { props: { recipe: 'cta' } as never })
-    expect(wrapper.element.className).toContain('bg-blue-500')
-    expect(wrapper.element.className).toContain('text-lg')
-  })
+    const wrapper = mount(box(Card), {
+      props: { asChild: true, flex: true, class: 'caller-class' } as AnyRecord,
+      slots: { default: () => [h('button', { class: 'child-class' })] },
+    })
+    fixture.afterComposition()
+    const result = fixture.result({
+      className: wrapper.element.className,
+      flexAttribute: wrapper.element.getAttribute('flex'),
+    })
+    return {
+      className: result.className,
+      flexAttribute: result.flexAttribute,
+      partnerFactoryCallsDuringAsChild: result.partnerFactoryCallsDuringComposition,
+      primaryFactoryCallsDuringAsChild: primary.calls(),
+    }
+  },
+  renderNestedAsChild: () => {
+    const fixture = createComposeConflictFixture()
+    const primary = createCountedPlugin(createTailwindPipeline)
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const Inner = createContractComponent({ tag: 'span', styling: { base: 'child-base' } })
+    const Card = createContractComponent({
+      tag: 'div',
+      enforcement: { diagnostics: fixture.diagnostics },
+      compose: { with: Surface },
+      styling: {
+        base: 'primary-base grid-cols-3 gap-4',
+        plugin: primary.plugin,
+      },
+    })
+    const wrapper = mount(box(Card), {
+      props: { asChild: true, flex: true, class: 'caller-class' } as AnyRecord,
+      slots: {
+        default: () => [
+          h(
+            box(Inner),
+            { asChild: true },
+            {
+              default: () => [h('button', { class: 'child-class' })],
+            },
+          ),
+        ],
+      },
+    })
+    fixture.afterComposition()
+    // asChild collapses the wrappers: the mounted root element is the innermost <button>.
+    const element = wrapper.element
+    expect(element.tagName).toBe('BUTTON')
+    const result = fixture.result({
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    })
+    return {
+      className: result.className,
+      flexAttribute: result.flexAttribute,
+      partnerFactoryCallsDuringAsChild: result.partnerFactoryCallsDuringComposition,
+      primaryFactoryCallsDuringAsChild: primary.calls(),
+    }
+  },
+})
+
+tailwindPolymorphicElementParitySuite({
+  render: ({ as, displayProps, className }) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    const wrapper = mount(box(Box), {
+      props: {
+        ...displayProps,
+        ...definedProp('as', as),
+        alt: as === 'img' ? '' : undefined,
+        class: className,
+      } as AnyRecord,
+    })
+    return {
+      tagName: wrapper.element.tagName.toLowerCase(),
+      className: wrapper.element.className,
+      flexAttribute: wrapper.element.getAttribute('flex'),
+    }
+  },
+  reactivity: async (steps) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    const wrapper = mount(box(Box), { props: {} })
+    const results = []
+    for (const step of steps) {
+      await wrapper.setProps({
+        flex: false,
+        as: step.as,
+        alt: step.as === 'img' ? '' : undefined,
+        ...(step.displayProps ?? {}),
+        class: step.className,
+      } as AnyRecord)
+      results.push({
+        tagName: wrapper.element.tagName.toLowerCase(),
+        className: wrapper.element.className,
+        flexAttribute: wrapper.element.getAttribute('flex'),
+      })
+    }
+    wrapper.unmount()
+    return results
+  },
 })

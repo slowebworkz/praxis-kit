@@ -2,11 +2,33 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { createElement, Fragment, createRef, forwardRef } from 'react'
 import type { RenderCallbackProps } from '../shared'
-import { warnDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
+import {
+  CollectingReporter,
+  DefaultPolicy,
+  Diagnostics,
+  Severity,
+  warnDiagnostics,
+  throwDiagnostics,
+} from '@praxis-kit/diagnostics'
+import type { ClassPluginFactory } from '@praxis-kit/styling'
+import { createTailwindPipeline } from '@praxis-kit/tailwind'
+import {
+  TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+  TAILWIND_DISPLAY_PARITY_VARIANTS,
+  tailwindDisplayParitySuite,
+  createComposeConflictFixture,
+  TAILWIND_COMPOSE_CONFLICT_COMPONENT,
+  tailwindComposePluginParitySuite,
+  createCountedPlugin,
+  tailwindAsChildPluginParitySuite,
+  tailwindPolymorphicElementParitySuite,
+} from '@praxis-kit/tailwind-testing'
 import type { AriaRule } from '@praxis-kit/core/contract'
 import type { AnyRecord } from '@praxis-kit/primitive'
 import { box, useReactDom } from '../shared/test-utils'
 import { Slottable } from '../shared'
+import { COMPOSITION_STYLE_REQUEST_PROP } from '@praxis-kit/adapter-utils'
+import { definedProp } from '@praxis-kit/test-utils'
 import { createContractComponent } from './create-contract-component'
 
 const dom = useReactDom()
@@ -32,15 +54,6 @@ describe('createContractComponent (current / React 19)', () => {
     expect(dom.container.querySelector('div')).toBeTruthy()
   })
 
-  it('renders a different tag via the as prop', () => {
-    const Box = createContractComponent({})
-
-    dom.mount(createElement(box(Box), { as: 'section' }))
-
-    expect(dom.container.querySelector('section')).toBeTruthy()
-    expect(dom.container.querySelector('div')).toBeNull()
-  })
-
   it('applies baseClassName', () => {
     const Box = createContractComponent({
       styling: { base: 'base-cls' },
@@ -62,6 +75,350 @@ describe('createContractComponent (current / React 19)', () => {
 
     expect(cls).toContain('base')
     expect(cls).toContain('extra')
+  })
+
+  it('resolves composed Praxis styling once with primary defaults taking precedence', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      name: 'Surface',
+      styling: {
+        base: 'partner-base',
+        variants: {
+          tone: { quiet: 'partner-quiet', loud: 'partner-loud' },
+          size: { sm: 'partner-sm' },
+        },
+        defaults: { tone: 'quiet', size: 'sm' },
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      name: 'Card',
+      compose: { with: Surface, defaults: { tone: 'quiet', size: 'sm' } },
+      styling: {
+        base: 'primary-base',
+        variants: {
+          tone: { quiet: 'primary-quiet', loud: 'primary-loud' },
+          density: { compact: 'primary-compact' },
+        },
+        defaults: { tone: 'loud' },
+      },
+    })
+
+    dom.mount(createElement(box(Card), { density: 'compact', className: 'caller-class' }))
+
+    const element = dom.container.querySelector('div')!
+    const classes = element.className.split(' ')
+    expect(classes).toContain('partner-base')
+    expect(classes).toContain('primary-base')
+    expect(classes).toContain('partner-loud')
+    expect(classes).toContain('primary-loud')
+    expect(classes).toContain('partner-sm')
+    expect(classes).toContain('primary-compact')
+    expect(classes).toContain('caller-class')
+    expect(classes.filter((value) => value === 'partner-base')).toHaveLength(1)
+    expect(classes.filter((value) => value === 'primary-base')).toHaveLength(1)
+    expect(classes).not.toContain('partner-quiet')
+    expect(classes).not.toContain('primary-quiet')
+  })
+
+  it('resolves partner-only variants and compounds when allProps is disabled', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        variants: {
+          intent: { ghost: 'partner-intent-ghost' },
+          size: { lg: 'partner-size-lg' },
+        },
+        compounds: [{ intent: 'ghost', size: 'lg', class: 'partner-compound-ghost-lg' }],
+      },
+    })
+    const Card = createContractComponent({ compose: { with: Surface } })
+
+    dom.mount(createElement(box(Card), { intent: 'ghost', size: 'lg' }))
+
+    const classes = dom.container.querySelector('div')!.className.split(' ')
+    expect(classes).toContain('partner-intent-ghost')
+    expect(classes).toContain('partner-size-lg')
+    expect(classes).toContain('partner-compound-ghost-lg')
+  })
+
+  it('resolves partner variants and compounds from allProps forwarded props', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        variants: {
+          intent: { ghost: 'partner-intent-ghost' },
+          size: { lg: 'partner-size-lg' },
+        },
+        compounds: [{ intent: 'ghost', size: 'lg', class: 'partner-compound-ghost-lg' }],
+      },
+    })
+    const Card = createContractComponent({ compose: { with: Surface, allProps: true } })
+
+    dom.mount(createElement(box(Card), { intent: 'ghost', size: 'lg' }))
+
+    const classes = dom.container.querySelector('div')!.className.split(' ')
+    expect(classes).toContain('partner-intent-ghost')
+    expect(classes).toContain('partner-size-lg')
+    expect(classes).toContain('partner-compound-ghost-lg')
+  })
+
+  it('matches partner compounds using compose.defaults and allProps-forwarded props', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        variants: {
+          intent: { ghost: 'partner-intent-ghost' },
+          size: { lg: 'partner-size-lg' },
+        },
+        compounds: [{ intent: 'ghost', size: 'lg', class: 'partner-compound-ghost-lg' }],
+      },
+    })
+    const Card = createContractComponent({
+      compose: { with: Surface, allProps: true, defaults: { intent: 'ghost' } },
+    })
+
+    dom.mount(createElement(box(Card), { size: 'lg' }))
+
+    const classes = dom.container.querySelector('div')!.className.split(' ')
+    expect(classes).toContain('partner-intent-ghost')
+    expect(classes).toContain('partner-size-lg')
+    expect(classes).toContain('partner-compound-ghost-lg')
+  })
+
+  it('uses the Tailwind plugin for combined classes and filters plugin-owned props from the host', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4 rounded' },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'border', plugin: createTailwindPipeline },
+    })
+
+    dom.mount(createElement(box(Card), { flex: true }))
+
+    const element = dom.container.querySelector('div')!
+    expect(element.className).toContain('flex')
+    expect(element.className).toContain('gap-4')
+    expect(element.className).toContain('rounded')
+    expect(element.className).toContain('border')
+    expect(element.className).not.toContain('grid-cols-3')
+    expect(element.getAttribute('flex')).toBeNull()
+  })
+
+  it('uses the composed partner Tailwind plugin when the primary has no plugin', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'grid-cols-3 gap-4 rounded',
+        plugin: createTailwindPipeline,
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'border' },
+    })
+
+    dom.mount(createElement(box(Card), { flex: true }))
+
+    const element = dom.container.querySelector('div')!
+    expect(element.className).toContain('flex')
+    expect(element.className).toContain('gap-4')
+    expect(element.className).toContain('rounded')
+    expect(element.className).toContain('border')
+    expect(element.className).not.toContain('grid-cols-3')
+    expect(element.getAttribute('flex')).toBeNull()
+  })
+
+  it('reports conflicting plugin factories through adapter composition and keeps the primary factory', () => {
+    const reporter = new CollectingReporter()
+    const diagnostics = new Diagnostics(
+      reporter,
+      new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
+    )
+    const primaryPlugin = vi.fn(() => ({ pipeline: () => 'primary-plugin' }))
+    const partnerPlugin = vi.fn(() => ({ pipeline: () => 'partner-plugin' }))
+    // Cast at the use site so the mocks keep their `.mock` typing.
+    const asPlugin = (factory: unknown) => factory as ClassPluginFactory
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: asPlugin(partnerPlugin) },
+    })
+    const partnerCallsBeforeComposition = partnerPlugin.mock.calls.length
+    const Card = createContractComponent({
+      tag: 'div',
+      name: 'ConflictCard',
+      enforcement: { diagnostics },
+      compose: { with: Surface },
+      styling: { base: 'primary-base', plugin: asPlugin(primaryPlugin) },
+    })
+
+    const conflicts = reporter.diagnostics.filter((diagnostic) => diagnostic.code === 'COMP1016')
+    expect(conflicts).toHaveLength(1)
+    expect(conflicts[0]?.component).toBe('ConflictCard')
+    expect(partnerPlugin).toHaveBeenCalledTimes(partnerCallsBeforeComposition)
+
+    dom.mount(createElement(box(Card), null))
+    const classes = dom.container.querySelector('div')!.className
+    expect(classes).toContain('primary-plugin')
+    expect(classes).not.toContain('partner-plugin')
+  })
+
+  it('reuses the same Tailwind plugin factory across composed components', () => {
+    const reporter = new CollectingReporter()
+    const diagnostics = new Diagnostics(
+      reporter,
+      new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
+    )
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'grid-cols-3 gap-4 rounded',
+        plugin: createTailwindPipeline,
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      name: 'SharedPluginCard',
+      enforcement: { diagnostics },
+      compose: { with: Surface },
+      styling: { base: 'border', plugin: createTailwindPipeline },
+    })
+
+    expect(
+      reporter.diagnostics.filter((diagnostic) => diagnostic.code === 'COMP1016'),
+    ).toHaveLength(0)
+
+    dom.mount(createElement(box(Card), { flex: true }))
+
+    const element = dom.container.querySelector('div')!
+    expect(element.className).toContain('flex')
+    expect(element.className).toContain('gap-4')
+    expect(element.className).toContain('rounded')
+    expect(element.className).toContain('border')
+    expect(element.className).not.toContain('grid-cols-3')
+    expect(element.getAttribute('flex')).toBeNull()
+  })
+
+  it('ignores a malformed internal composition style request', () => {
+    const Box = createContractComponent({ styling: { base: 'primary-base' } })
+
+    expect(() =>
+      dom.mount(
+        createElement(
+          box(Box),
+          { asChild: true, [COMPOSITION_STYLE_REQUEST_PROP]: { resolveClasses: 'not-a-function' } },
+          createElement('button'),
+        ),
+      ),
+    ).not.toThrow()
+
+    expect(dom.container.querySelector('button')!.className).toContain('primary-base')
+  })
+
+  it('keeps explicit asChild rendering on the primary contract styling path', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base' },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+
+    dom.mount(createElement(box(Card), { asChild: true }, createElement('button')))
+
+    const element = dom.container.querySelector('button')!
+    expect(element.className).toContain('primary-base')
+    expect(element.className).not.toContain('partner-base')
+  })
+
+  it('does not apply the partner plugin on the explicit asChild path', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4', plugin: createTailwindPipeline },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+
+    dom.mount(
+      createElement(
+        box(Card),
+        { asChild: true, ...({ flex: true } as AnyRecord) },
+        createElement('button'),
+      ),
+    )
+
+    const element = dom.container.querySelector('button')!
+    expect(element.className).toContain('primary-base')
+    expect(element.className).not.toContain('grid-cols-3')
+    expect(element.className).not.toContain('flex')
+    expect(element.getAttribute('flex')).toBeNull()
+  })
+
+  it('keeps custom render on the primary contract styling path when composed', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: {
+        base: 'partner-base',
+        variants: { intent: { loud: 'partner-loud' } },
+        presets: { emphasis: { intent: 'loud' } },
+      },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface, defaults: { intent: 'loud' } },
+      styling: {
+        base: 'primary-base',
+        variants: { size: { lg: 'primary-lg' } },
+        presets: { emphasis: { size: 'lg' } },
+      },
+    })
+
+    dom.mount(
+      createElement(box(Card), {
+        recipe: 'emphasis',
+        render: (props: RenderCallbackProps) => createElement('button', props as never),
+      }),
+    )
+
+    const element = dom.container.querySelector('button')!
+    expect(element.className).toContain('primary-base')
+    expect(element.className).toContain('primary-lg')
+    expect(element.className).not.toContain('partner-base')
+    expect(element.className).not.toContain('partner-loud')
+  })
+
+  it('does not apply the partner plugin on the custom render path', () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4', plugin: createTailwindPipeline },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { with: Surface },
+      styling: { base: 'primary-base' },
+    })
+
+    dom.mount(
+      createElement(box(Card), {
+        ...({ flex: true } as AnyRecord),
+        render: (props: RenderCallbackProps) => createElement('button', props as never),
+      }),
+    )
+
+    const element = dom.container.querySelector('button')!
+    expect(element.className).toContain('primary-base')
+    expect(element.className).not.toContain('grid-cols-3')
+    expect(element.className).not.toContain('flex')
+    expect(element.getAttribute('flex')).toBeNull()
   })
 
   it('forwards a ref to the DOM element', () => {
@@ -92,14 +449,6 @@ describe('createContractComponent (current / React 19)', () => {
     )
 
     expect(dom.container.querySelector('[data-testid="box"]')).toBeTruthy()
-  })
-
-  it('renders children', () => {
-    const Box = createContractComponent({})
-
-    dom.mount(createElement(box(Box), null, createElement('span', { id: 'child' })))
-
-    expect(dom.container.querySelector('span#child')).toBeTruthy()
   })
 
   it('asChild renders the child element type instead of the default tag', () => {
@@ -187,7 +536,7 @@ describe('createContractComponent (current / React 19)', () => {
   })
 
   // `compose` (declarative asChild composition) is covered by the shared conformance suite
-  // (`conformance.test.tsx` → `lib/adapter-utils/src/testing/conformance.ts`, "conformance —
+  // (`conformance.test.tsx` → `testing/packages/adapter-testing/src/conformance.ts`, "conformance —
   // compose") rather than duplicated here — same convention as `asChild` itself.
 
   it('applies filterProps — strips matching keys before DOM forwarding', () => {
@@ -688,4 +1037,227 @@ describe('createContractComponent (current / React 19)', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })
+})
+
+tailwindDisplayParitySuite({
+  renderers: {
+    props: ({ tag = 'div', displayProps, layout, baseClassName, variantProps, className }) => {
+      const Box = createContractComponent({
+        tag,
+        styling: {
+          base: baseClassName ?? 'base',
+          plugin: createTailwindPipeline,
+          variants: TAILWIND_DISPLAY_PARITY_VARIANTS,
+          compounds: TAILWIND_DISPLAY_PARITY_COMPOUNDS,
+        },
+      })
+      dom.mount(
+        createElement(box(Box), {
+          ...displayProps,
+          ...variantProps,
+          layout,
+          className,
+        } as AnyRecord),
+      )
+      return dom.container.querySelector(tag)!.className
+    },
+  },
+  reactivity: async (steps) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    return steps.map((step) => {
+      dom.mount(
+        createElement(box(Box), {
+          ...(step.displayProps ?? {}),
+          layout: step.layout,
+          className: step.className,
+        } as AnyRecord),
+      )
+      return dom.container.querySelector('div')!.className
+    })
+  },
+})
+
+tailwindComposePluginParitySuite({
+  renderPartnerPlugin: () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'grid-cols-3 gap-4 rounded', plugin: createTailwindPipeline },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { allProps: true, with: Surface },
+      styling: { base: 'border' },
+    })
+    dom.mount(createElement(box(Card), { flex: true }))
+    const element = dom.container.querySelector('div')!
+    return { className: element.className, flexAttribute: element.getAttribute('flex') }
+  },
+  renderPrimaryWins: () => {
+    const fixture = createComposeConflictFixture()
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const Card = createContractComponent({
+      tag: 'div',
+      name: TAILWIND_COMPOSE_CONFLICT_COMPONENT,
+      enforcement: { diagnostics: fixture.diagnostics },
+      compose: { allProps: true, with: Surface },
+      styling: { base: 'primary-base', plugin: fixture.primaryPlugin },
+    })
+    fixture.afterComposition()
+    dom.mount(createElement(box(Card), null))
+    const element = dom.container.querySelector('div')!
+    return fixture.result({
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    })
+  },
+  renderOwnedDefault: () => {
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: createTailwindPipeline },
+    })
+    const Card = createContractComponent({
+      tag: 'div',
+      compose: { allProps: true, with: Surface, defaults: { flex: true } as never },
+      styling: { base: 'primary-base' },
+    })
+    dom.mount(createElement(box(Card), null))
+    const element = dom.container.querySelector('div')!
+    return { className: element.className, flexAttribute: element.getAttribute('flex') }
+  },
+})
+
+tailwindAsChildPluginParitySuite({
+  renderPrimaryPluginAsChild: () => {
+    const fixture = createComposeConflictFixture()
+    const primary = createCountedPlugin(createTailwindPipeline)
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const Card = createContractComponent({
+      tag: 'div',
+      enforcement: { diagnostics: fixture.diagnostics },
+      compose: { with: Surface },
+      styling: {
+        base: 'primary-base grid-cols-3 gap-4',
+        plugin: primary.plugin,
+      },
+    })
+    dom.mount(
+      createElement(
+        box(Card),
+        { asChild: true, ...({ flex: true, className: 'caller-class' } as AnyRecord) },
+        createElement('button', { className: 'child-class' }),
+      ),
+    )
+    fixture.afterComposition()
+    const element = dom.container.querySelector('button')!
+    const result = fixture.result({
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    })
+    return {
+      className: result.className,
+      flexAttribute: result.flexAttribute,
+      partnerFactoryCallsDuringAsChild: result.partnerFactoryCallsDuringComposition,
+      primaryFactoryCallsDuringAsChild: primary.calls(),
+    }
+  },
+  renderNestedAsChild: () => {
+    const fixture = createComposeConflictFixture()
+    const primary = createCountedPlugin(createTailwindPipeline)
+    const Surface = createContractComponent({
+      tag: 'div',
+      styling: { base: 'partner-base', plugin: fixture.partnerPlugin },
+    })
+    fixture.afterPartner()
+    const Inner = createContractComponent({ tag: 'span', styling: { base: 'child-base' } })
+    const Card = createContractComponent({
+      tag: 'div',
+      enforcement: { diagnostics: fixture.diagnostics },
+      compose: { with: Surface },
+      styling: {
+        base: 'primary-base grid-cols-3 gap-4',
+        plugin: primary.plugin,
+      },
+    })
+    dom.mount(
+      createElement(
+        box(Card),
+        { asChild: true, flex: true, className: 'caller-class' },
+        createElement(
+          box(Inner),
+          { asChild: true },
+          createElement('button', { className: 'child-class' }),
+        ),
+      ),
+    )
+    fixture.afterComposition()
+    const element = dom.container.querySelector('button')!
+    const result = fixture.result({
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    })
+    return {
+      className: result.className,
+      flexAttribute: result.flexAttribute,
+      partnerFactoryCallsDuringAsChild: result.partnerFactoryCallsDuringComposition,
+      primaryFactoryCallsDuringAsChild: primary.calls(),
+    }
+  },
+})
+
+tailwindPolymorphicElementParitySuite({
+  render: ({ as, displayProps, className }) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    dom.mount(
+      createElement(box(Box), {
+        ...displayProps,
+        ...definedProp('as', as),
+        alt: as === 'img' ? '' : undefined,
+        className,
+      } as AnyRecord),
+    )
+    const element = dom.container.firstElementChild as HTMLElement
+    return {
+      tagName: element.tagName.toLowerCase(),
+      className: element.className,
+      flexAttribute: element.getAttribute('flex'),
+    }
+  },
+  reactivity: async (steps) => {
+    const Box = createContractComponent({
+      tag: 'div',
+      styling: { base: 'base', plugin: createTailwindPipeline },
+    })
+    const results = []
+    for (const step of steps) {
+      dom.mount(
+        createElement(box(Box), {
+          ...step.displayProps,
+          as: step.as,
+          alt: step.as === 'img' ? '' : undefined,
+          className: step.className,
+        } as AnyRecord),
+      )
+      const element = dom.container.firstElementChild as HTMLElement
+      results.push({
+        tagName: element.tagName.toLowerCase(),
+        className: element.className,
+        flexAttribute: element.getAttribute('flex'),
+      })
+    }
+    return results
+  },
 })

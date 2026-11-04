@@ -1,6 +1,7 @@
 import type { AnyRecord, ElementType } from '@praxis-kit/core'
 import { enforceAllowedAs } from '@praxis-kit/core'
-import { isObject } from '@praxis-kit/guards'
+import { isFalse, isFunction, isNullish, isObject, isTrue } from '@praxis-kit/guards'
+import { iterate } from '@praxis-kit/primitive'
 import { applyFilter, resolveNormalizedProps } from '../props'
 import type { SsrBundle } from './render-to-string'
 
@@ -16,21 +17,24 @@ export function isLooseBundle(arg: unknown): arg is SsrBundle {
 
   const { runtime, filterProps, childrenEvaluator } = arg as AnyRecord
   if (!isObject(runtime)) return false
-  if (!isObject((runtime as AnyRecord)['options'])) return false
+
+  const runtimeRecord = runtime as AnyRecord
+
+  if (!isObject(runtimeRecord['options'])) return false
+
   if (
-    typeof (runtime as AnyRecord)['resolveTag'] !== 'function' ||
-    typeof (runtime as AnyRecord)['resolveProps'] !== 'function' ||
-    typeof (runtime as AnyRecord)['resolveClasses'] !== 'function' ||
-    typeof (runtime as AnyRecord)['resolveAria'] !== 'function'
+    !isFunction(runtimeRecord['resolveTag']) ||
+    !isFunction(runtimeRecord['resolveProps']) ||
+    !isFunction(runtimeRecord['resolveClasses']) ||
+    !isFunction(runtimeRecord['resolveAria'])
   )
     return false
 
-  if (typeof filterProps !== 'function') return false
+  if (!isFunction(filterProps)) return false
 
   if (
     childrenEvaluator !== undefined &&
-    (!isObject(childrenEvaluator) ||
-      typeof (childrenEvaluator as AnyRecord)['evaluate'] !== 'function')
+    (!isObject(childrenEvaluator) || !isFunction((childrenEvaluator as AnyRecord)['evaluate']))
   )
     return false
 
@@ -142,31 +146,28 @@ export function diffAndApplyAttributes(
 
   // Remove pipeline-managed attributes absent from the new state (e.g. a
   // filterProps target that was set last run but is gone this run).
-  for (const key of prevPipelineAttrs) {
+  iterate.forEachSet(prevPipelineAttrs, (key) => {
     if (!hasOwn(attrs, key)) host.removeAttribute(key)
-  }
+  })
   prevPipelineAttrs.clear()
 
   // Remove aria-* and role attributes the ARIA engine stripped this run (e.g.
   // redundant role="navigation" on a <nav>). These are user-set, not
   // pipeline-set, so they're not covered by prevPipelineAttrs above.
-  for (const key in incomingProps) {
-    if (!hasOwn(incomingProps, key)) continue
-    if (!key.startsWith('aria-') && key !== 'role') continue
+  iterate.forEachEntry(incomingProps, (key) => {
+    if (!key.startsWith('aria-') && key !== 'role') return
     if (!hasOwn(attrs, key)) host.removeAttribute(key)
-  }
+  })
 
-  for (const key in attrs) {
-    if (!hasOwn(attrs, key)) continue
-    const value = attrs[key]
-    if (value === undefined || value === null || value === false) {
+  iterate.forEachEntry(attrs, (key, value) => {
+    if (isNullish(value) || isFalse(value)) {
       host.removeAttribute(key)
-    } else if (value === true) {
+    } else if (isTrue(value)) {
       host.setAttribute(key, '')
       prevPipelineAttrs.add(key)
     } else {
       host.setAttribute(key, String(value))
       prevPipelineAttrs.add(key)
     }
-  }
+  })
 }

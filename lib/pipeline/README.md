@@ -7,6 +7,12 @@ model.
 
 Private workspace package, bundled into whichever `praxis-kit` entries need it.
 
+**No runtime imports from other workspace packages — keep it that way.** The source imports only
+_types_ from `@praxis-kit/primitive`, so the engine bundles on its own. A runtime import of
+`iterate` (from `primitive`) or a guard (from `guards`) drags those packages' barrels, and `guardz`
+with them, into every consumer: `qa/tree-shaking-tests`' `source/pk2-engine-only` scenario (793 B)
+failed at 10.5 KB when it was tried. The plain loops and `=== undefined` checks here are deliberate.
+
 ---
 
 ## Status

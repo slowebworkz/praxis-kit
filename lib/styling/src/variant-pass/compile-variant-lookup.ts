@@ -1,3 +1,4 @@
+import { isDefined, isString } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import type { StringMap } from '@praxis-kit/primitive'
 import type { CompoundVariant, VariantConfig } from './variant-pass'
@@ -66,7 +67,7 @@ function matchesCompound(compound: CompoundVariant, effective: DefaultMap): bool
 }
 
 function flattenClass(cls: string | readonly string[]): string {
-  return typeof cls === 'string' ? cls : cls.join(' ')
+  return isString(cls) ? cls : cls.join(' ')
 }
 
 function resolveCombo(
@@ -78,9 +79,9 @@ function resolveCombo(
 
   iterate.forEach(dimensions, ({ key }) => {
     const active = effective[key]
-    if (active !== undefined) {
+    if (isDefined(active)) {
       const cls = config.variants[key]?.[active]
-      if (cls !== undefined && cls !== '') classes.push(cls)
+      if (isDefined(cls) && cls !== '') classes.push(cls)
     }
   })
 

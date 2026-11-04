@@ -1,15 +1,7 @@
 import type { ChildRuleInput } from '@praxis-kit/core'
 import { ChildrenEvaluator } from '@praxis-kit/core'
 import type { Diagnostics } from '@praxis-kit/diagnostics'
-
-export type RuntimeEngines = {
-  childrenEvaluator?: ChildrenEvaluator
-}
-
-export type BuildEnginesChildrenOptions = {
-  readonly exclusiveChildren?: boolean | undefined
-  readonly allowText?: boolean | undefined
-}
+import type { BuildEnginesChildrenOptions, RuntimeEngines } from './types'
 
 export function buildEngines(
   diagnostics: Diagnostics,

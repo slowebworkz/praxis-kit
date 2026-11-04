@@ -12,6 +12,14 @@ import { isDefined, isEqualTo } from 'guardz'
 
 export { isString, isNumber, isFunction, isDefined } from 'guardz'
 
+/**
+ * guardz's exact-value guard factory, exported so callers can build literal guards the same way
+ * `isNull`/`isUndefined`/`isFalse`/`isTrue` below are built. Pass the type argument for boolean
+ * and other widening literals: `isEqualTo<true>(true)`, since a bare `isEqualTo(true)` infers
+ * `boolean`.
+ */
+export { isEqualTo } from 'guardz'
+
 /** guardz's own name for "null or undefined" — re-exported under this package's historical name. */
 export { isNil as isNullish } from 'guardz'
 
@@ -22,6 +30,15 @@ export { isNil as isNullish } from 'guardz'
  */
 export const isNull = isEqualTo(null)
 export const isUndefined = isEqualTo(undefined)
+
+/**
+ * guardz (1.14) has no `isFalse`/`isTrue` either — same `isEqualTo` composition as above. The
+ * explicit `<false>`/`<true>` matter: `isEqualTo(false)` would infer `T = boolean`, widening the
+ * literal, and the guard would narrow to `boolean` instead of the literal. Exact matches, not
+ * truthiness: `!isFalse(x)` is NOT a stand-in for `isTrue(x)`.
+ */
+export const isFalse = isEqualTo<false>(false)
+export const isTrue = isEqualTo<true>(true)
 
 /**
  * guardz's `isDefined` already means "not null and not undefined" (its own docs: "the opposite

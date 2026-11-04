@@ -1,5 +1,5 @@
 import { describe, it, expectTypeOf } from 'vitest'
-import type { ChildRuleInput, ChildrenEvaluator } from '@praxis-kit/core'
+import type { ChildRuleInput, ChildrenEvaluator, EmptyRecord } from '@praxis-kit/core'
 import type { BuiltChildrenEvaluator } from './built-children-evaluator'
 
 // `BuiltChildrenEvaluator<TOptions>` must agree with `buildEngines`, which constructs a
@@ -29,6 +29,6 @@ describe('BuiltChildrenEvaluator', () => {
   it('omits the evaluator when nothing forces child enforcement', () => {
     expectTypeOf<HasEvaluator<{ exclusiveChildren: false }>>().toEqualTypeOf<false>()
     expectTypeOf<HasEvaluator<{ allowText: true }>>().toEqualTypeOf<false>()
-    expectTypeOf<HasEvaluator<Record<never, never>>>().toEqualTypeOf<false>()
+    expectTypeOf<HasEvaluator<EmptyRecord>>().toEqualTypeOf<false>()
   })
 })

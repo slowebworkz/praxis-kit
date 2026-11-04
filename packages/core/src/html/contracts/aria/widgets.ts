@@ -1,3 +1,5 @@
+import { AriaDiagnostics } from '@praxis-kit/contract'
+import type { AriaContext, AriaResult } from '../../../types'
 import { requireAccessibleName } from '../../aria-rules'
 import { ariaContract } from '../helpers'
 
@@ -18,6 +20,14 @@ export const dialogContract = ariaContract([requireAccessibleName])
 export const menuContract = ariaContract([requireAccessibleName])
 
 /**
+ * `role="menuitem"` — an actionable item within a menu or menubar.
+ * This single-element contract checks for an accessible name only; menu
+ * ownership and keyboard interaction require composite-widget context.
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/menubar/
+ */
+export const menuitemContract = ariaContract([requireAccessibleName])
+
+/**
  * `role="menubar"` — persistent horizontal menu bar of menu items.
  * APG: https://www.w3.org/WAI/ARIA/apg/patterns/menubar/
  */
@@ -30,16 +40,41 @@ export const menubarContract = ariaContract([requireAccessibleName])
 export const treeContract = ariaContract([requireAccessibleName])
 
 /**
+ * `role="treeitem"` — an item in a hierarchical tree. Its accessible name
+ * identifies the item; this contract does not validate tree/group ancestry or
+ * whether `aria-expanded` is appropriate for the item.
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/treeview/
+ */
+export const treeitemContract = ariaContract([requireAccessibleName])
+
+/**
  * `role="grid"` — composite widget containing rows of cells, similar to a spreadsheet.
  * APG: https://www.w3.org/WAI/ARIA/apg/patterns/grid/
  */
 export const gridContract = ariaContract([requireAccessibleName])
 
 /**
+ * `role="combobox"` — input or button that controls a popup for choosing a value.
+ * This contract checks the accessible name only. Required states such as
+ * `aria-expanded` are handled by the shared ARIA required-property validation;
+ * popup ownership and `aria-controls` target resolution need cross-element context.
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/combobox/
+ */
+export const comboboxContract = ariaContract([requireAccessibleName])
+
+/**
  * `role="listbox"` — list from which a user may select one or more options.
  * APG: https://www.w3.org/WAI/ARIA/apg/patterns/listbox/
  */
 export const listboxContract = ariaContract([requireAccessibleName])
+
+/**
+ * `role="toolbar"` — a grouping of controls that functions as a single widget.
+ * This static contract checks only the toolbar's accessible name; keyboard
+ * navigation and focus management are behavioral concerns.
+ * APG: https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/
+ */
+export const toolbarContract = ariaContract([requireAccessibleName])
 
 /**
  * `role="tablist"` — container for a set of tabs that manage tab panels.
@@ -52,3 +87,66 @@ export const tablistContract = ariaContract([requireAccessibleName])
  * WAI-ARIA 1.2: https://www.w3.org/TR/wai-aria-1.2/#radiogroup
  */
 export const radiogroupContract = ariaContract([requireAccessibleName])
+
+/**
+ * Creates a local widget-role rule for a state that WAI-ARIA requires on the
+ * role itself. This intentionally checks attribute presence, not truthiness:
+ * values such as `aria-selected="false"` and `aria-checked="false"` are valid.
+ *
+ * The contract is applied explicitly for a role, so it does not infer widget
+ * identity from a host element or attempt cross-element APG relationship checks.
+ */
+function requireAriaState(attribute: string, role: string) {
+  return ({ tag, props }: AriaContext): readonly AriaResult[] => {
+    if (attribute in props) return []
+
+    const message = `role="${role}" requires ${attribute}. Set it to the current state, including "false" when appropriate.`
+    return [
+      {
+        valid: false,
+        fixable: false,
+        severity: 'warning',
+        diagnostic: AriaDiagnostics.fromViolation({
+          message,
+          tag,
+          role,
+          attribute,
+          severity: 'warning',
+          phase: 'evaluate',
+        }),
+      },
+    ]
+  }
+}
+
+/** `role="tab"` — expose whether this tab is currently selected. */
+export const tabContract = ariaContract([requireAriaState('aria-selected', 'tab')])
+
+/** `role="radio"` — expose the checked state, including an explicit false. */
+export const radioContract = ariaContract([requireAriaState('aria-checked', 'radio')])
+
+/** `role="checkbox"` — expose the checked state, including an explicit false. */
+export const checkboxContract = ariaContract([requireAriaState('aria-checked', 'checkbox')])
+
+/**
+ * `role="tabpanel"` — provide an accessible name, commonly via
+ * `aria-labelledby` pointing to its controlling tab. The static contract does
+ * not resolve that ID reference or validate sibling relationships.
+ */
+export const tabpanelContract = ariaContract([requireAccessibleName])
+
+/**
+ * `role="option"` — expose the option's selection state. Presence is checked
+ * rather than truthiness, so `aria-selected="false"` remains valid.
+ */
+export const optionContract = ariaContract([requireAriaState('aria-selected', 'option')])
+
+/** `role="menuitemcheckbox"` — expose its checked state, including false. */
+export const menuitemcheckboxContract = ariaContract([
+  requireAriaState('aria-checked', 'menuitemcheckbox'),
+])
+
+/** `role="menuitemradio"` — expose its checked state, including false. */
+export const menuitemradioContract = ariaContract([
+  requireAriaState('aria-checked', 'menuitemradio'),
+])

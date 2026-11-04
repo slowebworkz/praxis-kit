@@ -3,6 +3,7 @@ import type { CompoundRecord, Defaults, PresetRecord, VariantRecord } from './bu
 import { buildVariantConfig } from './build-variant-config'
 import type { ClassResolution } from './resolve-classes'
 import { resolveClasses } from './resolve-classes'
+import { isUndefined } from '@praxis-kit/guards'
 import type { StringMap } from '@praxis-kit/primitive'
 
 export interface StylePipeline {
@@ -17,10 +18,10 @@ export function buildStylePipeline(
   variantLookup: StringMap<string> | undefined,
 ): StylePipeline | undefined {
   if (
-    variants === undefined &&
-    compounds === undefined &&
-    presets === undefined &&
-    variantLookup === undefined
+    isUndefined(variants) &&
+    isUndefined(compounds) &&
+    isUndefined(presets) &&
+    isUndefined(variantLookup)
   ) {
     return undefined
   }
