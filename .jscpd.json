@@ -11,11 +11,10 @@
     "**/snapshots/**",
     "**/scenarios/**"
   ],
-  "languages": ["typescript"],
   "minLines": 12,
   "minTokens": 70,
   "gitignore": true,
   "noSymlinks": true,
-  "path": ["lib", "packages"],
+  "path": ["lib", "packages", "adapters", "plugins"],
   "format": ["typescript"]
 }
