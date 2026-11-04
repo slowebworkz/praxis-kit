@@ -1,6 +1,6 @@
 # Decisions
 
-## Status — 2026-10-05
+## Status — 2026-11-04
 
 This file is a chronological decision log, not a spec. Read it top-down for what is still live:
 unresolved questions live in the **`## Open`** section below; everything under **`## Resolved`** is
@@ -14,9 +14,11 @@ instead:
 | How do I build a component?                             | [`GETTING_STARTED.md`](GETTING_STARTED.md), [`docs/`](docs/index.md)             |
 | Internal runtime pipeline                               | [`ARCHITECTURE.md`](ARCHITECTURE.md)                                             |
 
-**Current release:** `praxis-kit@1.0.2` on npm (public). History: `0.1.0` → `0.1.1` → `1.0.2`.
-**Current stability policy:** 1.x, beginning with 1.0.2 — see `docs/api-stability.md`. **Integration
-branch:** `develop` (repository default). `main` tracks the last release.
+**Current release:** `praxis-kit@1.4.0` on npm (public). History: `0.1.0` → `0.1.1` → `1.0.2` →
+`1.0.3` → `1.1.2` → `1.2.0` → `1.3.0` → `1.4.0`. **Current stability policy:** 1.x, beginning with
+1.0.2 — see `docs/api-stability.md`. **Integration branch:** `develop` (repository default). `main`
+tracks the last release and takes changes only through a pull request with CI green, admins
+included; `v*` tags are protected by a ruleset (see the 2026-11 entry at the end of this file).
 
 The architecture is frozen for the 1.x line: no new abstractions or tooling systems without a
 decision recorded here. Items below the historical entries that refer to 0.1 milestones (the 0.1.0
@@ -171,77 +173,6 @@ cleanup pass: move the `devDependency` declarations into the `qa/*` packages tha
 (each referencing `catalog:`), leaving only version ownership at the root via the catalog. Same
 question applies to `jsdom` and `type-fest` once test/config packages exist that import them (both
 already pared back: `jsdom` dropped from root, `type-fest` under review).
-
-### `lib/contract` — prop-normalizer false-state model
-
-The eight state-prop normalizers in `contract/src/props/` (`disabledProps`, `expandedProps`,
-`pressedProps`, `selectedProps`, `invalidProps`, `loadingProps`, `readonlyProps`, `activeProps`) are
-ported from `../pk` on **Model A**: a truthy state injects the `aria-*` / `data-*` pair, a falsy
-state emits `{}`, and an explicitly-supplied `aria-*` / `data-*` value is preserved (the normalizer
-only fills when the key is `undefined`).
-
-The eight files were byte-for-byte identical bar three strings, so they collapsed into
-`makeStateNormalizer(config)` (`props/make-state-normalizer.ts`) plus eight one-line configs in
-`props/index.ts`. `makeStateNormalizer` is also exported (with `StateNormalizerConfig`) for
-consumers authoring their own state props.
-
-**Resolved (2026-09):** the false-state model is **per-prop**, a `falseState` field on the config:
-
-- **`omit`** (default) — `disabled`, `invalid`, `loading`, `readonly`, `active`. `aria-*="false"`
-  equals the attribute's default, so deriving it is redundant noise.
-- **`synthesize`** (**Model B**) — `expanded`, `pressed`, `selected`. `state={false}` produces
-  `aria-*="false"`; `state` absent (`undefined` / `null`) still emits nothing. An absent
-  `aria-expanded` means "not an expandable element"; `="false"` means "expandable, currently
-  collapsed" — assistive technology announces the two differently, and if a component exposes an
-  `expanded` prop it _is_ an expandable element. The `data-*` attr stays present-when-true under
-  either model (style the false state via `[aria-*="false"]`).
-
-Under both models an explicitly supplied `aria-*` / `data-*` value is preserved.
-
-### HTML/ARIA contract layer — standards audit before it is authoritative
-
-Pre-1.0 gate, not an adapter blocker. **In progress** — the running record is
-[`docs/accessibility/html-aria-audit.md`](docs/accessibility/html-aria-audit.md), which now holds
-the normative source, rule, praxis-kit interpretation, covering test and any deliberate deviation
-for every rule the `AriaPolicyEngine` enforces. Do not widen any of these tables without adding the
-corresponding row + test there.
-
-The HTML/ARIA enforcement data in `packages/core` — `HTML_ARIA_RULES`, `ALLOWED_ROLES` /
-`ALLOWED_INPUT_ROLES` / `IMG_NAMED_ROLES`, `STRONG_ROLES`, `IMPLICIT_ROLE_RECORD` and the
-role→attribute table — was ported from `../pk` with source comments marking it a partial model. A
-wrong entry makes praxis-kit _confidently reject valid markup_, so it is being validated row by row
-against **ARIA in HTML**, **WAI-ARIA 1.2** and **HTML-AAM**.
-
-First pass (branch `fix/aria-html-standards-audit`): corrected the allowed-role tables (`nav` was
-`[]` — it permits five roles; `ul`/`ol` carried the deprecated `directory` and lacked
-`none`/`presentation`; `button`, `aside`, `img` and the `input[type]` sets had gaps); fixed
-`<select>` to resolve `combobox`/`listbox` from `multiple`/`size` rather than a hard-coded
-`listbox`; scoped the required-property check so a native `<select>` is not asked for
-`aria-expanded`. The `AriaPolicyEngine` / `createAriaPipeline` architecture did not change — this is
-a data-correctness pass.
-
-F7 cross-element relationships are handled by opt-in utilities that take a caller-supplied element
-scope (the design is in `docs/accessibility/aria-relationship-validation-design.md`, the code-level
-readiness review in `docs/accessibility/aria-relationship-validation-readiness.md`). They are
-implemented, not proposed: an internal ID index plus validators for ID references, tabs,
-listbox/options, combobox popups, tree, grid, radiogroup and menu/menubar ownership. They are not
-DOM walkers, and the single-element `AriaContext` and `AriaPolicyEngine` are unchanged.
-
-The role→attribute realignment and prohibited-property handling tracked as F5 are closed; see
-`docs/accessibility/html-aria-audit.md` and its change log. The focused APG widget-contract review
-(F7) is complete; findings and boundaries are recorded in
-`docs/accessibility/apg-widget-coverage-review.md`. Within the explicit-role `widgetContracts`
-registry, per-element contracts cover accessible names for `menu`, `menubar`, `menuitem`,
-`combobox`, `listbox`, `tree`, `treeitem`, `grid`, `tablist`, `tabpanel`, `toolbar` and
-`radiogroup`, plus required state presence for `tab`, `option`, `radio`, `checkbox`,
-`menuitemcheckbox` and `menuitemradio`. The separately registered native `<dialog>` `dialogContract`
-is part of `htmlContracts` and is outside this F7 widget-role matrix. The supplied-scope
-relationship validators cover ownership, ID references, active descendants and consistent selection
-mechanisms. F7 closure means the explicit-role registry was reviewed and its supported boundary
-documented; it does not claim exhaustive coverage of every APG pattern or promote keyboard
-interaction, focus management, or state transitions into static contracts. New widget patterns can
-be considered as separately scoped work. The separate `undefined` allowed-role rows also remain open
-where they need ancestry the single-element context lacks.
 
 ## Resolved
 
@@ -3988,3 +3919,149 @@ Closes the three items the testing-workspace entry left open.
   copies) is `definedProp('as', as)` in `test-utils` (so the five adapters that use it list
   `test-utils` as a devDependency); and `aria-policy-engine.custom-rules.test.ts` has a local
   `without(props, key)` for its five copies of the entries/filter/fromEntries omit.
+
+### `lib/contract` — prop-normalizer false-state model (resolved 2026-09)
+
+The eight state-prop normalizers in `contract/src/props/` (`disabledProps`, `expandedProps`,
+`pressedProps`, `selectedProps`, `invalidProps`, `loadingProps`, `readonlyProps`, `activeProps`) are
+ported from `../pk` on **Model A**: a truthy state injects the `aria-*` / `data-*` pair, a falsy
+state emits `{}`, and an explicitly-supplied `aria-*` / `data-*` value is preserved (the normalizer
+only fills when the key is `undefined`).
+
+The eight files were byte-for-byte identical bar three strings, so they collapsed into
+`makeStateNormalizer(config)` (`props/make-state-normalizer.ts`) plus eight one-line configs in
+`props/index.ts`. `makeStateNormalizer` is also exported (with `StateNormalizerConfig`) for
+consumers authoring their own state props.
+
+**Resolved (2026-09):** the false-state model is **per-prop**, a `falseState` field on the config:
+
+- **`omit`** (default) — `disabled`, `invalid`, `loading`, `readonly`, `active`. `aria-*="false"`
+  equals the attribute's default, so deriving it is redundant noise.
+- **`synthesize`** (**Model B**) — `expanded`, `pressed`, `selected`. `state={false}` produces
+  `aria-*="false"`; `state` absent (`undefined` / `null`) still emits nothing. An absent
+  `aria-expanded` means "not an expandable element"; `="false"` means "expandable, currently
+  collapsed" — assistive technology announces the two differently, and if a component exposes an
+  `expanded` prop it _is_ an expandable element. The `data-*` attr stays present-when-true under
+  either model (style the false state via `[aria-*="false"]`).
+
+Under both models an explicitly supplied `aria-*` / `data-*` value is preserved.
+
+### HTML/ARIA contract layer — standards audit before it is authoritative (closed)
+
+Pre-1.0 gate, not an adapter blocker. **Closed (2026-11)** — the running record is
+[`docs/accessibility/html-aria-audit.md`](docs/accessibility/html-aria-audit.md), which now holds
+the normative source, rule, praxis-kit interpretation, covering test and any deliberate deviation
+for every rule the `AriaPolicyEngine` enforces. Do not widen any of these tables without adding the
+corresponding row + test there.
+
+The HTML/ARIA enforcement data in `packages/core` — `HTML_ARIA_RULES`, `ALLOWED_ROLES` /
+`ALLOWED_INPUT_ROLES` / `IMG_NAMED_ROLES`, `STRONG_ROLES`, `IMPLICIT_ROLE_RECORD` and the
+role→attribute table — was ported from `../pk` with source comments marking it a partial model. A
+wrong entry makes praxis-kit _confidently reject valid markup_, so it is being validated row by row
+against **ARIA in HTML**, **WAI-ARIA 1.2** and **HTML-AAM**.
+
+First pass (branch `fix/aria-html-standards-audit`): corrected the allowed-role tables (`nav` was
+`[]` — it permits five roles; `ul`/`ol` carried the deprecated `directory` and lacked
+`none`/`presentation`; `button`, `aside`, `img` and the `input[type]` sets had gaps); fixed
+`<select>` to resolve `combobox`/`listbox` from `multiple`/`size` rather than a hard-coded
+`listbox`; scoped the required-property check so a native `<select>` is not asked for
+`aria-expanded`. The `AriaPolicyEngine` / `createAriaPipeline` architecture did not change — this is
+a data-correctness pass.
+
+F7 cross-element relationships are handled by opt-in utilities that take a caller-supplied element
+scope (the design is in `docs/accessibility/aria-relationship-validation-design.md`, the code-level
+readiness review in `docs/accessibility/aria-relationship-validation-readiness.md`). They are
+implemented, not proposed: an internal ID index plus validators for ID references, tabs,
+listbox/options, combobox popups, tree, grid, radiogroup and menu/menubar ownership. They are not
+DOM walkers, and the single-element `AriaContext` and `AriaPolicyEngine` are unchanged.
+
+The role→attribute realignment and prohibited-property handling tracked as F5 are closed; see
+`docs/accessibility/html-aria-audit.md` and its change log. The focused APG widget-contract review
+(F7) is complete; findings and boundaries are recorded in
+`docs/accessibility/apg-widget-coverage-review.md`. Within the explicit-role `widgetContracts`
+registry, per-element contracts now cover (after the 2026-11 re-check against the WAI-ARIA 1.2 role
+definitions, below) an accessible name for the author-named, name-required roles `tree`, `grid`,
+`treegrid`, `listbox`, `combobox`, `tabpanel`, `radiogroup` and `alertdialog`, plus required state
+presence for `radio`, `checkbox`, `switch`, `menuitemcheckbox`, `menuitemradio` and `tab` (the last
+as APG guidance). `menu`, `menubar`, `menuitem`, `treeitem`, `option`, `toolbar` and `tablist` carry
+no element-local rule. The separately registered native `<dialog>` `dialogContract` is part of
+`htmlContracts` and is outside this F7 widget-role matrix. The supplied-scope relationship
+validators cover ownership, ID references, active descendants and consistent selection mechanisms.
+F7 closure means the explicit-role registry was reviewed and its supported boundary documented; it
+does not claim exhaustive coverage of every APG pattern or promote keyboard interaction, focus
+management, or state transitions into static contracts. New widget patterns can be considered as
+separately scoped work. The separate `undefined` allowed-role rows also remain open where they need
+ancestry the single-element context lacks.
+
+### `diagnostics: 'warn'` is report-only (2026-11)
+
+`warnDiagnostics` used to report a problem _and_ let the engine fix it, so `<Box role="bogus">` lost
+its role while printing nothing for that fix, and a redundant `role` on a `<nav>` quietly
+disappeared. Warn mode is meant to _report_. **Decision:** `warn` is report-only — `Diagnostics`
+gained a `reportOnly` option and `shouldApplyFix()`, and the policy engine skips fixes (including
+the empty-`role` normalization) when it is set. `throw` still applies fixes for warning-level
+findings (it throws only on errors) and `silent` is unchanged. An unknown `role` now raises
+`ARIA2008`.
+
+Related de-noising shipped with it: `role="region"` on a strong native landmark is reported once
+(`HTML3004`) rather than also as `HTML3006`, `HTML3008` and `ARIA2009`; invalid-child messages name
+the element (`a`, `div`) instead of `"object"` and HTML parents list what they allow; a component
+with no name reports as `Anonymous component` instead of `PolymorphicComponent`.
+
+**Landmark names are opt-in.** `html.landmark.accessible-name` is no longer a built-in rule. Whether
+`<nav>`/`<aside>` need distinguishing names depends on how many a page has, which a single-element
+contract cannot know; the old rationale ("must have an accessible name") overstated the APG.
+`landmarkAccessibleNameRule` stays exported.
+
+**Consequence for adapters:** tests that relied on `warn` stripping a redundant role now assert the
+role is kept and reported, and use a `throw`-mode element where they need to observe stripping (Lit
+and Web `StrictNavElement`).
+
+### Widget contracts follow the WAI-ARIA 1.2 role definitions — F7 amendment (2026-11)
+
+The 2026-10 F7 review was source-and-test only. A re-check of every `widgetContracts` entry against
+the WAI-ARIA 1.2 role definitions (name-from, "name required", required states) found contracts that
+disagreed with the spec:
+
+- `menuitem`, `treeitem` (and `option`, `radio`, `checkbox`, `switch`) take their name from content,
+  which a single-element contract cannot see — so no `aria-label` check. `treeitem` has **no**
+  required states in 1.2 (`aria-query` 5.3 still lists `aria-selected`, a 1.1-era value).
+- `option`'s `aria-selected` was checked by both the contract and the engine, producing two
+  diagnostics for one omission; the engine's check is now the only one.
+- `toolbar`, `tablist`, `menu`, `menubar` are name-from-author but **not** name-required, so they no
+  longer require a name (`requireAccessibleName` is the opt-in).
+- `tab`'s `aria-selected` is "supported" in 1.2, required only by the APG tabs pattern; the message
+  now says so.
+- `combobox` requires `aria-controls` as well as `aria-expanded` (both are in 1.2's required list).
+  **Tracking 1.2:** the 1.3 draft relaxes `aria-controls` while collapsed; revisit when 1.3 is
+  final.
+- New contracts for `alertdialog`, `treegrid` (name) and `switch` (`aria-checked`). `slider`,
+  `meter` and a role-form `dialog` are deliberately not added — new widget families get their own
+  scope.
+
+Details: `docs/accessibility/html-aria-audit.md` ("F7 amendment") and
+`docs/accessibility/apg-widget-coverage-review.md`.
+
+### `main` protection and release-tag ruleset (2026-11)
+
+`main` is protected: changes land only through a pull request with `Build, Typecheck & Test` and
+`Playwright component tests` green, **enforced for admins too**; force pushes and deletion are
+blocked. Required approvals are 0 (a single maintainer). A repository ruleset ("Protect release
+tags") blocks creating, moving and deleting `v*` tags, with a repository-admin bypass, because
+pushing a `v*` tag runs `publish.yml` and publishes to npm. Consequence for tooling: nothing may
+push to `main`; the (unported) Changesets CI release job must open a `develop` → `main` PR.
+
+**GitHub releases.** Every published version now has a tag on `main` and a GitHub release (`v0.1.0`
+was the only one missing; created 2026-11-04). A stray non-version tag, `post-0.1.1-work`, is slated
+for deletion.
+
+### GitHub Sponsors — still not yet, reassessed at `v1.4.0` (2026-11-04)
+
+Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule. Conclusion unchanged from the
+`v1.3.0` reassessment: **not yet**. Checked directly (`gh api repos/.../praxis-kit`, issue/PR search
+for non-maintainer, non-Dependabot authors, 2026-11-04): 0 stars, 0 forks, 0 watchers, 0 external
+issues or PRs. `npm` downloads for the trailing month are 277 (`api.npmjs.org`, 2026-10-05 →
+2026-11-03) — down from the ~513–523 recorded at `v1.1.2`/`v1.2.0`, still indistinguishable from
+mirror/CI noise and not a usage signal. Maintenance velocity remains healthy (1.4.0 shipped, an ARIA
+1.2 audit pass, release protections added) but Sponsors needs adoption. **Revisit trigger
+unchanged:** a star/issue/PR from a non-maintainer account, or the next version tag.
