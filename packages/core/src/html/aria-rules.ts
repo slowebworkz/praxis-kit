@@ -36,6 +36,9 @@ export const landmarkRoleRule = defineAriaRule(
   ({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] => {
     if (!LANDMARK_TAG_SET.has(tag) || !implicitRole) return []
     const { role } = props
+    // The core ARIA engine owns the strong-implicit-role + role=region case.
+    // Avoid emitting a second HTML landmark diagnostic for the same violation.
+    if (role === 'region') return []
     // role === implicitRole is already caught by the built-in #checkRedundantRole (warns, removes).
     if (!role || role === implicitRole) return []
     const diagnostic = HtmlDiagnostics.landmarkRoleOverride(tag, implicitRole, role)
@@ -67,9 +70,9 @@ export function requireAccessibleName({ tag, props }: AriaContext): readonly Ari
   ]
 }
 
-// nav and aside are commonly multiplied on a single page (primary nav, breadcrumb nav;
-// main content, sidebar) and each instance must have a unique accessible name so that
-// screen reader users can distinguish them from the landmarks list.
+// Opt-in rule for pages with multiple landmarks of the same type. Names can help
+// assistive-technology users distinguish peer navigation/complementary landmarks, but
+// a single-element contract cannot determine whether duplicates exist on the page.
 // WAI-ARIA APG: https://www.w3.org/WAI/ARIA/apg/practices/landmark-regions/
 const NAMED_LANDMARK_TAGS = ['nav', 'aside'] as const satisfies HtmlTags
 const NAMED_LANDMARK_TAG_SET: ReadonlySet<string> = new Set(NAMED_LANDMARK_TAGS)
@@ -85,7 +88,6 @@ export const landmarkAccessibleNameRule = defineAriaRule(
 
 export const HTML_ARIA_RULES: readonly AriaRule[] = [
   landmarkRoleRule,
-  landmarkAccessibleNameRule,
   roleNotPermittedRule,
   ...INPUT_RULES,
   ...ANCHOR_RULES,

@@ -69,7 +69,7 @@ export function buildRuntime<
   const { childrenEvaluator } = buildEngines(
     normalized.diagnostics,
     normalized.enforcement?.children,
-    normalized.name,
+    options.name ?? 'Anonymous component',
     {
       exclusiveChildren: normalized.enforcement?.exclusiveChildren,
       allowText: normalized.enforcement?.allowText,

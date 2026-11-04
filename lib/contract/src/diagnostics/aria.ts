@@ -96,8 +96,9 @@ export const AriaDiagnostics = {
       category: DiagnosticCategory.ARIA,
       message: `<${tag}> has no accessible name. Add aria-label or aria-labelledby.`,
       rationale:
-        'Elements with a landmark or interactive role must have an accessible name so that ' +
-        'assistive technology can identify them when presenting the page outline.',
+        'Elements with an interactive role, and landmarks that appear more than once on a page, ' +
+        'need an accessible name so assistive technology can tell them apart. A single landmark ' +
+        'of its kind does not require one.',
       suggestions: [
         {
           title: 'Add aria-label',

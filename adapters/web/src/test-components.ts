@@ -52,6 +52,16 @@ export const NavElement = createContractComponent({
   enforcement: { diagnostics: warnDiagnostics },
 })
 
+// `warn` mode only reports, so a redundant role stays on the element. `throw` mode still applies
+// fixes for warning-level diagnostics (it throws only on errors), which is what lets a test observe
+// the engine stripping a redundant role.
+export const StrictNavElement = createContractComponent({
+  tag: 'nav',
+  name: 'StrictNav',
+  styling: { base: 'nav-base' },
+  enforcement: { diagnostics: throwDiagnostics },
+})
+
 // ─── Tabs (children enforcement) ─────────────────────────────────────────────
 
 function isTabsTrigger(child: unknown): child is Element {

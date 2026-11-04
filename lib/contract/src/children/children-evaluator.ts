@@ -2,7 +2,7 @@ import type { ChildRuleContext, ChildRuleInput, NormalizedChildRule } from '../t
 import { isDynamicRule, iterate, resolveRule } from '@praxis-kit/primitive'
 import { isNumber, isString } from '@praxis-kit/guards'
 import { InvariantBase } from '../strict'
-import type { Diagnostics } from '@praxis-kit/diagnostics'
+import type { DiagnosticInput, Diagnostics } from '@praxis-kit/diagnostics'
 import { ContractDiagnostics } from '../diagnostics'
 import { getTypeName } from './get-type-name'
 import type { ResolvedChildRuleInput } from './normalize-child-rule'
@@ -24,6 +24,9 @@ export type ChildrenEvaluatorOptions = {
    * exclusiveChildren or any listed rule. Default: true.
    */
   readonly allowText?: boolean | undefined
+  /** Optional domain-specific diagnostic for rejected children. */
+  readonly unexpectedChildDiagnostic?:
+    ((childType: string, index: number, context: string) => DiagnosticInput) | undefined
 }
 
 export class ChildrenEvaluator extends InvariantBase {
@@ -36,6 +39,7 @@ export class ChildrenEvaluator extends InvariantBase {
   readonly #ruleValidator: RuleValidator
   readonly #exclusiveChildren: boolean
   readonly #allowText: boolean
+  readonly #unexpectedChildDiagnostic: ChildrenEvaluatorOptions['unexpectedChildDiagnostic']
 
   constructor(
     rules: readonly ChildRuleInput[],
@@ -47,6 +51,7 @@ export class ChildrenEvaluator extends InvariantBase {
     this.#context = context
     this.#exclusiveChildren = options.exclusiveChildren ?? false
     this.#allowText = options.allowText ?? true
+    this.#unexpectedChildDiagnostic = options.unexpectedChildDiagnostic
 
     const staticRuleInputs: ChildRuleInput[] = []
     const dynamicRuleInputs: ChildRuleInput[] = []
@@ -108,7 +113,10 @@ export class ChildrenEvaluator extends InvariantBase {
     iterate.forEach(violating, (ci) => {
       const typeName = getTypeName(children[ci])
       if (unexpectedIndices.has(ci)) {
-        this.violate(ContractDiagnostics.unexpectedChild(typeName, ci, this.#context))
+        this.violate(
+          this.#unexpectedChildDiagnostic?.(typeName, ci, this.#context) ??
+            ContractDiagnostics.unexpectedChild(typeName, ci, this.#context),
+        )
       } else {
         const matches = matrix.childToRules.forward.get(ci)!
         const names = [...matches].map((ri) => rules[ri]?.name ?? `#${ri}`)
