@@ -41,7 +41,6 @@ import {
   tableRowContract,
   tablistContract,
   tabpanelContract,
-  toolbarContract,
   treeContract,
   treeitemContract,
   videoContract,
@@ -887,14 +886,10 @@ describe('widget contracts', () => {
   }
 
   it.each([
-    ['menuContract', menuContract],
     ['comboboxContract', comboboxContract],
-    ['menubarContract', menubarContract],
     ['treeContract', treeContract],
-    ['treeitemContract', treeitemContract],
     ['gridContract', gridContract],
     ['listboxContract', listboxContract],
-    ['tablistContract', tablistContract],
     ['tabpanelContract', tabpanelContract],
     ['radiogroupContract', radiogroupContract],
   ] as const)('%s has a single aria rule (requireAccessibleName)', (_name, contract) => {
@@ -920,33 +915,10 @@ describe('widget contracts', () => {
     expect(widgetContracts[role]).toBe(expected)
   })
 
-  it('requireAccessibleName fires via menuitemContract when aria-label is absent', () => {
-    const rule = menuitemContract.aria![0]!
-    const results = rule(ctx('button', {}))
-    expect(results).toMatchObject([{ valid: false, severity: 'warning' }])
-  })
-
-  it('requireAccessibleName passes via menuitemContract when aria-label is present', () => {
-    const rule = menuitemContract.aria![0]!
-    const results = rule(ctx('button', { 'aria-label': 'Save' }))
-    expect(results).toEqual([])
-  })
-
-  it('requireAccessibleName fires via menuContract when aria-label is absent', () => {
-    const rule = menuContract.aria![0]!
-    const results = rule(ctx('ul', {}))
-    expect(results).toMatchObject([{ valid: false, severity: 'warning' }])
-  })
-
-  it('requireAccessibleName passes via menuContract when aria-label is present', () => {
-    const rule = menuContract.aria![0]!
-    const results = rule(ctx('ul', { 'aria-label': 'File' }))
-    expect(results).toEqual([])
-  })
-
   it('widgetContracts contains exactly the expected roles', () => {
     expect(Object.keys(widgetContracts).sort()).toEqual(
       [
+        'alertdialog',
         'checkbox',
         'combobox',
         'grid',
@@ -959,11 +931,13 @@ describe('widget contracts', () => {
         'option',
         'radio',
         'radiogroup',
+        'switch',
         'tab',
         'tablist',
         'tabpanel',
         'toolbar',
         'tree',
+        'treegrid',
         'treeitem',
       ].sort(),
     )
@@ -973,13 +947,10 @@ describe('widget contracts', () => {
   // widget's accessible name only. They do not inspect descendants or enforce
   // widget-specific states and ID relationships.
   it.each([
-    ['menu', menuContract, { 'aria-label': 'Actions' }],
     ['tree', treeContract, { 'aria-label': 'Folders' }],
     ['grid', gridContract, { 'aria-label': 'Results' }],
     ['listbox', listboxContract, { 'aria-label': 'Choices' }],
     ['combobox', comboboxContract, { 'aria-label': 'Search' }],
-    ['tablist', tablistContract, { 'aria-label': 'Sections' }],
-    ['toolbar', toolbarContract, { 'aria-label': 'Formatting' }],
     ['radiogroup', radiogroupContract, { 'aria-label': 'Size' }],
   ] as const)(
     '%s does not currently enforce APG-specific relationships or states',

@@ -1,11 +1,12 @@
 # APG widget-contract coverage review (F7)
 
 **Status:** Review complete; F7 closed for the current explicit-role `widgetContracts` registry.
-This is a scoped review of those static widget-role contracts and supplied-scope relationship
-validators, not a review of every native HTML element contract or a claim of exhaustive
-implementation of every WAI-ARIA APG pattern. The native `<dialog>` `dialogContract` is registered
-through `htmlContracts`, not `widgetContracts`, and is intentionally outside this widget-role
-coverage matrix.
+Amended 2026-11 — see "Amendment" below: a later pass against the WAI-ARIA 1.2 role definitions
+corrected several contracts this review had accepted. This is a scoped review of those static
+widget-role contracts and supplied-scope relationship validators, not a review of every native HTML
+element contract or a claim of exhaustive implementation of every WAI-ARIA APG pattern. The native
+`<dialog>` `dialogContract` is registered through `htmlContracts`, not `widgetContracts`, and is
+intentionally outside this widget-role coverage matrix.
 
 ## Review basis
 
@@ -63,3 +64,25 @@ the current `AriaContext` is a single-element view.
 
 This is a source-and-test review; it does not claim that the test suite was executed as part of this
 patch. The change is documentation-only.
+
+## Amendment (2026-11) — re-check against WAI-ARIA 1.2
+
+This review was source-and-test only: it checked that the contracts matched their tests and the
+audit matrix, not that they matched the role definitions. A follow-up compared each contract with
+the WAI-ARIA 1.2 role definitions and ran them through the policy engine. It reopened parts of
+findings 1 and 5:
+
+- **Naming was over-applied.** `menuitem` and `treeitem` were treated as needing `aria-label`, but
+  their name may come from content, which a single-element contract cannot see. `toolbar`,
+  `tablist`, `menu` and `menubar` are not name-required in 1.2. These checks were removed (naming
+  stays available as the exported `requireAccessibleName` rule).
+- **`option` was checked twice**, producing two diagnostics for one omission; the engine's check is
+  now the only one.
+- **`combobox`** now also requires `aria-controls`, as 1.2 does.
+- **`tab`**'s `aria-selected` is APG guidance, not a 1.2 requirement, and the message now says so.
+- **Scope (finding 5) was extended narrowly**: `alertdialog`, `treegrid` and `switch` were added
+  because their requirements are unambiguous and element-local. `slider`, `meter` and a role-form
+  `dialog` remain unregistered.
+
+Details and rationale are in the F7 amendment in
+[`html-aria-audit.md`](./html-aria-audit.md#f7-amendment--role-definitions-re-checked-against-wai-aria-12-2026-11).

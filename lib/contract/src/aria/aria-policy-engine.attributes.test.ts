@@ -387,12 +387,22 @@ describe('validate() — WAI-ARIA required properties', () => {
     expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(true)
   })
 
-  it('no violation when aria-expanded is present on role="combobox"', () => {
-    const { violations } = makeValidator(throwDiagnostics).validate('div', {
+  it('warns for missing aria-controls on role="combobox"', () => {
+    const { violations } = makeValidator(silentDiagnostics).validate('div', {
       role: 'combobox',
       'aria-expanded': 'false',
     })
+    expect(violations.some((v) => v.attribute === 'aria-controls')).toBe(true)
+  })
+
+  it('no violation when aria-expanded and aria-controls are present on role="combobox"', () => {
+    const { violations } = makeValidator(throwDiagnostics).validate('div', {
+      role: 'combobox',
+      'aria-expanded': 'false',
+      'aria-controls': 'listbox-1',
+    })
     expect(violations.some((v) => v.attribute === 'aria-expanded')).toBe(false)
+    expect(violations.some((v) => v.attribute === 'aria-controls')).toBe(false)
   })
 
   it('warns for missing aria-selected on role="option"', () => {

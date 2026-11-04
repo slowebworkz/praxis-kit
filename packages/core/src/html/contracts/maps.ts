@@ -2,6 +2,7 @@ import type { HtmlContractMap } from '@praxis-kit/contract'
 import type { ContractGroup } from './types'
 import { buildMap } from './build-map'
 import {
+  alertdialogContract,
   checkboxContract,
   comboboxContract,
   dialogContract,
@@ -16,11 +17,13 @@ import {
   optionContract,
   radioContract,
   radiogroupContract,
+  switchContract,
   tabContract,
   tablistContract,
   tabpanelContract,
   toolbarContract,
   treeContract,
+  treegridContract,
   treeitemContract,
 } from './aria'
 import { LANDMARK_TAGS, TEXT_ONLY_TAGS, VOID_TAGS } from './categories'
@@ -125,11 +128,15 @@ export const htmlContracts: HtmlContractMap = {
  * // <ul role="menu" aria-label="File">
  * ```
  *
- * Widget contracts enforce the accessibility requirements defined by the
- * WAI-ARIA Authoring Practices, such as requiring an accessible name for
- * composite widgets.
+ * Widget contracts are element-local checks against WAI-ARIA 1.2 and the APG:
+ * an accessible name for roles whose name must come from `aria-label` /
+ * `aria-labelledby`, and a required state (`aria-checked`, `aria-selected`) for
+ * roles that expose one. Roles named from content, or whose name the spec does
+ * not require, carry no rule. Relationships between elements are covered by the
+ * separate `validateAria*Relationships` utilities.
  */
 export const widgetContracts: HtmlContractMap = {
+  alertdialog: alertdialogContract,
   checkbox: checkboxContract,
   combobox: comboboxContract,
   menu: menuContract,
@@ -147,5 +154,7 @@ export const widgetContracts: HtmlContractMap = {
   toolbar: toolbarContract,
   radio: radioContract,
   radiogroup: radiogroupContract,
+  switch: switchContract,
   tab: tabContract,
+  treegrid: treegridContract,
 }

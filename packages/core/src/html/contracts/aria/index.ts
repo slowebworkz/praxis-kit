@@ -1,5 +1,6 @@
 export { landmarkContract } from './landmarks'
 export {
+  alertdialogContract,
   checkboxContract,
   comboboxContract,
   dialogContract,
@@ -13,10 +14,12 @@ export {
   optionContract,
   radioContract,
   radiogroupContract,
+  switchContract,
   tabContract,
   tabpanelContract,
   tablistContract,
   toolbarContract,
   treeContract,
+  treegridContract,
   treeitemContract,
 } from './widgets'

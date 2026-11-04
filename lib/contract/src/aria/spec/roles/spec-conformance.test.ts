@@ -12,8 +12,10 @@ const prohibitedRef = support.prohibitedByRole as Record<string, readonly string
 
 describe('REQUIRED_ARIA_PROPERTIES vs the reference', () => {
   // praxis's list is a deliberate, conservative WAI-ARIA 1.2 subset — `aria-query` still carries
-  // a few ARIA-1.1-era requirements (e.g. combobox → aria-controls, heading → aria-level). So the
-  // gate is "never demand more than the reference", not equality.
+  // a few requirements 1.2 does not list (e.g. heading → aria-level, treeitem → aria-selected).
+  // So the gate is "never demand more than the reference", not equality. (combobox →
+  // aria-controls *is* in 1.2's Required States and Properties; the 1.3 draft relaxes it when the
+  // popup is collapsed, and this table tracks 1.2 until 1.3 is final.)
   //
   // Documented exceptions — praxis follows the WAI-ARIA 1.2 spec text where `aria-query` (5.3.2)
   // does not:
