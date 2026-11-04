@@ -7,7 +7,7 @@ import type { StringMap } from '@praxis-kit/primitive'
 // once its requirement is implemented in the engine and covered by tests — a reader must not
 // assume a role's absence here means "no required properties".
 export const REQUIRED_ARIA_PROPERTIES: Readonly<StringMap<readonly string[]>> = {
-  combobox: ['aria-expanded'],
+  combobox: ['aria-expanded', 'aria-controls'],
   option: ['aria-selected'],
   slider: ['aria-valuenow'],
   scrollbar: ['aria-controls', 'aria-valuenow'],
