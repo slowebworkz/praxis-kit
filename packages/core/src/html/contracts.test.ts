@@ -869,8 +869,8 @@ describe('landmarkAccessibleNameRule', () => {
     expect(landmarkAccessibleNameRule(ctx('nav', {}, undefined))).toEqual([])
   })
 
-  it('landmarkContract exposes landmarkAccessibleNameRule as second aria rule', () => {
-    expect(landmarkContract.aria![1]).toBe(landmarkAccessibleNameRule)
+  it('does not require landmark names without page-level multiplicity context', () => {
+    expect(landmarkContract.aria).not.toContain(landmarkAccessibleNameRule)
   })
 })
 

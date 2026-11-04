@@ -406,10 +406,13 @@ scope or validate keyboard behavior.
 and/or message. These identifiers are stable API names; overrides do not affect custom rules
 supplied through `enforcement.aria` or `enforcement.rules`.
 
+`landmarkAccessibleNameRule` (`html.landmark.accessible-name`) remains available as an opt-in custom
+rule for pages with multiple landmarks of the same type. It is not built in because a single-element
+contract cannot determine whether landmark names are needed to distinguish peers.
+
 | Rule                                                 | Identifier                              |
 | ---------------------------------------------------- | --------------------------------------- |
 | Landmark role override                               | `html.landmark.role`                    |
-| Accessible name for named landmarks                  | `html.landmark.accessible-name`         |
 | Explicit role not permitted for the element          | `html.role.not-permitted`               |
 | Unsupported input type                               | `html.input.supported-type`             |
 | Input attribute `checked` requires a checkable type  | `html.input.checked-type`               |

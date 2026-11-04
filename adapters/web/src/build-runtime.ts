@@ -29,7 +29,7 @@ export function buildRuntime<
   const { childrenEvaluator } = buildEngines(
     normalized.diagnostics,
     enforcement?.children,
-    normalized.name,
+    options.name ?? 'Anonymous component',
     { exclusiveChildren: enforcement?.exclusiveChildren, allowText: enforcement?.allowText },
   )
   const filterProps = composeFilter(ownedKeys, customFilter)

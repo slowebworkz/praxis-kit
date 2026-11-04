@@ -1,4 +1,4 @@
-import { landmarkAccessibleNameRule, landmarkRoleRule } from '../../aria-rules'
+import { landmarkRoleRule } from '../../aria-rules'
 import { ariaContract } from '../helpers'
 
 // ─── Landmark role contract ───────────────────────────────────────────────────
@@ -9,6 +9,7 @@ import { ariaContract } from '../helpers'
  *
  * - `role="<implicit>"` → warning: redundant, removed (built-in engine behaviour).
  * - `role="<anything else>"` → error: overrides the fixed landmark, removed.
- * - `<nav>` and `<aside>` without an accessible name → warning (commonly multiplied).
+ * Accessible names are intentionally not required by this element-local contract:
+ * whether repeated landmarks need distinguishing names depends on page-level context.
  */
-export const landmarkContract = ariaContract([landmarkRoleRule, landmarkAccessibleNameRule])
+export const landmarkContract = ariaContract([landmarkRoleRule])

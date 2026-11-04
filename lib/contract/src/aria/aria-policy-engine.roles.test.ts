@@ -1,13 +1,26 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { makeCollecting, makeValidator } from './aria-policy-engine.test-helpers'
-import { throwDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
+import { throwDiagnostics, silentDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
 // validate() — #checkRedundantRole
 // ---------------------------------------------------------------------------
 
 describe('validate() — redundant role', () => {
+  it('warn mode reports but preserves the original role prop', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const { props, violations } = makeValidator(warnDiagnostics).validate('nav', {
+        role: 'navigation',
+      })
+      expect(props).toHaveProperty('role', 'navigation')
+      expect(violations).toHaveLength(1)
+      expect(warn).toHaveBeenCalled()
+    } finally {
+      warn.mockRestore()
+    }
+  })
   it('warns when nav has role="navigation" (redundant)', () => {
     const { reporter, engine } = makeCollecting()
     engine.validate('nav', { role: 'navigation' })
@@ -50,6 +63,13 @@ describe('validate() — region override on strong landmark', () => {
     const { reporter, engine } = makeCollecting()
     engine.validate('nav', { role: 'region' })
     expect(reporter.diagnostics.length).toBeGreaterThan(0)
+  })
+
+  it('warn mode preserves nav role="region" without cascading ARIA2009', () => {
+    const { props, violations } = makeValidator(warnDiagnostics).validate('nav', { role: 'region' })
+    expect(props).toHaveProperty('role', 'region')
+    expect(violations).toHaveLength(1)
+    expect(violations[0]?.diagnostic?.code).toBe('HTML3004')
   })
 
   it('strips role from returned props', () => {
@@ -126,6 +146,22 @@ describe('validate() — empty role attribute', () => {
 // ---------------------------------------------------------------------------
 // validate() — valid role assignments (no violation)
 // ---------------------------------------------------------------------------
+
+describe('validate() — unknown roles', () => {
+  it('reports an unknown role and preserves it in warn mode', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const { props, violations } = makeValidator(warnDiagnostics).validate('div', {
+        role: 'bogus',
+      })
+      expect(props).toHaveProperty('role', 'bogus')
+      expect(violations[0]?.diagnostic?.code).toBe('ARIA2008')
+      expect(warn).toHaveBeenCalled()
+    } finally {
+      warn.mockRestore()
+    }
+  })
+})
 
 describe('validate() — valid role assignments', () => {
   it('allows nav + role="banner" (non-redundant, non-region)', () => {

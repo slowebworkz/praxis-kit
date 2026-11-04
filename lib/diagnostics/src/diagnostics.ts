@@ -20,12 +20,26 @@ export class Diagnostics {
    *  flag. A policy that ignores Warning but reports Info or throws on Error
    *  still reads `false` here; check the policy directly for other severities. */
   readonly warnActive: boolean
+  /** Report-only preset: validation must not silently normalize the caller's props. */
+  readonly reportOnly: boolean
 
-  constructor(reporter: DiagnosticReporter, policy: DiagnosticPolicy = new DefaultPolicy()) {
+  constructor(
+    reporter: DiagnosticReporter,
+    policy: DiagnosticPolicy = new DefaultPolicy(),
+    options: { reportOnly?: boolean } = {},
+  ) {
     this.reporter = reporter
     this.policy = policy
+    this.reportOnly = options.reportOnly ?? false
     this.warnActive =
       policy.resolve({ severity: Severity.Warning } as unknown as Diagnostic) !== Enforcement.Ignore
+  }
+
+  /** Whether validation fixes (e.g. stripping an invalid `role`) should be applied to the
+   * caller's props. Report-only presets (`'warn'`) preserve the input; throwing and ignore
+   * policies retain the legacy fix behavior. */
+  shouldApplyFix(): boolean {
+    return !this.reportOnly
   }
 
   report(diagnostic: Diagnostic): Diagnostic {

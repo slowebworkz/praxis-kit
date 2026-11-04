@@ -1,5 +1,12 @@
 import { iterate, LRUCache } from '@praxis-kit/primitive'
-import { isDefined, isNonNull, isNull, isString, isUndefined } from '@praxis-kit/guards'
+import {
+  isDefined,
+  isKnownAriaRole,
+  isNonNull,
+  isNull,
+  isString,
+  isUndefined,
+} from '@praxis-kit/guards'
 
 import { AriaDiagnostics, HtmlDiagnostics } from '../diagnostics'
 import { InvariantBase } from '../strict'
@@ -77,13 +84,17 @@ export class AriaPolicyEngine extends InvariantBase {
     this.#variantKeys = options?.variantKeys ?? NO_VARIANT_KEYS
   }
 
-  static #normalizeEmptyRole(tag: IntrinsicTag, props: IntrinsicProps): NormalizationResult {
+  static #normalizeEmptyRole(
+    tag: IntrinsicTag,
+    props: IntrinsicProps,
+    applyFix = true,
+  ): NormalizationResult {
     if (props.role !== '') return { normalized: false }
     const d = HtmlDiagnostics.emptyRole(tag)
     return {
       normalized: true,
       result: {
-        props: omitProp(props, 'role'),
+        props: applyFix ? omitProp(props, 'role') : props,
         violations: [
           {
             message: d.message,
@@ -103,6 +114,7 @@ export class AriaPolicyEngine extends InvariantBase {
     tag: AnyTag,
     props: IntrinsicProps,
     variantKeys: ReadonlySet<string> = NO_VARIANT_KEYS,
+    applyEmptyRoleFix = true,
   ): EvaluationContext {
     if (!isIntrinsicTag(tag)) return { proceed: false, result: { props, violations: [] } }
     const implicitRole = getImplicitRole(tag, props)
@@ -118,7 +130,7 @@ export class AriaPolicyEngine extends InvariantBase {
     // <footer role="" aria-autocomplete="all">) still has aria-* attributes worth checking; a
     // bare `return` here previously skipped that pipeline entirely for the render that
     // introduced the empty role, letting invalid aria-* values through unvalidated.
-    const normalized = AriaPolicyEngine.#normalizeEmptyRole(tag, props)
+    const normalized = AriaPolicyEngine.#normalizeEmptyRole(tag, props, applyEmptyRoleFix)
     // normalized.result.props is typed as the broader AnyRecord (ValidationResult's shape) but
     // is always `props` with `role` stripped, which still satisfies IntrinsicProps (role is
     // optional there).
@@ -141,6 +153,7 @@ export class AriaPolicyEngine extends InvariantBase {
   static #runRules(
     rules: readonly AriaRule[],
     context: AriaContext,
+    shouldApplyFix: () => boolean = () => true,
   ): { violations: ValidationViolation[]; fixes: AriaFix[] } {
     const violations: ValidationViolation[] = []
     const fixes: AriaFix[] = []
@@ -172,7 +185,7 @@ export class AriaPolicyEngine extends InvariantBase {
           ...(isNonNull(result.diagnostic) && { diagnostic: result.diagnostic }),
           ...(isNonNull(fallbackDiag) && { diagnostic: fallbackDiag }),
         })
-        if (result.fixable) fixes.push(result.fix)
+        if (result.fixable && shouldApplyFix()) fixes.push(result.fix)
       })
     })
 
@@ -192,8 +205,12 @@ export class AriaPolicyEngine extends InvariantBase {
     return AriaPolicyEngine.#implicitOnlyRules
   }
 
-  static evaluate(tag: AnyTag, props: IntrinsicProps): ValidationResult {
-    const derived = AriaPolicyEngine.#deriveContext(tag, props)
+  static evaluate(
+    tag: AnyTag,
+    props: IntrinsicProps,
+    shouldApplyFix: () => boolean = () => true,
+  ): ValidationResult {
+    const derived = AriaPolicyEngine.#deriveContext(tag, props, NO_VARIANT_KEYS, shouldApplyFix())
     if (!derived.proceed) return derived.result
     // No extra rules and no role semantics — nothing to evaluate.
     if (!derived.hasRole)
@@ -209,6 +226,7 @@ export class AriaPolicyEngine extends InvariantBase {
     const { violations, fixes } = AriaPolicyEngine.#runRules(
       AriaPolicyEngine.#getRules(context),
       context,
+      shouldApplyFix,
     )
     const next = AriaPolicyEngine.#applyFixes(narrowedTag, implicitRole, workingProps, fixes)
     return { props: next, violations: [...preExistingViolations, ...violations] }
@@ -220,8 +238,9 @@ export class AriaPolicyEngine extends InvariantBase {
     extraRules: readonly AriaRule[],
     extraProps?: IntrinsicProps,
     variantKeys: ReadonlySet<string> = NO_VARIANT_KEYS,
+    shouldApplyFix: () => boolean = () => true,
   ): ValidationResult {
-    const derived = AriaPolicyEngine.#deriveContext(tag, props, variantKeys)
+    const derived = AriaPolicyEngine.#deriveContext(tag, props, variantKeys, shouldApplyFix())
     if (!derived.proceed) return derived.result
 
     const {
@@ -236,7 +255,7 @@ export class AriaPolicyEngine extends InvariantBase {
     // fact, a security check) — they must always run, regardless of whether this element has any
     // ARIA semantics.
     const builtinRules = derived.hasRole ? AriaPolicyEngine.#getRules(context) : []
-    const builtin = AriaPolicyEngine.#runRules(builtinRules, context)
+    const builtin = AriaPolicyEngine.#runRules(builtinRules, context, shouldApplyFix)
 
     // extraRules (a consumer's own `enforcement.aria`/`enforcement.rules`) read `extraProps`
     // instead of `context.props` when the caller supplies it — the pre-variant-filter props
@@ -247,7 +266,7 @@ export class AriaPolicyEngine extends InvariantBase {
     // variant key read here can never leak into the returned props.
     const extraContext: AriaContext =
       extraProps === undefined ? context : { ...context, props: extraProps }
-    const extra = AriaPolicyEngine.#runRules(extraRules, extraContext)
+    const extra = AriaPolicyEngine.#runRules(extraRules, extraContext, shouldApplyFix)
 
     const violations = [...builtin.violations, ...extra.violations]
     const fixes = [...builtin.fixes, ...extra.fixes]
@@ -307,8 +326,9 @@ export class AriaPolicyEngine extends InvariantBase {
           this.#extraRules,
           extraProps,
           this.#variantKeys,
+          () => this.shouldApplyFix(),
         )
-      : AriaPolicyEngine.evaluate(tag, props)
+      : AriaPolicyEngine.evaluate(tag, props, () => this.shouldApplyFix())
 
     if (result.violations.length > 0) this.report(result.violations)
 
@@ -369,6 +389,7 @@ export class AriaPolicyEngine extends InvariantBase {
 
   // Snapshot diagnostic model: all rules evaluate against the same (tag, props, implicitRole) snapshot.
   static readonly #pipeline = [
+    AriaPolicyEngine.#checkUnknownRole,
     AriaPolicyEngine.#checkInvalidRoleOverride,
     AriaPolicyEngine.#checkRedundantRole,
     AriaPolicyEngine.#checkStandaloneRegion,
@@ -398,6 +419,26 @@ export class AriaPolicyEngine extends InvariantBase {
     AriaPolicyEngine.#checkAriaHiddenOnFocusable,
     AriaPolicyEngine.#checkPresentationalAriaAttributes,
   ] as const satisfies readonly AriaRule[]
+
+  static #checkUnknownRole({ tag, props }: AriaContext): readonly AriaResult[] {
+    const role = props.role
+    if (
+      !isString(role) ||
+      role.trim().length === 0 ||
+      role.trim().split(/\s+/).some(isKnownAriaRole)
+    )
+      return VALID_RESULT
+    const diagnostic = AriaDiagnostics.invalidRole(role, tag)
+    return [
+      {
+        valid: false,
+        fixable: true,
+        severity: 'error',
+        diagnostic,
+        fix: AriaPolicyEngine.#removeRole,
+      },
+    ]
+  }
 
   static #checkInvalidRoleOverride({
     tag,
@@ -442,6 +483,9 @@ export class AriaPolicyEngine extends InvariantBase {
   static #checkStandaloneRegion({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] {
     const role = props.role
     if (role !== 'region') return VALID_RESULT
+    // Strong landmarks are handled by #checkInvalidRoleOverride; reporting the
+    // standalone-region rule too would be duplicate diagnostics for one role.
+    if (isStrongImplicitRole(tag)) return VALID_RESULT
     if (!hasStandaloneRole(tag)) return VALID_RESULT
 
     const diagnostic = HtmlDiagnostics.standaloneRegionOverride(tag, implicitRole ?? tag)
@@ -572,6 +616,10 @@ export class AriaPolicyEngine extends InvariantBase {
     effectiveRole,
   }: AriaContext): readonly AriaResult[] {
     if (!effectiveRole || !NAME_REQUIRED_ROLES.has(effectiveRole)) return VALID_RESULT
+    // An invalid role=region override on a strong native landmark is already
+    // reported by #checkInvalidRoleOverride. Do not cascade a missing-name
+    // warning from the temporary, invalid role in report-only mode.
+    if (props.role === 'region' && isStrongImplicitRole(tag)) return VALID_RESULT
     if ('aria-label' in props || 'aria-labelledby' in props) return VALID_RESULT
     // Native <img> elements can satisfy the name requirement with a non-empty alt attribute.
     if (tag === 'img' && isString(props.alt) && props.alt.length > 0) return VALID_RESULT

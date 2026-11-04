@@ -5,7 +5,6 @@
  */
 export const BUILTIN_HTML_RULE_IDS = [
   'html.landmark.role',
-  'html.landmark.accessible-name',
   'html.role.not-permitted',
   'html.input.supported-type',
   'html.input.checked-type',

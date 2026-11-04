@@ -13,6 +13,10 @@ export abstract class InvariantBase {
     return this.diagnostics.warnActive
   }
 
+  protected shouldApplyFix(): boolean {
+    return this.diagnostics.shouldApplyFix()
+  }
+
   protected violate(input: DiagnosticInput): void {
     this.diagnostics.error(input)
   }

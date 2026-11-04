@@ -52,6 +52,18 @@ describe('getTypeName — class instances', () => {
 // Plain objects — Object constructor excluded
 // ---------------------------------------------------------------------------
 
+describe('getTypeName — framework element wrappers', () => {
+  it('returns intrinsic element type instead of generic object', () => {
+    expect(getTypeName({ type: 'a', props: {} })).toBe('a')
+    expect(getTypeName({ type: 'div', props: {} })).toBe('div')
+  })
+
+  it('uses displayName/name for component element types', () => {
+    const Component = Object.assign(() => null, { displayName: 'NamedWidget' })
+    expect(getTypeName({ type: Component, props: {} })).toBe('NamedWidget')
+  })
+})
+
 describe('getTypeName — plain objects', () => {
   it('returns "object" for a plain object literal', () => {
     expect(getTypeName({})).toBe('object')

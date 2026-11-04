@@ -26,6 +26,7 @@ export const silentDiagnostics = new Diagnostics(nullReporter, ignoreAllPolicy)
 export const warnDiagnostics = new Diagnostics(
   warnOnlyReporter,
   new DefaultPolicy({ reportThreshold: Severity.Warning, throwThreshold: Severity.Fatal }),
+  { reportOnly: true },
 )
 
 /** `'throw'` mode — Warning prints, **`Error` and above throw**. Note this is

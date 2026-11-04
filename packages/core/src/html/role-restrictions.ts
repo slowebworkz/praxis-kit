@@ -1,5 +1,5 @@
 import type { AriaContext, AriaFix, AriaResult, AriaRole, AriaRule } from '../types'
-import { HtmlDiagnostics } from '@praxis-kit/contract'
+import { HtmlDiagnostics, isStrongImplicitRole } from '@praxis-kit/contract'
 import type { StringMap } from '@praxis-kit/primitive'
 import type { HtmlElementSpec } from './spec/types'
 import { resolveAllowedRoles } from './spec/types'
@@ -151,6 +151,9 @@ export const roleNotPermittedRule: AriaRule = Object.assign(
   ({ tag, props, implicitRole }: AriaContext): readonly AriaResult[] => {
     const role = props.role
     if (typeof role !== 'string' || role.length === 0 || role === implicitRole) return []
+    // Strong native landmarks + role=region are diagnosed by the core ARIA
+    // engine (HTML3004); don't duplicate it with the role allow-list rule.
+    if (role === 'region' && isStrongImplicitRole(tag)) return []
     const allowed = getAllowedRoles(tag, props)
     if (allowed === undefined || allowed.includes(role)) return []
     const diagnostic = HtmlDiagnostics.roleNotPermitted(tag, role, allowed)
