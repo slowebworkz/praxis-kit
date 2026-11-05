@@ -20,8 +20,14 @@ export interface MessageEntry {
   $comment?: string
 }
 
-/** The JSON shape of one locale's catalog (see `lib/messages/schema/messages.schema.json`). */
+/** The JSON shape of one locale's catalog (see `schema/messages.schema.json`). */
 export interface MessageCatalog {
+  /** The contract major this catalog was written for (`CONTRACT_VERSION.major`). A catalog for a
+   *  major this package does not support is ignored by the resolver and rejected by the validator. */
+  contract: number
+  /** The `major.minor` contract the author last checked against. Advisory only: completeness is
+   *  computed from the real differences, never from this. */
+  builtAgainst?: string
   /** BCP 47 tag; selects the `Intl.PluralRules` / `Intl.ListFormat` rules. */
   locale: string
   /** Keyed by diagnostic code, or by the message id a code maps to. */

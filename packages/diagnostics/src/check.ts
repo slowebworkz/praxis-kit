@@ -1,0 +1,421 @@
+import { assertValidLocale } from './resolver'
+import type { ContextKind, DiagnosticsContract, IdContract } from './contract'
+
+// ─── Report ───────────────────────────────────────────────────────────────────
+
+/**
+ * What kind of problem. Structural problems (`errors`) mean the catalog is wrong and must not be
+ * used. They are kept apart from completeness (`incomplete`, `coverage`), which only says how much of
+ * the contract is translated: an unfinished catalog is not an invalid one.
+ */
+export type IssueKind =
+  | 'invalid-structure'
+  | 'invalid-locale'
+  | 'invalid-contract'
+  | 'contract-incompatible'
+  | 'unknown-id'
+  | 'unknown-field'
+  | 'empty-message'
+  | 'missing-other-form'
+  | 'plural-selector-mismatch'
+  | 'invalid-plural-form'
+  | 'unknown-context-key'
+  | 'optional-context-key'
+  | 'unknown-filter'
+  | 'filter-kind-mismatch'
+  | 'placeholder-missing-essential'
+  | 'placeholder-omitted'
+
+export interface Issue {
+  kind: IssueKind
+  id?: string
+  /** `message`, `rationale`, or `suggestions.N.title|description|fix`. */
+  field?: string
+  /** The plural form, when the problem is in one form of a plural template. */
+  form?: string
+  /** A developer-facing explanation (English, for the CLI and test output; never shown to users). */
+  message: string
+}
+
+export interface Report {
+  contract: { required: number; catalog: number | undefined; compatible: boolean; runtime: string }
+  /** Structural problems. A catalog with any of these must not be used. */
+  errors: Issue[]
+  /** Suspicious but allowed: a non-essential placeholder left out. */
+  warnings: Issue[]
+  /** Translations of ids the contract has removed. */
+  obsolete: { id: string; removedIn: string; replacedBy?: string }[]
+  /** Translations of ids the contract has deprecated; they still render. */
+  deprecated: { id: string; since: string; replacedBy?: string }[]
+  /** Contract ids with no translation, or a partial one. Not an error. */
+  incomplete: { id: string; since: string; missing: string[] }[]
+  /** Over catalog-driven ids only. */
+  coverage: { translated: number; total: number; ratio: number }
+}
+
+// ─── Helpers (this package takes no dependencies, so it carries its own tiny checks) ─────────────
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
+const KNOWN_FILTERS = new Set(['quote', 'list', 'list-or', 'list-unit'])
+const LIST_FILTERS = new Set(['list', 'list-or', 'list-unit'])
+const TOKEN = /\{([A-Za-z_$][\w$]*)((?:\|[a-z-]+)*)\}/g
+const PLURAL_CATEGORIES = new Set(['zero', 'one', 'two', 'few', 'many', 'other'])
+const ENTRY_KEYS = new Set(['message', 'rationale', 'suggestions', '$comment'])
+const SUGGESTION_KEYS = new Set(['title', 'description', 'fix'])
+
+interface Token {
+  name: string
+  filters: string[]
+}
+
+function tokensIn(text: string): Token[] {
+  return [...text.matchAll(TOKEN)].map((match) => ({
+    name: match[1] as string,
+    filters: match[2] ? (match[2] as string).slice(1).split('|') : [],
+  }))
+}
+
+/** A template's text by plural form; a plain string is the single form `undefined`. */
+function formsOf(template: unknown): Map<string | undefined, string> | undefined {
+  if (typeof template === 'string') return new Map([[undefined, template]])
+  if (!isRecord(template) || typeof template['plural'] !== 'string') return undefined
+  const forms = new Map<string | undefined, string>()
+  for (const [form, text] of Object.entries(template)) {
+    if (form !== 'plural' && typeof text === 'string') forms.set(form, text)
+  }
+  return forms
+}
+
+function fieldOf(id: string, field: string, form: string | undefined) {
+  return { id, field, ...(form !== undefined && { form }) }
+}
+
+// ─── The check ────────────────────────────────────────────────────────────────
+
+/**
+ * Checks a catalog against the contract. The catalog may be anything loaded from JSON: nothing here
+ * throws on malformed input, it reports it. Structural validity is `errors.length === 0`;
+ * completeness is `incomplete` and `coverage`, and they never mix.
+ */
+export function checkCatalog(catalog: unknown, contract: DiagnosticsContract): Report {
+  const runtime = `${contract.contract}.${contract.minor}`
+  const report: Report = {
+    contract: { required: contract.contract, catalog: undefined, compatible: false, runtime },
+    errors: [],
+    warnings: [],
+    obsolete: [],
+    deprecated: [],
+    incomplete: [],
+    coverage: { translated: 0, total: 0, ratio: 0 },
+  }
+  const error = (issue: Issue) => void report.errors.push(issue)
+
+  if (!isRecord(catalog)) {
+    error({ kind: 'invalid-structure', message: 'The catalog must be a JSON object.' })
+    return report
+  }
+
+  // Contract version. A catalog for another major cannot be trusted at all, so stop here.
+  const declared = catalog['contract']
+  if (typeof declared !== 'number' || !Number.isInteger(declared) || declared < 1) {
+    error({
+      kind: 'invalid-contract',
+      message: `"contract" must be a positive integer (the contract major, currently ${contract.contract}).`,
+    })
+    return report
+  }
+  report.contract.catalog = declared
+  if (declared !== contract.contract) {
+    error({
+      kind: 'contract-incompatible',
+      message: `The catalog is for contract ${declared}, but this version of praxis-kit-diagnostics implements contract ${contract.contract}.`,
+    })
+    return report
+  }
+  report.contract.compatible = true
+
+  let locale: string | undefined
+  try {
+    assertValidLocale(catalog['locale'])
+    locale = catalog['locale'] as string
+  } catch (error_) {
+    error({ kind: 'invalid-locale', message: (error_ as Error).message })
+  }
+
+  const messages = catalog['messages']
+  if (!isRecord(messages)) {
+    error({
+      kind: 'invalid-structure',
+      message: '"messages" must be an object keyed by message id.',
+    })
+    return report
+  }
+
+  const live = Object.entries(contract.ids).filter(([, spec]) => spec.removedIn === undefined)
+  report.coverage.total = live.length
+  const pluralCategories = locale
+    ? new Set(new Intl.PluralRules(locale).resolvedOptions().pluralCategories)
+    : undefined
+
+  // Ids the catalog has.
+  for (const [id, entry] of Object.entries(messages)) {
+    const spec = Object.hasOwn(contract.ids, id) ? contract.ids[id] : undefined
+    if (spec === undefined) {
+      error({
+        kind: 'unknown-id',
+        id,
+        message: `"${id}" is not an id in the contract. It is a typo, or from a newer contract.`,
+      })
+      continue
+    }
+    if (spec.removedIn !== undefined) {
+      report.obsolete.push({
+        id,
+        removedIn: spec.removedIn,
+        ...(spec.replacedBy !== undefined && { replacedBy: spec.replacedBy }),
+      })
+      continue
+    }
+    if (spec.deprecated !== undefined) {
+      report.deprecated.push({
+        id,
+        since: spec.deprecated.since,
+        ...(spec.deprecated.replacedBy !== undefined && { replacedBy: spec.deprecated.replacedBy }),
+      })
+    }
+    checkEntry(id, entry, spec, pluralCategories, report)
+  }
+
+  // Completeness.
+  for (const [id, spec] of live) {
+    const entry = Object.hasOwn(messages, id) ? messages[id] : undefined
+    if (!isRecord(entry) || !('message' in entry)) {
+      report.incomplete.push({ id, since: spec.since, missing: ['message'] })
+      continue
+    }
+    report.coverage.translated++
+    const missing: string[] = []
+    if (spec.rationale && entry['rationale'] === undefined) missing.push('rationale')
+    const have = Array.isArray(entry['suggestions']) ? entry['suggestions'].length : 0
+    if (have < spec.suggestions) missing.push('suggestions')
+    if (missing.length > 0) report.incomplete.push({ id, since: spec.since, missing })
+  }
+  report.coverage.ratio =
+    report.coverage.total === 0 ? 1 : report.coverage.translated / report.coverage.total
+
+  return report
+}
+
+function checkEntry(
+  id: string,
+  entry: unknown,
+  spec: IdContract,
+  pluralCategories: Set<string> | undefined,
+  report: Report,
+): void {
+  const error = (issue: Issue) => void report.errors.push(issue)
+  const warn = (issue: Issue) => void report.warnings.push(issue)
+
+  if (!isRecord(entry)) {
+    error({ kind: 'invalid-structure', id, message: `"${id}" must be an object with a "message".` })
+    return
+  }
+  for (const key of Object.keys(entry)) {
+    if (!ENTRY_KEYS.has(key)) {
+      error({
+        kind: 'unknown-field',
+        id,
+        field: key,
+        message: `"${key}" is not a field of a catalog entry.`,
+      })
+    }
+  }
+
+  const usedAnywhere = new Set<string>()
+
+  const checkTemplate = (field: string, template: unknown, isMessage: boolean): void => {
+    const forms = formsOf(template)
+    if (forms === undefined) {
+      error({
+        kind: 'invalid-structure',
+        ...fieldOf(id, field, undefined),
+        message: `"${field}" must be a string or a plural object with a "plural" selector.`,
+      })
+      return
+    }
+
+    if (typeof template !== 'string' && isRecord(template)) {
+      const selector = template['plural'] as string
+      const key = spec.context?.[selector]
+      if (spec.plural !== undefined && selector !== spec.plural) {
+        error({
+          kind: 'plural-selector-mismatch',
+          ...fieldOf(id, field, undefined),
+          message: `Plural selector "${selector}" must be "${spec.plural}" for this id.`,
+        })
+      } else if (key === undefined || key.kind !== 'number') {
+        error({
+          kind: 'plural-selector-mismatch',
+          ...fieldOf(id, field, undefined),
+          message: `Plural selector "${selector}" must be a number key in this id's context.`,
+        })
+      }
+      if (typeof template['other'] !== 'string') {
+        error({
+          kind: 'missing-other-form',
+          ...fieldOf(id, field, undefined),
+          message: `A plural template needs an "other" form: it is the fallback for every count no other form names.`,
+        })
+      }
+      for (const form of Object.keys(template)) {
+        if (form === 'plural') continue
+        if (!PLURAL_CATEGORIES.has(form)) {
+          error({
+            kind: 'invalid-plural-form',
+            ...fieldOf(id, field, form),
+            message: `"${form}" is not a plural category (zero, one, two, few, many, other).`,
+          })
+        } else if (pluralCategories !== undefined && !pluralCategories.has(form)) {
+          error({
+            kind: 'invalid-plural-form',
+            ...fieldOf(id, field, form),
+            message: `The "${form}" form is never selected in this locale.`,
+          })
+        }
+      }
+    }
+
+    for (const [form, text] of forms) {
+      const where = fieldOf(id, field, form)
+      if (text.trim() === '') {
+        error({
+          kind: 'empty-message',
+          ...where,
+          message: `"${field}" is blank, so it would render as empty text.`,
+        })
+        continue
+      }
+      const seen = new Set<string>()
+      for (const { name, filters } of tokensIn(text)) {
+        seen.add(name)
+        usedAnywhere.add(name)
+        const key = spec.context?.[name]
+        if (key === undefined) {
+          error({
+            kind: 'unknown-context-key',
+            ...where,
+            message: `{${name}} is not a context key of this id.`,
+          })
+          continue
+        }
+        if (!key.required) {
+          error({
+            kind: 'optional-context-key',
+            ...where,
+            message: `{${name}} is optional, so it can be absent and would print as literal {${name}}.`,
+          })
+        }
+        for (const filter of filters) {
+          if (!KNOWN_FILTERS.has(filter)) {
+            error({
+              kind: 'unknown-filter',
+              ...where,
+              message: `"${filter}" is not a filter (quote, list, list-or, list-unit).`,
+            })
+          } else if (LIST_FILTERS.has(filter) && key.kind !== 'string[]') {
+            error({
+              kind: 'filter-kind-mismatch',
+              ...where,
+              message: `|${filter} joins a list, but {${name}} is a ${key.kind}.`,
+            })
+          } else if (filter === 'quote' && !quotable(key.kind)) {
+            error({
+              kind: 'filter-kind-mismatch',
+              ...where,
+              message: `|quote does not apply to {${name}}, which is a ${key.kind}.`,
+            })
+          }
+        }
+      }
+      if (isMessage) {
+        for (const [name, key] of Object.entries(spec.context ?? {})) {
+          if (key.essential && !seen.has(name)) {
+            error({
+              kind: 'placeholder-missing-essential',
+              ...where,
+              message: `The message must use {${name}}: ${key.description}`,
+            })
+          }
+        }
+      }
+    }
+  }
+
+  if ('message' in entry) checkTemplate('message', entry['message'], true)
+  else
+    error({ kind: 'invalid-structure', id, field: 'message', message: `"${id}" has no "message".` })
+  if ('rationale' in entry) checkTemplate('rationale', entry['rationale'], false)
+
+  const suggestions = entry['suggestions']
+  if (suggestions !== undefined) {
+    if (!Array.isArray(suggestions)) {
+      error({
+        kind: 'invalid-structure',
+        id,
+        field: 'suggestions',
+        message: '"suggestions" must be an array.',
+      })
+    } else {
+      if (suggestions.length > spec.suggestions) {
+        error({
+          kind: 'unknown-field',
+          id,
+          field: `suggestions.${spec.suggestions}`,
+          message: `This id has ${spec.suggestions} suggestion(s); the catalog has ${suggestions.length}.`,
+        })
+      }
+      suggestions.forEach((item: unknown, index: number) => {
+        if (!isRecord(item)) {
+          error({
+            kind: 'invalid-structure',
+            id,
+            field: `suggestions.${index}`,
+            message: 'A suggestion must be an object with a "title".',
+          })
+          return
+        }
+        for (const key of Object.keys(item)) {
+          if (!SUGGESTION_KEYS.has(key)) {
+            error({
+              kind: 'unknown-field',
+              id,
+              field: `suggestions.${index}.${key}`,
+              message: `"${key}" is not a field of a suggestion.`,
+            })
+          }
+        }
+        for (const part of ['title', 'description'] as const) {
+          if (part in item) checkTemplate(`suggestions.${index}.${part}`, item[part], false)
+        }
+        if ('fix' in item) checkTemplate(`suggestions.${index}.fix`, item['fix'], false)
+      })
+    }
+  }
+
+  // A non-essential key the entry never uses is allowed, but worth saying.
+  for (const [name, key] of Object.entries(spec.context ?? {})) {
+    if (!key.essential && !key.informational && !usedAnywhere.has(name)) {
+      warn({
+        kind: 'placeholder-omitted',
+        id,
+        message: `{${name}} is never used in this entry: ${key.description}`,
+      })
+    }
+  }
+}
+
+function quotable(kind: ContextKind): boolean {
+  return kind === 'identifier' || kind === 'literal' || kind === 'string[]'
+}

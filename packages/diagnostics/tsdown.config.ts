@@ -4,7 +4,7 @@ import { defineConfig } from 'tsdown'
 // prose) and `praxis-kit-diagnostics/en` (the English catalog). A locale pack is a third,
 // separate package that never touches `en`.
 export default defineConfig({
-  entry: { index: 'src/index.ts', en: 'src/en.ts' },
+  entry: { index: 'src/index.ts', en: 'src/en.ts', contract: 'src/contract-entry.ts' },
   format: ['esm'],
   dts: true,
   tsconfig: 'tsconfig.json',

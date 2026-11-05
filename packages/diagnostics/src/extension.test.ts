@@ -34,6 +34,7 @@ const noDivDialog: AriaRule = Object.assign(
 ) as AriaRule
 
 const app = (locale: string, message: string): MessageCatalog => ({
+  contract: 1,
   locale,
   messages: { ...en.messages, 'acme.no-div-dialog': { message } },
 })

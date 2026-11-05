@@ -4,11 +4,15 @@
   "title": "Praxis Kit diagnostic message catalog",
   "description": "One catalog per locale. Keys under \"messages\" are diagnostic codes (for example HTML3004) or message ids a code maps to. Templates use {name} placeholders, optionally piped through filters: {names|quote|list-unit}.",
   "type": "object",
-  "required": ["locale", "messages"],
+  "required": ["contract", "locale", "messages"],
   "additionalProperties": false,
   "properties": {
-    "$schema": { "type": "string" },
-    "$comment": { "type": "string" },
+    "$schema": {
+      "type": "string"
+    },
+    "$comment": {
+      "type": "string"
+    },
     "locale": {
       "type": "string",
       "description": "BCP 47 language tag. Selects the Intl.PluralRules and Intl.ListFormat rules used when rendering.",
@@ -16,14 +20,28 @@
     },
     "messages": {
       "type": "object",
-      "additionalProperties": { "$ref": "#/definitions/entry" }
+      "additionalProperties": {
+        "$ref": "#/definitions/entry"
+      }
+    },
+    "contract": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The contract major this catalog was written for."
+    },
+    "builtAgainst": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Advisory: the major.minor contract the author last checked against."
     }
   },
   "definitions": {
     "template": {
       "description": "A template string, or a plural form chosen by a named count in the diagnostic's context.",
       "oneOf": [
-        { "type": "string" },
+        {
+          "type": "string"
+        },
         {
           "type": "object",
           "required": ["plural", "other"],
@@ -32,12 +50,24 @@
               "type": "string",
               "description": "Name of the numeric context value that selects the form."
             },
-            "zero": { "type": "string" },
-            "one": { "type": "string" },
-            "two": { "type": "string" },
-            "few": { "type": "string" },
-            "many": { "type": "string" },
-            "other": { "type": "string" }
+            "zero": {
+              "type": "string"
+            },
+            "one": {
+              "type": "string"
+            },
+            "two": {
+              "type": "string"
+            },
+            "few": {
+              "type": "string"
+            },
+            "many": {
+              "type": "string"
+            },
+            "other": {
+              "type": "string"
+            }
           },
           "additionalProperties": false
         }
@@ -52,8 +82,12 @@
           "type": "string",
           "description": "Notes for translators. Never rendered."
         },
-        "message": { "$ref": "#/definitions/template" },
-        "rationale": { "$ref": "#/definitions/template" },
+        "message": {
+          "$ref": "#/definitions/template"
+        },
+        "rationale": {
+          "$ref": "#/definitions/template"
+        },
         "suggestions": {
           "type": "array",
           "items": {
@@ -61,8 +95,12 @@
             "required": ["title"],
             "additionalProperties": false,
             "properties": {
-              "title": { "$ref": "#/definitions/template" },
-              "description": { "$ref": "#/definitions/template" },
+              "title": {
+                "$ref": "#/definitions/template"
+              },
+              "description": {
+                "$ref": "#/definitions/template"
+              },
               "fix": {
                 "type": "string",
                 "description": "Code to copy. Not translated."

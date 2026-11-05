@@ -111,5 +111,76 @@ export const SAMPLES: Record<string, () => DiagnosticInput> = {
   'html.input.unsupportedType': () => HtmlDiagnostics.input.unsupportedType('bogus'),
   'html.input.attributeIgnoredForType': () =>
     HtmlDiagnostics.input.attributeIgnoredForType('size', 'number', ['text', 'search']),
+  'html.input.attributeIgnoredForType.checked': () =>
+    HtmlDiagnostics.input.attributeIgnoredForType('checked', 'button', ['checkbox', 'radio']),
+  'html.input.attributeIgnoredForType.multiple': () =>
+    HtmlDiagnostics.input.attributeIgnoredForType('multiple', 'button', ['email', 'file']),
+  'html.input.attributeIgnoredForType.maxLength': () =>
+    HtmlDiagnostics.input.attributeIgnoredForType('maxLength', 'button', [
+      'text',
+      'search',
+      'url',
+      'tel',
+      'email',
+      'password',
+    ]),
+  'html.input.attributeIgnoredForType.minLength': () =>
+    HtmlDiagnostics.input.attributeIgnoredForType('minLength', 'button', [
+      'text',
+      'search',
+      'url',
+      'tel',
+      'email',
+      'password',
+    ]),
+  'html.input.attributeIgnoredForType.pattern': () =>
+    HtmlDiagnostics.input.attributeIgnoredForType('pattern', 'button', [
+      'text',
+      'search',
+      'url',
+      'tel',
+      'email',
+      'password',
+    ]),
+  'html.input.attributeIgnoredForType.min': () =>
+    HtmlDiagnostics.input.attributeIgnoredForType('min', 'button', [
+      'date',
+      'month',
+      'week',
+      'time',
+      'datetime-local',
+      'number',
+      'range',
+    ]),
+  'html.input.attributeIgnoredForType.max': () =>
+    HtmlDiagnostics.input.attributeIgnoredForType('max', 'button', [
+      'date',
+      'month',
+      'week',
+      'time',
+      'datetime-local',
+      'number',
+      'range',
+    ]),
+  'html.input.attributeIgnoredForType.step': () =>
+    HtmlDiagnostics.input.attributeIgnoredForType('step', 'button', [
+      'date',
+      'month',
+      'week',
+      'time',
+      'datetime-local',
+      'number',
+      'range',
+    ]),
+  'html.input.attributeIgnoredForType.accept': () =>
+    HtmlDiagnostics.input.attributeIgnoredForType('accept', 'button', ['file']),
+  'html.input.attributeIgnoredForType.capture': () =>
+    HtmlDiagnostics.input.attributeIgnoredForType('capture', 'button', ['file']),
+  'html.input.attributeIgnoredForType.alt': () =>
+    HtmlDiagnostics.input.attributeIgnoredForType('alt', 'button', ['image']),
+  'html.input.attributeIgnoredForType.height': () =>
+    HtmlDiagnostics.input.attributeIgnoredForType('height', 'button', ['image']),
+  'html.input.attributeIgnoredForType.width': () =>
+    HtmlDiagnostics.input.attributeIgnoredForType('width', 'button', ['image']),
   'html.anchor.dangerousHref': () => HtmlDiagnostics.anchor.dangerousHref('javascript:alert(1)'),
 }

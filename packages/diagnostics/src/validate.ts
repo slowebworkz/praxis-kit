@@ -1,4 +1,7 @@
 import { assertValidLocale } from './resolver'
+import { checkCatalog } from './check'
+import type { Report } from './check'
+import type { DiagnosticsContract } from './contract'
 import type { MessageCatalog, MessageEntry, MessageTemplate } from './types'
 
 export type CatalogIssue =
@@ -138,6 +141,30 @@ function compareField(
 }
 
 /**
+ * Validates a catalog.
+ *
+ * **Against the contract** (`validateCatalog(catalog, contract)`, with `contract` from
+ * `praxis-kit-diagnostics/contract`): the way to validate a language pack. It needs no English, never
+ * throws on malformed input, and returns a `Report` that keeps structural errors apart from
+ * completeness. See `checkCatalog`.
+ *
+ * **Against a reference catalog** (`validateCatalog(catalog, reference)`): the earlier form, which
+ * compares each field and plural form with another catalog, normally English.
+ *
+ * @deprecated The reference form. Validate against the contract instead; it knows which context keys
+ * exist, which are essential, and which ids are deprecated or removed, none of which a catalog can say.
+ */
+export function validateCatalog(catalog: MessageCatalog, reference: MessageCatalog): CatalogIssue[]
+export function validateCatalog(catalog: unknown, contract: DiagnosticsContract): Report
+export function validateCatalog(
+  catalog: unknown,
+  second: MessageCatalog | DiagnosticsContract,
+): CatalogIssue[] | Report {
+  if ('ids' in second) return checkCatalog(catalog, second)
+  return validateAgainstReference(catalog as MessageCatalog, second)
+}
+
+/**
  * Checks a locale's catalog against a reference (normally the English one) and returns every
  * problem found; an empty array means the catalog is sound. It checks that:
  *
@@ -152,7 +179,7 @@ function compareField(
  * - no field, and no plural form of one, is blank (`empty-message`), and every plural template has
  *   an `other` form (`missing-other-form`).
  */
-export function validateCatalog(
+function validateAgainstReference(
   catalog: MessageCatalog,
   reference: MessageCatalog,
 ): CatalogIssue[] {

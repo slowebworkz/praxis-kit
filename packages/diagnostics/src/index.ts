@@ -10,4 +10,15 @@ export { assertValidLocale, createMessageResolver } from './resolver'
 export type { MessageResolver } from './resolver'
 export { placeholdersIn, validateCatalog } from './validate'
 export type { CatalogIssue } from './validate'
+export { checkCatalog } from './check'
+export type { Issue, IssueKind, Report } from './check'
 export { renderTemplate } from './render'
+export { CONTRACT_VERSION } from './contract'
+export type {
+  ContextKeySpec,
+  ContextKind,
+  ContractExample,
+  DiagnosticsContract,
+  IdContract,
+  SpecLink,
+} from './contract'

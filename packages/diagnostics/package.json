@@ -10,6 +10,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./contract": {
+      "types": "./dist/contract.d.ts",
+      "import": "./dist/contract.js"
+    },
+    "./contract.json": "./dist/diagnostics.contract.json",
     "./en": {
       "types": "./dist/en.d.ts",
       "import": "./dist/en.js"

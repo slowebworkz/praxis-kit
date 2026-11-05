@@ -1,5 +1,6 @@
 {
   "$schema": "../schema/messages.schema.json",
+  "contract": 1,
   "locale": "en",
   "messages": {
     "HTML3002": {

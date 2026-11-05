@@ -403,5 +403,135 @@
   },
   "contract.positionViolation.last": {
     "message": "Card: \"footer\" must be last, got index 0"
+  },
+  "html.input.attributeIgnoredForType.checked": {
+    "message": "\"checked\" is ignored on <input type=\"button\">.",
+    "rationale": "\"checked\" only has an effect when type is one of: \"checkbox\", \"radio\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"checked\"",
+        "description": "\"checked\" only affects <input> when type is one of: \"checkbox\", \"radio\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.multiple": {
+    "message": "\"multiple\" is ignored on <input type=\"button\">.",
+    "rationale": "\"multiple\" only has an effect when type is one of: \"email\", \"file\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"multiple\"",
+        "description": "\"multiple\" only affects <input> when type is one of: \"email\", \"file\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.maxLength": {
+    "message": "\"maxLength\" is ignored on <input type=\"button\">.",
+    "rationale": "\"maxLength\" only has an effect when type is one of: \"text\", \"search\", \"url\", \"tel\", \"email\", \"password\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"maxLength\"",
+        "description": "\"maxLength\" only affects <input> when type is one of: \"text\", \"search\", \"url\", \"tel\", \"email\", \"password\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.minLength": {
+    "message": "\"minLength\" is ignored on <input type=\"button\">.",
+    "rationale": "\"minLength\" only has an effect when type is one of: \"text\", \"search\", \"url\", \"tel\", \"email\", \"password\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"minLength\"",
+        "description": "\"minLength\" only affects <input> when type is one of: \"text\", \"search\", \"url\", \"tel\", \"email\", \"password\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.pattern": {
+    "message": "\"pattern\" is ignored on <input type=\"button\">.",
+    "rationale": "\"pattern\" only has an effect when type is one of: \"text\", \"search\", \"url\", \"tel\", \"email\", \"password\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"pattern\"",
+        "description": "\"pattern\" only affects <input> when type is one of: \"text\", \"search\", \"url\", \"tel\", \"email\", \"password\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.min": {
+    "message": "\"min\" is ignored on <input type=\"button\">.",
+    "rationale": "\"min\" only has an effect when type is one of: \"date\", \"month\", \"week\", \"time\", \"datetime-local\", \"number\", \"range\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"min\"",
+        "description": "\"min\" only affects <input> when type is one of: \"date\", \"month\", \"week\", \"time\", \"datetime-local\", \"number\", \"range\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.max": {
+    "message": "\"max\" is ignored on <input type=\"button\">.",
+    "rationale": "\"max\" only has an effect when type is one of: \"date\", \"month\", \"week\", \"time\", \"datetime-local\", \"number\", \"range\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"max\"",
+        "description": "\"max\" only affects <input> when type is one of: \"date\", \"month\", \"week\", \"time\", \"datetime-local\", \"number\", \"range\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.step": {
+    "message": "\"step\" is ignored on <input type=\"button\">.",
+    "rationale": "\"step\" only has an effect when type is one of: \"date\", \"month\", \"week\", \"time\", \"datetime-local\", \"number\", \"range\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"step\"",
+        "description": "\"step\" only affects <input> when type is one of: \"date\", \"month\", \"week\", \"time\", \"datetime-local\", \"number\", \"range\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.accept": {
+    "message": "\"accept\" is ignored on <input type=\"button\">.",
+    "rationale": "\"accept\" only has an effect when type is one of: \"file\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"accept\"",
+        "description": "\"accept\" only affects <input> when type is one of: \"file\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.capture": {
+    "message": "\"capture\" is ignored on <input type=\"button\">.",
+    "rationale": "\"capture\" only has an effect when type is one of: \"file\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"capture\"",
+        "description": "\"capture\" only affects <input> when type is one of: \"file\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.alt": {
+    "message": "\"alt\" is ignored on <input type=\"button\">.",
+    "rationale": "\"alt\" only has an effect when type is one of: \"image\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"alt\"",
+        "description": "\"alt\" only affects <input> when type is one of: \"image\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.height": {
+    "message": "\"height\" is ignored on <input type=\"button\">.",
+    "rationale": "\"height\" only has an effect when type is one of: \"image\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"height\"",
+        "description": "\"height\" only affects <input> when type is one of: \"image\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.width": {
+    "message": "\"width\" is ignored on <input type=\"button\">.",
+    "rationale": "\"width\" only has an effect when type is one of: \"image\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"width\"",
+        "description": "\"width\" only affects <input> when type is one of: \"image\"."
+      }
+    ]
   }
 }

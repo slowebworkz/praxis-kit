@@ -12,6 +12,7 @@ import { assertValidLocale, createMessageResolver } from './resolver'
 import type { MessageCatalog } from './types'
 
 const de: MessageCatalog = {
+  contract: 1,
   locale: 'de',
   messages: {
     HTML3003: { message: '<{tag}> hat bereits die implizite Rolle "{implicitRole}".' },
@@ -49,16 +50,20 @@ describe('createMessageResolver', () => {
   )
 
   it('still resolves a catalog entry whose own key shadows an inherited name', () => {
-    const catalog: MessageCatalog = { locale: 'en', messages: { constructor: { message: 'mine' } } }
+    const catalog: MessageCatalog = {
+      contract: 1,
+      locale: 'en',
+      messages: { constructor: { message: 'mine' } },
+    }
     expect(createMessageResolver(catalog)({ code: 'X', messageId: 'constructor' })?.message).toBe(
       'mine',
     )
   })
 
   it('rejects a malformed locale when the resolver is created, not while rendering', () => {
-    expect(() => createMessageResolver({ locale: 'not_a_locale!', messages: {} })).toThrow(
-      RangeError,
-    )
+    expect(() =>
+      createMessageResolver({ contract: 1, locale: 'not_a_locale!', messages: {} }),
+    ).toThrow(RangeError)
     expect(() => assertValidLocale('pt-BR')).not.toThrow()
     expect(() => assertValidLocale('')).toThrow(/Invalid locale/)
   })
@@ -126,7 +131,11 @@ describe('assertValidLocale', () => {
   })
 
   it('validates but does not canonicalize: the catalog keeps the tag as written', () => {
-    const catalog: MessageCatalog = { locale: 'PT-br', messages: { X: { message: 'x' } } }
+    const catalog: MessageCatalog = {
+      contract: 1,
+      locale: 'PT-br',
+      messages: { X: { message: 'x' } },
+    }
     createMessageResolver(catalog)
     expect(catalog.locale).toBe('PT-br')
   })
@@ -134,8 +143,10 @@ describe('assertValidLocale', () => {
   it('renders identically for a non-canonical and a canonical tag', () => {
     const entry = { message: { plural: 'n', one: 'um {n}', other: '{n} {n}' } }
     const render = (locale: string) =>
-      createMessageResolver({ locale, messages: { X: entry } })({ code: 'X', context: { n: 2 } })
-        ?.message
+      createMessageResolver({ contract: 1, locale, messages: { X: entry } })({
+        code: 'X',
+        context: { n: 2 },
+      })?.message
     expect(render('pt-br')).toBe(render('pt-BR'))
     expect(render('EN-us')).toBe(render('en-US'))
   })

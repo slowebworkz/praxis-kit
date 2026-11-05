@@ -11,4 +11,8 @@ copyFileSync(
   join(root, 'schema', 'messages.schema.json'),
   join(root, 'dist', 'messages.schema.json'),
 )
-console.log('copied en.json and messages.schema.json into dist/')
+copyFileSync(
+  join(root, 'contract', 'diagnostics.contract.json'),
+  join(root, 'dist', 'diagnostics.contract.json'),
+)
+console.log('copied en.json, messages.schema.json and diagnostics.contract.json into dist/')

@@ -1,0 +1,2236 @@
+{
+  "$comment": "The versioned contract between Praxis Kit diagnostics and any message catalog. A language pack is validated against this file, not against English. See docs/localization/authoring-language-packs.md.",
+  "contract": 1,
+  "minor": 0,
+  "kinds": {
+    "identifier": "A name or token from HTML, ARIA or the author's own code (an element, attribute, role, component or variant). Copy it verbatim; never translate it.",
+    "literal": "A value shown as source text. Copy it verbatim.",
+    "number": "A number. May select a plural form when the entry names it as its plural selector.",
+    "string[]": "A list of identifiers or literals. Join it with a list filter (`list`, `list-or`, `list-unit`), optionally after `quote`.",
+    "text": "Prose written in English by Praxis Kit. None exist in contract 1: prose is never passed in context."
+  },
+  "ids": {
+    "HTML3002": {
+      "codes": ["HTML3002"],
+      "category": "HTML",
+      "severity": "warning",
+      "description": "An element has `role=\"\"`, an explicit but empty role. The attribute does nothing, so it should be removed.",
+      "specs": [
+        {
+          "name": "ARIA in HTML",
+          "url": "https://www.w3.org/TR/html-aria/"
+        }
+      ],
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Element name without angle brackets, for example `nav`.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "HTML3002",
+          "context": {
+            "tag": "div"
+          }
+        }
+      ]
+    },
+    "HTML3003": {
+      "codes": ["HTML3003"],
+      "category": "HTML",
+      "severity": "warning",
+      "description": "An element is given a `role` that is already its implicit (native) role, such as `role=\"navigation\"` on `<nav>`. The attribute is redundant.",
+      "specs": [
+        {
+          "name": "ARIA in HTML",
+          "url": "https://www.w3.org/TR/html-aria/"
+        }
+      ],
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Element name without angle brackets, for example `nav`.",
+          "essential": true
+        },
+        "implicitRole": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The ARIA role an element has by default, for example `navigation` for `<nav>`.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "HTML3003",
+          "context": {
+            "tag": "nav",
+            "implicitRole": "navigation"
+          }
+        }
+      ]
+    },
+    "HTML3004": {
+      "codes": ["HTML3004"],
+      "category": "HTML",
+      "severity": "error",
+      "description": "An element with a fixed native role is given a different role (for example `role=\"region\"` on `<nav>`), which overrides its meaning for assistive technology.",
+      "specs": [
+        {
+          "name": "ARIA in HTML",
+          "url": "https://www.w3.org/TR/html-aria/"
+        }
+      ],
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Element name without angle brackets, for example `nav`.",
+          "essential": true
+        },
+        "implicitRole": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The ARIA role an element has by default, for example `navigation` for `<nav>`.",
+          "essential": true
+        },
+        "role": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA role name, for example `region`.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "HTML3004",
+          "context": {
+            "tag": "nav",
+            "implicitRole": "navigation",
+            "role": "region"
+          }
+        }
+      ]
+    },
+    "HTML3005": {
+      "codes": ["HTML3005"],
+      "category": "HTML",
+      "severity": "error",
+      "description": "An element that is already a self-contained landmark is given `role=\"region\"`. The role has been removed.",
+      "specs": [
+        {
+          "name": "ARIA in HTML",
+          "url": "https://www.w3.org/TR/html-aria/"
+        }
+      ],
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Element name without angle brackets, for example `nav`.",
+          "essential": true
+        },
+        "implicitRole": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The ARIA role an element has by default, for example `navigation` for `<nav>`.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "HTML3005",
+          "context": {
+            "tag": "main",
+            "implicitRole": "main"
+          }
+        }
+      ]
+    },
+    "HTML3006": {
+      "codes": ["HTML3006"],
+      "category": "HTML",
+      "severity": "error",
+      "description": "An element with a fixed landmark role is given a different role. The override confuses assistive technology and has been removed.",
+      "specs": [
+        {
+          "name": "ARIA in HTML",
+          "url": "https://www.w3.org/TR/html-aria/"
+        }
+      ],
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Element name without angle brackets, for example `nav`.",
+          "essential": true
+        },
+        "implicitRole": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The ARIA role an element has by default, for example `navigation` for `<nav>`.",
+          "essential": true
+        },
+        "role": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA role name, for example `region`.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "HTML3006",
+          "context": {
+            "tag": "nav",
+            "implicitRole": "navigation",
+            "role": "banner"
+          }
+        }
+      ]
+    },
+    "HTML3007": {
+      "codes": ["HTML3007"],
+      "category": "HTML",
+      "severity": "error",
+      "description": "An element is a direct child of a parent that does not allow it. The parent accepts the listed tags.",
+      "specs": [
+        {
+          "name": "HTML Standard",
+          "url": "https://html.spec.whatwg.org/multipage/"
+        }
+      ],
+      "context": {
+        "child": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The offending child element, written as a tag such as `div`.",
+          "essential": true
+        },
+        "parent": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The parent element, written as a tag such as `ul`.",
+          "essential": true
+        },
+        "allowed": {
+          "kind": "string[]",
+          "required": true,
+          "description": "What the parent accepts: tags written like `<li>`, as a list.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "HTML3007",
+          "context": {
+            "child": "div",
+            "parent": "ul",
+            "allowed": ["<li>", "<script>", "<template>"]
+          }
+        }
+      ]
+    },
+    "HTML3007.phrasing": {
+      "codes": ["HTML3007"],
+      "category": "HTML",
+      "severity": "error",
+      "description": "An element is a direct child of an `<a>` but is interactive content, which an anchor does not allow. The parent accepts phrasing content.",
+      "specs": [
+        {
+          "name": "HTML Standard",
+          "url": "https://html.spec.whatwg.org/multipage/"
+        }
+      ],
+      "context": {
+        "child": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The offending child element, written as a tag such as `div`.",
+          "essential": true
+        },
+        "parent": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The parent element, written as a tag such as `ul`.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "HTML3007",
+          "messageId": "HTML3007.phrasing",
+          "context": {
+            "child": "button",
+            "parent": "a"
+          }
+        }
+      ]
+    },
+    "HTML3007.unspecified": {
+      "codes": ["HTML3007"],
+      "category": "HTML",
+      "severity": "error",
+      "description": "An element is a direct child of a parent that does not allow it. The parent has no simple list of accepted tags.",
+      "specs": [
+        {
+          "name": "HTML Standard",
+          "url": "https://html.spec.whatwg.org/multipage/"
+        }
+      ],
+      "context": {
+        "child": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The offending child element, written as a tag such as `div`.",
+          "essential": true
+        },
+        "parent": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The parent element, written as a tag such as `ul`.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "HTML3007",
+          "messageId": "HTML3007.unspecified",
+          "context": {
+            "child": "div",
+            "parent": "p"
+          }
+        }
+      ]
+    },
+    "HTML3008": {
+      "codes": ["HTML3008"],
+      "category": "HTML",
+      "severity": "error",
+      "description": "An explicit `role` is not one of the roles that ARIA in HTML allows on this element. The allowed alternative roles are listed.",
+      "specs": [
+        {
+          "name": "ARIA in HTML",
+          "url": "https://www.w3.org/TR/html-aria/"
+        }
+      ],
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Element name without angle brackets, for example `nav`.",
+          "essential": true
+        },
+        "role": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA role name, for example `region`.",
+          "essential": true
+        },
+        "allowedRoles": {
+          "kind": "string[]",
+          "required": true,
+          "description": "The roles allowed on the element, as a list.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "HTML3008",
+          "context": {
+            "tag": "ul",
+            "role": "button",
+            "allowedRoles": ["menu", "listbox"]
+          }
+        }
+      ]
+    },
+    "HTML3008.none": {
+      "codes": ["HTML3008"],
+      "category": "HTML",
+      "severity": "error",
+      "description": "An explicit `role` is not allowed on this element, and ARIA in HTML allows no alternative role for it at all.",
+      "specs": [
+        {
+          "name": "ARIA in HTML",
+          "url": "https://www.w3.org/TR/html-aria/"
+        }
+      ],
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Element name without angle brackets, for example `nav`.",
+          "essential": true
+        },
+        "role": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA role name, for example `region`.",
+          "essential": true
+        },
+        "allowedRoles": {
+          "kind": "string[]",
+          "required": true,
+          "description": "The roles allowed on the element, as a list.",
+          "essential": false,
+          "informational": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "HTML3008",
+          "messageId": "HTML3008.none",
+          "context": {
+            "tag": "br",
+            "role": "button",
+            "allowedRoles": []
+          }
+        }
+      ]
+    },
+    "HTML3101": {
+      "codes": ["HTML3101"],
+      "category": "HTML",
+      "severity": "warning",
+      "description": "An `<input>` has a `type` that is not defined by the HTML specification. Browsers fall back to `type=\"text\"`, so it is usually a typo.",
+      "specs": [
+        {
+          "name": "HTML Standard",
+          "url": "https://html.spec.whatwg.org/multipage/"
+        }
+      ],
+      "context": {
+        "type": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An `<input>` `type` value, for example `button`.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "HTML3101",
+          "context": {
+            "type": "bogus"
+          }
+        }
+      ]
+    },
+    "HTML31xx.attributeIgnored": {
+      "codes": [
+        "HTML3102",
+        "HTML3103",
+        "HTML3104",
+        "HTML3105",
+        "HTML3106",
+        "HTML3107",
+        "HTML3108",
+        "HTML3109",
+        "HTML3110",
+        "HTML3111",
+        "HTML3112",
+        "HTML3113",
+        "HTML3114",
+        "HTML3115"
+      ],
+      "category": "HTML",
+      "severity": "warning",
+      "description": "An `<input>` has an attribute that only applies to some input types, but its `type` is not one of them, so the browser ignores the attribute. One id serves all fourteen attribute codes (HTML3102 to HTML3115).",
+      "specs": [
+        {
+          "name": "HTML Standard",
+          "url": "https://html.spec.whatwg.org/multipage/"
+        }
+      ],
+      "context": {
+        "attribute": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An HTML attribute name, for example `size`.",
+          "essential": true
+        },
+        "type": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An `<input>` `type` value, for example `button`.",
+          "essential": true
+        },
+        "allowedTypes": {
+          "kind": "string[]",
+          "required": true,
+          "description": "The input types the attribute applies to, as a list.",
+          "essential": false
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "HTML3112",
+          "messageId": "HTML31xx.attributeIgnored",
+          "context": {
+            "attribute": "size",
+            "type": "number",
+            "allowedTypes": ["text", "search"]
+          }
+        },
+        {
+          "code": "HTML3102",
+          "messageId": "HTML31xx.attributeIgnored",
+          "context": {
+            "attribute": "checked",
+            "type": "button",
+            "allowedTypes": ["checkbox", "radio"]
+          }
+        },
+        {
+          "code": "HTML3103",
+          "messageId": "HTML31xx.attributeIgnored",
+          "context": {
+            "attribute": "multiple",
+            "type": "button",
+            "allowedTypes": ["email", "file"]
+          }
+        },
+        {
+          "code": "HTML3104",
+          "messageId": "HTML31xx.attributeIgnored",
+          "context": {
+            "attribute": "maxLength",
+            "type": "button",
+            "allowedTypes": [
+              "text",
+              "search",
+              "url",
+              "tel",
+              "email",
+              "password"
+            ]
+          }
+        },
+        {
+          "code": "HTML3105",
+          "messageId": "HTML31xx.attributeIgnored",
+          "context": {
+            "attribute": "minLength",
+            "type": "button",
+            "allowedTypes": [
+              "text",
+              "search",
+              "url",
+              "tel",
+              "email",
+              "password"
+            ]
+          }
+        },
+        {
+          "code": "HTML3106",
+          "messageId": "HTML31xx.attributeIgnored",
+          "context": {
+            "attribute": "pattern",
+            "type": "button",
+            "allowedTypes": [
+              "text",
+              "search",
+              "url",
+              "tel",
+              "email",
+              "password"
+            ]
+          }
+        },
+        {
+          "code": "HTML3107",
+          "messageId": "HTML31xx.attributeIgnored",
+          "context": {
+            "attribute": "min",
+            "type": "button",
+            "allowedTypes": [
+              "date",
+              "month",
+              "week",
+              "time",
+              "datetime-local",
+              "number",
+              "range"
+            ]
+          }
+        },
+        {
+          "code": "HTML3108",
+          "messageId": "HTML31xx.attributeIgnored",
+          "context": {
+            "attribute": "max",
+            "type": "button",
+            "allowedTypes": [
+              "date",
+              "month",
+              "week",
+              "time",
+              "datetime-local",
+              "number",
+              "range"
+            ]
+          }
+        },
+        {
+          "code": "HTML3109",
+          "messageId": "HTML31xx.attributeIgnored",
+          "context": {
+            "attribute": "step",
+            "type": "button",
+            "allowedTypes": [
+              "date",
+              "month",
+              "week",
+              "time",
+              "datetime-local",
+              "number",
+              "range"
+            ]
+          }
+        },
+        {
+          "code": "HTML3110",
+          "messageId": "HTML31xx.attributeIgnored",
+          "context": {
+            "attribute": "accept",
+            "type": "button",
+            "allowedTypes": ["file"]
+          }
+        },
+        {
+          "code": "HTML3111",
+          "messageId": "HTML31xx.attributeIgnored",
+          "context": {
+            "attribute": "capture",
+            "type": "button",
+            "allowedTypes": ["file"]
+          }
+        },
+        {
+          "code": "HTML3113",
+          "messageId": "HTML31xx.attributeIgnored",
+          "context": {
+            "attribute": "alt",
+            "type": "button",
+            "allowedTypes": ["image"]
+          }
+        },
+        {
+          "code": "HTML3114",
+          "messageId": "HTML31xx.attributeIgnored",
+          "context": {
+            "attribute": "height",
+            "type": "button",
+            "allowedTypes": ["image"]
+          }
+        },
+        {
+          "code": "HTML3115",
+          "messageId": "HTML31xx.attributeIgnored",
+          "context": {
+            "attribute": "width",
+            "type": "button",
+            "allowedTypes": ["image"]
+          }
+        }
+      ]
+    },
+    "HTML3201": {
+      "codes": ["HTML3201"],
+      "category": "HTML",
+      "severity": "warning",
+      "description": "An `<a>` has an `href` using a scheme that executes content when navigated to (`javascript:`, `data:` or `vbscript:`). The `href` has been removed.",
+      "specs": [
+        {
+          "name": "HTML Standard",
+          "url": "https://html.spec.whatwg.org/multipage/"
+        }
+      ],
+      "context": {
+        "href": {
+          "kind": "literal",
+          "required": true,
+          "description": "The `href` that was found, verbatim.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "HTML3201",
+          "context": {
+            "href": "javascript:alert(1)"
+          }
+        }
+      ]
+    },
+    "ARIA2003": {
+      "codes": ["ARIA2003"],
+      "category": "ARIA",
+      "description": "An `aria-*` attribute is not valid on the element's role. It will be removed.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#state_prop_def"
+        },
+        {
+          "name": "ARIA in HTML",
+          "url": "https://www.w3.org/TR/html-aria/"
+        }
+      ],
+      "context": {
+        "key": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The ARIA attribute that is not valid on this role.",
+          "essential": true
+        },
+        "role": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA role name, for example `region`.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2003",
+          "context": {
+            "key": "aria-foo",
+            "role": "button"
+          }
+        }
+      ]
+    },
+    "ARIA2004": {
+      "codes": ["ARIA2004"],
+      "category": "ARIA",
+      "description": "An element has a live-region role but no `aria-live`. The politeness level implied by the role has been added.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#live_region_roles"
+        },
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#aria-live"
+        }
+      ],
+      "context": {
+        "role": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA role name, for example `region`.",
+          "essential": true
+        },
+        "impliedLive": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The `aria-live` value implied by a role, for example `polite`.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2004",
+          "context": {
+            "role": "status",
+            "impliedLive": "polite"
+          }
+        }
+      ]
+    },
+    "ARIA2005": {
+      "codes": ["ARIA2005"],
+      "category": "ARIA",
+      "description": "An element has a live-region role and no `aria-atomic`. Whether the whole region or only changed nodes is announced is left to the browser.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#aria-atomic"
+        }
+      ],
+      "context": {
+        "role": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA role name, for example `region`.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2005",
+          "context": {
+            "role": "log"
+          }
+        }
+      ]
+    },
+    "ARIA2006": {
+      "codes": ["ARIA2006"],
+      "category": "ARIA",
+      "description": "`aria-relevant` contains tokens that are not valid (valid: additions, removals, text, all).",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#aria-relevant"
+        }
+      ],
+      "context": {
+        "invalid": {
+          "kind": "string[]",
+          "required": true,
+          "description": "The invalid tokens.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2006",
+          "context": {
+            "invalid": ["foo", "bar"]
+          }
+        }
+      ]
+    },
+    "ARIA2007": {
+      "codes": ["ARIA2007"],
+      "category": "ARIA",
+      "description": "`aria-relevant` combines `all` with other tokens. `all` already includes everything, so it should be used alone.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#aria-relevant"
+        }
+      ],
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2007"
+        }
+      ]
+    },
+    "ARIA2008": {
+      "codes": ["ARIA2008"],
+      "category": "ARIA",
+      "description": "The element has an ARIA role that is not recognised, or not applicable to it. The role will be ignored by assistive technology.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#role_definitions"
+        }
+      ],
+      "context": {
+        "role": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA role name, for example `region`.",
+          "essential": true
+        },
+        "tag": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Element name without angle brackets, for example `nav`.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2008",
+          "context": {
+            "role": "bogus",
+            "tag": "div"
+          }
+        },
+        {
+          "code": "ARIA2008",
+          "context": {
+            "role": "",
+            "tag": "div"
+          }
+        }
+      ]
+    },
+    "ARIA2009": {
+      "codes": ["ARIA2009"],
+      "category": "ARIA",
+      "description": "An element that needs an accessible name has none. Only reported when a rule that requires a name is enabled (for example for a repeated landmark).",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#namecalculation"
+        },
+        {
+          "name": "ARIA Authoring Practices Guide",
+          "url": "https://www.w3.org/WAI/ARIA/apg/"
+        }
+      ],
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Element name without angle brackets, for example `nav`.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 2,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2009",
+          "context": {
+            "tag": "nav"
+          }
+        }
+      ]
+    },
+    "ARIA2010": {
+      "codes": ["ARIA2010"],
+      "category": "ARIA",
+      "description": "An `aria-*` attribute is set on an element that is presentational (`role=\"none\"` or `role=\"presentation\"`). Presentational elements are hidden from assistive technology, so the attribute has no effect.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#presentation"
+        }
+      ],
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA attribute name, for example `aria-label`.",
+          "essential": true
+        },
+        "tag": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Element name without angle brackets, for example `nav`.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2010",
+          "context": {
+            "attr": "aria-label",
+            "tag": "img"
+          }
+        }
+      ]
+    },
+    "ARIA2011": {
+      "codes": ["ARIA2011"],
+      "category": "ARIA",
+      "description": "`aria-hidden=\"true\"` is set on a focusable element. Keyboard users can reach it but assistive technology cannot describe it.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#aria-hidden"
+        }
+      ],
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Element name without angle brackets, for example `nav`.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 2,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2011",
+          "context": {
+            "tag": "button"
+          }
+        }
+      ]
+    },
+    "ARIA2012": {
+      "codes": ["ARIA2012"],
+      "category": "ARIA",
+      "description": "A role requires a state or property that is missing (for example `aria-expanded` on `role=\"combobox\"`).",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#requiredState"
+        }
+      ],
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA attribute name, for example `aria-label`.",
+          "essential": true
+        },
+        "role": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA role name, for example `region`.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2012",
+          "context": {
+            "attr": "aria-expanded",
+            "role": "combobox"
+          }
+        }
+      ]
+    },
+    "ARIA2013": {
+      "codes": ["ARIA2013"],
+      "category": "ARIA",
+      "description": "An `aria-*` attribute has a value that is not valid. The valid values are a fixed set, listed.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#propcharacteristic_value"
+        }
+      ],
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA attribute name, for example `aria-label`.",
+          "essential": true
+        },
+        "got": {
+          "kind": "literal",
+          "required": true,
+          "description": "The value that was given, already rendered as source text (strings are quoted; `null` and `undefined` are spelled out). Do not add quotes around it.",
+          "essential": true
+        },
+        "values": {
+          "kind": "string[]",
+          "required": true,
+          "description": "The allowed values, as a list.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2013",
+          "context": {
+            "attr": "aria-checked",
+            "got": "\"yes\"",
+            "values": ["true", "false", "mixed"]
+          }
+        },
+        {
+          "code": "ARIA2013",
+          "context": {
+            "attr": "aria-checked",
+            "got": "null",
+            "values": ["true", "false", "mixed"]
+          }
+        },
+        {
+          "code": "ARIA2013",
+          "context": {
+            "attr": "aria-checked",
+            "got": "undefined",
+            "values": ["true", "false", "mixed"]
+          }
+        },
+        {
+          "code": "ARIA2013",
+          "context": {
+            "attr": "aria-hidden",
+            "got": "\"x\"",
+            "values": ["true", "false"]
+          }
+        },
+        {
+          "code": "ARIA2013",
+          "context": {
+            "attr": "aria-live",
+            "got": "\"loud\"",
+            "values": ["off", "polite", "assertive"]
+          }
+        }
+      ]
+    },
+    "ARIA2013.number": {
+      "codes": ["ARIA2013"],
+      "category": "ARIA",
+      "description": "An `aria-*` attribute needs a number and was given something else.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#propcharacteristic_value"
+        }
+      ],
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA attribute name, for example `aria-label`.",
+          "essential": true
+        },
+        "got": {
+          "kind": "literal",
+          "required": true,
+          "description": "The value that was given, already rendered as source text (strings are quoted; `null` and `undefined` are spelled out). Do not add quotes around it.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2013",
+          "messageId": "ARIA2013.number",
+          "context": {
+            "attr": "aria-valuenow",
+            "got": "\"abc\""
+          }
+        }
+      ]
+    },
+    "ARIA2013.integer": {
+      "codes": ["ARIA2013"],
+      "category": "ARIA",
+      "description": "An `aria-*` attribute needs an integer and was given something else.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#propcharacteristic_value"
+        }
+      ],
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA attribute name, for example `aria-label`.",
+          "essential": true
+        },
+        "got": {
+          "kind": "literal",
+          "required": true,
+          "description": "The value that was given, already rendered as source text (strings are quoted; `null` and `undefined` are spelled out). Do not add quotes around it.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2013",
+          "messageId": "ARIA2013.integer",
+          "context": {
+            "attr": "aria-posinset",
+            "got": "1.5"
+          }
+        }
+      ]
+    },
+    "ARIA2013.integerMin": {
+      "codes": ["ARIA2013"],
+      "category": "ARIA",
+      "description": "An `aria-*` attribute needs an integer that is at least a minimum and was given something else.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#propcharacteristic_value"
+        }
+      ],
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA attribute name, for example `aria-label`.",
+          "essential": true
+        },
+        "got": {
+          "kind": "literal",
+          "required": true,
+          "description": "The value that was given, already rendered as source text (strings are quoted; `null` and `undefined` are spelled out). Do not add quotes around it.",
+          "essential": true
+        },
+        "min": {
+          "kind": "number",
+          "required": true,
+          "description": "A minimum.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2013",
+          "messageId": "ARIA2013.integerMin",
+          "context": {
+            "attr": "aria-level",
+            "got": "0",
+            "min": 1
+          }
+        }
+      ]
+    },
+    "ARIA2013.integerMax": {
+      "codes": ["ARIA2013"],
+      "category": "ARIA",
+      "description": "An `aria-*` attribute needs an integer that is at most a maximum and was given something else.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#propcharacteristic_value"
+        }
+      ],
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA attribute name, for example `aria-label`.",
+          "essential": true
+        },
+        "got": {
+          "kind": "literal",
+          "required": true,
+          "description": "The value that was given, already rendered as source text (strings are quoted; `null` and `undefined` are spelled out). Do not add quotes around it.",
+          "essential": true
+        },
+        "max": {
+          "kind": "number",
+          "required": true,
+          "description": "A maximum.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2013",
+          "messageId": "ARIA2013.integerMax",
+          "context": {
+            "attr": "aria-level",
+            "got": "9",
+            "max": 6
+          }
+        }
+      ]
+    },
+    "ARIA2013.integerRange": {
+      "codes": ["ARIA2013"],
+      "category": "ARIA",
+      "description": "An `aria-*` attribute needs an integer between a minimum and a maximum and was given something else.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#propcharacteristic_value"
+        }
+      ],
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA attribute name, for example `aria-label`.",
+          "essential": true
+        },
+        "got": {
+          "kind": "literal",
+          "required": true,
+          "description": "The value that was given, already rendered as source text (strings are quoted; `null` and `undefined` are spelled out). Do not add quotes around it.",
+          "essential": true
+        },
+        "min": {
+          "kind": "number",
+          "required": true,
+          "description": "A minimum.",
+          "essential": true
+        },
+        "max": {
+          "kind": "number",
+          "required": true,
+          "description": "A maximum.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2013",
+          "messageId": "ARIA2013.integerRange",
+          "context": {
+            "attr": "aria-level",
+            "got": "0",
+            "min": 1,
+            "max": 6
+          }
+        }
+      ]
+    },
+    "ARIA2014": {
+      "codes": ["ARIA2014"],
+      "category": "ARIA",
+      "description": "`aria-level` repeats the heading level the element already has, so it adds nothing and should be removed.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#aria-level"
+        }
+      ],
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Element name without angle brackets, for example `nav`.",
+          "essential": true
+        },
+        "level": {
+          "kind": "number",
+          "required": true,
+          "description": "A heading level.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2014",
+          "context": {
+            "tag": "h2",
+            "level": 2
+          }
+        }
+      ]
+    },
+    "ARIA2015": {
+      "codes": ["ARIA2015"],
+      "category": "ARIA",
+      "description": "`aria-label` or `aria-labelledby` is set on a role that cannot be named by the author. It is a conformance error and will be removed.",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#namefromprohibited"
+        }
+      ],
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA attribute name, for example `aria-label`.",
+          "essential": true
+        },
+        "role": {
+          "kind": "identifier",
+          "required": true,
+          "description": "An ARIA role name, for example `region`.",
+          "essential": true
+        }
+      },
+      "rationale": true,
+      "suggestions": 1,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "ARIA2015",
+          "context": {
+            "attr": "aria-label",
+            "role": "generic"
+          }
+        }
+      ]
+    },
+    "COMP1004": {
+      "codes": ["COMP1004"],
+      "category": "Contract",
+      "description": "A component received a child that its contract does not allow at all.",
+      "context": {
+        "typeName": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The kind of child found, a tag name or a JavaScript type name such as `object`.",
+          "essential": true
+        },
+        "index": {
+          "kind": "number",
+          "required": true,
+          "description": "Zero-based position of the child.",
+          "essential": false
+        },
+        "scope": {
+          "kind": "identifier",
+          "required": true,
+          "description": "What the children belong to, for example `<ul>` or a component name.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "COMP1004",
+          "context": {
+            "typeName": "object",
+            "index": 0,
+            "scope": "<ul>"
+          }
+        }
+      ]
+    },
+    "COMP1005": {
+      "codes": ["COMP1005"],
+      "category": "Contract",
+      "description": "A child matches more than one of the contract's child rules, so it is ambiguous which one applies.",
+      "context": {
+        "typeName": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The kind of child found, a tag name or a JavaScript type name such as `object`.",
+          "essential": true
+        },
+        "index": {
+          "kind": "number",
+          "required": true,
+          "description": "Zero-based position of the child.",
+          "essential": false
+        },
+        "ruleNames": {
+          "kind": "string[]",
+          "required": true,
+          "description": "The names of the rules that matched, as a list.",
+          "essential": true
+        },
+        "scope": {
+          "kind": "identifier",
+          "required": true,
+          "description": "What the children belong to, for example `<ul>` or a component name.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "COMP1005",
+          "context": {
+            "typeName": "Item",
+            "index": 1,
+            "ruleNames": ["a", "b"],
+            "scope": "Menu"
+          }
+        }
+      ]
+    },
+    "COMP1006": {
+      "codes": ["COMP1006"],
+      "category": "Contract",
+      "description": "A child rule requires a minimum number of matching children and fewer were given.",
+      "context": {
+        "ruleName": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The name the component gave a child rule in its contract.",
+          "essential": true
+        },
+        "min": {
+          "kind": "number",
+          "required": true,
+          "description": "A minimum.",
+          "essential": true
+        },
+        "scope": {
+          "kind": "identifier",
+          "required": true,
+          "description": "What the children belong to, for example `<ul>` or a component name.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "COMP1006",
+          "context": {
+            "ruleName": "item",
+            "min": 1,
+            "scope": "Menu"
+          }
+        }
+      ]
+    },
+    "COMP1007": {
+      "codes": ["COMP1007"],
+      "category": "Contract",
+      "description": "A child rule allows a maximum number of matching children and more were given.",
+      "context": {
+        "ruleName": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The name the component gave a child rule in its contract.",
+          "essential": true
+        },
+        "max": {
+          "kind": "number",
+          "required": true,
+          "description": "A maximum.",
+          "essential": true
+        },
+        "scope": {
+          "kind": "identifier",
+          "required": true,
+          "description": "What the children belong to, for example `<ul>` or a component name.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "COMP1007",
+          "context": {
+            "ruleName": "item",
+            "max": 2,
+            "scope": "Menu"
+          }
+        }
+      ]
+    },
+    "COMP1008.first": {
+      "codes": ["COMP1008"],
+      "category": "Contract",
+      "description": "A child rule requires its matching child to be the first child and it is not.",
+      "context": {
+        "ruleName": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The name the component gave a child rule in its contract.",
+          "essential": true
+        },
+        "index": {
+          "kind": "number",
+          "required": true,
+          "description": "Zero-based position of the child.",
+          "essential": false
+        },
+        "scope": {
+          "kind": "identifier",
+          "required": true,
+          "description": "What the children belong to, for example `<ul>` or a component name.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "COMP1008",
+          "messageId": "COMP1008.first",
+          "context": {
+            "ruleName": "header",
+            "index": 2,
+            "scope": "Card"
+          }
+        }
+      ]
+    },
+    "COMP1008.last": {
+      "codes": ["COMP1008"],
+      "category": "Contract",
+      "description": "A child rule requires its matching child to be the last child and it is not.",
+      "context": {
+        "ruleName": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The name the component gave a child rule in its contract.",
+          "essential": true
+        },
+        "index": {
+          "kind": "number",
+          "required": true,
+          "description": "Zero-based position of the child.",
+          "essential": false
+        },
+        "scope": {
+          "kind": "identifier",
+          "required": true,
+          "description": "What the children belong to, for example `<ul>` or a component name.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "COMP1008",
+          "messageId": "COMP1008.last",
+          "context": {
+            "ruleName": "footer",
+            "index": 0,
+            "scope": "Card"
+          }
+        }
+      ]
+    },
+    "COMP1009": {
+      "codes": ["COMP1009"],
+      "category": "Contract",
+      "description": "The `as` prop named an element that this component does not allow. The allowed elements are listed.",
+      "context": {
+        "component": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The component name.",
+          "essential": true
+        },
+        "tag": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Element name without angle brackets, for example `nav`.",
+          "essential": true
+        },
+        "allowedAs": {
+          "kind": "string[]",
+          "required": true,
+          "description": "The elements allowed, as a list.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "COMP1009",
+          "context": {
+            "component": "Box",
+            "tag": "span",
+            "allowedAs": ["div", "p"]
+          }
+        }
+      ]
+    },
+    "COMP1010": {
+      "codes": ["COMP1010"],
+      "category": "Contract",
+      "description": "A configuration entry (for example a compound variant) refers to a variant that the component does not define.",
+      "context": {
+        "component": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The component name.",
+          "essential": true
+        },
+        "label": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Where in the configuration the problem was found, for example `compound[0]`.",
+          "essential": true
+        },
+        "dim": {
+          "kind": "identifier",
+          "required": true,
+          "description": "A variant name.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "COMP1010",
+          "context": {
+            "component": "Box",
+            "label": "compound[0]",
+            "dim": "size"
+          }
+        }
+      ]
+    },
+    "COMP1011": {
+      "codes": ["COMP1011"],
+      "category": "Contract",
+      "description": "A configuration entry sets a variant to a value the variant does not define. The valid values are listed.",
+      "context": {
+        "component": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The component name.",
+          "essential": true
+        },
+        "label": {
+          "kind": "identifier",
+          "required": true,
+          "description": "Where in the configuration the problem was found, for example `compound[0]`.",
+          "essential": true
+        },
+        "dim": {
+          "kind": "identifier",
+          "required": true,
+          "description": "A variant name.",
+          "essential": true
+        },
+        "value": {
+          "kind": "literal",
+          "required": true,
+          "description": "The value that was given.",
+          "essential": true
+        },
+        "valid": {
+          "kind": "string[]",
+          "required": true,
+          "description": "The valid values, as a list.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "COMP1011",
+          "context": {
+            "component": "Box",
+            "label": "compound[0]",
+            "dim": "size",
+            "value": "xl",
+            "valid": ["sm", "md"]
+          }
+        }
+      ]
+    },
+    "COMP1012": {
+      "codes": ["COMP1012"],
+      "category": "Contract",
+      "description": "The `recipe` prop names a preset that does not exist.",
+      "context": {
+        "component": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The component name.",
+          "essential": true
+        },
+        "key": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The preset name that was not found.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "COMP1012",
+          "context": {
+            "component": "Box",
+            "key": "primary"
+          }
+        }
+      ]
+    },
+    "COMP1013": {
+      "codes": ["COMP1013"],
+      "category": "Contract",
+      "description": "A variant prop was given a value that is not one of the values defined for that variant.",
+      "context": {
+        "component": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The component name.",
+          "essential": true
+        },
+        "key": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The variant name.",
+          "essential": true
+        },
+        "value": {
+          "kind": "literal",
+          "required": true,
+          "description": "The value that was given.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "COMP1013",
+          "context": {
+            "component": "Box",
+            "key": "size",
+            "value": "xl"
+          }
+        }
+      ]
+    },
+    "SLOT1001": {
+      "codes": ["SLOT1001"],
+      "category": "Contract",
+      "description": "`as` and `asChild` were both given. They are mutually exclusive.",
+      "context": {
+        "name": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The component name.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "SLOT1001",
+          "context": {
+            "name": "Box"
+          }
+        }
+      ]
+    },
+    "SLOT1002.required": {
+      "codes": ["SLOT1002"],
+      "category": "Contract",
+      "description": "`asChild` needs exactly one child element and none was given.",
+      "context": {
+        "name": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The component name.",
+          "essential": true
+        },
+        "elementTerm": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The adapter's word for an element, for example `React element` or `VNode`. A technical term; copy it verbatim.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "SLOT1002",
+          "messageId": "SLOT1002.required",
+          "context": {
+            "name": "Box",
+            "elementTerm": "element"
+          }
+        }
+      ]
+    },
+    "SLOT1002.exceeded": {
+      "codes": ["SLOT1002"],
+      "category": "Contract",
+      "description": "`asChild` needs exactly one child element and more than one was given.",
+      "context": {
+        "name": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The component name.",
+          "essential": true
+        },
+        "elementTerm": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The adapter's word for an element, for example `React element` or `VNode`. A technical term; copy it verbatim.",
+          "essential": true
+        },
+        "count": {
+          "kind": "number",
+          "required": true,
+          "description": "A number of items; selects the plural form.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "SLOT1002",
+          "messageId": "SLOT1002.exceeded",
+          "context": {
+            "name": "Box",
+            "elementTerm": "element",
+            "count": 2
+          }
+        }
+      ]
+    },
+    "SLOT1003": {
+      "codes": ["SLOT1003"],
+      "category": "Contract",
+      "description": "`asChild` ignored children that were not elements (for example text). Only elements can be composed.",
+      "context": {
+        "name": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The component name.",
+          "essential": true
+        },
+        "elementTerm": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The adapter's word for an element, for example `React element` or `VNode`. A technical term; copy it verbatim.",
+          "essential": true
+        },
+        "count": {
+          "kind": "number",
+          "required": true,
+          "description": "A number of items; selects the plural form.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "plural": "count",
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "SLOT1003",
+          "context": {
+            "name": "Box",
+            "elementTerm": "element",
+            "count": 1
+          }
+        },
+        {
+          "code": "SLOT1003",
+          "context": {
+            "name": "Box",
+            "elementTerm": "element",
+            "count": 3
+          }
+        }
+      ]
+    },
+    "SLOT1004": {
+      "codes": ["SLOT1004"],
+      "category": "Contract",
+      "description": "`asChild` needs a render function as its children and something else was given.",
+      "context": {
+        "name": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The component name.",
+          "essential": true
+        },
+        "received": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The JavaScript type of what was given instead, for example `string`.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "SLOT1004",
+          "context": {
+            "name": "Box",
+            "received": "string"
+          }
+        }
+      ]
+    },
+    "SLOT1005": {
+      "codes": ["SLOT1005"],
+      "category": "Contract",
+      "description": "`asChild` composed the component onto an element that is not in its list of allowed elements, so native behaviour may not work.",
+      "context": {
+        "name": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The component name.",
+          "essential": true
+        },
+        "childTag": {
+          "kind": "identifier",
+          "required": true,
+          "description": "The tag of the element the child resolved to.",
+          "essential": true
+        },
+        "allowedAs": {
+          "kind": "string[]",
+          "required": true,
+          "description": "The elements allowed, as a list.",
+          "essential": true
+        }
+      },
+      "rationale": false,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "SLOT1005",
+          "context": {
+            "name": "Box",
+            "childTag": "span",
+            "allowedAs": ["div", "p"]
+          }
+        }
+      ]
+    },
+    "A11Y8100": {
+      "codes": ["A11Y8100"],
+      "category": "Accessibility",
+      "severity": "warning",
+      "description": "An `<input>` has no accessible name (no label, `aria-label` or `aria-labelledby`).",
+      "specs": [
+        {
+          "name": "WAI-ARIA 1.2",
+          "url": "https://www.w3.org/TR/wai-aria-1.2/#namecalculation"
+        },
+        {
+          "name": "ARIA Authoring Practices Guide",
+          "url": "https://www.w3.org/WAI/ARIA/apg/"
+        }
+      ],
+      "rationale": true,
+      "suggestions": 2,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "A11Y8100"
+        }
+      ]
+    },
+    "A11Y8101": {
+      "codes": ["A11Y8101"],
+      "category": "Accessibility",
+      "severity": "warning",
+      "description": "An `<input>` relies on its placeholder as its only name. A placeholder disappears as the user types and is not a reliable accessible name.",
+      "specs": [
+        {
+          "name": "HTML Standard",
+          "url": "https://html.spec.whatwg.org/multipage/"
+        },
+        {
+          "name": "ARIA Authoring Practices Guide",
+          "url": "https://www.w3.org/WAI/ARIA/apg/"
+        }
+      ],
+      "rationale": true,
+      "suggestions": 2,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "A11Y8101"
+        }
+      ]
+    },
+    "A11Y8102": {
+      "codes": ["A11Y8102"],
+      "category": "Accessibility",
+      "severity": "warning",
+      "description": "A password `<input>` has no `autocomplete` value, so password managers cannot tell sign-in from sign-up.",
+      "specs": [
+        {
+          "name": "HTML Standard",
+          "url": "https://html.spec.whatwg.org/multipage/"
+        }
+      ],
+      "rationale": true,
+      "suggestions": 2,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "A11Y8102"
+        }
+      ]
+    },
+    "A11Y8103": {
+      "codes": ["A11Y8103"],
+      "category": "Accessibility",
+      "severity": "warning",
+      "description": "An `<input>` is both `required` and `readOnly`. A read-only field cannot be edited, so `required` can never be satisfied or violated.",
+      "specs": [
+        {
+          "name": "HTML Standard",
+          "url": "https://html.spec.whatwg.org/multipage/"
+        }
+      ],
+      "rationale": true,
+      "suggestions": 0,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "A11Y8103"
+        }
+      ]
+    },
+    "A11Y8200": {
+      "codes": ["A11Y8200"],
+      "category": "Accessibility",
+      "severity": "warning",
+      "description": "An `<a>` with an `href` has `role=\"button\"`. It is announced as a button but still navigates when activated.",
+      "specs": [
+        {
+          "name": "ARIA in HTML",
+          "url": "https://www.w3.org/TR/html-aria/"
+        },
+        {
+          "name": "ARIA Authoring Practices Guide",
+          "url": "https://www.w3.org/WAI/ARIA/apg/"
+        }
+      ],
+      "rationale": true,
+      "suggestions": 2,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "A11Y8200"
+        }
+      ]
+    },
+    "A11Y8201": {
+      "codes": ["A11Y8201"],
+      "category": "Accessibility",
+      "severity": "warning",
+      "description": "An `<a>` has `aria-disabled`. Unlike a native control, a link stays focusable and clickable, so `aria-disabled` only changes what is announced.",
+      "specs": [
+        {
+          "name": "ARIA in HTML",
+          "url": "https://www.w3.org/TR/html-aria/"
+        }
+      ],
+      "rationale": true,
+      "suggestions": 2,
+      "since": "1.0",
+      "examples": [
+        {
+          "code": "A11Y8201"
+        }
+      ]
+    }
+  },
+  "notCatalogDriven": {
+    "COMP1001": "Allocated, but nothing emits it yet.",
+    "COMP1002": "Allocated, but nothing emits it yet.",
+    "COMP1003": "Allocated, but nothing emits it yet.",
+    "COMP1014": "Composition checks emitted with caller-supplied text.",
+    "COMP1015": "Composition check in adapter-utils: message text is still English in code.",
+    "COMP1016": "Composition checks emitted with caller-supplied text.",
+    "ARIA2001": "Relationship validators: message text is still English in code.",
+    "ARIA2002": "Carries explicit text written by a custom rule author, by design; never looked up in a catalog.",
+    "HTML3001": "Allocated, but nothing emits it yet.",
+    "RENDER4001": "Allocated, but nothing emits it yet.",
+    "LINT5001": "ESLint plugin: message text is still English in code.",
+    "LINT5002": "ESLint plugin: message text is still English in code.",
+    "LINT5003": "ESLint plugin: message text is still English in code.",
+    "LINT5004": "ESLint plugin: message text is still English in code.",
+    "LINT5005": "ESLint plugin: message text is still English in code.",
+    "LINT5006": "ESLint plugin: message text is still English in code.",
+    "LINT5007": "ESLint plugin: message text is still English in code.",
+    "LINT5008": "ESLint plugin: message text is still English in code.",
+    "LINT5009": "ESLint plugin: message text is still English in code.",
+    "LINT5010": "ESLint plugin: message text is still English in code.",
+    "LINT5011": "ESLint plugin: message text is still English in code.",
+    "LINT5012": "ESLint plugin: message text is still English in code.",
+    "LINT5013": "ESLint plugin: message text is still English in code.",
+    "LINT5014": "ESLint plugin: message text is still English in code.",
+    "LINT5015": "Vite plugin: message text is still English in code.",
+    "LINT5016": "Vite plugin: message text is still English in code.",
+    "CSS6001": "Tailwind pipeline (lib/tailwind): message text is still English in code.",
+    "CSS6002": "Tailwind pipeline (lib/tailwind): message text is still English in code.",
+    "CSS6003": "Tailwind pipeline (lib/tailwind): message text is still English in code.",
+    "CSS6004": "Tailwind pipeline (lib/tailwind): message text is still English in code.",
+    "CSS6005": "Tailwind pipeline (lib/tailwind): message text is still English in code.",
+    "CSS6006": "Tailwind pipeline (lib/tailwind): message text is still English in code.",
+    "PLUGIN7001": "Plugin API checks: message text is still English in code.",
+    "PLUGIN7002": "Plugin API checks: message text is still English in code.",
+    "INTERNAL9000": "Allocated, but nothing emits it yet."
+  }
+}
