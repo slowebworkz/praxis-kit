@@ -45,7 +45,9 @@ export function createMessageResolver(catalog: MessageCatalog): MessageResolver 
   assertValidLocale(catalog.locale)
   return (diagnostic) => {
     const id = diagnostic.messageId ?? diagnostic.code
-    const entry = catalog.messages[id]
+    // Own properties only: `messages` is a plain object, so an id like "constructor" or "toString"
+    // (a custom rule can choose any messageId) would otherwise resolve an inherited member.
+    const entry = Object.hasOwn(catalog.messages, id) ? catalog.messages[id] : undefined
     return entry && renderEntry(entry, id, diagnostic.context ?? {}, catalog.locale)
   }
 }

@@ -40,6 +40,21 @@ describe('createMessageResolver', () => {
     expect(createMessageResolver(de)({ code: 'HTML3004', context: { tag: 'nav' } })).toBeUndefined()
   })
 
+  it.each(['constructor', 'toString', 'hasOwnProperty', '__proto__', 'valueOf'])(
+    'does not resolve the inherited member %s as a catalog entry',
+    (id) => {
+      const resolve = createMessageResolver(en)
+      expect(resolve({ code: 'ARIA2002', messageId: id, context: {} })).toBeUndefined()
+    },
+  )
+
+  it('still resolves a catalog entry whose own key shadows an inherited name', () => {
+    const catalog: MessageCatalog = { locale: 'en', messages: { constructor: { message: 'mine' } } }
+    expect(createMessageResolver(catalog)({ code: 'X', messageId: 'constructor' })?.message).toBe(
+      'mine',
+    )
+  })
+
   it('rejects a malformed locale when the resolver is created, not while rendering', () => {
     expect(() => createMessageResolver({ locale: 'not_a_locale!', messages: {} })).toThrow(
       RangeError,

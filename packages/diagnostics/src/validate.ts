@@ -5,7 +5,10 @@ export type CatalogIssue =
   | { kind: 'invalid-locale'; message: string }
   | { kind: 'missing-id'; id: string }
   | { kind: 'unknown-id'; id: string }
-  | { kind: 'empty-message'; id: string }
+  /** A field, or one plural form of it, is blank, so it would render as empty text. */
+  | { kind: 'empty-message'; id: string; field: string; form?: string }
+  /** A plural template has no `other` form, which is the fallback for every count it doesn't name. */
+  | { kind: 'missing-other-form'; id: string; field: string }
   /** The reference has this field (`rationale`, `suggestions.0.title`, …) and the catalog does not. */
   | { kind: 'missing-field'; id: string; field: string }
   /** The catalog has a field the reference does not. */
@@ -76,6 +79,26 @@ function expectedFor(reference: Forms, form: string | undefined): Set<string> | 
   return text === undefined ? undefined : placeholdersIn(text)
 }
 
+/**
+ * Every template, and every plural form of it, must have text. A blank form is as bad as a missing
+ * one: it renders as an empty string for the counts that select it.
+ */
+function checkNotEmpty(
+  id: string,
+  field: string,
+  template: MessageTemplate,
+  issues: CatalogIssue[],
+): void {
+  if (typeof template !== 'string' && typeof template.other !== 'string') {
+    issues.push({ kind: 'missing-other-form', id, field })
+  }
+  for (const [form, text] of formsOf(template)) {
+    if (text.trim() === '') {
+      issues.push({ kind: 'empty-message', id, field, ...(form !== undefined && { form }) })
+    }
+  }
+}
+
 function compareField(
   id: string,
   field: string,
@@ -126,7 +149,8 @@ function compareField(
  *   Fields and forms are compared one by one, so a variable left out of one message or one plural
  *   branch is caught even when it appears in another (`placeholder-mismatch`),
  * - plural templates select on the same count as the reference (`plural-selector-mismatch`),
- * - no entry has an empty message.
+ * - no field, and no plural form of one, is blank (`empty-message`), and every plural template has
+ *   an `other` form (`missing-other-form`).
  */
 export function validateCatalog(
   catalog: MessageCatalog,
@@ -141,21 +165,20 @@ export function validateCatalog(
   }
 
   for (const id of Object.keys(reference.messages)) {
-    if (!(id in catalog.messages)) issues.push({ kind: 'missing-id', id })
+    if (!Object.hasOwn(catalog.messages, id)) issues.push({ kind: 'missing-id', id })
   }
 
   for (const [id, entry] of Object.entries(catalog.messages)) {
-    const referenceEntry = reference.messages[id]
+    const referenceEntry = Object.hasOwn(reference.messages, id)
+      ? reference.messages[id]
+      : undefined
     if (referenceEntry === undefined) {
       issues.push({ kind: 'unknown-id', id })
       continue
     }
 
-    if ([...formsOf(entry.message).values()].every((text) => text.trim() === '')) {
-      issues.push({ kind: 'empty-message', id })
-    }
-
     const actualFields = fieldsOf(entry)
+    for (const [field, template] of actualFields) checkNotEmpty(id, field, template, issues)
     const expectedFields = fieldsOf(referenceEntry)
     for (const [field, expected] of expectedFields) {
       const actual = actualFields.get(field)
