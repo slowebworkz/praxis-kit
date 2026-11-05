@@ -133,7 +133,24 @@ coverage.
 1. `npm ci`
 2. `npx praxis-kit-diagnostics validate catalog/<locale>.json --json` (errors fail the build; gate
    completeness with `--min-coverage`)
-3. Run the same on the oldest supported `praxis-kit-diagnostics` (a matrix on the peer range)
+3. Run the same on the oldest and the newest `praxis-kit-diagnostics` the pack claims to support.
+   The oldest is the lower bound of your `peerDependencies` range (`>=0.2` means `0.2.0`), so the
+   matrix names it and installs it over the dev dependency:
+
+   ```yaml
+   strategy:
+     matrix:
+       diagnostics: ['0.2.0', 'latest'] # lower bound of the peer range, and the newest release
+   steps:
+     - run: npm ci
+     - run: npm install --no-save praxis-kit-diagnostics@${{ matrix.diagnostics }}
+     - run: npx praxis-kit-diagnostics validate catalog/fr.json --json
+   ```
+
+   Raise the lower bound (in `peerDependencies` and the matrix together) when the pack starts
+   needing something newer. If a newer contract major exists, `latest` will fail with
+   `contract-incompatible`: that is the signal to publish a pack for the new major.
+
 4. Pack, install the tarball into an empty directory, bundle a tiny entry, and check the bundle has
    no English and the tarball has no `en.json`
 5. On a tag, publish with provenance
