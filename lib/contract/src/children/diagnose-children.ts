@@ -10,7 +10,7 @@ import { isNumber, isString } from '@praxis-kit/guards'
 import { normalizeChildRule } from './normalize-child-rule'
 import { RuleMatcher } from './rules-matcher'
 import { getTypeName } from './get-type-name'
-import { ContractDiagnostics } from '../diagnostics'
+import { ContractDiagnostics, factText } from '../diagnostics'
 
 const isTextLike = (child: unknown): boolean => isString(child) || isNumber(child)
 
@@ -31,10 +31,20 @@ function addCardinalityViolations(
   const { min, max } = cardinality
   if (matchCount < min) {
     const d = ContractDiagnostics.cardinalityMin(name, min, context)
-    violations.push({ kind: 'cardinality-min', message: d.message, diagnostic: d, ruleName: name })
+    violations.push({
+      kind: 'cardinality-min',
+      message: factText(d),
+      diagnostic: d,
+      ruleName: name,
+    })
   } else if (matchCount > max) {
     const d = ContractDiagnostics.cardinalityMax(name, max, context)
-    violations.push({ kind: 'cardinality-max', message: d.message, diagnostic: d, ruleName: name })
+    violations.push({
+      kind: 'cardinality-max',
+      message: factText(d),
+      diagnostic: d,
+      ruleName: name,
+    })
   }
 }
 
@@ -55,7 +65,7 @@ function addPositionViolations(
       const d = ContractDiagnostics.positionViolation(name, position, index, context)
       violations.push({
         kind: 'position',
-        message: d.message,
+        message: factText(d),
         diagnostic: d,
         ruleName: name,
         childIndex: index,
@@ -88,7 +98,7 @@ function addUnexpectedViolations(
 ): void {
   iterate.forEachSet(unexpectedIndices, (ci) => {
     const d = ContractDiagnostics.unexpectedChild(getTypeName(children[ci]), ci, context)
-    violations.push({ kind: 'unexpected', message: d.message, diagnostic: d, childIndex: ci })
+    violations.push({ kind: 'unexpected', message: factText(d), diagnostic: d, childIndex: ci })
   })
 }
 
@@ -104,7 +114,7 @@ function addAmbiguousViolations(
     const matches = matrix.childToRules.forward.get(ci)!
     const names = [...matches].map((ri) => normalized[ri]?.name ?? `#${ri}`)
     const d = ContractDiagnostics.ambiguousChild(getTypeName(children[ci]), ci, names, context)
-    violations.push({ kind: 'ambiguous', message: d.message, diagnostic: d, childIndex: ci })
+    violations.push({ kind: 'ambiguous', message: factText(d), diagnostic: d, childIndex: ci })
   })
 }
 

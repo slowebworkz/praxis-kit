@@ -4,12 +4,14 @@ import type { NormalizedChildRule, MatchMatrix } from '../types'
 import { RuleValidator } from './rule-validator'
 import {
   CollectingReporter,
+  DiagnosticCode,
   Diagnostics,
   DefaultPolicy,
   Severity,
   throwDiagnostics,
   silentDiagnostics,
 } from '@praxis-kit/diagnostics'
+import { thrownDiagnostic } from '../strict/thrown-diagnostic'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -52,7 +54,9 @@ describe('RuleValidator.validate() — cardinality min', () => {
   it('throws when match count is below min', () => {
     const r = rule({ name: 'required', cardinality: { kind: 'bounded', min: 1, max: Infinity } })
     const m = matrix([new Set()])
-    expect(() => throwValidator.validate([r], m, 0)).toThrow(/required/)
+    expect(thrownDiagnostic(() => throwValidator.validate([r], m, 0))).toMatchObject({
+      code: DiagnosticCode.CardinalityMin,
+    })
   })
 })
 
@@ -70,7 +74,9 @@ describe('RuleValidator.validate() — cardinality max', () => {
   it('throws when match count exceeds max', () => {
     const r = rule({ name: 'once', cardinality: { kind: 'bounded', min: 0, max: 1 } })
     const m = matrix([new Set([0, 1])])
-    expect(() => throwValidator.validate([r], m, 2)).toThrow(/once/)
+    expect(thrownDiagnostic(() => throwValidator.validate([r], m, 2))).toMatchObject({
+      code: DiagnosticCode.CardinalityMax,
+    })
   })
 })
 
@@ -96,7 +102,10 @@ describe('RuleValidator.validate() — position "first"', () => {
       position: 'first',
     })
     const m = matrix([new Set([1])], 3)
-    expect(() => throwValidator.validate([r], m, 3)).toThrow(/header/)
+    expect(thrownDiagnostic(() => throwValidator.validate([r], m, 3))).toMatchObject({
+      code: DiagnosticCode.PositionViolation,
+      context: { ruleName: 'header' },
+    })
   })
 })
 
@@ -122,7 +131,10 @@ describe('RuleValidator.validate() — position "last"', () => {
       position: 'last',
     })
     const m = matrix([new Set([0])], 3)
-    expect(() => throwValidator.validate([r], m, 3)).toThrow(/footer/)
+    expect(thrownDiagnostic(() => throwValidator.validate([r], m, 3))).toMatchObject({
+      code: DiagnosticCode.PositionViolation,
+      context: { ruleName: 'footer' },
+    })
   })
 })
 
@@ -152,7 +164,9 @@ describe('RuleValidator.validate() — multiple rules', () => {
     const r1 = rule({ name: 'ok', cardinality: { kind: 'unbounded' } })
     const r2 = rule({ name: 'missing', cardinality: { kind: 'bounded', min: 1, max: Infinity } })
     const m = matrix([new Set([0]), new Set()], 1)
-    expect(() => throwValidator.validate([r1, r2], m, 1)).toThrow(/missing/)
+    expect(thrownDiagnostic(() => throwValidator.validate([r1, r2], m, 1))).toMatchObject({
+      code: DiagnosticCode.CardinalityMin,
+    })
   })
 })
 
@@ -170,7 +184,9 @@ describe('RuleValidator.validate() — no children', () => {
   it('throws required rule violation when there are no children', () => {
     const r = rule({ name: 'required', cardinality: { kind: 'bounded', min: 1, max: Infinity } })
     const m = matrix([new Set()], 0)
-    expect(() => throwValidator.validate([r], m, 0)).toThrow(/required/)
+    expect(thrownDiagnostic(() => throwValidator.validate([r], m, 0))).toMatchObject({
+      code: DiagnosticCode.CardinalityMin,
+    })
   })
 })
 

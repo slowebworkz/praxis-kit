@@ -8,7 +8,7 @@ import {
   isUndefined,
 } from '@praxis-kit/guards'
 
-import { AriaDiagnostics, HtmlDiagnostics } from '../diagnostics'
+import { AriaDiagnostics, factText, HtmlDiagnostics } from '../diagnostics'
 import { InvariantBase } from '../strict'
 import { isAriaAttributeValidForRole, isGlobalAriaAttribute } from './aria-attribute-policy'
 import { getImplicitRole, hasStandaloneRole, isStrongImplicitRole } from './aria-role-policy'
@@ -97,7 +97,7 @@ export class AriaPolicyEngine extends InvariantBase {
         props: applyFix ? omitProp(props, 'role') : props,
         violations: [
           {
-            message: d.message,
+            message: factText(d),
             diagnostic: d,
             tag,
             role: '',
@@ -171,19 +171,22 @@ export class AriaPolicyEngine extends InvariantBase {
           props: { role },
         } = context
         const { message, attribute, severity } = result
-        const resolvedMessage = message ?? result.diagnostic?.message
-        const fallbackDiag = isNonNull(resolvedMessage)
-          ? undefined
-          : AriaDiagnostics.invalidRole(role, tag)
+        // A rule that returns neither text nor a diagnostic still has to say something: report it as
+        // an invalid role. The check is on the diagnostic itself, not its text, because diagnostics
+        // are facts and usually carry no message.
+        const fallbackDiag =
+          isNonNull(message) || isNonNull(result.diagnostic)
+            ? undefined
+            : AriaDiagnostics.invalidRole(role, tag)
+        const reported = result.diagnostic ?? fallbackDiag
         violations.push({
-          message: resolvedMessage ?? fallbackDiag!.message,
+          message: message ?? factText(reported!),
           tag,
           role,
           attribute,
           severity,
           phase: 'evaluate',
-          ...(isNonNull(result.diagnostic) && { diagnostic: result.diagnostic }),
-          ...(isNonNull(fallbackDiag) && { diagnostic: fallbackDiag }),
+          ...(isNonNull(reported) && { diagnostic: reported }),
         })
         if (result.fixable && shouldApplyFix()) fixes.push(result.fix)
       })
