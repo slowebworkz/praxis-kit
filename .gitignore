@@ -20,3 +20,7 @@ CLAUDE.md
 # .vscode is local-only — editor tasks, migration notes, and lint config are not
 # versioned with the repo (also excluded by the global gitignore; kept explicit here).
 .vscode/
+
+# `pnpm pack` / `npm pack` output. Generated, ~MBs, never meant to be committed. The release smoke
+# test packs into a temp directory, but a manual `pnpm pack` in a package writes the tarball here.
+packages/*/*.tgz

@@ -106,23 +106,31 @@ function main(): void {
   console.log('smoke-test: building fresh dist/ …')
   run('pnpm', ['build'], KIT_DIR)
 
-  console.log('smoke-test: packing …')
-  const packOutput = run('pnpm', ['pack', '--json'], KIT_DIR)
-  const tarballName = (JSON.parse(packOutput) as { filename: string }).filename
-  const tarballPath = join(KIT_DIR, tarballName)
-  if (!existsSync(tarballPath)) throw new Error(`pnpm pack did not produce ${tarballPath}`)
-
-  // Declared before the try so `finally` can clean it up even if something between the tarball
-  // existing and the fixture being created throws — e.g. mkdtempSync itself failing (disk full,
-  // permissions). Previously the fixture was created *before* the try/finally, so a throw in that
-  // narrow window would have left the tarball behind with nothing to clean it up.
-  let fixture: string | undefined
+  // One temp directory, outside the repo, holds the tarball and the consumer fixture. The tarball is
+  // packed straight into it (`--pack-destination`), never into packages/kit: a run that is killed
+  // or interrupted before the `finally` below cannot leave a ~2.7 MB generated .tgz in the package
+  // workspace for someone to commit. A leaked temp directory is harmless; a leaked tarball in the
+  // package is not.
+  //
+  // Declared before the try so `finally` can clean it up even if something after it throws, and
+  // created before packing so the tarball has somewhere to go.
+  let workDir: string | undefined
 
   try {
+    workDir = mkdtempSync(join(tmpdir(), 'praxis-kit-smoke-'))
+    console.log(`smoke-test: working directory at ${workDir}`)
+
+    console.log('smoke-test: packing …')
+    const packOutput = run('pnpm', ['pack', '--pack-destination', workDir, '--json'], KIT_DIR)
+    // With --pack-destination, pnpm reports the tarball's absolute path.
+    const tarballPath = (JSON.parse(packOutput) as { filename: string }).filename
+    if (!existsSync(tarballPath)) throw new Error(`pnpm pack did not produce ${tarballPath}`)
+
     // Outside this repo's pnpm workspace entirely — inside it, `npm`/`pnpm` would resolve
     // `@praxis-kit/*`-adjacent things via workspace hoisting and mask exactly the class of bug
     // this script exists to catch.
-    fixture = mkdtempSync(join(tmpdir(), 'praxis-kit-smoke-'))
+    const fixture = join(workDir, 'fixture')
+    mkdirSync(fixture)
     console.log(`smoke-test: fixture at ${fixture}`)
 
     run('npm', ['init', '-y'], fixture)
@@ -252,8 +260,7 @@ console.log('Polymorphic.svelte compiles (client + server) and every import reso
 
     console.log('smoke-test: PASS')
   } finally {
-    if (fixture) rmSync(fixture, { recursive: true, force: true })
-    rmSync(tarballPath, { force: true })
+    if (workDir) rmSync(workDir, { recursive: true, force: true })
   }
 }
 
