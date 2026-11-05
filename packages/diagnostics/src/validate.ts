@@ -1,4 +1,8 @@
+import { isDefined, isString, isUndefined, iterate } from '@praxis-kit/foundation'
 import { assertValidLocale } from './resolver'
+import { checkCatalog } from './check'
+import type { Report } from './check'
+import type { DiagnosticsContract } from './contract'
 import type { MessageCatalog, MessageEntry, MessageTemplate } from './types'
 
 export type CatalogIssue =
@@ -41,13 +45,13 @@ export function placeholdersIn(text: string): Set<string> {
 /** Each translatable field of an entry, keyed by a path such as `message` or `suggestions.1.title`. */
 function fieldsOf(entry: MessageEntry): Map<string, MessageTemplate> {
   const fields = new Map<string, MessageTemplate>([['message', entry.message]])
-  if (entry.rationale !== undefined) fields.set('rationale', entry.rationale)
+  if (isDefined(entry.rationale)) fields.set('rationale', entry.rationale)
   entry.suggestions?.forEach((suggestion, index) => {
     fields.set(`suggestions.${index}.title`, suggestion.title)
-    if (suggestion.description !== undefined) {
+    if (isDefined(suggestion.description)) {
       fields.set(`suggestions.${index}.description`, suggestion.description)
     }
-    if (suggestion.fix !== undefined) fields.set(`suggestions.${index}.fix`, suggestion.fix)
+    if (isDefined(suggestion.fix)) fields.set(`suggestions.${index}.fix`, suggestion.fix)
   })
   return fields
 }
@@ -56,12 +60,12 @@ type Forms = Map<string | undefined, string>
 
 /** A template's text by plural form; a plain string is the single form `undefined`. */
 function formsOf(template: MessageTemplate): Forms {
-  if (typeof template === 'string') return new Map([[undefined, template]])
+  if (isString(template)) return new Map([[undefined, template]])
   const { plural: _selector, ...rest } = template
   const forms: Forms = new Map()
-  for (const [form, text] of Object.entries(rest)) {
-    if (typeof text === 'string') forms.set(form, text)
-  }
+  iterate.forEachEntry(rest, (form, text) => {
+    if (isString(text)) forms.set(form, text)
+  })
   return forms
 }
 
@@ -76,7 +80,7 @@ function sameSet(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
  */
 function expectedFor(reference: Forms, form: string | undefined): Set<string> | undefined {
   const text = reference.get(form) ?? reference.get('other') ?? reference.get(undefined)
-  return text === undefined ? undefined : placeholdersIn(text)
+  return isUndefined(text) ? undefined : placeholdersIn(text)
 }
 
 /**
@@ -89,14 +93,14 @@ function checkNotEmpty(
   template: MessageTemplate,
   issues: CatalogIssue[],
 ): void {
-  if (typeof template !== 'string' && typeof template.other !== 'string') {
+  if (!isString(template) && !isString(template.other)) {
     issues.push({ kind: 'missing-other-form', id, field })
   }
-  for (const [form, text] of formsOf(template)) {
+  iterate.forEach(formsOf(template), ([form, text]) => {
     if (text.trim() === '') {
-      issues.push({ kind: 'empty-message', id, field, ...(form !== undefined && { form }) })
+      issues.push({ kind: 'empty-message', id, field, ...(isDefined(form) && { form }) })
     }
-  }
+  })
 }
 
 function compareField(
@@ -106,11 +110,7 @@ function compareField(
   expected: MessageTemplate,
   issues: CatalogIssue[],
 ): void {
-  if (
-    typeof actual !== 'string' &&
-    typeof expected !== 'string' &&
-    actual.plural !== expected.plural
-  ) {
+  if (!isString(actual) && !isString(expected) && actual.plural !== expected.plural) {
     issues.push({
       kind: 'plural-selector-mismatch',
       id,
@@ -121,20 +121,44 @@ function compareField(
   }
 
   const expectedForms = formsOf(expected)
-  for (const [form, text] of formsOf(actual)) {
+  iterate.forEach(formsOf(actual), ([form, text]) => {
     const want = expectedFor(expectedForms, form)
-    if (want === undefined) continue
+    if (isUndefined(want)) return
     const have = placeholdersIn(text)
-    if (sameSet(have, want)) continue
+    if (sameSet(have, want)) return
     issues.push({
       kind: 'placeholder-mismatch',
       id,
       field,
-      ...(form !== undefined && { form }),
+      ...(isDefined(form) && { form }),
       missing: [...want].filter((name) => !have.has(name)),
       extra: [...have].filter((name) => !want.has(name)),
     })
-  }
+  })
+}
+
+/**
+ * Validates a catalog.
+ *
+ * **Against the contract** (`validateCatalog(catalog, contract)`, with `contract` from
+ * `praxis-kit-diagnostics/contract`): the way to validate a language pack. It needs no English, never
+ * throws on malformed input, and returns a `Report` that keeps structural errors apart from
+ * completeness. See `checkCatalog`.
+ *
+ * **Against a reference catalog** (`validateCatalog(catalog, reference)`): the earlier form, which
+ * compares each field and plural form with another catalog, normally English.
+ *
+ * @deprecated The reference form. Validate against the contract instead; it knows which context keys
+ * exist, which are essential, and which ids are deprecated or removed, none of which a catalog can say.
+ */
+export function validateCatalog(catalog: MessageCatalog, reference: MessageCatalog): CatalogIssue[]
+export function validateCatalog(catalog: unknown, contract: DiagnosticsContract): Report
+export function validateCatalog(
+  catalog: unknown,
+  second: MessageCatalog | DiagnosticsContract,
+): CatalogIssue[] | Report {
+  if ('ids' in second) return checkCatalog(catalog, second)
+  return validateAgainstReference(catalog as MessageCatalog, second)
 }
 
 /**
@@ -152,7 +176,7 @@ function compareField(
  * - no field, and no plural form of one, is blank (`empty-message`), and every plural template has
  *   an `other` form (`missing-other-form`).
  */
-export function validateCatalog(
+function validateAgainstReference(
   catalog: MessageCatalog,
   reference: MessageCatalog,
 ): CatalogIssue[] {
@@ -164,31 +188,31 @@ export function validateCatalog(
     issues.push({ kind: 'invalid-locale', message: (error as Error).message })
   }
 
-  for (const id of Object.keys(reference.messages)) {
+  iterate.forEachKey(reference.messages, (id) => {
     if (!Object.hasOwn(catalog.messages, id)) issues.push({ kind: 'missing-id', id })
-  }
+  })
 
-  for (const [id, entry] of Object.entries(catalog.messages)) {
+  iterate.forEachEntry(catalog.messages, (id, entry) => {
     const referenceEntry = Object.hasOwn(reference.messages, id)
       ? reference.messages[id]
       : undefined
-    if (referenceEntry === undefined) {
+    if (isUndefined(referenceEntry)) {
       issues.push({ kind: 'unknown-id', id })
-      continue
+      return
     }
 
     const actualFields = fieldsOf(entry)
     for (const [field, template] of actualFields) checkNotEmpty(id, field, template, issues)
     const expectedFields = fieldsOf(referenceEntry)
-    for (const [field, expected] of expectedFields) {
+    iterate.forEach(expectedFields, ([field, expected]) => {
       const actual = actualFields.get(field)
-      if (actual === undefined) issues.push({ kind: 'missing-field', id, field })
+      if (isUndefined(actual)) issues.push({ kind: 'missing-field', id, field })
       else compareField(id, field, actual, expected, issues)
-    }
-    for (const field of actualFields.keys()) {
+    })
+    iterate.forEach(actualFields.keys(), (field) => {
       if (!expectedFields.has(field)) issues.push({ kind: 'unknown-field', id, field })
-    }
-  }
+    })
+  })
 
   return issues
 }

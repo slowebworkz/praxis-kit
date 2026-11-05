@@ -93,32 +93,32 @@
     ]
   },
   "aria.invalidAttributeValue.string": {
-    "message": "\"aria-checked\" has an invalid value (\"yes\"). Expected: true, false, or mixed.",
+    "message": "\"aria-checked\" has an invalid value (\"yes\"). Expected: \"true\", \"false\", or \"mixed\".",
     "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
     "suggestions": [
       {
         "title": "Use a valid value for aria-checked",
-        "description": "Valid values are: true, false, or mixed."
+        "description": "Valid values are: \"true\", \"false\", or \"mixed\"."
       }
     ]
   },
   "aria.invalidAttributeValue.null": {
-    "message": "\"aria-checked\" has an invalid value (null). Expected: true, false, or mixed.",
+    "message": "\"aria-checked\" has an invalid value (null). Expected: \"true\", \"false\", or \"mixed\".",
     "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
     "suggestions": [
       {
         "title": "Use a valid value for aria-checked",
-        "description": "Valid values are: true, false, or mixed."
+        "description": "Valid values are: \"true\", \"false\", or \"mixed\"."
       }
     ]
   },
   "aria.invalidAttributeValue.undefined": {
-    "message": "\"aria-checked\" has an invalid value (undefined). Expected: true, false, or mixed.",
+    "message": "\"aria-checked\" has an invalid value (undefined). Expected: \"true\", \"false\", or \"mixed\".",
     "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
     "suggestions": [
       {
         "title": "Use a valid value for aria-checked",
-        "description": "Valid values are: true, false, or mixed."
+        "description": "Valid values are: \"true\", \"false\", or \"mixed\"."
       }
     ]
   },
@@ -171,9 +171,6 @@
   },
   "contract.cardinalityMax": {
     "message": "Menu: \"item\" allows at most 2."
-  },
-  "contract.positionViolation": {
-    "message": "Card: \"header\" must be first, got index 2"
   },
   "contract.unknownVariantDim": {
     "message": "Box: compound[0] references unknown variant \"size\"."
@@ -334,5 +331,207 @@
   "html.anchor.dangerousHref": {
     "message": "href=\"javascript:alert(1)\" uses a scheme that executes attacker-controlled content when navigated to. It has been removed.",
     "rationale": "\"javascript:\", \"data:\", and \"vbscript:\" URLs are a common XSS vector when href comes from untrusted input — none of the three are needed for legitimate navigation."
+  },
+  "aria.invalidAttributeValue.boolean": {
+    "message": "\"aria-hidden\" has an invalid value (\"x\"). Expected: \"true\" or \"false\".",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-hidden",
+        "description": "Valid values are: \"true\" or \"false\"."
+      }
+    ]
+  },
+  "aria.invalidAttributeValue.enum": {
+    "message": "\"aria-live\" has an invalid value (\"loud\"). Expected: \"off\", \"polite\", or \"assertive\".",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-live",
+        "description": "Valid values are: \"off\", \"polite\", or \"assertive\"."
+      }
+    ]
+  },
+  "aria.invalidAttributeValue.finiteNumber": {
+    "message": "\"aria-valuenow\" has an invalid value (\"abc\"). Expected: a finite number.",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-valuenow",
+        "description": "Valid values are: a finite number."
+      }
+    ]
+  },
+  "aria.invalidAttributeValue.integer": {
+    "message": "\"aria-posinset\" has an invalid value (1.5). Expected: an integer.",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-posinset",
+        "description": "Valid values are: an integer."
+      }
+    ]
+  },
+  "aria.invalidAttributeValue.integerMax": {
+    "message": "\"aria-level\" has an invalid value (9). Expected: an integer ≤ 6.",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-level",
+        "description": "Valid values are: an integer ≤ 6."
+      }
+    ]
+  },
+  "aria.invalidAttributeValue.integerRange": {
+    "message": "\"aria-level\" has an invalid value (0). Expected: an integer between 1 and 6.",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-level",
+        "description": "Valid values are: an integer between 1 and 6."
+      }
+    ]
+  },
+  "html.invalidChild.phrasing": {
+    "message": "<button> is not a valid direct child of <a>. Allowed: phrasing content, excluding interactive descendants such as <a>, <button>, and form controls."
+  },
+  "html.invalidChild.unspecified": {
+    "message": "<div> is not a valid direct child of <p>. Allowed: the parent element’s permitted content model."
+  },
+  "contract.positionViolation.first": {
+    "message": "Card: \"header\" must be first, got index 2"
+  },
+  "contract.positionViolation.last": {
+    "message": "Card: \"footer\" must be last, got index 0"
+  },
+  "html.input.attributeIgnoredForType.checked": {
+    "message": "\"checked\" is ignored on <input type=\"button\">.",
+    "rationale": "\"checked\" only has an effect when type is one of: \"checkbox\", \"radio\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"checked\"",
+        "description": "\"checked\" only affects <input> when type is one of: \"checkbox\", \"radio\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.multiple": {
+    "message": "\"multiple\" is ignored on <input type=\"button\">.",
+    "rationale": "\"multiple\" only has an effect when type is one of: \"email\", \"file\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"multiple\"",
+        "description": "\"multiple\" only affects <input> when type is one of: \"email\", \"file\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.maxLength": {
+    "message": "\"maxLength\" is ignored on <input type=\"button\">.",
+    "rationale": "\"maxLength\" only has an effect when type is one of: \"text\", \"search\", \"url\", \"tel\", \"email\", \"password\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"maxLength\"",
+        "description": "\"maxLength\" only affects <input> when type is one of: \"text\", \"search\", \"url\", \"tel\", \"email\", \"password\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.minLength": {
+    "message": "\"minLength\" is ignored on <input type=\"button\">.",
+    "rationale": "\"minLength\" only has an effect when type is one of: \"text\", \"search\", \"url\", \"tel\", \"email\", \"password\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"minLength\"",
+        "description": "\"minLength\" only affects <input> when type is one of: \"text\", \"search\", \"url\", \"tel\", \"email\", \"password\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.pattern": {
+    "message": "\"pattern\" is ignored on <input type=\"button\">.",
+    "rationale": "\"pattern\" only has an effect when type is one of: \"text\", \"search\", \"url\", \"tel\", \"email\", \"password\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"pattern\"",
+        "description": "\"pattern\" only affects <input> when type is one of: \"text\", \"search\", \"url\", \"tel\", \"email\", \"password\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.min": {
+    "message": "\"min\" is ignored on <input type=\"button\">.",
+    "rationale": "\"min\" only has an effect when type is one of: \"date\", \"month\", \"week\", \"time\", \"datetime-local\", \"number\", \"range\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"min\"",
+        "description": "\"min\" only affects <input> when type is one of: \"date\", \"month\", \"week\", \"time\", \"datetime-local\", \"number\", \"range\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.max": {
+    "message": "\"max\" is ignored on <input type=\"button\">.",
+    "rationale": "\"max\" only has an effect when type is one of: \"date\", \"month\", \"week\", \"time\", \"datetime-local\", \"number\", \"range\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"max\"",
+        "description": "\"max\" only affects <input> when type is one of: \"date\", \"month\", \"week\", \"time\", \"datetime-local\", \"number\", \"range\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.step": {
+    "message": "\"step\" is ignored on <input type=\"button\">.",
+    "rationale": "\"step\" only has an effect when type is one of: \"date\", \"month\", \"week\", \"time\", \"datetime-local\", \"number\", \"range\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"step\"",
+        "description": "\"step\" only affects <input> when type is one of: \"date\", \"month\", \"week\", \"time\", \"datetime-local\", \"number\", \"range\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.accept": {
+    "message": "\"accept\" is ignored on <input type=\"button\">.",
+    "rationale": "\"accept\" only has an effect when type is one of: \"file\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"accept\"",
+        "description": "\"accept\" only affects <input> when type is one of: \"file\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.capture": {
+    "message": "\"capture\" is ignored on <input type=\"button\">.",
+    "rationale": "\"capture\" only has an effect when type is one of: \"file\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"capture\"",
+        "description": "\"capture\" only affects <input> when type is one of: \"file\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.alt": {
+    "message": "\"alt\" is ignored on <input type=\"button\">.",
+    "rationale": "\"alt\" only has an effect when type is one of: \"image\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"alt\"",
+        "description": "\"alt\" only affects <input> when type is one of: \"image\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.height": {
+    "message": "\"height\" is ignored on <input type=\"button\">.",
+    "rationale": "\"height\" only has an effect when type is one of: \"image\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"height\"",
+        "description": "\"height\" only affects <input> when type is one of: \"image\"."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType.width": {
+    "message": "\"width\" is ignored on <input type=\"button\">.",
+    "rationale": "\"width\" only has an effect when type is one of: \"image\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"width\"",
+        "description": "\"width\" only affects <input> when type is one of: \"image\"."
+      }
+    ]
   }
 }

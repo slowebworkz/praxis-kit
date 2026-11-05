@@ -1,3 +1,9 @@
+/**
+ * A string-keyed object with values of unknown type. The same alias as `AnyRecord` in
+ * `@praxis-kit/foundation`, declared here because this package is published with no dependencies.
+ */
+export type AnyRecord = Record<string, unknown>
+
 /** A template string, or plural forms chosen by a numeric value in the diagnostic's context. */
 export type MessageTemplate =
   | string
@@ -20,8 +26,14 @@ export interface MessageEntry {
   $comment?: string
 }
 
-/** The JSON shape of one locale's catalog (see `lib/messages/schema/messages.schema.json`). */
+/** The JSON shape of one locale's catalog (see `schema/catalog.v1.schema.json`). */
 export interface MessageCatalog {
+  /** The contract major this catalog was written for (`CONTRACT_VERSION.major`). A catalog for a
+   *  major this package does not support is ignored by the resolver and rejected by the validator. */
+  contract: number
+  /** The `major.minor` contract the author last checked against. Advisory only: completeness is
+   *  computed from the real differences, never from this. */
+  builtAgainst?: string
   /** BCP 47 tag; selects the `Intl.PluralRules` / `Intl.ListFormat` rules. */
   locale: string
   /** Keyed by diagnostic code, or by the message id a code maps to. */
@@ -43,5 +55,5 @@ export interface RenderedMessage {
 export interface DiagnosticFacts {
   code: string
   messageId?: string | undefined
-  context?: Readonly<Record<string, unknown>> | undefined
+  context?: Readonly<AnyRecord> | undefined
 }

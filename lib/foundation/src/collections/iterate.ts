@@ -261,7 +261,7 @@ function forEachSet<T>(s: ReadonlySet<T>, callback: (value: T) => void): void {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-export const iterate = Object.freeze({
+export const iterate = /* @__PURE__ */ Object.freeze({
   entries,
   filter,
   find,

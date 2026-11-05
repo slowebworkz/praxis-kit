@@ -4,18 +4,19 @@ Framework-neutral UI infrastructure with enforceable structural and accessibilit
 
 ## Contents
 
-| Document                                              | What it covers                                                                                   |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| [Getting started](../GETTING_STARTED.md)              | Installation, first component, quick reference                                                   |
-| [Architecture](../ARCHITECTURE.md)                    | Layer model, dependency graph, runtime lifecycle                                                 |
-| [Examples](./examples.md)                             | Where to see praxis-kit exercised end to end today                                               |
-| [Concepts](./concepts.md)                             | Core abstractions: polymorphism, contracts, styling                                              |
-| [API stability](./api-stability.md)                   | Which of the ~19 subpaths are stable for 1.x, and which remain experimental                      |
-| [Adapter authoring](../ADAPTER_AUTHORING.md)          | Building a new framework adapter                                                                 |
-| [HTML/ARIA audit](./accessibility/html-aria-audit.md) | Normative source, rule, interpretation, test and deviation for every accessibility contract rule |
-| [Release gate](./releasing/verify-release.md)         | What `pnpm verify:release` runs and why the order matters                                        |
-| [Decisions](../DECISIONS.md)                          | Decision log; the **Status** section at the top is the current-state snapshot                    |
-| [Security policy](../SECURITY.md)                     | Supported versions, how to report a vulnerability                                                |
+| Document                                                     | What it covers                                                                                   |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| [Getting started](../GETTING_STARTED.md)                     | Installation, first component, quick reference                                                   |
+| [Architecture](../ARCHITECTURE.md)                           | Layer model, dependency graph, runtime lifecycle                                                 |
+| [Examples](./examples.md)                                    | Where to see praxis-kit exercised end to end today                                               |
+| [Concepts](./concepts.md)                                    | Core abstractions: polymorphism, contracts, styling                                              |
+| [API stability](./api-stability.md)                          | Which of the ~19 subpaths are stable for 1.x, and which remain experimental                      |
+| [Adapter authoring](../ADAPTER_AUTHORING.md)                 | Building a new framework adapter                                                                 |
+| [Language packs](./localization/authoring-language-packs.md) | Writing, validating and versioning a diagnostics language pack                                   |
+| [HTML/ARIA audit](./accessibility/html-aria-audit.md)        | Normative source, rule, interpretation, test and deviation for every accessibility contract rule |
+| [Release gate](./releasing/verify-release.md)                | What `pnpm verify:release` runs and why the order matters                                        |
+| [Decisions](../DECISIONS.md)                                 | Decision log; the **Status** section at the top is the current-state snapshot                    |
+| [Security policy](../SECURITY.md)                            | Supported versions, how to report a vulnerability                                                |
 
 **History:** `0.1.0` → `0.1.1` → `1.0.2`, all recorded in
 [`packages/kit/CHANGELOG.md`](../packages/kit/CHANGELOG.md). The `praxis-kit` npm name previously

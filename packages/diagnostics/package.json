@@ -10,28 +10,40 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./contract": {
+      "types": "./dist/contract.d.ts",
+      "import": "./dist/contract.js"
+    },
+    "./contract.json": "./dist/diagnostics.contract.json",
     "./en": {
       "types": "./dist/en.d.ts",
       "import": "./dist/en.js"
     },
     "./en.json": "./dist/en.json",
-    "./schema.json": "./dist/messages.schema.json"
+    "./schema.json": "./dist/schema.json",
+    "./catalog.v1.schema.json": "./dist/catalog.v1.schema.json"
+  },
+  "bin": {
+    "praxis-kit-diagnostics": "./dist/cli.js"
   },
   "files": [
     "dist",
     "LICENSE"
   ],
   "scripts": {
-    "build": "rm -rf dist && tsdown && node scripts/copy-assets.mjs",
+    "build": "rm -rf dist && node scripts/build-schema.mjs && tsdown && node scripts/copy-assets.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:related": "vitest run --changed",
     "prepublishOnly": "pnpm build",
-    "lint:pkg": "publint"
+    "lint:pkg": "publint",
+    "test:pack": "tsx scripts/smoke-test.ts"
   },
   "devDependencies": {
     "@praxis-kit/contract": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/foundation": "workspace:*",
+    "ajv": "^6.12.6",
     "publint": "catalog:",
     "tsdown": "catalog:",
     "vitest": "catalog:"

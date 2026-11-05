@@ -1,10 +1,11 @@
 /**
  * ARIA attribute value type system: what counts as a valid value for a given
- * {@link AriaValueType}, and how to describe what was expected when it isn't. Extracted from
- * `AriaPolicyEngine` — these three functions are cohesive on their own (they're describing a
- * type system, not policy), and `#checkAriaAttributeValues` (kept in `aria-policy-engine.ts`
- * alongside every other rule implementation — see that file's own pipeline) is now just a thin
- * caller of {@link isValidAriaValue}/{@link describeExpected}.
+ * {@link AriaValueType}. Extracted from
+ * `AriaPolicyEngine` — these functions are cohesive on their own (they're describing a type
+ * system, not policy), and `#checkAriaAttributeValues` (kept in `aria-policy-engine.ts` alongside
+ * every other rule implementation — see that file's own pipeline) is now just a thin caller of
+ * {@link isValidAriaValue}. What a valid value looks like, for a diagnostic, is described by
+ * `AriaDiagnostics.invalidAttributeValue` as structured data, not as a sentence built here.
  */
 import { isDefined, isNumber, isString, isUndefined } from '@praxis-kit/guards'
 import type { AriaValueType } from '../types'
@@ -54,28 +55,5 @@ export function isValidAriaValue(value: unknown, type: AriaValueType): boolean {
     }
     case 'enum':
       return isString(value) && type.values.has(value)
-  }
-}
-
-/** Describes what a valid value for `type` looks like, for use in an invalid-value diagnostic
- *  message (e.g. `aria-valuenow` got `"abc"`, expected "a finite number"). */
-export function describeExpected(type: AriaValueType): string {
-  switch (type.kind) {
-    case 'boolean':
-      return '"true" or "false"'
-    case 'tristate':
-      return '"true", "false", or "mixed"'
-    case 'number':
-      return 'a finite number'
-    case 'integer': {
-      const parts: string[] = ['an integer']
-      if (isDefined(type.min) && isDefined(type.max))
-        parts.push(`between ${type.min} and ${type.max}`)
-      else if (isDefined(type.min)) parts.push(`≥ ${type.min}`)
-      else if (isDefined(type.max)) parts.push(`≤ ${type.max}`)
-      return parts.join(' ')
-    }
-    case 'enum':
-      return [...type.values].map((v) => `"${v}"`).join(', ')
   }
 }

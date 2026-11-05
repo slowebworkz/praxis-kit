@@ -4,6 +4,7 @@ import { placeholdersIn, validateCatalog } from './validate'
 import type { MessageCatalog, MessageEntry } from './types'
 
 const ref: MessageCatalog = {
+  contract: 1,
   locale: 'en',
   messages: {
     A: { message: '{tag} and {role}', rationale: 'because {role}' },
@@ -24,7 +25,7 @@ const faithful = (): Record<string, MessageEntry> => ({
 })
 
 const check = (messages: Record<string, MessageEntry>, locale = 'de') =>
-  validateCatalog({ locale, messages }, ref)
+  validateCatalog({ contract: 1, locale, messages }, ref)
 
 describe('placeholdersIn', () => {
   it('collects placeholders and ignores filters', () => {
@@ -209,14 +210,18 @@ describe('validateCatalog', () => {
   })
 
   it('does not treat an inherited name as a present id', () => {
-    const reference: MessageCatalog = { locale: 'en', messages: { constructor: { message: 'x' } } }
+    const reference: MessageCatalog = {
+      contract: 1,
+      locale: 'en',
+      messages: { constructor: { message: 'x' } },
+    }
     // `constructor` is inherited by every object; only an own key counts as present.
-    expect(validateCatalog({ locale: 'de', messages: {} }, reference)).toContainEqual({
+    expect(validateCatalog({ contract: 1, locale: 'de', messages: {} }, reference)).toContainEqual({
       kind: 'missing-id',
       id: 'constructor',
     })
     expect(
-      validateCatalog({ locale: 'de', messages: { toString: { message: 'y' } } }, ref),
+      validateCatalog({ contract: 1, locale: 'de', messages: { toString: { message: 'y' } } }, ref),
     ).toContainEqual({
       kind: 'unknown-id',
       id: 'toString',

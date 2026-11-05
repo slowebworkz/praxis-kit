@@ -1,6 +1,13 @@
-import type { MessageCatalog, MessageEntry, MessageTemplate, RenderedMessage } from './types'
+import { isArray, isDefined, isString, isUndefined } from '@praxis-kit/foundation'
+import type {
+  MessageCatalog,
+  MessageEntry,
+  MessageTemplate,
+  RenderedMessage,
+  AnyRecord,
+} from './types'
 
-type Context = Readonly<Record<string, unknown>>
+type Context = Readonly<AnyRecord>
 
 // `{name}` or `{name|filter|filter}`. Unknown names are left in place so a mistake is visible
 // rather than silently blank.
@@ -20,7 +27,7 @@ function isListFilter(filter: string): filter is ListFilter {
 }
 
 function applyFilters(value: unknown, filters: readonly string[], locale: string): string {
-  let items: unknown[] = Array.isArray(value) ? value : [value]
+  let items: unknown[] = isArray(value) ? value : [value]
   let joined: string | undefined
 
   for (const filter of filters) {
@@ -37,14 +44,14 @@ function applyFilters(value: unknown, filters: readonly string[], locale: string
 export function renderTemplate(template: string, context: Context, locale: string): string {
   return template.replace(TOKEN, (token, name: string, filterPart: string) => {
     const value = context[name]
-    if (value === undefined) return token
+    if (isUndefined(value)) return token
     const filters = filterPart === '' ? [] : filterPart.slice(1).split('|')
     return applyFilters(value, filters, locale)
   })
 }
 
 function pickForm(template: MessageTemplate, context: Context, locale: string): string {
-  if (typeof template === 'string') return template
+  if (isString(template)) return template
   const count = Number(context[template.plural])
   const category = Number.isNaN(count) ? 'other' : new Intl.PluralRules(locale).select(count)
   return template[category] ?? template.other
@@ -66,17 +73,17 @@ export function renderEntry(
   context: Context,
   locale: string,
 ): RenderedMessage {
-  if (entry === undefined) return { message: id }
+  if (isUndefined(entry)) return { message: id }
 
   const rendered: RenderedMessage = { message: render(entry.message, context, locale) }
-  if (entry.rationale !== undefined) rendered.rationale = render(entry.rationale, context, locale)
-  if (entry.suggestions !== undefined) {
+  if (isDefined(entry.rationale)) rendered.rationale = render(entry.rationale, context, locale)
+  if (isDefined(entry.suggestions)) {
     rendered.suggestions = entry.suggestions.map((suggestion) => ({
       title: render(suggestion.title, context, locale),
-      ...(suggestion.description !== undefined && {
+      ...(isDefined(suggestion.description) && {
         description: render(suggestion.description, context, locale),
       }),
-      ...(suggestion.fix !== undefined && {
+      ...(isDefined(suggestion.fix) && {
         fix: renderTemplate(suggestion.fix, context, locale),
       }),
     }))

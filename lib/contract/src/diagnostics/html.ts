@@ -1,5 +1,6 @@
 import type { DiagnosticInput } from '@praxis-kit/diagnostics'
 import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
+import { isDefined, isUndefined } from '@praxis-kit/guards'
 import type { Severity as AriaSeverity, StringMap } from '@praxis-kit/primitive'
 
 // A fixed-severity fact about HTML/ARIA-in-HTML validity. The same diagnostic always carries the
@@ -49,7 +50,7 @@ function fact(
     category: DiagnosticCategory.HTML,
     severity,
     context,
-    ...(messageId !== undefined && { messageId }),
+    ...(isDefined(messageId) && { messageId }),
   }
 }
 
@@ -74,7 +75,25 @@ export const HtmlDiagnostics = {
     return fact(DiagnosticCode.HtmlLandmarkRoleOverride, 'error', { tag, implicitRole, role })
   },
 
-  invalidChild(child: string, parent: string, allowed: string): Fact {
+  // What the parent accepts, as data: a list of tags (written as `<li>`, which is how HTML names
+  // them in any language), `'phrasing'` for the phrasing-content model, or nothing when the parent
+  // has no simple summary. The two non-list shapes are their own message ids.
+  invalidChild(
+    child: string,
+    parent: string,
+    allowed: readonly string[] | 'phrasing' | undefined,
+  ): Fact {
+    if (isUndefined(allowed)) {
+      return fact(
+        DiagnosticCode.HtmlInvalidChild,
+        'error',
+        { child, parent },
+        'HTML3007.unspecified',
+      )
+    }
+    if (allowed === 'phrasing') {
+      return fact(DiagnosticCode.HtmlInvalidChild, 'error', { child, parent }, 'HTML3007.phrasing')
+    }
     return fact(DiagnosticCode.HtmlInvalidChild, 'error', { child, parent, allowed })
   },
 

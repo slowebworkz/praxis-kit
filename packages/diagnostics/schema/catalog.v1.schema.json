@@ -1,0 +1,197 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/slowebworkz/praxis-kit/blob/main/packages/diagnostics/schema/catalog.v1.schema.json",
+  "title": "Praxis Kit diagnostic message catalog (contract 1)",
+  "description": "One catalog per locale. Keys under \"messages\" are message ids from the diagnostics contract. Templates use {name} placeholders, optionally piped through filters: {names|quote|list-unit}. Generated from the contract; ids of your own (custom rules) pass this schema, but the CLI accepts them only when declared with --extension. The CLI (`praxis-kit-diagnostics validate`) is the authority on placeholders, plurals and ids.",
+  "type": "object",
+  "required": [
+    "contract",
+    "locale",
+    "messages"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "contract": {
+      "const": 1,
+      "description": "The contract major this catalog is written for. This schema is for contract 1."
+    },
+    "builtAgainst": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Advisory: the major.minor contract the author last checked against."
+    },
+    "locale": {
+      "type": "string",
+      "minLength": 1,
+      "description": "BCP 47 language tag. Selects the Intl.PluralRules and Intl.ListFormat rules.",
+      "examples": [
+        "en",
+        "de",
+        "pt-BR"
+      ]
+    },
+    "messages": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+        "description": "A message id from the contract (suggested below), or an id of your own.",
+        "examples": [
+          "A11Y8100",
+          "A11Y8101",
+          "A11Y8102",
+          "A11Y8103",
+          "A11Y8200",
+          "A11Y8201",
+          "ARIA2003",
+          "ARIA2004",
+          "ARIA2005",
+          "ARIA2006",
+          "ARIA2007",
+          "ARIA2008",
+          "ARIA2009",
+          "ARIA2010",
+          "ARIA2011",
+          "ARIA2012",
+          "ARIA2013",
+          "ARIA2013.integer",
+          "ARIA2013.integerMax",
+          "ARIA2013.integerMin",
+          "ARIA2013.integerRange",
+          "ARIA2013.number",
+          "ARIA2014",
+          "ARIA2015",
+          "COMP1004",
+          "COMP1005",
+          "COMP1006",
+          "COMP1007",
+          "COMP1008.first",
+          "COMP1008.last",
+          "COMP1009",
+          "COMP1010",
+          "COMP1011",
+          "COMP1012",
+          "COMP1013",
+          "HTML3002",
+          "HTML3003",
+          "HTML3004",
+          "HTML3005",
+          "HTML3006",
+          "HTML3007",
+          "HTML3007.phrasing",
+          "HTML3007.unspecified",
+          "HTML3008",
+          "HTML3008.none",
+          "HTML3101",
+          "HTML31xx.attributeIgnored",
+          "HTML3201",
+          "SLOT1001",
+          "SLOT1002.exceeded",
+          "SLOT1002.required",
+          "SLOT1003",
+          "SLOT1004",
+          "SLOT1005"
+        ]
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/entry"
+      }
+    }
+  },
+  "definitions": {
+    "template": {
+      "description": "A template string, or a plural form chosen by a numeric context key. `other` is required: it is the fallback for every count no other form names.",
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        {
+          "type": "object",
+          "required": [
+            "plural",
+            "other"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "plural": {
+              "type": "string",
+              "description": "The numeric context key that selects the form."
+            },
+            "zero": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "one": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "two": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "few": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "many": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "other": {
+              "type": "string",
+              "pattern": "\\S"
+            }
+          }
+        }
+      ]
+    },
+    "entry": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "$comment": {
+          "type": "string",
+          "description": "Notes for translators. Never rendered."
+        },
+        "message": {
+          "$ref": "#/definitions/template"
+        },
+        "rationale": {
+          "$ref": "#/definitions/template"
+        },
+        "suggestions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "title"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "title": {
+                "$ref": "#/definitions/template"
+              },
+              "description": {
+                "$ref": "#/definitions/template"
+              },
+              "fix": {
+                "type": "string",
+                "description": "Code to copy. Placeholders are filled in; it is not translated."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

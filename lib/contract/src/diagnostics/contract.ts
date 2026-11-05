@@ -1,6 +1,7 @@
 import type { DiagnosticInput } from '@praxis-kit/diagnostics'
 import type { ElementType } from '@praxis-kit/primitive'
 import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
+import { isDefined, isString } from '@praxis-kit/guards'
 
 /**
  * Renders an `ElementType` for a diagnostic message. A plain `String(tag)` works fine for the
@@ -10,7 +11,7 @@ import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
  * rather than ever stringifying the reference itself.
  */
 export function describeElementType(tag: ElementType): string {
-  if (typeof tag === 'string') return tag
+  if (isString(tag)) return tag
   const named = tag as { displayName?: string; name?: string }
   return named.displayName ?? named.name ?? '[component]'
 }
@@ -20,12 +21,14 @@ function contract(
   code: DiagnosticCode,
   context: Readonly<Record<string, unknown>>,
   component?: string,
+  messageId?: string,
 ): DiagnosticInput {
   return {
     code,
     category: DiagnosticCategory.Contract,
-    ...(component !== undefined && { component }),
+    ...(isDefined(component) && { component }),
     context,
+    ...(isDefined(messageId) && { messageId }),
   }
 }
 
@@ -52,13 +55,20 @@ export const ContractDiagnostics = {
     return contract(DiagnosticCode.CardinalityMax, { ruleName, max, scope }, scope)
   },
 
+  // `first` and `last` are message ids (`COMP1008.first`, `COMP1008.last`), not a context value, so a
+  // translation says "first" or "last" in its own words instead of splicing an English one in.
   positionViolation(
     ruleName: string,
-    position: string,
+    position: 'first' | 'last',
     index: number,
     scope: string,
   ): DiagnosticInput {
-    return contract(DiagnosticCode.PositionViolation, { ruleName, position, index, scope }, scope)
+    return contract(
+      DiagnosticCode.PositionViolation,
+      { ruleName, index, scope },
+      scope,
+      `COMP1008.${position}`,
+    )
   },
 
   unknownVariantDim(component: string, label: string, dim: string): DiagnosticInput {

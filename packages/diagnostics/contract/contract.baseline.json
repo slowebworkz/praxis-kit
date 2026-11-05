@@ -1,0 +1,759 @@
+{
+  "$comment": "The contract as last published. contract.test.ts compares the current contract with this file and fails if a change needs a version bump that was not made. Regenerate it when a new version is published (see docs/releasing/RELEASING.md).",
+  "contract": 1,
+  "minor": 0,
+  "ids": {
+    "HTML3002": {
+      "since": "1.0",
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "HTML3003": {
+      "since": "1.0",
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true
+        },
+        "implicitRole": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "HTML3004": {
+      "since": "1.0",
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true
+        },
+        "implicitRole": {
+          "kind": "identifier",
+          "required": true
+        },
+        "role": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "HTML3005": {
+      "since": "1.0",
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true
+        },
+        "implicitRole": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "HTML3006": {
+      "since": "1.0",
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true
+        },
+        "implicitRole": {
+          "kind": "identifier",
+          "required": true
+        },
+        "role": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "HTML3007": {
+      "since": "1.0",
+      "context": {
+        "child": {
+          "kind": "identifier",
+          "required": true
+        },
+        "parent": {
+          "kind": "identifier",
+          "required": true
+        },
+        "allowed": {
+          "kind": "string[]",
+          "required": true
+        }
+      }
+    },
+    "HTML3007.phrasing": {
+      "since": "1.0",
+      "context": {
+        "child": {
+          "kind": "identifier",
+          "required": true
+        },
+        "parent": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "HTML3007.unspecified": {
+      "since": "1.0",
+      "context": {
+        "child": {
+          "kind": "identifier",
+          "required": true
+        },
+        "parent": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "HTML3008": {
+      "since": "1.0",
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true
+        },
+        "role": {
+          "kind": "identifier",
+          "required": true
+        },
+        "allowedRoles": {
+          "kind": "string[]",
+          "required": true
+        }
+      }
+    },
+    "HTML3008.none": {
+      "since": "1.0",
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true
+        },
+        "role": {
+          "kind": "identifier",
+          "required": true
+        },
+        "allowedRoles": {
+          "kind": "string[]",
+          "required": true
+        }
+      }
+    },
+    "HTML3101": {
+      "since": "1.0",
+      "context": {
+        "type": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "HTML31xx.attributeIgnored": {
+      "since": "1.0",
+      "context": {
+        "attribute": {
+          "kind": "identifier",
+          "required": true
+        },
+        "type": {
+          "kind": "identifier",
+          "required": true
+        },
+        "allowedTypes": {
+          "kind": "string[]",
+          "required": true
+        }
+      }
+    },
+    "HTML3201": {
+      "since": "1.0",
+      "context": {
+        "href": {
+          "kind": "literal",
+          "required": true
+        }
+      }
+    },
+    "ARIA2003": {
+      "since": "1.0",
+      "context": {
+        "key": {
+          "kind": "identifier",
+          "required": true
+        },
+        "role": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "ARIA2004": {
+      "since": "1.0",
+      "context": {
+        "role": {
+          "kind": "identifier",
+          "required": true
+        },
+        "impliedLive": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "ARIA2005": {
+      "since": "1.0",
+      "context": {
+        "role": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "ARIA2006": {
+      "since": "1.0",
+      "context": {
+        "invalid": {
+          "kind": "string[]",
+          "required": true
+        }
+      }
+    },
+    "ARIA2007": {
+      "since": "1.0",
+      "context": {}
+    },
+    "ARIA2008": {
+      "since": "1.0",
+      "context": {
+        "role": {
+          "kind": "identifier",
+          "required": true
+        },
+        "tag": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "ARIA2009": {
+      "since": "1.0",
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "ARIA2010": {
+      "since": "1.0",
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true
+        },
+        "tag": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "ARIA2011": {
+      "since": "1.0",
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "ARIA2012": {
+      "since": "1.0",
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true
+        },
+        "role": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "ARIA2013": {
+      "since": "1.0",
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true
+        },
+        "got": {
+          "kind": "literal",
+          "required": true
+        },
+        "values": {
+          "kind": "string[]",
+          "required": true
+        }
+      }
+    },
+    "ARIA2013.number": {
+      "since": "1.0",
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true
+        },
+        "got": {
+          "kind": "literal",
+          "required": true
+        }
+      }
+    },
+    "ARIA2013.integer": {
+      "since": "1.0",
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true
+        },
+        "got": {
+          "kind": "literal",
+          "required": true
+        }
+      }
+    },
+    "ARIA2013.integerMin": {
+      "since": "1.0",
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true
+        },
+        "got": {
+          "kind": "literal",
+          "required": true
+        },
+        "min": {
+          "kind": "number",
+          "required": true
+        }
+      }
+    },
+    "ARIA2013.integerMax": {
+      "since": "1.0",
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true
+        },
+        "got": {
+          "kind": "literal",
+          "required": true
+        },
+        "max": {
+          "kind": "number",
+          "required": true
+        }
+      }
+    },
+    "ARIA2013.integerRange": {
+      "since": "1.0",
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true
+        },
+        "got": {
+          "kind": "literal",
+          "required": true
+        },
+        "min": {
+          "kind": "number",
+          "required": true
+        },
+        "max": {
+          "kind": "number",
+          "required": true
+        }
+      }
+    },
+    "ARIA2014": {
+      "since": "1.0",
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true
+        },
+        "level": {
+          "kind": "number",
+          "required": true
+        }
+      }
+    },
+    "ARIA2015": {
+      "since": "1.0",
+      "context": {
+        "attr": {
+          "kind": "identifier",
+          "required": true
+        },
+        "role": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "COMP1004": {
+      "since": "1.0",
+      "context": {
+        "typeName": {
+          "kind": "identifier",
+          "required": true
+        },
+        "index": {
+          "kind": "number",
+          "required": true
+        },
+        "scope": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "COMP1005": {
+      "since": "1.0",
+      "context": {
+        "typeName": {
+          "kind": "identifier",
+          "required": true
+        },
+        "index": {
+          "kind": "number",
+          "required": true
+        },
+        "ruleNames": {
+          "kind": "string[]",
+          "required": true
+        },
+        "scope": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "COMP1006": {
+      "since": "1.0",
+      "context": {
+        "ruleName": {
+          "kind": "identifier",
+          "required": true
+        },
+        "min": {
+          "kind": "number",
+          "required": true
+        },
+        "scope": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "COMP1007": {
+      "since": "1.0",
+      "context": {
+        "ruleName": {
+          "kind": "identifier",
+          "required": true
+        },
+        "max": {
+          "kind": "number",
+          "required": true
+        },
+        "scope": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "COMP1008.first": {
+      "since": "1.0",
+      "context": {
+        "ruleName": {
+          "kind": "identifier",
+          "required": true
+        },
+        "index": {
+          "kind": "number",
+          "required": true
+        },
+        "scope": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "COMP1008.last": {
+      "since": "1.0",
+      "context": {
+        "ruleName": {
+          "kind": "identifier",
+          "required": true
+        },
+        "index": {
+          "kind": "number",
+          "required": true
+        },
+        "scope": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "COMP1009": {
+      "since": "1.0",
+      "context": {
+        "component": {
+          "kind": "identifier",
+          "required": true
+        },
+        "tag": {
+          "kind": "identifier",
+          "required": true
+        },
+        "allowedAs": {
+          "kind": "string[]",
+          "required": true
+        }
+      }
+    },
+    "COMP1010": {
+      "since": "1.0",
+      "context": {
+        "component": {
+          "kind": "identifier",
+          "required": true
+        },
+        "label": {
+          "kind": "identifier",
+          "required": true
+        },
+        "dim": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "COMP1011": {
+      "since": "1.0",
+      "context": {
+        "component": {
+          "kind": "identifier",
+          "required": true
+        },
+        "label": {
+          "kind": "identifier",
+          "required": true
+        },
+        "dim": {
+          "kind": "identifier",
+          "required": true
+        },
+        "value": {
+          "kind": "literal",
+          "required": true
+        },
+        "valid": {
+          "kind": "string[]",
+          "required": true
+        }
+      }
+    },
+    "COMP1012": {
+      "since": "1.0",
+      "context": {
+        "component": {
+          "kind": "identifier",
+          "required": true
+        },
+        "key": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "COMP1013": {
+      "since": "1.0",
+      "context": {
+        "component": {
+          "kind": "identifier",
+          "required": true
+        },
+        "key": {
+          "kind": "identifier",
+          "required": true
+        },
+        "value": {
+          "kind": "literal",
+          "required": true
+        }
+      }
+    },
+    "SLOT1001": {
+      "since": "1.0",
+      "context": {
+        "name": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "SLOT1002.required": {
+      "since": "1.0",
+      "context": {
+        "name": {
+          "kind": "identifier",
+          "required": true
+        },
+        "elementTerm": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "SLOT1002.exceeded": {
+      "since": "1.0",
+      "context": {
+        "name": {
+          "kind": "identifier",
+          "required": true
+        },
+        "elementTerm": {
+          "kind": "identifier",
+          "required": true
+        },
+        "count": {
+          "kind": "number",
+          "required": true
+        }
+      }
+    },
+    "SLOT1003": {
+      "since": "1.0",
+      "context": {
+        "name": {
+          "kind": "identifier",
+          "required": true
+        },
+        "elementTerm": {
+          "kind": "identifier",
+          "required": true
+        },
+        "count": {
+          "kind": "number",
+          "required": true
+        }
+      }
+    },
+    "SLOT1004": {
+      "since": "1.0",
+      "context": {
+        "name": {
+          "kind": "identifier",
+          "required": true
+        },
+        "received": {
+          "kind": "identifier",
+          "required": true
+        }
+      }
+    },
+    "SLOT1005": {
+      "since": "1.0",
+      "context": {
+        "name": {
+          "kind": "identifier",
+          "required": true
+        },
+        "childTag": {
+          "kind": "identifier",
+          "required": true
+        },
+        "allowedAs": {
+          "kind": "string[]",
+          "required": true
+        }
+      }
+    },
+    "A11Y8100": {
+      "since": "1.0",
+      "context": {}
+    },
+    "A11Y8101": {
+      "since": "1.0",
+      "context": {}
+    },
+    "A11Y8102": {
+      "since": "1.0",
+      "context": {}
+    },
+    "A11Y8103": {
+      "since": "1.0",
+      "context": {}
+    },
+    "A11Y8200": {
+      "since": "1.0",
+      "context": {}
+    },
+    "A11Y8201": {
+      "since": "1.0",
+      "context": {}
+    }
+  },
+  "notCatalogDriven": [
+    "ARIA2001",
+    "ARIA2002",
+    "COMP1001",
+    "COMP1002",
+    "COMP1003",
+    "COMP1014",
+    "COMP1015",
+    "COMP1016",
+    "CSS6001",
+    "CSS6002",
+    "CSS6003",
+    "CSS6004",
+    "CSS6005",
+    "CSS6006",
+    "HTML3001",
+    "INTERNAL9000",
+    "LINT5001",
+    "LINT5002",
+    "LINT5003",
+    "LINT5004",
+    "LINT5005",
+    "LINT5006",
+    "LINT5007",
+    "LINT5008",
+    "LINT5009",
+    "LINT5010",
+    "LINT5011",
+    "LINT5012",
+    "LINT5013",
+    "LINT5014",
+    "LINT5015",
+    "LINT5016",
+    "PLUGIN7001",
+    "PLUGIN7002",
+    "RENDER4001"
+  ]
+}

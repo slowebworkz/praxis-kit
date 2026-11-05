@@ -1,5 +1,6 @@
 {
-  "$schema": "../schema/messages.schema.json",
+  "$schema": "../schema/catalog.v1.schema.json",
+  "contract": 1,
   "locale": "en",
   "messages": {
     "HTML3002": {
@@ -18,7 +19,13 @@
       "message": "<{tag}> has a fixed landmark role=\"{implicitRole}\". role=\"{role}\" overrides it and confuses assistive technology. The override has been removed."
     },
     "HTML3007": {
-      "message": "<{child}> is not a valid direct child of <{parent}>. Allowed: {allowed}."
+      "message": "<{child}> is not a valid direct child of <{parent}>. Allowed: {allowed|list-or}."
+    },
+    "HTML3007.phrasing": {
+      "message": "<{child}> is not a valid direct child of <{parent}>. Allowed: phrasing content, excluding interactive descendants such as <a>, <button>, and form controls."
+    },
+    "HTML3007.unspecified": {
+      "message": "<{child}> is not a valid direct child of <{parent}>. Allowed: the parent element’s permitted content model."
     },
     "HTML3008": {
       "message": "role=\"{role}\" is not permitted on <{tag}>. Allowed alternate role(s): {allowedRoles|quote|list-unit}.",
@@ -150,12 +157,62 @@
       ]
     },
     "ARIA2013": {
-      "message": "\"{attr}\" has an invalid value ({got}). Expected: {expected}.",
+      "message": "\"{attr}\" has an invalid value ({got}). Expected: {values|quote|list-or}.",
       "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
       "suggestions": [
         {
           "title": "Use a valid value for {attr}",
-          "description": "Valid values are: {expected}."
+          "description": "Valid values are: {values|quote|list-or}."
+        }
+      ]
+    },
+    "ARIA2013.number": {
+      "message": "\"{attr}\" has an invalid value ({got}). Expected: a finite number.",
+      "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+      "suggestions": [
+        {
+          "title": "Use a valid value for {attr}",
+          "description": "Valid values are: a finite number."
+        }
+      ]
+    },
+    "ARIA2013.integer": {
+      "message": "\"{attr}\" has an invalid value ({got}). Expected: an integer.",
+      "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+      "suggestions": [
+        {
+          "title": "Use a valid value for {attr}",
+          "description": "Valid values are: an integer."
+        }
+      ]
+    },
+    "ARIA2013.integerMin": {
+      "message": "\"{attr}\" has an invalid value ({got}). Expected: an integer ≥ {min}.",
+      "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+      "suggestions": [
+        {
+          "title": "Use a valid value for {attr}",
+          "description": "Valid values are: an integer ≥ {min}."
+        }
+      ]
+    },
+    "ARIA2013.integerMax": {
+      "message": "\"{attr}\" has an invalid value ({got}). Expected: an integer ≤ {max}.",
+      "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+      "suggestions": [
+        {
+          "title": "Use a valid value for {attr}",
+          "description": "Valid values are: an integer ≤ {max}."
+        }
+      ]
+    },
+    "ARIA2013.integerRange": {
+      "message": "\"{attr}\" has an invalid value ({got}). Expected: an integer between {min} and {max}.",
+      "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+      "suggestions": [
+        {
+          "title": "Use a valid value for {attr}",
+          "description": "Valid values are: an integer between {min} and {max}."
         }
       ]
     },
@@ -191,8 +248,11 @@
     "COMP1007": {
       "message": "{scope}: \"{ruleName}\" allows at most {max}."
     },
-    "COMP1008": {
-      "message": "{scope}: \"{ruleName}\" must be {position}, got index {index}"
+    "COMP1008.first": {
+      "message": "{scope}: \"{ruleName}\" must be first, got index {index}"
+    },
+    "COMP1008.last": {
+      "message": "{scope}: \"{ruleName}\" must be last, got index {index}"
     },
     "COMP1009": {
       "message": "<{component}>: \"as\" prop received \"{tag}\" but only [{allowedAs|quote|list-unit}] are allowed."

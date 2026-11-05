@@ -25,7 +25,7 @@
     "bench": "pnpm --filter @praxis-kit/bench bench",
     "bench:render": "pnpm --filter @praxis-kit/bench bench:render",
     "verify": "pnpm --filter ./packages/kit build && pnpm --filter ./packages/diagnostics build && pnpm check && pnpm repo-state",
-    "verify:release": "pnpm verify && pnpm --filter ./packages/kit lint:pkg && pnpm --filter ./packages/kit test:pack && pnpm --filter @praxis-kit/tree-shaking-tests test && pnpm --filter @praxis-kit/bundle-analysis test && pnpm metrics:collect && pnpm metrics:assert",
+    "verify:release": "pnpm verify && pnpm --filter ./packages/kit lint:pkg && pnpm --filter ./packages/kit test:pack && pnpm --filter ./packages/diagnostics lint:pkg && pnpm --filter ./packages/diagnostics test:pack && pnpm --filter @praxis-kit/tree-shaking-tests test && pnpm --filter @praxis-kit/bundle-analysis test && pnpm metrics:collect && pnpm metrics:assert",
     "lint": "NODE_OPTIONS=--max-old-space-size=8192 eslint . --fix",
     "lint:check": "NODE_OPTIONS=--max-old-space-size=8192 eslint .",
     "lint:staged": "git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' | xargs eslint --fix",
