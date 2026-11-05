@@ -1,3 +1,4 @@
+import type { AnyRecord } from './types'
 import { describe, expect, it } from 'vitest'
 import { Severity } from '@praxis-kit/diagnostics'
 import en from './en'
@@ -8,7 +9,7 @@ import { createMessageResolver } from './resolver'
 // `english.golden.json` is the English every factory produced before its prose moved into the
 // catalog. Rendering each sample through the catalog must reproduce it exactly.
 const resolve = createMessageResolver(en)
-const goldenByKey = golden as Record<string, unknown>
+const goldenByKey = golden as AnyRecord
 
 describe('English catalog reproduces the original messages', () => {
   it.each(Object.keys(SAMPLES))('%s', (key) => {

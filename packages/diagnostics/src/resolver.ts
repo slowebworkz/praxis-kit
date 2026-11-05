@@ -1,3 +1,4 @@
+import { isDefined, isNumber, isString, isUndefined } from '@praxis-kit/foundation'
 import { CONTRACT_VERSION } from './contract'
 import { renderEntry } from './render'
 import type { DiagnosticFacts, MessageCatalog, RenderedMessage } from './types'
@@ -20,10 +21,10 @@ export type MessageResolver = (diagnostic: DiagnosticFacts) => RenderedMessage |
 export function assertValidLocale(locale: unknown): asserts locale is string {
   const bad = (): never => {
     throw new RangeError(
-      `Invalid locale ${typeof locale === 'string' ? `"${locale}"` : String(locale)}: expected a BCP 47 language tag such as "en" or "pt-BR".`,
+      `Invalid locale ${isString(locale) ? `"${locale}"` : String(locale)}: expected a BCP 47 language tag such as "en" or "pt-BR".`,
     )
   }
-  if (typeof locale !== 'string' || locale === '') return bad()
+  if (!isString(locale) || locale === '') return bad()
   try {
     Intl.getCanonicalLocales(locale)
   } catch {
@@ -65,7 +66,7 @@ function usable(
   // throws. Everything below degrades.
   assertValidLocale(catalog.locale)
   const declared: unknown = catalog.contract
-  if (typeof declared !== 'number' || !Number.isInteger(declared) || declared < 1) {
+  if (!isNumber(declared) || !Number.isInteger(declared) || declared < 1) {
     report({
       kind: 'invalid-contract',
       locale: catalog.locale,
@@ -108,10 +109,10 @@ export function createMessageResolver(
       // A broken callback must not take diagnostics down with it.
     }
   }
-  const fallback = options.fallback === undefined ? [] : [options.fallback].flat()
+  const fallback = isUndefined(options.fallback) ? [] : [options.fallback].flat()
   const chain = [catalog, ...fallback]
     .map((candidate) => usable(candidate, report))
-    .filter((candidate): candidate is MessageCatalog => candidate !== undefined)
+    .filter((candidate): candidate is MessageCatalog => isDefined(candidate))
 
   return (diagnostic) => {
     const id = diagnostic.messageId ?? diagnostic.code
@@ -119,7 +120,7 @@ export function createMessageResolver(
       // Own properties only: `messages` is a plain object, so an id like "constructor" or "toString"
       // (a custom rule can choose any messageId) would otherwise resolve an inherited member.
       const entry = Object.hasOwn(candidate.messages, id) ? candidate.messages[id] : undefined
-      if (entry === undefined) continue
+      if (isUndefined(entry)) continue
       try {
         return renderEntry(entry, id, diagnostic.context ?? {}, candidate.locale)
       } catch (error_) {

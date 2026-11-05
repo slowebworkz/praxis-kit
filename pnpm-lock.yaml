@@ -985,6 +985,9 @@ importers:
       '@praxis-kit/diagnostics':
         specifier: workspace:*
         version: link:../../lib/diagnostics
+      '@praxis-kit/foundation':
+        specifier: workspace:*
+        version: link:../../lib/foundation
       ajv:
         specifier: ^6.12.6
         version: 6.15.0

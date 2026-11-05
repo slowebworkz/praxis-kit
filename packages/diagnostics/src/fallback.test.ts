@@ -10,7 +10,7 @@ import { HtmlDiagnostics } from '@praxis-kit/contract'
 import en from './en'
 import { createMessageResolver } from './resolver'
 import type { ResolverIssue } from './resolver'
-import type { MessageCatalog } from './types'
+import type { MessageCatalog, AnyRecord } from './types'
 
 const fr: MessageCatalog = {
   contract: 1,
@@ -21,7 +21,7 @@ const fr: MessageCatalog = {
     ARIA2007: { message: 'aria-relevant="all" doit être utilisé seul.' },
   },
 }
-const facts = (code: string, context: Record<string, unknown> = {}) => ({ code, context })
+const facts = (code: string, context: AnyRecord = {}) => ({ code, context })
 const redundant = facts('HTML3003', { tag: 'nav', implicitRole: 'navigation' })
 
 describe('fallback chain: requested catalog, then fallback, then the code', () => {

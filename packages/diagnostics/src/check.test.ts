@@ -3,6 +3,7 @@ import { checkCatalog } from './check'
 import contract from './contract-entry'
 import type { DiagnosticsContract } from './contract'
 import en from './en'
+import type { AnyRecord } from './types'
 
 // A fresh, mutable copy of the English catalog for each test to damage in one place. The entries are
 // deliberately loose: the tests build malformed catalogs on purpose.
@@ -185,7 +186,7 @@ describe('checkCatalog — placeholders', () => {
 })
 
 describe('checkCatalog — plurals', () => {
-  const plural = (forms: Record<string, unknown>, locale = 'en') => {
+  const plural = (forms: AnyRecord, locale = 'en') => {
     const c = copy()
     c.locale = locale
     c.messages['SLOT1003'].message = forms
@@ -256,7 +257,7 @@ describe('checkCatalog — plurals', () => {
 
 describe('checkCatalog — contract evolution', () => {
   // A small synthetic contract, so each lifecycle state can be shown without touching the real one.
-  const spec = (over: Record<string, unknown> = {}) => ({
+  const spec = (over: AnyRecord = {}) => ({
     codes: ['X1'],
     category: 'ARIA',
     description: 'd',
@@ -267,7 +268,7 @@ describe('checkCatalog — contract evolution', () => {
     context: { tag: { kind: 'identifier', required: true, essential: true, description: 't' } },
     ...over,
   })
-  const base = (ids: Record<string, unknown>) =>
+  const base = (ids: AnyRecord) =>
     ({
       contract: 1,
       minor: 3,
@@ -275,7 +276,7 @@ describe('checkCatalog — contract evolution', () => {
       ids,
       notCatalogDriven: {},
     }) as unknown as DiagnosticsContract
-  const pack = (messages: Record<string, unknown>) => ({ contract: 1, locale: 'fr', messages })
+  const pack = (messages: AnyRecord) => ({ contract: 1, locale: 'fr', messages })
 
   it('a compatible addition is incomplete, not an error, and carries its version', () => {
     const c = base({ A: spec(), B: spec({ since: '1.3' }) })

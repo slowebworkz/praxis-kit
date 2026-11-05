@@ -1,3 +1,4 @@
+import type { AnyRecord } from './types'
 import { describe, expect, it } from 'vitest'
 import { DiagnosticCode } from '@praxis-kit/diagnostics'
 import baselineJson from '../contract/contract.baseline.json'
@@ -23,7 +24,7 @@ const baseline = baselineJson as Baseline
 
 const ids = Object.entries(contract.ids)
 const factFor = (make: () => unknown) =>
-  make() as { code: string; messageId?: string; context?: Record<string, unknown> }
+  make() as { code: string; messageId?: string; context?: AnyRecord }
 
 describe('contract version', () => {
   it('matches the constant the resolver checks', () => {

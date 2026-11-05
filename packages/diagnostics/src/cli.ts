@@ -1,3 +1,4 @@
+import { isDefined, isString, isUndefined } from '@praxis-kit/foundation'
 import { readFileSync } from 'node:fs'
 import { checkCatalog } from './check'
 import type { Issue, Report } from './check'
@@ -68,7 +69,7 @@ function parse(argv: readonly string[]): Parsed {
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i] as string
     if (!arg.startsWith('--')) {
-      if (parsed.command === undefined) parsed.command = arg
+      if (isUndefined(parsed.command)) parsed.command = arg
       else parsed.positional.push(arg)
       continue
     }
@@ -77,7 +78,7 @@ function parse(argv: readonly string[]): Parsed {
       parsed.flags.set(name, true)
     } else if (VALUE_FLAGS.has(name)) {
       const value = inline ?? argv[++i]
-      if (value === undefined) parsed.problem = `--${name} needs a value.`
+      if (isUndefined(value)) parsed.problem = `--${name} needs a value.`
       else parsed.flags.set(name, value)
     } else {
       parsed.problem = `Unknown option --${name}.`
@@ -98,7 +99,7 @@ export function formatReport(report: Report, file: string): string {
   const out: string[] = []
   const { contract } = report
   out.push(`${file}: checked against contract ${contract.runtime}`)
-  if (contract.catalog !== undefined) out.push(`catalog targets contract ${contract.catalog}`)
+  if (isDefined(contract.catalog)) out.push(`catalog targets contract ${contract.catalog}`)
   out.push('')
   out.push(`Errors: ${report.errors.length}`)
   out.push(...report.errors.map(line))
@@ -132,19 +133,19 @@ export function formatReport(report: Report, file: string): string {
 }
 
 function loadContract(path: string | true | undefined, io: Io): DiagnosticsContract {
-  if (typeof path !== 'string') return contractData
+  if (!isString(path)) return contractData
   return JSON.parse(io.readFile(path)) as DiagnosticsContract
 }
 
 function validateCommand(parsed: Parsed, io: Io): number {
   const file = parsed.positional[0]
-  if (file === undefined) {
+  if (isUndefined(file)) {
     io.stderr('validate needs a catalog file.\n\n' + USAGE)
     return EXIT.usage
   }
   const rawMin = parsed.flags.get('min-coverage')
-  const minCoverage = typeof rawMin === 'string' ? Number(rawMin) : undefined
-  if (minCoverage !== undefined && !(minCoverage >= 0 && minCoverage <= 100)) {
+  const minCoverage = isString(rawMin) ? Number(rawMin) : undefined
+  if (isDefined(minCoverage) && !(minCoverage >= 0 && minCoverage <= 100)) {
     io.stderr('--min-coverage must be a number from 0 to 100.\n')
     return EXIT.usage
   }
@@ -166,7 +167,7 @@ function validateCommand(parsed: Parsed, io: Io): number {
 
   let extensions: ExtensionContract | undefined
   const extensionPath = parsed.flags.get('extension')
-  if (typeof extensionPath === 'string') {
+  if (isString(extensionPath)) {
     try {
       extensions = JSON.parse(io.readFile(extensionPath)) as ExtensionContract
     } catch (error_) {
@@ -177,7 +178,7 @@ function validateCommand(parsed: Parsed, io: Io): number {
 
   let report: Report
   try {
-    report = checkCatalog(catalog, contract, extensions === undefined ? {} : { extensions })
+    report = checkCatalog(catalog, contract, isUndefined(extensions) ? {} : { extensions })
   } catch (error_) {
     io.stderr(`${(error_ as Error).message}\n`)
     return EXIT.usage
@@ -188,8 +189,7 @@ function validateCommand(parsed: Parsed, io: Io): number {
 
   if (report.errors.length > 0) return EXIT.invalid
   if (parsed.flags.has('fail-on-obsolete') && report.obsolete.length > 0) return EXIT.invalid
-  if (minCoverage !== undefined && report.coverage.ratio * 100 < minCoverage)
-    return EXIT.lowCoverage
+  if (isDefined(minCoverage) && report.coverage.ratio * 100 < minCoverage) return EXIT.lowCoverage
   return EXIT.ok
 }
 
@@ -202,7 +202,7 @@ export function buildSourceSheet(contract: DiagnosticsContract) {
     contract: { major: contract.contract, minor: contract.minor },
     kinds: contract.kinds,
     ids: Object.entries(contract.ids)
-      .filter(([, spec]) => spec.removedIn === undefined)
+      .filter(([, spec]) => isUndefined(spec.removedIn))
       .map(([id, spec]) => ({
         id,
         codes: spec.codes,
@@ -278,11 +278,11 @@ function exportSourceCommand(parsed: Parsed, io: Io): number {
 
 export function run(argv: readonly string[], io: Io = defaultIo): number {
   const parsed = parse(argv)
-  if (parsed.flags.has('help') || (parsed.command === undefined && parsed.problem === undefined)) {
+  if (parsed.flags.has('help') || (isUndefined(parsed.command) && isUndefined(parsed.problem))) {
     io.stdout(USAGE)
-    return parsed.command === undefined && !parsed.flags.has('help') ? EXIT.usage : EXIT.ok
+    return isUndefined(parsed.command) && !parsed.flags.has('help') ? EXIT.usage : EXIT.ok
   }
-  if (parsed.problem !== undefined) {
+  if (isDefined(parsed.problem)) {
     io.stderr(`${parsed.problem}\n\n${USAGE}`)
     return EXIT.usage
   }

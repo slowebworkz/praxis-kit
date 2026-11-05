@@ -1,3 +1,11 @@
+import {
+  isArray,
+  isDefined,
+  isNonNullObject as isRecord,
+  isNumber,
+  isString,
+  isUndefined,
+} from '@praxis-kit/foundation'
 import { assertValidLocale } from './resolver'
 import type {
   ContextKeySpec,
@@ -65,10 +73,10 @@ export interface CheckOptions {
   extensions?: ExtensionContract
 }
 
-// ─── Helpers (this package takes no dependencies, so it carries its own tiny checks) ─────────────
+// ─── Helpers ─────────────
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
+// No boolean guard exists in foundation; this is the one place a context spec needs it.
+const isBooleanValue = (value: unknown): value is boolean => typeof value === 'boolean'
 
 const KNOWN_FILTERS = new Set(['quote', 'list', 'list-or', 'list-unit'])
 const LIST_FILTERS = new Set(['list', 'list-or', 'list-unit'])
@@ -100,17 +108,17 @@ function tokensIn(text: string): Token[] {
 
 /** A template's text by plural form; a plain string is the single form `undefined`. */
 function formsOf(template: unknown): Map<string | undefined, string> | undefined {
-  if (typeof template === 'string') return new Map([[undefined, template]])
-  if (!isRecord(template) || typeof template['plural'] !== 'string') return undefined
+  if (isString(template)) return new Map([[undefined, template]])
+  if (!isRecord(template) || !isString(template['plural'])) return undefined
   const forms = new Map<string | undefined, string>()
   for (const [form, text] of Object.entries(template)) {
-    if (form !== 'plural' && typeof text === 'string') forms.set(form, text)
+    if (form !== 'plural' && isString(text)) forms.set(form, text)
   }
   return forms
 }
 
 function fieldOf(id: string, field: string, form: string | undefined) {
-  return { id, field, ...(form !== undefined && { form }) }
+  return { id, field, ...(isDefined(form) && { form }) }
 }
 
 /** Turns an extension file into id contracts, or throws a RangeError saying what is wrong with it. */
@@ -134,23 +142,23 @@ export function normalizeExtensions(
     for (const [key, spec] of Object.entries(isRecord(raw['context']) ? raw['context'] : {})) {
       if (
         !isRecord(spec) ||
-        typeof spec['kind'] !== 'string' ||
+        !isString(spec['kind']) ||
         !Object.hasOwn(contract.kinds, spec['kind']) ||
-        typeof spec['required'] !== 'boolean'
+        !isBooleanValue(spec['required'])
       ) {
         fail(`"${id}" context key "${key}" needs a known "kind" and a boolean "required".`)
       }
       context[key] = { essential: false, description: '', ...(spec as object) } as ContextKeySpec
     }
-    const plural = typeof raw['plural'] === 'string' ? raw['plural'] : undefined
+    const plural = isString(raw['plural']) ? raw['plural'] : undefined
     out[id] = {
       codes: [],
       category: 'custom',
       description: '',
       context,
-      ...(plural !== undefined && { plural }),
+      ...(isDefined(plural) && { plural }),
       rationale: raw['rationale'] === true,
-      suggestions: typeof raw['suggestions'] === 'number' ? raw['suggestions'] : 0,
+      suggestions: isNumber(raw['suggestions']) ? raw['suggestions'] : 0,
       since: '0.0',
       examples: [],
     }
@@ -170,8 +178,9 @@ export function checkCatalog(
   contract: DiagnosticsContract,
   options: CheckOptions = {},
 ): Report {
-  const extensions =
-    options.extensions === undefined ? {} : normalizeExtensions(options.extensions, contract)
+  const extensions = isUndefined(options.extensions)
+    ? {}
+    : normalizeExtensions(options.extensions, contract)
   const runtime = `${contract.contract}.${contract.minor}`
   const report: Report = {
     contract: { required: contract.contract, catalog: undefined, compatible: false, runtime },
@@ -196,7 +205,7 @@ export function checkCatalog(
 
   // Contract version. A catalog for another major cannot be trusted at all, so stop here.
   const declared = catalog['contract']
-  if (typeof declared !== 'number' || !Number.isInteger(declared) || declared < 1) {
+  if (!isNumber(declared) || !Number.isInteger(declared) || declared < 1) {
     error({
       kind: 'invalid-contract',
       message: `"contract" must be a positive integer (the contract major, currently ${contract.contract}).`,
@@ -224,7 +233,7 @@ export function checkCatalog(
     }
   }
   for (const key of ['$schema', '$comment'] as const) {
-    if (key in catalog && typeof catalog[key] !== 'string') {
+    if (key in catalog && !isString(catalog[key])) {
       error({ kind: 'invalid-structure', field: key, message: `"${key}" must be a string.` })
     }
   }
@@ -253,7 +262,7 @@ export function checkCatalog(
     return report
   }
 
-  const live = Object.entries(contract.ids).filter(([, spec]) => spec.removedIn === undefined)
+  const live = Object.entries(contract.ids).filter(([, spec]) => isUndefined(spec.removedIn))
   report.coverage.total = live.length
   const pluralCategories = locale
     ? new Set(new Intl.PluralRules(locale).resolvedOptions().pluralCategories)
@@ -266,7 +275,7 @@ export function checkCatalog(
       : Object.hasOwn(extensions, id)
         ? extensions[id]
         : undefined
-    if (spec === undefined) {
+    if (isUndefined(spec)) {
       const custom = EXTENSION_ID.test(id)
       error({
         kind: 'unknown-id',
@@ -277,19 +286,19 @@ export function checkCatalog(
       })
       continue
     }
-    if (spec.removedIn !== undefined) {
+    if (isDefined(spec.removedIn)) {
       report.obsolete.push({
         id,
         removedIn: spec.removedIn,
-        ...(spec.replacedBy !== undefined && { replacedBy: spec.replacedBy }),
+        ...(isDefined(spec.replacedBy) && { replacedBy: spec.replacedBy }),
       })
       continue
     }
-    if (spec.deprecated !== undefined) {
+    if (isDefined(spec.deprecated)) {
       report.deprecated.push({
         id,
         since: spec.deprecated.since,
-        ...(spec.deprecated.replacedBy !== undefined && { replacedBy: spec.deprecated.replacedBy }),
+        ...(isDefined(spec.deprecated.replacedBy) && { replacedBy: spec.deprecated.replacedBy }),
       })
     }
     checkEntry(id, entry, spec, pluralCategories, report)
@@ -304,8 +313,8 @@ export function checkCatalog(
     }
     report.coverage.translated++
     const missing: string[] = []
-    if (spec.rationale && entry['rationale'] === undefined) missing.push('rationale')
-    const have = Array.isArray(entry['suggestions']) ? entry['suggestions'].length : 0
+    if (spec.rationale && isUndefined(entry['rationale'])) missing.push('rationale')
+    const have = isArray(entry['suggestions']) ? entry['suggestions'].length : 0
     if (have < spec.suggestions) missing.push('suggestions')
     if (missing.length > 0) report.incomplete.push({ id, since: spec.since, missing })
   }
@@ -344,7 +353,7 @@ function checkEntry(
 
   const checkTemplate = (field: string, template: unknown, isMessage: boolean): void => {
     const forms = formsOf(template)
-    if (forms === undefined) {
+    if (isUndefined(forms)) {
       error({
         kind: 'invalid-structure',
         ...fieldOf(id, field, undefined),
@@ -353,23 +362,23 @@ function checkEntry(
       return
     }
 
-    if (typeof template !== 'string' && isRecord(template)) {
+    if (!isString(template) && isRecord(template)) {
       const selector = template['plural'] as string
       const key = spec.context?.[selector]
-      if (spec.plural !== undefined && selector !== spec.plural) {
+      if (isDefined(spec.plural) && selector !== spec.plural) {
         error({
           kind: 'plural-selector-mismatch',
           ...fieldOf(id, field, undefined),
           message: `Plural selector "${selector}" must be "${spec.plural}" for this id.`,
         })
-      } else if (key === undefined || key.kind !== 'number') {
+      } else if (isUndefined(key) || key.kind !== 'number') {
         error({
           kind: 'plural-selector-mismatch',
           ...fieldOf(id, field, undefined),
           message: `Plural selector "${selector}" must be a number key in this id's context.`,
         })
       }
-      if (typeof template['other'] !== 'string') {
+      if (!isString(template['other'])) {
         error({
           kind: 'missing-other-form',
           ...fieldOf(id, field, undefined),
@@ -384,7 +393,7 @@ function checkEntry(
             ...fieldOf(id, field, form),
             message: `"${form}" is not a plural category (zero, one, two, few, many, other).`,
           })
-        } else if (pluralCategories !== undefined && !pluralCategories.has(form)) {
+        } else if (isDefined(pluralCategories) && !pluralCategories.has(form)) {
           error({
             kind: 'invalid-plural-form',
             ...fieldOf(id, field, form),
@@ -409,7 +418,7 @@ function checkEntry(
         seen.add(name)
         usedAnywhere.add(name)
         const key = spec.context?.[name]
-        if (key === undefined) {
+        if (isUndefined(key)) {
           error({
             kind: 'unknown-context-key',
             ...where,
@@ -466,8 +475,8 @@ function checkEntry(
   if ('rationale' in entry) checkTemplate('rationale', entry['rationale'], false)
 
   const suggestions = entry['suggestions']
-  if (suggestions !== undefined) {
-    if (!Array.isArray(suggestions)) {
+  if (isDefined(suggestions)) {
+    if (!isArray(suggestions)) {
       error({
         kind: 'invalid-structure',
         id,

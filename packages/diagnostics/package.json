@@ -41,6 +41,7 @@
   "devDependencies": {
     "@praxis-kit/contract": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
+    "@praxis-kit/foundation": "workspace:*",
     "ajv": "^6.12.6",
     "publint": "catalog:",
     "tsdown": "catalog:",

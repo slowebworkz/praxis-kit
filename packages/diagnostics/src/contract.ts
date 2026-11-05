@@ -1,3 +1,4 @@
+import type { AnyRecord } from './types'
 // The shape of the versioned contract between Praxis Kit diagnostics and any message catalog.
 //
 // The data lives in `contract/diagnostics.contract.json`, published as
@@ -47,7 +48,7 @@ export interface SpecLink {
 export interface ContractExample {
   code: string
   messageId?: string
-  context?: Readonly<Record<string, unknown>>
+  context?: Readonly<AnyRecord>
 }
 
 export interface IdContract {

@@ -1,3 +1,9 @@
+/**
+ * A string-keyed object with values of unknown type. The same alias as `AnyRecord` in
+ * `@praxis-kit/foundation`, declared here because this package is published with no dependencies.
+ */
+export type AnyRecord = Record<string, unknown>
+
 /** A template string, or plural forms chosen by a numeric value in the diagnostic's context. */
 export type MessageTemplate =
   | string
@@ -49,5 +55,5 @@ export interface RenderedMessage {
 export interface DiagnosticFacts {
   code: string
   messageId?: string | undefined
-  context?: Readonly<Record<string, unknown>> | undefined
+  context?: Readonly<AnyRecord> | undefined
 }
