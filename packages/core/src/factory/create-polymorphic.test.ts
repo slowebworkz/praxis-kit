@@ -254,8 +254,12 @@ describe('createPolymorphic — resolveAria()', () => {
 
   describe('ruleOverrides combinations', () => {
     type Overrides = NonNullable<EnforcementOptions['ruleOverrides']>
-    const INPUT_TYPE_MESSAGE =
-      'type="nope" is not a value defined by the HTML specification. Browsers silently fall back to type="text".'
+    // Diagnostics are facts: a code plus the context a message would interpolate. Overrides change
+    // severity (or supply explicit text) and must leave both untouched.
+    const INPUT_TYPE_FACT = {
+      code: DiagnosticCode.HtmlInputUnsupportedType,
+      context: { type: 'nope' },
+    }
 
     function report(
       tag: 'input' | 'ul',
@@ -276,22 +280,23 @@ describe('createPolymorphic — resolveAria()', () => {
     const roleNotPermitted = (ruleOverrides?: Overrides) =>
       report('ul', { role: 'checkbox' }, DiagnosticCode.HtmlRoleNotPermitted, ruleOverrides)
 
-    it('promotes a warning to an error, keeping the original message', () => {
+    it('promotes a warning to an error, keeping the original code and context', () => {
       expect(inputType()).toMatchObject({ severity: Severity.Warning })
       expect(inputType({ 'html.input.supported-type': { severity: 'error' } })).toMatchObject({
         severity: Severity.Error,
-        message: INPUT_TYPE_MESSAGE,
+        ...INPUT_TYPE_FACT,
       })
     })
 
-    it('demotes an error to a warning, keeping the original message', () => {
+    it('demotes an error to a warning, keeping the original code and context', () => {
       const original = roleNotPermitted()
       expect(original).toMatchObject({ severity: Severity.Error })
       expect(
         roleNotPermitted({ 'html.role.not-permitted': { severity: 'warning' } }),
       ).toMatchObject({
         severity: Severity.Warning,
-        message: original?.message,
+        code: original?.code,
+        context: original?.context,
       })
     })
 
@@ -307,7 +312,7 @@ describe('createPolymorphic — resolveAria()', () => {
     it('leaves a rule untouched when an empty override object is given', () => {
       expect(inputType({ 'html.input.supported-type': {} })).toMatchObject({
         severity: Severity.Warning,
-        message: INPUT_TYPE_MESSAGE,
+        ...INPUT_TYPE_FACT,
       })
     })
 

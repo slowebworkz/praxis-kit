@@ -491,7 +491,7 @@ describe('createContractComponent (Solid adapter)', () => {
       // @ts-expect-error — intentionally invalid: children must be a render fn
       <Comp asChild>not a function</Comp>
     ))
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('asChild requires a render function'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1004'))
     // Falls through to the normal render: the default tag, with the malformed `children` value
     // passed through as ordinary content — not blank, not the render-fn call.
     expect(container.querySelector('div')?.textContent).toBe('not a function')
@@ -511,7 +511,7 @@ describe('createContractComponent (Solid adapter)', () => {
       </Comp>
     ))
     expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('"as" and "asChild" are mutually exclusive'),
+      expect.stringContaining('SLOT1001'),
     )
     // Falls through to the normal render at the `as`-resolved tag (section, not div) — asChild's
     // own render path never runs. (The render-fn `children` value still gets invoked with no

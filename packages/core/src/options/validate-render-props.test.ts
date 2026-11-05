@@ -1,16 +1,17 @@
 import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
+import {
+  AsyncConsoleReporter,
+  CollectingReporter,
+  DefaultPolicy,
+  DiagnosticCode,
+  Diagnostics,
+  Severity,
+  silentDiagnostics,
+  throwDiagnostics,
+} from '@praxis-kit/diagnostics'
 import type { MockInstance } from 'vitest'
 import { validateRenderProps } from './validate-render-props'
 import type { AnyRecord } from '../types'
-import {
-  CollectingReporter,
-  Diagnostics,
-  DefaultPolicy,
-  Severity,
-  throwDiagnostics,
-  silentDiagnostics,
-  AsyncConsoleReporter,
-} from '@praxis-kit/diagnostics'
 
 const variants = {
   size: { sm: 'text-sm', md: 'text-base', lg: 'text-lg' },
@@ -63,13 +64,16 @@ describe('validateRenderProps — unknown recipeKey', () => {
     const { reporter, diagnostics } = makeCollecting()
     validateRenderProps(diagnostics, { variants, recipeMap }, {}, 'unknown')
     expect(reporter.diagnostics).toHaveLength(1)
-    expect(reporter.diagnostics[0]!.message).toMatch(/unknown recipeKey "unknown"/i)
+    expect(reporter.diagnostics[0]).toMatchObject({
+      code: DiagnosticCode.ContractUnknownRecipeKey,
+      context: { key: 'unknown' },
+    })
   })
 
   it('throws when recipeKey names no defined preset (strict: throw)', () => {
     expect(() =>
       validateRenderProps(throwDiagnostics, { variants, recipeMap }, {}, 'unknown'),
-    ).toThrow(/unknown recipeKey "unknown"/i)
+    ).toThrow(DiagnosticCode.ContractUnknownRecipeKey)
   })
 
   it('is silent when recipeKey is undefined', () => {
@@ -87,7 +91,7 @@ describe('validateRenderProps — unknown recipeKey', () => {
   it('includes component name in the message when displayName is set', () => {
     const { reporter, diagnostics } = makeCollecting()
     validateRenderProps(diagnostics, { variants, recipeMap, displayName: 'Button' }, {}, 'unknown')
-    expect(reporter.diagnostics[0]!.message).toMatch(/\[Button\]/)
+    expect(String(reporter.diagnostics[0]!.context?.['component'])).toMatch(/Button/)
   })
 
   it('does not treat inherited properties as valid presets', () => {
@@ -103,13 +107,16 @@ describe('validateRenderProps — invalid variant value', () => {
     const { reporter, diagnostics } = makeCollecting()
     validateRenderProps(diagnostics, { variants }, { size: 'enormous' }, undefined)
     expect(reporter.diagnostics).toHaveLength(1)
-    expect(reporter.diagnostics[0]!.message).toMatch(/size=enormous/i)
+    expect(reporter.diagnostics[0]).toMatchObject({
+      code: DiagnosticCode.ContractInvalidVariantValue,
+      context: { key: 'size', value: 'enormous' },
+    })
   })
 
   it('throws when a known variant dimension receives an invalid value (strict: throw)', () => {
     expect(() =>
       validateRenderProps(throwDiagnostics, { variants }, { size: 'enormous' }, undefined),
-    ).toThrow(/size=enormous/i)
+    ).toThrow(DiagnosticCode.ContractInvalidVariantValue)
   })
 
   it('is silent when all variant props have valid values', () => {
@@ -163,7 +170,7 @@ describe('validateRenderProps — multiple violations', () => {
         { size: 'enormous' },
         'unknown',
       ),
-    ).toThrow(/unknown recipeKey "unknown"/i)
+    ).toThrow(DiagnosticCode.ContractUnknownRecipeKey)
   })
 })
 
@@ -172,7 +179,10 @@ describe('validateRenderProps — runtime type bypass', () => {
     const { reporter, diagnostics } = makeCollecting()
     validateRenderProps(diagnostics, { variants }, { size: 123 as never }, undefined)
     expect(reporter.diagnostics).toHaveLength(1)
-    expect(reporter.diagnostics[0]!.message).toMatch(/size=123/i)
+    expect(reporter.diagnostics[0]).toMatchObject({
+      code: DiagnosticCode.ContractInvalidVariantValue,
+      context: { key: 'size', value: '123' },
+    })
   })
 })
 
@@ -191,7 +201,7 @@ describe('validateRenderProps — AsyncConsoleReporter batching', () => {
     validateRenderProps(d, { variants, recipeMap }, {}, 'unknown')
     await Promise.resolve()
     expect(warn).toHaveBeenCalledOnce()
-    expect(warn.mock.calls[0]![0]).toMatch(/unknown recipeKey "unknown"/i)
+    expect(warn.mock.calls[0]![0]).toContain(DiagnosticCode.ContractUnknownRecipeKey)
   })
 
   it('deduplicates identical messages within the same tick', async () => {
@@ -220,8 +230,8 @@ describe('validateRenderProps — AsyncConsoleReporter batching', () => {
     await Promise.resolve()
     expect(warn).toHaveBeenCalledTimes(2)
     const messages = warn.mock.calls.map((c) => c[0] as string)
-    expect(messages.some((m) => /unknown recipeKey "unknown"/i.test(m))).toBe(true)
-    expect(messages.some((m) => /size=enormous/i.test(m))).toBe(true)
+    expect(messages.some((m) => m.includes(DiagnosticCode.ContractUnknownRecipeKey))).toBe(true)
+    expect(messages.some((m) => m.includes(DiagnosticCode.ContractInvalidVariantValue))).toBe(true)
   })
 
   it('batches three distinct messages without collapsing them', async () => {

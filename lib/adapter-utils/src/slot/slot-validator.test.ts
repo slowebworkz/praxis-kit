@@ -18,7 +18,7 @@ function makeWarnCollecting() {
 }
 
 describe('SlotValidator.warnAllowedAsMismatch', () => {
-  it('reports a warn-severity SlotAllowedAsMismatch diagnostic naming the component, child tag, and allowed list', () => {
+  it('reports a warn-severity SlotAllowedAsMismatch diagnostic carrying the component, child tag, and allowed list', () => {
     const { reporter, diagnostics } = makeWarnCollecting()
     const validator = new SlotValidator('HoverCard.Trigger', diagnostics, 'React element')
 
@@ -29,8 +29,7 @@ describe('SlotValidator.warnAllowedAsMismatch', () => {
     expect(diagnostic.code).toBe(DiagnosticCode.SlotAllowedAsMismatch)
     expect(diagnostic.severity).toBe(Severity.Warning)
     expect(diagnostic.component).toBe('HoverCard.Trigger')
-    expect(diagnostic.message).toContain('"a"')
-    expect(diagnostic.message).toContain('"button"')
+    expect(diagnostic.context).toMatchObject({ childTag: 'a', allowedAs: ['button'] })
   })
 
   it('lists every allowed tag when more than one is configured', () => {
@@ -39,7 +38,7 @@ describe('SlotValidator.warnAllowedAsMismatch', () => {
 
     validator.warnAllowedAsMismatch('div', ['button', 'a'])
 
-    expect(reporter.diagnostics[0]!.message).toContain('"button", "a"')
+    expect(reporter.diagnostics[0]!.context).toMatchObject({ allowedAs: ['button', 'a'] })
   })
 
   it('never throws — this diagnostic is always warn-severity, unlike assertExclusive/assertSingleChild', () => {

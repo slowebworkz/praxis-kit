@@ -106,9 +106,8 @@ export function composeConformance<C extends ConformanceComponent>(
 
             adapter.render(Card, { as: 'main' })
             expect(warnSpy).toHaveBeenCalled()
-            expect(warnSpy.mock.calls.flat().join(' ')).toMatch(
-              /COMP1009.*"as" prop received "main"/,
-            )
+            // Praxis Kit alone prints the code; the offending `as` value is in the diagnostic's context.
+            expect(warnSpy.mock.calls.flat().join(' ')).toContain('COMP1009')
           })
         })
       }

@@ -80,7 +80,7 @@ describe('createContractComponent — tag rendering', () => {
         props: { as: Inner, asChild: true } as never,
         slots: { default: () => [h('a', { href: '/' })] },
       }),
-    ).toThrow('"as" and "asChild" are mutually exclusive')
+    ).toThrow('SLOT1001')
   })
 })
 
@@ -200,7 +200,7 @@ describe('createContractComponent — asChild', () => {
         props: { asChild: true },
         slots: { default: () => [] },
       }),
-    ).toThrow('asChild requires a VNode child')
+    ).toThrow('SLOT1002')
   })
 
   it('throws when as and asChild are both provided', () => {
@@ -210,7 +210,7 @@ describe('createContractComponent — asChild', () => {
         props: { as: 'button', asChild: true },
         slots: { default: () => [h('a', { href: '/' })] },
       }),
-    ).toThrow('"as" and "asChild" are mutually exclusive')
+    ).toThrow('SLOT1001')
   })
 
   // `allowedAs` includes the component's own default tag ('div') so Vue's separate,
@@ -233,8 +233,8 @@ describe('createContractComponent — asChild', () => {
       props: { asChild: true },
       slots: { default: () => [h('a')] },
     })
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"a"'))
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"button"'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1005'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1005'))
     warn.mockRestore()
   })
 
@@ -283,7 +283,7 @@ describe('createContractComponent — asChild', () => {
         default: () => [h(Slottable, null, { default: () => [h('a')] }), h('span', null, 'icon')],
       },
     })
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"a"'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1005'))
     warn.mockRestore()
   })
 
@@ -369,7 +369,7 @@ describe('createContractComponent — asChild VNode classification', () => {
     })
 
     expect(wrapper.element.tagName.toLowerCase()).toBe('a')
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('non-element child'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1003'))
     warn.mockRestore()
   })
 
@@ -394,7 +394,7 @@ describe('createContractComponent — asChild VNode classification', () => {
         props: { asChild: true },
         slots: { default: () => [createTextVNode('just text')] },
       }),
-    ).toThrow('asChild requires a VNode child')
+    ).toThrow('SLOT1002')
   })
 
   it('clones a component child', () => {

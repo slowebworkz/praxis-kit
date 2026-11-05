@@ -54,7 +54,7 @@ describe('Polymorphic (Svelte adapter)', () => {
     }))
     expect(() =>
       render(Polymorphic, { bundle, as: InnerButton as never, asChild: true, children }),
-    ).toThrow('"as" and "asChild" are mutually exclusive')
+    ).toThrow('SLOT1001')
   })
 
   it('applies base class', () => {
@@ -234,7 +234,7 @@ describe('Polymorphic (Svelte adapter)', () => {
         children,
       })
       expect(warn).toHaveBeenCalledWith(
-        expect.stringContaining('"as" and "asChild" are mutually exclusive'),
+        expect.stringContaining('SLOT1001'),
       )
       expect(container.querySelector('section')).toBeTruthy()
       expect(container.querySelector('div')).toBeNull()
@@ -260,7 +260,7 @@ describe('Polymorphic (Svelte adapter)', () => {
         tag: 'div',
         enforcement: { diagnostics: throwDiagnostics, allowedAs: ['section'] },
       })
-      expect(() => render(Polymorphic, { bundle, as: InnerButton as never })).toThrow(/allowed/i)
+      expect(() => render(Polymorphic, { bundle, as: InnerButton as never })).toThrow('COMP1009')
     })
   })
 

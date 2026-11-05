@@ -261,13 +261,13 @@ describe('Tier 4 — children enforcement', () => {
   })
 
   it('throws when no children are provided (below min)', () => {
-    expect(() => dom.mount(createElement(box(Guarded), null))).toThrow(/at least 1/)
+    expect(() => dom.mount(createElement(box(Guarded), null))).toThrow('COMP1006')
   })
 
   it('throws when child count exceeds the maximum', () => {
     expect(() =>
       dom.mount(createElement(box(Guarded), null, child('a'), child('b'), child('c'), child('d'))),
-    ).toThrow(/at most 3/)
+    ).toThrow('COMP1007')
   })
 
   it('throws when an unexpected child type is mixed in', () => {
@@ -275,7 +275,7 @@ describe('Tier 4 — children enforcement', () => {
       dom.mount(
         createElement(box(Guarded), null, child('a'), createElement('div', { key: 'bad' })),
       ),
-    ).toThrow(/unexpected child/)
+    ).toThrow('COMP1004')
   })
 
   it('still applies styling classes when children are valid', () => {
@@ -340,13 +340,13 @@ describe('Tier 5 — all capabilities combined', () => {
   })
 
   it('throws when children violate the cardinality rule', () => {
-    expect(() => dom.mount(createElement(box(Full), null))).toThrow(/at least 1/)
+    expect(() => dom.mount(createElement(box(Full), null))).toThrow('COMP1006')
   })
 
   it('throws when an unexpected child type is present', () => {
     expect(() =>
       dom.mount(createElement(box(Full), null, link('a'), createElement('div', { key: 'x' }))),
-    ).toThrow(/unexpected child/)
+    ).toThrow('COMP1004')
   })
 
   it('renders correctly when all constraints are satisfied', () => {

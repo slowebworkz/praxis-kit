@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { DiagnosticCode } from '@praxis-kit/diagnostics'
 
 import type { AnyRecord, AriaContext } from '../types'
 import {
@@ -280,13 +281,17 @@ describe('inputAccessibleNameRule', () => {
   it('flags a placeholder-only input with the placeholder-specific message', () => {
     const [result] = inputAccessibleNameRule(ctx({ placeholder: 'Email' }))
     expect(result).toMatchObject({ valid: false, severity: 'warning' })
-    expect(result && !result.valid && result.diagnostic?.message).toMatch(/placeholder/i)
+    expect(result && !result.valid && result.diagnostic?.code).toBe(
+      DiagnosticCode.A11yInputPlaceholderNotLabel,
+    )
   })
 
   it('flags an input with no name at all', () => {
     const [result] = inputAccessibleNameRule(ctx({}))
     expect(result).toMatchObject({ valid: false, severity: 'warning' })
-    expect(result && !result.valid && result.diagnostic?.message).toMatch(/no accessible name/i)
+    expect(result && !result.valid && result.diagnostic?.code).toBe(
+      DiagnosticCode.A11yInputMissingAccessibleName,
+    )
   })
 })
 

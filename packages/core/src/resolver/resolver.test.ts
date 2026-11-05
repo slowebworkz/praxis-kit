@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createResolverPipeline, enforceAllowedAs } from './resolver'
-import { throwDiagnostics, warnDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
+import {
+  CollectingReporter,
+  DiagnosticCode,
+  Diagnostics,
+  throwDiagnostics,
+  warnDiagnostics,
+  silentDiagnostics,
+} from '@praxis-kit/diagnostics'
 import type { ClassPipelineFn, ResolverOptions } from '../types'
 
 describe('enforceAllowedAs()', () => {
@@ -26,20 +33,21 @@ describe('enforceAllowedAs()', () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     enforceAllowedAs('div', ['article', 'section'], warnDiagnostics)
     expect(spy).toHaveBeenCalledOnce()
-    expect(spy.mock.calls[0]![0]).toContain('"div"')
-    expect(spy.mock.calls[0]![0]).toContain('"article"')
+    // Praxis Kit alone prints the diagnostic's code; the offending tag is in its context.
+    expect(spy.mock.calls[0]![0]).toContain(DiagnosticCode.AllowedAsViolation)
     spy.mockRestore()
   })
 
   it('throws when throwDiagnostics and tag not allowed', () => {
-    expect(() => enforceAllowedAs('div', ['article', 'section'], throwDiagnostics)).toThrow(/"div"/)
+    expect(() => enforceAllowedAs('div', ['article', 'section'], throwDiagnostics)).toThrow(
+      DiagnosticCode.AllowedAsViolation,
+    )
   })
 
   it('includes displayName in message when provided', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    enforceAllowedAs('div', ['article'], warnDiagnostics, 'Heading')
-    expect(spy.mock.calls[0]![0]).toContain('<Heading>')
-    spy.mockRestore()
+    const reporter = new CollectingReporter()
+    enforceAllowedAs('div', ['article'], new Diagnostics(reporter), 'Heading')
+    expect(reporter.diagnostics[0]?.context).toMatchObject({ component: 'Heading', tag: 'div' })
   })
 })
 
