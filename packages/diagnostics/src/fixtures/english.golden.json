@@ -1,0 +1,338 @@
+{
+  "aria.attributeInvalid": {
+    "message": "\"aria-foo\" is not valid on role=\"button\". It will be removed.",
+    "rationale": "Invalid ARIA attributes are ignored by assistive technology and may trigger accessibility-tree warnings in browser devtools.",
+    "suggestions": [
+      {
+        "title": "Remove the attribute",
+        "description": "\"aria-foo\" is not in the allowed attribute set for role=\"button\"."
+      }
+    ]
+  },
+  "aria.missingLiveRegion": {
+    "message": "role=\"status\" implies aria-live=\"polite\" but it is missing. It has been injected.",
+    "rationale": "Live-region roles announce dynamic content changes to screen readers. Without aria-live the politeness level is unspecified and announcements may be silent.",
+    "suggestions": [
+      {
+        "title": "Add aria-live=\"polite\"",
+        "description": "role=\"status\" conventionally implies aria-live=\"polite\".",
+        "fix": "aria-live=\"polite\""
+      }
+    ]
+  },
+  "aria.missingAtomic": {
+    "message": "role=\"log\" is a live region. Consider setting aria-atomic=\"true\" if the full region should be announced as a unit, or aria-atomic=\"false\" if only changed nodes should be read.",
+    "rationale": "aria-atomic controls whether assistive technology announces the entire live region or only the changed nodes. Omitting it leaves the behaviour browser-defined."
+  },
+  "aria.relevantInvalidTokens": {
+    "message": "aria-relevant contains invalid token(s): \"foo\", \"bar\". Valid tokens are: additions, removals, text, all.",
+    "rationale": "aria-relevant accepts a space-separated list of change types. Unrecognised tokens are silently ignored by assistive technology, making the attribute ineffective.",
+    "suggestions": [
+      {
+        "title": "Use only valid tokens",
+        "description": "Valid values are: additions, removals, text, all (or a space-separated combination)."
+      }
+    ]
+  },
+  "aria.relevantSuperseded": {
+    "message": "aria-relevant includes \"all\" alongside other tokens. \"all\" supersedes additions, removals, and text — use aria-relevant=\"all\" alone.",
+    "rationale": "\"all\" is equivalent to \"additions removals text\". Combining it with other tokens is redundant and may confuse readers of the markup.",
+    "suggestions": [
+      {
+        "title": "Use aria-relevant=\"all\"",
+        "fix": "aria-relevant=\"all\""
+      }
+    ]
+  },
+  "aria.missingAccessibleName": {
+    "message": "<nav> has no accessible name. Add aria-label or aria-labelledby.",
+    "rationale": "Elements with an interactive role, and landmarks that appear more than once on a page, need an accessible name so assistive technology can tell them apart. A single landmark of its kind does not require one.",
+    "suggestions": [
+      {
+        "title": "Add aria-label",
+        "description": "Add aria-label=\"…\" directly to the <nav> element."
+      },
+      {
+        "title": "Add aria-labelledby",
+        "description": "Point aria-labelledby at the id of an existing heading or label element."
+      }
+    ]
+  },
+  "aria.nameProhibited": {
+    "message": "\"aria-label\" is prohibited on role=\"generic\" — this role does not support a name from the author. It will be removed.",
+    "rationale": "WAI-ARIA 1.2 lists a set of roles (generic, presentation/none, and the inline text-level roles) as Name Prohibited: aria-label / aria-labelledby on them are a conformance error and are ignored by assistive technology.",
+    "suggestions": [
+      {
+        "title": "Remove the attribute",
+        "description": "role=\"generic\" cannot be named. If the element needs an accessible name, give it a role that supports one (or use visible text / a wrapping labelled element)."
+      }
+    ]
+  },
+  "aria.attributeOnPresentational": {
+    "message": "\"aria-label\" is not allowed on a presentational <img>. Presentational elements are invisible to assistive technology.",
+    "rationale": "role=\"none\" and role=\"presentation\" (including <img alt=\"\">) remove an element from the accessibility tree. ARIA attributes on such elements are ignored by assistive technology.",
+    "suggestions": [
+      {
+        "title": "Remove the attribute",
+        "description": "\"aria-label\" has no effect when the element has role=\"none\" or role=\"presentation\"."
+      }
+    ]
+  },
+  "aria.ariaHiddenOnFocusable": {
+    "message": "aria-hidden=\"true\" must not be used on focusable <button> elements. Screen reader users who navigate by keyboard will encounter the element but receive no information about it.",
+    "rationale": "aria-hidden removes an element from the accessibility tree while leaving it keyboard-reachable. This creates a \"ghost\" — a focusable element assistive technology cannot describe.",
+    "suggestions": [
+      {
+        "title": "Remove aria-hidden",
+        "description": "If the element should be hidden from all users, use the HTML hidden attribute or CSS display:none instead."
+      },
+      {
+        "title": "Make the element non-focusable",
+        "description": "If the element is intentionally decorative, add tabindex=\"-1\" and disable it so it is not reachable by keyboard."
+      }
+    ]
+  },
+  "aria.invalidAttributeValue.string": {
+    "message": "\"aria-checked\" has an invalid value (\"yes\"). Expected: true, false, or mixed.",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-checked",
+        "description": "Valid values are: true, false, or mixed."
+      }
+    ]
+  },
+  "aria.invalidAttributeValue.null": {
+    "message": "\"aria-checked\" has an invalid value (null). Expected: true, false, or mixed.",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-checked",
+        "description": "Valid values are: true, false, or mixed."
+      }
+    ]
+  },
+  "aria.invalidAttributeValue.undefined": {
+    "message": "\"aria-checked\" has an invalid value (undefined). Expected: true, false, or mixed.",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-checked",
+        "description": "Valid values are: true, false, or mixed."
+      }
+    ]
+  },
+  "aria.invalidAttributeValue.number": {
+    "message": "\"aria-level\" has an invalid value (0). Expected: an integer ≥ 1.",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-level",
+        "description": "Valid values are: an integer ≥ 1."
+      }
+    ]
+  },
+  "aria.redundantAriaLevel": {
+    "message": "aria-level=\"2\" is redundant on <h2>: the element already has an implicit heading level of 2. Remove the attribute.",
+    "rationale": "Restating the implicit aria-level adds noise without semantic value. Use aria-level only to override the native heading level (e.g. aria-level=\"3\" on <h2>).",
+    "suggestions": [
+      {
+        "title": "Remove aria-level",
+        "description": "<h2> already implies aria-level=\"2\"."
+      }
+    ]
+  },
+  "aria.requiredProperty": {
+    "message": "\"aria-expanded\" is required for role=\"combobox\" but is missing.",
+    "rationale": "WAI-ARIA 1.2 specifies required states and properties for certain roles. Without \"aria-expanded\", assistive technology cannot correctly communicate the element's state to users.",
+    "suggestions": [
+      {
+        "title": "Add aria-expanded",
+        "description": "role=\"combobox\" requires \"aria-expanded\" to be present."
+      }
+    ]
+  },
+  "aria.invalidRole": {
+    "message": "Invalid role \"bogus\" on <div>.",
+    "rationale": "An unrecognised or misapplied ARIA role is ignored by assistive technology and may degrade the accessibility of the element."
+  },
+  "aria.invalidRole.undefined": {
+    "message": "Invalid role \"\" on <div>.",
+    "rationale": "An unrecognised or misapplied ARIA role is ignored by assistive technology and may degrade the accessibility of the element."
+  },
+  "contract.unexpectedChild": {
+    "message": "<ul>: unexpected child \"object\" at index 0."
+  },
+  "contract.ambiguousChild": {
+    "message": "Menu: child \"Item\" at index 1 matches multiple child rules: \"a\" and \"b\"."
+  },
+  "contract.cardinalityMin": {
+    "message": "Menu: \"item\" requires at least 1."
+  },
+  "contract.cardinalityMax": {
+    "message": "Menu: \"item\" allows at most 2."
+  },
+  "contract.positionViolation": {
+    "message": "Card: \"header\" must be first, got index 2"
+  },
+  "contract.unknownVariantDim": {
+    "message": "Box: compound[0] references unknown variant \"size\"."
+  },
+  "contract.unknownVariantValue": {
+    "message": "Box: compound[0] sets \"size\" to unknown value \"xl\" (valid: sm, md)."
+  },
+  "contract.unknownRecipeKey": {
+    "message": "Box: unknown recipeKey \"primary\" — no preset with that name exists."
+  },
+  "contract.invalidVariantValue": {
+    "message": "Box: variant \"size=xl\" is not a defined value for the \"size\" dimension."
+  },
+  "contract.allowedAsViolation": {
+    "message": "<Box>: \"as\" prop received \"span\" but only [\"div\", \"p\"] are allowed."
+  },
+  "slot.exclusive": {
+    "message": "Box: \"as\" and \"asChild\" are mutually exclusive"
+  },
+  "slot.singleChildRequired": {
+    "message": "Box: asChild requires a element child"
+  },
+  "slot.singleChildExceeded": {
+    "message": "Box: asChild requires exactly one element child, got 2"
+  },
+  "slot.discardedChildren.one": {
+    "message": "Box: asChild discarded 1 non-element child — only elements are valid asChild children."
+  },
+  "slot.discardedChildren.many": {
+    "message": "Box: asChild discarded 3 non-element children — only elements are valid asChild children."
+  },
+  "slot.renderFnRequired": {
+    "message": "Box: asChild requires a render function as children, got string"
+  },
+  "slot.allowedAsMismatch": {
+    "message": "Box: asChild composed onto \"span\", which is not one of [\"div\", \"p\"] — Box's behavior depends on the resolved tag, so native functionality may not work."
+  },
+  "a11y.input.missingAccessibleName": {
+    "message": "This input has no accessible name. Add an associated <label>, aria-label, or aria-labelledby.",
+    "rationale": "Assistive technology announces a form field by its accessible name; without one, users of screen readers cannot tell what the field is for.",
+    "suggestions": [
+      {
+        "title": "Add aria-label",
+        "description": "Set aria-label=\"…\" directly on the input."
+      },
+      {
+        "title": "Add an associated <label>",
+        "description": "Wrap the input in a <label>, or point a <label for=\"…\"> at its id."
+      }
+    ]
+  },
+  "a11y.input.placeholderIsNotLabel": {
+    "message": "Placeholder text does not provide an accessible name. Add an associated <label>, aria-label, or aria-labelledby.",
+    "rationale": "Placeholder text disappears as users interact with the field and is not treated as the control's accessible name by many assistive technologies.",
+    "suggestions": [
+      {
+        "title": "Add aria-label",
+        "description": "Set aria-label=\"…\" directly on the input."
+      },
+      {
+        "title": "Add an associated <label>",
+        "description": "Wrap the input in a <label>, or point a <label for=\"…\"> at its id."
+      }
+    ]
+  },
+  "a11y.input.passwordMissingAutocomplete": {
+    "message": "Password inputs should specify an autoComplete value.",
+    "rationale": "Without an explicit autocomplete hint, password managers and browsers cannot reliably tell a sign-in field apart from a password-creation field.",
+    "suggestions": [
+      {
+        "title": "Set autoComplete=\"current-password\"",
+        "description": "Use this for sign-in forms."
+      },
+      {
+        "title": "Set autoComplete=\"new-password\"",
+        "description": "Use this for sign-up / change-password forms."
+      }
+    ]
+  },
+  "a11y.input.requiredReadOnlyConflict": {
+    "message": "\"required\" has no effect while this field is readOnly — the two attributes together usually signal an unintended state.",
+    "rationale": "The combination is valid HTML, but a readOnly control cannot be edited, so its \"required\" constraint can never be satisfied or violated through user interaction. Consider using disabled instead of readOnly, or only applying required when the field is editable."
+  },
+  "a11y.anchor.roleButtonWithHref": {
+    "message": "role=\"button\" on an <a> with an href overrides its navigation semantics for assistive technology; use a real <button> element, or remove href, if this element should not navigate.",
+    "rationale": "Assistive technology announces role=\"button\" as a button, not a link — but the element still follows the link when activated by mouse or keyboard, which is confusing and inconsistent with how a button is expected to behave.",
+    "suggestions": [
+      {
+        "title": "Use a real <button>",
+        "description": "If this element should not navigate, render a <button> instead of an <a>."
+      },
+      {
+        "title": "Remove role=\"button\"",
+        "description": "If this element should navigate, keep the default link role."
+      }
+    ]
+  },
+  "a11y.anchor.ariaDisabledInert": {
+    "message": "aria-disabled does not prevent an <a> from being focused, clicked, or navigated via keyboard; remove href, or prevent navigation yourself, if this link should be inert.",
+    "rationale": "Unlike a native form control, an <a> has no disabled state the browser enforces — aria-disabled only changes what assistive technology announces, not what actually happens when the link is activated by mouse or keyboard.",
+    "suggestions": [
+      {
+        "title": "Remove href",
+        "description": "If this element is temporarily unavailable, remove href until it can be activated."
+      },
+      {
+        "title": "Prevent navigation when disabled",
+        "description": "Prevent the click and keyboard activation when the link is disabled so it behaves consistently for all users."
+      }
+    ]
+  },
+  "html.emptyRole": {
+    "message": "<div> has an explicit empty role=\"\". Omit the attribute instead."
+  },
+  "html.implicitRoleRedundant": {
+    "message": "<nav> already has implicit role=\"navigation\". Avoid redundant role assignment."
+  },
+  "html.implicitRoleOverride": {
+    "message": "<nav> should not override its implicit role=\"navigation\" with role=\"region\"."
+  },
+  "html.standaloneRegionOverride": {
+    "message": "<main> is a self-contained element with implicit role=\"main\". Assigning role=\"region\" has been removed."
+  },
+  "html.landmarkRoleOverride": {
+    "message": "<nav> has a fixed landmark role=\"navigation\". role=\"banner\" overrides it and confuses assistive technology. The override has been removed."
+  },
+  "html.invalidChild": {
+    "message": "<div> is not a valid direct child of <ul>. Allowed: <li>, <script>, or <template>."
+  },
+  "html.roleNotPermitted.some": {
+    "message": "role=\"button\" is not permitted on <ul>. Allowed alternate role(s): \"menu\", \"listbox\".",
+    "rationale": "The WAI-ARIA \"ARIA in HTML\" specification restricts which explicit roles a native element may take. A role outside that set is ignored or produces undefined behavior in assistive technology."
+  },
+  "html.roleNotPermitted.none": {
+    "message": "role=\"button\" is not permitted on <br>. Allowed alternate role(s): none — no explicit role is permitted on this element.",
+    "rationale": "The WAI-ARIA \"ARIA in HTML\" specification restricts which explicit roles a native element may take. A role outside that set is ignored or produces undefined behavior in assistive technology."
+  },
+  "html.input.unsupportedType": {
+    "message": "type=\"bogus\" is not a value defined by the HTML specification. Browsers silently fall back to type=\"text\".",
+    "rationale": "An unrecognized input type is not invalid markup — the spec requires the \"text\" fallback — but it usually means a typo, since the input keeps working while silently losing the intended type-specific behavior (validation, virtual keyboard, picker UI).",
+    "suggestions": [
+      {
+        "title": "Check for a typo in the type value",
+        "description": "\"bogus\" does not match any HTML5 input type."
+      }
+    ]
+  },
+  "html.input.attributeIgnoredForType": {
+    "message": "\"size\" is ignored on <input type=\"number\">.",
+    "rationale": "\"size\" only has an effect when type is one of: \"text\", \"search\". Browsers silently ignore it on other input types.",
+    "suggestions": [
+      {
+        "title": "Remove \"size\"",
+        "description": "\"size\" only affects <input> when type is one of: \"text\", \"search\"."
+      }
+    ]
+  },
+  "html.anchor.dangerousHref": {
+    "message": "href=\"javascript:alert(1)\" uses a scheme that executes attacker-controlled content when navigated to. It has been removed.",
+    "rationale": "\"javascript:\", \"data:\", and \"vbscript:\" URLs are a common XSS vector when href comes from untrusted input — none of the three are needed for legitimate navigation."
+  }
+}

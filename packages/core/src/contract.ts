@@ -4,6 +4,8 @@ export * from './primitive'
 export * from './html'
 export * from './state'
 export type * from './diagnostics-api'
+export { createDiagnostics } from '@praxis-kit/diagnostics'
+export type { DiagnosticsMode, DiagnosticText, MessageResolver } from '@praxis-kit/diagnostics'
 export { InvariantBase } from '@praxis-kit/contract'
 export {
   AriaDiagnostics,

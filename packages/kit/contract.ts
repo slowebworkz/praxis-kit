@@ -14,6 +14,16 @@
 export type { Diagnostics } from '@praxis-kit/core/contract'
 
 /**
+ * Builds a `Diagnostics` for a preset mode that can resolve message text. Praxis Kit emits
+ * diagnostic codes and context only; pass a resolver from the optional `praxis-kit-diagnostics`
+ * package (`createMessageResolver(catalog)`) to get localized messages, or your own function.
+ * The resolver belongs to the returned instance, so different instances can use different
+ * languages at once.
+ */
+export { createDiagnostics } from '@praxis-kit/core/contract'
+export type { DiagnosticsMode, DiagnosticText, MessageResolver } from '@praxis-kit/core/contract'
+
+/**
  * State-prop normalizers for the built-in component states: `disabled`,
  * `expanded`, `invalid`, `loading`, `pressed`, `readonly`, `selected`, `active`.
  */

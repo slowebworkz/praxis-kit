@@ -47,6 +47,11 @@ jobs:
       - name: Build
         run: pnpm --filter ./packages/kit build
 
+      # `praxis-kit-diagnostics` is published alongside `praxis-kit` but is independent of it: the
+      # kit does not depend on it, and it does not depend on the kit. Same path-filter rule as above.
+      - name: Build praxis-kit-diagnostics
+        run: pnpm --filter ./packages/diagnostics build
+
       - name: Configure npm auth
         run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
         env:
@@ -107,3 +112,16 @@ jobs:
           prerelease=""
           if echo "$version" | grep -qE '-(alpha|beta|rc)'; then prerelease="--prerelease"; fi
           gh release create "$TAG" --title "praxis-kit $TAG" --notes-file "$notes" $prerelease --verify-tag
+
+      # After the GitHub release so a problem publishing this package (a new package name needs an
+      # npm token that is allowed to create it) can't prevent the release of `praxis-kit` itself.
+      # Idempotent like the kit publish: an already-published version is skipped.
+      - name: Publish praxis-kit-diagnostics
+        run: |
+          name=$(node -p "require('./packages/diagnostics/package.json').name")
+          version=$(node -p "require('./packages/diagnostics/package.json').version")
+          if npm view "$name@$version" version &>/dev/null; then
+            echo "Skipping $name@$version — already published"
+          else
+            (cd packages/diagnostics && pnpm publish --access public --no-git-checks --provenance --tag ${{ steps.dist_tag.outputs.tag }})
+          fi
