@@ -385,6 +385,13 @@ describe('custom ids (extension contract)', () => {
       },
     ],
     [{ ids: { 'acme.x': { colour: 'red' } } }],
+    [
+      {
+        ids: {
+          'acme.x': { context: { a: { kind: 'identifier', required: false, essential: true } } },
+        },
+      },
+    ],
     [{ ids: { 'acme.Rule': {} } }],
     [{ ids: { 'Acme.rule': {} } }],
     [{ ids: { 'acme.no_div': {} } }],

@@ -210,6 +210,11 @@ Declare your own in an **extension contract**, a small JSON file, and pass it wi
 npx praxis-kit-diagnostics validate catalog/app.json --extension acme.extension.json
 ```
 
+A malformed extension file is a configuration error, not a catalog error: the CLI exits 64, and
+`checkCatalog(catalog, contract, { extensions })` throws a `RangeError` instead of returning a
+report (every other problem with a catalog is reported, never thrown). An `essential` key must also
+be `required`.
+
 Extension ids are checked like built-in ones (placeholders, filters, plurals) but do not count
 toward coverage. The JSON Schema accepts any well-formed id, so it never rejects an extended catalog
 that the CLI accepts with the extension.

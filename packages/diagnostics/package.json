@@ -36,7 +36,8 @@
     "test": "vitest run",
     "test:related": "vitest run --changed",
     "prepublishOnly": "pnpm build",
-    "lint:pkg": "publint"
+    "lint:pkg": "publint",
+    "test:pack": "tsx scripts/smoke-test.ts"
   },
   "devDependencies": {
     "@praxis-kit/contract": "workspace:*",

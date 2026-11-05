@@ -140,6 +140,11 @@ const EXTENSION_CONTEXT_KEYS = new Set([
  * Turns an extension file into id contracts, or throws a RangeError saying what is wrong with it.
  * Nothing is defaulted silently: a malformed or unexpected field is an error, because a typo here
  * would otherwise weaken validation without a word.
+ *
+ * This throws, unlike `checkCatalog`, which reports. The two differ on purpose: a malformed catalog
+ * is data under test, so it becomes a `Report`; a malformed extension contract is the tool's own
+ * configuration, so there is nothing meaningful to report against. The CLI catches it and exits 64.
+ * Call it yourself first (or catch the `RangeError`) when you pass `extensions` to `checkCatalog`.
  */
 export function normalizeExtensions(
   extension: unknown,
@@ -187,6 +192,11 @@ export function normalizeExtensions(
         if (Object.hasOwn(spec, flag) && !isBooleanValue(spec[flag])) {
           fail(`${where}.${flag} must be a boolean.`)
         }
+      }
+      if (spec['essential'] === true && spec['required'] === false) {
+        return fail(
+          `${where} is essential but not required: a key that can be absent cannot be essential.`,
+        )
       }
       if (Object.hasOwn(spec, 'description') && !isString(spec['description'])) {
         fail(`${where}.description must be a string.`)
@@ -237,6 +247,9 @@ export function normalizeExtensions(
  * Checks a catalog against the contract. The catalog may be anything loaded from JSON: nothing here
  * throws on malformed input, it reports it. Structural validity is `errors.length === 0`;
  * completeness is `incomplete` and `coverage`, and they never mix.
+ *
+ * `options.extensions` is the one exception to "never throws": a malformed extension contract is a
+ * configuration error and throws a `RangeError` (see `normalizeExtensions`).
  */
 export function checkCatalog(
   catalog: unknown,
