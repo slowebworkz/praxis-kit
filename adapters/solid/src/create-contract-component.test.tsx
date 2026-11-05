@@ -510,9 +510,7 @@ describe('createContractComponent (Solid adapter)', () => {
         {(props: AnyRecord) => <a {...props} />}
       </Comp>
     ))
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('SLOT1001'),
-    )
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1001'))
     // Falls through to the normal render at the `as`-resolved tag (section, not div) — asChild's
     // own render path never runs. (The render-fn `children` value still gets invoked with no
     // arguments here, but that's Solid's own "a function in child position is a reactive

@@ -14,9 +14,7 @@ describe('assertExclusive', () => {
   it('warns when strict is warn', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     new SlotValidator('Button', warnDiagnostics, 'React element').assertExclusive()
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('SLOT1001'),
-    )
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1001'))
   })
 
   it('is silent when strict is false', () => {

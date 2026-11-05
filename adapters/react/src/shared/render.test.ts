@@ -373,9 +373,7 @@ describe('render', () => {
       filterProps: noopFilter,
       slotValidator: new SlotValidator('Test', warnDiagnostics, 'React element'),
     })
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('SLOT1002'),
-    )
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('SLOT1002'))
     expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('SLOT1003'))
     warnSpy.mockRestore()
   })

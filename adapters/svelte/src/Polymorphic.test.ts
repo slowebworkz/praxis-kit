@@ -233,9 +233,7 @@ describe('Polymorphic (Svelte adapter)', () => {
         as: 'section',
         children,
       })
-      expect(warn).toHaveBeenCalledWith(
-        expect.stringContaining('SLOT1001'),
-      )
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1001'))
       expect(container.querySelector('section')).toBeTruthy()
       expect(container.querySelector('div')).toBeNull()
       warn.mockRestore()
