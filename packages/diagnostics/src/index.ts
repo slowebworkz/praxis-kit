@@ -7,7 +7,7 @@ export type {
   RenderedMessage,
 } from './types'
 export { assertValidLocale, createMessageResolver } from './resolver'
-export type { MessageResolver } from './resolver'
+export type { MessageResolver, ResolverIssue, ResolverOptions } from './resolver'
 export { placeholdersIn, validateCatalog } from './validate'
 export type { CatalogIssue } from './validate'
 export { checkCatalog } from './check'
