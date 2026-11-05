@@ -218,3 +218,62 @@ describe('validate() — ARIA attribute value validation', () => {
     expect(valueViolation).toBeUndefined()
   })
 })
+
+// ---------------------------------------------------------------------------
+// The diagnostic's shape: what a translation depends on
+// ---------------------------------------------------------------------------
+
+// An invalid value reports what was expected as structured data, never as an English sentence. A set
+// of values is a list; the shapes that are not a set each have their own message id. These are the
+// keys a language pack's templates may use, so they are pinned here as emitted by the real engine.
+describe('validate() — invalid value diagnostics carry structured context', () => {
+  const diagnosticFor = (
+    tag: 'div' | 'button' | 'h2',
+    props: Record<string, unknown>,
+    attribute: string,
+  ) =>
+    makeValidator(silentDiagnostics)
+      .validate(tag, props)
+      .violations.find((v) => v.attribute === attribute)?.diagnostic
+
+  it('lists the allowed values for a value set, with no message id', () => {
+    expect(diagnosticFor('button', { 'aria-expanded': 'maybe' }, 'aria-expanded')).toMatchObject({
+      code: 'ARIA2013',
+      context: { attr: 'aria-expanded', got: '"maybe"', values: ['true', 'false'] },
+    })
+    expect(
+      diagnosticFor('button', { 'aria-expanded': 'maybe' }, 'aria-expanded')?.messageId,
+    ).toBeUndefined()
+  })
+
+  it('lists enum values', () => {
+    expect(diagnosticFor('div', { role: 'alert', 'aria-live': 'loud' }, 'aria-live')).toMatchObject(
+      {
+        code: 'ARIA2013',
+        context: { values: expect.arrayContaining(['assertive', 'off', 'polite']) },
+      },
+    )
+  })
+
+  it('uses a message id, not prose, for a number', () => {
+    expect(
+      diagnosticFor('div', { role: 'slider', 'aria-valuenow': 'abc' }, 'aria-valuenow'),
+    ).toMatchObject({
+      code: 'ARIA2013',
+      messageId: 'ARIA2013.number',
+    })
+  })
+
+  it('reports a bound as a number with its own message id', () => {
+    expect(diagnosticFor('h2', { role: 'heading', 'aria-level': 0 }, 'aria-level')).toMatchObject({
+      code: 'ARIA2013',
+      messageId: 'ARIA2013.integerMin',
+      context: { attr: 'aria-level', got: '0', min: 1 },
+    })
+  })
+
+  it('never puts an English sentence in the context', () => {
+    const d = diagnosticFor('h2', { role: 'heading', 'aria-level': 0 }, 'aria-level')
+    expect(d?.context).not.toHaveProperty('expected')
+  })
+})

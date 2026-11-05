@@ -1,17 +1,22 @@
 import type { DiagnosticInput } from '@praxis-kit/diagnostics'
 import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
-import type { ValidationViolation } from '../types'
+import type { AriaValueType, ValidationViolation } from '../types'
 
 // Every factory here returns a *fact*: the code, the category, and the `context` values a message
 // would interpolate. None of them carries prose — the text for each code lives in a message catalog
 // (see `praxis-kit-diagnostics`) that a `Diagnostics` instance resolves at report time. Without one,
 // a formatter prints the code. Renaming a context key is a breaking change for every catalog.
 
-function aria(code: DiagnosticCode, context?: Readonly<Record<string, unknown>>): DiagnosticInput {
+function aria(
+  code: DiagnosticCode,
+  context?: Readonly<Record<string, unknown>>,
+  messageId?: string,
+): DiagnosticInput {
   return {
     code,
     category: DiagnosticCategory.ARIA,
     ...(context !== undefined && { context }),
+    ...(messageId !== undefined && { messageId }),
   }
 }
 
@@ -21,6 +26,35 @@ function showValue(value: unknown): string {
   if (value === null) return 'null'
   if (value === undefined) return 'undefined'
   return typeof value === 'string' ? `"${value}"` : String(value)
+}
+
+// What a valid ARIA value looks like, as structured data rather than a sentence. A set of allowed
+// values is passed as a list (the catalog decides how to join and quote it); the shapes that are not
+// a set (a number, an integer, an integer with bounds) each get their own message id, so a
+// translation never has to splice an English fragment such as "an integer ≥ 1" into its sentence.
+function expectedValue(type: AriaValueType): {
+  messageId?: string
+  context: Readonly<Record<string, unknown>>
+} {
+  switch (type.kind) {
+    case 'boolean':
+      return { context: { values: ['true', 'false'] } }
+    case 'tristate':
+      return { context: { values: ['true', 'false', 'mixed'] } }
+    case 'enum':
+      return { context: { values: [...type.values] } }
+    case 'number':
+      return { messageId: 'ARIA2013.number', context: {} }
+    case 'integer': {
+      const { min, max } = type
+      if (min !== undefined && max !== undefined) {
+        return { messageId: 'ARIA2013.integerRange', context: { min, max } }
+      }
+      if (min !== undefined) return { messageId: 'ARIA2013.integerMin', context: { min } }
+      if (max !== undefined) return { messageId: 'ARIA2013.integerMax', context: { max } }
+      return { messageId: 'ARIA2013.integer', context: {} }
+    }
+  }
 }
 
 export const AriaDiagnostics = {
@@ -72,8 +106,13 @@ export const AriaDiagnostics = {
     return aria(DiagnosticCode.AriaHiddenOnFocusable, { tag })
   },
 
-  invalidAttributeValue(attr: string, value: unknown, expected: string): DiagnosticInput {
-    return aria(DiagnosticCode.AriaInvalidAttributeValue, { attr, got: showValue(value), expected })
+  invalidAttributeValue(attr: string, value: unknown, expected: AriaValueType): DiagnosticInput {
+    const { messageId, context } = expectedValue(expected)
+    return aria(
+      DiagnosticCode.AriaInvalidAttributeValue,
+      { attr, got: showValue(value), ...context },
+      messageId,
+    )
   },
 
   redundantAriaLevel(tag: string, level: number): DiagnosticInput {

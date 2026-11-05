@@ -93,32 +93,32 @@
     ]
   },
   "aria.invalidAttributeValue.string": {
-    "message": "\"aria-checked\" has an invalid value (\"yes\"). Expected: true, false, or mixed.",
+    "message": "\"aria-checked\" has an invalid value (\"yes\"). Expected: \"true\", \"false\", or \"mixed\".",
     "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
     "suggestions": [
       {
         "title": "Use a valid value for aria-checked",
-        "description": "Valid values are: true, false, or mixed."
+        "description": "Valid values are: \"true\", \"false\", or \"mixed\"."
       }
     ]
   },
   "aria.invalidAttributeValue.null": {
-    "message": "\"aria-checked\" has an invalid value (null). Expected: true, false, or mixed.",
+    "message": "\"aria-checked\" has an invalid value (null). Expected: \"true\", \"false\", or \"mixed\".",
     "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
     "suggestions": [
       {
         "title": "Use a valid value for aria-checked",
-        "description": "Valid values are: true, false, or mixed."
+        "description": "Valid values are: \"true\", \"false\", or \"mixed\"."
       }
     ]
   },
   "aria.invalidAttributeValue.undefined": {
-    "message": "\"aria-checked\" has an invalid value (undefined). Expected: true, false, or mixed.",
+    "message": "\"aria-checked\" has an invalid value (undefined). Expected: \"true\", \"false\", or \"mixed\".",
     "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
     "suggestions": [
       {
         "title": "Use a valid value for aria-checked",
-        "description": "Valid values are: true, false, or mixed."
+        "description": "Valid values are: \"true\", \"false\", or \"mixed\"."
       }
     ]
   },
@@ -334,5 +334,71 @@
   "html.anchor.dangerousHref": {
     "message": "href=\"javascript:alert(1)\" uses a scheme that executes attacker-controlled content when navigated to. It has been removed.",
     "rationale": "\"javascript:\", \"data:\", and \"vbscript:\" URLs are a common XSS vector when href comes from untrusted input — none of the three are needed for legitimate navigation."
+  },
+  "aria.invalidAttributeValue.boolean": {
+    "message": "\"aria-hidden\" has an invalid value (\"x\"). Expected: \"true\" or \"false\".",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-hidden",
+        "description": "Valid values are: \"true\" or \"false\"."
+      }
+    ]
+  },
+  "aria.invalidAttributeValue.enum": {
+    "message": "\"aria-live\" has an invalid value (\"loud\"). Expected: \"off\", \"polite\", or \"assertive\".",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-live",
+        "description": "Valid values are: \"off\", \"polite\", or \"assertive\"."
+      }
+    ]
+  },
+  "aria.invalidAttributeValue.finiteNumber": {
+    "message": "\"aria-valuenow\" has an invalid value (\"abc\"). Expected: a finite number.",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-valuenow",
+        "description": "Valid values are: a finite number."
+      }
+    ]
+  },
+  "aria.invalidAttributeValue.integer": {
+    "message": "\"aria-posinset\" has an invalid value (1.5). Expected: an integer.",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-posinset",
+        "description": "Valid values are: an integer."
+      }
+    ]
+  },
+  "aria.invalidAttributeValue.integerMax": {
+    "message": "\"aria-level\" has an invalid value (9). Expected: an integer ≤ 6.",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-level",
+        "description": "Valid values are: an integer ≤ 6."
+      }
+    ]
+  },
+  "aria.invalidAttributeValue.integerRange": {
+    "message": "\"aria-level\" has an invalid value (0). Expected: an integer between 1 and 6.",
+    "rationale": "ARIA attributes with invalid values are silently ignored by assistive technology, making the markup semantically inert.",
+    "suggestions": [
+      {
+        "title": "Use a valid value for aria-level",
+        "description": "Valid values are: an integer between 1 and 6."
+      }
+    ]
+  },
+  "html.invalidChild.phrasing": {
+    "message": "<button> is not a valid direct child of <a>. Allowed: phrasing content, excluding interactive descendants such as <a>, <button>, and form controls."
+  },
+  "html.invalidChild.unspecified": {
+    "message": "<div> is not a valid direct child of <p>. Allowed: the parent element’s permitted content model."
   }
 }

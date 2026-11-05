@@ -23,7 +23,7 @@ import { NAME_REQUIRED_ROLES } from './spec/roles/name-required'
 import { REQUIRED_ARIA_PROPERTIES } from './spec/roles/required-properties'
 import type { RoleAttributeRequirements } from './spec/types'
 import { checkRequiredAttributes } from './spec/validators/required-properties-validator'
-import { describeExpected, isValidAriaValue, strictNumeric } from './value-validation'
+import { isValidAriaValue, strictNumeric } from './value-validation'
 
 import type { Diagnostics } from '@praxis-kit/diagnostics'
 import type { AnyRecord, IntrinsicTag } from '@praxis-kit/primitive'
@@ -531,8 +531,8 @@ export class AriaPolicyEngine extends InvariantBase {
   }
 
   // ─── ARIA attribute value validation ──────────────────────────────────────
-  // See value-validation.ts for the value-type system itself (isValidAriaValue/
-  // describeExpected/strictNumeric) — this rule is just a thin caller of it.
+  // See value-validation.ts for the value-type system itself (isValidAriaValue/strictNumeric) —
+  // this rule is just a thin caller of it.
 
   static #checkAriaAttributeValues({ props, effectiveRole }: AriaContext): readonly AriaResult[] {
     // Presentational elements have no ARIA semantics — all attrs handled elsewhere.
@@ -548,7 +548,7 @@ export class AriaPolicyEngine extends InvariantBase {
         fixable: true,
         severity: 'warning',
         attribute: key,
-        diagnostic: AriaDiagnostics.invalidAttributeValue(key, value, describeExpected(type)),
+        diagnostic: AriaDiagnostics.invalidAttributeValue(key, value, type),
         fix: AriaPolicyEngine.#makeRemoveAttributeFix(key),
       })
     })

@@ -27,13 +27,28 @@ export const SAMPLES: Record<string, () => DiagnosticInput> = {
     AriaDiagnostics.attributeOnPresentational('aria-label', 'img'),
   'aria.ariaHiddenOnFocusable': () => AriaDiagnostics.ariaHiddenOnFocusable('button'),
   'aria.invalidAttributeValue.string': () =>
-    AriaDiagnostics.invalidAttributeValue('aria-checked', 'yes', 'true, false, or mixed'),
+    AriaDiagnostics.invalidAttributeValue('aria-checked', 'yes', { kind: 'tristate' }),
   'aria.invalidAttributeValue.null': () =>
-    AriaDiagnostics.invalidAttributeValue('aria-checked', null, 'true, false, or mixed'),
+    AriaDiagnostics.invalidAttributeValue('aria-checked', null, { kind: 'tristate' }),
   'aria.invalidAttributeValue.undefined': () =>
-    AriaDiagnostics.invalidAttributeValue('aria-checked', undefined, 'true, false, or mixed'),
+    AriaDiagnostics.invalidAttributeValue('aria-checked', undefined, { kind: 'tristate' }),
   'aria.invalidAttributeValue.number': () =>
-    AriaDiagnostics.invalidAttributeValue('aria-level', 0, 'an integer ≥ 1'),
+    AriaDiagnostics.invalidAttributeValue('aria-level', 0, { kind: 'integer', min: 1 }),
+  'aria.invalidAttributeValue.boolean': () =>
+    AriaDiagnostics.invalidAttributeValue('aria-hidden', 'x', { kind: 'boolean' }),
+  'aria.invalidAttributeValue.enum': () =>
+    AriaDiagnostics.invalidAttributeValue('aria-live', 'loud', {
+      kind: 'enum',
+      values: new Set(['off', 'polite', 'assertive']),
+    }),
+  'aria.invalidAttributeValue.finiteNumber': () =>
+    AriaDiagnostics.invalidAttributeValue('aria-valuenow', 'abc', { kind: 'number' }),
+  'aria.invalidAttributeValue.integer': () =>
+    AriaDiagnostics.invalidAttributeValue('aria-posinset', 1.5, { kind: 'integer' }),
+  'aria.invalidAttributeValue.integerMax': () =>
+    AriaDiagnostics.invalidAttributeValue('aria-level', 9, { kind: 'integer', max: 6 }),
+  'aria.invalidAttributeValue.integerRange': () =>
+    AriaDiagnostics.invalidAttributeValue('aria-level', 0, { kind: 'integer', min: 1, max: 6 }),
   'aria.redundantAriaLevel': () => AriaDiagnostics.redundantAriaLevel('h2', 2),
   'aria.requiredProperty': () => AriaDiagnostics.requiredProperty('aria-expanded', 'combobox'),
   'aria.invalidRole': () => AriaDiagnostics.invalidRole('bogus', 'div'),
@@ -85,7 +100,9 @@ export const SAMPLES: Record<string, () => DiagnosticInput> = {
   'html.landmarkRoleOverride': () =>
     HtmlDiagnostics.landmarkRoleOverride('nav', 'navigation', 'banner'),
   'html.invalidChild': () =>
-    HtmlDiagnostics.invalidChild('div', 'ul', '<li>, <script>, or <template>'),
+    HtmlDiagnostics.invalidChild('div', 'ul', ['<li>', '<script>', '<template>']),
+  'html.invalidChild.phrasing': () => HtmlDiagnostics.invalidChild('button', 'a', 'phrasing'),
+  'html.invalidChild.unspecified': () => HtmlDiagnostics.invalidChild('div', 'p', undefined),
   'html.roleNotPermitted.some': () =>
     HtmlDiagnostics.roleNotPermitted('ul', 'button', ['menu', 'listbox']),
   'html.roleNotPermitted.none': () => HtmlDiagnostics.roleNotPermitted('br', 'button', []),

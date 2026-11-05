@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 
 import type { AnyRecord, AriaContext, EnforcementOptions } from '../types'
 import { ChildrenEvaluator, diagnoseChildren } from '../children'
-import { throwDiagnostics } from '@praxis-kit/diagnostics'
-import { getHtmlChildrenEvaluator } from './evaluators'
+import { DiagnosticCode, throwDiagnostics } from '@praxis-kit/diagnostics'
+import { getHtmlChildrenEvaluator, invalidHtmlChild } from './evaluators'
 import {
   anchorContract,
   audioContract,
@@ -982,5 +982,35 @@ describe('widget contracts', () => {
 
   it('requireAccessibleName passes via comboboxContract when aria-label is present', () => {
     expect(comboboxContract.aria![0]!(ctx('input', { 'aria-label': 'Search' }))).toEqual([])
+  })
+})
+
+// ─── invalid-child diagnostics: what a translation depends on ────────────────
+// What the parent accepts is reported as data (a list of tags, or the phrasing model), never as an
+// English sentence, so a language pack decides how to say it. These are the shapes the built-in
+// evaluators emit.
+describe('invalid child diagnostics carry structured context', () => {
+  it.each(['ul', 'ol', 'menu'])('lists the tags <%s> accepts, with no message id', (parent) => {
+    const d = invalidHtmlChild('div', parent)
+    expect(d).toMatchObject({
+      code: DiagnosticCode.HtmlInvalidChild,
+      context: { child: 'div', parent, allowed: ['<li>', '<script>', '<template>'] },
+    })
+    expect(d.messageId).toBeUndefined()
+  })
+
+  it('uses a message id for the phrasing model (<a>)', () => {
+    expect(invalidHtmlChild('button', 'a')).toMatchObject({
+      messageId: 'HTML3007.phrasing',
+      context: { child: 'button', parent: 'a' },
+    })
+    expect(invalidHtmlChild('button', 'a').context).not.toHaveProperty('allowed')
+  })
+
+  it('uses a message id when the parent has no simple summary', () => {
+    expect(invalidHtmlChild('div', 'table')).toMatchObject({
+      messageId: 'HTML3007.unspecified',
+      context: { child: 'div', parent: 'table' },
+    })
   })
 })

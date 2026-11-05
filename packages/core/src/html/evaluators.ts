@@ -1,4 +1,4 @@
-import { ChildrenEvaluator, HtmlDiagnostics  } from '@praxis-kit/contract'
+import { ChildrenEvaluator, HtmlDiagnostics } from '@praxis-kit/contract'
 import { isString } from '@praxis-kit/guards'
 import { iterate } from '@praxis-kit/primitive'
 import type { StringMap } from '@praxis-kit/primitive'
@@ -7,11 +7,22 @@ import { htmlContracts } from './contracts'
 
 const htmlDiagnostics = warnDiagnostics
 
-const HTML_CHILD_GUIDANCE: Readonly<StringMap<string>> = {
-  ul: '<li>, <script>, or <template>',
-  ol: '<li>, <script>, or <template>',
-  menu: '<li>, <script>, or <template>',
-  a: 'phrasing content, excluding interactive descendants such as <a>, <button>, and form controls',
+// What each parent accepts, as data (see `HtmlDiagnostics.invalidChild`): a list of tags, or the
+// phrasing-content model. Parents with no entry get the "permitted content model" wording.
+const LIST_ITEMS = ['<li>', '<script>', '<template>'] as const
+const HTML_CHILD_CONTENT: Readonly<StringMap<readonly string[] | 'phrasing'>> = {
+  ul: LIST_ITEMS,
+  ol: LIST_ITEMS,
+  menu: LIST_ITEMS,
+  a: 'phrasing',
+}
+
+/**
+ * The invalid-child diagnostic for a child that a built-in HTML parent rejects, with what that parent
+ * accepts reported as data (see `HtmlDiagnostics.invalidChild`).
+ */
+export function invalidHtmlChild(child: string, parent: string) {
+  return HtmlDiagnostics.invalidChild(child, parent, HTML_CHILD_CONTENT[parent])
 }
 
 function buildEvaluatorMap(): ReadonlyMap<string, ChildrenEvaluator> {
@@ -25,12 +36,7 @@ function buildEvaluatorMap(): ReadonlyMap<string, ChildrenEvaluator> {
           allowText,
           unexpectedChildDiagnostic: (child, _index, context) => {
             const parent = context.replace(/[<>]/g, '')
-            const allowed = HTML_CHILD_GUIDANCE[parent]
-            return HtmlDiagnostics.invalidChild(
-              child,
-              parent,
-              allowed ?? 'the parent element’s permitted content model',
-            )
+            return invalidHtmlChild(child, parent)
           },
         }),
       )
