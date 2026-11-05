@@ -1,7 +1,7 @@
 import type { DiagnosticPolicy } from './policy'
 import type { Diagnostic, DiagnosticReporter, MessageResolver } from './types'
 import { PraxisError } from './error'
-import { isDefined, isUndefined } from './guards'
+import { isDefined, isUndefined } from '@praxis-kit/foundation'
 import { DefaultPolicy, Enforcement } from './policy'
 import { Severity } from './severity'
 

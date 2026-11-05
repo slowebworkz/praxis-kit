@@ -11,7 +11,7 @@ export function getTypeName(value: unknown): string {
   const { type: elementType } = value as { type?: unknown }
   if (isString(elementType)) return elementType
   if (isFunction(elementType)) {
-    const component: { displayName?: string; name?: string } = elementType
+    const component = elementType as { displayName?: string; name?: string }
     return component.displayName ?? component.name ?? 'component'
   }
 

@@ -1,5 +1,5 @@
 // Guards come from ./guards, not @praxis-kit/guards: that package sits above this one.
-import { isDefined, isUndefined } from './guards'
+import { isDefined, isUndefined } from '@praxis-kit/foundation'
 import type { Diagnostic } from './types'
 import { DiagnosticCategory } from './category'
 import { Severity } from './severity'

@@ -1,5 +1,5 @@
 // Guards come from ./guards, not @praxis-kit/guards: that package sits above this one.
-import { isString, isUndefined } from './guards'
+import { isString, isUndefined } from '@praxis-kit/foundation'
 import type { Diagnostics } from './diagnostics'
 import type { MessageResolver } from './types'
 import { silentDiagnostics, throwDiagnostics, warnDiagnostics } from './presets'

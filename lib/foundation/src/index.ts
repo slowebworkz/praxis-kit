@@ -11,6 +11,27 @@
 export type { AnyRecord, StringMap } from './types/string-map.ts'
 export type { AnyFunction } from './types/any-function.ts'
 
+// guards
+export {
+  isArray,
+  isDefined,
+  isEqualTo,
+  isFalse,
+  isFunction,
+  isNil,
+  isNonNull,
+  isNonNullObject,
+  isNull,
+  isNullish,
+  isNumber,
+  isObject,
+  isPlainObject,
+  isRecord,
+  isString,
+  isTrue,
+  isUndefined,
+} from './guards/foundational.ts'
+
 // collections
 export { iterate, items } from './collections/iterate.ts'
 export { LRUCache } from './collections/lru-cache.ts'
