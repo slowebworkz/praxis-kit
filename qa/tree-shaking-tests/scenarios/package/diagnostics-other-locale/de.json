@@ -1,0 +1,8 @@
+{
+  "locale": "de",
+  "messages": {
+    "HTML3003": {
+      "message": "<{tag}> hat bereits die implizite Rolle \"{implicitRole}\"."
+    }
+  }
+}

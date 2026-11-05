@@ -1258,6 +1258,9 @@ importers:
       praxis-kit:
         specifier: workspace:*
         version: link:../../packages/kit
+      praxis-kit-diagnostics:
+        specifier: workspace:*
+        version: link:../../packages/diagnostics
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

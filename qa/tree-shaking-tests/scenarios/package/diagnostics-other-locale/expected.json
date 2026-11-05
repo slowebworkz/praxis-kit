@@ -1,0 +1,9 @@
+{
+  "mustInclude": [
+    "packages/diagnostics/dist/index.js",
+    "scenarios/package/diagnostics-other-locale/de.json"
+  ],
+  "mustIncludeText": ["hat bereits die implizite Rolle"],
+  "mustExcludeText": ["already has implicit role"],
+  "mustExcludePackages": ["praxis-kit"]
+}
