@@ -11,6 +11,11 @@
  * Uses outputs[].inputs[].bytesInOutput rather than top-level inputs so tree-shaken modules
  * (analyzed but contributing 0 bytes) do not trigger false failures.
  *
+ * mustIncludeText/mustExcludeText check the bundled output itself (`bundle.js`) for a literal
+ * string. Use them when a path check cannot answer the question: a bundler is free to merge one
+ * module into another, so "this file is absent" does not prove "this code is absent". A message
+ * catalog's English text is the case that needed it.
+ *
  * Exits with code 1 if any assertion fails.
  */
 import { readdir, readFile } from 'node:fs/promises'
@@ -28,6 +33,8 @@ type Expected = {
   mustExclude?: string[]
   mustIncludePackages?: string[]
   mustExcludePackages?: string[]
+  mustIncludeText?: string[]
+  mustExcludeText?: string[]
 }
 
 type OutputInputs = StringMap<{ bytesInOutput: number }>
@@ -51,7 +58,12 @@ function scenarioLabel(group: string, scenario: string): string {
   return `${group}/${scenario}`
 }
 
-function check(label: string, metafile: Metafile, expected: Expected): string[] {
+function check(
+  label: string,
+  metafile: Metafile,
+  expected: Expected,
+  bundleText: string,
+): string[] {
   const live = getLiveInputPaths(metafile)
   const livePackages = new Set(live.map(toPackageName).filter((p): p is string => p !== undefined))
   const failures: string[] = []
@@ -85,6 +97,17 @@ function check(label: string, metafile: Metafile, expected: Expected): string[] 
   for (const name of expected.mustExcludePackages ?? []) {
     if (livePackages.has(name)) {
       failures.push(`FAIL [${label}] mustExcludePackages "${name}" — package contributed live code`)
+    }
+  }
+
+  for (const text of expected.mustIncludeText ?? []) {
+    if (!bundleText.includes(text)) {
+      failures.push(`FAIL [${label}] mustIncludeText "${text}" — not found in the bundled output`)
+    }
+  }
+  for (const text of expected.mustExcludeText ?? []) {
+    if (bundleText.includes(text)) {
+      failures.push(`FAIL [${label}] mustExcludeText "${text}" — found in the bundled output`)
     }
   }
 
@@ -130,8 +153,19 @@ for (const group of ['source', 'package'] as const) {
       continue
     }
 
+    let bundleText = ''
+    try {
+      bundleText = await readFile(join(distDir, group, scenario, 'bundle.js'), 'utf8')
+    } catch {
+      // Only the text assertions need the bundle; without them a missing file is not an error.
+      if (expected.mustIncludeText || expected.mustExcludeText) {
+        allFailures.push(`FAIL [${label}] bundle.js missing — run pnpm build first`)
+        continue
+      }
+    }
+
     const liveCount = getLiveInputPaths(metafile).length
-    const failures = check(label, metafile, expected)
+    const failures = check(label, metafile, expected, bundleText)
     if (failures.length === 0) {
       console.log(`  pass   ${label} (${liveCount} live modules)`)
       passed++

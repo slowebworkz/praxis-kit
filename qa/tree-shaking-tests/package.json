@@ -26,7 +26,8 @@
     "@praxis-kit/solid": "workspace:*",
     "@praxis-kit/svelte": "workspace:*",
     "@praxis-kit/vue": "workspace:*",
-    "praxis-kit": "workspace:*"
+    "praxis-kit": "workspace:*",
+    "praxis-kit-diagnostics": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "catalog:",

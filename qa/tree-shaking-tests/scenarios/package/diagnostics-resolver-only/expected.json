@@ -1,0 +1,5 @@
+{
+  "mustInclude": ["packages/diagnostics/dist/index.js"],
+  "mustExcludeText": ["already has implicit role"],
+  "mustExcludePackages": ["praxis-kit"]
+}

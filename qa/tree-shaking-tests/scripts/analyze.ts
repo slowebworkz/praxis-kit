@@ -61,11 +61,18 @@ for (const group of ['source', 'package'] as const) {
   const scenarios = await listScenarios(groupDir)
   if (scenarios.length === 0) continue
 
-  if (group === 'package' && !existsSync(join(root, 'packages/kit/dist'))) {
-    throw new Error(
-      'scenarios/package/* consume `packages/kit`, which has no dist/ yet — ' +
-        'run `pnpm --filter praxis-kit build` first.',
-    )
+  if (group === 'package') {
+    for (const [pkgDir, filter] of [
+      ['packages/kit', 'praxis-kit'],
+      ['packages/diagnostics', 'praxis-kit-diagnostics'],
+    ] as const) {
+      if (!existsSync(join(root, pkgDir, 'dist'))) {
+        throw new Error(
+          `scenarios/package/* consume \`${pkgDir}\`, which has no dist/ yet — ` +
+            `run \`pnpm --filter ${filter} build\` first.`,
+        )
+      }
+    }
   }
 
   for (const scenario of scenarios) {

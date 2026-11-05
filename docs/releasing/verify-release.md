@@ -15,7 +15,7 @@ CI runs it on every push and PR to `main` / `develop` (`.github/workflows/ci.yml
 
 | Step | Command                                             | Checks                                                                                                                                                                                                                                                                                                                                 |
 | ---- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | `pnpm verify`                                       | Builds `packages/kit`, then `pnpm check` (`lint:check` → `typecheck` → `test`, all 29 packages) and `pnpm repo-state` (regenerates `.repo-state/`, fails on drift).                                                                                                                                                                    |
+| 1    | `pnpm verify`                                       | Builds `packages/kit` and `packages/diagnostics`, then `pnpm check` (`lint:check` → `typecheck` → `test`, all 29 packages) and `pnpm repo-state` (regenerates `.repo-state/`, fails on drift).                                                                                                                                         |
 | 2    | `pnpm --filter ./packages/kit lint:pkg`             | `publint` — export-map correctness, resolution under node10 / node16 / bundler.                                                                                                                                                                                                                                                        |
 | 3    | `pnpm --filter ./packages/kit test:pack`            | `scripts/smoke-test.ts`: build → `pnpm pack` → install the tarball into an isolated fixture **outside** this workspace (no pnpm hoisting) → `import()` every public JS entry → resolve every typed entry's `.d.ts` with `tsc` → compile `Polymorphic.svelte` (client + server) and resolve its imports → run the `praxis-codemod` bin. |
 | 4    | `pnpm --filter @praxis-kit/tree-shaking-tests test` | Per-scenario live-module-count assertions + gzip regression (`snapshots/gzip.json`).                                                                                                                                                                                                                                                   |
@@ -26,10 +26,15 @@ Steps 3–5 each rebuild what they need, so the gate is safe to run from any sta
 
 ## Ordering constraints (why the sequence matters)
 
-- `packages/kit/dist/` must exist before `pnpm -r typecheck` — `qa/tree-shaking-tests`'
-  `scenarios/package/*` resolve `praxis-kit/<entry>` types through it. `pnpm verify` builds
-  `packages/kit` first; `pnpm build` was also reordered (`pnpm -r build && pnpm typecheck`) so it is
-  self-sufficient on a fresh checkout.
+- `packages/kit/dist/` and `packages/diagnostics/dist/` must exist before `pnpm -r typecheck` —
+  `qa/tree-shaking-tests`' `scenarios/package/*` resolve `praxis-kit/<entry>` and
+  `praxis-kit-diagnostics` types through them. `pnpm verify` builds both first; `pnpm build` was
+  also reordered (`pnpm -r build && pnpm typecheck`) so it is self-sufficient on a fresh checkout.
+- The `diagnostics-*` scenarios guard the promise that choosing another language leaves English out
+  of a bundle. They assert on the bundled **text** (`mustExcludeText` / `mustIncludeText`), not on
+  file paths: a bundler may merge the English catalog into another module, so "no `en.js`" would
+  pass even with English leaked in. `diagnostics-with-english` is the control that proves the text
+  check can see English at all.
 - `pnpm metrics:collect` reads `.repo-state/{dependency-graph,exports}.json` (from
   `pnpm repo-state`, run in step 1) and `qa/tree-shaking-tests/snapshots/gzip.json` (written in step
   4).
