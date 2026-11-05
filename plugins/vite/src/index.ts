@@ -64,9 +64,9 @@ export function contractPlugin(options?: PluginOptions): Plugin {
       iterate.forEach(diagnostics, ({ col, diagnostic, line, severity }) => {
         const loc = { file: id, line, column: col }
         if (severity === 'error') {
-          this.error({ message: diagnostic.message, loc })
+          this.error({ message: diagnostic.message ?? diagnostic.code, loc })
         } else {
-          this.warn({ message: diagnostic.message, loc })
+          this.warn({ message: diagnostic.message ?? diagnostic.code, loc })
         }
       })
 
@@ -102,9 +102,9 @@ export function contractPlugin(options?: PluginOptions): Plugin {
         ({ col, diagnostic, fileId, line, severity }) => {
           const loc = { file: fileId, line, column: col }
           if (severity === 'error') {
-            this.error({ message: diagnostic.message, loc })
+            this.error({ message: diagnostic.message ?? diagnostic.code, loc })
           } else {
-            this.warn({ message: diagnostic.message, loc })
+            this.warn({ message: diagnostic.message ?? diagnostic.code, loc })
           }
         },
       )
