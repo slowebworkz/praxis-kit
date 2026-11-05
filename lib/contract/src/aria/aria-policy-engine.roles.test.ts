@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { makeCollecting, makeValidator } from './aria-policy-engine.test-helpers'
-import { throwDiagnostics, silentDiagnostics, warnDiagnostics } from '@praxis-kit/diagnostics'
+import {
+  DiagnosticCode,
+  silentDiagnostics,
+  throwDiagnostics,
+  warnDiagnostics,
+} from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
 // validate() — #checkRedundantRole
@@ -130,7 +135,7 @@ describe('validate() — empty role attribute', () => {
   it('pushes a violation for the empty role', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('nav', { role: '' })
     expect(violations).toHaveLength(1)
-    expect(violations[0]?.message).toMatch(/empty role/)
+    expect(violations[0]?.diagnostic?.code).toBe(DiagnosticCode.HtmlEmptyRole)
   })
 
   it('preserves other props when stripping the empty role', () => {
@@ -376,12 +381,16 @@ describe('validate() — output (implicit role: status)', () => {
 describe('validate() — select implicit role via multiple/size (ARIA-in-HTML)', () => {
   it('a plain <select> is an implicit combobox — role="combobox" is redundant', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('select', { role: 'combobox' })
-    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.HtmlImplicitRoleRedundant),
+    ).toBe(true)
   })
 
   it('a plain <select> is NOT a listbox — role="listbox" is a non-redundant override', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('select', { role: 'listbox' })
-    expect(violations.some((v) => v.message.includes('redundant'))).toBe(false)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.HtmlImplicitRoleRedundant),
+    ).toBe(false)
   })
 
   it('<select multiple> is an implicit listbox — role="listbox" is redundant', () => {
@@ -389,7 +398,9 @@ describe('validate() — select implicit role via multiple/size (ARIA-in-HTML)',
       multiple: true,
       role: 'listbox',
     })
-    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.HtmlImplicitRoleRedundant),
+    ).toBe(true)
   })
 
   it('<select size="4"> is an implicit listbox — role="listbox" is redundant', () => {
@@ -397,7 +408,9 @@ describe('validate() — select implicit role via multiple/size (ARIA-in-HTML)',
       size: '4',
       role: 'listbox',
     })
-    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.HtmlImplicitRoleRedundant),
+    ).toBe(true)
   })
 
   it('allows aria-multiselectable on <select multiple> (valid for listbox)', () => {
@@ -415,17 +428,23 @@ describe('validate() — anchor implicit role via href (ARIA-in-HTML)', () => {
       href: '/about',
       role: 'link',
     })
-    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.HtmlImplicitRoleRedundant),
+    ).toBe(true)
   })
 
   it('a bare <a> is generic, NOT link — role="button" is not a redundant override', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('a', { role: 'button' })
-    expect(violations.some((v) => v.message.includes('redundant'))).toBe(false)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.HtmlImplicitRoleRedundant),
+    ).toBe(false)
   })
 
   it('a bare <a> is an implicit generic — role="generic" is redundant', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('a', { role: 'generic' })
-    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.HtmlImplicitRoleRedundant),
+    ).toBe(true)
   })
 
   it('<area href> is an implicit link, a bare <area> is generic', () => {
@@ -433,9 +452,15 @@ describe('validate() — anchor implicit role via href (ARIA-in-HTML)', () => {
       href: '/x',
       role: 'link',
     })
-    expect(withHref.violations.some((v) => v.message.includes('redundant'))).toBe(true)
+    expect(
+      withHref.violations.some(
+        (v) => v.diagnostic?.code === DiagnosticCode.HtmlImplicitRoleRedundant,
+      ),
+    ).toBe(true)
     const bare = makeValidator(silentDiagnostics).validate('area', { role: 'button' })
-    expect(bare.violations.some((v) => v.message.includes('redundant'))).toBe(false)
+    expect(
+      bare.violations.some((v) => v.diagnostic?.code === DiagnosticCode.HtmlImplicitRoleRedundant),
+    ).toBe(false)
   })
 })
 
@@ -548,7 +573,9 @@ describe('validate() — input implicit roles via type attribute', () => {
         list: 'options',
         role: 'textbox',
       })
-      expect(violations.some((v) => v.message.includes('redundant'))).toBe(false)
+      expect(
+        violations.some((v) => v.diagnostic?.code === DiagnosticCode.HtmlImplicitRoleRedundant),
+      ).toBe(false)
     })
   }
 
@@ -580,7 +607,9 @@ describe('validate() — section conditional landmark (role: region when named)'
       role: 'region',
     })
     // role="region" matches implicit region → redundant → one warning
-    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.HtmlImplicitRoleRedundant),
+    ).toBe(true)
   })
 
   it('engine skips unnamed section (no implicit role without accessible name)', () => {
@@ -626,7 +655,9 @@ describe('validate() — form conditional landmark (role: form when named)', () 
       role: 'form',
     })
     // role="form" matches implicit form → redundant → one warning
-    expect(violations.some((v) => v.message.includes('redundant'))).toBe(true)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.HtmlImplicitRoleRedundant),
+    ).toBe(true)
   })
 
   it('engine skips unnamed form (no implicit role without accessible name)', () => {
@@ -708,36 +739,48 @@ describe('validate() — img implicit role', () => {
 describe('validate() — accessible name required for role=img', () => {
   it('warns when <img> has no alt and no aria-label', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('img', {})
-    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(true)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingAccessibleName),
+    ).toBe(true)
   })
 
   it('does not warn when <img> has non-empty alt (native accessible name)', () => {
     const { violations } = makeValidator(throwDiagnostics).validate('img', { alt: 'Company logo' })
-    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(false)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingAccessibleName),
+    ).toBe(false)
   })
 
   it('does not warn when <img> has aria-label', () => {
     const { violations } = makeValidator(throwDiagnostics).validate('img', {
       'aria-label': 'Chart',
     })
-    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(false)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingAccessibleName),
+    ).toBe(false)
   })
 
   it('does not warn when <img> has aria-labelledby', () => {
     const { violations } = makeValidator(throwDiagnostics).validate('img', {
       'aria-labelledby': 'caption-id',
     })
-    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(false)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingAccessibleName),
+    ).toBe(false)
   })
 
   it('does not warn when <img alt=""> (decorative, role=none)', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('img', { alt: '' })
-    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(false)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingAccessibleName),
+    ).toBe(false)
   })
 
   it('warns when <div role="img"> has no aria-label', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('div', { role: 'img' })
-    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(true)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingAccessibleName),
+    ).toBe(true)
   })
 
   it('does not warn when <div role="img"> has aria-label', () => {
@@ -745,11 +788,15 @@ describe('validate() — accessible name required for role=img', () => {
       role: 'img',
       'aria-label': 'Revenue chart',
     })
-    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(false)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingAccessibleName),
+    ).toBe(false)
   })
 
   it('does not warn for non-img roles', () => {
     const { violations } = makeValidator(throwDiagnostics).validate('button', {})
-    expect(violations.some((v) => v.message.includes('accessible name'))).toBe(false)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingAccessibleName),
+    ).toBe(false)
   })
 })

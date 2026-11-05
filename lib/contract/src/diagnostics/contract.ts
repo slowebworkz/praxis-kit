@@ -15,69 +15,54 @@ export function describeElementType(tag: ElementType): string {
   return named.displayName ?? named.name ?? '[component]'
 }
 
+// Facts only — the text for each code lives in a message catalog; see `aria.ts`.
+function contract(
+  code: DiagnosticCode,
+  context: Readonly<Record<string, unknown>>,
+  component?: string,
+): DiagnosticInput {
+  return {
+    code,
+    category: DiagnosticCategory.Contract,
+    ...(component !== undefined && { component }),
+    context,
+  }
+}
+
 export const ContractDiagnostics = {
-  unexpectedChild(typeName: string, index: number, context: string): DiagnosticInput {
-    return {
-      code: DiagnosticCode.UnexpectedChild,
-      category: DiagnosticCategory.Contract,
-      component: context,
-      message: `${context}: unexpected child "${typeName}" at index ${index}.`,
-    }
+  // `scope` is the component or element the children belong to, for example `<ul>` or `Menu`.
+  unexpectedChild(typeName: string, index: number, scope: string): DiagnosticInput {
+    return contract(DiagnosticCode.UnexpectedChild, { typeName, index, scope }, scope)
   },
 
   ambiguousChild(
     typeName: string,
     index: number,
     ruleNames: string[],
-    context: string,
+    scope: string,
   ): DiagnosticInput {
-    const quoted = ruleNames.map((n) => `"${n}"`).join(' and ')
-    return {
-      code: DiagnosticCode.AmbiguousChild,
-      category: DiagnosticCategory.Contract,
-      component: context,
-      message: `${context}: child "${typeName}" at index ${index} matches multiple child rules: ${quoted}.`,
-    }
+    return contract(DiagnosticCode.AmbiguousChild, { typeName, index, ruleNames, scope }, scope)
   },
 
-  cardinalityMin(ruleName: string, min: number, context: string): DiagnosticInput {
-    return {
-      code: DiagnosticCode.CardinalityMin,
-      category: DiagnosticCategory.Contract,
-      component: context,
-      message: `${context}: "${ruleName}" requires at least ${min}.`,
-    }
+  cardinalityMin(ruleName: string, min: number, scope: string): DiagnosticInput {
+    return contract(DiagnosticCode.CardinalityMin, { ruleName, min, scope }, scope)
   },
 
-  cardinalityMax(ruleName: string, max: number, context: string): DiagnosticInput {
-    return {
-      code: DiagnosticCode.CardinalityMax,
-      category: DiagnosticCategory.Contract,
-      component: context,
-      message: `${context}: "${ruleName}" allows at most ${max}.`,
-    }
+  cardinalityMax(ruleName: string, max: number, scope: string): DiagnosticInput {
+    return contract(DiagnosticCode.CardinalityMax, { ruleName, max, scope }, scope)
   },
 
   positionViolation(
     ruleName: string,
     position: string,
     index: number,
-    context: string,
+    scope: string,
   ): DiagnosticInput {
-    return {
-      code: DiagnosticCode.PositionViolation,
-      category: DiagnosticCategory.Contract,
-      component: context,
-      message: `${context}: "${ruleName}" must be ${position}, got index ${index}`,
-    }
+    return contract(DiagnosticCode.PositionViolation, { ruleName, position, index, scope }, scope)
   },
 
   unknownVariantDim(component: string, label: string, dim: string): DiagnosticInput {
-    return {
-      code: DiagnosticCode.ContractUnknownVariantDim,
-      category: DiagnosticCategory.Contract,
-      message: `${component}: ${label} references unknown variant "${dim}".`,
-    }
+    return contract(DiagnosticCode.ContractUnknownVariantDim, { component, label, dim })
   },
 
   unknownVariantValue(
@@ -87,27 +72,21 @@ export const ContractDiagnostics = {
     value: string,
     valid: string[],
   ): DiagnosticInput {
-    return {
-      code: DiagnosticCode.ContractUnknownVariantValue,
-      category: DiagnosticCategory.Contract,
-      message: `${component}: ${label} sets "${dim}" to unknown value "${value}" (valid: ${valid.join(', ')}).`,
-    }
+    return contract(DiagnosticCode.ContractUnknownVariantValue, {
+      component,
+      label,
+      dim,
+      value,
+      valid,
+    })
   },
 
   unknownRecipeKey(component: string, key: string): DiagnosticInput {
-    return {
-      code: DiagnosticCode.ContractUnknownRecipeKey,
-      category: DiagnosticCategory.Contract,
-      message: `${component}: unknown recipeKey "${key}" — no preset with that name exists.`,
-    }
+    return contract(DiagnosticCode.ContractUnknownRecipeKey, { component, key })
   },
 
   invalidVariantValue(component: string, key: string, value: string): DiagnosticInput {
-    return {
-      code: DiagnosticCode.ContractInvalidVariantValue,
-      category: DiagnosticCategory.Contract,
-      message: `${component}: variant "${key}=${value}" is not a defined value for the "${key}" dimension.`,
-    }
+    return contract(DiagnosticCode.ContractInvalidVariantValue, { component, key, value })
   },
 
   allowedAsViolation(
@@ -115,12 +94,10 @@ export const ContractDiagnostics = {
     allowedAs: readonly ElementType[],
     component: string,
   ): DiagnosticInput {
-    const allowed = allowedAs.map((t) => `"${describeElementType(t)}"`).join(', ')
-    return {
-      code: DiagnosticCode.AllowedAsViolation,
-      category: DiagnosticCategory.Contract,
+    return contract(
+      DiagnosticCode.AllowedAsViolation,
+      { component, tag: describeElementType(tag), allowedAs: allowedAs.map(describeElementType) },
       component,
-      message: `<${component}>: "as" prop received "${describeElementType(tag)}" but only [${allowed}] are allowed.`,
-    }
+    )
   },
 }

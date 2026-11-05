@@ -2,10 +2,7 @@
 // collections. Already large — keep it to genuinely shared primitives; a helper
 // with one call site belongs next to that call site, not here.
 
-// `guardz` directly, not `@praxis-kit/guards`: this package sits below it in the dependency graph
-// (guards → primitive → foundation), so importing through it would be a cycle. Same arrangement as
-// `lib/primitive` and `lib/diagnostics`; see DECISIONS.md (guards migration).
-import { isDefined, isEqualTo } from 'guardz'
+import { isDefined, isNull } from '../guards/foundational.ts'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,9 +16,6 @@ interface ItemCollection<T> {
   readonly length: number
   item(index: number): T | null
 }
-
-// guardz has no standalone `isNull`; `isEqualTo(null)` is its own documented composition for it.
-const isNull = isEqualTo(null)
 
 // ─── Generic iterable algorithms ──────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { makeValidator } from './aria-policy-engine.test-helpers'
-import { throwDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
+import { DiagnosticCode, silentDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
 // validate() — #checkMissingLiveRegion
@@ -34,18 +34,26 @@ describe('validate() — missing aria-live on live region roles', () => {
       'aria-live': 'polite',
     })
     expect(props).toHaveProperty('aria-live', 'polite')
-    expect(violations.some((v) => v.message.includes('injected'))).toBe(false)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingLiveRegion),
+    ).toBe(false)
   })
 
   it('pushes a warning violation when injecting', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('div', { role: 'alert' })
-    expect(violations.some((v) => v.message.includes('aria-live'))).toBe(true)
-    expect(violations.find((v) => v.message.includes('aria-live'))?.severity).toBe('warning')
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingLiveRegion),
+    ).toBe(true)
+    expect(
+      violations.find((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingLiveRegion)?.severity,
+    ).toBe('warning')
   })
 
   it('does not fire for a non-live-region role', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('div', { role: 'button' })
-    expect(violations.some((v) => v.message.includes('aria-live'))).toBe(false)
+    expect(
+      violations.some((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingLiveRegion),
+    ).toBe(false)
   })
 
   it('proceeds for a live-region role on a tag with no implicit role', () => {
@@ -61,7 +69,9 @@ describe('validate() — missing aria-live on live region roles', () => {
 describe('validate() — missing aria-atomic advisory on live region roles', () => {
   it('produces a warning when aria-atomic is absent on role="alert"', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('div', { role: 'alert' })
-    expect(violations.some((v) => v.message.includes('aria-atomic'))).toBe(true)
+    expect(violations.some((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingAtomic)).toBe(
+      true,
+    )
   })
 
   it('does not fire when aria-atomic is already set', () => {
@@ -69,12 +79,16 @@ describe('validate() — missing aria-atomic advisory on live region roles', () 
       role: 'alert',
       'aria-atomic': 'true',
     })
-    expect(violations.some((v) => v.message.includes('aria-atomic'))).toBe(false)
+    expect(violations.some((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingAtomic)).toBe(
+      false,
+    )
   })
 
   it('does not fire for non-live-region roles', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('nav', { role: 'banner' })
-    expect(violations.some((v) => v.message.includes('aria-atomic'))).toBe(false)
+    expect(violations.some((v) => v.diagnostic?.code === DiagnosticCode.AriaMissingAtomic)).toBe(
+      false,
+    )
   })
 
   it('is advisory only — does not inject aria-atomic into props', () => {
@@ -107,7 +121,10 @@ describe('validate() — aria-relevant validation and normalisation', () => {
     })
     const v = violations.find((v) => v.attribute === 'aria-relevant')
     expect(v).toBeDefined()
-    expect(v?.message).toMatch(/bogus/)
+    expect(v?.diagnostic).toMatchObject({
+      code: DiagnosticCode.AriaRelevantInvalidToken,
+      context: { invalid: ['bogus'] },
+    })
   })
 
   it('normalises "all additions" to "all"', () => {

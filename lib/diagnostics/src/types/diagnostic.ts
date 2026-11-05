@@ -40,7 +40,13 @@ export interface Diagnostic {
   severity: Severity
   category: DiagnosticCategory
 
-  message: string
+  /** Human-readable text. Optional: the core emits facts (code, severity, category, context) and
+   *  carries no prose. A message is attached by a `MessageResolver` on the `Diagnostics` instance
+   *  when one is configured; without one, formatters fall back to `code`. */
+  message?: string
+  /** Names the catalog entry that describes this diagnostic when it differs from `code` (several
+   *  codes can share one entry). A fact, not text. */
+  messageId?: string
   rationale?: string
 
   component?: string
@@ -55,3 +61,17 @@ export interface Diagnostic {
   /** Structured data for tooling — never rendered. Machine-oriented. */
   metadata?: Metadata
 }
+
+/** The text parts a resolver may supply for a diagnostic. */
+export interface DiagnosticText {
+  message?: string
+  rationale?: string
+  suggestions?: DiagnosticSuggestion[]
+}
+
+/**
+ * Turns a diagnostic's facts (`code`, `messageId`, `context`) into text. Supplied per `Diagnostics`
+ * instance, never globally, so concurrent consumers can use different locales safely. Return
+ * `undefined` for a diagnostic it has no text for; the formatter then falls back to the code.
+ */
+export type MessageResolver = (diagnostic: Diagnostic) => DiagnosticText | undefined

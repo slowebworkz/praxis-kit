@@ -125,3 +125,64 @@ describe('PraxisError', () => {
     expect(error.diagnostic.severity).toBe(Severity.Error)
   })
 })
+
+describe('message resolution (instance-scoped)', () => {
+  const fact = {
+    code: DiagnosticCode.InvalidChild,
+    category: DiagnosticCategory.Composition,
+    context: { child: 'Button' },
+  } as const
+
+  it('reports a fact with no text when no resolver is configured', () => {
+    const reporter = new CollectingReporter()
+    new Diagnostics(reporter).warn(fact)
+    expect(reporter.diagnostics[0]?.message).toBeUndefined()
+    expect(reporter.diagnostics[0]?.code).toBe(DiagnosticCode.InvalidChild)
+  })
+
+  it('attaches resolver text to the reported diagnostic', () => {
+    const reporter = new CollectingReporter()
+    const resolveMessage = (d: { context?: { child?: unknown } }) => ({
+      message: `no ${String(d.context?.child)} here`,
+    })
+    new Diagnostics(reporter, undefined, { resolveMessage }).warn(fact)
+    expect(reporter.diagnostics[0]?.message).toBe('no Button here')
+  })
+
+  it('lets text the diagnostic already carries win over the resolver', () => {
+    const reporter = new CollectingReporter()
+    new Diagnostics(reporter, undefined, { resolveMessage: () => ({ message: 'resolved' }) }).warn({
+      ...fact,
+      message: 'explicit',
+    })
+    expect(reporter.diagnostics[0]?.message).toBe('explicit')
+  })
+
+  it('keeps two instances with different resolvers independent', () => {
+    const a = new CollectingReporter()
+    const b = new CollectingReporter()
+    const base = new Diagnostics(a, undefined, { resolveMessage: () => ({ message: 'en' }) })
+    const other = new Diagnostics(b, undefined, { resolveMessage: () => ({ message: 'de' }) })
+    base.warn(fact)
+    other.warn(fact)
+    expect(a.diagnostics[0]?.message).toBe('en')
+    expect(b.diagnostics[0]?.message).toBe('de')
+  })
+
+  it('withMessages returns a new instance and leaves the original untouched', () => {
+    const reporter = new CollectingReporter()
+    const plain = new Diagnostics(reporter)
+    const localized = plain.withMessages(() => ({ message: 'hi' }))
+    localized.warn(fact)
+    plain.warn(fact)
+    expect(reporter.diagnostics[0]?.message).toBe('hi')
+    expect(reporter.diagnostics[1]?.message).toBeUndefined()
+  })
+
+  it('falls back to the code in a thrown PraxisError', () => {
+    const throwing = new Diagnostics(new CollectingReporter(), {
+      resolve: () => Enforcement.Throw,
+    })
+    expect(() => throwing.error(fact)).toThrow(DiagnosticCode.InvalidChild)
+  })
+})

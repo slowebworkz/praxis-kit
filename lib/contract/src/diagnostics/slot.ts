@@ -1,53 +1,41 @@
 import type { DiagnosticInput } from '@praxis-kit/diagnostics'
 import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
 
+// Facts only — see `aria.ts`. `messageId` separates entries that share a code.
+function slot(
+  code: DiagnosticCode,
+  name: string,
+  context: Readonly<Record<string, unknown>>,
+  messageId?: string,
+): DiagnosticInput {
+  return {
+    code,
+    category: DiagnosticCategory.Contract,
+    component: name,
+    context: { name, ...context },
+    ...(messageId !== undefined && { messageId }),
+  }
+}
+
 export const SlotDiagnostics = {
   exclusive(name: string): DiagnosticInput {
-    return {
-      code: DiagnosticCode.SlotExclusive,
-      category: DiagnosticCategory.Contract,
-      component: name,
-      message: `${name}: "as" and "asChild" are mutually exclusive`,
-    }
+    return slot(DiagnosticCode.SlotExclusive, name, {})
   },
 
   singleChildRequired(name: string, elementTerm: string): DiagnosticInput {
-    return {
-      code: DiagnosticCode.SlotSingleChild,
-      category: DiagnosticCategory.Contract,
-      component: name,
-      message: `${name}: asChild requires a ${elementTerm} child`,
-    }
+    return slot(DiagnosticCode.SlotSingleChild, name, { elementTerm }, 'SLOT1002.required')
   },
 
   singleChildExceeded(name: string, elementTerm: string, count: number): DiagnosticInput {
-    return {
-      code: DiagnosticCode.SlotSingleChild,
-      category: DiagnosticCategory.Contract,
-      component: name,
-      message: `${name}: asChild requires exactly one ${elementTerm} child, got ${count}`,
-    }
+    return slot(DiagnosticCode.SlotSingleChild, name, { elementTerm, count }, 'SLOT1002.exceeded')
   },
 
   discardedChildren(name: string, elementTerm: string, count: number): DiagnosticInput {
-    const noun = count === 1 ? 'child' : 'children'
-    return {
-      code: DiagnosticCode.SlotDiscardedChildren,
-      category: DiagnosticCategory.Contract,
-      component: name,
-      message:
-        `${name}: asChild discarded ${count} non-element ${noun} — ` +
-        `only ${elementTerm}s are valid asChild children.`,
-    }
+    return slot(DiagnosticCode.SlotDiscardedChildren, name, { elementTerm, count })
   },
 
   renderFnRequired(name: string, received: string): DiagnosticInput {
-    return {
-      code: DiagnosticCode.SlotRenderFn,
-      category: DiagnosticCategory.Contract,
-      component: name,
-      message: `${name}: asChild requires a render function as children, got ${received}`,
-    }
+    return slot(DiagnosticCode.SlotRenderFn, name, { received })
   },
 
   allowedAsMismatch(
@@ -55,14 +43,9 @@ export const SlotDiagnostics = {
     childTag: string,
     allowedAs: readonly unknown[],
   ): DiagnosticInput {
-    const allowed = allowedAs.map((t) => `"${String(t)}"`).join(', ')
-    return {
-      code: DiagnosticCode.SlotAllowedAsMismatch,
-      category: DiagnosticCategory.Contract,
-      component: name,
-      message:
-        `${name}: asChild composed onto "${childTag}", which is not one of [${allowed}] — ` +
-        `${name}'s behavior depends on the resolved tag, so native functionality may not work.`,
-    }
+    return slot(DiagnosticCode.SlotAllowedAsMismatch, name, {
+      childTag,
+      allowedAs: allowedAs.map(String),
+    })
   },
 }

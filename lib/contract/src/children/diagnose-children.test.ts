@@ -55,7 +55,7 @@ describe('diagnoseChildren', () => {
         cardinality: { min: 1, max: 1 },
       }
       const [v] = diagnoseChildren([rule], [], 'MyWidget')
-      expect(v?.message).toContain('MyWidget')
+      expect(v?.diagnostic?.context).toMatchObject({ scope: 'MyWidget' })
     })
   })
 
@@ -109,7 +109,7 @@ describe('diagnoseChildren', () => {
       const violations = diagnoseChildren([flexRule], [gridEl], 'Component', {
         exclusiveChildren: true,
       })
-      expect(violations[0]?.message).toContain('Grid')
+      expect(violations[0]?.diagnostic?.context).toMatchObject({ typeName: 'Grid' })
     })
   })
 
@@ -176,8 +176,9 @@ describe('diagnoseChildren', () => {
       }
       const violations = diagnoseChildren([flexRule, catchAllRule], [flexEl])
       const v = violations.find((x) => x.kind === 'ambiguous')
-      expect(v?.message).toContain('"flex"')
-      expect(v?.message).toContain('"any"')
+      expect(v?.diagnostic?.context).toMatchObject({
+        ruleNames: expect.arrayContaining(['flex', 'any']),
+      })
     })
   })
 

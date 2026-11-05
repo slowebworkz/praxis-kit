@@ -13,8 +13,7 @@
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "@praxis-kit/foundation": "workspace:*",
-    "guardz": "catalog:"
+    "@praxis-kit/foundation": "workspace:*"
   },
   "devDependencies": {
     "vitest": "catalog:"

@@ -140,7 +140,7 @@ describe('createContractComponent (Preact adapter)', () => {
           asChild: true,
         }),
       ),
-    ).toThrow('asChild requires a Preact element child')
+    ).toThrow('SLOT1002')
   })
 
   it('fragment child counts as one element for asChild (no flattening)', () => {
@@ -287,7 +287,7 @@ describe('createContractComponent (Preact adapter)', () => {
     mount(h(box(Box), { asChild: true }, h('a', null), 'trailing text'))
 
     expect(container.querySelector('a')).toBeTruthy()
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('non-element child'))
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('SLOT1003'))
     warnSpy.mockRestore()
   })
 
@@ -311,8 +311,8 @@ describe('createContractComponent (Preact adapter)', () => {
 
     mount(h(box(Trigger), { asChild: true }, h('a', null)))
 
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"a"'))
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"button"'))
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('SLOT1005'))
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('SLOT1005'))
     warnSpy.mockRestore()
   })
 
@@ -350,7 +350,7 @@ describe('createContractComponent (Preact adapter)', () => {
       h(box(Trigger), { asChild: true }, h(Slottable, null, h('a', null)), h('span', null, 'icon')),
     )
 
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"a"'))
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('SLOT1005'))
     warnSpy.mockRestore()
   })
 

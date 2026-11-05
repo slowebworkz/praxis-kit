@@ -185,7 +185,7 @@ describe('render', () => {
         filterProps: noopFilter,
         slotValidator: defaultValidator,
       }),
-    ).toThrow('Test: "as" and "asChild" are mutually exclusive')
+    ).toThrow('SLOT1001')
   })
 
   it('throws when asChild has zero children', () => {
@@ -199,7 +199,7 @@ describe('render', () => {
         filterProps: noopFilter,
         slotValidator: defaultValidator,
       }),
-    ).toThrow('asChild requires a React element child')
+    ).toThrow('SLOT1002')
   })
 
   it('throws when asChild has more than one child', () => {
@@ -214,7 +214,7 @@ describe('render', () => {
         filterProps: noopFilter,
         slotValidator: defaultValidator,
       }),
-    ).toThrow('asChild requires exactly one React element child, got 2')
+    ).toThrow('SLOT1002')
   })
 
   it('asChild with Slottable sibling pattern passes children through to Slot without throwing', () => {
@@ -304,7 +304,7 @@ describe('render', () => {
       filterProps: noopFilter,
       slotValidator: new SlotValidator('Test', warnDiagnostics, 'React element'),
     })
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('discarded 1 non-element child'))
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('SLOT1003'))
     warnSpy.mockRestore()
   })
 
@@ -373,10 +373,8 @@ describe('render', () => {
       filterProps: noopFilter,
       slotValidator: new SlotValidator('Test', warnDiagnostics, 'React element'),
     })
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('asChild requires a React element child'),
-    )
-    expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('non-element child —'))
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('SLOT1002'))
+    expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('SLOT1003'))
     warnSpy.mockRestore()
   })
 

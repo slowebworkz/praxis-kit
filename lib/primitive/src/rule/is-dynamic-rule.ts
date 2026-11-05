@@ -1,5 +1,5 @@
 import type { DynamicRule, Rule } from '../types'
-import { isNonNullObject } from 'guardz'
+import { isNonNullObject } from '@praxis-kit/foundation'
 import { RULE_BRAND } from './rule-brand'
 
 export function isDynamicRule<T, C>(rule: Rule<T, C>): rule is DynamicRule<T, C> {

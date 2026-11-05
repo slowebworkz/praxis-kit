@@ -166,3 +166,23 @@ describe('isEqualTo', () => {
     }
   })
 })
+
+// `@praxis-kit/guards` only re-exports the guards the foundation implements; it must never grow a
+// second copy of one. Identity, not just behaviour, is what keeps the two from drifting.
+describe('re-exports from @praxis-kit/foundation', () => {
+  it('exposes exactly the foundation guards, as the same functions', async () => {
+    const mine = await import('./index')
+    const theirs = await import('@praxis-kit/foundation')
+    const names = Object.keys(mine).sort()
+    expect(names.length).toBeGreaterThan(0)
+    for (const name of names) {
+      expect([name, (mine as Record<string, unknown>)[name]]).toEqual([
+        name,
+        (theirs as Record<string, unknown>)[name],
+      ])
+      expect((mine as Record<string, unknown>)[name]).toBe(
+        (theirs as Record<string, unknown>)[name],
+      )
+    }
+  })
+})

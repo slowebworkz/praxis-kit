@@ -27,6 +27,30 @@ const config = [
       'import-x/no-cycle': ['error', { maxDepth: 6 }],
     },
   },
+
+  // `guardz` is a CommonJS barrel with no `sideEffects: false`, so a bundler cannot tree-shake it:
+  // importing any one guard keeps the whole library (about 9 KB gzipped) in every bundle that
+  // reaches the import. Use the guards from `@praxis-kit/guards`, or `@praxis-kit/foundation` in the
+  // packages below it. Only the foundation's own parity test imports `guardz`, to check the guards
+  // that replaced it against the original.
+  {
+    files: TS_FILES,
+    ignores: ['lib/foundation/src/guards/foundational.test.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'guardz',
+              message:
+                "guardz is not tree-shakeable (CommonJS barrel). Import the guard from '@praxis-kit/guards' (or '@praxis-kit/foundation' below it) instead.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ] satisfies ESLintConfig
 
 export default config

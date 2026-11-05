@@ -66,3 +66,24 @@ describe('AsyncConsoleReporter', () => {
     expect(warn).not.toHaveBeenCalled()
   })
 })
+
+describe('AsyncConsoleReporter — facts without text', () => {
+  const fact = (key: string): Diagnostic => ({
+    code: DiagnosticCode.ContractUnknownRecipeKey,
+    category: DiagnosticCategory.Contract,
+    severity: Severity.Warning,
+    context: { key },
+  })
+
+  it('prints one line per distinct context even though the lines are identical', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const reporter = new AsyncConsoleReporter()
+    reporter.report(fact('a'))
+    reporter.report(fact('b'))
+    reporter.report(fact('a'))
+    await Promise.resolve()
+    expect(warn).toHaveBeenCalledTimes(2)
+    expect(warn).toHaveBeenNthCalledWith(1, 'Warning COMP1012')
+    warn.mockRestore()
+  })
+})

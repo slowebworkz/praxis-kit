@@ -3,8 +3,9 @@ import { describe, expect, it } from 'vitest'
 import type { ChildRuleContext, ChildRuleInput } from '../types'
 import { ChildrenEvaluator } from './children-evaluator'
 import type { ChildrenEvaluatorOptions } from './children-evaluator'
-import { throwDiagnostics } from '@praxis-kit/diagnostics'
+import { DiagnosticCode, throwDiagnostics } from '@praxis-kit/diagnostics'
 import { dynamic } from '@praxis-kit/primitive'
+import { thrownDiagnostic } from '../strict/thrown-diagnostic'
 
 // ---------------------------------------------------------------------------
 // Helpers — plain class instances
@@ -202,12 +203,18 @@ describe('ChildrenEvaluator.evaluate() — unexpected child (exclusiveChildren: 
     const ev = new ChildrenEvaluator([flexRule], throwDiagnostics, 'MyComponent', {
       exclusiveChildren: true,
     })
-    expect(() => ev.evaluate([gridEl])).toThrow(/MyComponent/)
+    expect(thrownDiagnostic(() => ev.evaluate([gridEl]))).toMatchObject({
+      code: DiagnosticCode.UnexpectedChild,
+      context: { scope: 'MyComponent' },
+    })
   })
 
   it('error message identifies the element type', () => {
     const ev = makeEvaluator([flexRule], 'Test', { exclusiveChildren: true })
-    expect(() => ev.evaluate([gridEl])).toThrow(/Grid/)
+    expect(thrownDiagnostic(() => ev.evaluate([gridEl]))).toMatchObject({
+      code: DiagnosticCode.UnexpectedChild,
+      context: { typeName: 'Grid' },
+    })
   })
 })
 
@@ -243,7 +250,10 @@ describe('ChildrenEvaluator.evaluate() — open by default', () => {
       cardinality: { min: 1 },
     }
     const ev = makeEvaluator([requiredHeader])
-    expect(() => ev.evaluate([gridEl])).toThrow(/header/)
+    expect(thrownDiagnostic(() => ev.evaluate([gridEl]))).toMatchObject({
+      code: DiagnosticCode.CardinalityMin,
+      context: { ruleName: 'header' },
+    })
   })
 })
 
@@ -304,8 +314,10 @@ describe('ChildrenEvaluator.evaluate() — multiple rule matches', () => {
   it('error message lists the conflicting rule names', () => {
     const broadRule: ChildRuleInput = { name: 'broad', match: (_: unknown): _ is unknown => true }
     const ev = makeEvaluator([flexRule, broadRule])
-    expect(() => ev.evaluate([flexEl])).toThrow(/flex/)
-    expect(() => ev.evaluate([flexEl])).toThrow(/broad/)
+    expect(thrownDiagnostic(() => ev.evaluate([flexEl]))).toMatchObject({
+      code: DiagnosticCode.AmbiguousChild,
+      context: { ruleNames: expect.arrayContaining(['flex', 'broad']) },
+    })
   })
 })
 
@@ -321,7 +333,9 @@ describe('ChildrenEvaluator.evaluate() — cardinality violations', () => {
       cardinality: { min: 1 },
     }
     const ev = makeEvaluator([required])
-    expect(() => ev.evaluate([])).toThrow(/required/)
+    expect(thrownDiagnostic(() => ev.evaluate([]))).toMatchObject({
+      code: DiagnosticCode.CardinalityMin,
+    })
   })
 
   it('throws when max is exceeded', () => {
@@ -331,7 +345,9 @@ describe('ChildrenEvaluator.evaluate() — cardinality violations', () => {
       cardinality: { max: 1 },
     }
     const ev = makeEvaluator([atMostOne])
-    expect(() => ev.evaluate([flexEl, flexEl])).toThrow(/once/)
+    expect(thrownDiagnostic(() => ev.evaluate([flexEl, flexEl]))).toMatchObject({
+      code: DiagnosticCode.CardinalityMax,
+    })
   })
 
   it('passes when count is exactly at min', () => {
@@ -357,12 +373,18 @@ describe('ChildrenEvaluator.evaluate() — cardinality violations', () => {
 describe('ChildrenEvaluator.evaluate() — position violations', () => {
   it('throws when "first" child is not at index 0', () => {
     const ev = makeEvaluator([bodyRule, headerRule])
-    expect(() => ev.evaluate([bodyEl, headerEl])).toThrow(/header/)
+    expect(thrownDiagnostic(() => ev.evaluate([bodyEl, headerEl]))).toMatchObject({
+      code: DiagnosticCode.PositionViolation,
+      context: { ruleName: 'header' },
+    })
   })
 
   it('throws when "last" child is not at final index', () => {
     const ev = makeEvaluator([footerRule, bodyRule])
-    expect(() => ev.evaluate([footerEl, bodyEl])).toThrow(/footer/)
+    expect(thrownDiagnostic(() => ev.evaluate([footerEl, bodyEl]))).toMatchObject({
+      code: DiagnosticCode.PositionViolation,
+      context: { ruleName: 'footer' },
+    })
   })
 
   it('passes when "first" child is correctly placed', () => {
@@ -401,8 +423,14 @@ describe('ChildrenEvaluator.evaluate() — dynamic(...) cardinality', () => {
     const ev = makeEvaluator([headerRuleByTag])
     const sectionCtx: ChildRuleContext = { tag: 'section', props: {} }
     expect(() => ev.evaluate([headerEl], sectionCtx)).not.toThrow()
-    expect(() => ev.evaluate([headerEl, headerEl], sectionCtx)).toThrow(/header/)
-    expect(() => ev.evaluate([], sectionCtx)).toThrow(/header/)
+    expect(thrownDiagnostic(() => ev.evaluate([headerEl, headerEl], sectionCtx))).toMatchObject({
+      code: DiagnosticCode.CardinalityMax,
+      context: { ruleName: 'header' },
+    })
+    expect(thrownDiagnostic(() => ev.evaluate([], sectionCtx))).toMatchObject({
+      code: DiagnosticCode.CardinalityMin,
+      context: { ruleName: 'header' },
+    })
   })
 
   it('resolves against the given context: div allows any number of Headers', () => {
@@ -415,7 +443,10 @@ describe('ChildrenEvaluator.evaluate() — dynamic(...) cardinality', () => {
   it('re-resolves per call — the same evaluator instance honors a changed context', () => {
     const ev = makeEvaluator([headerRuleByTag])
     expect(() => ev.evaluate([], { tag: 'div', props: {} })).not.toThrow()
-    expect(() => ev.evaluate([], { tag: 'section', props: {} })).toThrow(/header/)
+    expect(thrownDiagnostic(() => ev.evaluate([], { tag: 'section', props: {} }))).toMatchObject({
+      code: DiagnosticCode.CardinalityMin,
+      context: { ruleName: 'header' },
+    })
   })
 
   it('mixes cleanly with static rules — static rules stay cached, dynamic ones re-resolve', () => {
@@ -423,7 +454,10 @@ describe('ChildrenEvaluator.evaluate() — dynamic(...) cardinality', () => {
     const sectionCtx: ChildRuleContext = { tag: 'section', props: {} }
     // header: exactly one (dynamic, section); footer: position="last" (static)
     expect(() => ev.evaluate([headerEl, footerEl], sectionCtx)).not.toThrow()
-    expect(() => ev.evaluate([footerEl, headerEl], sectionCtx)).toThrow(/footer/)
+    expect(thrownDiagnostic(() => ev.evaluate([footerEl, headerEl], sectionCtx))).toMatchObject({
+      code: DiagnosticCode.PositionViolation,
+      context: { ruleName: 'footer' },
+    })
   })
 
   it('still runs the position/cardinality invariant check against the resolved value', () => {

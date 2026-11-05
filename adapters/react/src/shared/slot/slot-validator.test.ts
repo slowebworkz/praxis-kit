@@ -8,15 +8,13 @@ describe('assertExclusive', () => {
   it('throws with the component name when strict is throw', () => {
     expect(() =>
       new SlotValidator('Button', throwDiagnostics, 'React element').assertExclusive(),
-    ).toThrow('Button: "as" and "asChild" are mutually exclusive')
+    ).toThrow('SLOT1001')
   })
 
   it('warns when strict is warn', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     new SlotValidator('Button', warnDiagnostics, 'React element').assertExclusive()
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('"as" and "asChild" are mutually exclusive'),
-    )
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1001'))
   })
 
   it('is silent when strict is false', () => {
@@ -32,13 +30,13 @@ describe('warnDiscardedChildren', () => {
   it('uses singular form for count 1', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     new SlotValidator('Card', warnDiagnostics, 'React element').warnDiscardedChildren(1)
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('1 non-element child —'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1003'))
   })
 
   it('uses plural form for count greater than 1', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     new SlotValidator('Card', warnDiagnostics, 'React element').warnDiscardedChildren(3)
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('3 non-element children —'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1003'))
   })
 
   it('is silent when strict is false', () => {
@@ -60,7 +58,7 @@ describe('assertSingleChild', () => {
   it('throws with count in message when strict is throw', () => {
     expect(() =>
       new SlotValidator('Icon', throwDiagnostics, 'React element').assertSingleChild(3),
-    ).toThrow('Icon: asChild requires exactly one React element child, got 3')
+    ).toThrow('SLOT1002')
   })
 
   it('is silent when strict is false', () => {

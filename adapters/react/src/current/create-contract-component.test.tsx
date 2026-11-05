@@ -481,7 +481,7 @@ describe('createContractComponent (current / React 19)', () => {
           asChild: true,
         }),
       ),
-    ).toThrow('asChild requires a React element child')
+    ).toThrow('SLOT1002')
   })
 
   // Fragment is NOT flattened in current/ — it counts as one element.
@@ -686,7 +686,7 @@ describe('createContractComponent (current / React 19)', () => {
 
     dom.mount(createElement(box(Box), { as: 'div' }))
 
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"div"'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('COMP1009'))
     warn.mockRestore()
   })
 
@@ -695,7 +695,7 @@ describe('createContractComponent (current / React 19)', () => {
       enforcement: { diagnostics: throwDiagnostics, allowedAs: ['button', 'a'] },
     })
 
-    expect(() => dom.mount(createElement(box(Box), { as: 'div' }))).toThrow(/"div"/)
+    expect(() => dom.mount(createElement(box(Box), { as: 'div' }))).toThrow('COMP1009')
   })
 
   // React's adapter default is throwDiagnostics (resolveAdapterCommonOptions), so omitting
@@ -706,7 +706,7 @@ describe('createContractComponent (current / React 19)', () => {
       enforcement: { allowedAs: ['button', 'a'] },
     })
 
-    expect(() => dom.mount(createElement(box(Box), { as: 'div' }))).toThrow(/"div"/)
+    expect(() => dom.mount(createElement(box(Box), { as: 'div' }))).toThrow('COMP1009')
   })
 
   // ── component-reference "as"/"allowedAs" ────────────────────────────────────
@@ -771,8 +771,8 @@ describe('createContractComponent (current / React 19)', () => {
 
     dom.mount(createElement(box(Trigger), { asChild: true }, createElement('a')))
 
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"a"'))
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"button"'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1005'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1005'))
     warn.mockRestore()
   })
 
@@ -821,7 +821,7 @@ describe('createContractComponent (current / React 19)', () => {
 
     dom.mount(createElement(box(Trigger), { asChild: true }, createElement(box(Link), null)))
 
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"a"'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1005'))
     warn.mockRestore()
   })
 
@@ -863,7 +863,7 @@ describe('createContractComponent (current / React 19)', () => {
       ),
     )
 
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('"a"'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('SLOT1005'))
     warn.mockRestore()
   })
 

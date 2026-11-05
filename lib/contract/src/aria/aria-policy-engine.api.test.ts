@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { AriaPolicyEngine, isInvalid } from './aria-policy-engine'
 import { makeCollecting, makeValidator } from './aria-policy-engine.test-helpers'
-import { throwDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
+import { DiagnosticCode, silentDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
 // isInvalid()
@@ -201,12 +201,14 @@ describe('validate() — violation message content', () => {
       role: 'button',
       'aria-checked': 'true',
     })
-    expect(violations[0]?.message).toMatch(/aria-checked/)
-    expect(violations[0]?.message).toMatch(/button/)
+    expect(violations[0]?.diagnostic).toMatchObject({
+      code: DiagnosticCode.AriaAttributeInvalid,
+      context: { key: 'aria-checked', role: 'button' },
+    })
   })
 
   it('attribute violation message on implicit role names the implicit role', () => {
     const { violations } = makeCollecting().engine.validate('button', { 'aria-checked': 'true' })
-    expect(violations[0]?.message).toMatch(/button/)
+    expect(violations[0]?.diagnostic).toMatchObject({ context: { role: 'button' } })
   })
 })

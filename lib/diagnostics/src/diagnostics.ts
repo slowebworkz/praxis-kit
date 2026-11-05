@@ -1,6 +1,7 @@
 import type { DiagnosticPolicy } from './policy'
-import type { Diagnostic, DiagnosticReporter } from './types'
+import type { Diagnostic, DiagnosticReporter, MessageResolver } from './types'
 import { PraxisError } from './error'
+import { isDefined, isUndefined } from '@praxis-kit/foundation'
 import { DefaultPolicy, Enforcement } from './policy'
 import { Severity } from './severity'
 
@@ -22,15 +23,20 @@ export class Diagnostics {
   readonly warnActive: boolean
   /** Report-only preset: validation must not silently normalize the caller's props. */
   readonly reportOnly: boolean
+  /** Supplies text for diagnostics reported through this instance. Instance-scoped on purpose: two
+   *  instances can use different locales at once. `undefined` ⇒ diagnostics carry no text and
+   *  formatters fall back to the code. */
+  readonly resolveMessage: MessageResolver | undefined
 
   constructor(
     reporter: DiagnosticReporter,
     policy: DiagnosticPolicy = new DefaultPolicy(),
-    options: { reportOnly?: boolean } = {},
+    options: { reportOnly?: boolean; resolveMessage?: MessageResolver } = {},
   ) {
     this.reporter = reporter
     this.policy = policy
     this.reportOnly = options.reportOnly ?? false
+    this.resolveMessage = options.resolveMessage
     this.warnActive =
       policy.resolve({ severity: Severity.Warning } as unknown as Diagnostic) !== Enforcement.Ignore
   }
@@ -42,7 +48,31 @@ export class Diagnostics {
     return !this.reportOnly
   }
 
-  report(diagnostic: Diagnostic): Diagnostic {
+  /** A copy of this instance (same reporter and policy) that resolves text with `resolver`. */
+  withMessages(resolver: MessageResolver | undefined): Diagnostics {
+    return new Diagnostics(this.reporter, this.policy, {
+      reportOnly: this.reportOnly,
+      ...(isDefined(resolver) && { resolveMessage: resolver }),
+    })
+  }
+
+  /** Attaches resolver text to a diagnostic. Text the diagnostic already carries always wins. */
+  describe(diagnostic: Diagnostic): Diagnostic {
+    if (isUndefined(this.resolveMessage)) return diagnostic
+    const text = this.resolveMessage(diagnostic)
+    if (isUndefined(text)) return diagnostic
+    return {
+      ...diagnostic,
+      ...(isUndefined(diagnostic.message) && isDefined(text.message) && { message: text.message }),
+      ...(isUndefined(diagnostic.rationale) &&
+        isDefined(text.rationale) && { rationale: text.rationale }),
+      ...(isUndefined(diagnostic.suggestions) &&
+        isDefined(text.suggestions) && { suggestions: text.suggestions }),
+    }
+  }
+
+  report(input: Diagnostic): Diagnostic {
+    const diagnostic = this.describe(input)
     const enforcement = this.policy.resolve(diagnostic)
     if (enforcement === Enforcement.Ignore) return diagnostic
     if (enforcement === Enforcement.Throw) throw new PraxisError(diagnostic)

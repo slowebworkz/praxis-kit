@@ -7,17 +7,17 @@
     ".": "./src/index.ts"
   },
   "sideEffects": false,
-  "description": "Generic, dependency-free utilities safe for both bundler-mode resolution and direct Node execution — no internal workspace dependencies, no directory-style barrel exports",
+  "description": "Generic, dependency-free utilities safe for both bundler-mode resolution and direct Node execution \u2014 no internal workspace dependencies, no directory-style barrel exports",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:related": "vitest run --changed"
   },
   "dependencies": {
-    "clsx": "catalog:",
-    "guardz": "catalog:"
+    "clsx": "catalog:"
   },
   "devDependencies": {
+    "guardz": "catalog:",
     "vitest": "catalog:"
   }
 }

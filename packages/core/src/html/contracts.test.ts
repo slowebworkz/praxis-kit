@@ -743,13 +743,15 @@ describe('landmarkContract', () => {
     expect(results).toMatchObject([{ valid: false, severity: 'error', fixable: true }])
   })
 
-  it('error message names the tag and both roles', () => {
+  it('error carries the tag and both roles as context', () => {
     const [result] = rule(ctx('nav', { role: 'presentation' }, 'navigation'))
     expect(result!.valid).toBe(false)
     if (!result!.valid) {
-      expect(result!.diagnostic?.message).toMatch(/nav/)
-      expect(result!.diagnostic?.message).toMatch(/navigation/)
-      expect(result!.diagnostic?.message).toMatch(/presentation/)
+      expect(result!.diagnostic?.context).toMatchObject({
+        tag: 'nav',
+        implicitRole: 'navigation',
+        role: 'presentation',
+      })
     }
   })
 

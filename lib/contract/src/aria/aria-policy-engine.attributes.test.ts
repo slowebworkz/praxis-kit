@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { makeCollecting, makeValidator } from './aria-policy-engine.test-helpers'
-import { throwDiagnostics, silentDiagnostics } from '@praxis-kit/diagnostics'
+import { DiagnosticCode, silentDiagnostics, throwDiagnostics } from '@praxis-kit/diagnostics'
 
 // ---------------------------------------------------------------------------
 // validate() — #checkInvalidAriaAttributes (aria-* on wrong role)
@@ -516,14 +516,22 @@ describe('validate() — redundant aria-level on heading elements', () => {
   it('warns when h1 has aria-level="1" (matches implicit level)', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('h1', { 'aria-level': '1' })
     expect(
-      violations.some((v) => v.attribute === 'aria-level' && v.message.includes('redundant')),
+      violations.some(
+        (v) =>
+          v.attribute === 'aria-level' &&
+          v.diagnostic?.code === DiagnosticCode.AriaRedundantLevelAttribute,
+      ),
     ).toBe(true)
   })
 
   it('warns when h3 has aria-level={3} (numeric, matches implicit level)', () => {
     const { violations } = makeValidator(silentDiagnostics).validate('h3', { 'aria-level': 3 })
     expect(
-      violations.some((v) => v.attribute === 'aria-level' && v.message.includes('redundant')),
+      violations.some(
+        (v) =>
+          v.attribute === 'aria-level' &&
+          v.diagnostic?.code === DiagnosticCode.AriaRedundantLevelAttribute,
+      ),
     ).toBe(true)
   })
 
@@ -535,7 +543,11 @@ describe('validate() — redundant aria-level on heading elements', () => {
   it('does not warn when aria-level overrides the implicit level', () => {
     const { violations } = makeValidator(throwDiagnostics).validate('h2', { 'aria-level': '3' })
     expect(
-      violations.some((v) => v.attribute === 'aria-level' && v.message.includes('redundant')),
+      violations.some(
+        (v) =>
+          v.attribute === 'aria-level' &&
+          v.diagnostic?.code === DiagnosticCode.AriaRedundantLevelAttribute,
+      ),
     ).toBe(false)
   })
 
@@ -551,7 +563,11 @@ describe('validate() — redundant aria-level on heading elements', () => {
     })
     // role=heading on div with aria-level=2 is not redundant (div has no implicit level)
     expect(
-      violations.some((v) => v.attribute === 'aria-level' && v.message.includes('redundant')),
+      violations.some(
+        (v) =>
+          v.attribute === 'aria-level' &&
+          v.diagnostic?.code === DiagnosticCode.AriaRedundantLevelAttribute,
+      ),
     ).toBe(false)
   })
 
