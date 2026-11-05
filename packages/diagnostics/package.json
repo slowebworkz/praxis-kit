@@ -23,6 +23,9 @@
     "./schema.json": "./dist/catalog.v1.schema.json",
     "./catalog.v1.schema.json": "./dist/catalog.v1.schema.json"
   },
+  "bin": {
+    "praxis-kit-diagnostics": "./dist/cli.js"
+  },
   "files": [
     "dist",
     "LICENSE"
