@@ -33,45 +33,45 @@
     "gzip": 21165
   },
   "package/contract-only": {
-    "gzip": 985
+    "gzip": 442
   },
   "package/diagnostics-other-locale": {
-    "gzip": 1241
+    "gzip": 1245
   },
   "package/diagnostics-resolver-only": {
     "gzip": 1174
   },
   "package/diagnostics-with-english": {
-    "gzip": 5600
+    "gzip": 5599
   },
   "package/diagnostics-with-validator": {
-    "gzip": 5003
+    "gzip": 5400
   },
   "package/guards-only": {
     "gzip": 388
   },
   "package/html-only": {
-    "gzip": 6668
+    "gzip": 6871
   },
   "package/lit-minimal": {
-    "gzip": 20181
+    "gzip": 20156
   },
   "package/preact-minimal": {
-    "gzip": 22220
+    "gzip": 22188
   },
   "package/react-minimal": {
-    "gzip": 22531
+    "gzip": 22501
   },
   "package/solid-minimal": {
-    "gzip": 21581
+    "gzip": 21556
   },
   "package/utils-only": {
     "gzip": 118
   },
   "package/vue-minimal": {
-    "gzip": 21712
+    "gzip": 21685
   },
   "package/web-minimal": {
-    "gzip": 20149
+    "gzip": 20128
   }
 }

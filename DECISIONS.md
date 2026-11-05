@@ -4147,3 +4147,41 @@ plugin-API checks (`packages/core/src/factory/plugin-diagnostics.ts`), the relat
 checks in `lib/runtime/src/build-tree-context.ts` and
 `lib/adapter-utils/src/runtime/diagnose-incomplete-composition.ts`. Until those move, localization
 is partial and is documented as such in `docs/api-stability.md` and the package README.
+
+## 2026-11 — Language packs: a versioned catalog contract
+
+Context: an external pack (first target `praxis-kit-diagnostics-fr`, own repo and package) must stay
+correct as Praxis Kit evolves. The risk is not invalid JSON; it is a translation that looks valid
+and silently becomes wrong when a context key, placeholder or plural rule changes. Before this,
+English was the de facto spec and nothing versioned, deprecated or removed an id.
+
+- _The contract is data, and packs are checked against it, not against English._
+  `packages/diagnostics/contract/diagnostics.contract.json` lists, per catalog-driven id, its codes,
+  context keys (kind, required, essential), plural selector, spec links, `since`, and real examples.
+  English is validated by the same code, which keeps the validator honest. Drift tests run every
+  example through the real factories, so a changed context key fails the build.
+- _Two version numbers._ A catalog declares only the contract **major** (`"contract": 1`); the minor
+  is the contract's own and additive. The validator computes missing ids from the real diff and
+  never trusts a pack-supplied minor. A breaking change is gated by a committed
+  `contract.baseline.json`.
+- _Prose was removed from context before freezing v1._ `ARIA2013 expected`, `HTML3007 allowed` and
+  `COMP1008 position` were English sentences or words, so they could not be translated correctly.
+  They became lists, message-id variants and numbers (see the `praxis-kit` changeset).
+- _Fallback is opt-in and per diagnostic._ `createMessageResolver(pack, { fallback })`: pack, then
+  fallback, then the printed code. A French-only bundle holds no English. A contract-major mismatch
+  degrades (pack ignored, `onIssue`), never throws; the command and CI are where it fails hard.
+- _Structure and completeness never mix._ `errors` block a pack; `incomplete` and `coverage` only
+  measure it. Removed ids stay as tombstones (`removedIn`, `replacedBy`) so "obsolete" is told apart
+  from a typo.
+- _Custom-rule ids use an extension contract, not a loophole._ The core contract stays
+  authoritative; `--extension` declares namespaced lower-case ids (`acme.rule`), validated strictly
+  (no silent defaults, unknown fields rejected). A malformed extension throws (configuration), a
+  malformed catalog is reported (data).
+- _Coverage is partial and said so._ 35 codes are not catalog-driven yet and print as their code.
+  They are listed with reasons in `notCatalogDriven`; moving one in is a minor, additive bump.
+- _The artifact is proven, not assumed._ `test:pack` packs the tarball, checks its files, asserts no
+  bare `@praxis-kit/*` import and no dependencies, installs it into an isolated consumer, and runs
+  the command. It is part of `verify:release`.
+- _Deferred, needs the maintainer:_ the external `praxis-kit-diagnostics-fr` repository and its CI,
+  the machine-assisted French draft (to be marked draft until natively reviewed), and an npm token
+  allowed to create new package names (the first publish of a new name).
