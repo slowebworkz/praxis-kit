@@ -2,9 +2,9 @@
 
 The ordered checklist for shipping a version. Two packages publish from this repo: `packages/kit`
 (`praxis-kit`, versioned by the steps below and tagged `v<version>`) and `packages/diagnostics`
-(`praxis-kit-diagnostics`, the optional message catalogs, versioned independently). Every other
-workspace package is private and unversioned. The release gate itself is described in
-[`verify-release.md`](./verify-release.md).
+(`praxis-kit-diagnostics`, the optional message catalogs, versioned and released independently, see
+[below](#praxis-kit-diagnostics)). Every other workspace package is private and unversioned. The
+release gate itself is described in [`verify-release.md`](./verify-release.md).
 
 ## How a release moves
 
@@ -40,9 +40,8 @@ feature branches ──► develop ──► release/<version> ──► develop
    - fails if the packed `package.json` still contains `catalog:` specifiers,
    - publishes with provenance (`latest`, or `beta` for an `-alpha`/`-beta`/`-rc` version), and
      skips the publish if that version already exists,
-   - creates the GitHub release from the matching `## <version>` section of the changelog,
-   - then publishes `praxis-kit-diagnostics` if its `package.json` version is not already on npm
-     (idempotent, and after the release so a problem with that package can't block `praxis-kit`).
+   - creates the GitHub release from the matching `## <version>` section of the changelog.
+
 7. **Sync back.** Open a PR `main` → `develop`
    (`chore: merge main back into develop after <version>`) so `develop` contains the release commit
    and tag. Do not delete `develop` when a PR from it merges.
@@ -52,13 +51,27 @@ feature branches ──► develop ──► release/<version> ──► develop
 
 ### `praxis-kit-diagnostics`
 
-It versions independently of `praxis-kit`: give it its own changeset when its catalogs or resolver
-change, and `changeset version` bumps it separately. It rides the same tag and workflow, so there is
-no second release process. It is pre-1.0 (`0.x`); the catalog format may still change.
+It is versioned and released independently of `praxis-kit`, so a catalog fix can ship without a kit
+release and the kit can ship without it. It has its own tag, `diagnostics-v<version>`, and its own
+workflow, `publish-diagnostics.yml`; `publish.yml` (the `v*` tags) never publishes it. The tag
+ruleset protects both patterns.
+
+1. Give a change to its catalogs or resolver a changeset naming `praxis-kit-diagnostics` (it is
+   `0.x`; the catalog format may still change). `changeset version` bumps
+   `packages/diagnostics/package.json` and writes its `CHANGELOG.md`, in the same version PR as the
+   kit or on its own.
+2. Once that version is on `main`, tag the merge commit `diagnostics-v<version>` (it must equal the
+   `package.json` version, and the workflow fails if it doesn't) and push the tag.
+3. `publish-diagnostics.yml` runs the package's tests, builds it, publishes it with provenance
+   (skipping a version that is already on npm), and creates a GitHub release from the changelog
+   section (generated notes for the first release, which has no changelog yet).
+
+`workflow_dispatch` on that workflow publishes the version currently in `package.json` without a tag
+or a release, for recovery.
 
 The npm token (`NPM_TOKEN`) must be allowed to publish it. The first publish creates a new package
 name, which a token scoped to existing packages cannot do, so widen the token (or publish the first
-version by hand) before the release that carries it.
+version by hand) before tagging `diagnostics-v0.1.0`.
 
 ## After publishing
 

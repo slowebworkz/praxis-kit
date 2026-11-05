@@ -1,0 +1,130 @@
+name: Publish diagnostics
+
+# `praxis-kit-diagnostics` (packages/diagnostics) is versioned independently of `praxis-kit`, so it
+# has its own tag and its own workflow: push `diagnostics-v<version>` (the version in
+# packages/diagnostics/package.json) to publish it. `workflow_dispatch` publishes the version that is
+# currently in package.json without creating a tag or a GitHub release; it must be run from `main`.
+# Either way the commit published has to be on `main`. `publish.yml` (the `v*` tags) is untouched by
+# this and does not publish this package.
+on:
+  push:
+    tags:
+      - "diagnostics-v*"
+  workflow_dispatch:
+
+permissions:
+  # contents: write — needed to create the GitHub release for the tag.
+  contents: write
+  # Required for npm publish provenance (see publish.yml).
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish praxis-kit-diagnostics to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Full history: the next step checks that the commit being published is on `main`.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 12.3.4
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
+
+      # Publishing is a `main` operation. A manual run must be started from `main` itself (otherwise
+      # it would publish whatever branch it was pointed at), and a tag must point at a commit that is
+      # already on `main` (otherwise a tag on a feature branch would publish unreviewed code).
+      - name: Require main
+        run: |
+          git fetch --no-tags origin main
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+              echo "ERROR: manual publishing must run from main (this run is on $GITHUB_REF)"
+              exit 1
+            fi
+          elif ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "ERROR: $GITHUB_REF_NAME points at $GITHUB_SHA, which is not on main"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # A tag that doesn't match the package version would publish one version under another's name.
+      - name: Check the tag matches the package version
+        id: version
+        run: |
+          version=$(node -p "require('./packages/diagnostics/package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "diagnostics-v$version" ]; then
+            echo "ERROR: tag $GITHUB_REF_NAME does not match packages/diagnostics version $version (expected diagnostics-v$version)"
+            exit 1
+          fi
+
+      # Path filter, not a name filter — same reasoning as publish.yml.
+      - name: Test
+        run: pnpm --filter ./packages/diagnostics test
+
+      - name: Build
+        run: pnpm --filter ./packages/diagnostics build
+
+      - name: Resolve dist-tag
+        id: dist_tag
+        run: |
+          if echo "${{ steps.version.outputs.version }}" | grep -qE '-(alpha|beta|rc)'; then
+            echo "tag=beta" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure npm auth
+        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Idempotent, like publish.yml: an already-published version is skipped.
+      - name: Publish
+        run: |
+          name=$(node -p "require('./packages/diagnostics/package.json').name")
+          version="${{ steps.version.outputs.version }}"
+          if npm view "$name@$version" version &>/dev/null; then
+            echo "Skipping $name@$version — already published"
+          else
+            (cd packages/diagnostics && pnpm publish --access public --no-git-checks --provenance --tag ${{ steps.dist_tag.outputs.tag }})
+          fi
+
+      - name: Create GitHub release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "$TAG" &>/dev/null; then
+            echo "Release $TAG already exists — skipping"
+            exit 0
+          fi
+          prerelease=""
+          if echo "$VERSION" | grep -qE '-(alpha|beta|rc)'; then prerelease="--prerelease"; fi
+          # Body = the CHANGELOG section for this version when there is one. The first release has no
+          # changelog yet (changesets writes one on the first bump), so fall back to generated notes.
+          notes=$(mktemp)
+          if [ -f packages/diagnostics/CHANGELOG.md ]; then
+            awk -v v="$VERSION" '
+              $0 ~ "^## "v"$" { on=1; next }
+              on && /^## / { exit }
+              on { print }
+            ' packages/diagnostics/CHANGELOG.md > "$notes"
+          fi
+          if [ -s "$notes" ]; then
+            gh release create "$TAG" --title "praxis-kit-diagnostics v$VERSION" --notes-file "$notes" $prerelease --verify-tag
+          else
+            gh release create "$TAG" --title "praxis-kit-diagnostics v$VERSION" --generate-notes $prerelease --verify-tag
+          fi
