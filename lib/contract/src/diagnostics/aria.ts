@@ -1,5 +1,6 @@
 import type { DiagnosticInput } from '@praxis-kit/diagnostics'
 import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
+import { isDefined, isNull, isString, isUndefined } from '@praxis-kit/guards'
 import type { AriaValueType, ValidationViolation } from '../types'
 
 // Every factory here returns a *fact*: the code, the category, and the `context` values a message
@@ -15,17 +16,17 @@ function aria(
   return {
     code,
     category: DiagnosticCategory.ARIA,
-    ...(context !== undefined && { context }),
-    ...(messageId !== undefined && { messageId }),
+    ...(isDefined(context) && { context }),
+    ...(isDefined(messageId) && { messageId }),
   }
 }
 
 // How an attribute value is shown in a message: `null`, `undefined`, a quoted string, or `String()`.
 // A literal rendering of the value, not prose, so it stays here rather than in a catalog.
 function showValue(value: unknown): string {
-  if (value === null) return 'null'
-  if (value === undefined) return 'undefined'
-  return typeof value === 'string' ? `"${value}"` : String(value)
+  if (isNull(value)) return 'null'
+  if (isUndefined(value)) return 'undefined'
+  return isString(value) ? `"${value}"` : String(value)
 }
 
 // What a valid ARIA value looks like, as structured data rather than a sentence. A set of allowed
@@ -47,11 +48,11 @@ function expectedValue(type: AriaValueType): {
       return { messageId: 'ARIA2013.number', context: {} }
     case 'integer': {
       const { min, max } = type
-      if (min !== undefined && max !== undefined) {
+      if (isDefined(min) && isDefined(max)) {
         return { messageId: 'ARIA2013.integerRange', context: { min, max } }
       }
-      if (min !== undefined) return { messageId: 'ARIA2013.integerMin', context: { min } }
-      if (max !== undefined) return { messageId: 'ARIA2013.integerMax', context: { max } }
+      if (isDefined(min)) return { messageId: 'ARIA2013.integerMin', context: { min } }
+      if (isDefined(max)) return { messageId: 'ARIA2013.integerMax', context: { max } }
       return { messageId: 'ARIA2013.integer', context: {} }
     }
   }

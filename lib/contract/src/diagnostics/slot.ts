@@ -1,5 +1,6 @@
 import type { DiagnosticInput } from '@praxis-kit/diagnostics'
 import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
+import { isDefined } from '@praxis-kit/guards'
 
 // Facts only — see `aria.ts`. `messageId` separates entries that share a code.
 function slot(
@@ -13,7 +14,7 @@ function slot(
     category: DiagnosticCategory.Contract,
     component: name,
     context: { name, ...context },
-    ...(messageId !== undefined && { messageId }),
+    ...(isDefined(messageId) && { messageId }),
   }
 }
 

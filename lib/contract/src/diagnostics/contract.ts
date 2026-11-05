@@ -1,6 +1,7 @@
 import type { DiagnosticInput } from '@praxis-kit/diagnostics'
 import type { ElementType } from '@praxis-kit/primitive'
 import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
+import { isDefined, isString } from '@praxis-kit/guards'
 
 /**
  * Renders an `ElementType` for a diagnostic message. A plain `String(tag)` works fine for the
@@ -10,7 +11,7 @@ import { DiagnosticCategory, DiagnosticCode } from '@praxis-kit/diagnostics'
  * rather than ever stringifying the reference itself.
  */
 export function describeElementType(tag: ElementType): string {
-  if (typeof tag === 'string') return tag
+  if (isString(tag)) return tag
   const named = tag as { displayName?: string; name?: string }
   return named.displayName ?? named.name ?? '[component]'
 }
@@ -24,7 +25,7 @@ function contract(
   return {
     code,
     category: DiagnosticCategory.Contract,
-    ...(component !== undefined && { component }),
+    ...(isDefined(component) && { component }),
     context,
   }
 }
