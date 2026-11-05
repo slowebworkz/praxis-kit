@@ -11,8 +11,8 @@ English prose. A bare install prints the code, for example `Warning HTML3004` wh
 - `Diagnostic.message` is now `message?: string`. Code that reads it needs to handle `undefined`
   (`diagnostic.message ?? diagnostic.code`). `PraxisError.message` is the code when there is no
   text.
-- To get text, install the new optional package `praxis-kit-diagnostics` and give a `Diagnostics`
-  instance a resolver:
+- To get text, install the new, independently published package `praxis-kit-diagnostics` (optional;
+  it has no dependency on `praxis-kit`) and give a `Diagnostics` instance a resolver:
 
   ```ts
   import { createDiagnostics } from 'praxis-kit/contract'
@@ -29,10 +29,10 @@ English prose. A bare install prints the code, for example `Warning HTML3004` wh
   `DiagnosticsMode`.
 - The async console reporter now de-duplicates on the printed line **and** the diagnostic's context,
   so two different problems with the same code are no longer collapsed into one line.
-- Smaller bundles: the diagnostics chunk no longer inlines the whole `guardz` library, and English
-  no longer ships by default. Packaged adapter entries are about 24% smaller gzipped (for example
-  `praxis-kit/react` 39.9 KB to 30.5 KB). `praxis-kit/contract` grows by about 1 KB for
-  `createDiagnostics`.
+- Smaller bundles: `guardz` is no longer part of the published code. It cannot be tree-shaken, so
+  one guard used to pull in the whole library; the few guards Praxis Kit uses are now written out in
+  `@praxis-kit/foundation`, with the same behaviour, and English no longer ships by default.
+  `praxis-kit/contract` grows by about 1 KB for `createDiagnostics`.
 - `ValidationViolation.message` and `ChildViolation.message` hold the diagnostic's code when no text
   is available.
 

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-05T00:09:47.711Z",
+  "generated": "2026-11-05T00:36:38.097Z",
   "bundles": {
     "package/contract-only": 8467,
     "package/guards-only": 7878,
@@ -11,17 +11,17 @@
     "package/utils-only": 118,
     "package/vue-minimal": 29598,
     "package/web-minimal": 28011,
-    "source/aria-only": 31223,
-    "source/contracts-only": 31296,
-    "source/full-runtime": 31448,
-    "source/minimal-polymorphic": 31255,
+    "source/aria-only": 21948,
+    "source/contracts-only": 22021,
+    "source/full-runtime": 22171,
+    "source/minimal-polymorphic": 21968,
     "source/pk2-engine-only": 793,
-    "source/polymorphic-validation": 31249,
-    "source/preact-minimal": 30935,
-    "source/react-minimal": 31255,
-    "source/solid-minimal": 30210,
-    "source/svelte-minimal": 28489,
-    "source/vue-minimal": 30437
+    "source/polymorphic-validation": 21972,
+    "source/preact-minimal": 21657,
+    "source/react-minimal": 21968,
+    "source/solid-minimal": 20940,
+    "source/svelte-minimal": 19228,
+    "source/vue-minimal": 21167
   },
   "architecture": {
     "status": "CLEAN",
@@ -64,11 +64,11 @@
         "types": 0
       },
       "@praxis-kit/foundation": {
-        "values": 7,
+        "values": 24,
         "types": 6
       },
       "@praxis-kit/guards": {
-        "values": 42,
+        "values": 44,
         "types": 5
       },
       "@praxis-kit/lit": {
@@ -149,12 +149,12 @@
     "lib/primitive": {
       "files": 122,
       "functions": 15,
-      "loc": 2255
+      "loc": 2254
     },
     "lib/diagnostics": {
-      "files": 19,
-      "functions": 30,
-      "loc": 542
+      "files": 18,
+      "functions": 27,
+      "loc": 537
     },
     "lib/contract-props": {
       "files": 5,

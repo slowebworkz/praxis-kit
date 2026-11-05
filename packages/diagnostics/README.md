@@ -2,6 +2,11 @@
 
 Optional message catalogs for [Praxis Kit](https://github.com/slowebworkz/praxis-kit) diagnostics.
 
+This is an independently published and versioned npm package that lives in the Praxis Kit monorepo
+(`packages/diagnostics`). It has its own version, changelog, tag (`diagnostics-v<version>`) and
+publish workflow, but not its own repository: catalogs stay in step with the diagnostic codes they
+describe. A locale pack for another language can be published from anywhere.
+
 Praxis Kit itself emits **diagnostic facts**: a `code` (such as `HTML3004`), a severity and
 category, and a `context` of the values involved. It carries no prose. Install this package to turn
 those facts into text in your language. Without it, a diagnostic prints as its code.

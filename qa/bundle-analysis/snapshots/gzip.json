@@ -1,30 +1,30 @@
 {
   "source/lit": {
-    "gzip": 29487
+    "gzip": 20178
   },
   "source/preact": {
-    "gzip": 30938
+    "gzip": 21648
   },
   "source/react": {
-    "gzip": 31257
+    "gzip": 21971
   },
   "source/react-legacy": {
-    "gzip": 31170
+    "gzip": 21924
   },
   "source/solid": {
-    "gzip": 30195
+    "gzip": 20927
   },
   "source/svelte": {
-    "gzip": 28478
+    "gzip": 19223
   },
   "source/tailwind": {
-    "gzip": 14610
+    "gzip": 5455
   },
   "source/vue": {
-    "gzip": 30436
+    "gzip": 21162
   },
   "source/web": {
-    "gzip": 29442
+    "gzip": 20143
   },
   "package/contract": {
     "gzip": 10121

@@ -4091,8 +4091,9 @@ in a bundle that uses another language. Three earlier designs were rejected, eac
 - _Zero-config prints IDs, not English._ Chosen over bundling English by default: smallest core, and
   a bare install makes no language assumption. Installing `praxis-kit-diagnostics` gives English.
 - _Separate package, same repo._ One CI and release flow, catalogs versioned against the codes,
-  while translators can still publish their own packs. It versions independently (`0.x`) and rides
-  the `praxis-kit` tag/publish workflow.
+  while translators can still publish their own packs. It versions and releases independently
+  (`0.x`): its own `diagnostics-v<version>` tag and `publish-diagnostics.yml` workflow (the tag
+  ruleset covers both patterns), so a catalog fix doesn't need a kit release.
 - _Custom renderer, not ICU._ Catalogs use `{name}`, four filters (`quote`, `list`, `list-or`,
   `list-unit`) and CLDR plural objects, rendered with `Intl.PluralRules`/`Intl.ListFormat` — about
   100 lines, no dependency. `intl-messageformat` would give standard syntax and translator tooling
@@ -4119,13 +4120,21 @@ in a bundle that uses another language. Three earlier designs were rejected, eac
   captured from the factories before their prose moved): every factory sample must render back to
   its original text through the English catalog.
 
-- _`lib/diagnostics` no longer imports `guardz`._ The published build inlines the package into one
-  shared chunk, and `guardz` does not tree-shake: one guard pulled the whole library (about 178 KB
-  unminified) into every entry reaching the chunk, and the new `createDiagnostics` export made
-  `praxis-kit/contract` reach it. The package now has three one-line local guards
-  (`lib/diagnostics/src/guards.ts`). Net effect measured with the size gates: packaged adapter
-  entries about 24% smaller gzipped (`praxis-kit/react` 39,841 to 30,436 B); `praxis-kit/contract`
-  +984 B.
+- _`guardz` is gone from the published code._ It is a CommonJS package with a single barrel and no
+  `sideEffects: false`, so no bundler can tree-shake it: one guard keeps the whole library (40 KB
+  minified, 9 KB gzipped for a single function), and the build inlined it, whole, into every entry
+  (the shared diagnostics chunk alone carried about 178 KB of it). The seven guards the workspace
+  uses (`isString`, `isNumber`, `isFunction`, `isNil`/`isNullish`, `isDefined`/`isNonNull`,
+  `isEqualTo`, `isNonNullObject`) now live in `@praxis-kit/foundation`
+  (`lib/foundation/src/guards/foundational.ts`), the dependency-free leaf every package can reach,
+  and `@praxis-kit/guards` re-exports them, so the API is unchanged. `@praxis-kit/diagnostics` could
+  not use `@praxis-kit/guards` (guards → primitive → diagnostics would be a cycle), which is why
+  they belong in the foundation. A parity test checks each against `guardz` over a matrix of values,
+  and a lint rule (`no-restricted-imports`) keeps the bare `guardz` import out; only that test uses
+  it. One deliberate difference: the new guards take a single argument, so `.every(isString)` no
+  longer hands `guardz`'s optional `config` parameter the array index. Measured with the size gates,
+  packaged adapter entries are about 24% smaller gzipped before this move and the rest of the
+  `guardz` weight is removed from every other entry by it.
 
 **Staged migration — what is not catalog-driven yet.** Covered: HTML, ARIA, contract (children,
 variants, `as`), slot, and accessibility-advisory diagnostics (every factory in
