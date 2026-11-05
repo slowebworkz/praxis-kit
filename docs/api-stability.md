@@ -92,6 +92,22 @@ You only need these to build _on top of_ praxis-kit's enforcement, not to use it
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `praxis-kit/vite-plugin` | Exports seven plugin factories — `contractPlugin`, `compoundPrunePlugin`, `classExtractPlugin`, `designTokensPlugin` (settling); **`slotTransformPlugin` (`asChild` transform), `staticCompositionPlugin` (static inlining), and `ssrOptimizePlugin` (the three optimisation plugins bundled in dependency order) are experimental** — pending differential tests (see the enforcement matrix in [README](../README.md)) — plus `PluginOptions` / `DesignTokens*` config types. The internal building blocks each plugin composes from are not exported. |
 
+### Experimental — diagnostic messages
+
+Diagnostics are facts: a `code`, a severity and category, and a `context`. `Diagnostic.message` is
+optional, and a bare install of `praxis-kit` prints the code (`Warning HTML3004`). Text is supplied
+per `Diagnostics` instance by a resolver.
+
+| Surface                                                                                            | Status                                                                                                                                                                                                                                                                |
+| -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `praxis-kit/contract`: `createDiagnostics`, `MessageResolver`, `DiagnosticText`, `DiagnosticsMode` | Stable in shape: build a `Diagnostics` for a preset mode with a resolver of your own. The **context keys** each diagnostic carries are the contract a resolver reads, and they are documented alongside the catalog rather than frozen here.                          |
+| `praxis-kit-diagnostics` (separate package, `0.x`)                                                 | **Experimental.** The catalog format, the resolver API and `validateCatalog` may change before its `1.0.0`. The English catalog (`praxis-kit-diagnostics/en`) is the reference for message ids and placeholders. See its [README](../packages/diagnostics/README.md). |
+
+Which diagnostics are catalog-driven today: the HTML, ARIA, contract (children, variants, `as`),
+slot and accessibility-advisory families. Diagnostics from the Tailwind pipeline, the Vite and
+ESLint plugins, plugin-API checks and a few core checks still carry English text of their own; they
+move to the catalog in follow-up changes.
+
 ## Not an API
 
 `praxis-kit/package.json` is exported only so tooling can resolve the package root.

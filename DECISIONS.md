@@ -4065,3 +4065,76 @@ issues or PRs. `npm` downloads for the trailing month are 277 (`api.npmjs.org`, 
 mirror/CI noise and not a usage signal. Maintenance velocity remains healthy (1.4.0 shipped, an ARIA
 1.2 audit pass, release protections added) but Sponsors needs adoption. **Revisit trigger
 unchanged:** a star/issue/PR from a non-maintainer account, or the next version tag.
+
+### Diagnostics are facts; message text lives in an optional package (2026-11)
+
+**Decision.** Praxis Kit emits diagnostic _facts_ — `code`, severity, category and a `context` of
+the values involved — and carries no prose. `Diagnostic.message` is optional. A bare install prints
+the code (`Warning HTML3004`). Text comes from a **resolver** that belongs to a `Diagnostics`
+instance (`createDiagnostics(mode, { messages })`), and the catalogs and resolver live in a
+separate, optional, separately published package in this repo, `praxis-kit-diagnostics`
+(`packages/diagnostics`). Core never imports it.
+
+**Why.** The goal was localization: default English, other languages loadable, and no English left
+in a bundle that uses another language. Three earlier designs were rejected, each by review:
+
+1. _Catalog inside `praxis-kit`, swapped by a bundler alias._ Worked for tree-shaking, but kept
+   English in core and made the swap a bundler-config trick.
+2. _A module-global catalog (`setMessages`)._ Shared across the process, so concurrent requests with
+   different locales leak into each other. Localization state is now instance-scoped; there is no
+   global and no `resetMessages`.
+3. _Factories that render English but read a locale._ A core that still requires a message string
+   cannot be localization-agnostic. Factories now return facts only; `message` is optional.
+
+**Choices recorded.**
+
+- _Zero-config prints IDs, not English._ Chosen over bundling English by default: smallest core, and
+  a bare install makes no language assumption. Installing `praxis-kit-diagnostics` gives English.
+- _Separate package, same repo._ One CI and release flow, catalogs versioned against the codes,
+  while translators can still publish their own packs. It versions independently (`0.x`) and rides
+  the `praxis-kit` tag/publish workflow.
+- _Custom renderer, not ICU._ Catalogs use `{name}`, four filters (`quote`, `list`, `list-or`,
+  `list-unit`) and CLDR plural objects, rendered with `Intl.PluralRules`/`Intl.ListFormat` — about
+  100 lines, no dependency. `intl-messageformat` would give standard syntax and translator tooling
+  at the cost of a parser on every consumer. We keep the narrow custom format on purpose and
+  **revisit before `1.0.0` of the package** if a language needs `select`, messages need number/date
+  formatting, or a professional translation workflow needs ICU-aware tools. Simple `{name}` messages
+  already carry over; filters and the plural shape would need converting, and apostrophes checked.
+- _Validation is per field and per plural form._ `validateCatalog` compares each field and each
+  plural form with the reference, so a variable dropped from one message or one plural branch is not
+  masked by its presence elsewhere. Locales are validated when a resolver is created
+  (`assertValidLocale`: validated, not canonicalized, non-strings rejected).
+- _Custom `enforcement.aria` rules_ can supply explicit text (carried through `ARIA2002`, never
+  localized) or a `messageId` plus `context` that an app-extended catalog resolves.
+
+**Consequences.**
+
+- `Diagnostic.message` becoming optional is a type-level breaking change, and the default console
+  output changes. Released as a major `praxis-kit` changeset.
+- The console de-duplicates on the printed line **and** the context, since the line alone is now
+  often just the code.
+- Engine and children violations carry `message: diagnostic.message ?? code`; tests assert on codes
+  and context rather than prose.
+- English is pinned by a golden file (`packages/diagnostics/src/fixtures/english.golden.json`,
+  captured from the factories before their prose moved): every factory sample must render back to
+  its original text through the English catalog.
+
+- _`lib/diagnostics` no longer imports `guardz`._ The published build inlines the package into one
+  shared chunk, and `guardz` does not tree-shake: one guard pulled the whole library (about 178 KB
+  unminified) into every entry reaching the chunk, and the new `createDiagnostics` export made
+  `praxis-kit/contract` reach it. The package now has three one-line local guards
+  (`lib/diagnostics/src/guards.ts`). Net effect measured with the size gates: packaged adapter
+  entries about 24% smaller gzipped (`praxis-kit/react` 39,841 to 30,436 B); `praxis-kit/contract`
+  +984 B.
+
+**Staged migration — what is not catalog-driven yet.** Covered: HTML, ARIA, contract (children,
+variants, `as`), slot, and accessibility-advisory diagnostics (every factory in
+`lib/contract/src/diagnostics`). Still English-in-code, to move in follow-up changes: the Tailwind
+pipeline (`lib/tailwind/src/diagnostics.ts`), the Vite plugin
+(`plugins/vite/src/vite-diagnostics.ts`) and ESLint plugin (`plugins/eslint/src/diagnostics.ts`),
+plugin-API checks (`packages/core/src/factory/plugin-diagnostics.ts`), the relationship validators'
+(`packages/core/src/html/aria-relationships/shared.ts`) and widget state rule's
+(`packages/core/src/html/contracts/aria/widgets.ts`) inline messages, and the composition/runtime
+checks in `lib/runtime/src/build-tree-context.ts` and
+`lib/adapter-utils/src/runtime/diagnose-incomplete-composition.ts`. Until those move, localization
+is partial and is documented as such in `docs/api-stability.md` and the package README.

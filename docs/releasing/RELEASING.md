@@ -1,7 +1,9 @@
 # Releasing `praxis-kit`
 
-The ordered checklist for shipping a version. Only `packages/kit` (`praxis-kit`) is published; every
-other workspace package is private and unversioned. The release gate itself is described in
+The ordered checklist for shipping a version. Two packages publish from this repo: `packages/kit`
+(`praxis-kit`, versioned by the steps below and tagged `v<version>`) and `packages/diagnostics`
+(`praxis-kit-diagnostics`, the optional message catalogs, versioned independently). Every other
+workspace package is private and unversioned. The release gate itself is described in
 [`verify-release.md`](./verify-release.md).
 
 ## How a release moves
@@ -38,13 +40,25 @@ feature branches ──► develop ──► release/<version> ──► develop
    - fails if the packed `package.json` still contains `catalog:` specifiers,
    - publishes with provenance (`latest`, or `beta` for an `-alpha`/`-beta`/`-rc` version), and
      skips the publish if that version already exists,
-   - creates the GitHub release from the matching `## <version>` section of the changelog.
+   - creates the GitHub release from the matching `## <version>` section of the changelog,
+   - then publishes `praxis-kit-diagnostics` if its `package.json` version is not already on npm
+     (idempotent, and after the release so a problem with that package can't block `praxis-kit`).
 7. **Sync back.** Open a PR `main` → `develop`
    (`chore: merge main back into develop after <version>`) so `develop` contains the release commit
    and tag. Do not delete `develop` when a PR from it merges.
 8. **Reassess GitHub Sponsors** (`CLAUDE.md`). Add a dated entry at the end of `DECISIONS.md` with
    the current numbers (stars, forks, external issues and PRs, trailing-month npm downloads) and the
    conclusion, even when it is "not yet".
+
+### `praxis-kit-diagnostics`
+
+It versions independently of `praxis-kit`: give it its own changeset when its catalogs or resolver
+change, and `changeset version` bumps it separately. It rides the same tag and workflow, so there is
+no second release process. It is pre-1.0 (`0.x`); the catalog format may still change.
+
+The npm token (`NPM_TOKEN`) must be allowed to publish it. The first publish creates a new package
+name, which a token scoped to existing packages cannot do, so widen the token (or publish the first
+version by hand) before the release that carries it.
 
 ## After publishing
 

@@ -1,27 +1,27 @@
 {
-  "generated": "2026-11-04T01:22:32.247Z",
+  "generated": "2026-11-05T00:09:47.711Z",
   "bundles": {
-    "package/contract-only": 8468,
-    "package/guards-only": 7877,
-    "package/html-only": 23915,
-    "package/lit-minimal": 37437,
-    "package/preact-minimal": 39493,
-    "package/react-minimal": 39841,
-    "package/solid-minimal": 38829,
+    "package/contract-only": 8467,
+    "package/guards-only": 7878,
+    "package/html-only": 14367,
+    "package/lit-minimal": 28041,
+    "package/preact-minimal": 30100,
+    "package/react-minimal": 30436,
+    "package/solid-minimal": 29473,
     "package/utils-only": 118,
-    "package/vue-minimal": 39024,
-    "package/web-minimal": 37406,
-    "source/aria-only": 33493,
-    "source/contracts-only": 33559,
-    "source/full-runtime": 33718,
-    "source/minimal-polymorphic": 33477,
+    "package/vue-minimal": 29598,
+    "package/web-minimal": 28011,
+    "source/aria-only": 31223,
+    "source/contracts-only": 31296,
+    "source/full-runtime": 31448,
+    "source/minimal-polymorphic": 31255,
     "source/pk2-engine-only": 793,
-    "source/polymorphic-validation": 33517,
-    "source/preact-minimal": 33133,
-    "source/react-minimal": 33477,
-    "source/solid-minimal": 32401,
-    "source/svelte-minimal": 30581,
-    "source/vue-minimal": 32675
+    "source/polymorphic-validation": 31249,
+    "source/preact-minimal": 30935,
+    "source/react-minimal": 31255,
+    "source/solid-minimal": 30210,
+    "source/svelte-minimal": 28489,
+    "source/vue-minimal": 30437
   },
   "architecture": {
     "status": "CLEAN",
@@ -44,7 +44,7 @@
         "types": 9
       },
       "@praxis-kit/contract": {
-        "values": 33,
+        "values": 34,
         "types": 39
       },
       "@praxis-kit/contract-props": {
@@ -56,8 +56,8 @@
         "types": 141
       },
       "@praxis-kit/diagnostics": {
-        "values": 19,
-        "types": 14
+        "values": 20,
+        "types": 16
       },
       "@praxis-kit/eslint-plugin": {
         "values": 10,
@@ -149,12 +149,12 @@
     "lib/primitive": {
       "files": 122,
       "functions": 15,
-      "loc": 2256
+      "loc": 2255
     },
     "lib/diagnostics": {
-      "files": 18,
-      "functions": 23,
-      "loc": 455
+      "files": 19,
+      "functions": 30,
+      "loc": 542
     },
     "lib/contract-props": {
       "files": 5,
@@ -162,9 +162,9 @@
       "loc": 88
     },
     "lib/contract": {
-      "files": 53,
-      "functions": 128,
-      "loc": 2554
+      "files": 55,
+      "functions": 137,
+      "loc": 2307
     },
     "lib/styling": {
       "files": 22,
@@ -194,7 +194,7 @@
     "packages/core": {
       "files": 92,
       "functions": 112,
-      "loc": 4153
+      "loc": 4237
     }
   }
 }
