@@ -103,6 +103,11 @@ export interface ExtensionId {
   suggestions?: number
 }
 
+/** Extension ids normalized to full id contracts, keyed by message id. */
+export interface NormalizedExtensions {
+  [id: string]: IdContract
+}
+
 export interface ExtensionContract {
   ids: Readonly<Record<string, ExtensionId>>
 }

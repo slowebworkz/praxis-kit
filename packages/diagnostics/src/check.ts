@@ -1,19 +1,22 @@
+import type { StringMap } from '@praxis-kit/foundation'
 import {
   isArray,
   isDefined,
-  isNonNullObject as isRecord,
   isNumber,
+  isNonNullObject as isRecord,
   isString,
   isUndefined,
+  iterate,
 } from '@praxis-kit/foundation'
-import { assertValidLocale } from './resolver'
 import type {
   ContextKeySpec,
-  ExtensionContract,
   ContextKind,
   DiagnosticsContract,
+  ExtensionContract,
   IdContract,
+  NormalizedExtensions,
 } from './contract'
+import { assertValidLocale } from './resolver'
 
 // ─── Report ───────────────────────────────────────────────────────────────────
 
@@ -111,9 +114,9 @@ function formsOf(template: unknown): Map<string | undefined, string> | undefined
   if (isString(template)) return new Map([[undefined, template]])
   if (!isRecord(template) || !isString(template['plural'])) return undefined
   const forms = new Map<string | undefined, string>()
-  for (const [form, text] of Object.entries(template)) {
+  iterate.forEachEntry(template, (form, text) => {
     if (form !== 'plural' && isString(text)) forms.set(form, text)
-  }
+  })
   return forms
 }
 
@@ -125,21 +128,21 @@ function fieldOf(id: string, field: string, form: string | undefined) {
 export function normalizeExtensions(
   extension: unknown,
   contract: DiagnosticsContract,
-): Record<string, IdContract> {
+): NormalizedExtensions {
   const fail = (message: string): never => {
     throw new RangeError(`Invalid extension contract: ${message}`)
   }
   if (!isRecord(extension) || !isRecord(extension['ids']))
     return fail('expected { "ids": { ... } }.')
-  const out: Record<string, IdContract> = {}
-  for (const [id, raw] of Object.entries(extension['ids'])) {
+  const out: NormalizedExtensions = {}
+  iterate.forEachEntry(extension['ids'], (id, raw) => {
     if (!EXTENSION_ID.test(id)) {
       fail(`"${id}" must be namespaced and lower-case, like "acme.no-div-dialog".`)
     }
     if (Object.hasOwn(contract.ids, id)) fail(`"${id}" is already a built-in id.`)
     if (!isRecord(raw)) return fail(`"${id}" must be an object.`)
-    const context: Record<string, ContextKeySpec> = {}
-    for (const [key, spec] of Object.entries(isRecord(raw['context']) ? raw['context'] : {})) {
+    const context: StringMap<ContextKeySpec> = {}
+    iterate.forEachEntry(isRecord(raw['context']) ? raw['context'] : {}, (key, spec) => {
       if (
         !isRecord(spec) ||
         !isString(spec['kind']) ||
@@ -149,7 +152,7 @@ export function normalizeExtensions(
         fail(`"${id}" context key "${key}" needs a known "kind" and a boolean "required".`)
       }
       context[key] = { essential: false, description: '', ...(spec as object) } as ContextKeySpec
-    }
+    })
     const plural = isString(raw['plural']) ? raw['plural'] : undefined
     out[id] = {
       codes: [],
@@ -162,7 +165,7 @@ export function normalizeExtensions(
       since: '0.0',
       examples: [],
     }
-  }
+  })
   return out
 }
 
@@ -223,7 +226,7 @@ export function checkCatalog(
   report.contract.compatible = true
 
   // The same top-level shape the JSON Schema enforces, so the schema and the CLI cannot disagree.
-  for (const key of Object.keys(catalog)) {
+  iterate.forEachKey(catalog, (key) => {
     if (!TOP_LEVEL_KEYS.has(key)) {
       error({
         kind: 'unknown-field',
@@ -231,12 +234,12 @@ export function checkCatalog(
         message: `"${key}" is not a top-level field of a catalog (allowed: ${[...TOP_LEVEL_KEYS].join(', ')}).`,
       })
     }
-  }
-  for (const key of ['$schema', '$comment'] as const) {
+  })
+  iterate.forEach(['$schema', '$comment'] as const, (key) => {
     if (key in catalog && !isString(catalog[key])) {
       error({ kind: 'invalid-structure', field: key, message: `"${key}" must be a string.` })
     }
-  }
+  })
   if ('builtAgainst' in catalog && !/^[0-9]+\.[0-9]+$/.test(String(catalog['builtAgainst']))) {
     error({
       kind: 'invalid-structure',
@@ -269,7 +272,7 @@ export function checkCatalog(
     : undefined
 
   // Ids the catalog has.
-  for (const [id, entry] of Object.entries(messages)) {
+  iterate.forEachEntry(messages, (id, entry) => {
     const spec = Object.hasOwn(contract.ids, id)
       ? contract.ids[id]
       : Object.hasOwn(extensions, id)
@@ -284,7 +287,7 @@ export function checkCatalog(
           ? `"${id}" is not an id in the contract. If it belongs to a custom rule, declare it in an extension contract (--extension <file>); otherwise it is a typo.`
           : `"${id}" is not an id in the contract. It is a typo, or from a newer contract.`,
       })
-      continue
+      return
     }
     if (isDefined(spec.removedIn)) {
       report.obsolete.push({
@@ -292,7 +295,7 @@ export function checkCatalog(
         removedIn: spec.removedIn,
         ...(isDefined(spec.replacedBy) && { replacedBy: spec.replacedBy }),
       })
-      continue
+      return
     }
     if (isDefined(spec.deprecated)) {
       report.deprecated.push({
@@ -302,14 +305,14 @@ export function checkCatalog(
       })
     }
     checkEntry(id, entry, spec, pluralCategories, report)
-  }
+  })
 
   // Completeness.
-  for (const [id, spec] of live) {
+  iterate.forEach(live, ([id, spec]) => {
     const entry = Object.hasOwn(messages, id) ? messages[id] : undefined
     if (!isRecord(entry) || !('message' in entry)) {
       report.incomplete.push({ id, since: spec.since, missing: ['message'] })
-      continue
+      return
     }
     report.coverage.translated++
     const missing: string[] = []
@@ -317,7 +320,7 @@ export function checkCatalog(
     const have = isArray(entry['suggestions']) ? entry['suggestions'].length : 0
     if (have < spec.suggestions) missing.push('suggestions')
     if (missing.length > 0) report.incomplete.push({ id, since: spec.since, missing })
-  }
+  })
   report.coverage.ratio =
     report.coverage.total === 0 ? 1 : report.coverage.translated / report.coverage.total
 
@@ -338,7 +341,7 @@ function checkEntry(
     error({ kind: 'invalid-structure', id, message: `"${id}" must be an object with a "message".` })
     return
   }
-  for (const key of Object.keys(entry)) {
+  iterate.forEachKey(entry, (key) => {
     if (!ENTRY_KEYS.has(key)) {
       error({
         kind: 'unknown-field',
@@ -347,7 +350,7 @@ function checkEntry(
         message: `"${key}" is not a field of a catalog entry.`,
       })
     }
-  }
+  })
 
   const usedAnywhere = new Set<string>()
 
@@ -385,8 +388,8 @@ function checkEntry(
           message: `A plural template needs an "other" form: it is the fallback for every count no other form names.`,
         })
       }
-      for (const form of Object.keys(template)) {
-        if (form === 'plural') continue
+      iterate.forEachKey(template, (form) => {
+        if (form === 'plural') return
         if (!PLURAL_CATEGORIES.has(form)) {
           error({
             kind: 'invalid-plural-form',
@@ -400,10 +403,10 @@ function checkEntry(
             message: `The "${form}" form is never selected in this locale.`,
           })
         }
-      }
+      })
     }
 
-    for (const [form, text] of forms) {
+    iterate.forEach(forms, ([form, text]) => {
       const where = fieldOf(id, field, form)
       if (text.trim() === '') {
         error({
@@ -411,10 +414,10 @@ function checkEntry(
           ...where,
           message: `"${field}" is blank, so it would render as empty text.`,
         })
-        continue
+        return
       }
       const seen = new Set<string>()
-      for (const { name, filters } of tokensIn(text)) {
+      iterate.forEach(tokensIn(text), ({ name, filters }) => {
         seen.add(name)
         usedAnywhere.add(name)
         const key = spec.context?.[name]
@@ -424,7 +427,7 @@ function checkEntry(
             ...where,
             message: `{${name}} is not a context key of this id.`,
           })
-          continue
+          return
         }
         if (!key.required) {
           error({
@@ -433,7 +436,7 @@ function checkEntry(
             message: `{${name}} is optional, so it can be absent and would print as literal {${name}}.`,
           })
         }
-        for (const filter of filters) {
+        iterate.forEach(filters, (filter) => {
           if (!KNOWN_FILTERS.has(filter)) {
             error({
               kind: 'unknown-filter',
@@ -453,10 +456,10 @@ function checkEntry(
               message: `|quote does not apply to {${name}}, which is a ${key.kind}.`,
             })
           }
-        }
-      }
+        })
+      })
       if (isMessage) {
-        for (const [name, key] of Object.entries(spec.context ?? {})) {
+        iterate.forEachEntry(spec.context ?? {}, (name, key) => {
           if (key.essential && !seen.has(name)) {
             error({
               kind: 'placeholder-missing-essential',
@@ -464,9 +467,9 @@ function checkEntry(
               message: `The message must use {${name}}: ${key.description}`,
             })
           }
-        }
+        })
       }
-    }
+    })
   }
 
   if ('message' in entry) checkTemplate('message', entry['message'], true)
@@ -502,7 +505,7 @@ function checkEntry(
           })
           return
         }
-        for (const key of Object.keys(item)) {
+        iterate.forEachKey(item, (key) => {
           if (!SUGGESTION_KEYS.has(key)) {
             error({
               kind: 'unknown-field',
@@ -511,17 +514,17 @@ function checkEntry(
               message: `"${key}" is not a field of a suggestion.`,
             })
           }
-        }
-        for (const part of ['title', 'description'] as const) {
+        })
+        iterate.forEach(['title', 'description'] as const, (part) => {
           if (part in item) checkTemplate(`suggestions.${index}.${part}`, item[part], false)
-        }
+        })
         if ('fix' in item) checkTemplate(`suggestions.${index}.fix`, item['fix'], false)
       })
     }
   }
 
   // A non-essential key the entry never uses is allowed, but worth saying.
-  for (const [name, key] of Object.entries(spec.context ?? {})) {
+  iterate.forEachEntry(spec.context ?? {}, (name, key) => {
     if (!key.essential && !key.informational && !usedAnywhere.has(name)) {
       warn({
         kind: 'placeholder-omitted',
@@ -529,7 +532,7 @@ function checkEntry(
         message: `{${name}} is never used in this entry: ${key.description}`,
       })
     }
-  }
+  })
 }
 
 function quotable(kind: ContextKind): boolean {

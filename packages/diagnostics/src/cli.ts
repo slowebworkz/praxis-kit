@@ -1,4 +1,4 @@
-import { isDefined, isString, isUndefined } from '@praxis-kit/foundation'
+import { isDefined, isString, isUndefined, iterate } from '@praxis-kit/foundation'
 import { readFileSync } from 'node:fs'
 import { checkCatalog } from './check'
 import type { Issue, Report } from './check'
@@ -108,17 +108,17 @@ export function formatReport(report: Report, file: string): string {
   }
   if (report.obsolete.length > 0) {
     out.push('', `Obsolete (the contract removed these ids): ${report.obsolete.length}`)
-    for (const o of report.obsolete) {
+    iterate.forEach(report.obsolete, (o) => {
       out.push(
         `  ${o.id}  removed in ${o.removedIn}${o.replacedBy ? `, replaced by ${o.replacedBy}` : ''}`,
       )
-    }
+    })
   }
   if (report.deprecated.length > 0) {
     out.push('', `Deprecated (still render): ${report.deprecated.length}`)
-    for (const d of report.deprecated) {
+    iterate.forEach(report.deprecated, (d) => {
       out.push(`  ${d.id}  since ${d.since}${d.replacedBy ? `, use ${d.replacedBy}` : ''}`)
-    }
+    })
   }
   out.push('', `Incomplete: ${report.incomplete.length}`)
   for (const i of report.incomplete)
@@ -225,7 +225,7 @@ function toMarkdown(sheet: ReturnType<typeof buildSourceSheet>): string {
   ]
   out.push('Context kinds:', '')
   for (const [kind, text] of Object.entries(sheet.kinds)) out.push(`- \`${kind}\`: ${text}`)
-  for (const entry of sheet.ids) {
+  iterate.forEach(sheet.ids, (entry) => {
     out.push(
       '',
       `## ${entry.id}`,
@@ -238,11 +238,11 @@ function toMarkdown(sheet: ReturnType<typeof buildSourceSheet>): string {
     const keys = Object.entries(entry.context)
     if (keys.length > 0) {
       out.push('', '| Context key | Kind | Essential | Meaning |', '| --- | --- | --- | --- |')
-      for (const [key, spec] of keys) {
+      iterate.forEach(keys, ([key, spec]) => {
         out.push(
           `| \`{${key}}\` | ${spec.kind} | ${spec.informational ? 'tooling only' : spec.essential ? 'yes' : 'no'} | ${spec.description} |`,
         )
-      }
+      })
     }
     if (entry.plural) out.push('', `Plural forms are chosen by \`{${entry.plural}}\`.`)
     if (entry.english) {
@@ -251,15 +251,15 @@ function toMarkdown(sheet: ReturnType<typeof buildSourceSheet>): string {
     const shown = entry.examples.filter((e) => e.english).slice(0, 2)
     if (shown.length > 0) {
       out.push('', 'Examples:')
-      for (const example of shown) {
+      iterate.forEach(shown, (example) => {
         out.push(
           '',
           `- context \`${JSON.stringify(example.facts.context ?? {})}\``,
           `  - ${example.english?.message}`,
         )
-      }
+      })
     }
-  }
+  })
   return `${out.join('\n')}\n`
 }
 

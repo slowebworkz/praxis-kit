@@ -1,4 +1,4 @@
-import { isDefined, isString, isUndefined } from '@praxis-kit/foundation'
+import { isDefined, isString, isUndefined, iterate } from '@praxis-kit/foundation'
 import { assertValidLocale } from './resolver'
 import { checkCatalog } from './check'
 import type { Report } from './check'
@@ -63,9 +63,9 @@ function formsOf(template: MessageTemplate): Forms {
   if (isString(template)) return new Map([[undefined, template]])
   const { plural: _selector, ...rest } = template
   const forms: Forms = new Map()
-  for (const [form, text] of Object.entries(rest)) {
+  iterate.forEachEntry(rest, (form, text) => {
     if (isString(text)) forms.set(form, text)
-  }
+  })
   return forms
 }
 
@@ -96,11 +96,11 @@ function checkNotEmpty(
   if (!isString(template) && !isString(template.other)) {
     issues.push({ kind: 'missing-other-form', id, field })
   }
-  for (const [form, text] of formsOf(template)) {
+  iterate.forEach(formsOf(template), ([form, text]) => {
     if (text.trim() === '') {
       issues.push({ kind: 'empty-message', id, field, ...(isDefined(form) && { form }) })
     }
-  }
+  })
 }
 
 function compareField(
@@ -121,11 +121,11 @@ function compareField(
   }
 
   const expectedForms = formsOf(expected)
-  for (const [form, text] of formsOf(actual)) {
+  iterate.forEach(formsOf(actual), ([form, text]) => {
     const want = expectedFor(expectedForms, form)
-    if (isUndefined(want)) continue
+    if (isUndefined(want)) return
     const have = placeholdersIn(text)
-    if (sameSet(have, want)) continue
+    if (sameSet(have, want)) return
     issues.push({
       kind: 'placeholder-mismatch',
       id,
@@ -134,7 +134,7 @@ function compareField(
       missing: [...want].filter((name) => !have.has(name)),
       extra: [...have].filter((name) => !want.has(name)),
     })
-  }
+  })
 }
 
 /**
@@ -188,31 +188,31 @@ function validateAgainstReference(
     issues.push({ kind: 'invalid-locale', message: (error as Error).message })
   }
 
-  for (const id of Object.keys(reference.messages)) {
+  iterate.forEachKey(reference.messages, (id) => {
     if (!Object.hasOwn(catalog.messages, id)) issues.push({ kind: 'missing-id', id })
-  }
+  })
 
-  for (const [id, entry] of Object.entries(catalog.messages)) {
+  iterate.forEachEntry(catalog.messages, (id, entry) => {
     const referenceEntry = Object.hasOwn(reference.messages, id)
       ? reference.messages[id]
       : undefined
     if (isUndefined(referenceEntry)) {
       issues.push({ kind: 'unknown-id', id })
-      continue
+      return
     }
 
     const actualFields = fieldsOf(entry)
     for (const [field, template] of actualFields) checkNotEmpty(id, field, template, issues)
     const expectedFields = fieldsOf(referenceEntry)
-    for (const [field, expected] of expectedFields) {
+    iterate.forEach(expectedFields, ([field, expected]) => {
       const actual = actualFields.get(field)
       if (isUndefined(actual)) issues.push({ kind: 'missing-field', id, field })
       else compareField(id, field, actual, expected, issues)
-    }
-    for (const field of actualFields.keys()) {
+    })
+    iterate.forEach(actualFields.keys(), (field) => {
       if (!expectedFields.has(field)) issues.push({ kind: 'unknown-field', id, field })
-    }
-  }
+    })
+  })
 
   return issues
 }
