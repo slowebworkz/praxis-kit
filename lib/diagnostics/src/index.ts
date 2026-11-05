@@ -15,6 +15,8 @@ export type {
   Diagnostic,
   DiagnosticReporter,
   DiagnosticSuggestion,
+  DiagnosticText,
+  MessageResolver,
   SourceLocation,
   SourcePosition,
 } from './types'
@@ -23,5 +25,5 @@ export { CollectingReporter } from './collecting-reporter'
 export { ConsoleReporter } from './console-reporter'
 export { nullReporter } from './null-reporter'
 export { silentDiagnostics, warnDiagnostics, throwDiagnostics } from './presets'
-export { resolveDiagnostics } from './resolve-diagnostics'
+export { createDiagnostics, resolveDiagnostics } from './resolve-diagnostics'
 export type { DiagnosticsMode } from './resolve-diagnostics'

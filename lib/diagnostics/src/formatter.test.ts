@@ -47,4 +47,9 @@ describe('formatDiagnostic', () => {
     })
     expect(line).toBe('Error COMP1003: [Composition] Button cannot be a direct child of Menu')
   })
+
+  it('prints only the severity and code when a diagnostic carries no message', () => {
+    const { message: _message, ...fact } = base
+    expect(formatDiagnostic(fact)).toBe('Error COMP1003')
+  })
 })
