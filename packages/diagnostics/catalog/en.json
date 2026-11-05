@@ -1,5 +1,5 @@
 {
-  "$schema": "../schema/messages.schema.json",
+  "$schema": "../schema/catalog.v1.schema.json",
   "contract": 1,
   "locale": "en",
   "messages": {

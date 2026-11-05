@@ -20,14 +20,15 @@
       "import": "./dist/en.js"
     },
     "./en.json": "./dist/en.json",
-    "./schema.json": "./dist/messages.schema.json"
+    "./schema.json": "./dist/catalog.v1.schema.json",
+    "./catalog.v1.schema.json": "./dist/catalog.v1.schema.json"
   },
   "files": [
     "dist",
     "LICENSE"
   ],
   "scripts": {
-    "build": "rm -rf dist && tsdown && node scripts/copy-assets.mjs",
+    "build": "rm -rf dist && node scripts/build-schema.mjs && tsdown && node scripts/copy-assets.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:related": "vitest run --changed",
@@ -37,6 +38,7 @@
   "devDependencies": {
     "@praxis-kit/contract": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
+    "ajv": "^6.12.6",
     "publint": "catalog:",
     "tsdown": "catalog:",
     "vitest": "catalog:"

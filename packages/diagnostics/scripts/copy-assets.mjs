@@ -8,11 +8,11 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 mkdirSync(join(root, 'dist'), { recursive: true })
 copyFileSync(join(root, 'catalog', 'en.json'), join(root, 'dist', 'en.json'))
 copyFileSync(
-  join(root, 'schema', 'messages.schema.json'),
-  join(root, 'dist', 'messages.schema.json'),
+  join(root, 'schema', 'catalog.v1.schema.json'),
+  join(root, 'dist', 'catalog.v1.schema.json'),
 )
 copyFileSync(
   join(root, 'contract', 'diagnostics.contract.json'),
   join(root, 'dist', 'diagnostics.contract.json'),
 )
-console.log('copied en.json, messages.schema.json and diagnostics.contract.json into dist/')
+console.log('copied en.json, the schema and diagnostics.contract.json into dist/')

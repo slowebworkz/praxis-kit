@@ -20,7 +20,7 @@ export interface MessageEntry {
   $comment?: string
 }
 
-/** The JSON shape of one locale's catalog (see `schema/messages.schema.json`). */
+/** The JSON shape of one locale's catalog (see `schema/catalog.v1.schema.json`). */
 export interface MessageCatalog {
   /** The contract major this catalog was written for (`CONTRACT_VERSION.major`). A catalog for a
    *  major this package does not support is ignored by the resolver and rejected by the validator. */
