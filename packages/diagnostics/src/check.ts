@@ -1,5 +1,11 @@
 import { assertValidLocale } from './resolver'
-import type { ContextKind, DiagnosticsContract, IdContract } from './contract'
+import type {
+  ContextKeySpec,
+  ExtensionContract,
+  ContextKind,
+  DiagnosticsContract,
+  IdContract,
+} from './contract'
 
 // ─── Report ───────────────────────────────────────────────────────────────────
 
@@ -50,7 +56,13 @@ export interface Report {
   /** Contract ids with no translation, or a partial one. Not an error. */
   incomplete: { id: string; since: string; missing: string[] }[]
   /** Over catalog-driven ids only. */
-  coverage: { translated: number; total: number; ratio: number }
+  coverage: { translated: number; total: number; ratio: number; notCatalogDriven: number }
+}
+
+export interface CheckOptions {
+  /** Ids of your own (custom rules), checked as extensions. Without this, any id outside the contract
+   *  is an `unknown-id` error: the contract stays authoritative. */
+  extensions?: ExtensionContract
 }
 
 // ─── Helpers (this package takes no dependencies, so it carries its own tiny checks) ─────────────
@@ -63,6 +75,15 @@ const LIST_FILTERS = new Set(['list', 'list-or', 'list-unit'])
 const TOKEN = /\{([A-Za-z_$][\w$]*)((?:\|[a-z-]+)*)\}/g
 const PLURAL_CATEGORIES = new Set(['zero', 'one', 'two', 'few', 'many', 'other'])
 const ENTRY_KEYS = new Set(['message', 'rationale', 'suggestions', '$comment'])
+const TOP_LEVEL_KEYS = new Set([
+  '$schema',
+  '$comment',
+  'contract',
+  'builtAgainst',
+  'locale',
+  'messages',
+])
+const EXTENSION_ID = /^[a-z][a-z0-9-]*(\.[A-Za-z0-9_-]+)+$/
 const SUGGESTION_KEYS = new Set(['title', 'description', 'fix'])
 
 interface Token {
@@ -92,6 +113,51 @@ function fieldOf(id: string, field: string, form: string | undefined) {
   return { id, field, ...(form !== undefined && { form }) }
 }
 
+/** Turns an extension file into id contracts, or throws a RangeError saying what is wrong with it. */
+export function normalizeExtensions(
+  extension: unknown,
+  contract: DiagnosticsContract,
+): Record<string, IdContract> {
+  const fail = (message: string): never => {
+    throw new RangeError(`Invalid extension contract: ${message}`)
+  }
+  if (!isRecord(extension) || !isRecord(extension['ids']))
+    return fail('expected { "ids": { ... } }.')
+  const out: Record<string, IdContract> = {}
+  for (const [id, raw] of Object.entries(extension['ids'])) {
+    if (!EXTENSION_ID.test(id)) {
+      fail(`"${id}" must be namespaced and lower-case, like "acme.no-div-dialog".`)
+    }
+    if (Object.hasOwn(contract.ids, id)) fail(`"${id}" is already a built-in id.`)
+    if (!isRecord(raw)) return fail(`"${id}" must be an object.`)
+    const context: Record<string, ContextKeySpec> = {}
+    for (const [key, spec] of Object.entries(isRecord(raw['context']) ? raw['context'] : {})) {
+      if (
+        !isRecord(spec) ||
+        typeof spec['kind'] !== 'string' ||
+        !Object.hasOwn(contract.kinds, spec['kind']) ||
+        typeof spec['required'] !== 'boolean'
+      ) {
+        fail(`"${id}" context key "${key}" needs a known "kind" and a boolean "required".`)
+      }
+      context[key] = { essential: false, description: '', ...(spec as object) } as ContextKeySpec
+    }
+    const plural = typeof raw['plural'] === 'string' ? raw['plural'] : undefined
+    out[id] = {
+      codes: [],
+      category: 'custom',
+      description: '',
+      context,
+      ...(plural !== undefined && { plural }),
+      rationale: raw['rationale'] === true,
+      suggestions: typeof raw['suggestions'] === 'number' ? raw['suggestions'] : 0,
+      since: '0.0',
+      examples: [],
+    }
+  }
+  return out
+}
+
 // ─── The check ────────────────────────────────────────────────────────────────
 
 /**
@@ -99,7 +165,13 @@ function fieldOf(id: string, field: string, form: string | undefined) {
  * throws on malformed input, it reports it. Structural validity is `errors.length === 0`;
  * completeness is `incomplete` and `coverage`, and they never mix.
  */
-export function checkCatalog(catalog: unknown, contract: DiagnosticsContract): Report {
+export function checkCatalog(
+  catalog: unknown,
+  contract: DiagnosticsContract,
+  options: CheckOptions = {},
+): Report {
+  const extensions =
+    options.extensions === undefined ? {} : normalizeExtensions(options.extensions, contract)
   const runtime = `${contract.contract}.${contract.minor}`
   const report: Report = {
     contract: { required: contract.contract, catalog: undefined, compatible: false, runtime },
@@ -108,7 +180,12 @@ export function checkCatalog(catalog: unknown, contract: DiagnosticsContract): R
     obsolete: [],
     deprecated: [],
     incomplete: [],
-    coverage: { translated: 0, total: 0, ratio: 0 },
+    coverage: {
+      translated: 0,
+      total: 0,
+      ratio: 0,
+      notCatalogDriven: Object.keys(contract.notCatalogDriven).length,
+    },
   }
   const error = (issue: Issue) => void report.errors.push(issue)
 
@@ -136,6 +213,29 @@ export function checkCatalog(catalog: unknown, contract: DiagnosticsContract): R
   }
   report.contract.compatible = true
 
+  // The same top-level shape the JSON Schema enforces, so the schema and the CLI cannot disagree.
+  for (const key of Object.keys(catalog)) {
+    if (!TOP_LEVEL_KEYS.has(key)) {
+      error({
+        kind: 'unknown-field',
+        field: key,
+        message: `"${key}" is not a top-level field of a catalog (allowed: ${[...TOP_LEVEL_KEYS].join(', ')}).`,
+      })
+    }
+  }
+  for (const key of ['$schema', '$comment'] as const) {
+    if (key in catalog && typeof catalog[key] !== 'string') {
+      error({ kind: 'invalid-structure', field: key, message: `"${key}" must be a string.` })
+    }
+  }
+  if ('builtAgainst' in catalog && !/^[0-9]+\.[0-9]+$/.test(String(catalog['builtAgainst']))) {
+    error({
+      kind: 'invalid-structure',
+      field: 'builtAgainst',
+      message: '"builtAgainst" must look like "1.3" (major.minor).',
+    })
+  }
+
   let locale: string | undefined
   try {
     assertValidLocale(catalog['locale'])
@@ -161,12 +261,19 @@ export function checkCatalog(catalog: unknown, contract: DiagnosticsContract): R
 
   // Ids the catalog has.
   for (const [id, entry] of Object.entries(messages)) {
-    const spec = Object.hasOwn(contract.ids, id) ? contract.ids[id] : undefined
+    const spec = Object.hasOwn(contract.ids, id)
+      ? contract.ids[id]
+      : Object.hasOwn(extensions, id)
+        ? extensions[id]
+        : undefined
     if (spec === undefined) {
+      const custom = EXTENSION_ID.test(id)
       error({
         kind: 'unknown-id',
         id,
-        message: `"${id}" is not an id in the contract. It is a typo, or from a newer contract.`,
+        message: custom
+          ? `"${id}" is not an id in the contract. If it belongs to a custom rule, declare it in an extension contract (--extension <file>); otherwise it is a typo.`
+          : `"${id}" is not an id in the contract. It is a typo, or from a newer contract.`,
       })
       continue
     }

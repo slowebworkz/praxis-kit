@@ -19,7 +19,12 @@ describe('checkCatalog — the English catalog', () => {
     expect(r.warnings).toEqual([])
     expect(r.incomplete).toEqual([])
     expect(r.obsolete).toEqual([])
-    expect(r.coverage).toEqual({ translated: 54, total: 54, ratio: 1 })
+    expect(r.coverage).toEqual({
+      translated: 54,
+      total: 54,
+      ratio: 1,
+      notCatalogDriven: expect.any(Number),
+    })
     expect(r.contract).toEqual({ required: 1, catalog: 1, compatible: true, runtime: '1.0' })
   })
 })
@@ -294,10 +299,74 @@ describe('checkCatalog — contract evolution', () => {
     const r = checkCatalog(pack({ A: { message: '{tag}' }, B: { message: '{tag}' } }), c)
     expect(r.errors).toEqual([])
     expect(r.obsolete).toEqual([{ id: 'A', removedIn: '1.3', replacedBy: 'B' }])
-    expect(r.coverage).toEqual({ translated: 1, total: 1, ratio: 1 })
+    expect(r.coverage).toEqual({
+      translated: 1,
+      total: 1,
+      ratio: 1,
+      notCatalogDriven: expect.any(Number),
+    })
   })
 
   it('an empty contract has full coverage by definition', () => {
     expect(checkCatalog(pack({}), base({})).coverage.ratio).toBe(1)
+  })
+})
+
+describe('custom ids (extension contract)', () => {
+  const extension = {
+    ids: {
+      'acme.no-div-dialog': {
+        context: {
+          tag: { kind: 'identifier', required: true, essential: true, description: 'tag' },
+        },
+      },
+    },
+  } as const
+  const withCustom = (message: string) => ({
+    ...en,
+    messages: { ...en.messages, 'acme.no-div-dialog': { message } },
+  })
+
+  it('rejects a namespaced id without an extension, and says how to declare it', () => {
+    const r = checkCatalog(withCustom('<{tag}> no'), contract)
+    expect(r.errors).toEqual([
+      expect.objectContaining({ kind: 'unknown-id', id: 'acme.no-div-dialog' }),
+    ])
+    expect(r.errors[0]?.message).toContain('--extension')
+  })
+
+  it('accepts it when declared, without counting it toward coverage', () => {
+    const r = checkCatalog(withCustom('<{tag}> no'), contract, { extensions: extension })
+    expect(r.errors).toEqual([])
+    expect(r.coverage.total).toBe(54)
+  })
+
+  it('validates the extension id like any other: placeholders must be in its context', () => {
+    const r = checkCatalog(withCustom('<{nope}> no'), contract, { extensions: extension })
+    expect(r.errors.map((e) => e.kind)).toContain('unknown-context-key')
+    expect(r.errors.map((e) => e.kind)).toContain('placeholder-missing-essential')
+  })
+
+  it.each([
+    [{ ids: { NoNamespace: {} } }],
+    [{ ids: { 'HTML3003.x': {} } }],
+    [{ ids: { HTML3003: {} } }],
+    [{ ids: { 'acme.x': { context: { a: { kind: 'bogus', required: true } } } } }],
+    [{}],
+  ])('rejects the invalid extension %j', (bad) => {
+    expect(() => checkCatalog(en, contract, { extensions: bad as never })).toThrow(RangeError)
+  })
+})
+
+describe('top-level shape (same as the JSON Schema)', () => {
+  it('rejects an unknown top-level field', () => {
+    const r = checkCatalog({ ...en, extra: 1 }, contract)
+    expect(r.errors).toEqual([expect.objectContaining({ kind: 'unknown-field', field: 'extra' })])
+  })
+
+  it('rejects a malformed builtAgainst or a non-string $comment', () => {
+    expect(checkCatalog({ ...en, builtAgainst: '1' }, contract).errors).toHaveLength(1)
+    expect(checkCatalog({ ...en, $comment: 3 }, contract).errors).toHaveLength(1)
+    expect(checkCatalog({ ...en, builtAgainst: '1.3' }, contract).errors).toEqual([])
   })
 })

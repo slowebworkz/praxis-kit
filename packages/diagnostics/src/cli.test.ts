@@ -131,3 +131,38 @@ describe('export-source', () => {
     expect(sheet.ids.some((i) => i.id === 'OLD')).toBe(false)
   })
 })
+
+describe('--extension', () => {
+  const custom = JSON.stringify({
+    ...en,
+    messages: { ...en.messages, 'acme.rule': { message: '<{tag}> no' } },
+  })
+  const extension = JSON.stringify({
+    ids: {
+      'acme.rule': {
+        context: { tag: { kind: 'identifier', required: true, essential: true, description: 't' } },
+      },
+    },
+  })
+
+  it('rejects custom ids by default and accepts them when declared', () => {
+    const files = { 'c.json': custom, 'x.json': extension }
+    expect(drive(['validate', 'c.json'], files).code).toBe(EXIT.invalid)
+    expect(drive(['validate', 'c.json', '--extension', 'x.json'], files).code).toBe(EXIT.ok)
+  })
+
+  it('treats a broken extension file as a usage problem', () => {
+    const files = { 'c.json': custom, 'x.json': '{"ids":{"Bad":{}}}' }
+    expect(drive(['validate', 'c.json', '--extension', 'x.json'], files).code).toBe(EXIT.usage)
+    expect(drive(['validate', 'c.json', '--extension', 'nope.json'], files).code).toBe(EXIT.usage)
+  })
+
+  it('says how much is not catalog-driven', () => {
+    expect(
+      drive(['validate', 'c.json', '--extension', 'x.json'], {
+        'c.json': custom,
+        'x.json': extension,
+      }).stdout,
+    ).toMatch(/not catalog-driven yet/)
+  })
+})

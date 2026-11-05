@@ -91,24 +91,59 @@ and `praxis-kit-diagnostics/schema.json` is a JSON Schema for editor validation.
 That is the whole language: placeholders, four filters and plurals. There is no `select`, nesting,
 or number and date formatting, on purpose (see [Why not ICU?](#why-not-icu)).
 
-### Writing a locale pack
+### What a language pack covers
 
-A locale pack is a package containing one JSON file. Check it against the English catalog:
+A pack translates the **catalog-driven** diagnostics: the ids listed in the contract
+(`praxis-kit-diagnostics/contract.json`). Some Praxis Kit diagnostics are not catalog-driven yet and
+always print as their code, whatever pack is installed (`notCatalogDriven` in the contract lists
+each one with the reason). So "install a language pack" localizes most, not all, diagnostics.
+Widening coverage is a deliberate, separate task: each id that moves into the catalog is a
+compatible addition (a minor contract bump), and a pack that lacks it keeps working and reports it
+as incomplete.
 
-```ts
-import { validateCatalog } from 'praxis-kit-diagnostics'
-import en from 'praxis-kit-diagnostics/en'
-import de from './de.json'
+### The contract
 
-const issues = validateCatalog(de, en)
-if (issues.length > 0) throw new Error(JSON.stringify(issues, null, 2))
+Packs are validated against a versioned **contract**, not against the English catalog: the contract
+says, per id, which context keys exist, what kind each is (identifier, number, list…), which are
+essential, and how plurals select. A catalog declares the contract major it targets
+(`"contract": 1`).
+
+| Change to the contract                          | Effect on an existing pack                                     |
+| ----------------------------------------------- | -------------------------------------------------------------- |
+| New id (minor)                                  | still valid; reported as incomplete; fallback covers it        |
+| Context key removed, renamed or retyped (major) | the resolver ignores the pack; `validate` fails                |
+| Id deprecated                                   | still renders; reported under `deprecated`                     |
+| Id removed                                      | its translation is reported as obsolete (`--fail-on-obsolete`) |
+
+### Writing a language pack
+
+A pack is a package containing one JSON file, validated with the CLI:
+
+```sh
+npx praxis-kit-diagnostics validate catalog/fr.json --min-coverage 80
+npx praxis-kit-diagnostics export-source --format md > translator-sheet.md
 ```
 
-`validateCatalog` checks the locale tag, that every English id is present and none is invented, that
-every field is present, and that **each field, and each plural form within it, uses exactly the
-placeholders the English one does**. A variable dropped from one message or one plural branch is
-reported even when it appears elsewhere in the entry. A plural form only your language has (Russian
-"few") is compared with the English `other` form.
+`validate` exits 0 when the catalog is valid, 1 when it has errors, 2 when it is valid but below
+`--min-coverage`, 64 for bad usage. Structural validity (`errors`) is kept apart from completeness
+(`incomplete`, `coverage`): an unfinished pack is not an invalid one. Every field, and every plural
+form within it, may use only the placeholders the contract lists for that id, with a filter that
+matches the key's kind, and must keep the essential ones. `--json` prints the full report.
+
+The JSON Schema (`praxis-kit-diagnostics/schema.json`) gives editors structure and autocomplete. The
+CLI is the authority: it enforces the same top-level shape and also checks placeholders, plurals and
+ids, which a JSON Schema cannot express.
+
+A pack depends only on this package's public entry points (`praxis-kit-diagnostics`,
+`/contract.json`, `/schema.json`, and the `praxis-kit-diagnostics` command), never on monorepo paths
+or workspace aliases, so it can live in its own repository and validate after a plain `npm install`.
+
+### Fallback
+
+`createMessageResolver(fr, { fallback: en, onIssue })` looks an id up in the pack, then the
+fallback, then gives up and lets the core print the code. English is opt-in, so a French-only bundle
+contains none. Fallback is per diagnostic, never per field. A pack for another contract major is
+ignored and reported through `onIssue`; it never throws.
 
 ## Custom rules
 
@@ -147,8 +182,36 @@ Built-in Praxis Kit diagnostics are looked up in the catalog by code. Rules you 
 3. **Both.** Supply a `messageId` and let the catalog win; fall back to the code when it has no
    entry.
 
-Rule ids and message ids are yours to namespace (`acme.…`); the built-in ones are Praxis Kit codes
-and the `*.…` ids listed in the English catalog.
+Rule ids and message ids are yours to namespace (`acme.…`, lower-case with a dot); the built-in ones
+are Praxis Kit codes and the ids in the contract.
+
+The contract stays authoritative for built-in ids, so `validate` rejects an id it does not know.
+Declare your own in an **extension contract**, a small JSON file, and pass it with `--extension`:
+
+```json
+{
+  "ids": {
+    "acme.no-div-dialog": {
+      "context": {
+        "tag": {
+          "kind": "identifier",
+          "required": true,
+          "essential": true,
+          "description": "The element"
+        }
+      }
+    }
+  }
+}
+```
+
+```sh
+npx praxis-kit-diagnostics validate catalog/app.json --extension acme.extension.json
+```
+
+Extension ids are checked like built-in ones (placeholders, filters, plurals) but do not count
+toward coverage. The JSON Schema accepts any well-formed id, so it never rejects an extended catalog
+that the CLI accepts with the extension.
 
 ## Why not ICU?
 
@@ -159,7 +222,7 @@ The renderer is a small custom format rather than ICU MessageFormat (for example
 | ------------------ | ------------------------------------ | ---------------------------------------- |
 | Runtime cost       | None; about 100 lines, no dependency | A parser and formatter on every consumer |
 | Syntax             | `{name}`, four filters, plurals      | Standard; `select`, nesting, number/date |
-| Translator tooling | JSON Schema and `validateCatalog`    | Established ICU-aware tools and TMS      |
+| Translator tooling | JSON Schema and `validate` CLI       | Established ICU-aware tools and TMS      |
 | Maintenance        | We own the parser semantics          | Mature, widely tested                    |
 
 Diagnostics are short and mostly plain interpolation, the packages they ship in are size-gated, and

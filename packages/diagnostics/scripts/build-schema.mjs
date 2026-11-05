@@ -46,7 +46,7 @@ export function buildSchema(contract) {
     $id: `https://github.com/slowebworkz/praxis-kit/blob/main/packages/diagnostics/schema/catalog.v${contract.contract}.schema.json`,
     title: `Praxis Kit diagnostic message catalog (contract ${contract.contract})`,
     description:
-      'One catalog per locale. Keys under "messages" are message ids from the diagnostics contract. Templates use {name} placeholders, optionally piped through filters: {names|quote|list-unit}. Generated from the contract; the CLI (`praxis-kit-diagnostics validate`) is the authority on placeholders and plurals.',
+      'One catalog per locale. Keys under "messages" are message ids from the diagnostics contract. Templates use {name} placeholders, optionally piped through filters: {names|quote|list-unit}. Generated from the contract; ids of your own (custom rules) pass this schema, but the CLI accepts them only when declared with --extension. The CLI (`praxis-kit-diagnostics validate`) is the authority on placeholders, plurals and ids.',
     type: 'object',
     required: ['contract', 'locale', 'messages'],
     additionalProperties: false,

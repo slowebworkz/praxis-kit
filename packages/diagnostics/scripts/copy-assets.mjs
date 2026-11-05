@@ -1,18 +1,26 @@
-// Ships the English catalog and its schema as plain JSON next to the compiled entries, so
-// translators and tools can read them without importing JavaScript.
-import { copyFileSync, mkdirSync } from 'node:fs'
+// Ships the English catalog, the schemas and the contract as plain JSON next to the compiled entries,
+// so translators and tools can read them without importing JavaScript.
+//
+// Every schema/catalog.v<N>.schema.json is copied (older majors are frozen files that stay exported),
+// and `schema.json` is a copy of the one for the current contract major.
+import { copyFileSync, mkdirSync, readdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-mkdirSync(join(root, 'dist'), { recursive: true })
-copyFileSync(join(root, 'catalog', 'en.json'), join(root, 'dist', 'en.json'))
-copyFileSync(
-  join(root, 'schema', 'catalog.v1.schema.json'),
-  join(root, 'dist', 'catalog.v1.schema.json'),
+const dist = join(root, 'dist')
+mkdirSync(dist, { recursive: true })
+
+const contractFile = join(root, 'contract', 'diagnostics.contract.json')
+const { contract: major } = JSON.parse(readFileSync(contractFile, 'utf8'))
+
+copyFileSync(join(root, 'catalog', 'en.json'), join(dist, 'en.json'))
+copyFileSync(contractFile, join(dist, 'diagnostics.contract.json'))
+
+const schemas = readdirSync(join(root, 'schema')).filter((f) =>
+  /^catalog\.v\d+\.schema\.json$/.test(f),
 )
-copyFileSync(
-  join(root, 'contract', 'diagnostics.contract.json'),
-  join(root, 'dist', 'diagnostics.contract.json'),
-)
-console.log('copied en.json, the schema and diagnostics.contract.json into dist/')
+for (const file of schemas) copyFileSync(join(root, 'schema', file), join(dist, file))
+copyFileSync(join(root, 'schema', `catalog.v${major}.schema.json`), join(dist, 'schema.json'))
+
+console.log(`copied en.json, the contract and ${schemas.length} schema(s) into dist/`)

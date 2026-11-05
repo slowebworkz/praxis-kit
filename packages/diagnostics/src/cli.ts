@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { checkCatalog } from './check'
 import type { Issue, Report } from './check'
 import contractData from './contract-entry'
-import type { DiagnosticsContract } from './contract'
+import type { DiagnosticsContract, ExtensionContract } from './contract'
 import en from './en'
 import { createMessageResolver } from './resolver'
 
@@ -36,6 +36,9 @@ Commands
       --json                  Print the report as JSON.
       --min-coverage <n>      Exit 2 if fewer than n% of the contract's ids are translated.
       --fail-on-obsolete      Exit 1 if the catalog translates ids the contract has removed.
+      --extension <file>      Also accept the custom-rule ids declared in this file
+                              ({ "ids": { "acme.rule": { "context": { ... } } } }). Without it
+                              any id outside the contract is an error.
       --contract <file>       Validate against another contract file (for example a published
                               version's contract.json) instead of the one bundled here.
   export-source             Print what a translator needs for every id: the English source, what
@@ -45,7 +48,7 @@ Commands
 Exit codes: 0 valid, 1 invalid, 2 below --min-coverage, 64 bad usage.
 `
 
-const VALUE_FLAGS = new Set(['min-coverage', 'contract', 'format'])
+const VALUE_FLAGS = new Set(['min-coverage', 'contract', 'extension', 'format'])
 const BOOLEAN_FLAGS = new Set(['json', 'fail-on-obsolete', 'help'])
 
 interface Parsed {
@@ -119,8 +122,11 @@ export function formatReport(report: Report, file: string): string {
   out.push('', `Incomplete: ${report.incomplete.length}`)
   for (const i of report.incomplete)
     out.push(`  ${i.id}  (since ${i.since})  missing ${i.missing.join(', ')}`)
-  const { translated, total, ratio } = report.coverage
+  const { translated, total, ratio, notCatalogDriven } = report.coverage
   out.push('', `Coverage: ${translated}/${total} ids (${Math.round(ratio * 100)}%)`)
+  out.push(
+    `${notCatalogDriven} more diagnostic codes are not catalog-driven yet and always print as their code.`,
+  )
   out.push(report.errors.length === 0 ? 'Structurally valid.' : 'NOT valid: fix the errors above.')
   return `${out.join('\n')}\n`
 }
@@ -158,7 +164,24 @@ function validateCommand(parsed: Parsed, io: Io): number {
     return EXIT.invalid
   }
 
-  const report = checkCatalog(catalog, contract)
+  let extensions: ExtensionContract | undefined
+  const extensionPath = parsed.flags.get('extension')
+  if (typeof extensionPath === 'string') {
+    try {
+      extensions = JSON.parse(io.readFile(extensionPath)) as ExtensionContract
+    } catch (error_) {
+      io.stderr(`Cannot read the extension contract: ${String(error_)}\n`)
+      return EXIT.usage
+    }
+  }
+
+  let report: Report
+  try {
+    report = checkCatalog(catalog, contract, extensions === undefined ? {} : { extensions })
+  } catch (error_) {
+    io.stderr(`${(error_ as Error).message}\n`)
+    return EXIT.usage
+  }
   io.stdout(
     parsed.flags.has('json') ? `${JSON.stringify(report, null, 2)}\n` : formatReport(report, file),
   )

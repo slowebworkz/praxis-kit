@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import Ajv from 'ajv'
@@ -72,5 +72,30 @@ describe('catalog.v1.schema.json', () => {
     const c = clone()
     damage(c)
     expect(ok(c)).toBe(false)
+  })
+})
+
+describe('schema assets follow the contract major', () => {
+  const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
+  const copy = readFileSync(join(root, 'scripts', 'copy-assets.mjs'), 'utf8')
+
+  it('exports the current major as a versioned schema and as schema.json', () => {
+    expect(pkg.exports[`./catalog.v${contract.contract}.schema.json`]).toBe(
+      `./dist/catalog.v${contract.contract}.schema.json`,
+    )
+    expect(pkg.exports['./schema.json']).toBe('./dist/schema.json')
+  })
+
+  it('has a frozen schema file for every versioned export', () => {
+    for (const key of Object.keys(pkg.exports)) {
+      const match = /^\.\/catalog\.v(\d+)\.schema\.json$/.exec(key)
+      if (match) {
+        expect(existsSync(join(root, 'schema', `catalog.v${match[1]}.schema.json`))).toBe(true)
+      }
+    }
+  })
+
+  it('copies assets without hardcoding a major', () => {
+    expect(copy).not.toMatch(/catalog\.v1/)
   })
 })

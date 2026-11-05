@@ -87,3 +87,21 @@ export interface DiagnosticsContract {
    *  completeness; moving one into `ids` is a compatible addition (a minor bump). */
   notCatalogDriven: Readonly<Record<string, string>>
 }
+
+/**
+ * An id of your own, for a custom rule (`messageId: 'acme.no-div-dialog'`). The core contract stays
+ * authoritative for built-in ids; this describes only the extra ones, so `checkCatalog` can validate a
+ * catalog that carries them. Ids must be namespaced: lower-case, with a dot (`acme.rule`).
+ */
+export interface ExtensionId {
+  context?: Readonly<Record<string, ContextKeySpec>>
+  plural?: string
+  /** Whether entries have a `rationale`. Default false. */
+  rationale?: boolean
+  /** How many suggestions entries have. Default 0. */
+  suggestions?: number
+}
+
+export interface ExtensionContract {
+  ids: Readonly<Record<string, ExtensionId>>
+}
