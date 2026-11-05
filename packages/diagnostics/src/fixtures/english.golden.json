@@ -172,9 +172,6 @@
   "contract.cardinalityMax": {
     "message": "Menu: \"item\" allows at most 2."
   },
-  "contract.positionViolation": {
-    "message": "Card: \"header\" must be first, got index 2"
-  },
   "contract.unknownVariantDim": {
     "message": "Box: compound[0] references unknown variant \"size\"."
   },
@@ -400,5 +397,11 @@
   },
   "html.invalidChild.unspecified": {
     "message": "<div> is not a valid direct child of <p>. Allowed: the parent element’s permitted content model."
+  },
+  "contract.positionViolation.first": {
+    "message": "Card: \"header\" must be first, got index 2"
+  },
+  "contract.positionViolation.last": {
+    "message": "Card: \"footer\" must be last, got index 0"
   }
 }

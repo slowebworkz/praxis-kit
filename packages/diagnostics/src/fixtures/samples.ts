@@ -60,8 +60,10 @@ export const SAMPLES: Record<string, () => DiagnosticInput> = {
     ContractDiagnostics.ambiguousChild('Item', 1, ['a', 'b'], 'Menu'),
   'contract.cardinalityMin': () => ContractDiagnostics.cardinalityMin('item', 1, 'Menu'),
   'contract.cardinalityMax': () => ContractDiagnostics.cardinalityMax('item', 2, 'Menu'),
-  'contract.positionViolation': () =>
+  'contract.positionViolation.first': () =>
     ContractDiagnostics.positionViolation('header', 'first', 2, 'Card'),
+  'contract.positionViolation.last': () =>
+    ContractDiagnostics.positionViolation('footer', 'last', 0, 'Card'),
   'contract.unknownVariantDim': () =>
     ContractDiagnostics.unknownVariantDim('Box', 'compound[0]', 'size'),
   'contract.unknownVariantValue': () =>

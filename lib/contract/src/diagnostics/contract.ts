@@ -21,12 +21,14 @@ function contract(
   code: DiagnosticCode,
   context: Readonly<Record<string, unknown>>,
   component?: string,
+  messageId?: string,
 ): DiagnosticInput {
   return {
     code,
     category: DiagnosticCategory.Contract,
     ...(isDefined(component) && { component }),
     context,
+    ...(isDefined(messageId) && { messageId }),
   }
 }
 
@@ -53,13 +55,20 @@ export const ContractDiagnostics = {
     return contract(DiagnosticCode.CardinalityMax, { ruleName, max, scope }, scope)
   },
 
+  // `first` and `last` are message ids (`COMP1008.first`, `COMP1008.last`), not a context value, so a
+  // translation says "first" or "last" in its own words instead of splicing an English one in.
   positionViolation(
     ruleName: string,
-    position: string,
+    position: 'first' | 'last',
     index: number,
     scope: string,
   ): DiagnosticInput {
-    return contract(DiagnosticCode.PositionViolation, { ruleName, position, index, scope }, scope)
+    return contract(
+      DiagnosticCode.PositionViolation,
+      { ruleName, index, scope },
+      scope,
+      `COMP1008.${position}`,
+    )
   },
 
   unknownVariantDim(component: string, label: string, dim: string): DiagnosticInput {

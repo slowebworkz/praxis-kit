@@ -55,6 +55,8 @@ export class RuleValidator extends InvariantBase {
     lastIndex: number,
   ): void {
     const { name, position } = rule
+    // `any` accepts every position, so it can never violate one (and has no first/last to report).
+    if (position === 'any') return
     iterate.forEachSet(matches, (index) => {
       if (RuleValidator.#isValidPosition(index, position, firstIndex, lastIndex)) {
         return

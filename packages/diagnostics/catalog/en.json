@@ -247,8 +247,11 @@
     "COMP1007": {
       "message": "{scope}: \"{ruleName}\" allows at most {max}."
     },
-    "COMP1008": {
-      "message": "{scope}: \"{ruleName}\" must be {position}, got index {index}"
+    "COMP1008.first": {
+      "message": "{scope}: \"{ruleName}\" must be first, got index {index}"
+    },
+    "COMP1008.last": {
+      "message": "{scope}: \"{ruleName}\" must be last, got index {index}"
     },
     "COMP1009": {
       "message": "<{component}>: \"as\" prop received \"{tag}\" but only [{allowedAs|quote|list-unit}] are allowed."
