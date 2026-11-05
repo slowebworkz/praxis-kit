@@ -8,7 +8,9 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const dist = join(root, 'dist')
+// `--out <dir>` lets the build test emit into a temp directory; the build uses dist/.
+const outFlag = process.argv.indexOf('--out')
+const dist = outFlag === -1 ? join(root, 'dist') : process.argv[outFlag + 1]
 mkdirSync(dist, { recursive: true })
 
 const contractFile = join(root, 'contract', 'diagnostics.contract.json')

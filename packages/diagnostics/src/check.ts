@@ -94,7 +94,9 @@ const TOP_LEVEL_KEYS = new Set([
   'locale',
   'messages',
 ])
-const EXTENSION_ID = /^[a-z][a-z0-9-]*(\.[A-Za-z0-9_-]+)+$/
+// Lower-case throughout: letters, digits and hyphens, at least two dot-separated segments. No
+// underscores, so `acme.no-div-dialog` is valid and `acme.NoDiv`, `acme.no_div` are not.
+const EXTENSION_ID = /^[a-z][a-z0-9-]*(\.[a-z0-9][a-z0-9-]*)+$/
 const SUGGESTION_KEYS = new Set(['title', 'description', 'fix'])
 
 interface Token {
@@ -124,7 +126,21 @@ function fieldOf(id: string, field: string, form: string | undefined) {
   return { id, field, ...(isDefined(form) && { form }) }
 }
 
-/** Turns an extension file into id contracts, or throws a RangeError saying what is wrong with it. */
+const EXTENSION_KEYS = new Set(['$schema', '$comment', 'ids'])
+const EXTENSION_ID_KEYS = new Set(['$comment', 'context', 'plural', 'rationale', 'suggestions'])
+const EXTENSION_CONTEXT_KEYS = new Set([
+  'kind',
+  'required',
+  'essential',
+  'informational',
+  'description',
+])
+
+/**
+ * Turns an extension file into id contracts, or throws a RangeError saying what is wrong with it.
+ * Nothing is defaulted silently: a malformed or unexpected field is an error, because a typo here
+ * would otherwise weaken validation without a word.
+ */
 export function normalizeExtensions(
   extension: unknown,
   contract: DiagnosticsContract,
@@ -132,28 +148,74 @@ export function normalizeExtensions(
   const fail = (message: string): never => {
     throw new RangeError(`Invalid extension contract: ${message}`)
   }
-  if (!isRecord(extension) || !isRecord(extension['ids']))
+  const onlyKeys = (where: string, object: StringMap<unknown>, allowed: ReadonlySet<string>) =>
+    iterate.forEachKey(object, (key) => {
+      if (!allowed.has(key)) {
+        fail(`${where} has an unknown field "${key}" (allowed: ${[...allowed].join(', ')}).`)
+      }
+    })
+
+  if (!isRecord(extension) || !isRecord(extension['ids'])) {
     return fail('expected { "ids": { ... } }.')
+  }
+  onlyKeys('the file', extension, EXTENSION_KEYS)
   const out: NormalizedExtensions = {}
+
   iterate.forEachEntry(extension['ids'], (id, raw) => {
     if (!EXTENSION_ID.test(id)) {
-      fail(`"${id}" must be namespaced and lower-case, like "acme.no-div-dialog".`)
+      fail(
+        `"${id}" must be namespaced and lower-case (letters, digits, hyphens; dot-separated), like "acme.no-div-dialog".`,
+      )
     }
     if (Object.hasOwn(contract.ids, id)) fail(`"${id}" is already a built-in id.`)
     if (!isRecord(raw)) return fail(`"${id}" must be an object.`)
+    onlyKeys(`"${id}"`, raw, EXTENSION_ID_KEYS)
+
+    const rawContext = Object.hasOwn(raw, 'context') ? raw['context'] : {}
+    if (!isRecord(rawContext)) return fail(`"${id}".context must be an object.`)
     const context: StringMap<ContextKeySpec> = {}
-    iterate.forEachEntry(isRecord(raw['context']) ? raw['context'] : {}, (key, spec) => {
-      if (
-        !isRecord(spec) ||
-        !isString(spec['kind']) ||
-        !Object.hasOwn(contract.kinds, spec['kind']) ||
-        !isBooleanValue(spec['required'])
-      ) {
-        fail(`"${id}" context key "${key}" needs a known "kind" and a boolean "required".`)
+    iterate.forEachEntry(rawContext, (key, spec) => {
+      const where = `"${id}" context key "${key}"`
+      if (!isRecord(spec)) return fail(`${where} must be an object.`)
+      onlyKeys(where, spec, EXTENSION_CONTEXT_KEYS)
+      const kind = spec['kind']
+      if (!isString(kind) || !Object.hasOwn(contract.kinds, kind)) {
+        return fail(`${where} needs a "kind" (${Object.keys(contract.kinds).join(', ')}).`)
       }
-      context[key] = { essential: false, description: '', ...(spec as object) } as ContextKeySpec
+      if (!isBooleanValue(spec['required'])) return fail(`${where} needs a boolean "required".`)
+      for (const flag of ['essential', 'informational'] as const) {
+        if (Object.hasOwn(spec, flag) && !isBooleanValue(spec[flag])) {
+          fail(`${where}.${flag} must be a boolean.`)
+        }
+      }
+      if (Object.hasOwn(spec, 'description') && !isString(spec['description'])) {
+        fail(`${where}.description must be a string.`)
+      }
+      context[key] = {
+        kind: kind as ContextKind,
+        required: spec['required'],
+        essential: spec['essential'] === true,
+        ...(spec['informational'] === true && { informational: true }),
+        description: isString(spec['description']) ? spec['description'] : '',
+      }
     })
-    const plural = isString(raw['plural']) ? raw['plural'] : undefined
+
+    let plural: string | undefined
+    if (Object.hasOwn(raw, 'plural')) {
+      plural = isString(raw['plural']) ? raw['plural'] : undefined
+      if (isUndefined(plural)) return fail(`"${id}".plural must be a string (a context key).`)
+      if (context[plural]?.kind !== 'number') {
+        return fail(`"${id}".plural "${plural}" must name a context key of kind "number".`)
+      }
+    }
+    if (Object.hasOwn(raw, 'rationale') && !isBooleanValue(raw['rationale'])) {
+      return fail(`"${id}".rationale must be a boolean.`)
+    }
+    const suggestions = Object.hasOwn(raw, 'suggestions') ? raw['suggestions'] : 0
+    if (!isNumber(suggestions) || !Number.isInteger(suggestions) || suggestions < 0) {
+      return fail(`"${id}".suggestions must be a non-negative integer.`)
+    }
+
     out[id] = {
       codes: [],
       category: 'custom',
@@ -161,7 +223,7 @@ export function normalizeExtensions(
       context,
       ...(isDefined(plural) && { plural }),
       rationale: raw['rationale'] === true,
-      suggestions: isNumber(raw['suggestions']) ? raw['suggestions'] : 0,
+      suggestions,
       since: '0.0',
       examples: [],
     }
@@ -240,11 +302,14 @@ export function checkCatalog(
       error({ kind: 'invalid-structure', field: key, message: `"${key}" must be a string.` })
     }
   })
-  if ('builtAgainst' in catalog && !/^[0-9]+\.[0-9]+$/.test(String(catalog['builtAgainst']))) {
+  if (
+    'builtAgainst' in catalog &&
+    !(isString(catalog['builtAgainst']) && /^[0-9]+\.[0-9]+$/.test(catalog['builtAgainst']))
+  ) {
     error({
       kind: 'invalid-structure',
       field: 'builtAgainst',
-      message: '"builtAgainst" must look like "1.3" (major.minor).',
+      message: '"builtAgainst" must be a string like "1.3" (major.minor), not a number.',
     })
   }
 

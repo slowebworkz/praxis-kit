@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkCatalog } from './check'
+import { checkCatalog, normalizeExtensions } from './check'
 import contract from './contract-entry'
 import type { DiagnosticsContract } from './contract'
 import en from './en'
@@ -354,8 +354,71 @@ describe('custom ids (extension contract)', () => {
     [{ ids: { HTML3003: {} } }],
     [{ ids: { 'acme.x': { context: { a: { kind: 'bogus', required: true } } } } }],
     [{}],
+    [{ ids: {}, extra: 1 }],
+    [{ ids: { 'acme.x': { suggestions: 'one' } } }],
+    [{ ids: { 'acme.x': { suggestions: -1 } } }],
+    [{ ids: { 'acme.x': { suggestions: 1.5 } } }],
+    [{ ids: { 'acme.x': { rationale: 'yes' } } }],
+    [{ ids: { 'acme.x': { context: [] } } }],
+    [{ ids: { 'acme.x': { context: { a: 'identifier' } } } }],
+    [{ ids: { 'acme.x': { context: { a: { kind: 'identifier' } } } } }],
+    [{ ids: { 'acme.x': { context: { a: { kind: 'identifier', required: true, nope: 1 } } } } }],
+    [
+      {
+        ids: {
+          'acme.x': { context: { a: { kind: 'identifier', required: true, essential: 'y' } } },
+        },
+      },
+    ],
+    [
+      {
+        ids: {
+          'acme.x': { context: { a: { kind: 'identifier', required: true, description: 3 } } },
+        },
+      },
+    ],
+    [{ ids: { 'acme.x': { plural: 3 } } }],
+    [{ ids: { 'acme.x': { plural: 'n' } } }],
+    [
+      {
+        ids: { 'acme.x': { context: { n: { kind: 'identifier', required: true } }, plural: 'n' } },
+      },
+    ],
+    [{ ids: { 'acme.x': { colour: 'red' } } }],
+    [{ ids: { 'acme.Rule': {} } }],
+    [{ ids: { 'Acme.rule': {} } }],
+    [{ ids: { 'acme.no_div': {} } }],
   ])('rejects the invalid extension %j', (bad) => {
     expect(() => checkCatalog(en, contract, { extensions: bad as never })).toThrow(RangeError)
+  })
+})
+
+describe('a complete extension', () => {
+  it('normalizes every declared property', () => {
+    const out = normalizeExtensions(
+      {
+        $comment: 'x',
+        ids: {
+          'acme.count': {
+            $comment: 'n',
+            context: {
+              n: { kind: 'number', required: true, essential: true, description: 'how many' },
+            },
+            plural: 'n',
+            rationale: true,
+            suggestions: 2,
+          },
+        },
+      },
+      contract,
+    )
+    expect(out['acme.count']).toMatchObject({ plural: 'n', rationale: true, suggestions: 2 })
+    expect(out['acme.count']?.context?.['n']).toEqual({
+      kind: 'number',
+      required: true,
+      essential: true,
+      description: 'how many',
+    })
   })
 })
 
@@ -369,5 +432,12 @@ describe('top-level shape (same as the JSON Schema)', () => {
     expect(checkCatalog({ ...en, builtAgainst: '1' }, contract).errors).toHaveLength(1)
     expect(checkCatalog({ ...en, $comment: 3 }, contract).errors).toHaveLength(1)
     expect(checkCatalog({ ...en, builtAgainst: '1.3' }, contract).errors).toEqual([])
+  })
+
+  it('does not coerce a numeric builtAgainst: 1.3 is a number, not the string "1.3"', () => {
+    const r = checkCatalog({ ...en, builtAgainst: 1.3 }, contract)
+    expect(r.errors).toEqual([
+      expect.objectContaining({ kind: 'invalid-structure', field: 'builtAgainst' }),
+    ])
   })
 })

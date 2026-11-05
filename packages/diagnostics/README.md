@@ -182,8 +182,9 @@ Built-in Praxis Kit diagnostics are looked up in the catalog by code. Rules you 
 3. **Both.** Supply a `messageId` and let the catalog win; fall back to the code when it has no
    entry.
 
-Rule ids and message ids are yours to namespace (`acme.…`, lower-case with a dot); the built-in ones
-are Praxis Kit codes and the ids in the contract.
+Rule ids and message ids are yours to namespace (`acme.…`: lower-case letters, digits and hyphens in
+dot-separated segments; no upper case, no underscores); the built-in ones are Praxis Kit codes and
+the ids in the contract.
 
 The contract stays authoritative for built-in ids, so `validate` rejects an id it does not know.
 Declare your own in an **extension contract**, a small JSON file, and pass it with `--extension`:
