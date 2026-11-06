@@ -31,139 +31,41 @@ the current state.
 
 ## Open
 
-### `defineContract` — proposed contract-definition boundary — deferred past 0.1.1
+### `qa/*` tooling ownership — deferred
 
-External proposal (2026-09-11): introduce `defineContract(options): O` as the standard entry point
-for authoring a contract, exported from `praxis-kit/contract`. Establishes a named boundary between
-_defining_ a contract (`defineContract`) and _creating a framework component from it_
-(`createContractComponent`), replacing:
+`jscpd` and `ts-morph` stay in the root `devDependencies` (`pnpm analyze:duplicates` and
+`scripts/generate-repo-state.ts` use them; `@ast-grep/cli` was removed). Open question: whether to
+move them into the `qa/*` packages that own the analysis, with only version ownership at the root
+via the catalog. Same for `type-fest`, which is still under review.
 
-```ts
-export const Box = defineContractComponent(boxContract)((opts) => createContractComponent(opts))
-```
+## Resolved`** is
 
-with:
+history, kept for the reasoning, not as current-state documentation. For current state, use these
+instead:
 
-```ts
-export const boxContract = defineContract({ tag: 'div', name: 'Box' /* ... */ })
-export const Box = createContractComponent(boxContract)
-```
+| Question                                                | Authoritative source                                                             |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| What's public, and how stable is it for 1.x?            | [`docs/api-stability.md`](docs/api-stability.md)                                 |
+| Which HTML/ARIA rules does the engine enforce, and why? | [`docs/accessibility/html-aria-audit.md`](docs/accessibility/html-aria-audit.md) |
+| How do I build a component?                             | [`GETTING_STARTED.md`](GETTING_STARTED.md), [`docs/`](docs/index.md)             |
+| Internal runtime pipeline                               | [`ARCHITECTURE.md`](ARCHITECTURE.md)                                             |
 
-**The core technical claim checked out against the real code.** `defineContractComponent`
-(`lib/adapter-utils/src/runtime/define-component.ts`) is exactly what the proposal says — a pure
-currying trick (`<O>(options: O) => <R>(factory: (options: O) => R): R => factory(options)`), no
-runtime behavior. It exists because `createContractComponent` has seven generic parameters
-(`TDefault, Props, Variants, TPreset, TPlugin, TAllowed, TSubComponents`) all meant to be inferred
-from different sub-paths of one `options` object — fragile as a single-shot inference, reliable once
-`options` is already pinned to a concrete type `O` (which is all the first curried call does).
-`defineContract(options): O` performs the identical pinning without the second call, so
-`createContractComponent(boxContract)` should infer exactly as well as it does today inside the
-curried callback. The "one contract, multiple adapters" goal (§9 of the proposal) isn't new —
-`defineContractComponent` already lives in the framework-neutral `@praxis-kit/adapter-utils` and is
-already shared across adapters — so the actual delta is narrower than the proposal's framing:
-dropping the second curried call, and repositioning the concept from "define a component" to "define
-a contract."
+**Current release:** `praxis-kit@1.4.0` on npm (public). History: `0.1.0` → `0.1.1` → `1.0.2` →
+`1.0.3` → `1.1.2` → `1.2.0` → `1.3.0` → `1.4.0`. **Current stability policy:** 1.x, beginning with
+1.0.2 — see `docs/api-stability.md`. **Integration branch:** `develop` (repository default). `main`
+tracks the last release and takes changes only through a pull request with CI green, admins
+included; `v*` tags are protected by a ruleset (see the 2026-11 entry at the end of this file).
 
-**Why it's a real diagnosis, not just a naming exercise.** The proposal's §11 (`ContractProps`
-should be a derived view of a defined contract, not the contract's representation) names the exact
-root cause behind finding #44's `ContractProps` layout-union collapse
-(`fix/contractprops-layout-union-collapse`, PR #95): `ContractProps<T>` has to recover the concrete
-contract shape from an _already-built_ component via the `HasGenerics<G>`/`__generics`
-phantom-marker trick, because nothing upstream still carries that type by the time a consumer needs
-it. If `defineContract` preserved the concrete type at the definition site, adapters could type off
-that directly instead of doing generics-archaeology on the built component afterward. Worth
-reconsidering `ContractProps`/`AnyFactoryOptions` against this once `defineContract` lands, per the
-proposal's own §14 Step 5 — not before.
+The architecture is frozen for the 1.x line: no new abstractions or tooling systems without a
+decision recorded here. Items below the historical entries that refer to 0.1 milestones (the 0.1.0
+tag, flipping `packages/kit` off `private`, first publish) are done; the entries are kept for the
+reasoning behind them.
 
-**Deferred, not rejected.** Even the proposal's own Step 1 (a typed identity function) is a new
-public export and a new named type (`DefinedContract<O>`) on the framework-neutral core — a new
-abstraction by the letter of the frozen-architecture rule above, regardless of how small its first
-implementation is. User confirmed 2026-09-11: this is post-0.1.1 work. Revisit once the 0.1.x line
-is stable and there's room to touch `FactoryOptions`/`createContractComponent`'s call sites across
-every adapter.
+The live items are in **`## Open`**. Decisions below are historical and are not rewritten to match
+the current state.
+---
 
-**Update — `AnyFactoryOptions`, resolved (2026-09-13): eliminated, not kept.** The reconsideration
-flagged above landed differently than an earlier draft of this entry assumed: user confirmed, once
-Phases 0–4 (`defineContract`, per-adapter single-generic `createContractComponent`, `__contract`
-retention, `ContractProps` rewire) actually proved the type architecture out, that
-`AnyFactoryOptions` should be deleted outright, not kept as a documented erasure escape hatch. Every
-adapter's re-export, the `packages/core`/`packages/kit` barrels, the
-`factory-options.compounds.test.ts` erasure test (rewritten against a plain
-`FactoryOptions<'textarea', Props, VariantMap>` instantiation — the same erasure, no separate named
-type needed to demonstrate it), the `TYPE_CHECK_ENTRIES` name in
-`packages/kit/scripts/smoke-test.ts` (→ `FactoryOptions`), the `GENERIC_FACTORY_OPTIONS_NAMES`
-exclusion set in `scripts/generate-repo-state.ts`, and the one real test usage (Svelte's
-`define-contract-component.test.ts`, where the `satisfies AnyFactoryOptions` annotation was already
-redundant with `defineContractComponent<O extends FactoryOptions>`'s own constraint) were all
-updated or removed accordingly. No replacement type was introduced — nothing in this repo has a live
-need for one today; if a genuine erasure need surfaces later, scope it to that one call site rather
-than reintroducing a general-purpose one.
-
-**TypeScript limitations hit while building `defineContract`/`ContractModel`, and the fixes they
-forced** — moved here from inline code comments (2026-09-14) to keep the type files themselves
-readable; the _why_ behind each design choice stays in the code, the debugging narrative lives here:
-
-- **Explicit type arguments disable `const` type-parameter inference for later, defaulted
-  parameters.** A `const T` type parameter only preserves an argument's literal type when a call
-  supplies _zero_ explicit type arguments — giving even one explicit argument (e.g.
-  `defineContract<ButtonProps>(...)`) silently falls every later, defaulted parameter back to its
-  own declared bound instead of inferring from the real literal. Confirmed via a minimal repro early
-  in Phase 1; the fix was dropping `defineContract`'s once-planned explicit `Props` type argument
-  entirely, relying on zero-generic inference only (matching every real `createContractComponent`
-  call site in this repo, none of which ever supplies explicit generics).
-- **A required (non-optional) `infer` pattern is the only reliable way to detect a genuinely absent
-  field.** An earlier `ContractModel` draft re-derived each dimension from `FactoryOptions`'s own
-  _optional_ nested fields at every accessor call, matching via `{ tag?: infer T }`-style patterns.
-  Confirmed broken for the common case of a field being genuinely absent: TypeScript resolves an
-  evidence-free `infer` to the field's declared _constraint_, not a tight empty default, silently
-  reopening the "everything permitted" hole `defineContract`'s `tag`/`name` requirement exists to
-  close, one layer down for every other field. Every `*From<O>` derivation in `contract-model.ts`
-  matches a _required_ pattern instead (`{ tag: infer T }`), which fails the whole `extends` check
-  cleanly when the field is genuinely absent, routing to the explicit empty-fallback branch.
-- **A narrow default on a type parameter used as another parameter's constraint bound silently
-  widens inference when a real value doesn't fit that narrow default.** `ContractInput`'s
-  `V`/`TPreset`/`TPlugin`/`TAllowed` parameters default to their own wide _bound_
-  (`Readonly<VariantMap>`, `RecipeMap<V>`, etc.), not `FactoryOptions`'s narrower
-  `EmptyRecord`-style defaults. This was hit as a real bug once, not designed defensively upfront:
-  an earlier draft used the narrow defaults, and `defineContract`'s own round-trip test caught a
-  real contract (non-empty `styling.variants`) silently widening its inferred `O` to
-  `ContractInput`'s own bound instead of the real literal, because the narrow default failed to
-  structurally satisfy the constraint check.
-- **Referencing a still-abstract sibling generic parameter from within a type's own default fails
-  assignability verification.** `ContractModel`'s `TPreset` parameter is fixed to the widest
-  `RecipeMap<VariantMap>`, not the self-referential `RecipeMap<V>` `FactoryOptions`/`StylingOptions`
-  use — verifying `RecipeMap<V>`'s assignability for a still-abstract `V` (as it is at
-  `defineContract`'s own return-type-annotation call site, before any real call resolves the
-  generics) hits a TypeScript limitation over that type's `keyof V[K]` mapped-type position. Every
-  place this pattern recurs (`ContractModel.TPreset`, `ContractPresetFrom`) decouples from the
-  still-abstract sibling the same way, for the identical reason.
-
-**Update — `defineContractComponent`, resolved (2026-09-14): removed entirely, not relocated.** The
-curried predecessor `defineContract` supersedes went through two positions before landing here:
-first kept on every adapter's primary entry point (its original, pre-refactor state); then, once
-real evidence surfaced — `../praxis-components` (a real downstream consumer) uses the curried
-`defineContractComponent(options)(createContractComponent)` pattern across its entire component
-library, 100+ files, as a live workspace dependency, not in tests — relocated to
-`praxis-kit/contract` as a clearly marked legacy/compat surface, matching the "if backward
-compatibility is required, move it rather than keep it on every primary entry point" fallback. User
-confirmed, with that evidence in hand: remove it entirely anyway, accepting that `praxis-components`
-breaks until its own separate migration (already out of scope for this refactor, per this entry's
-own earlier framing) lands. Removed: `lib/adapter-utils/src/runtime/define-component.ts` and its
-test, the `defineContractComponent` export from `lib/adapter-utils/src/runtime/index.ts` and
-`packages/kit/contract.ts`, and every mention from `docs/api-stability.md` and the seven adapter
-READMEs (now documented as a breaking change instead of a relocation). Svelte's
-`define-contract-component.test.ts` — the one file still exercising the curried pattern for real
-coverage (no equivalent `defineContract`-based test existed for Svelte; every other adapter already
-got its Phase 5a conversion) — was rewritten as `define-contract.test.ts` against `defineContract` +
-a direct `createContractComponent` call, rather than simply deleted, so the real coverage
-(`BuiltRuntime` shape, `AnyBuiltRuntime` structural check, independent calls) isn't lost.
-
-### `spikes/*` — deferred
-
-`../pk` keeps a `spikes/*` glob for throwaway experiments (currently empty).
-
-Decide later whether disposable spike packages live in-workspace (fast to wire up, but pnpm installs
-and typechecks them) or in a separate scratch location outside the workspace globs.
+## Open
 
 ### `qa/*` tooling ownership — deferred
 
@@ -175,6 +77,29 @@ question applies to `jsdom` and `type-fest` once test/config packages exist that
 already pared back: `jsdom` dropped from root, `type-fest` under review).
 
 ## Resolved
+
+### `defineContract` — contract-definition boundary — shipped (2026-09)
+
+Proposed 2026-09-11 as `defineContract(options): O`, a typed identity function that pins `options`
+before `createContractComponent` infers its seven generics. It replaces the curried
+`defineContractComponent(options)(createContractComponent)` trick, which was a pure currying
+workaround with no runtime behavior. Deferred past 0.1.1 as a new abstraction, then built and proven
+out across all adapters (2026-09-13/14):
+
+- **`AnyFactoryOptions` was deleted**, not kept as an erasure hatch. No replacement; if an erasure
+  need surfaces, scope it to that call site.
+- **`defineContractComponent` was removed entirely**, not relocated, even though
+  `../praxis-components` (100+ files) used it. User accepted that it breaks until its own migration.
+  Svelte's test was rewritten as `define-contract.test.ts` to keep the coverage.
+- **TypeScript limitations hit** (the _why_ stays in the code; the narrative is here):
+  - Explicit type arguments disable `const` inference for later defaulted parameters, so
+    `defineContract` takes zero explicit generics.
+  - Only a _required_ `infer` pattern (`{ tag: infer T }`) detects an absent field; an optional one
+    resolves to the field's constraint and reopens the "everything permitted" hole.
+  - A narrow default on a parameter used as another's constraint bound silently widens inference;
+    `ContractInput` defaults to the wide bound instead.
+  - Referencing a still-abstract sibling generic in a default fails assignability, so
+    `ContractModel.TPreset` is fixed to the widest `RecipeMap<VariantMap>`.
 
 ### `runtime/*` — folded into `lib/*` as `lib/runtime`
 
@@ -1426,16 +1351,12 @@ inert for the ones whose dirs don't exist yet.
 ### Git workflow: `main` stable, `develop` integration
 
 `main` holds only stable, released state. `develop` is the integration branch — feature branches
-start from `develop` and merge back into it; `develop` merges into `main` at a release. A local
-(un-versioned) `.vscode/tasks.json` carries the workflow helpers — `Git: sync repository` fetches
-and hard-resets **both** `main` and `develop` to their origins then prunes gone branches;
-`Git: switch develop` and the individual `Git: reset … to origin` / `Git: prune gone branches` tasks
-are also exposed. `Git: prune gone branches` deletes a local branch when its upstream is `[gone]`
-**and** it is merged into `develop` or `main` (feature branches merge into `develop`, so a
-`--merged=main` check — the original — never matched). The whole `.vscode/` directory is
-`.gitignore`d and was scrubbed from history; the tasks file is a local convenience, not a repo
-artifact. A `Git: start feature` task is deferred — the branch name needs input, so it is handled
-outside a plain shell task for now.
+start from `develop` and merge back into it; `develop` merges into `main` at a release. The
+branch-protection and release rules live in `CLAUDE.md` and the 2026-11 `main` protection entry.
+`.vscode/tasks.json` carries the workflow helpers and is tracked (re-included in `.gitignore`).
+`Git: prune gone branches` deletes a local branch when its upstream is `[gone]` **and** it is merged
+into `develop` or `main` (a `--merged=main` check alone never matched, since features merge into
+`develop`). A `Git: start feature` task is deferred — the branch name needs input.
 
 ### `lib/tailwind` — port scope
 
@@ -1496,9 +1417,8 @@ via `@praxis-kit/pipeline-kit`), `ClassClassifier` / `ClassBuilder`, `LayoutStat
 - `changelog: "@changesets/cli/changelog"` (the built-in) — a `@changesets/changelog-github` upgrade
   is a follow-up (needs the extra dep).
 - `baseBranch: main` — releases are cut from `main`.
-- The **CI release job** and the **first publish** are still deferred: they need `packages/kit` to
-  have a real build, which needs the remaining adapters (`solid`, `svelte`, `lit`, `web`) and
-  `tooling/codemod` — the `exports` map and `../pk`'s `tsup` config both reference them.
+- Publishing is done (`praxis-kit@1.4.0` on npm); the Changesets-driven CI release job is still not
+  built — releases are `changeset version` by hand, then a `v*` tag, which fires `publish.yml`.
 
 ### `packages/kit` — scaffold (the `v1.0.0` line)
 
@@ -2234,9 +2154,7 @@ leaks into a published package unresolved).
 
 CI triggers on `[main, develop]` (`../pk`'s only real branch is `main`; this repo's `CLAUDE.md`
 gitflow uses `develop` as the integration branch feature branches merge into, so both need coverage)
-— `codeql.yml` (already-ported, pre-existing) still only watches `main`, a real, now more-visible
-inconsistency, left as an **Open** item rather than changed in this PR (out of scope for a
-CI-workflow port, not a regression this PR introduces).
+— `codeql.yml` initially watched only `main`; it now triggers on `[main, develop]` too.
 
 `publish.yml` exists and is ready, but `packages/kit/package.json` is still `private: true` — first
 publish is a separate, deliberate step, not something this PR flips as a side effect.
@@ -2294,73 +2212,13 @@ the codemod bin through its real symlink); `qa/tree-shaking-tests` rebuilt with 
 
 ### `verify`/`publish.yml` — the `--filter praxis-kit` name collision
 
-CI's first real run on this branch (PR #42) failed on the `Verify` step, with the exact symptom
-`pnpm verify` was supposed to have already fixed: `Cannot find module 'praxis-kit/solid'` (and
-`react`/`lit`/`html`/`contract`), from `qa/tree-shaking-tests`' own typecheck. Confusing, since this
-is precisely the ordering bug the previous entry fixed — but the actual root cause was different and
-hadn't surfaced locally.
-
-**`pnpm --filter praxis-kit` is ambiguous in this repo — not a typo, a genuine name collision.** The
-root workspace `package.json` is named `"praxis-kit"` (its own real identity), and
-`packages/kit/package.json` is _also_ `"praxis-kit"` (the actual published npm name). Confirmed
-directly: `pnpm --filter praxis-kit list --depth -1` prints both `.` and `packages/kit`. A
-name-based `--filter praxis-kit build` therefore runs **both** matched packages' `build` scripts —
-including the root's own `pnpm typecheck && pnpm -r build`, which recursively typechecks
-`qa/tree-shaking-tests` before `packages/kit`'s own build has written `dist/`, if pnpm happens to
-schedule the root's script first. Every local verification of `pnpm verify` up to this point
-happened to schedule `packages/kit`'s own build first — pure luck, not correctness — so the bug
-never showed up until CI's run had the unlucky order.
-
-`../pk`'s own `publish.yml` already used a **path** filter (`--filter ./packages/kit build`) for
-exactly this reason — porting it to a name filter (`--filter praxis-kit build`) was an unintentional
-regression made when this repo's `ci.yml`/`publish.yml`/`verify` were first written, not a
-deliberate divergence. Fixed by switching every occurrence back to the path form: the root `verify`
-script, `publish.yml`'s `Build` step, and the doc comment in `packages/kit/scripts/smoke-test.ts`
-suggesting how to invoke `test:pack` manually. A path filter matches by location, not name, so it
-can't collide regardless of what any package happens to be called.
-
-Verification: reproduced the exact failure locally first (`pnpm --filter praxis-kit list --depth -1`
-prints both packages), then confirmed the fix the same way — `packages/kit/dist` removed,
-`pnpm verify` then `pnpm build` both run fresh end-to-end, both exit 0, `qa/tree-shaking-tests`'
-`package/*` scenarios resolve correctly throughout. `pnpm --filter ./packages/kit build` alone
-prints no "Scope: 2 of 27" line (unlike the old name filter), confirming the collision is actually
-gone, not just no longer triggered.
-
-### `codeql.yml` — invalid `with:` shape, not a branch-scoping bug
-
-Noticed while investigating the fix above: `.github/workflows/codeql.yml` had been failing on
-**every single push to every branch** — including `develop` itself, across at least the last 8 runs
-going back before this session's CI work — with zero jobs ever created and GitHub's generic
-"workflow file issue" message. Confirmed via the API (`gh api .../actions/runs/<id>` → 0 jobs; the
-check-suite → 0 check-runs), not just the CLI summary.
-
-The workflow's own trigger is `branches: [main]`, so a failure specifically on feature-branch pushes
-looked at first like a branch-scoping question — it isn't. Ruled out, in order: GitHub's repo-level
-"default CodeQL setup" conflicting with a custom workflow (checked `code-scanning/default-setup` —
-`"not-configured"`); an Advanced Security licensing gate (repo is public, not an issue); an Actions
-allowlist blocking `codeql-action`/`checkout` (`actions/permissions` → `"allowed_actions": "all"`).
-The actual cause: `with: languages:` was a YAML sequence —
-
-```yaml
-languages:
-  - javascript-typescript
-  - actions
-```
-
-`github/codeql-action/init`'s own docs specify `languages` as a **comma-separated string**, and more
-fundamentally, every `with:` value in a GitHub Actions workflow must be a scalar — a nested sequence
-there is a schema violation of the workflow file format itself, not just a wrong value for this one
-input. That's exactly why the failure was branch-independent: GitHub's static parse of the file
-fails before it ever reaches evaluating whether a given push's branch matches `on.push.branches`, so
-every push produces a zero-job "workflow file issue" run regardless of which branch it's on. Fixed
-to `languages: javascript-typescript,actions`.
-
-Verification: `format:check` clean; pushed this fix to its own branch (`fix/codeql-languages-input`)
-and confirmed via the API (`GET /repos/.../actions/runs?branch=...` → `total_count: 0`) that the
-push produces **no** workflow run at all — the correct behavior for a non-`main` branch. Every prior
-branch push in this session produced a phantom, zero-job `codeql.yml` failure; this one produced
-none, confirming the diagnosis (a parse-time schema failure, not a real per-branch trigger) rather
-than just the changelog-adjacent theory.
+`pnpm --filter praxis-kit` is ambiguous here: the root workspace package and `packages/kit` are both
+named `praxis-kit`, so a name filter runs both packages' `build` scripts, and the root's own
+`pnpm typecheck && pnpm -r build` can run first and typecheck `qa/tree-shaking-tests` before
+`packages/kit/dist` exists. CI hit the unlucky ordering on PR #42
+(`Cannot find module 'praxis-kit/solid'`). **Rule: always filter by path**
+(`--filter ./packages/kit`), as `../pk` did. The root `verify` script, `publish.yml` and the
+`smoke-test.ts` comment were switched back to the path form.
 
 ### `SECURITY.md` — ported near-verbatim, one section genuinely doesn't apply yet
 
@@ -2701,27 +2559,6 @@ touched package (`foundation` 36, `primitive` 147, `pipeline` 38, `contract` 501
 29, `svelte` 25, `preact` 169, `web` 28, `lit` 25 — plus `vite-plugin` 164 and `eslint-plugin` 121)
 all pass; the `repo-state` → `qa/metrics` `collect`/`assert` chain re-run clean end to end after the
 sweep.
-
-### `qa/bench` — `pnpm bench` failing on `tabs.bench.ts` — a real, pre-existing config gap
-
-Running the whole `qa/*` suite end to end (`repo-state`, `qa/tree-shaking-tests`, `qa/metrics`,
-`qa/bench`) surfaced a real, pre-existing bug unrelated to any of the work above:
-`pnpm --filter @praxis-kit/bench bench` (the plain `bench` script, `vitest.bench.config.ts`) threw
-`ReferenceError: document is not defined` in `tabs.bench.ts`. Confirmed via `git log` that both
-files were last touched in PR #38 (`0073067`) — months before this session's other work, not a
-regression from anything above.
-
-Root cause: `vitest.bench.config.ts`'s `exclude` list already excludes `pipeline.bench.ts` and
-`react-compiler.bench.ts` (not-yet-implemented render-level benchmarks) but was missing
-`tabs.bench.ts` — a real DOM benchmark (mounts a React Tabs component) that needs a DOM environment
-this config never configures. `vitest.render.bench.config.ts` (the `bench:render` script) does
-configure one and is where `tabs.bench.ts` was always meant to run — confirmed by running
-`bench:render` first, which produces real numbers with no error. Fixed by adding `tabs.bench.ts` to
-both `exclude` arrays in `vitest.bench.config.ts`, alongside its two siblings.
-
-Verification: `pnpm --filter @praxis-kit/bench bench` now exits 0 with no DOM error;
-`pnpm --filter @praxis-kit/bench bench:render` unaffected (still runs `tabs.bench.ts` for real);
-`typecheck`, `format:check`, and `lint:check` all clean on the changed file.
 
 ### root `scripts/` — porting closed; `build-pipeline.ts` skipped, `ast-grep.sh` deferred
 
@@ -3166,32 +3003,6 @@ Verification: full `pnpm typecheck` + `pnpm test` + `pnpm lint:check` green; `pu
 `test:pack` PASS; `qa/*` gzip within threshold (type-only + dead-re-export removal — no runtime
 bytes moved).
 
-### CI / tooling cleanup — CodeQL on `develop`, dead analysis deps removed (2026-09-08)
-
-P2 housekeeping.
-
-- **`codeql.yml`** now triggers on `push` / `pull_request` to `[main, develop]`, not just `main`.
-  `develop` is the default branch and every PR targets it, so CodeQL had been running on no PR at
-  all — only the weekly `schedule` cron touched the code. (Closes the **Open** item flagged in the
-  `CI — .github/workflows/ci.yml + publish.yml` entry above.)
-- **`@ast-grep/cli`** and **`dependency-cruiser`** removed from the root `devDependencies`, the
-  `catalog:`, and (for ast-grep) `allowBuilds`. Both were carried over from `../pk` and used by
-  nothing here — no `analyze:deps` / `analyze:patterns` script, no `.dependency-cruiser.cjs`, no
-  `.ast-grep/` config, no import. `../pk`'s two analysis passes are deliberately not part of this
-  repo's gate: the layer boundaries they check are already enforced by `eslint-plugin-boundaries`
-  (`configs/architecture.ts`) + `import-x/no-cycle`, and `scripts/generate-repo-state.ts` produces
-  the dependency-graph snapshot. `-276` lockfile lines.
-- **Kept:** `ts-morph` at the root — `scripts/generate-repo-state.ts` (typechecked by
-  `scripts/tsconfig.json` via the root `typecheck` script, and run under `pnpm repo-state`) imports
-  it directly; `jscpd` (`pnpm analyze:duplicates`, `.jscpd.json`); `aria-query` /
-  `@types/aria-query` (`scripts/generate-aria-support.ts`). All real root dev tools.
-- Reworded the now-stale `ci.yml` comment and the `.dependency-cruiser.cjs` reference in
-  `lib/primitive/src/types/contracts/children-evaluator.ts`.
-
-Verification: `pnpm install` clean (no ignored-build prompt), full `pnpm typecheck` + `pnpm test` +
-`pnpm lint:check` green, `pnpm analyze:duplicates` + `@praxis-kit/codemod` (ts-morph consumer) both
-still work.
-
 ### `packages/kit` — dependency / license / metadata audit for 0.1 (2026-09-08)
 
 Deliberate review of the publishable package's `package.json` ahead of the first publish.
@@ -3614,46 +3425,6 @@ a plain bundle object, not a component (Svelte components must come from `.svelt
 renders it by importing and recursing into itself (`<Polymorphic bundle={with} asChild>`), a
 standard, supported Svelte pattern for this kind of structural composition.
 
-### GitHub Sponsors — still not yet, reassessed at `v1.1.2` (2026-10-12)
-
-Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule. Conclusion unchanged from the
-`v1.0.0` reassessment above: **not yet**, and the revisit trigger from that entry still hasn't fired
-— checked directly (`gh api repos/.../praxis-kit`, `gh issue list`, `gh pr list`, 2026-10-12): 0
-stars, 0 forks, 0 watchers, no external issues, no external PRs. `npm` downloads for the trailing
-month sit at 523 (`api.npmjs.org`, 2026-09-12 → 2026-10-11) — still indistinguishable from
-registry-mirror/CI noise on a package with no known external consumers, not a usage signal. The
-package itself is healthier than at `v1.0.0` (three releases shipped on schedule, a real
-dependency-upgrade cadence, growing adapter parity) but that's maintenance velocity, not adoption —
-Sponsors needs the latter. **Revisit trigger unchanged:** a star/issue/PR from a non-maintainer
-account, or the next version tag.
-
-### GitHub Sponsors — still not yet, reassessed at `v1.2.0` (2026-10-13)
-
-Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule. Conclusion unchanged from the
-`v1.1.2` reassessment above: **not yet**, and the revisit trigger still hasn't fired — checked
-directly (`gh api repos/.../praxis-kit`, `gh issue list`, `gh pr list`, 2026-10-13): 0 stars, 0
-forks, 0 watchers, no external issues, and the only non-maintainer PRs are five Dependabot
-dependency bumps (not community contributions). `npm` downloads for the trailing month sit at 513
-(`api.npmjs.org`, 2026-09-13 → 2026-10-12) — flat versus the 523 recorded at `v1.1.2`, still
-indistinguishable from registry-mirror/CI noise. Shipped since the last reassessment: `v1.2.0`
-(`compose.allProps` cross-adapter feature plus a dedicated merge-semantics audit and fix pass) —
-real engineering progress, but adoption signals haven't moved. **Revisit trigger unchanged:** a
-star/issue/PR from a non-maintainer account, or the next version tag.
-
-### GitHub Sponsors — still not yet, reassessed at `v1.3.0` (2026-10-14)
-
-Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule. Conclusion unchanged from the
-`v1.2.0` reassessment above: **not yet**, and the revisit trigger still hasn't fired — checked
-directly (`gh api repos/.../praxis-kit`, `gh issue list`, `gh pr list`, 2026-10-14): 0 stars, 0
-forks, 0 watchers, 5 open issues (all maintainer-filed, not external reports), and every open/merged
-PR since the last reassessment is either mine or Dependabot's — no community contributions. `npm`
-downloads for the trailing month sit at 513 (`api.npmjs.org`, 2026-09-13 → 2026-10-12) — identical
-to the `v1.2.0` reading, still indistinguishable from registry-mirror/CI noise. Shipped since the
-last reassessment: `v1.3.0` (compose-aware `ContractProps<T>` for finding #54, across
-React/Preact/Vue/Solid) — real engineering progress, but adoption signals still haven't moved.
-**Revisit trigger unchanged:** a star/issue/PR from a non-maintainer account, or the next version
-tag.
-
 ### Composition resolver bundle cost — accept, update baselines (2026-10-20)
 
 **Question:** can the composition resolver be structured so components that never use `compose`
@@ -4057,14 +3828,13 @@ for deletion.
 
 ### GitHub Sponsors — still not yet, reassessed at `v1.4.0` (2026-11-04)
 
-Revisited per `CLAUDE.md`'s "every new version tag, reassess" rule. Conclusion unchanged from the
-`v1.3.0` reassessment: **not yet**. Checked directly (`gh api repos/.../praxis-kit`, issue/PR search
+Reassessed at each tag per `CLAUDE.md` (the `v1.1.2`–`v1.3.0` entries were identical and are folded
+in here). Conclusion: **not yet.** Checked directly (`gh api repos/.../praxis-kit`, issue/PR search
 for non-maintainer, non-Dependabot authors, 2026-11-04): 0 stars, 0 forks, 0 watchers, 0 external
-issues or PRs. `npm` downloads for the trailing month are 277 (`api.npmjs.org`, 2026-10-05 →
-2026-11-03) — down from the ~513–523 recorded at `v1.1.2`/`v1.2.0`, still indistinguishable from
-mirror/CI noise and not a usage signal. Maintenance velocity remains healthy (1.4.0 shipped, an ARIA
-1.2 audit pass, release protections added) but Sponsors needs adoption. **Revisit trigger
-unchanged:** a star/issue/PR from a non-maintainer account, or the next version tag.
+issues or PRs. Trailing-month npm downloads: 523 (`v1.1.2`), 513 (`v1.2.0`, `v1.3.0`), 277 now —
+indistinguishable from mirror/CI noise, not a usage signal. Maintenance velocity is healthy, but
+Sponsors needs adoption. **Revisit trigger:** a star/issue/PR from a non-maintainer account, or the
+next version tag. Going forward, update this entry in place rather than adding one per tag.
 
 ### Diagnostics are facts; message text lives in an optional package (2026-11)
 
