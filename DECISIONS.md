@@ -1401,323 +1401,111 @@ framing). `pnpm lint:check`/`format:check` clean.
 
 ### `packages/kit` — real build (tsup → tsdown)
 
-The PR #32 scaffold (see "`packages/kit` — scaffold" above) shipped `package.json` with no build at
-all — `private: true`, `typecheck`-only, and an `exports` map missing `solid`, `svelte`, `lit`,
-`web`, and `codemod` because those adapters didn't exist yet. All 7 framework adapters now do, so
-this is the actual `v1.0.0` work: a real `tsdown.config.ts`, `scripts/postbuild.ts`, and the full
-`exports`/`typesVersions`/`dependencies` surface.
+The PR #32 scaffold had no build and an `exports` map missing `solid`, `svelte`, `lit`, `web` and
+`codemod`. With all seven adapters present this is the actual `v1.0.0` work: `tsdown.config.ts`,
+`scripts/postbuild.ts` and the full `exports` / `typesVersions` / `dependencies` surface. Not a
+straight port: `../pk` builds this package with `tsup`, and this repo chose tsdown (see "Bundler"),
+so only the entry list and dependency-boundary intent carried over.
 
-**Not a straight port.** `../pk` builds this package with `tsup` (`tsup.config.ts`, ~17 entries + a
-shared diagnostics chunk); this repo already committed to tsdown instead (see "Bundler: tsdown (not
-tsup)" above), and pk itself has never built this particular package with tsdown — there was no
-tsup-shaped config to carry over line-for-line, only the entry list and dependency-boundary intent.
+- **tsdown bundles every reachable import by default**, workspace and npm packages alike. A first
+  pass with no `deps` config silently inlined `lit` and its whole dependency tree into
+  `dist/lit/index.js`; the build's "detected dependencies in bundle" hint caught it. Fix: every
+  entry sets `deps.neverBundle` to an explicit list (always `@praxis-kit/diagnostics`, plus that
+  entry's own framework peer and its scoped subpaths) and lets the internal `@praxis-kit/*` packages
+  bundle in by default. The inverse (`neverBundle: true` plus an `alwaysBundle` allowlist)
+  under-bundled: `alwaysBundle` strings don't prefix-match subpaths and it missed transitive
+  internals.
+- **`@praxis-kit/diagnostics` stays external everywhere** via a single shared chunk
+  (`dist/_shared/diagnostics.*`). Its private class members would make the class nominally distinct
+  per entry if bundled per entry.
+- **`class-variance-authority` is bundled** into every entry that reaches `lib/styling`'s `cva.ts`.
+  `../pk`'s build does not reach it from these adapters, so the two repos' `lib/styling` /
+  `adapter-utils` wiring genuinely diverges. Left bundled (a few KB), not chased.
+- **`postbuild.ts` is plain sequential functions**, not a `@praxis-kit/pipeline` `Pass` chain: five
+  linear steps (copy the tailwind safelist, copy `Polymorphic.svelte`, discover dist files, rewrite
+  the diagnostics specifier, enforce the single-declaration invariant) don't need the abstraction,
+  and the package has no other reason to depend on `lib/pipeline`.
+- **Two gaps were deferred at this point and later closed** (see "both deferred gaps … closed"):
+  `svelte` shipped JS-only because `rolldown-plugin-dts` cannot resolve svelte's ambient
+  `declare module 'svelte'` re-exports, and `solid` was absent because no rolldown-native Solid JSX
+  transform was wired in (`../pk` used `esbuild-plugin-solid`).
 
-**tsdown's bundling default is the opposite of what its docs' `neverBundle`/`alwaysBundle` naming
-suggests at a glance.** With no `deps` config at all, tsdown bundles every reachable import,
-workspace packages _and_ npm packages alike — confirmed against `../pk`'s own already-built tsup
-output, whose `dist/preact/index.js` inlines `lib/contract`/`lib/styling` source directly (by
-source-comment evidence) while leaving framework peers external, i.e. tsup's default lands in the
-same place. A first pass here with zero `deps` config silently inlined `lit` and its own
-`@lit/reactive-element`/`lit-html`/`lit-element`/`@lit-labs/ssr-dom-shim` dependency tree straight
-into `dist/lit/index.js` — undetected until the build's own "detected dependencies in bundle" hint
-flagged it. Fix: every entry sets `deps.neverBundle` to an explicit list — always
-`@praxis-kit/diagnostics`, plus that entry's own framework peer and everything scoped under it
-(`react`/`react-dom`/`react/*`, `preact/*`, `vue/*`, `lit`/`lit-*`/`@lit/*`/`@lit-labs/*`) — and
-lets every internal `@praxis-kit/*` package the entry actually reaches (`adapter-utils`, `core`,
-`primitive`, `contract`, `styling`, `runtime` — whichever) bundle in by the same default tsup relied
-on. No `alwaysBundle`/`alias` allowlist needed once the peer exclusion is explicit; an earlier
-attempt at the inverse (`neverBundle: true` + an `alwaysBundle` allowlist naming only
-`adapter-utils`/`core`) under-bundled instead — `alwaysBundle` string entries don't prefix-match
-subpaths (`@praxis-kit/core/props` didn't match a bare `'@praxis-kit/core'` entry), and it missed
-`core`/`adapter-utils`'s own further-transitive internal deps.
+**Review pass — fixes found only by installing the packed tarball.** `publint` and a workspace
+typecheck check `dist/` shape and source types, not what a real install does at runtime:
 
-**`@praxis-kit/diagnostics`** stays external everywhere via the same shared-chunk trick as pk's
-build (single `dist/_shared/diagnostics.*`, private class members mean bundling it per-entry would
-make the class nominally distinct across entries). **`class-variance-authority`** ends up bundled
-into every entry that reaches `lib/styling`'s `cva.ts` (preact/vue/web/lit/contract/guards/html) —
-confirmed `../pk`'s own build does _not_ reach it from these adapters at all (0 occurrences in its
-built `dist/preact/index.js`), so this is a genuine, if minor, divergence between the two repos'
-`lib/styling`/`adapter-utils` wiring, not a build misconfiguration on this side. Left bundled
-(functionally correct, a few KB) rather than chased — worth a future look, not a blocker. **Open.**
+- **`@typescript-eslint/utils` was externalized but only a `devDependency`.** `praxis-kit/eslint`
+  imports it at runtime. Moved to `dependencies` (implementation machinery, not a peer). The
+  monorepo's hoisted `node_modules` would have masked this.
+- **`codemod`'s `deps.neverBundle: ['typescript']` was a no-op:** `ts-morph` reaches the compiler
+  through `@ts-morph/common`, which vendors its own `typescript.js` by relative path. `neverBundle`
+  only intercepts bare specifiers. Removed; `praxis-codemod` is self-contained. (`vite-plugin`
+  really does `import ts from 'typescript'`, so its optional peer stays.)
+- **`praxis-codemod` threw `ReferenceError: __filename is not defined`** on every run. Vendored
+  `@ts-morph/common` uses the CJS global; tsup auto-shims it, tsdown needs `shims: true`, added to
+  the `codemod` entry only.
+- **The codemod CLI silently did nothing, even after the shim.** The "is this the entry point" guard
+  compared `process.argv[1]` to `fileURLToPath(import.meta.url)`. A real install's `bin` is a
+  symlink: `argv[1]` stays the symlink path while `import.meta.url` resolves to the target, so
+  `main()` never ran (no error, exit 0). A **pre-existing bug in `tooling/codemod`**, invisible to
+  every direct-path run. Fixed with `realpathSync`.
+- `packages/kit/README.md` was rewritten; it still described the PR #32 scaffold.
 
-**`svelte` ships with `dts: false`, JS-only, and `solid` isn't in `exports` at all** — two real,
-separately-tracked gaps, not oversights:
-
-- **Svelte's declaration file.** `svelte`'s own shipped types use `declare module 'svelte' { ... }`
-  ambient-module-augmentation rather than plain top-level `export`s. `rolldown-plugin-dts` (tried
-  both its `oxc` and `tsc` resolver modes) bundles declarations by statically binding re-exports
-  through rolldown's own linker, which can't resolve an ambient `declare module` re-export
-  (`[MISSING_EXPORT] "Snippet" is not exported by .../svelte/types/index.d.ts`, even though
-  `Snippet` is genuinely declared there) and exposes no external/opaque-module escape hatch for it.
-  `rollup-plugin-dts` (what tsup/pk's build uses) handles this package shape natively. The JS build
-  is unaffected — `adapters/svelte`'s only `svelte` import is `import type { Snippet }`, erased at
-  that level — only `dist/svelte/index.d.ts` is missing until this is fixed upstream in
-  `rolldown-plugin-dts`, or `adapters/svelte`'s public prop types stop surfacing `Snippet`.
-- **Solid isn't ported into this build at all.** `../pk`'s tsup config compiles Solid's `.tsx` via
-  `esbuild-plugin-solid` (`babel-preset-solid` under esbuild's plugin API). Rolldown's plugin API is
-  a different shape, and no rolldown-native Solid JSX transform is wired into this workspace today —
-  `babel-preset-solid`/`babel-plugin-jsx-dom-expressions` are present only as incidental transitive
-  deps of `@solidjs/testing-library`, not a real, declared build dependency. Writing and validating
-  a custom Babel-based rolldown transform plugin from scratch was out of scope for this pass; the
-  `solid` kit entry is deferred rather than forced. **Open** — options when picked back up: a real
-  rolldown/unplugin Solid transform if one lands, a standalone-esbuild pre-transpile step feeding
-  tsdown pre-compiled JS, or continuing to defer.
-
-**`postbuild.ts` simplified, not ported verbatim.** `../pk`'s version threads its 5 steps through a
-`@praxis-kit/pipeline` `Pass` chain; this package has no other reason to depend on
-`@praxis-kit/pipeline`, and 5 linear steps (copy the tailwind safelist, copy `Polymorphic.svelte`,
-discover dist files, rewrite the diagnostics specifier, enforce the single-declaration invariant)
-don't need a Pass-chain abstraction to stay readable, so it's plain sequential functions instead.
-Same behavior and same invariant checks otherwise.
-
-**Package.json surface**: full `exports`/`typesVersions` for every built entry (`solid` excluded per
-above), `bin.praxis-codemod`, `scripts.build` (`tsdown && tsx scripts/postbuild.ts`),
-`scripts.dev`/`prepublishOnly`/`lint:pkg` (`publint`). `peerDependencies` gained `lit`/`svelte`
-(optional, matching the existing react/vue/preact/eslint/vite/typescript pattern). `devDependencies`
-gained everything the build itself now needs: `@typescript-eslint/utils`, `@types/react(-dom)`,
-`lit`, `preact`, `publint`, `react(-dom)`, `svelte`, `tsdown`, `tsx`, `typescript`, `vite`, `vue`.
-
-Verification: `pnpm --filter praxis-kit build` clean (17 entries + shared chunk; `solid` excluded,
-`svelte` JS-only per above); `postbuild` reports all invariants hold and rewrites the diagnostics
-specifier in 21 files; `pnpm --filter praxis-kit typecheck` and `pnpm -r typecheck` (26 packages) 0
-errors; `pnpm lint:check`/`format:check` clean; `pnpm --filter praxis-kit lint:pkg` (`publint`)
-clean.
-
-**Review pass — packaging fixes, two of them found only by actually installing the tarball.**
-`publint` and a workspace typecheck are necessary but not sufficient for a multi-entry package like
-this one; they check `dist/` shape and source types, not what a real install of the published
-tarball actually does at runtime. Confirmed the hard way:
-
-- **`@typescript-eslint/utils` was externalized but not a published dependency.**
-  `praxis-kit/eslint` really does
-  `import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'` at runtime (confirmed in
-  `dist/eslint/index.js`), but the package only listed it in `devDependencies`. Moved to
-  `dependencies` (not a peer — this is implementation machinery for the plugin, not something a
-  consumer should need to know about). Verified against a real `pnpm pack` tarball installed into an
-  isolated fixture (not the monorepo's own hoisted `node_modules`, which would have masked the gap):
-  `praxis-kit/eslint` now resolves cleanly.
-- **`codemod`'s `deps.neverBundle: ['typescript']` was a no-op — traced, not assumed.**
-  `dist/codemod/ index.js` has zero bare npm import specifiers besides Node builtins; `ts-morph`'s
-  compiler access goes through `@ts-morph/common`, which vendors its own `dist/typescript.js` as a
-  relative-path file inside that package (not a `dependencies` edge on the real `typescript` npm
-  package) — `neverBundle` only intercepts bare specifiers, so it never had anything to externalize
-  here. Removed the dead config entry; `praxis-codemod` was already, and remains, fully
-  self-contained — no consumer TypeScript install needed for this entry specifically (`vite-plugin`
-  is different: it really does `import ts from 'typescript'`, confirmed in its own
-  `dist/vite-plugin/index.js`, so its optional peer stays).
-- **Found via the tarball install, not by inspection: `praxis-codemod` threw
-  `ReferenceError: __filename is not defined in ES module scope` on every invocation.** Vendored
-  `@ts-morph/common` code calls `isFileSystemCaseSensitive()`, which references the CJS global
-  `__filename` — no equivalent exists in ESM output by default. tsup auto-shims this; tsdown
-  requires `shims: true` explicitly per entry. Added to the `codemod` entry only (the only one that
-  touches `__filename`/`__dirname`, confirmed by grepping the other entries' output).
-- **Found via the tarball install: `praxis-codemod`'s CLI silently did nothing at all — `--help`, no
-  args, everything — even after the shim fix.** Root cause is in `tooling/codemod/src/ index.ts`
-  itself, not the kit build: its "is this the entry point" guard compared
-  `process.argv[1] === fileURLToPath(import.meta.url)` directly. A real install's `bin` entry is a
-  symlink (`node_modules/.bin/praxis-codemod -> ../praxis-kit/dist/codemod/index.js`); Node leaves
-  `process.argv[1]` as the symlink path but resolves `import.meta.url` to the real target, so the
-  two never matched and `main()` never ran — no error, no output, exit 0. This is a **pre-existing
-  bug in `tooling/codemod` itself**, not something the kit packaging introduced —
-  `@praxis-kit/codemod` published on its own would have the identical failure the moment anyone
-  installed it for real (every prior verification of that package ran its bin by direct path,
-  `node dist/index.js`, which never exercises the symlink). Fixed by resolving `process.argv[1]`
-  through `realpathSync` before comparing. `tooling/codemod`'s own 24 tests + typecheck stay green;
-  re-verified end-to-end through the actual `.bin` symlink in the tarball fixture, including a real
-  `migrate --dry-run` run.
-- `packages/kit/README.md` rewritten — it still described the PR #32 scaffold's gated status
-  ("Scaffold only… gated on the remaining adapters… landing") long after the build actually shipped.
-  Replaced with the real per-entry status table and the `svelte`/`solid` gaps stated plainly rather
-  than folded into a generic "not yet published" line.
-
-**Verification method going forward, not just this pass:** `pnpm --filter praxis-kit build` →
-`pnpm pack` → install the tarball into an isolated fixture (outside the monorepo's own
-`node_modules`, which resolves internal deps via hoisting regardless of what's actually declared) →
-import every framework-neutral/plugin entry → run the `codemod` bin through its real `.bin` symlink,
-not by direct path. Two of the four fixes above (`__filename`, the `argv`/symlink mismatch) were
-invisible to `publint`, a workspace typecheck, and a direct-path bin invocation alike — only a real
-install surfaced them.
-
-**Made permanent: `packages/kit/scripts/smoke-test.ts` (`pnpm --filter praxis-kit test:pack`).**
-Automates the exact sequence above rather than leaving it as a one-off manual check: fresh
-`pnpm build` → `pnpm pack` → install the tarball plus every framework peer into an isolated
-`os.tmpdir()` fixture (deliberately outside this repo's own pnpm workspace — inside it, resolution
-would go through workspace hoisting and mask the same class of gap the `@typescript-eslint/utils`
-finding above was) → `import()` every plain-JS public entry (14 of them; `ts-plugin` is CJS-only and
-`codemod` is exercised as a CLI instead) and report every failure rather than stopping at the first
-→ run `praxis-codemod --help` and a real `migrate --dry-run` through the actual `.bin` symlink, not
-by direct path. Exits non-zero on any failure. Wired into `prepublishOnly` (replacing a bare
-`pnpm build`) so a real publish can't skip it; not yet wired into CI, since this repo doesn't have a
-CI pipeline at all yet (lands separately — see `.vscode/MIGRATION.md`). `pnpm pack --json`'s real
-shape is `{ filename, files }` (a single object, not an array) — worth noting since the shape isn't
-obvious without checking, and easy to get wrong first try (initial version assumed an array).
-
-**Added: type resolution, not just runtime imports.** The first version of `smoke-test.ts` proved
-every entry's JS resolves from the installed tarball, but said nothing about `.d.ts` resolution —
-`typesVersions`/`types` fields, broken declaration re-exports, and a stray unresolved
-`@praxis-kit/*` reference in public types are all invisible to a plain `import()` check. Added a
-second phase: write one `export type { <RealExportName> as _checkN } from 'praxis-kit/<entry>'` line
-per typed public entry (13 of the 14; `svelte` is skipped — its documented JS-only gap, not an
-oversight — and `codemod`/`ts-plugin` have no meaningful ESM named-type surface to check), then run
-the fixture's own installed `tsc --noEmit` against it. A re-export rather than a bare `import type`
-guarantees every name is actually consumed, so nothing passes by accident via unused-import elision.
-**Confirmed this actually catches something**, not just theoretically: renamed one entry's checked
-export to a nonexistent name and reran — failed immediately with a real `tsc`
-`TS2305 "has no exported member"` error, exit 2, propagated as a script failure. Reverted after
-confirming.
+**Made permanent: `packages/kit/scripts/smoke-test.ts` (`test:pack`).** Fresh build, `pnpm pack`,
+install the tarball plus every framework peer into an isolated `os.tmpdir()` fixture outside the
+workspace (inside it, hoisting masks missing dependencies), `import()` every plain-JS public entry
+and report all failures, then run `praxis-codemod --help` and a real `migrate --dry-run` through the
+`.bin` symlink. A second phase checks type resolution: one
+`export type { <RealExport> as _checkN } from 'praxis-kit/<entry>'` per typed entry, compiled with
+the fixture's own `tsc --noEmit`. A re-export rather than a bare `import type` guarantees each name
+is consumed. Verified to fail on a renamed export (`TS2305`). Wired into `prepublishOnly`.
+`pnpm pack --json` returns a single `{ filename, files }` object, not an array.
 
 ### `qa/tree-shaking-tests` — ported; less blocked than earlier stated
 
-The `qa/*` entry above said this package "needs the unported `runtime/core`." Checked precisely
-before porting: only 2 of `../pk`'s 13 scenarios (`pk2-compiler-minimal`,
-`pk2-compiler-with-variants`) actually import `@praxis-kit/runtime/compiler` — this repo has no
-`runtime/compiler` module at all (`lib/runtime` is flat), so those two aren't ported. The other 11
-don't touch it and port cleanly. `esbuild` (`^0.28.1`) resolves every workspace package straight to
-its TypeScript source via a hand-maintained `alias` map in `scripts/analyze.ts` — no prior
-`pnpm build` required, matching `../pk`'s own approach.
+Only 2 of `../pk`'s 13 scenarios import `@praxis-kit/runtime/compiler`, which does not exist here
+(`lib/runtime` is flat), so those two were not ported. The other 11 port cleanly. `esbuild` resolves
+every workspace package straight to TypeScript source through a hand-maintained `alias` map in
+`scripts/analyze.ts`, so no prior build is needed.
 
-**Two real bugs found in `../pk`'s own fixtures, fixed here, not just carried over.** 5 of the 11
-ported `expected.json` files asserted `mustExclude: ["packages/tailwind/src"]` — stale from before
-`../pk`'s own `packages/tailwind` → `lib/tailwind` move (confirmed: `../pk`'s current layout is
-`lib/tailwind` too). Since a `mustExclude` fragment that never appears in a real metafile always
-"passes" silently, this assertion has been dead in `../pk` itself since that move, not just here —
-fixed to `lib/tailwind/src` so it can actually fire. `pk2-engine-only/expected.json`'s `mustExclude`
-also referenced `runtime/core/src/compiler`, which can't exist in this repo — dropped that line
-rather than leaving a permanently-vacuous assertion.
+- **Dead assertions in `../pk`'s fixtures, fixed:** 5 `expected.json` files asserted
+  `mustExclude: ["packages/tailwind/src"]`, stale since the move to `lib/tailwind`. A `mustExclude`
+  fragment that never appears in a metafile passes silently, so the assertion could never fire.
+  Fixed to `lib/tailwind/src`; a permanently vacuous `runtime/core/src/compiler` line was dropped.
+- **`pk2-engine-only/entry.ts` was rewritten**, not path-fixed: `../pk`'s builder-chain pipeline API
+  (`startPipeline().then().build()`) does not exist in this repo's `lib/pipeline`, which exports
+  `runPipeline` / `phasedPipeline` and the merge primitives. The claim under test (the pipeline
+  engine alone pulls in no adapter, compiler or style code) is unchanged.
+- **esbuild's `alias` prefix-matches unmatched subpaths:** `@praxis-kit/foo/bar` with no exact key
+  appends `/bar` to `@praxis-kit/foo`'s target, which breaks against a single-file target. Every
+  reachable subpath needs its own explicit map entry.
+- **`pipeline.ts` (the orchestrator) was dropped:** it needs a `@praxis-kit/pipeline/node` subpath
+  this repo does not expose, and adding one to `lib/pipeline` for one qa script is out of
+  proportion. The `test` script is `pnpm build && pnpm assert && pnpm gzip`.
 
-**`pk2-engine-only`'s entry.ts needed a real rewrite, not a path fix — `@praxis-kit/pipeline`'s API
-is genuinely different here.** `../pk`'s version imports `startPipeline`/`executePipeline`/
-`executeProcessor`/`createPipeline` (a builder-chain API: `startPipeline().then().build()`, also
-seen in `../pk`'s own `postbuild.ts` scripts throughout this port). This repo's clean-room
-`lib/pipeline` has none of those — its real exports are `runPipeline`/`phasedPipeline` (execution)
-and `mergeContext`/`mergeResults`/`shallowDiff` (context-merge primitives). Rewrote the scenario to
-import the real exports, preserving the same claim under test ("the pipeline engine alone pulls in
-zero adapter/compiler/style code") — `mustInclude: ["lib/pipeline/src"]` still holds.
+**Review passes:**
 
-**`esbuild`'s `alias` does prefix-matching against unmatched subpaths**, not exact-match-only as the
-option's shape might suggest — an import for `@praxis-kit/foo/bar` with no exact
-`@praxis-kit/foo/bar` key falls back to appending `/bar` onto whatever `@praxis-kit/foo` resolves
-to, which breaks immediately against a single-file alias target
-(`Cannot read directory ".../index.ts": not a directory`). Every subpath actually reachable from the
-11 ported scenarios needs its own explicit map entry. This repo's
-`packages/core/src/ {primitive,contract}.ts` (refactored into pass-throughs against granular barrels
-— see "`packages/kit` — scaffold") reach several subpaths `../pk`'s equivalent files don't:
-`@praxis-kit/primitive/{tag,utils}` and
-`@praxis-kit/contract/{aria/factories,aria/roles,props, types/aria/aria-rule}`. Added all of them;
-`gzip.ts`'s `StringMap` import also moved from `@praxis-kit/pipeline` (where `../pk` exports it) to
-`@praxis-kit/primitive` (where this repo's reconstruction does — the same substitution
-`lib/adapter-utils`'s port already documented).
+1. **`scenarios/source/` and `scenarios/package/` split.** `source/*` aliases to workspace source;
+   `package/*` imports `praxis-kit/<name>` through ordinary resolution against `packages/kit`'s
+   built `dist`, so it measures what a consumer gets. `analyze.ts` fails with an actionable message
+   if `dist` is missing rather than building it as a side effect. `mustExclude` on sibling
+   `dist/<name>` entries proves cross-entry isolation.
+2. **`assert.ts` gained `mustIncludePackages` / `mustExcludePackages`**, which survive a file moving
+   inside its package where a path fragment does.
+3. **`gzip.ts` no longer writes `snapshots/gzip.json` as a side effect of `pnpm test`.** Default
+   mode fails on a missing baseline, a scenario with no baseline entry, or a stale entry; `--update`
+   (`pnpm gzip:update`) is a deliberate, reviewed action.
+4. **`analyze.ts` validates scenario shape** (`scenario "<group>/<name>" is missing entry.ts`).
+5. The framework-external policy is centralized and covers `lit`.
+6. **Naming precision:** `scenarios/package/*` consumes `dist` through the workspace link, not a
+   packed tarball, so it does not cover `files` or packing metadata (`smoke-test.ts` does). It is
+   "package-consumption testing"; a `pnpm pack`-based version is the not-yet-done follow-up.
+7. **Surgical scenarios:** `package/{contract,guards,html,utils}-only` have genuinely different
+   footprints (118 B → 917 B → 8.2 KB, versus 20+ KB for any adapter entry). Adapter-scoped "depth"
+   variants were dropped: every adapter entry's only real export is `createContractComponent`, so
+   the five original `source/*` depth scenarios all produce byte-identical bundles (142 modules
+   each), differing only in type imports erased before esbuild sees them.
 
-**`pipeline.ts` (the `pnpm test` orchestrator) dropped, not ported.** `../pk`'s version threads
-build → assert → gzip through `@praxis-kit/pipeline/node`'s `shellPass`/`runPipeline` — a real
-`./node` subpath this repo's `lib/pipeline` doesn't expose at all (confirmed: only `.` is in its
-`exports` map). Porting that subpath into an already-released, already-depended-on `lib/pipeline`
-just to satisfy one qa script's orchestration preference is a bigger, more invasive change than this
-port needs — `package.json`'s own `test` script is a plain `pnpm build && pnpm assert && pnpm gzip`
-chain instead, functionally identical, no new dependency surface. `tsx` dropped from devDependencies
-along with it (only `pipeline.ts` needed it).
-
-Also fixed: `qa/*`'s `.changeset/config.json` `ignore` list was missing `@praxis-kit/bench`,
-`@praxis-kit/lit`, and `@praxis-kit/web` entirely — none were added when those packages landed.
-Added those three plus `@praxis-kit/tree-shaking-tests`, alphabetized.
-
-Verification: `pnpm --filter @praxis-kit/tree-shaking-tests typecheck` 0 errors;
-`pnpm --filter @praxis-kit/tree-shaking-tests test` (build → assert → gzip) green, 11/11 scenarios
-pass their `mustInclude`/`mustExclude` assertions, fresh `snapshots/gzip.json` baseline recorded and
-re-verified stable on a second run; `pnpm -r typecheck` (27 packages) 0 errors;
-`pnpm lint:check`/`format:check` clean.
-
-**Review pass — closes the "source graph, not published boundary" gap, plus three smaller hardening
-fixes.** The port above validated `@praxis-kit/react` etc. aliased straight to workspace TypeScript
-source — a genuinely different question from "can a customer tree-shake the package we actually
-publish," which only `packages/kit`'s own `dist/` output can answer. Four changes:
-
-1. **`scenarios/source/` and `scenarios/package/` split.** The 11 ported scenarios moved under
-   `source/` unchanged. Added `package/{react,preact,vue,lit,web}-minimal` under `package/` —
-   `import ... from 'praxis-kit/<name>'`, resolved via ordinary node module resolution against
-   `packages/kit`'s _built_ dist (no `alias` at all, unlike `source/*`), so this is exactly what a
-   real install does. `solid` is absent from `package/*` for the same reason it's absent from
-   `packages/kit`'s own build (no rolldown Solid transform yet); `svelte` is absent because its
-   `.d.ts` doesn't exist yet — both already-tracked gaps, not new ones. `analyze.ts` requires
-   `packages/kit/dist` to exist before building `package/*` and fails with an actionable message
-   (`pnpm --filter praxis-kit build` first) rather than silently building it as a side effect —
-   requires no adjustment to `assert.ts`'s `mustInclude`/`mustExclude` mechanism: tsdown's build
-   isn't minified into one truly opaque blob per entry — each entry still imports
-   `dist/_shared/diagnostics.js` as a real (rewritten-relative) module, so the metafile still shows
-   a real, if coarser, multi-file live-input graph (e.g.
-   `mustInclude: ["packages/kit/dist/react/index.js", "packages/kit/dist/_shared/diagnostics.js"]`,
-   `mustExclude` on every sibling entry's `dist/<name>` — proving cross-entry isolation, that
-   importing `praxis-kit/react` doesn't also drag in `praxis-kit/vue`'s bundle).
-2. **`assert.ts` gained `mustIncludePackages`/`mustExcludePackages`**, alongside the existing
-   path-fragment `mustInclude`/`mustExclude` (both still work — nothing existing needed to migrate).
-   A small `toPackageName()` resolver maps a live path to `@praxis-kit/<name>` (`adapters/<name>/`,
-   `lib/<name>/`, `packages/core/` → `@praxis-kit/core`) or `praxis-kit` (`packages/kit/dist/`); a
-   path it doesn't recognize contributes no package name rather than guessing. Package-level
-   assertions survive a source file moving around inside its own package, where a raw path fragment
-   doesn't. Demonstrated on `source/react-minimal` alongside its existing path-fragment assertions;
-   the rest weren't migrated (not required, and every scenario mixing both forms wasn't worth the
-   diff).
-3. **`gzip.ts` no longer writes `snapshots/gzip.json` as a side effect of `pnpm test`.** It used to:
-   no baseline → record one and exit clean, meaning a CI run of `pnpm test` could silently mutate
-   tracked repository state. Split into two explicit modes: default (what `pnpm test` runs) now
-   _fails_ if the baseline file is missing entirely, if a built scenario has no baseline entry, or
-   if a baseline entry has no matching built scenario (stale — a deleted/renamed scenario left its
-   entry behind, previously undetectable). `--update` (`pnpm gzip:update`, a new script) replaces
-   the snapshot with exactly the current scenario set — a person runs it, reviews the diff, and
-   commits it; a test run never does.
-4. **`analyze.ts` validates scenario shape before handing it to esbuild.** A `scenarios/foo/` with
-   no `entry.ts` used to surface as an esbuild "file not found," not obviously a fixture problem.
-   Now fails with `scenario "<group>/<name>" is missing entry.ts` naming the exact expected path.
-5. Framework-external policy centralized and extended to `lit` (`@lit/*`, `@lit-labs/*`, `lit-html`,
-   `lit-element`) — previously only react/vue/solid/preact/svelte were covered; needed for the new
-   `package/lit-minimal` scenario, and worth having regardless since `lit` is a real adapter here.
-
-`report.ts`'s hardcoded `LIB_TAGS` list is left as a known, disclosed limitation — it'll drift as
-the library grows; deriving it from real package metadata is a fine follow-up, not done here.
-
-Verification: all of the above re-run clean —
-`pnpm --filter @praxis-kit/tree-shaking-tests typecheck` 0 errors (including the 5 new `package/*`
-entries, none needed the tsconfig exclusion the 4 framework-specific `source/*` scenarios do);
-`pnpm test` 16/16 scenarios pass; fresh `snapshots/gzip.json` (16 entries) recorded via
-`gzip:update` and re-verified stable; manually confirmed the two new failure modes actually fire (a
-deliberately-broken scenario directory, and an injected stale baseline entry, each produced the
-expected `FAIL` and non-zero exit, then reverted); `pnpm -r typecheck`/`lint:check`/`format:check`
-clean. Also fixed `configs/typescript.ts`'s `allowDefaultProject` entries for the 4
-tsconfig-excluded scenarios, stale after the `source/` move.
-
-**Second review pass — naming precision, plus four genuinely surgical scenarios.** Two more rounds:
-
-1. **"Published package" was the wrong claim for `scenarios/package/*`.** It consumes
-   `packages/kit`'s built dist through the pnpm workspace link
-   (`node_modules/praxis-kit → packages/kit`), not an actual `pnpm pack` tarball installed into an
-   isolated consumer — so it doesn't cover `files`/npm packing/`.npmignore`/package metadata the way
-   a real install would (`packages/kit/scripts/smoke-test.ts` already does exactly that, for the kit
-   package itself). Corrected every comment in `analyze.ts` and
-   `scenarios/package/react-minimal/entry.ts` to call this **package-consumption testing** and name
-   published-package testing (a `pnpm pack`-based version of this same scenario group) as the real,
-   not-yet-done follow-up, rather than overclaiming it already happened. Not a functional change —
-   the test itself was already doing something real and useful, just mislabeled.
-2. **Added `package/{contract,guards,html,utils}-only`** — genuinely surgical scenarios, unlike an
-   adapter-scoped equivalent would have been. Considered `react-primitive-only`/`react-aria-only`/
-   etc. first and dropped them: every `praxis-kit/<adapter>` entry's only real export is
-   `createContractComponent`, already bundled as one function by `packages/kit`'s own build —
-   there's no shallower value-level import an adapter entry offers that would pull in less. This is
-   exactly why the 5 original `source/*` "depth" scenarios (`aria-only`, `contracts-only`,
-   `full-runtime`, `minimal-polymorphic`, `polymorphic-validation`) all produce byte-identical
-   bundles (142 live modules each, confirmed again on this rebuild) — their only differences are
-   type-only imports, erased before esbuild ever sees them. The framework-neutral entries
-   (`contract`, `guards`, `html`, `utils`) are where real, distinct footprints exist to test:
-   confirmed empirically, not assumed — `guards-only`/`utils-only` (pure `@praxis-kit/primitive`
-   re-exports) each resolve to exactly **1** live module and ~120–350 bytes gzip; `contract-only`
-   (core + primitive, no diagnostics — its only `Diagnostics` reference is `import type`, erased) is
-   **1** module, 917 bytes; `html-only` (core, and a real runtime diagnostics import, unlike
-   `contract`) is **2** modules (its own file + the shared diagnostics chunk), 8221 bytes — versus
-   20–22 KB for any framework adapter entry. That range (118 B → 8.2 KB → 20+ KB) is the kind of
-   real size discrimination the original "depth" scenarios never actually produced.
-
-Verification: same as above, rerun with all 20 scenarios (16 + 4 new) — `pnpm test` 20/20 pass,
-`snapshots/gzip.json` regenerated via `gzip:update`, `pnpm -r typecheck`/`lint:check`/
-`format:check` clean.
+`report.ts`'s hardcoded `LIB_TAGS` list is a known limitation that will drift.
 
 ### CI — `.github/workflows/ci.yml` + `publish.yml`, scoped to what actually exists
 
