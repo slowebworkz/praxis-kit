@@ -1652,103 +1652,42 @@ Verification: `npx prettier --check` and `npx markdownlint-cli2` clean on both c
 
 ### `scripts/generate-repo-state.ts` + `qa/metrics` — ported; the `boundaries/dependencies` rule was silently never enforcing anything
 
-Ported `../pk`'s root `scripts/generate-repo-state.ts` (570 lines: `dependency-cruiser` + a
-builder-chain `@praxis-kit/pipeline` API this repo's clean-room `lib/pipeline` doesn't have) and its
-dependent `qa/metrics`, deliberately, not verbatim — see the full design in the session's plan file
-for the detailed reasoning; summarized below.
+Ported `../pk`'s root `scripts/generate-repo-state.ts` and its dependent `qa/metrics`, deliberately
+not verbatim: `../pk`'s script used `dependency-cruiser` plus a builder-chain `@praxis-kit/pipeline`
+API that this repo's `lib/pipeline` does not have.
 
-**Package discovery bug in `../pk` itself, not just a porting mismatch**: `../pk`'s
-`discoverPackages()` only ever globs `packages/`, never `adapters/` — `../pk` moved every framework
-adapter to `adapters/<name>/` years ago and never updated this function, so its own
-`.repo-state/adapters.json`/`contracts.json` come out empty and `exports.json` only ever has
-`@praxis-kit/core` on every real run there today. Fixed here at the root cause: `discoverPackages()`
-reads `pnpm-workspace.yaml`'s real `packages:` glob list (a narrow, documented line-based reader of
-that file's own controlled shape, not a general YAML parser) instead of a hardcoded directory, so a
-future new top-level workspace dir doesn't require touching this script again. Real result: 26 (28
-once `lib/foundation`/`qa/metrics` themselves landed) packages discovered correctly across
-`packages/`, `lib/`, `adapters/`, `plugins/`, `tooling/`, `qa/`.
-
-**Dependency-graph source changed from `dependency-cruiser` to `eslint-plugin-boundaries`** — this
-repo's actual, CI-gated architecture-enforcement mechanism, rather than standing up a second,
-parallel config nothing keeps in sync (the exact staleness class already found in `../pk`'s own
-`.dependency-cruiser.cjs`, which still has dead rules referencing pre-migration `packages/react`
-paths). `violations` come from ESLint's Node API run against `configs/architecture.ts` directly (so
-it can never drift from what CI actually lints with); the full package-to-package import graph
-(`packageImports`) comes from a separate ts-morph AST import-specifier scan, since the boundaries
-plugin fundamentally reports policy pass/fail per import, not a resolved edge list — confirmed by
-reading its compiled rule source before assuming otherwise.
-
-**A real, pre-existing, repo-wide bug found while wiring this up**: `configs/architecture.ts`'s
-`boundaries/dependencies` rule — the `core` must-not-import-frameworks policy that's been in this
-repo's checked-in CI-gated lint config all along — has never actually fired. Traced to the rule's
-own source (`node_modules/eslint-plugin-boundaries/dist/Rules/Dependencies.js`): it only evaluates
-policies when `checkAllOrigins || isLocalDependency`, and `checkAllOrigins` defaults to `false` —
-meaning by default the rule only checks dependencies whose _target_ is a **local** (workspace)
-element, never an **external** package. Since the `core` policy's entire purpose is disallowing
-imports of _external_ framework packages (`'react'`, `'vue'`, etc.), it had silently never been
-evaluated. Confirmed empirically, not by reading alone: `import 'react'` into
-`packages/core/src/ index.ts` produced zero lint output before the fix and a real, correct violation
-after adding `checkAllOrigins: true` to the rule's options. Re-running the full repo through the
-fixed rule found no latent violation (`packages/core` genuinely never imports a framework package
-today) — the CI gate had been doing nothing, not silently ignoring a real breach, but it was still a
-real gap in what this repo's own lint config believed it was enforcing. This is arguably the most
-significant finding of this port, independent of `qa/metrics` itself.
-
-**Investigated and deliberately did not add**: a structural "`foundation` must never depend on
-anything internal" policy, attempted via the same rule. Confirmed via
-`ESLINT_PLUGIN_BOUNDARIES_DEBUG=1` that this plugin's **local-to-local (element-to-element)
-resolution does not work in this repo's current setup** — even a real, declared, resolvable
-workspace dependency (`@praxis-kit/diagnostics`, temporarily added to `lib/foundation/package.json`
-to test with) reports `module.origin: "external"` and `element.isUnknown: true` in the debug output,
-meaning `to: { element: { type: ... } } }`-shaped policies can never match a local dependency here
-today — only external-package string matching (`dependency.source`, the mechanism the `core` policy
-already uses) is confirmed working. This is a separate, deeper gap than the `checkAllOrigins`
-default (likely a missing resolver setting this plugin needs beyond what `configs/architecture.ts`
-currently configures) — investigating and fixing it is out of scope for this task. Reverted the
-non-functional policy attempt rather than ship a second silently-inert rule of exactly the kind just
-found and fixed above; `foundation`'s leaf status stays a documented, code-reviewed convention (its
-own README, zero real dependencies) rather than a mechanically-enforced one for now.
-
-**`qa/metrics`**: ported `collect.ts`/`report.ts`/`assert.ts`/`types.ts` largely as-is once their
-inputs existed for real, with two real fixes:
-
-- `assert.ts`'s git-baseline path was `lib/metrics/snapshots/metrics.json` in `../pk` — a path that
-  never existed in either repo (the package has always been `qa/metrics`), silently no-op'ing every
-  soft-gate growth comparison there on every real run. Fixed to `qa/metrics/snapshots/metrics.json`.
-- `SOURCE_PACKAGES`' complexity-scan bucket list extended from `../pk`'s stale 5 entries to 10,
-  covering
-  `lib/{primitive,diagnostics,contract-props,contract,styling,tailwind,pipeline-kit, runtime,adapter-utils}` +
-  `packages/core` — explicitly excluding `lib/pipeline` (no real production consumer yet) and
-  `lib/playwright` (test infrastructure, same tier as the already- excluded `qa/*` packages) rather
-  than silently inheriting a list that predates half of this repo's real `lib/*` inventory.
-
-`generate-repo-state.ts` runs as plain sequential functions (`async function main()`), not a
-`lib/pipeline` `Pass` chain — matching the same call already made for
-`packages/kit/scripts/ postbuild.ts` and the root `verify` script for structurally identical linear
-scripts; `../pk`'s builder-chain `@praxis-kit/pipeline` API doesn't exist in this repo's clean-room
-rewrite anyway. `node --experimental-strip-types`, not `tsx`, matching `qa/tree-shaking-tests`'s own
-already- established move away from `tsx` for this class of package. No `runtime-graph.json` —
-dropped entirely per explicit decision (hand-written documentation duplicating `ARCHITECTURE.md`'s
-real render-pipeline table, no source derivation at all).
-
-`pnpm repo-state` wired into the root `verify` script (already the exact step `ci.yml` runs), so the
-architecture check this script produces is now genuinely CI-gated, not just a report nobody reads —
-closing a gap flagged during review before it shipped un-wired.
-
-`generate-repo-state.ts`'s own `main()` originally treated a
-`dependency-graph.json.status === 'ERROR'` (e.g. a thrown ESLint invocation) as a silent success —
-exit code 0, "✓ .repo-state/ written" printed regardless. Fixed during review, before merging:
-`ERROR` now sets `process.exitCode = 1` and prints the underlying error, same as a real
-`'VIOLATIONS'` result. An architecture- verification tool that reports its own failure as success
-defeats the entire point of gating `verify` on it.
-
-Verification: `pnpm -r typecheck`, `pnpm lint:check`, `pnpm format:check` all clean;
-`pnpm repo-state` produces all 6 files (no `runtime-graph.json`) with a real, non-empty, correct
-28-package inventory (confirmed `adapters.json` has exactly 7 real entries with derived
-`optionsType`/ `frameworkSpecificOptions`, not `../pk`'s empty map); intentionally broke the hard
-gate (a disallowed `import 'react'`), confirmed `status: 'VIOLATIONS'`, a real violation entry, and
-`process.exitCode === 1`, then reverted; `qa/metrics`'s `collect`/`report`/`assert` all run clean
-end to end.
+- **Package discovery bug in `../pk` itself:** `discoverPackages()` only globbed `packages/`, never
+  `adapters/`, so its `adapters.json` / `contracts.json` came out empty and `exports.json` held only
+  `@praxis-kit/core`. Here it reads `pnpm-workspace.yaml`'s `packages:` globs (a narrow line-based
+  reader, not a YAML parser), so a new top-level workspace dir needs no script change.
+- **Dependency-graph source is `eslint-plugin-boundaries`, not `dependency-cruiser`.** That is the
+  CI-gated enforcement mechanism, and a second parallel config goes stale (`../pk`'s
+  `.dependency-cruiser.cjs` already references pre-migration paths). `violations` come from ESLint's
+  Node API against `configs/architecture.ts`; the package-to-package edge list comes from a separate
+  ts-morph import scan, because the plugin reports pass/fail per import, not a resolved edge list.
+- **`boundaries/dependencies` had never fired.** It only evaluates policies when
+  `checkAllOrigins || isLocalDependency`, and `checkAllOrigins` defaults to `false`, so a policy
+  that disallows _external_ packages (`core` must not import `react`, `vue`, …) was never evaluated.
+  An `import 'react'` in `packages/core` produced no lint output until `checkAllOrigins: true` was
+  set. Re-running found no latent violation, so the gate had been doing nothing rather than ignoring
+  a breach. Arguably the most significant finding of this port.
+- **Investigated and not added:** a "`foundation` must not depend on anything internal" policy. With
+  `ESLINT_PLUGIN_BOUNDARIES_DEBUG=1`, local-to-local element resolution does not work in this setup
+  (a real workspace dependency reports `origin: "external"`, `isUnknown: true`), so
+  `to: { element: … }` policies can never match. Likely a missing resolver setting. The attempt was
+  reverted rather than ship a second silently inert rule; `foundation`'s leaf status stays a
+  reviewed convention.
+- **`qa/metrics` fixes:** `assert.ts`'s git-baseline path was `lib/metrics/snapshots/metrics.json`,
+  a path that never existed, so every soft-gate growth comparison was a silent no-op; fixed to
+  `qa/metrics/…`. `SOURCE_PACKAGES` grew from `../pk`'s stale 5 entries to 10, excluding
+  `lib/pipeline` (no production consumer yet) and `lib/playwright` (test infrastructure).
+- **Plain sequential functions, run with `node --experimental-strip-types`** (not `tsx`), like
+  `postbuild.ts`. No `runtime-graph.json`: it was hand-written documentation duplicating
+  `ARCHITECTURE.md`.
+- **`pnpm repo-state` is part of the root `verify` script**, so the architecture check is CI-gated.
+  `main()` originally treated `dependency-graph.json.status === 'ERROR'` (for example a thrown
+  ESLint call) as success with exit code 0. `ERROR` now sets `process.exitCode = 1`, like
+  `VIOLATIONS`; a verification tool that reports its own failure as success defeats the gate.
 
 ### `lib/foundation` — extracted from `lib/primitive`; a real Node-native-resolution bug found along the way
 
@@ -1902,115 +1841,52 @@ No code changes for this entry — a documentation-only closure.
 
 ### `qa/bundle-analysis` — rewritten fresh, not ported; two independent leak signals, both proven against real injected leaks
 
-`../pk`'s `qa/bundle-analysis` is still genuinely broken there, unrelated to porting: its
-`rollup.config.ts` resolves every adapter/tailwind entry via `packages/<pkg>/src/...`, but only
-`packages/core` still lives under `packages/` in `../pk` — every adapter moved to `adapters/*`
-(tailwind to `lib/tailwind`) in one restructuring commit that never updated this file. Confirmed via
-`git log --oneline -- qa/bundle-analysis/rollup.config.ts`: exactly one commit ever touched it (the
-same one that introduced the staleness), followed only by dependency bumps. Also never wired into
-`../pk`'s own CI — its root `package.json` has `analyze`/`size` scripts targeting it by name, but no
-workflow ever invokes them, presumably why the break was never caught. Rather than port a config
-that's provably broken with zero maintenance since, or keep waiting on an upstream fix with no sign
-of happening, rewrote fresh against `qa/tree-shaking-tests`'s already-working esbuild pattern, which
-solves the identical `adapters/*`/`packages/core`/`lib/tailwind` path-aliasing problem correctly in
-this repo today.
+`../pk`'s `qa/bundle-analysis` is broken there: its `rollup.config.ts` resolves every entry via
+`packages/<pkg>/src/...`, but only `packages/core` still lives there (adapters moved to
+`adapters/*`, tailwind to `lib/tailwind`, in a commit that never updated this file), and no workflow
+ever invokes its scripts. Rather than port a provably broken config, it was rewritten against
+`qa/tree-shaking-tests`' working esbuild pattern.
 
-**Shared alias knowledge extracted, not duplicated.** Pulled `workspaceAlias`,
-`consumerExternalStrings`, `consumerExternalPlugin`, and `toPackageName` out of
-`qa/tree-shaking-tests/scripts/{analyze,assert}.ts` into a new
-`qa/tree-shaking-tests/scripts/workspace-resolution.ts`, exposed via a new `"."` export in
-`qa/tree-shaking-tests/package.json` pointing directly at that one flat file. `qa/bundle-analysis`
-depends on `@praxis-kit/tree-shaking-tests` and imports these as real runtime values — safe
-specifically because the export points at one flat file, not a directory barrel: the same
-`ERR_UNSUPPORTED_DIR_IMPORT` problem that motivated extracting `lib/foundation` would otherwise
-apply here too (a Node-native script importing a real value through a directory-style export).
-`analyze.ts`/`assert.ts` import the four names back from the new file — a pure extraction, their own
-behavior is unchanged. `qa/bundle-analysis` layers only 3 additional aliases on top, in its own
-`scripts/workspace-alias.ts` (`@praxis-kit/react/legacy`, `@praxis-kit/lit`, `@praxis-kit/web`) —
-the plan going in expected `@praxis-kit/core/{props,state,aria}` would be needed too (they back
-`packages/kit/contract.ts`'s re-exports), but that turned out unnecessary once actually checked: no
-adapter source imports those subpaths directly, and this package's `contract`/`guards`/`html`/
-`utils` scenarios are package-tier only (see below) — left out rather than added speculatively.
-
-**Dual scenario tiers, asymmetric by design, not 1:1.** `scenarios/source/*` — 9 scenarios, one per
-entry with a real workspace-source counterpart (`react`, `react-legacy`, `preact`, `vue`, `solid`,
-`svelte`, `lit`, `web`, `tailwind`) — gives real per-original-file `bytesInOutput` composition data,
-the fine-grained breakdown tier. `scenarios/package/*` — all 13 scope entries, including
-`contract`/`guards`/`html`/`utils` (pass-through re-export files that live _inside_ `packages/kit`
-itself, not a distinct workspace package with its own source tree, so there's no separate "does the
-source graph tree-shake" question to ask for them) — real node resolution against `packages/kit`'s
-built `dist/`, the real-consumer-size tier. Every scenario does `export * from '<entry>'` (the whole
-public surface), not one hand-picked symbol — deliberately different from `tree-shaking-tests`'s
-minimal-usage style, since this tool answers "what does the whole entry actually cost," a different
-question `tree-shaking-tests` already answers well for the narrower one. `preact` and `solid` are
-excluded from `qa/bundle-analysis`'s own `tsc --noEmit` (their real JSX types aren't assignable
-under this package's `jsxImportSource: "react"`) — the exact same conflict `tree-shaking-tests`
-already hits and excludes its own `preact-minimal`/ `solid-minimal` scenarios for;
-`eslint.config.ts`'s `allowDefaultProject` needed the same two new entries `tree-shaking-tests`'s
-equivalents already have, or ESLint's typescript-eslint project service can't find a project for the
-excluded files at all.
-
-**Deliberately not duplicated**: `../pk`'s original 6 `.size-limit.json` fixture scenarios
-(`react-minimal`, `react-enforcement`, `react-variants`, `react-tailwind`, `vue-minimal`,
-`solid-minimal`) — `tree-shaking-tests` already tracks a committed gzip baseline per minimal-usage
-adapter scenario, and its own `DECISIONS.md` entry already proved these collapse to byte-identical
-output per adapter (every adapter's real value-level surface is one function). The one genuinely
-additive dimension this tool tracks instead: total gzip size of the whole real entry (every
-re-export), a real, different number from any existing baseline — confirmed non-trivially different
-in practice: `lib/contract`'s built-in ARIA rule tables turned out to dominate every source/*
-adapter bundle's byte share (47–53%), not the adapter's own code as initially assumed going in —
-architecturally correct (`createContractComponent` pulls in the full enforcement rule set regardless
-of framework) but worth recording as a real, only-empirically-discovered composition fact.
-
-**Two independent leak-detection signals** (`scripts/leak-check.ts`, named distinctly from
-`assert.ts` — isolation correctness, not tree-shaking inclusion): a live-file-path check (does a
-scenario's live input paths include another owner's source/dist dir) and an external-peer check
-(does a scenario externalize a bare specifier belonging to a framework other than its own — the
-signal a byte-count check structurally cannot see, since an externalized import is always 0
-`bytesInOutput`). Both proven against real injected leaks, not just written and trusted: a genuine
-`export * from` re-export between two sibling adapter barrels turned out to be a **false negative**
-on the first attempt — collided value names (`createContractComponent`, `defineContractComponent`)
-between the two `export *` sources are silently dropped under ECMAScript's ambiguous-star-export
-rule, so nothing ever became live. Switched to an unambiguous renamed re-export
-(`export { createContractComponent as __leakedVueCreateContractComponent } from '../../vue/src/create-contract-component'`)
-injected into `adapters/react/src/index.ts`, which both checks caught correctly; reverted after
-confirming. A second injection (`export { render as __leakedSolidRender } from 'solid-js/web'`)
-proved the external-peer check fires independently — no live-file-path signal exists at all for a
-raw external package, so only that check reported it; reverted after confirming.
-
-The `OWNERS` table's `ownPeers` (per-adapter framework-peer patterns) is a hand-maintained mirror of
-`packages/kit/tsdown.config.ts`'s own per-entry `deps.neverBundle` lists, not an import from there —
-deliberately: importing the actual build config would pull tsdown/unplugin-solid in as real
-dependencies of a QA script just to read a few peer-pattern arrays, a real-import version of the
-"parsing tsdown.config.ts as a file would be too clever and brittle" problem it was written to
-avoid. This is accepted, documented duplication, not a false single-source-of-truth claim — the doc
-comment says so explicitly, and a follow-up (a small, side-effect-free shared data module both files
-import) is noted but not done here. `react`/`react-legacy` deliberately share one ownership domain
-(same source/dist dirs — both are the React adapter, differing only in API surface); a known,
-accepted consequence is this check cannot detect one surface depending on something only the other
-exposes. External-peer detection is deliberately narrow — it only flags a specifier belonging to
-_another known Praxis framework owner_, not "any external dependency this repo doesn't recognize" —
-broadening it would dilute a currently crisp invariant ("did one Praxis adapter acquire another's
-peer") into a fuzzier general dependency-policy checker.
-
-**`scripts/inventory-check.ts`** — the one check in this package that looks outward: cross-checks
-`scenarios/package/*` against `packages/kit/package.json`'s real `exports` map, so a new subpath
-export landing in `packages/kit` with no scenario ever created for it doesn't pass silently forever
-(every other script here only ever iterates the scenario directories that already exist). Excludes 5
-real exports with no meaningful bundle-composition question to ask (`./tailwind.css` — a CSS asset;
-`./svelte/Polymorphic.svelte` — raw source for the consumer's own compiler; `./eslint`/
-`./ts-plugin`/`./vite-plugin`/`./codemod` — tooling entries never imported into an application
-bundle). Proven against a real injected drift (an extra scenario directory with no matching export)
-before being trusted.
-
-Verification: `pnpm --filter @praxis-kit/bundle-analysis typecheck`/`build` (22 scenarios)/
-`leak-check` (22/22)/`inventory-check`/`report` (real non-zero composition numbers,
-`composition.json` written per scenario) all clean; `gzip:update` then `gzip` clean; both negative-
-case proofs above confirmed and reverted (`git status` clean on `adapters/react/src/index.ts`
-afterward); full `pnpm verify` (root — a real `packages/kit` rebuild, then `lint:check` +
-`typecheck` + `test` across all ~31 packages, then `repo-state`) exits 0, `qa/bundle-analysis`'s own
-`test` script picked up automatically by `pnpm -r --if-present test` with no CI YAML change and no
-root `package.json` change, exactly as `tree-shaking-tests` itself was.
+- **Shared alias knowledge extracted, not duplicated:** `workspaceAlias`, `consumerExternalStrings`,
+  `consumerExternalPlugin` and `toPackageName` moved to
+  `qa/tree-shaking-tests/scripts/workspace-resolution.ts`, exposed through a `"."` export that
+  points at that one flat file. A directory-style export would hit `ERR_UNSUPPORTED_DIR_IMPORT` for
+  a Node-native script, the same problem that motivated `lib/foundation`. `bundle-analysis` layers
+  only three extra aliases (`@praxis-kit/react/legacy`, `lit`, `web`).
+- **Two scenario tiers, asymmetric by design.** `scenarios/source/*` (9, one per entry with a real
+  source counterpart) gives per-file `bytesInOutput` composition. `scenarios/package/*` (all 13
+  scope entries, including the pass-through `contract`/`guards`/`html`/`utils`) resolves against
+  `packages/kit`'s built `dist` for real-consumer size. Every scenario does
+  `export * from '<entry>'`: this tool answers "what does the whole entry cost", which
+  `tree-shaking-tests` does not. `preact` and `solid` are excluded from its `tsc --noEmit` (JSX
+  types conflict with `jsxImportSource: "react"`), as in `tree-shaking-tests`, and need matching
+  `allowDefaultProject` entries.
+- **`../pk`'s six `.size-limit.json` scenarios were not duplicated:** `tree-shaking-tests` already
+  baselines each adapter and they collapse to identical output. The additive number is the
+  whole-entry gzip size. It showed that `lib/contract`'s built-in ARIA rule tables dominate every
+  adapter bundle (47–53% of bytes), not the adapter's own code.
+- **Two independent leak signals** (`scripts/leak-check.ts`): a live-file-path check (a scenario's
+  live inputs include another owner's source or dist directory) and an external-peer check (a
+  scenario externalizes another framework's bare specifier), which a byte count cannot see because
+  an externalized import is always 0 bytes. Both were proven against injected leaks. The first
+  attempt, an `export *` between two adapter barrels, was a **false negative**: colliding names
+  (`createContractComponent`) are silently dropped under ECMAScript's ambiguous star-export rule. An
+  unambiguous renamed re-export caught it, and an injected `solid-js/web` import proved the
+  external-peer check fires on its own.
+- **`OWNERS.ownPeers` mirrors `packages/kit/tsdown.config.ts`'s `deps.neverBundle` lists by hand.**
+  Importing the build config would pull tsdown into a QA script. Accepted, documented duplication; a
+  small shared data module is a noted follow-up. `react` and `react-legacy` share one ownership
+  domain, so one surface depending on something only the other exposes goes undetected.
+  External-peer detection is deliberately narrow (another known Praxis framework's peers only);
+  broadening it would blur "did an adapter acquire another's peer" into a general dependency-policy
+  checker.
+- **`scripts/inventory-check.ts`** looks outward: it cross-checks `scenarios/package/*` against
+  `packages/kit/package.json`'s `exports`, so a new export with no scenario does not pass silently.
+  It excludes five exports with no bundle-composition question (`./tailwind.css`,
+  `./svelte/Polymorphic.svelte`, `./eslint`, `./ts-plugin`, `./vite-plugin`, `./codemod`), and was
+  proven against injected drift.
+- Its `test` script is picked up by `pnpm -r --if-present test`, so no CI or root `package.json`
+  change was needed.
 
 ### `lib/adapter-utils` — SSR tag serialization had no safety boundary; `assertSerializableTag` added
 
