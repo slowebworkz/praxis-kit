@@ -876,164 +876,82 @@ proxies `getSemanticDiagnostics` and adds `checkNoEnforcementWithoutStrict` (cod
 
 ### `plugins/vite` — port scope
 
-`@praxis-kit/vite-plugin`, ported (~2800 src LOC after the deferral below, 7 vitest files / 148
-tests). Six build-time Vite plugins that parse `.tsx`/`.jsx` with the **TypeScript compiler API**
-(`import ts from 'typescript'`, not babel):
+`@praxis-kit/vite-plugin`: six build-time Vite plugins that parse `.tsx`/`.jsx` with the
+**TypeScript compiler API** (`import ts from 'typescript'`, not babel):
 
-- `contractPlugin` — static `enforcement.children` cardinality + ARIA-override checks, single-file
+- `contractPlugin` — static `enforcement.children` cardinality and ARIA-override checks, single-file
   (`transform`) and cross-file (`buildEnd`, via a `ConstraintRegistry`).
 - `compoundPrunePlugin` — strips dead `styling.compounds` entries.
 - `classExtractPlugin` — injects a static `precomputedClasses` map into each factory call.
 - `slotTransformPlugin` — rewrites safe `asChild` sites to the render-prop form.
-- `staticCompositionPlugin` — inlines statically-analyzable usage sites to direct element creation.
-- `ssrOptimizePlugin` — the bundle of the three transforms in dependency order.
+- `staticCompositionPlugin` — inlines statically analyzable usage sites. **Experimental.**
+- `ssrOptimizePlugin` — the three transforms bundled in dependency order.
 
-- **deps:** `@praxis-kit/{core (type-only),diagnostics,primitive}` + `typescript` → `dependencies`
-  (`typescript` is a real runtime dep — the plugin bundles compiler-API calls); `vite >=5` peer;
-  `vite` + `vitest` + `@types/node` dev. `type-fest` dropped (was design-tokens-only).
-- **scaffold:** standard `lib/*` shape — `exports .` → `src/index.ts`,
-  `defineLibConfig('vite-plugin')`, no build script. `../pk`'s `tsup` build config dropped entirely
-  (rather than converted to `tsdown`) — nothing consumes it in-repo; a real build lands with the
-  release pipeline. `type: module`.
-- `repository.directory` corrected `packages/vite-plugin` → `plugins/vite`. Added to root
-  `tsconfig.json` `references`; no `tsconfig.paths.json` entry (only self-referenced in JSDoc).
+- **Scaffold:** `typescript` is a real runtime `dependency` (the plugin makes compiler-API calls);
+  `vite >=5` peer. Standard `lib/*` shape with no build script: `../pk`'s `tsup` config was dropped
+  rather than converted, since nothing consumes it in-repo.
+- **`designTokensPlugin`** was deferred (it is the only module importing `@praxis-kit/tailwind`) and
+  restored with the `lib/tailwind` slice. It clears its accumulator on `buildStart` (otherwise a
+  watch-mode rebuild after a rename keeps the removed component's classes) and takes its output root
+  from `configResolved(config).root` instead of reaching into an internal context shape.
+- **`parseSource` derives `ScriptKind` from the extension** (unknown → `TSX`). `../pk` always parsed
+  as `TSX`, which mis-parsed `<T>expr` assertions in `.ts` files.
+- **Framing:** this is a small static compiler, not a "misc plugin collection". Cross-file analysis
+  is "best-effort static analysis, not whole-program verification" (`import * as X`, deep barrels
+  and dynamic config are left alone). SSR is the headline use case.
 
-**`designTokensPlugin` was deferred then restored.** `src/design-tokens.ts` + `.test.ts` are the
-only modules that import `@praxis-kit/tailwind` (`layoutKeys`). PR #30 landed the plugin without
-them; the `lib/tailwind` PR restored them (+ the `./design-tokens` re-exports in `index.ts`, the
-`@praxis-kit/tailwind: workspace:*` dep, and the README section). Nothing else in the plugin touches
-Tailwind. vite-plugin: 151 → 163 tests.
+**Follow-ups (design toward, not scheduled):**
 
-**Port-review changes:**
-
-- **`parseSource` derives `ScriptKind` from the extension** (`.ts` → `TS`, `.tsx` → `TSX`, `.js` →
-  `JS`, …; unknown → `TSX`). `../pk` always parsed as `TSX`, so a `.ts` file's `<T>expr` type
-  assertion (valid in `compoundPrune` / `classExtract`, which run on `ALL_EXTS`) was mis-parsed. +3
-  `ast.test.ts` cases.
-- **README + `package.json` reframed** — it _is_ a small static compiler, not a "misc plugin
-  collection": description updated; cross-file analysis stated as "best-effort static analysis, not
-  whole-program verification" (`import * as X` / deep barrels / dynamic config are left alone); SSR
-  made the headline use case; `staticCompositionPlugin` marked **experimental** pending differential
-  tests.
-
-**Review pass 2 (with the `lib/tailwind` slice that restored `designTokensPlugin`):**
-
-- **`designTokensPlugin` clears its accumulator on `buildStart`** — without it a watch-mode rebuild
-  after a file is deleted/renamed keeps the removed component's classes in the emitted manifest. +1
-  lifecycle test (`164` tests).
-- **Output root via `configResolved(config).root`** instead of the
-  `(this as unknown as { config? }).config?.root` reach into an internal-ish context shape.
-
-**Follow-ups (design toward — not this slice):**
-
-- **Extract a framework-neutral `lib/compiler`** — `parse / analyze / transform / optimize / emit`,
-  with `plugins/vite` (and eventually a Rollup/Webpack/esbuild adapter, and the `plugins/typescript`
-  diagnostics) as thin adapters. The five Vite plugins are really _one pipeline_ wearing Vite's
-  independently-ordered-transform clothing. This is the same consolidation as the `plugins/eslint` +
-  `plugins/typescript` "shared diagnostics core" follow-up — one target:
-  `Praxis static compiler → { validation, optimisation, transforms } → {Vite, TS} adapters`.
-- **Source maps.** The transforms return `{ code }` with no `map`. For AST→AST→source, and for
-  diagnostics that must point at the _original_ line after several transforms, source-map
-  preservation is a production-readiness requirement before the optimiser is called stable.
-- **Import-aware `isFactoryCall`** (shared with `plugins/typescript`, and more dangerous here since
-  this _rewrites_ code) — recognise `createContractComponent` only when imported from
-  `@praxis-kit/*`, not an unrelated same-named function.
-- **`classExtractPlugin` large-map strategy** — the 512-combination cap is a fine safety valve; a
-  shared/generated asset (vs. an inline literal per module) is the eventual answer for big maps, and
-  for not emitting the data when the component is tree-shaken away.
-- **`staticCompositionPlugin` differential tests** — render the inlined output vs the runtime path
-  and assert DOM/attr equivalence, across refs / context / defaults, before dropping the
-  experimental label. Reviewer: highest-value testing work; ~20–30 targeted cases across
-  `slotTransform` / `staticCompose` / `classExtract` would do.
-- **`designTokensPlugin` manifest keying** — keyed by bare component name, so `admin/Button` +
-  `public/Button` merge. Fine while the manifest's job is Tailwind safelisting (the flat
-  `allClasses` union is what matters); revisit with a module-path key + friendly name as metadata if
-  the per-component map gains a real consumer.
+- **A framework-neutral `lib/compiler`** (`parse / analyze / transform / optimize / emit`) with
+  `plugins/vite` and `plugins/typescript` as thin adapters. The five Vite plugins are really one
+  pipeline; this is the same consolidation as the `plugins/eslint` + `plugins/typescript` "shared
+  diagnostics core" follow-up.
+- **Source maps.** The transforms return `{ code }` with no `map`, which must change before the
+  optimiser is called stable.
+- **Import-aware `isFactoryCall`** (shared with `plugins/typescript`, and riskier here since this
+  rewrites code): recognise `createContractComponent` only when imported from `@praxis-kit/*`.
+- **`classExtractPlugin` large maps:** the 512-combination cap is a safety valve; a shared generated
+  asset is the eventual answer.
+- **`staticCompositionPlugin` differential tests** (inlined output vs the runtime path across refs,
+  context and defaults) before dropping the experimental label. The highest-value testing work.
+- **`designTokensPlugin` manifest keying** is by bare component name, so `admin/Button` and
+  `public/Button` merge. Fine for Tailwind safelisting; revisit if the per-component map gains a
+  real consumer.
 
 ### `tooling/codemod` — port scope
 
-`@praxis-kit/codemod`, ported ~verbatim (~20 src files, ~430 non-test LOC, 22 tests). A `ts-morph`
-CLI with three commands — `migrate` (the recommended one-pass), `rename`
-(`createPolymorphicComponent` → `createContractComponent` across ESM named imports/exports), and
-`migrate-paths` (`@praxis-kit/*` → `praxis-kit/*` specifiers, incl. `require()` / dynamic
-`import()`, with `@praxis-kit/eslint-plugin` → `praxis-kit/eslint` as the one special case).
-`migrate` runs rename **before** paths so the `PRAXIS_PACKAGE` filter still matches `@praxis-kit/*`
-specifiers; both orders are idempotent and the suite pins that.
+`@praxis-kit/codemod`: a `ts-morph` CLI with three commands. `migrate` is the one-pass command,
+`rename` changes `createPolymorphicComponent` → `createContractComponent` across ESM
+imports/exports, and `migrate-paths` rewrites `@praxis-kit/*` → `praxis-kit/*` specifiers (including
+`require()` and dynamic `import()`; `@praxis-kit/eslint-plugin` → `praxis-kit/eslint` is the one
+special case). `migrate` runs rename **before** paths so the `PRAXIS_PACKAGE` filter still matches
+`@praxis-kit/*`; both orders are idempotent and tested.
 
-- **deps:** `ts-morph` (catalog) → `dependencies`; `@types/node` + `tsdown` + `typescript` +
-  `vitest` (all catalog) dev. No `@praxis-kit/*` deps — it operates on _consumer_ source text, not
-  the kit's own types.
-- **Build scripts kept** (`build` / `dev` via `tsdown`), like `plugins/typescript` and unlike the
-  `lib/*` / `plugins/vite` packages — this is a runnable `praxis-codemod` bin (`dist/index.js`, ESM,
-  `#!/usr/bin/env node` banner), not a from-source library. `tsdown.config.ts` ported verbatim
-  (`entry: src/index.ts`, `format: ['esm']`, `dts`, `clean`, `fixedExtension: false`).
-- **`tsconfig.json` is standalone** (not `extends: ../../tsconfig.base.json` — base is `noEmit` +
-  `moduleResolution: bundler`): `module` / `moduleResolution: NodeNext`, `outDir: dist`,
-  `rootDir: src`, `types: ["node"]`, `+ skipLibCheck`. `vitest.config.ts` uses the repo's
-  `defineLibConfig('codemod')` (was a hand-rolled `defineConfig` in `../pk`).
-- Added to root `tsconfig.json` `references` and `.changeset/config.json` `ignore` (private, bundles
-  into `praxis-kit`); no `tsconfig.paths.json` entry (nothing imports it). `configs/typescript.ts`
-  `allowDefaultProject` and `configs/architecture.ts` already listed the `tooling/codemod` paths.
+- **No `@praxis-kit/*` dependencies:** it operates on _consumer_ source text. Build scripts are kept
+  (`tsdown`, ESM, shebang banner) because this is a runnable `praxis-codemod` bin, not a from-source
+  library. `tsconfig.json` is standalone (`NodeNext`), since the base is `noEmit` + `bundler`.
+- **Deleted three dead re-export shims** (`src/types.ts`, `transforms/rename-symbol.ts`,
+  `cli/project.ts`).
+- **`usage.ts` no longer reads a sibling `.md` at runtime.** `../pk` read `usage.md` via
+  `import.meta.url` but never copied it into `dist`, so `--help`, no-args and unknown-command threw
+  `ENOENT` in a built CLI. The text is an inline string now.
+- **The README's v3.1.0 section was wrong.** It documented `styling.presets` → `styling.recipes` as
+  a completed rename, but it never shipped: `presets` is still the real field name (see
+  "`StylingOptions.presets` — kept"). Following it would have broken working code. The section now
+  says so, and the framing says each subsection is a migration that already shipped (currently one).
+- **`rename`'s scope is documented:** it renames a Praxis Kit factory bound to a `@praxis-kit` /
+  `praxis-kit` specifier, not any same-named symbol, and for an unaliased import it reaches every
+  reference to that binding project-wide (a real `ts-morph` identifier rename). Tests pin the
+  cascade.
+- The bin ships inside `praxis-kit`, and the symlink entry-point bug is recorded under
+  "`packages/kit` — real build".
 
-**Port-review changes:**
-
-- **Deleted 3 dead re-export shims** — `src/types.ts` (re-exported `./types/index.js`),
-  `src/transforms/rename-symbol.ts` (`renameInProject`), `src/cli/project.ts` (`buildProject`).
-  Nothing imported any of them; the real modules are imported directly.
-- **`usage.ts` no longer reads a sibling `.md` at runtime.** `../pk` did
-  `readFileSync(new URL('./usage.md', import.meta.url))` and never copied `usage.md` into `dist` (it
-  wasn't in `files` either) — so the standalone `--help` / no-args / unknown-command paths threw
-  `ENOENT` in a built CLI. The text is now an inline `const usage` string; `usage.md` deleted. Also
-  fixes the prettier-mangled markdown (`*` → `\*`, collapsed command list) the old file had.
-  Verified end-to-end: `node dist/index.js --help` and `migrate --dry-run --verbose` both work.
-
-**Review pass 2 (README accuracy + `rename` scope):**
-
-- **README "Migrations" restructured for versioning clarity.** It listed two dated sections (v1.0.0,
-  v3.1.0) with no signal for whether either was historical or proposed — a reader could reasonably
-  wonder if the codemod was meant to walk several Praxis generations. Added a one-line framing
-  ("each subsection is a migration that has already shipped; there is currently one") so the single
-  real, automated migration reads unambiguously as current, not as the first of a series.
-- **The v3.1.0 section's claim was wrong, not just ambiguous.** It documented `styling.presets` →
-  `styling.recipes` as a completed rename needing manual find-and-replace. It never shipped —
-  `presets` is still the real `StylingOptions` field name, in `../pk` and here (confirmed by reading
-  the source, not just the docs). A codemod or a user manually "fixing" this per the old README text
-  would have broken working code by renaming to a key the type doesn't have. The section now says so
-  plainly and points at the "Open" item above; the `variantKey` → `recipe` prop half of the old
-  claim **is** real but is ancient/already-complete history with nothing left to migrate, so it's
-  dropped rather than presented as still-actionable.
-- **`rename`'s scope stated explicitly** (README, `--help` text, and a code comment on
-  `renameInProject`): it renames a Praxis-Kit factory bound to a `@praxis-kit`/`praxis-kit`
-  specifier, not an arbitrary same-named symbol — and, for an unaliased import, the rename reaches
-  every reference to that binding project-wide (bare references, `.method()` calls, …), not just the
-  import/export line, because it's a real `ts-morph` identifier rename. Both branches were already
-  correct; only the documentation was unclear about which. +2 tests pin the cascade (`fn.bind(...)`,
-  a bare reference) and comment preservation on the specifier line. 24 tests.
-
-**Follow-ups (not this slice):**
-
-- **The `praxis-codemod` bin ships inside `praxis-kit`.** `packages/kit` needs a `bin` entry + a
-  build entry that bundles `src/index.ts` (with the shebang banner) — lands with the `packages/kit`
-  build, alongside the deferred tsup→tsdown work.
-- **A future structural property-migration command** — reviewer-suggested: recognize
-  `styling: { presets: {...} }` and a `recipe`-style JSX attribute via `ts-morph`'s AST rather than
-  find-and-replace, avoiding the false-positive risk of renaming an unrelated same-named object key
-  or prop. There is nothing to migrate for `presets` today (see the "Open" item above) — this stays
-  a template for whenever a real mechanical field/prop rename ships, not a command to build now
-  against a rename that doesn't exist.
-- **A richer migration report** — reviewer-suggested: a structured summary (renames / path rewrites
-  / files modified, plus a "skipped: namespace imports / CJS destructuring" count) instead of the
-  current one-line `message`. The `Summary`/`RenameSummary`/`PathSummary`/`MigrateSummary` types
-  already carry the counts a nicer formatter would need; this is a `create-command.ts` presentation
-  change, not a transform change.
-- **Keep the transform layer framework-neutral** — reviewer's architectural note, worth recording
-  even though nothing prompted it yet: this package should stay scoped to the Praxis Kit public
-  API/contract surface (paths, factory names, eventually API properties). Framework-specific
-  migration logic (React-only, Vue-only, …), if it's ever needed, belongs elsewhere rather than
-  growing branches inside `tooling/codemod`.
-- `isFactoryCall` equivalent: `rename` matches a named import by name + a `@praxis-kit`/`praxis-kit`
-  module filter, which is right, but the same import-identity rigor as the `plugins/*` follow-ups
-  would let it also handle re-export chains.
+**Follow-ups (not scheduled):** a structural property-migration command (recognise
+`styling: { presets }` and `recipe` attributes via the AST) as a template for whenever a real
+mechanical rename ships, since none exists today; a structured migration report (the `Summary` types
+already carry the counts); keep the transform layer scoped to the Praxis Kit public API, with any
+framework-specific migration logic living elsewhere; import-identity rigor for re-export chains, as
+in the `plugins/*` follow-ups.
 
 ### Contract: `cardinality: { max: 0 }` is the canonical "forbid this child type"
 
