@@ -43,7 +43,7 @@
     "@praxis-kit/contract": "workspace:*",
     "@praxis-kit/diagnostics": "workspace:*",
     "@praxis-kit/foundation": "workspace:*",
-    "ajv": "^6.12.6",
+    "ajv": "^8.20.0",
     "publint": "catalog:",
     "tsdown": "catalog:",
     "vitest": "catalog:"
